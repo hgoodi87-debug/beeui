@@ -1,0 +1,120 @@
+﻿[36mvite v6.4.1 [32mbuilding for production...[36m[39m
+transforming...
+[32m??[39m 4 modules transformed.
+node.exe : [31m??[3
+9m Build failed in 4
+89ms
+위치 줄:1 문자:1
++ & "C:\Program File
+s\nodejs/node.exe" "
+C:\Program Files\nod
+ejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: ([31   
+ m??[39m Build f    
+ailed in 489ms:    S
+tring) [], Rem    ot
+eException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+[31merror during bu
+ild:
+[31m[vite:css] [pos
+tcss] C:/Users/dbcjs
+/Desktop/beeliber/be
+eliber/beeliber-main
+-main/beeliber-main/
+client/index.css:55:
+1: Unexpected }[31m
+file: [36mC:/Users/
+dbcjs/Desktop/beelib
+er/beeliber/beeliber
+-main-main/beeliber-
+main/client/index.cs
+s:55:0[31m
+    at Input.error (
+C:\Users\dbcjs\Deskt
+op\beeliber\beeliber
+\beeliber-main-main\
+beeliber-main\node_m
+odules\postcss\lib\i
+nput.js:135:16)
+    at Parser.unexpe
+ctedClose (C:\Users\
+dbcjs\Desktop\beelib
+er\beeliber\beeliber
+-main-main\beeliber-
+main\node_modules\po
+stcss\lib\parser.js:
+587:22)
+    at Parser.end (C
+:\Users\dbcjs\Deskto
+p\beeliber\beeliber\
+beeliber-main-main\b
+eeliber-main\node_mo
+dules\postcss\lib\pa
+rser.js:330:12)
+    at Parser.parse 
+(C:\Users\dbcjs\Desk
+top\beeliber\beelibe
+r\beeliber-main-main
+\beeliber-main\node_
+modules\postcss\lib\
+parser.js:456:16)
+    at parse (C:\Use
+rs\dbcjs\Desktop\bee
+liber\beeliber\beeli
+ber-main-main\beelib
+er-main\node_modules
+\postcss\lib\parse.j
+s:11:12)
+    at new LazyResul
+t (C:\Users\dbcjs\De
+sktop\beeliber\beeli
+ber\beeliber-main-ma
+in\beeliber-main\nod
+e_modules\postcss\li
+b\lazy-result.js:165
+:16)
+    at Processor.pro
+cess (C:\Users\dbcjs
+\Desktop\beeliber\be
+eliber\beeliber-main
+-main\beeliber-main\
+node_modules\postcss
+\lib\processor.js:53
+:14)
+    at runPostCSS (f
+ile:///C:/Users/dbcj
+s/Desktop/beeliber/b
+eeliber/beeliber-mai
+n-main/beeliber-main
+/node_modules/vite/d
+ist/node/chunks/dep-
+D4NMHUTW.js:43853:52
+)
+    at async compile
+PostCSS (file:///C:/
+Users/dbcjs/Desktop/
+beeliber/beeliber/be
+eliber-main-main/bee
+liber-main/node_modu
+les/vite/dist/node/c
+hunks/dep-D4NMHUTW.j
+s:43823:18)
+    at async compile
+CSS (file:///C:/User
+s/dbcjs/Desktop/beel
+iber/beeliber/beelib
+er-main-main/beelibe
+r-main/node_modules/
+vite/dist/node/chunk
+s/dep-D4NMHUTW.js:43
+678:27)[39m

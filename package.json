@@ -1,0 +1,14 @@
+{
+    "name": "beeliber-root",
+    "private": true,
+    "workspaces": [
+        "client",
+        "functions"
+    ],
+    "scripts": {
+        "dev": "npm run dev --workspace=beeliber-web",
+        "build": "npm run build --workspace=beeliber-web",
+        "deploy": "npm run build && firebase deploy",
+        "client:install": "npm install --workspace=beeliber-web"
+    }
+}

@@ -1,0 +1,50 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+    content: [
+        "./index.html",
+        "./App.tsx",
+        "./components/**/*.{js,ts,jsx,tsx}",
+        "./services/**/*.{js,ts,jsx,tsx}",
+        "./translations_split/**/*.{js,ts,jsx,tsx}"
+    ],
+    theme: {
+        extend: {
+            fontFamily: {
+                sans: ['Pretendard', 'Inter', 'sans-serif'],
+            },
+            colors: {
+                bee: {
+                    yellow: '#ffcb05',
+                    blue: '#7ba0c9',
+                    black: '#1a1a1a',
+                    grey: '#4a4a4a',
+                    light: '#f8fafc'
+                },
+                primary: '#ffee05',
+            },
+            borderRadius: {
+                'bee': '40px'
+            },
+            animation: {
+                'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
+                'fade-in': 'fade-in 0.5s ease-out forwards',
+                'zoom-in': 'zoom-in 0.3s ease-out forwards',
+            },
+            keyframes: {
+                'fade-in-up': {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                'fade-in': {
+                    '0%': { opacity: '0' },
+                    '100%': { opacity: '1' },
+                },
+                'zoom-in': {
+                    '0%': { opacity: '0', transform: 'scale(0.95)' },
+                    '100%': { opacity: '1', transform: 'scale(1)' },
+                }
+            }
+        },
+    },
+    plugins: [],
+}

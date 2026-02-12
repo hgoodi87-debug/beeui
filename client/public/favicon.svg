@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Carrier Body (Bee Yellow) -->
+  <rect x="106" y="120" width="300" height="340" rx="40" ry="40" fill="#FFCB05" stroke="#1A1A1A" stroke-width="24"/>
+  
+  <!-- Carrier Handle -->
+  <path d="M196 120V80a20 20 0 0 1 20-20h80a20 20 0 0 1 20 20v40" fill="none" stroke="#1A1A1A" stroke-width="24" stroke-linecap="round"/>
+  
+  <!-- 'B' Logo (Black) -->
+  <path d="M220 180h40c30 0 50 20 50 50s-20 50-50 50h-40v-100z M220 280h45c35 0 55 20 55 55s-20 55-55 55h-45v-110z" fill="#1A1A1A"/>
+  
+  <!-- Wheels -->
+  <circle cx="156" cy="480" r="24" fill="#1A1A1A"/>
+  <circle cx="356" cy="480" r="24" fill="#1A1A1A"/>
+</svg>

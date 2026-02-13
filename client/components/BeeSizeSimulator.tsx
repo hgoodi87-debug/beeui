@@ -32,7 +32,7 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
     };
 
     const LUGGAGE_DATA = [
-        { label: "M", range: s.size_m_range, height: 58, color: "#FFD700", desc: s.size_m_desc },
+        { label: "M", range: s.size_m_range, height: 58, color: "#ffcb05", desc: s.size_m_desc },
         { label: "L", range: s.size_l_range, height: 68, color: "#FFA500", desc: s.size_l_desc },
         { label: "XL", range: s.size_xl_range, height: 76, color: "#FF8C00", desc: s.size_xl_desc },
     ];

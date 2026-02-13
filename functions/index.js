@@ -369,8 +369,11 @@ exports.sendBookingVoucherFinal = functions.region("us-central1").firestore
 // HTTPS Callable: Manual Resend (Triggered from Admin Dashboard)
 // Helper Function: Send Arrival Email
 async function processArrivalEmail(bookingId, booking) {
-    const userEmail = booking.userEmail;
-    if (!userEmail) return;
+    const userEmail = booking?.userEmail;
+    if (!userEmail) {
+        console.log("No user email found for arrival notification");
+        return;
+    }
 
     // Fetch Destination Data for Pickup Info
     const destLoc = await getLocationData(booking.dropoffLocation);
@@ -527,8 +530,9 @@ exports.handleBookingUpdate = functions.region("us-central1").firestore
         const before = change.before.data();
         const after = change.after.data();
 
+        if (!after) return;
         // Check if status changed to '목적지도착'
-        if (before.status !== '목적지도착' && after.status === '목적지도착') {
+        if (before?.status !== '목적지도착' && after.status === '목적지도착') {
             try {
                 await processArrivalEmail(context.params.bookingId, after);
             } catch (error) {
@@ -715,6 +719,9 @@ exports.partnerApi = functions.region("us-central1").https.onRequest(async (req,
         // POST /v1/bookings
         if (req.method === 'POST' && resource === 'bookings') {
             const bookingData = req.body;
+            if (!bookingData || Object.keys(bookingData).length === 0) {
+                return res.status(400).json({ error: "Missing booking data" });
+            }
 
             // Generate ID logic (minimal copy from StorageService logic)
             const snapshot = await admin.firestore().collection("bookings").get();

@@ -160,7 +160,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
-                                className="relative p-8 bg-[#FFD700] rounded-[2rem] overflow-hidden shadow-[0_20px_40px_rgba(255,215,0,0.2)]"
+                                className="relative p-8 bg-[#ffcb05] rounded-[2rem] overflow-hidden shadow-[0_20px_40px_rgba(255,203,5,0.2)]"
                             >
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -mr-16 -mt-16 blur-3xl" />
                                 <p className="relative z-10 text-lg md:text-xl font-black text-black break-keep leading-snug">

@@ -180,7 +180,8 @@ export const ko = {
         total_amount: '최종 결제 금액',
         processing: '예약 처리 중...',
         storage_only: '보관 전용 서비스',
-        insurance_desc: '수하물 파손 및 분실 시 최대 100만원까지 보상해 드립니다.'
+        insurance_desc: '수하물 파손 및 분실 시 최대 100만원까지 보상해 드립니다.',
+        msg_same_day_limit: '당일 예약은 오후 2시까지만 가능합니다.'
     },
     status_mapping: {
         '접수완료': '접수완료', '예약완료': '예약완료', '보관중': '보관중', '이동중': '이동중',

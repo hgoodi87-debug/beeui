@@ -211,7 +211,7 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     } else {
       const start = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
       const end = new Date(`${booking.dropoffDate}T${booking.deliveryTime}`);
-      const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60));
+      const hours = Math.max(4, (end.getTime() - start.getTime()) / (1000 * 60 * 60));
       const hRate = storageTiers.find(t => t.id === 'st-4h')?.prices || INITIAL_STORAGE_TIERS[0].prices;
       const dRate = storageTiers.find(t => t.id === 'st-1d')?.prices || INITIAL_STORAGE_TIERS[1].prices;
       const wRate = storageTiers.find(t => t.id === 'st-week')?.prices || INITIAL_STORAGE_TIERS[2].prices;
@@ -410,7 +410,7 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                         {new Date().getHours() >= 14 && (
                           <p className="text-[10px] text-red-500 font-bold ml-1">
                             <i className="fa-solid fa-clock mr-1"></i>
-                            {lang === 'ko' ? '당일 예약은 오후 2시까지만 가능합니다.' : 'Same-day booking is available until 2 PM.'}
+                            {t.booking.msg_same_day_limit}
                           </p>
                         )}
                       </div>

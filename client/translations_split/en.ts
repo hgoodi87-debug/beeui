@@ -172,7 +172,8 @@ export const en = {
         total_amount: 'Total Amount',
         processing: 'Processing...',
         storage_only: 'Storage Service Only',
-        insurance_desc: 'Baggage insurance up to 1,000,000 KRW per bag.'
+        insurance_desc: 'Baggage insurance up to 1,000,000 KRW per bag.',
+        msg_same_day_limit: 'Same-day booking is available until 2 PM.'
     },
     status_mapping: {
         '접수완료': 'Pending', '보관중': 'Storing', '이동중': 'In Transit',

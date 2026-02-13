@@ -31,7 +31,7 @@ interface LandingRenewalProps {
  */
 const CONFIG = {
     colors: {
-        primary: "#FFD700",
+        primary: "#ffcb05",
         dark: "#0C0C0C",
     },
     video: {
@@ -176,7 +176,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                                 exit={{ y: '-100%' }}
                                 transition={{ type: 'spring', damping: 38, stiffness: 450 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="absolute top-0 right-0 w-[20%] min-w-[100px] bg-white shadow-[-10px_10px_40px_rgba(0,0,0,0.1)] p-2 pt-20 border-l border-b border-gray-100 rounded-bl-[3rem] flex flex-col items-center gap-1 z-[1001]"
+                                className="absolute top-0 right-0 w-[40%] min-w-[140px] bg-white shadow-[-10px_10px_40px_rgba(0,0,0,0.1)] p-4 pt-20 border-l border-b border-gray-100 rounded-bl-[3rem] flex flex-col items-center gap-1 z-[1001]"
                             >
                                 <div className="w-4 h-0.5 bg-bee-yellow mb-3 rounded-full" />
 
@@ -274,8 +274,14 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
 
                         <h1 className="text-5xl md:text-[120px] font-black leading-[1.15] tracking-tighter mb-10 text-white">
                             {t.hero.main_title_1}<br />
-                            <span className="text-bee-yellow drop-shadow-[0_10px_30px_rgba(255,215,0,0.3)]">
+                            <span className="text-bee-yellow drop-shadow-[0_15px_40px_rgba(255,203,5,0.4)] relative inline-block">
                                 {t.hero.main_title_2}
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    whileInView={{ width: '100%' }}
+                                    transition={{ delay: 0.5, duration: 0.8 }}
+                                    className="absolute -bottom-2 left-0 h-2 bg-bee-yellow/30 rounded-full"
+                                />
                             </span>
                         </h1>
 

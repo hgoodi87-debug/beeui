@@ -96,7 +96,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                 >
                     <i className="fa-solid fa-check text-3xl text-bee-black"></i>
                     <div className="absolute -top-1 -right-1 w-6 h-6 bg-bee-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                        <i className="fa-solid fa-crown text-[#FFD700] text-[10px]"></i>
+                        <i className="fa-solid fa-crown text-[#ffcb05] text-[10px]"></i>
                     </div>
                 </motion.div>
                 <h2 className="text-3xl font-black italic tracking-tighter text-bee-black mb-2 uppercase">

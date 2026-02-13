@@ -157,7 +157,8 @@ export const ja = {
         total_amount: '最終決済金額',
         processing: '予約処理中...',
         storage_only: '保管専用サービス',
-        insurance_desc: '手荷物の破損・紛失時、バッグ1個につき最大100万ウォンまで補償いたします。'
+        insurance_desc: '手荷物の破損・紛失時、バッグ1個につき最大100万ウォンまで補償いたします。',
+        msg_same_day_limit: '当日のご予約は午後2時まで可能です。'
     },
     status_mapping: {
         '접수완료': '受付完了', '보관중': '保管中', '이동중': '移動中',

@@ -148,7 +148,8 @@ export const zhHK = {
             '精密電子設備及高價IT/攝影器材'
         ],
         agree_premium_checklist: '確認禁止攜帶物品清單同賠償政策',
-        restricted_items_note: '* 如果包含上述物品，可能會被拒絕賠償。'
+        restricted_items_note: '* 如果包含上述物品，可能會被拒絕賠償。',
+        msg_same_day_limit: '當日預訂僅限於下午 2 點前辦理。'
     },
     status_mapping: {
         '접수완료': '已受理', '보관중': '寄存中', '이동중': '運輸中',

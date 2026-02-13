@@ -275,7 +275,7 @@ export const ko = {
         location_error: '위치 정보를 가져오는데 실패했습니다.',
         geolocation_permission_denied: '위치 정보 접근 권한이 거부되었습니다.',
         get_directions: '길찾기 (Google Maps)',
-        btn_get_directions: '길찾기',
+        btn_get_directions: '길 찾기',
         btn_view_roadview: '로드뷰 (Street View)',
         btn_reserve_delivery: '배송 예약하기',
         btn_storage_only: '보관 전용 서비스',
@@ -350,6 +350,9 @@ export const ko = {
         ai_refund_prompt: '예약 취소 및 환불 규정에 대해 상세히 설명해줘. (24시간 전 100%, 12시간 전 50% 등)'
     },
     services_page: {
+        badge: "Smart Luggage Solution",
+        main_title_1: "서울 여행의 시작,",
+        main_title_2: "짐 없이 가볍게",
         title: "짐 없는 가벼운 여행의 시작, Beeliber와 함께!",
         subtitle: "짐으로부터 해방되어 오직 여행의 즐거움에만 집중하세요.",
         intro: "Beeliber는 여행객의 소중한 수화물을 안전하게 운송하고 보관하는 전문 서비스입니다. 무거운 짐 걱정 없이 두 손 가볍게 여행을 만끽할 수 있도록, Beeliber가 여러분의 여행을 더욱 자유롭고 편리하게 만들어 드립니다.",

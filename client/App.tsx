@@ -190,13 +190,6 @@ const App: React.FC = () => {
       await StorageService.saveBooking(finalBooking);
       console.log("[App] Booking saved:", finalBooking.id);
 
-      // Notify external Chat (Non-critical)
-      try {
-        await StorageService.notifyNewBookingInChat(finalBooking);
-      } catch (notifyError) {
-        console.warn("[App] Notification failed, but booking saved:", notifyError);
-      }
-
       setLastBooking(finalBooking);
       navigate('BOOKING_SUCCESS');
     } catch (saveError: any) {

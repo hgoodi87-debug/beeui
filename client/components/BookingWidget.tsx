@@ -299,7 +299,6 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
         }
         const newBooking = { ...booking, id: bookingId, status: BookingStatus.CONFIRMED, createdAt: new Date().toISOString(), finalPrice: priceDetails.total, language: lang, recaptchaToken: recaptchaToken || undefined };
         await StorageService.saveBooking(newBooking);
-        await StorageService.notifyNewBookingInChat(newBooking as BookingState);
       }
 
       localStorage.removeItem('beeliber_current_booking');

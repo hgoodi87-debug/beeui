@@ -330,8 +330,12 @@ export const en = {
         cta_title: 'Ready?', cta_desc: 'Experience freedom.', cta_btn: 'Book Now'
     },
     services_page: {
+        badge: "Smart Luggage Solution",
+        main_title_1: "Start Your Seoul Trip,",
+        main_title_2: "Light Without Luggage",
         title: "Start a Light Trip Without Luggage, with Beeliber!",
         subtitle: "Free yourself from luggage and focus only on the joy of travel.",
+        subtitle_badge: "Beeliber Service",
         intro: "Beeliber is a professional service that safely transports and stores travelers' precious luggage. We make your travel freer and more convenient so you can enjoy every moment lightly.",
         pain_title: "Are you experiencing these inconveniences?",
         pain_1: "Struggling with heavy luggage from the airport to your hotel?",
@@ -342,6 +346,7 @@ export const en = {
         service_1_desc: "We transport your luggage quickly and safely from airport to hotel, hotel to hotel, or anywhere you want.",
         service_2_title: "Luggage Storage Service",
         service_2_desc: "Use our safe storage service when schedules change or you have free time before check-in/after check-out.",
+        service_prefix: "Service",
         benefits_title: "Special Benefits of Beeliber",
         benefits: [
             { t: "No Luggage Worries", d: "Focus only on the excitement of travel instead of heavy lifting." },
@@ -355,8 +360,26 @@ export const en = {
         why_2_t: "Convenience", why_2_d: "From easy booking to pickup",
         why_3_t: "Support", why_3_d: "Friendly professional team always ready",
         how_title: "How to Use",
+        how_desc_simple: "Start your luggage-free trip in three simple steps.",
+        how_step_descs: ["Select the date and location easily.", "Drop off or pick up your luggage at the booked location.", "Enjoy your trip lightly without luggage."],
         how_steps: ["Easy Booking", "Drop-off", "Free Travel", "Pick-up"],
-        cta: "Experience a light trip without luggage with Beeliber now!",
+        delivery_section: {
+            title: "Airport-Hotel Delivery",
+            subtitle: "Between Airport ↔ Hotel",
+            desc: "Don't spend the beginning and end of your trip struggling with heavy luggage. We provide safe same-day delivery from Incheon/Gimpo Airport to your accommodation (and vice-versa).",
+            features: ["Same-day Arrival Guaranteed", "Photo Authentication Sent", "Damage/Loss Insurance Applied"],
+            btn: "Book Delivery"
+        },
+        storage_section: {
+            title: "Hub Storage",
+            subtitle: "At Major Tourist Spots",
+            desc: "Need a place to store your luggage for just a few hours? Use our secure storage points in major locations like Hongdae and Seoul. Book online and drop off immediately.",
+            features: ["Near Subway Stations", "Real-time Booking Available", "CCTV Security Monitoring"],
+            btn: "Book Storage"
+        },
+        cta: "Experience a luggage-free trip with Beeliber now!",
+        cta_main_title: "Ready to enjoy your travel freedom?",
+        btn_book_now: "Book Now",
         back: "Back to Main"
     },
     location_names: {

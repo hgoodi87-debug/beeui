@@ -184,8 +184,12 @@ export const zh = {
         step3_desc: '如果您满意推荐方案，只需点击一下即可确认预订，轻松开启旅程！'
     },
     services_page: {
+        badge: "Smart Luggage Solution",
+        main_title_1: "首尔旅行的开始，",
+        main_title_2: "无行李轻便行",
         title: "与 Beeliber 一起，开启无行李轻便旅行！",
         subtitle: "从沉重的行李中解放出来，只专注于旅行的乐趣。",
+        subtitle_badge: "Beeliber 服务",
         intro: "Beeliber 是安全运输和保管旅客珍贵行李的专业服务。为了让您能轻便地享受每一刻，我们让您的旅行更自由、更便捷。",
         pain_title: "您是否正在经历这些不便？",
         pain_1: "从机场到酒店，因为沉重的行李而疲惫不堪？",
@@ -196,6 +200,7 @@ export const zh = {
         service_1_desc: "从机场到酒店，酒店到酒店，或任何您想要的地方，我们都会快速安全地帮您运送行李。",
         service_2_title: "行李寄存服务",
         service_2_desc: "当行程变动或入住前/退房后有空闲时间时，请使用我们安全的寄存服务。",
+        service_prefix: "服务",
         benefits_title: "Beeliber 的特别优惠",
         benefits: [
             { t: "无行李烦恼", d: "不再需要提重物，只专注于旅行的激动心情。" },
@@ -206,11 +211,29 @@ export const zh = {
         ],
         why_title: "为什么选择 Beeliber？",
         why_1_t: "信赖", why_1_d: "细致负责的服务",
-        why_2_t: "便利", why_2_d: "从轻松预订到取件",
+        why_2_t: "便利", why_2_d: "从轻松预定到取件",
         why_3_t: "支持", why_3_d: "随时待命的亲切专业团队",
         how_title: "使用方法",
+        how_desc_simple: "只需 3 个简单的步骤，即可开启无行李旅行。",
+        how_step_descs: ["轻松选择日期和地点。", "在预约地点寄存或领取行李。", "开启无行李轻便旅行。"],
         how_steps: ["轻松预订", "寄存行李", "自由旅行", "领取行李"],
+        delivery_section: {
+            title: "机场-酒店配送",
+            subtitle: "机场 ↔ 酒店之间",
+            desc: "在旅行的开始和结束，不要因为沉重的行李而辛苦。提供从仁川/金浦机场到住宿地点（或反之）的安全当日配送服务。",
+            features: ["当日送达保证", "照片认证发送", "涵盖损坏/丢失保险"],
+            btn: "预约配送"
+        },
+        storage_section: {
+            title: "枢纽寄存",
+            subtitle: "在主要景点",
+            desc: "需要寄存几个小时行李的地方吗？请使用位于弘大、首尔等主要地点的安全寄存点。在线预约后即可立即寄存。",
+            features: ["邻近地铁站", "支持实时预约", "CCTV 安全监控"],
+            btn: "预约寄存"
+        },
         cta: "现在就在 Beeliber 体验无行李的轻便旅行吧！",
+        cta_main_title: "准备好享受旅行的自由了吗？",
+        btn_book_now: "现在预订",
         back: "返回主页"
     },
     tracking: { title: '实时查询', desc: '输入邮箱查看位置。', placeholder: '输入邮箱', btn: '查询', noResult: '无查询结果。', status_suffix: '状态' },

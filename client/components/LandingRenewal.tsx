@@ -252,8 +252,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                         className="w-full h-full object-cover"
                     />
                     {/* Dark Overlay for Readability */}
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
                 </div>
 
                 {/* Content Layer */}

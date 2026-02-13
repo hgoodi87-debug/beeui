@@ -145,9 +145,9 @@ const Hero: React.FC<HeroProps> = ({ onStorageClick, t, lang }) => {
 
 
   return (
-    <div className="relative pt-24 pb-20 md:pt-40 md:pb-32 bg-transparent overflow-hidden">
+    <div className="relative pt-24 pb-20 md:pt-40 md:pb-32 bg-white overflow-hidden shadow-sm">
       {/* Background Decoration */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(255,203,5,0.05),transparent_70%)]"></div>
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(255,203,5,0.1),transparent_75%)]"></div>
 
       <div className="max-w-4xl mx-auto px-6 text-center space-y-12 md:space-y-16 relative z-10">
         {/* Top Label */}
@@ -172,7 +172,7 @@ const Hero: React.FC<HeroProps> = ({ onStorageClick, t, lang }) => {
               <span className="absolute -bottom-2 left-0 w-full h-3 md:h-4 bg-bee-yellow/20 -z-10 rounded-full"></span>
             </span>
           </h1>
-          <p className="text-base md:text-xl text-bee-black/70 font-bold leading-relaxed max-w-2xl mx-auto animate-fade-in-up break-keep hero-animation-delay-4">
+          <p className="text-base md:text-xl text-bee-black/85 font-bold leading-relaxed max-w-2xl mx-auto animate-fade-in-up break-keep hero-animation-delay-4">
             {t.hero.subtitle}
           </p>
         </div>

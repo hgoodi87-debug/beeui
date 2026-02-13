@@ -302,12 +302,13 @@ exports.sendBookingVoucherFinal = functions.region("us-central1").firestore
             console.error("Error in sendBookingVoucherFinal:", error);
         }
 
-        // --- simplified Google Chat Notification ---
+        // --- Enhanced Google Chat Notification ---
         try {
+            console.log(`Starting Google Chat notification for booking: ${booking.id}`);
             const configSnap = await admin.firestore().collection('settings').doc('cloud_config').get();
             let webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : null;
 
-            // Hardcoded fallback as requested
+            // Hardcoded fallback
             if (!webhook) {
                 webhook = 'https://chat.googleapis.com/v1/spaces/AAQALERgHe8/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=mz0YiIHWi0H1pZ1tMH1JxwFb0W3UiUc-eGh24YKQMos';
             }
@@ -316,27 +317,51 @@ exports.sendBookingVoucherFinal = functions.region("us-central1").firestore
                 const serviceLabel = booking.serviceType === 'DELIVERY' ? '📦 배송 (Delivery)' : '🔒 보관 (Storage)';
                 const pickupLoc = await getLocationData(booking.pickupLocation);
                 const dropoffLoc = await getLocationData(booking.dropoffLocation);
-                const getLoc = (id, locData) => locData?.name || id;
 
-                const text = [
+                const getLoc = (id, locData) => {
+                    if (!locData) return id || 'N/A';
+                    return `${locData.name} (${id})`;
+                };
+
+                const bookingUrl = `https://bee-liber.com/admin?scan=${booking.id}`;
+
+                const textParts = [
                     `*🆕 새 예약 알림 (${booking.id})*`,
+                    `──────────────────`,
                     `• *서비스*: ${serviceLabel}`,
-                    `• *고객*: ${booking.userName} (${booking.userEmail})`,
-                    `• *출발/위치*: ${getLoc(booking.pickupLocation || booking.location, pickupLoc)} (${booking.pickupTime})`,
-                    booking.serviceType === 'DELIVERY' ? `• *도착*: ${getLoc(booking.dropoffLocation || booking.destinationLocation, dropoffLoc)} (${booking.deliveryTime || booking.returnTime})` : null,
-                    `• *가방*: ${booking.bags}개`,
+                    `• *고객*: ${booking.userName || 'Unknown'} (${booking.userEmail || 'N/A'})`,
+                    `• *SNS*: ${booking.snsChannel || 'N/A'} - ${booking.snsId || 'N/A'}`,
+                    `• *출발/위치*: ${getLoc(booking.pickupLocation, pickupLoc)}`,
+                    `• *날짜/시간*: ${booking.pickupDate} ${booking.pickupTime}`,
+                    booking.serviceType === 'DELIVERY'
+                        ? `• *도착*: ${getLoc(booking.dropoffLocation, dropoffLoc)} (${booking.deliveryTime})`
+                        : `• *종료*: ${booking.dropoffDate} ${booking.deliveryTime}`,
+                    `• *가방*: ${booking.bags || 0}개 (${Object.entries(booking.bagSizes || {}).filter(([_, c]) => c > 0).map(([s, c]) => `${s}:${c}`).join(', ')})`,
                     `• *금액*: ₩${(booking.finalPrice || 0).toLocaleString()}`,
-                    `• *언어*: ${booking.language || 'ko'}`
-                ].filter(Boolean).join('\n');
+                    `• *언어*: ${booking.language || 'ko'}`,
+                    `──────────────────`,
+                    `🔗 *관리자 링크*: <${bookingUrl}|직접 확인하기>`
+                ];
 
-                await fetch(webhook, {
+                const text = textParts.join('\n');
+
+                const response = await fetch(webhook, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text })
                 });
+
+                if (response.ok) {
+                    console.log(`Google Chat notification sent for ${booking.id}`);
+                } else {
+                    const err = await response.text();
+                    console.error(`Google Chat API error for ${booking.id}:`, err);
+                }
+            } else {
+                console.warn("No Google Chat Webhook URL found (even fallback).");
             }
         } catch (notifierError) {
-            console.error("Failed to send Google Chat booking notification:", notifierError);
+            console.error("Critical failure in Google Chat notifier:", notifierError);
         }
     });
 

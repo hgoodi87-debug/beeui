@@ -511,48 +511,9 @@ export const StorageService = {
 
   // --- External Notifications ---
   notifyNewBookingInChat: async (booking: BookingState): Promise<void> => {
-    // 보안(CORS) 문제를 피하기 위해 서버 프록시(/api/notify-google-chat)를 사용합니다.
-    const proxyUrl = '/api/notify-google-chat';
-
-    // Format message
-    const serviceIcon = booking.serviceType === 'DELIVERY' ? '🚚' : '🔒';
-    const sCount = booking.bagSizes.S || 0;
-    const mCount = booking.bagSizes.M || 0;
-    const lCount = booking.bagSizes.L || 0;
-    const xlCount = booking.bagSizes.XL || 0;
-    const bagInfo = `S(${sCount}) M(${mCount}) L(${lCount}) XL(${xlCount})`;
-
-    const text = [
-      `🐝 *[신규 예약 알림]*`,
-      `---------------------------------------`,
-      `*예약번호:* ${booking.id}`,
-      `*서비스:* ${serviceIcon} ${booking.serviceType}`,
-      `*고객명:* ${booking.userName} (${booking.userEmail})`,
-      `*연락처:* ${booking.snsChannel}: ${booking.snsId}`,
-      `*일정:* ${booking.pickupDate} ${booking.pickupTime}`,
-      `*경로:* ${booking.pickupLocation || 'N/A'} ➔ ${booking.dropoffLocation || 'N/A'}`,
-      `*짐 정보:* ${bagInfo} (총 ${booking.bags}개)`,
-      `*결제금액:* ₩${(booking.finalPrice || 0).toLocaleString()}`,
-      `---------------------------------------`
-    ].join('\n');
-
-    try {
-      // Use local proxy instead of direct webhook
-      await fetch(proxyUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          sessionId: booking.id, // Using booking ID as session ID for threading
-          senderName: 'System',
-          senderEmail: 'admin@bee-liber.com',
-          role: 'bot'
-        })
-      });
-      console.log('Booking notification sent via server proxy');
-    } catch (e) {
-      console.error('Failed to send booking notification via proxy:', e);
-    }
+    // [Server-Side Handled] Notification is now handled by Cloud Functions (sendBookingVoucherFinal)
+    // to ensure reliability and avoid CORS issues.
+    console.log(`[Storage] Notification for ${booking.id} will be handled by server-side trigger.`);
   },
 
   // --- Expenditures ---

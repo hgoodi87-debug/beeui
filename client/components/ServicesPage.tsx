@@ -45,16 +45,16 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                         transition={{ duration: 0.6 }}
                     >
                         <span className="inline-block px-4 py-1.5 rounded-full bg-yellow-50 text-bee-yellow border border-bee-yellow/20 font-bold text-xs uppercase tracking-widest mb-6">
-                            Smart Luggage Solution
+                            {t.services_page?.badge || "Smart Luggage Solution"}
                         </span>
                         <h1 className="text-5xl md:text-7xl font-black leading-tight mb-8 text-bee-black">
-                            {t.main_title_1 || 'Leave your luggage,'} <br className="hidden md:block" />
+                            {t.services_page?.main_title_1 || 'Leave your luggage,'} <br className="hidden md:block" />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-bee-yellow to-yellow-500">
-                                {t.main_title_2 || 'Find your freedom.'}
+                                {t.services_page?.main_title_2 || 'Find your freedom.'}
                             </span>
                         </h1>
                         <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-12">
-                            {t.subtitle || 'From Hongdae to Incheon Airport. We handle your heavy bags so you can enjoy every moment of your trip.'}
+                            {t.services_page?.subtitle || 'From Hongdae to Incheon Airport. We handle your heavy bags so you can enjoy every moment of your trip.'}
                         </p>
                     </motion.div>
 
@@ -78,21 +78,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                     </div>
                                 </div>
 
-                                {/* Reusing TrackingWidget Logic/UI but customized for this page if needed, or just embedding it */}
-                                {/* Since TrackingWidget is self-contained with dark theme, we might need to wrap it or adjust it. 
-                                    However, the user asked for "White & Yellow". TrackingWidget is currently dark. 
-                                    For now, let's wrap it in a container that possibly overrides styles or we accept the dark widget as a contrast.
-                                    Actually, passing a prop to TrackingWidget to handle 'light' mode would be best, but I cannot modify it in this single step easily without checking it first.
-                                    Let's try to pass a className or just let it be a dark card on a white page (looks modern).
-                                    BUT, TrackingWidget has 'bg-[#0b0a14]' hardcoded in non-modal mode.
-                                    Let's use it in 'isModal' mode (which removes the section wrapper) and style the container here.
-                                */}
                                 <div className="tracking-widget-container-light">
-                                    {/* We need to make sure TrackingWidget text is visible on white if we change bg. 
-                                         Currently TrackingWidget uses white text. 
-                                         So we should keep the container Dark for the widget area to make it pop, or modify TrackingWidget.
-                                         Let's keep it in a dark 'card' for now as a high-contrast element.
-                                     */}
                                     <div className="bg-bee-black rounded-3xl p-6 md:p-8">
                                         <TrackingWidget t={t} isModal={true} />
                                     </div>
@@ -114,13 +100,13 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                             viewport={{ once: true }}
                             className="inline-block px-4 py-1.5 rounded-full bg-bee-yellow/10 border border-bee-yellow/20 text-[10px] font-black tracking-[0.3em] mb-6 text-bee-black uppercase"
                         >
-                            {t?.subtitle_badge || "Beeliber Service"}
+                            {t.services_page?.subtitle_badge || "Beeliber Service"}
                         </motion.div>
                         <h2 className="text-4xl md:text-7xl font-black tracking-tighter leading-[1.1] mb-10 break-keep">
-                            {t?.title}
+                            {t.services_page?.title}
                         </h2>
                         <p className="text-lg md:text-2xl text-black/50 font-bold leading-relaxed break-keep">
-                            {t?.intro}
+                            {t.services_page?.intro}
                         </p>
                     </div>
 
@@ -134,22 +120,18 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                     viewport={{ once: true }}
                                     className="inline-block px-3 py-1 bg-[#FF4B5C]/10 text-[#FF4B5C] text-[10px] font-black rounded-sm mx-auto md:mx-0"
                                 >
-                                    {landingT?.pain_section?.badge || "TRAVEL CHALLENGES"}
+                                    {t.services_page?.pain_badge || landingT?.pain_section?.badge || "TRAVEL CHALLENGES"}
                                 </motion.div>
                                 <h3 className="text-3xl md:text-5xl font-black tracking-tighter break-keep leading-tight text-center md:text-left">
-                                    {landingT?.pain_section?.title_1} <br />
-                                    <span className="text-[#FF4B5C] underline decoration-[#FF4B5C]/30 decoration-4 underline-offset-8">
-                                        {landingT?.pain_section?.highlight}
-                                    </span>
-                                    {landingT?.pain_section?.title_2}
+                                    {t.services_page?.pain_title || landingT?.pain_section?.title_1} <br />
                                 </h3>
                             </div>
 
                             <div className="space-y-6">
                                 {[
-                                    { t: landingT?.pain_section?.item1_t, d: landingT?.pain_section?.item1_d, icon: "!" },
-                                    { t: landingT?.pain_section?.item2_t, d: landingT?.pain_section?.item2_d, icon: "📵" },
-                                    { t: landingT?.pain_section?.item3_t, d: landingT?.pain_section?.item3_d, icon: "🕒" }
+                                    { t: t.services_page?.pain_1, d: t.services_page?.pain_1_desc || landingT?.pain_section?.item1_d, icon: "!" },
+                                    { t: t.services_page?.pain_2, d: t.services_page?.pain_2_desc || landingT?.pain_section?.item2_d, icon: "📵" },
+                                    { t: t.services_page?.pain_3, d: t.services_page?.pain_3_desc || landingT?.pain_section?.item3_d, icon: "🕒" }
                                 ].map((item, idx) => (
                                     <motion.div
                                         key={idx}
@@ -182,7 +164,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                             >
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -mr-16 -mt-16 blur-3xl" />
                                 <p className="relative z-10 text-lg md:text-xl font-black text-black break-keep leading-snug">
-                                    🐝 {landingT?.pain_section?.solution}
+                                    🐝 {t.services_page?.pain_solution || landingT?.pain_section?.solution}
                                 </p>
                             </motion.div>
                         </div>
@@ -207,7 +189,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                     <span className="w-2.5 h-2.5 bg-white/20 rounded-full flex items-center justify-center">
                                         <span className="w-1 h-1 bg-white rounded-full animate-pulse" />
                                     </span>
-                                    너무 무거운 여행
+                                    {t.services_page?.main_title_2}
                                 </span>
                             </div>
 
@@ -218,10 +200,10 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                         <Smartphone className="w-3 h-3 text-bee-black" />
                                     </div>
                                     <h4 className="text-[10px] font-black tracking-tight text-black leading-tight">
-                                        가볍게, <span className="text-bee-black">진짜 여행의 시작</span>
+                                        {t.services_page?.main_title_2}, <span className="text-bee-black">{t.services_page?.main_title_1}</span>
                                     </h4>
                                     <p className="text--[7px] font-bold text-black/50 leading-tight break-keep">
-                                        비리버가 당신의 짐을 먼저 보냅니다
+                                        {t.services_page?.intro?.split('.')[0]}
                                     </p>
                                 </div>
                             </div>
@@ -231,10 +213,10 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                     {/* Benefits Grid */}
                     <div className="space-y-20">
                         <div className="text-center">
-                            <h3 className="text-3xl md:text-5xl font-black tracking-tighter mb-6">{t?.benefits_title}</h3>
+                            <h3 className="text-3xl md:text-5xl font-black tracking-tighter mb-6">{t.services_page?.benefits_title}</h3>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
-                            {t?.benefits?.map((benefit: any, idx: number) => (
+                            {t.services_page?.benefits?.map((benefit: any, idx: number) => (
                                 <motion.div
                                     key={idx}
                                     initial={{ opacity: 0, y: 20 }}
@@ -258,12 +240,11 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
             </section>
 
             {/* CTA */}
-            {/* CTA */}
             <section className="py-24 text-center px-6">
                 <div className="max-w-3xl mx-auto">
-                    <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight">{t?.cta_main_title || 'Ready to verify your freedom?'}</h2>
+                    <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight">{t.services_page?.cta_main_title || 'Ready to verify your freedom?'}</h2>
                     <button onClick={onBack} className="bg-bee-yellow text-bee-black px-12 py-6 rounded-[2rem] text-xl font-black hover:scale-105 transition-transform shadow-[0_20px_40px_-10px_rgba(255,215,0,0.3)]">
-                        {t?.btn_book_now || 'Start Now'} <i className="fa-solid fa-arrow-right ml-3"></i>
+                        {t.services_page?.btn_book_now || t.nav?.book || 'Start Now'} <i className="fa-solid fa-arrow-right ml-3"></i>
                     </button>
                 </div>
             </section>

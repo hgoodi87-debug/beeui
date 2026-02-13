@@ -790,33 +790,37 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                 <div className="flex flex-col gap-3 pt-6 border-t border-gray-100">
                   <button
                     onClick={() => {
-                      if (selectedLocation.lat && selectedLocation.lng) {
-                        const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
-                        window.open(url, '_blank');
+                      let typeToUse = selectedServiceType;
+                      if (!selectedLocation.supportsDelivery && selectedLocation.supportsStorage) typeToUse = 'STORAGE';
+                      if (!selectedLocation.supportsStorage && selectedLocation.supportsDelivery) typeToUse = 'DELIVERY';
+
+                      if (onSelectLocation) {
+                        onSelectLocation(selectedLocation.id, typeToUse as 'STORAGE' | 'DELIVERY', bookingDate, bagSizes);
+                      } else {
+                        setSelectedServiceType(typeToUse);
+                        setViewStep('BOOKING');
                       }
                     }}
-                    className="w-full py-4 bg-bee-yellow text-bee-black text-xs font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] transition-all mb-4 shadow-lg"
+                    className="w-full py-4 bg-bee-black text-bee-yellow text-xs font-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
                   >
-                    <div className="p-1.5 bg-bee-black text-bee-yellow rounded-lg"><i className="fa-solid fa-location-arrow"></i></div>
-                    {t.locations_page.btn_get_directions}
+                    {t.locations_page.reservation_title || 'Book Now'}
                   </button>
-                  <div className="flex gap-3">
+
+                  <div className="flex flex-col mt-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                      {t.locations_page.btn_get_directions}
+                    </label>
                     <button
                       onClick={() => {
-                        let typeToUse = selectedServiceType;
-                        if (!selectedLocation.supportsDelivery && selectedLocation.supportsStorage) typeToUse = 'STORAGE';
-                        if (!selectedLocation.supportsStorage && selectedLocation.supportsDelivery) typeToUse = 'DELIVERY';
-
-                        if (onSelectLocation) {
-                          onSelectLocation(selectedLocation.id, typeToUse as 'STORAGE' | 'DELIVERY', bookingDate, bagSizes);
-                        } else {
-                          setSelectedServiceType(typeToUse);
-                          setViewStep('BOOKING');
+                        if (selectedLocation.lat && selectedLocation.lng) {
+                          const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
+                          window.open(url, '_blank');
                         }
                       }}
-                      className="flex-1 py-4 bg-bee-black text-bee-yellow text-xs font-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+                      className="w-full py-2.5 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all shadow-sm"
                     >
-                      {t.locations_page.reservation_title || 'Book Now'}
+                      <i className="fa-solid fa-location-arrow text-[10px]"></i>
+                      {t.locations_page.btn_get_directions}
                     </button>
                   </div>
                 </div>
@@ -1145,18 +1149,23 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                             {t.locations_page.reservation_title || 'Book Now'}
                           </button>
 
-                          <button
-                            onClick={() => {
-                              if (selectedLocation.lat && selectedLocation.lng) {
-                                const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
-                                window.open(url, '_blank');
-                              }
-                            }}
-                            className="w-full py-1.5 bg-white border border-gray-200 text-gray-500 text-[9px] font-bold rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-                          >
-                            <i className="fa-solid fa-location-arrow text-[8px]"></i>
-                            {t.locations_page.btn_get_directions}
-                          </button>
+                          <div className="flex flex-col mt-1">
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
+                              {t.locations_page.btn_get_directions}
+                            </label>
+                            <button
+                              onClick={() => {
+                                if (selectedLocation.lat && selectedLocation.lng) {
+                                  const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
+                                  window.open(url, '_blank');
+                                }
+                              }}
+                              className="w-full py-2 bg-white border border-gray-200 text-gray-500 text-[9px] font-bold rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
+                            >
+                              <i className="fa-solid fa-location-arrow text-[8px]"></i>
+                              {t.locations_page.btn_get_directions}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (

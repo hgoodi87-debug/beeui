@@ -71,6 +71,7 @@ export interface LocationOption {
   businessHours_ja?: string;
   businessHours_zh?: string;
   isActive?: boolean;
+  availableServices?: string[];
 }
 
 export interface BagSizes {

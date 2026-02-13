@@ -321,6 +321,30 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <label className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-gray-50 p-2 rounded-lg hover:bg-gray-100"><input type="checkbox" checked={locForm.isDestination} onChange={e => setLocForm({ ...locForm, isDestination: e.target.checked })} /> 목적지 (Dest)</label>
                         </div>
                         <div className="pt-2 border-t border-dashed border-gray-200">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">제공 서비스 (Available Services)</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['짐 보관', '짐 배송', '환전', '캐리어 구매'].map(service => (
+                                    <label key={service} className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-gray-50 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={(locForm.availableServices || []).includes(service)}
+                                            onChange={e => {
+                                                const currentServices = locForm.availableServices || [];
+                                                if (e.target.checked) {
+                                                    setLocForm({ ...locForm, availableServices: [...currentServices, service] });
+                                                } else {
+                                                    setLocForm({ ...locForm, availableServices: currentServices.filter((s: string) => s !== service) });
+                                                }
+                                            }}
+                                            className="w-4 h-4 rounded accent-bee-black"
+                                        />
+                                        {service}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-dashed border-gray-200">
                             <label className="flex items-center gap-3 text-sm font-black cursor-pointer bg-bee-yellow/10 p-4 rounded-2xl border-2 border-bee-yellow/20 hover:bg-bee-yellow/20 transition-all">
                                 <input
                                     type="checkbox"

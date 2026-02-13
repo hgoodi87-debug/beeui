@@ -778,9 +778,15 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                       <div>
                         <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t.locations_page.label_facilities}</h5>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          <span className="px-3 py-1 bg-gray-50 rounded-lg text-[9px] font-bold text-gray-500 border border-gray-100">{t.locations_page.tag_baggage_storage}</span>
-                          <span className="px-3 py-1 bg-gray-50 rounded-lg text-[9px] font-bold text-gray-500 border border-gray-100">{t.locations_page.tag_same_day_delivery}</span>
-                          <span className="px-3 py-1 bg-gray-50 rounded-lg text-[9px] font-bold text-gray-500 border border-gray-100">{t.locations_page.tag_global_shipping}</span>
+                          {(selectedLocation.availableServices && selectedLocation.availableServices.length > 0) ? (
+                            selectedLocation.availableServices.map((service: string) => (
+                              <span key={service} className="px-3 py-1 bg-bee-yellow/10 rounded-lg text-[9px] font-black text-bee-black border border-bee-yellow/20 shadow-sm">
+                                {service}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[9px] font-bold text-gray-300 italic">{t.locations_page.msg_no_extra_facilities || 'No additional facilities'}</span>
+                          )}
                         </div>
                       </div>
                     </div>

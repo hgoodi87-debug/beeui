@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookingState, ServiceType, LocationOption } from '../types';
+import html2canvas from 'html2canvas';
 
 interface BookingVoucherProps {
     booking: BookingState;
@@ -13,6 +13,8 @@ interface BookingVoucherProps {
 }
 
 const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, pickupLoc, dropoffLoc, onBack }) => {
+    const couponRef = React.useRef<HTMLDivElement>(null);
+
     // 폰트 깨짐 방지 및 언어별 폰트 설정
     const safeDate = (dateStr: string) => {
         if (!dateStr) return 'N/A';
@@ -32,6 +34,25 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
         const dbLang = lang.startsWith('zh') ? 'zh' : lang;
         if (lang === 'ko') return l.pickupGuide;
         return (l[`pickupGuide_${dbLang}` as keyof LocationOption] as string) || l.pickupGuide_en || l.pickupGuide;
+    };
+
+    const handleSaveCoupon = async () => {
+        if (!couponRef.current) return;
+        try {
+            const canvas = await html2canvas(couponRef.current, {
+                scale: 3,
+                backgroundColor: null,
+                useCORS: true,
+                logging: false,
+            });
+            const link = document.createElement('a');
+            link.download = `MoneyBox_Coupon_${booking.id}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (err) {
+            console.error('Failed to save coupon image:', err);
+            alert(lang === 'ko' ? '이미지 저장에 실패했습니다.' : 'Failed to save coupon image.');
+        }
     };
 
     const containerVariants = {
@@ -273,6 +294,91 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         <div key={i} className="w-4 h-4 rounded-full bg-gray-50 flex-shrink-0" />
                     ))}
                 </div>
+
+                {/* MoneyBox Coupon Section */}
+                <motion.div
+                    ref={couponRef}
+                    onClick={handleSaveCoupon}
+                    className="mt-8 relative group cursor-pointer"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                >
+                    <div className="bg-gradient-to-br from-bee-black to-gray-900 rounded-[32px] p-1 shadow-xl overflow-hidden relative border border-gray-800">
+                        {/* Background Deco */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-bee-yellow/10 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-bee-yellow/5 rounded-full -ml-16 -mb-16 blur-2xl pointer-events-none" />
+
+                        <div className="bg-white/5 backdrop-blur-sm rounded-[30px] p-6 border border-white/10 relative z-10">
+                            {/* Coupon Header */}
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xl font-black italic text-bee-yellow">money</span>
+                                        <span className="text-xl font-black text-white">box</span>
+                                    </div>
+                                    <p className="text-[10px] font-black text-bee-yellow/80 uppercase tracking-widest whitespace-nowrap">Yeonnam Branch Official Partner</p>
+                                </div>
+                                <div className="px-3 py-1 bg-bee-yellow rounded-full shadow-lg border border-white/20">
+                                    <p className="text-[10px] font-black text-bee-black uppercase">VIP Coupon</p>
+                                </div>
+                            </div>
+
+                            {/* Main Title */}
+                            <div className="text-center mb-6">
+                                <h3 className="text-2xl font-black text-white italic tracking-tight mb-1 uppercase">Currency Exchange</h3>
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="h-px w-8 bg-bee-yellow/30" />
+                                    <span className="text-3xl font-black text-bee-yellow">Special Benefit</span>
+                                    <div className="h-px w-8 bg-bee-yellow/30" />
+                                </div>
+                            </div>
+
+                            {/* Info Rows */}
+                            <div className="space-y-3 mb-6 bg-white/5 p-4 rounded-2xl border border-white/5">
+                                <div className="flex items-start gap-3">
+                                    <i className="fa-solid fa-location-dot text-bee-yellow mt-1 text-xs"></i>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">ADDRESS</p>
+                                        <p className="text-[11px] font-bold text-white leading-tight">서울 마포구 월드컵북로2길 93 (연남점)</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <i className="fa-solid fa-clock text-bee-yellow mt-1 text-xs"></i>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">OPEN HOURS</p>
+                                        <p className="text-[11px] font-bold text-white">09:00 - 21:00 (Everyday)</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <i className="fa-solid fa-id-card text-bee-yellow mt-1 text-xs"></i>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">COUPON CODE</p>
+                                        <p className="text-sm font-black text-bee-yellow">BEELIBER-VIP-2026</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Mente */}
+                            <div className="text-center space-y-2">
+                                <p className="text-[12px] font-black text-white italic tracking-wide">
+                                    {lang === 'ko' ? '"직원을 보여주세요"' : '"Show to staff"'}
+                                </p>
+                                <p className="text-[10px] font-bold text-red-500 bg-red-500/10 py-1 rounded-lg border border-red-500/20">
+                                    {lang === 'ko' ? '금액이 작은 권종은 우대가 어렵습니다' : 'Lower denominational currencies may not be eligible for preference.'}
+                                </p>
+                                <div className="pt-2">
+                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] animate-pulse">
+                                        {lang === 'ko' ? '터치하여 쿠폰 이미지 저장' : 'Touch to save coupon image'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Cut-out effect decoration */}
+                        <div className="absolute top-1/2 -left-4 w-8 h-8 bg-gray-50 rounded-full -translate-y-1/2 border border-gray-100 shadow-inner z-20" />
+                        <div className="absolute top-1/2 -right-4 w-8 h-8 bg-gray-50 rounded-full -translate-y-1/2 border border-gray-100 shadow-inner z-20" />
+                    </div>
+                </motion.div>
             </div>
 
             {/* Print Note */}

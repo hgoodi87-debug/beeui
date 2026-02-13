@@ -91,19 +91,19 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                             <div className="bg-gray-50 p-6 rounded-3xl space-y-4 border border-gray-100">
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">성함 (Name)</label>
-                                    <input value={selectedBooking.userName || ''} onChange={e => setSelectedBooking({ ...selectedBooking, userName: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
+                                    <input title="성함" placeholder="성함 입력" value={selectedBooking.userName || ''} onChange={e => setSelectedBooking({ ...selectedBooking, userName: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">이메일 (Email)</label>
-                                    <input value={selectedBooking.userEmail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, userEmail: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
+                                    <input title="이메일" placeholder="이메일 입력" value={selectedBooking.userEmail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, userEmail: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">연락처 (SNS)</label>
                                     <div className="flex gap-2">
-                                        <select value={selectedBooking.snsType} onChange={e => setSelectedBooking({ ...selectedBooking, snsType: e.target.value as SnsType })} className="bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm">
+                                        <select title="SNS 종류" value={selectedBooking.snsType} onChange={e => setSelectedBooking({ ...selectedBooking, snsType: e.target.value as SnsType })} className="bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm">
                                             {Object.values(SnsType).map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
-                                        <input value={selectedBooking.snsId || ''} onChange={e => setSelectedBooking({ ...selectedBooking, snsId: e.target.value })} className="flex-1 bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
+                                        <input title="SNS ID" placeholder="SNS ID 입력" value={selectedBooking.snsId || ''} onChange={e => setSelectedBooking({ ...selectedBooking, snsId: e.target.value })} className="flex-1 bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                     </div>
                                 </div>
                             </div>
@@ -118,11 +118,11 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">날짜 (Date)</label>
-                                        <input type="date" value={selectedBooking.pickupDate || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupDate: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
+                                        <input title="수거 날짜" type="date" value={selectedBooking.pickupDate || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupDate: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">상태 (Status)</label>
-                                        <select value={selectedBooking.status} onChange={e => setSelectedBooking({ ...selectedBooking, status: e.target.value as BookingStatus })} className={`w-full p-2.5 rounded-xl border-none outline-none font-black text-xs cursor-pointer shadow-sm ${getStatusStyle(selectedBooking.status || BookingStatus.PENDING)}`}>
+                                        <select title="예약 상태" value={selectedBooking.status} onChange={e => setSelectedBooking({ ...selectedBooking, status: e.target.value as BookingStatus })} className={`w-full p-2.5 rounded-xl border-none outline-none font-black text-xs cursor-pointer shadow-sm ${getStatusStyle(selectedBooking.status || BookingStatus.PENDING)}`}>
                                             {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </div>
@@ -130,12 +130,12 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">수거/보관 시작 시간</label>
-                                        <input type="time" value={selectedBooking.pickupTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupTime: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
+                                        <input title="수거 시간" type="time" value={selectedBooking.pickupTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupTime: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                     </div>
                                     {selectedBooking.serviceType === ServiceType.DELIVERY && (
                                         <div>
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">배송 완료 시간</label>
-                                            <input type="time" value={selectedBooking.deliveryTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, deliveryTime: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
+                                            <input title="배송 시간" type="time" value={selectedBooking.deliveryTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, deliveryTime: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                         </div>
                                     )}
                                 </div>
@@ -155,6 +155,7 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">출발지 (Pickup)</label>
                                     <div className="flex gap-2 mb-2">
                                         <select
+                                            title="출발 지점"
                                             value={selectedBooking.pickupLocation}
                                             onChange={e => setSelectedBooking({ ...selectedBooking, pickupLocation: e.target.value })}
                                             className="flex-1 bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold"
@@ -204,6 +205,7 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">도착지 (Dropoff)</label>
                                         <div className="flex gap-2 mb-2">
                                             <select
+                                                title="도착 지점"
                                                 value={selectedBooking.dropoffLocation}
                                                 onChange={e => setSelectedBooking({ ...selectedBooking, dropoffLocation: e.target.value })}
                                                 className="flex-1 bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold"
@@ -235,6 +237,8 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">총 수량 (Total Bags)</label>
                                     <input
+                                        title="총 가방 수량"
+                                        placeholder="수량"
                                         type="number"
                                         value={selectedBooking.bags || 0}
                                         onChange={e => setSelectedBooking({ ...selectedBooking, bags: Number(e.target.value) })}
@@ -246,6 +250,8 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                         <div key={size}>
                                             <label className="text-[8px] font-black text-gray-400 uppercase block mb-1">{size} Size</label>
                                             <input
+                                                title={`${size} 사이즈 수량`}
+                                                placeholder="수량"
                                                 type="number"
                                                 value={(selectedBooking.bagSizes as any)?.[size] || 0}
                                                 onChange={e => {
@@ -301,6 +307,7 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                 </span>
                                 <div className="flex items-center gap-2">
                                     <input
+                                        title="신규 할인 코드"
                                         type="text"
                                         placeholder="신규 할인 코드"
                                         value={promoCode}
@@ -319,6 +326,7 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                             <div className="flex items-center gap-1 text-red-500">
                                 <span className="font-black">-₩</span>
                                 <input
+                                    title="할인 금액"
                                     type="number"
                                     value={selectedBooking.discountAmount || 0}
                                     onChange={e => {

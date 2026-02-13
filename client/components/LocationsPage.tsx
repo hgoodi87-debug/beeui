@@ -787,7 +787,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 pt-6 border-t border-gray-100">
+                <div className="flex flex-col gap-2 pt-6 border-t border-gray-100">
                   <button
                     onClick={() => {
                       let typeToUse = selectedServiceType;
@@ -806,23 +806,18 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                     {t.locations_page.reservation_title || 'Book Now'}
                   </button>
 
-                  <div className="flex flex-col mt-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                      {t.locations_page.btn_get_directions}
-                    </label>
-                    <button
-                      onClick={() => {
-                        if (selectedLocation.lat && selectedLocation.lng) {
-                          const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
-                          window.open(url, '_blank');
-                        }
-                      }}
-                      className="w-full py-2.5 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all shadow-sm"
-                    >
-                      <i className="fa-solid fa-location-arrow text-[10px]"></i>
-                      {t.locations_page.btn_get_directions}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => {
+                      if (selectedLocation.lat && selectedLocation.lng) {
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
+                        window.open(url, '_blank');
+                      }
+                    }}
+                    className="w-full py-3 bg-white border border-gray-200 text-gray-400 text-[10px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-all shadow-sm"
+                  >
+                    <i className="fa-solid fa-location-arrow text-[10px]"></i>
+                    {t.locations_page.btn_get_directions}
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -1128,7 +1123,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                             <p className="text-xs font-bold">{getLocData(selectedLocation).hours}</p>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-3 mb-8">
+                        <div className="flex flex-col gap-2 mb-8">
                           <button
                             title="Reserve"
                             aria-label="Reserve"
@@ -1149,23 +1144,18 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                             {t.locations_page.reservation_title || 'Book Now'}
                           </button>
 
-                          <div className="flex flex-col mt-1">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
-                              {t.locations_page.btn_get_directions}
-                            </label>
-                            <button
-                              onClick={() => {
-                                if (selectedLocation.lat && selectedLocation.lng) {
-                                  const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
-                                  window.open(url, '_blank');
-                                }
-                              }}
-                              className="w-full py-2 bg-white border border-gray-200 text-gray-500 text-[9px] font-bold rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
-                            >
-                              <i className="fa-solid fa-location-arrow text-[8px]"></i>
-                              {t.locations_page.btn_get_directions}
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              if (selectedLocation.lat && selectedLocation.lng) {
+                                const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.lat},${selectedLocation.lng}`;
+                                window.open(url, '_blank');
+                              }
+                            }}
+                            className="w-full py-3 bg-white border border-gray-200 text-gray-400 text-[10px] font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+                          >
+                            <i className="fa-solid fa-location-arrow text-[9px]"></i>
+                            {t.locations_page.btn_get_directions}
+                          </button>
                         </div>
                       </div>
                     ) : (

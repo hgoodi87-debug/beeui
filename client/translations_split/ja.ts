@@ -32,6 +32,8 @@ export const ja = {
     hero: {
         badge: 'グローバルパートナー', trust_badge: 'GLOBAL PARTNER', title1: '手荷物なしで', title2: '自由に。',
         hook_text: '✨ ここでキャリーケースを預けられる場所を確認して予約しましょう！',
+        insurance_title: '安全補償保険',
+        insurance_desc: '紛失および破損時、バッグ1個あたり最大50万ウォン（約$380）まで補償いたします。安心してお旅行ください。',
         insurance_badge: '安全補償保険加入済み',
         subtitle: '空港からホテルまで、重い荷物はBeeliberに任せて、身軽な旅行を楽しんでください。',
         btn1: '今すぐ予約', btn2: 'ご利用ガイド', quote: '手荷物の心配のない旅の始まり、Beeliber！',

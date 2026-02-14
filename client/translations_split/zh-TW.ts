@@ -32,6 +32,8 @@ export const zhTW = {
     hero: {
         badge: '全球旅遊夥伴', trust_badge: 'GLOBAL PARTNER', title1: '免行李', title2: '更自由',
         hook_text: '✨ 在這裡查看並預訂可以寄存行李箱的地方！',
+        insurance_title: '安全賠償保險',
+        insurance_desc: '遺失或損壞時，每件行李最高可獲得50萬韓元（約380美元）的 賠償。請放心旅行。',
         insurance_badge: '已加入安全賠償保險',
         subtitle: '將沉重的行李交給 Beeliber，輕鬆享受旅遊的每一刻。',
         btn1: '立即預訂', btn2: '使用指南', quote: '行李無憂，輕鬆出發！',
@@ -39,10 +41,10 @@ export const zhTW = {
         book_delivery: '預訂配送',
         book_storage: '預訂寄存',
         book_branch: '據點預約 (地圖)',
-        main_title_1: '旅行，无行李',
-        main_title_2: '更自由。',
-        insurance_badge_text: '每件行李最高赔偿50万韩元',
-        track_booking: '查询预约',
+        main_title_1: '從行李中，',
+        main_title_2: '獲得自由。',
+        insurance_badge_text: '每件行李最高賠償50萬韓元',
+        track_booking: '查詢預約',
         reviews: [
             { name: "金某", text: "去機場前寄放了行李，輕鬆開啟旅程！" },
             { name: "Lee J.", text: "實時追蹤功能太棒了。強烈推薦！" },

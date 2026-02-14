@@ -32,6 +32,8 @@ export const zh = {
     hero: {
         badge: '全球旅游伙伴', trust_badge: 'GLOBAL PARTNER', title1: '无行李', title2: '更自由',
         hook_text: '✨ 在这里查看并预订可以寄存行李箱的地方！',
+        insurance_title: '安全赔偿保险',
+        insurance_desc: '丢失或损坏时，每件行李最高可获得50万韩元（约380美元）的赔偿。请放心旅行。',
         insurance_badge: '已加入安全赔偿保险',
         subtitle: '将沉重的行李交给 Beeliber，轻便享受旅游的每一刻。',
         btn1: '立即预订', btn2: '使用指南', quote: '行李无忧，轻松出发！',

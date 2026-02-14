@@ -33,6 +33,7 @@ export const en = {
         badge: 'Global Partner', title1: 'Bee Free.', title2: 'Travel Liber.',
         hook_text: '✨ Check and book a place to leave your luggage here!',
         insurance_title: 'Luggage Insurance',
+        insurance_desc: 'Up to 500,000 KRW (approx. $380) covered per bag for loss or damage. Travel with total peace of mind.',
         insurance_badge: 'Insurance coverage completed',
         subtitle: 'Leave your heavy luggage to Beeliber and enjoy your trip to the fullest.',
         subtitle_badge: 'EASY & SMART',

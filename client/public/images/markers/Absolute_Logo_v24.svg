@@ -1,0 +1,22 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Circular Background -->
+    <circle cx="20" cy="20" r="18" fill="#1a1a1a" stroke="#ffcb05" stroke-width="2"/>
+
+    <!-- beeliber Bee Icon (simplified) -->
+    <g transform="translate(10, 10) scale(0.4)">
+        <path d="M25 5C25 5 35 15 25 25C15 35 5 25 10 20C15 15 20 8 25 5Z" fill="#ffcb05"/>
+        <!-- Wing -->
+        <circle cx="25" cy="25" r="15" fill="#ffcb05"/>
+        <!-- Body -->
+        <path d="M15 25H35" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+        <!-- Strip 1 -->
+        <path d="M18 18H32" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+        <!-- Strip 2 -->
+        <circle cx="20" cy="22" r="2" fill="#1a1a1a"/>
+        <!-- Eye -->
+    </g>
+
+    <!-- Subtle Drop Shadow -->
+    <circle cx="20" cy="20" r="19" stroke="black" stroke-opacity="0.1" stroke-width="1"/>
+</svg>

@@ -1,0 +1,14 @@
+<svg width="120" height="140" viewBox="0 0 120 140"
+    xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="60" cy="130" rx="15" ry="5" fill="#1A1A1A" fill-opacity="0.15"/>
+    <path d="M60 10 L110 60 L60 110 L10 60 Z" fill="#FFFFFF" stroke="#FFCB05" stroke-width="6"/>
+    <path d="M60 12 L106 60 L60 108 L14 60 Z" fill="none" stroke="#1A1A1A" stroke-width="1" stroke-opacity="0.1"/>
+    <text x="60" y="42" font-family="Arial, sans-serif" font-size="10" font-weight="950" fill="#1A1A1A" text-anchor="middle" letter-spacing="1">beeliber</text>
+    <text x="60" y="54" font-family="Arial, sans-serif" font-size="8.5" font-weight="900" fill="#FFCB05" text-anchor="middle" letter-spacing="0.5">STORE</text>
+    <g transform="translate(42, 64)">
+        <rect x="2" y="6" width="32" height="22" rx="3" fill="#1A1A1A"/>
+        <path d="M12 6 V3 C12 2 13 1.5 14 1.5 H22 C23 1.5 24 2 24 3 V6" stroke="#1A1A1A" stroke-width="2.5" fill="none"/>
+        <rect x="17" y="10" width="2" height="14" fill="#FFCB05"/>
+    </g>
+    <path d="M60 125 L52 108 H68 L60 125Z" fill="#FFCB05"/>
+</svg>

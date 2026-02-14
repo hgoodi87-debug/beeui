@@ -1,0 +1,31 @@
+<svg width="100" height="120" viewBox="0 0 100 120"
+  xmlns="http://www.w3.org/2000/svg">
+  <!-- 비리버 마스터피스 v11.0: 화이트 다이아몬드 + 골드 프레임 (Stability Focus) -->
+
+  <!-- Shadow Base -->
+  <path d="M50 115 L42 100 H58 L50 115Z" fill="#1A1A1A" fill-opacity="0.1"/>
+
+  <!-- Pure White Diamond with Golden Border -->
+  <path d="M50 10 L90 50 L50 90 L10 50 Z" fill="#FFFFFF" stroke="#FFCB05" stroke-width="4.5"/>
+  <path d="M50 12 L86 50 L50 88 L14 50 Z" fill="none" stroke="#1A1A1A" stroke-width="0.5" stroke-opacity="0.1"/>
+
+  <!-- "beeliber store" Text (Slightly Lower Center) -->
+  <text x="50" y="36" font-family="'Segoe UI', Roboto, Arial, sans-serif" font-size="7.5" font-weight="950" fill="#1A1A1A" text-anchor="middle" letter-spacing="1">beeliber</text>
+  <text x="50" y="46" font-family="'Segoe UI', Roboto, Arial, sans-serif" font-size="6.5" font-weight="900" fill="#FFCB05" text-anchor="middle" letter-spacing="0.5">STORE</text>
+
+  <!-- Luxury Carrier (The Icon of Trust) -->
+  <g transform="translate(35, 54)">
+    <!-- Suitcase Body -->
+    <rect x="2" y="6" width="26" height="18" rx="2.5" fill="#1A1A1A"/>
+    <rect x="5" y="9" width="20" height="12" rx="1" fill="#FFFFFF" fill-opacity="0.05"/>
+
+    <!-- Handle -->
+    <path d="M10 6 V4 C10 3 11 2.5 12 2.5 H18 C19 2.5 20 3 20 4 V6" stroke="#1A1A1A" stroke-width="1.8" fill="none"/>
+
+    <!-- Beeliber Yellow Accent -->
+    <rect x="14" y="10" width="2" height="10" fill="#FFCB05"/>
+  </g>
+
+  <!-- Bottom Pointer Tip -->
+  <path d="M50 105 L44 92 H56 L50 105Z" fill="#FFCB05"/>
+</svg>

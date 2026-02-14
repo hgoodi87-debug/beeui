@@ -1,0 +1,36 @@
+<svg width="100" height="135" viewBox="0 0 100 135"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- 비리버 마스터피스 v14.0 LEGACY IDENTITY (Based on Reference Image) -->
+
+    <!-- Outer Teardrop Frame -->
+    <path d="M50 132 C50 132 10 90 10 50 C10 28 28 10 50 10 C72 10 90 28 90 50 C90 90 50 132 50 132 Z" fill="#1A1A1A" stroke="#FFFFFF" stroke-width="2"/>
+
+    <!-- Inner White Circle -->
+    <circle cx="50" cy="50" r="32" fill="#FFFFFF"/>
+
+    <!-- Icon Cluster (Suitcase, Key, Locker) -->
+    <g transform="translate(32, 32) scale(0.45)">
+        <!-- Suitcase -->
+        <rect x="10" y="25" width="60" height="42" rx="4" fill="none" stroke="#1A1A1A" stroke-width="4"/>
+        <path d="M30 25 V18 C30 15 34 13 40 13 C46 13 50 15 50 18 V25" fill="none" stroke="#1A1A1A" stroke-width="4"/>
+        <path d="M22 25 V67 M58 25 V67 M40 35 V45" stroke="#1A1A1A" stroke-width="4"/>
+        <!-- Key -->
+        <circle cx="15" cy="15" r="7" fill="none" stroke="#1A1A1A" stroke-width="3" opacity="0.8"/>
+        <rect x="22" y="13" width="15" height="4" fill="#1A1A1A" opacity="0.8"/>
+        <path d="M32 17 V20 M37 17 V20" stroke="#1A1A1A" stroke-width="3" opacity="0.8"/>
+        <!-- Locker (Stylized) -->
+        <rect x="55" y="5" width="30" height="25" rx="2" fill="none" stroke="#1A1A1A" stroke-width="3" opacity="0.8"/>
+        <path d="M62 10 H78 M62 15 H78 M62 20 H78" stroke="#1A1A1A" stroke-width="2" opacity="0.5"/>
+    </g>
+
+    <!-- Vertical "beeliber" Text -->
+    <text transform="translate(50, 95)" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#FFFFFF" text-anchor="middle">
+        <tspan x="0" dy="0">b</tspan>
+        <tspan x="0" dy="11">e</tspan>
+        <tspan x="0" dy="11">e</tspan>
+        <tspan x="0" dy="11">i</tspan>
+        <tspan x="0" dy="11">b</tspan>
+        <tspan x="0" dy="11">e</tspan>
+        <tspan x="0" dy="11">r</tspan>
+    </text>
+</svg>

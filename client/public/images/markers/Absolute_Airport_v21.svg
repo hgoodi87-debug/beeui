@@ -1,0 +1,24 @@
+<svg width="80" height="120" viewBox="0 0 80 120"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- 비리버 프리미엄 v21.1 ELITE FLYING AIRPORT (Take-off Masterpiece) -->
+
+    <!-- Ground Shadow (Elite Depth) -->
+    <ellipse cx="40" cy="110" rx="15" ry="5" fill="#000000" opacity="0.15"/>
+
+    <!-- Outer Frame (Teardrop Flight Path - Midnight Black) -->
+    <path d="M40 105 C40 105 15 78 15 63 C15 49.2 26.2 38 40 38 C53.8 38 65 49.2 65 63 C65 78 40 105 40 105 Z" fill="#1A1A1A" stroke="#FFFFFF" stroke-width="2.5"/>
+
+    <!-- Inner High-Contrast Circle -->
+    <circle cx="40" cy="63" r="22" fill="#FFFFFF"/>
+
+    <!-- Take-off Airplane Icon (Dynamic Angle) -->
+    <g transform="translate(40, 63) rotate(-35)">
+        <!-- Airplane Wings & Body -->
+        <path d="M-12 2 L-2 4 L2 14 L4 14 L4 5 L14 8 L14 4 L4 -2 L4 -14 L2 -14 L-2 -3 L-12 -5 Z" fill="#1A1A1A" stroke="#1A1A1A" stroke-width="1.5" stroke-linejoin="round"/>
+        <!-- Details -->
+        <circle cx="6" cy="0" r="1" fill="#FFCB05"/>
+    </g>
+
+    <!-- Flight Trail (Subtle Elegance) -->
+    <path d="M35 105 Q30 90 40 75" fill="none" stroke="#FFCB05" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.6"/>
+</svg>

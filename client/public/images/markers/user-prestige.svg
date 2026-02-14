@@ -1,0 +1,30 @@
+<svg width="100" height="100" viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg">
+  <!-- 비리버 마스터피스 v11.0: 세절귀 꿀벌 + 럭셔리 캐리어 (Stability Focus) -->
+
+  <!-- Ground Circle Soft Reflection -->
+  <circle cx="50" cy="50" r="42" fill="#FFCB05" fill-opacity="0.08"/>
+
+  <!-- Cute Rounded Wings -->
+  <circle cx="36" cy="32" r="14" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="1.5"/>
+  <circle cx="64" cy="32" r="14" fill="#FFFFFF" stroke="#1A1A1A" stroke-width="1.5"/>
+
+  <!-- Chubby Bee Body (Luxury Gold) -->
+  <rect x="24" y="38" width="52" height="36" rx="18" fill="#FFCB05" stroke="#1A1A1A" stroke-width="2.5"/>
+
+  <!-- Bold Pro-Stripes -->
+  <rect x="38" y="38" width="5" height="36" fill="#1A1A1A"/>
+  <rect x="48" y="38" width="5" height="36" fill="#1A1A1A"/>
+  <rect x="58" y="38" width="5" height="36" fill="#1A1A1A"/>
+
+  <!-- CEO-Approved Cute Face -->
+  <circle cx="68" cy="48" r="3.5" fill="#1A1A1A"/>
+  <path d="M68 56 C68 58 66 59 64 58" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+  <!-- Portable Carrier (The Mission) -->
+  <g transform="translate(14, 58)">
+    <rect x="0" y="0" width="22" height="16" rx="2" fill="#1A1A1A"/>
+    <path d="M6 0 V-3 C6 -4 7 -4.5 8 -4.5 H14 C15 -4.5 16 -4 16 -3 V0" stroke="#1A1A1A" stroke-width="1.5" fill="none"/>
+    <rect x="10" y="4" width="2" height="8" fill="#FFCB05"/>
+  </g>
+</svg>

@@ -1,0 +1,27 @@
+<svg width="120" height="70" viewBox="0 0 120 70" fill="none"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Black Capsule Background with Yellow Border (y=0) -->
+    <rect x="5" y="0" width="110" height="40" rx="20" fill="#1a1a1a" stroke="#ffcb05" stroke-width="2.5"/>
+
+    <!-- Softer Precision Pointer (Shortened tail - Tip at y=70) -->
+    <path d="M48 40L60 70L72 40H48Z" fill="#1a1a1a" stroke="#ffcb05" stroke-width="2.5" stroke-linejoin="round"/>
+    <!-- Fill to hide overlapping stroke -->
+    <path d="M49 39L60 68L71 39H49Z" fill="#1a1a1a"/>
+
+    <!-- Small Carrier (Suitcase) Icon (Adjusted for shorter pointer) -->
+    <g transform="translate(56, 41) scale(0.5)">
+        <rect x="1" y="3" width="12" height="10" rx="1.5" fill="#ffcb05"/>
+        <path d="M4 3V1C4 0.447715 4.44772 0 5 0H9C9.55228 0 10 0.447715 10 1V3" stroke="#ffcb05" stroke-width="1.5" stroke-linecap="round"/>
+        <rect x="3" y="13" width="2" height="2" rx="0.5" fill="#ffcb05"/>
+        <rect x="9" y="13" width="2" height="2" rx="0.5" fill="#ffcb05"/>
+    </g>
+
+    <!-- "beeliber" logo text (y=20) -->
+    <text x="50%" y="20" dominant-baseline="central" text-anchor="middle" font-family="'Inter', 'Pretendard', sans-serif" font-weight="950" font-size="22" letter-spacing="-0.5">
+        <tspan fill="#FFCB05">bee</tspan>
+        <tspan fill="#FFFFFF">liber</tspan>
+    </text>
+
+    <!-- Subtle Premium Shine -->
+    <path d="M15 10Q30 5 50 10" stroke="white" stroke-opacity="0.2" stroke-width="1" stroke-linecap="round"/>
+</svg>

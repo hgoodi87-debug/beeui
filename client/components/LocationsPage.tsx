@@ -133,13 +133,6 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isMapError, setIsMapError] = useState(false);
   const [mapErrorReason, setMapErrorReason] = useState<string | null>(null);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-
-  // Logger Helper
-  const addLog = (msg: string) => {
-    console.log(`[BeeliberMap] ${msg}`);
-    setDebugLogs(prev => [`[${new Date().toISOString().split('T')[1].slice(0, 8)}] ${msg}`, ...prev].slice(0, 50));
-  };
 
   // Load Locations
   useEffect(() => {
@@ -162,7 +155,6 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
     const loadScript = () => {
       // Check if script or naver object already exists
       if (window.naver && window.naver.maps) {
-        addLog(`Naver Maps already loaded. Skipping reload for lang: ${lang}`);
         if (!mapInstance.current) {
           initMap();
         }
@@ -171,12 +163,16 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
 
       const scriptId = 'naver-map-script';
       const existingScript = document.getElementById(scriptId);
-      if (existingScript) {
-        addLog("Found existing script but window.naver missing. Waiting...");
+
+      // If script exists but naver is missing, it might have failed or still loading
+      if (existingScript && !(window as any).naver) {
+        existingScript.remove();
+        // continue to create new script
+      } else if (window.naver && window.naver.maps) {
+        if (isMounted) initMap();
         return;
       }
 
-      addLog(`Initializing Map Script for lang: ${lang}`);
 
       let naverLang = 'ko';
       if (lang.startsWith('en')) naverLang = 'en';
@@ -191,14 +187,12 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
       const timeoutId = setTimeout(() => {
         if (isMounted && !window.naver) {
           const msg = "Map Load Timeout (10s) - Network too slow or blocked?";
-          addLog(msg);
           setIsMapError(true);
           setMapErrorReason(msg);
         }
       }, 10000);
 
       window.initBeeliberMap = () => {
-        addLog("Callback initBeeliberMap triggered");
         clearTimeout(timeoutId);
         if (isMounted) initMap();
       };
@@ -206,7 +200,6 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
       window.navermap_authFailure = () => {
         clearTimeout(timeoutId);
         const msg = "Auth Failure Callback Triggered";
-        addLog(msg);
         // Only alert if it's a real auth failure (not just a race condition)
         if (isMounted) {
           // Check if localhost/domain is the issue
@@ -216,17 +209,18 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
         }
       };
 
-      script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=f3gsmqhjcn&submodules=geocoder&language=${naverLang}&callback=initBeeliberMap`;
+      // [스봉이 실장] 사장님! ncpKeyId로 다시 모십니다. 명품 스타일 연동의 정석 가이드를 따릅니다.
+      const customStyleId = '372d23ff-f7ac-40b3-a900-e4c4545a31e1';
+      script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=f3gsmqhjcn&submodules=geocoder,gl&language=${naverLang}&callback=initBeeliberMap`;
       script.async = true;
+      script.defer = true;
 
       script.onload = () => {
-        addLog("Script onload event fired");
       };
 
       script.onerror = () => {
         clearTimeout(timeoutId);
         const msg = "Script onerror event fired (Network Failed)";
-        addLog(msg);
         if (isMounted) {
           setIsMapError(true);
           setMapErrorReason(msg);
@@ -234,7 +228,6 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
       };
 
       document.head.appendChild(script);
-      addLog("Script appended to head");
     };
 
     loadScript();
@@ -247,48 +240,74 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
   }, []); // Run once on mount, ignore lang changes for script loading to prevent reload loop
 
   const initMap = () => {
-    addLog("Executing initMap...");
     if (!mapRef.current) {
-      addLog("Error: mapRef.current is null");
       return;
     }
     if (!window.naver?.maps?.Map || !window.naver?.maps?.LatLng) {
       const msg = "Error: window.naver.maps.Map/LatLng missing";
-      addLog(msg);
       console.error(msg);
       setIsMapError(true);
       setMapErrorReason(msg);
       return;
     }
 
-    if (mapRef.current.firstChild) {
-      addLog("Clearing existing map container");
-      mapRef.current.innerHTML = '';
-      if (mapInstance.current) {
+    // Always clear container to ensure fresh canvas
+    mapRef.current.innerHTML = '';
+    if (mapInstance.current) {
+      try {
         mapInstance.current.destroy && mapInstance.current.destroy();
-        mapInstance.current = null;
-      }
+      } catch (e) { }
+      mapInstance.current = null;
     }
 
+    const customStyleId = '372d23ff-f7ac-40b3-a900-e4c4545a31e1';
+
     try {
-      addLog("Creating new Map instance");
-      mapInstance.current = new window.naver.maps.Map(mapRef.current, {
-        center: new (window.naver.maps.LatLng as any)(37.5665, 126.9780),
+      const isGLSupported = (window as any).naver.maps.isGLSupported ? (window as any).naver.maps.isGLSupported() : 'unknown';
+
+      // [전직원 정예 멤버 합의안] navermaps.github.io 공식 가이드 기반 최후의 정석 세팅
+      const mapOptions: any = {
+        center: new window.naver.maps.LatLng(37.5665, 126.9780),
         zoom: 11,
-        zoomControl: false,
+        customStyleId: customStyleId,
+        gl: true, // 벡터 지도 및 커스텀 스타일 활성화
         logoControl: true,
-        mapDataControl: false,
         scaleControl: false,
-        mapTypeId: 'normal'
-      });
-      addLog("Map instance created successfully");
-    } catch (e: any) {
-      const msg = `Map Constructor Failed: ${e.message}`;
-      addLog(msg);
-      console.error(msg, e);
-      setIsMapError(true);
-      setMapErrorReason(msg);
-      return;
+        mapDataControl: false,
+        zoomControl: false,
+        minZoom: 6,
+        maxZoom: 21,
+        disableKineticPan: false
+      };
+
+      mapInstance.current = new window.naver.maps.Map(mapRef.current, mapOptions);
+
+      try {
+        const isGLSupported = (window as any).naver.maps.isGLSupported && (window as any).naver.maps.isGLSupported();
+        const activeStyleId = mapInstance.current.getOptions('customStyleId');
+        const activeRenderer = mapInstance.current.getOptions('gl') ? 'WebGL' : 'Canvas';
+
+        window.naver.maps.Event.once(mapInstance.current, 'init', () => {
+        });
+
+      } catch (e: any) {
+      }
+    } catch (glError: any) {
+      try {
+        // Fallback to standard map if GL/MapId fails
+        mapRef.current.innerHTML = '';
+        mapInstance.current = new window.naver.maps.Map(mapRef.current, {
+          center: new window.naver.maps.LatLng(37.5665, 126.9780),
+          zoom: 11,
+          logoControl: true,
+          zoomControl: true
+        });
+      } catch (stdError: any) {
+        const msg = `CRITICAL: Both GL and Standard Initialization failed: ${stdError.message}`;
+        console.error(msg, stdError);
+        setIsMapError(true);
+        setMapErrorReason(msg);
+      }
     }
 
     handleMyLocation();
@@ -302,46 +321,22 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
     }
 
     const content = `
-      <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <div style="
-          background: #FF0000; color: white; padding: 4px 10px; border-radius: 12px;
-          font-size: 10px; font-weight: 900; margin-bottom: 6px; white-space: nowrap;
-          box-shadow: 0 4px 12px rgba(255,0,0,0.3); border: 2px solid white;
-          animation: float 2s ease-in-out infinite;
-        ">
-          ${t.locations_page.my_location || 'Member\'s Location 💅✨'}
+      <div style="position: relative; width: 48px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+        <div style="position: absolute; top: 0; background: #1a1a1a; color: #ffcb05; padding: 3px 8px; border-radius: 20px; font-size: 8.5px; font-weight: 950; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 1.2px solid #ffcb05; z-index: 10; font-family: 'Pretendard', sans-serif; letter-spacing: 0.5px; animation: bounce 2s infinite;">
+          ${t.locations_page.user_marker || 'Customer Location'} 💅✨
         </div>
-        <div style="position: relative; display: flex; align-items: center; justify-content: center;">
-          <div style="
-            width: 16px; height: 16px; background: #FF0000; border-radius: 50%;
-            border: 3px solid white; box-shadow: 0 0 15px rgba(255,0,0,0.5);
-            position: relative; z-index: 2;
-          "></div>
-          <div style="
-            width: 40px; height: 40px; background: rgba(255,0,0,0.2);
-            border-radius: 50%; position: absolute;
-            animation: pulse-red 2s infinite;
-          "></div>
-        </div>
+        <img src="/images/markers/Absolute_Bee_v21.svg?v=${Date.now()}" style="width: 48px; height: 75px;" alt="User Location" />
       </div>
-      <style>
-        @keyframes pulse-red {
-          0% { transform: scale(0.6); opacity: 1; }
-          100% { transform: scale(2.2); opacity: 0; }
-        }
-        @keyframes float {
-          0% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-          100% { transform: translateY(0); }
-        }
-      </style>
     `;
 
     myLocationMarkerRef.current = new window.naver.maps.Marker({
       position: new window.naver.maps.LatLng(lat, lng),
       map: mapInstance.current,
-      content: content,
-      anchor: new window.naver.maps.Point(40, 50),
+      icon: {
+        content: content,
+        size: new window.naver.maps.Size(48, 80),
+        anchor: new window.naver.maps.Point(24, 75)
+      },
       zIndex: 1000
     });
   };
@@ -368,67 +363,104 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
       const point = new (window.naver.maps.LatLng as any)(loc.lat || 37.5, loc.lng || 127.0);
       const isAirport = loc.type === LocationType.AIRPORT;
       const isActive = selectedLocation?.id === loc.id;
-      const bothServices = loc.supportsDelivery && loc.supportsStorage;
 
-      let badgeContent = '';
-      let badgeColor = '#ffffff';
-      let textColor = '#FF0000'; // Brand Red for better visibility
-      let borderColor = '#FF0000';
+      // ULTRA-PRECISION SIZES v34.0 (Softer Precision Grounding)
+      const airportW = 42, airportH = 60;
+      const storeW = 84, storeH = 49;
 
-      if (isAirport) {
-        badgeContent = `<i class="fa-solid fa-plane-up mr-1 text-[10px]"></i>${t.locations_page.tag_airport_delivery || 'Airport Delivery'}`;
-        badgeColor = isActive ? '#FF0000' : '#1a1a1a';
-        textColor = isActive ? '#ffffff' : '#FF0000';
-      } else if (bothServices) {
-        badgeContent = `<i class="fa-solid fa-truck-fast mr-1 text-[10px]"></i>${t.locations_page.tag_delivery || 'Delivery'} | <i class="fa-solid fa-vault mr-1 text-[10px]"></i>${t.locations_page.tag_storage || 'Storage'}`;
-        badgeColor = isActive ? '#FF0000' : '#ffffff';
-        textColor = isActive ? '#ffffff' : '#FF0000';
-      } else if (loc.supportsStorage) {
-        badgeContent = `<i class="fa-solid fa-vault mr-1 text-[10px]"></i>${t.locations_page.tag_storage_only || 'Storage Only'}`;
-        badgeColor = isActive ? '#FF0000' : '#ffffff';
-        textColor = isActive ? '#ffffff' : '#FF0000';
-      } else {
-        badgeContent = `<i class="fa-solid fa-truck-fast mr-1 text-[10px]"></i>${t.locations_page.tag_delivery_only || 'Delivery Only'}`;
-        badgeColor = isActive ? '#FF0000' : '#ffffff';
-        textColor = isActive ? '#ffffff' : '#FF0000';
-      }
+      // Dynamic Service Badge Logic (Pills floating ABOVE the marker)
+      const services = loc.availableServices || [];
+      const badgeList: string[] = [];
 
-      const content = `
-        <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.2s ease-out; transform: ${isActive ? 'scale(1.15) translateY(-5px)' : 'scale(1)'};">
-          <div style="
-            background: ${badgeColor};
-            padding: 8px 16px;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid ${borderColor};
-            box-shadow: 0 6px 15px rgba(255,0,0,0.15);
-            color: ${textColor};
-            font-family: 'Pretendard', sans-serif;
-            font-weight: 800;
-            font-size: 11px;
-            white-space: nowrap;
-            letter-spacing: -0.02em;
-          ">
-            ${badgeContent}
-          </div>
-          <div style="
-            width: 0;
-            height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 8px solid ${borderColor};
-            margin-top: -1px;
-          "></div>
+      const renderBadge = (color: string, icon: string, label: string) => `
+        <div style="
+          background: ${isActive ? color : '#ffffff'};
+          padding: 2px 6px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          border: 1px solid ${color};
+          color: ${isActive ? '#ffffff' : color};
+          font-family: 'Pretendard', sans-serif;
+          font-weight: 900;
+          font-size: 8.5px;
+          white-space: nowrap;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          margin-bottom: 2px;
+          pointer-events: none;
+        ">
+          <i class="${icon}" style="font-size: 8px;"></i>
+          <span>${label}</span>
         </div>
       `;
+
+      if (isAirport) {
+        badgeList.push(renderBadge('#3B82F6', 'fa-solid fa-plane-up', t.locations_page.service_delivery || 'Delivery'));
+      } else {
+        if (services.includes('짐 보관')) badgeList.push(renderBadge('#FFCB05', 'fa-solid fa-vault', t.locations_page.service_storage || 'Storage'));
+        if (services.includes('짐 배송')) badgeList.push(renderBadge('#3B82F6', 'fa-solid fa-truck-fast', t.locations_page.service_delivery || 'Delivery'));
+        if (services.includes('환전')) badgeList.push(renderBadge('#10B981', 'fa-solid fa-money-bill-transfer', t.locations_page.service_exchange || 'Exchange'));
+      }
+
+      // Fallback
+      if (!isAirport && badgeList.length === 0) {
+        if (loc.supportsStorage) badgeList.push(renderBadge('#FFCB05', 'fa-solid fa-vault', t.locations_page.service_storage || 'Storage'));
+        if (loc.supportsDelivery) badgeList.push(renderBadge('#3B82F6', 'fa-solid fa-truck-fast', t.locations_page.service_delivery || 'Delivery'));
+      }
+
+      const badgeContainer = `
+        <div style="display: flex; flex-direction: column; align-items: center; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 0px; pointer-events: none; z-index: 10;">
+          ${badgeList.join('')}
+        </div>
+      `;
+
+      let content = '';
+      if (isAirport) {
+        content = `
+          <div style="position: relative; width: ${airportW}px; height: ${airportH}px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.2s ease;">
+            <style>
+              @keyframes planeTakeoffMini {
+                0% { transform: translateY(0); }
+                50% { transform: translateY(-3px); }
+                100% { transform: translateY(0); }
+              }
+              .airport-marker-active { animation: planeTakeoffMini 2s infinite ease-in-out; }
+            </style>
+            ${badgeContainer}
+            <div class="${isActive ? 'airport-marker-active' : ''}" style="transform: ${isActive ? 'scale(1.1)' : 'scale(1)'};">
+              <img src="/images/markers/Absolute_Airport_v22.svg?v=${Date.now()}" style="width: ${airportW}px; height: ${airportH}px; filter: ${isActive ? 'drop-shadow(0 0 10px rgba(0,0,255,0.4))' : 'none'};" alt="${getLocData(loc).name}" />
+            </div>
+            ${isActive ? `
+              <div style="position: absolute; top: calc(100% + 2px); left: 50%; transform: translateX(-50%); background: #0000FF; color: #ffffff; padding: 2px 6px; border-radius: 6px; font-size: 8.5px; font-weight: 950; white-space: nowrap; border: 1px solid white; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                ${getLocData(loc).name}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else {
+        // Black Capsule Logo Branch Marker v34.0 (Softer Precision)
+        content = `
+          <div style="position: relative; width: ${storeW}px; height: ${storeH}px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; transition: all 0.2s ease-out; transform: ${isActive ? 'scale(1.05)' : 'scale(1)'};">
+            ${badgeContainer}
+            <img src="/images/markers/Absolute_Logo_v25.svg?v=${Date.now()}" style="width: ${storeW}px; height: ${storeH}px; filter: ${isActive ? 'drop-shadow(0 0 15px rgba(255,203,5,0.4))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'}; pointer-events: none;" alt="${getLocData(loc).name}" />
+            ${isActive ? `
+              <div style="position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #ffcb05; padding: 3px 10px; border-radius: 8px; font-size: 9px; font-weight: 950; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1.5px solid #ffcb05; z-index: 20;">
+                ${getLocData(loc).name}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
 
       if (!window.naver?.maps?.Marker || !window.naver?.maps?.Point || !window.naver?.maps?.Event) return;
       const marker = new (window.naver.maps.Marker as any)({
         position: point,
-        content: content,
-        anchor: new (window.naver.maps.Point as any)(bothServices ? 50 : 40, 40),
+        icon: {
+          content: content,
+          size: new (window.naver.maps.Size as any)(120, 160), // Keep canvas large for badges
+          anchor: new (window.naver.maps.Point as any)(isAirport ? airportW / 2 : storeW / 2, isAirport ? airportH : storeH)
+        },
         map: mapInstance.current,
         zIndex: isActive ? 100 : 1
       });
@@ -529,7 +561,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
 
   return (
     <div className="h-screen flex flex-col bg-white overflow-hidden relative">
-      {/* Premium Navbar */}
+      {/* Header */}
       <nav className="flex-shrink-0 border-b border-gray-100 px-6 py-4 flex justify-between items-center bg-white/95 backdrop-blur-md z-[1000] shadow-sm">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-1 cursor-pointer group" onClick={onBack}>
@@ -549,7 +581,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         {/* PC Sidebar */}
-        <aside className="hidden md:flex flex-col w-[400px] border-r border-gray-100 bg-[#fafafb] z-20 h-full overflow-hidden">
+        <aside className="hidden md:flex flex-col w-[400px] border-r border-gray-100 bg-[#fafafb] z-[200] h-full overflow-hidden">
           <AnimatePresence mode="wait">
             {viewStep === 'LIST' && (
               <motion.div
@@ -681,12 +713,12 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                                 <h4 className="font-black text-base text-bee-black leading-tight mb-1">{name}</h4>
                                 <div className="flex gap-1.5">
                                   {loc.supportsDelivery && (
-                                    <div className={`p-1 rounded-md ${isSelected ? 'bg-bee-black/10 text-bee-black' : 'bg-blue-50 text-blue-500'}`} title="Delivery">
+                                    <div className={`p - 1 rounded - md ${isSelected ? 'bg-bee-black/10 text-bee-black' : 'bg-blue-50 text-blue-500'} `} title="Delivery">
                                       <Truck size={10} />
                                     </div>
                                   )}
                                   {loc.supportsStorage && (
-                                    <div className={`p-1 rounded-md ${isSelected ? 'bg-bee-black/10 text-bee-black' : 'bg-orange-50 text-orange-500'}`} title="Storage">
+                                    <div className={`p - 1 rounded - md ${isSelected ? 'bg-bee-black/10 text-bee-black' : 'bg-orange-50 text-orange-500'} `} title="Storage">
                                       <Briefcase size={10} />
                                     </div>
                                   )}
@@ -823,73 +855,71 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
                   >
                     <i className="fa-solid fa-location-arrow text-[10px]"></i>
                     {t.locations_page.btn_get_directions}
-                  </button>
-                </div>
-              </motion.div>
+                  </button >
+                </div >
+              </motion.div >
             )}
 
-            {viewStep === 'BOOKING' && selectedLocation && (
-              <BookingDetailed
-                t={t}
-                lang={lang}
-                selectedLocation={selectedLocation}
-                locations={locations}
-                serviceType={selectedServiceType as ServiceType}
-                initialDate={bookingDate}
-                initialBags={bagSizes}
-                onClose={() => setViewStep('DETAIL')}
-                onSuccess={(b) => {
-                  if (onSuccess) onSuccess(b);
-                  setViewStep('LIST');
-                  alert(t.locations_page.msg_booking_confirmed);
-                }}
-                user={user}
-              />
-            )}
-          </AnimatePresence>
-        </aside>
+            {
+              viewStep === 'BOOKING' && selectedLocation && (
+                <BookingDetailed
+                  t={t}
+                  lang={lang}
+                  selectedLocation={selectedLocation}
+                  locations={locations}
+                  serviceType={selectedServiceType as ServiceType}
+                  initialDate={bookingDate}
+                  initialBags={bagSizes}
+                  onClose={() => setViewStep('DETAIL')}
+                  onSuccess={(b) => {
+                    if (onSuccess) onSuccess(b);
+                    setViewStep('LIST');
+                    alert(t.locations_page.msg_booking_confirmed);
+                  }}
+                  user={user}
+                />
+              )
+            }
+          </AnimatePresence >
+        </aside >
 
         {/* Map Container */}
-        <section className="flex-1 relative order-1 md:order-2 h-full min-h-[300px] w-full bg-gray-50">
-          <div ref={mapRef} className="w-full h-full absolute inset-0 z-10" />
+        < section className="flex-1 relative order-1 md:order-2 h-full min-h-[450px] w-full bg-[#333]" >
+          <div
+            ref={mapRef}
+            id="beeliber-naver-map"
+            style={{ minHeight: '450px', backgroundColor: '#444', zIndex: 1 }}
+            className="w-full h-full absolute inset-0"
+          />
+
 
           {/* Map Error Fallback */}
-          {isMapError && (
-            <div className="absolute inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center text-center p-8">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
-                <MapPin className="text-red-500" size={32} />
-              </div>
-              <h3 className="text-xl font-black text-bee-black mb-2">{t.locations_page.label_map_error}</h3>
-              <p className="text-sm text-gray-500 font-bold mb-2 max-w-xs">
-                {t.locations_page.msg_map_load_error}
-              </p>
-              {mapErrorReason && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg max-w-md w-full text-left">
-                  <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">{t.locations_page.msg_error_reason}</p>
-                  <p className="text-xs font-mono text-red-600 break-all">{mapErrorReason}</p>
+          {
+            isMapError && (
+              <div className="absolute inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center text-center p-8">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                  <MapPin className="text-red-500" size={32} />
                 </div>
-              )}
+                <h3 className="text-xl font-black text-bee-black mb-2">{t.locations_page.label_map_error}</h3>
+                <p className="text-sm text-gray-500 font-bold mb-2 max-w-xs">
+                  {t.locations_page.msg_map_load_error}
+                </p>
+                {mapErrorReason && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg max-w-md w-full text-left">
+                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">{t.locations_page.msg_error_reason}</p>
+                    <p className="text-xs font-mono text-red-600 break-all">{mapErrorReason}</p>
+                  </div>
+                )}
 
-              {/* Debug Logs Console */}
-              <div className="mb-6 p-3 bg-gray-900 rounded-lg max-w-md w-full h-32 overflow-y-auto text-left custom-scrollbar">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 sticky top-0 bg-gray-900 pb-1 border-b border-gray-800">{t.locations_page.msg_system_logs}</p>
-                <div className="space-y-1">
-                  {debugLogs.map((log, i) => (
-                    <p key={i} className="text-[10px] font-mono text-green-400 break-all border-b border-gray-800/50 pb-0.5 leading-tight">
-                      <span className="opacity-50 mr-2">Step {debugLogs.length - i}:</span>
-                      {log}
-                    </p>
-                  ))}
-                </div>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-bee-black text-bee-yellow rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
+                >
+                  {t.locations_page.btn_reload_page}
+                </button>
               </div>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-bee-black text-bee-yellow rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
-              >
-                {t.locations_page.btn_reload_page}
-              </button>
-            </div>
-          )}
+            )
+          }
 
           {/* Roadview Container Overlay */}
           <div id="roadview-container" className="absolute inset-0 z-[2000] bg-black hidden">
@@ -911,7 +941,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
           </div>
 
           {/* Mobile Overlay: Smart Control (Date & Bags) */}
-          <div className="md:hidden absolute top-6 left-6 right-6 z-40 space-y-3">
+          <div className="md:hidden absolute top-6 left-6 right-6 z-[300] space-y-3">
             <div className="bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl shadow-2xl flex items-center px-4 py-3 gap-3">
               <Search className="w-4 h-4 text-bee-black" />
               <input
@@ -1029,7 +1059,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
           </div>
 
           {/* Mobile Step Views */}
-          <div className="md:hidden absolute bottom-8 left-0 right-0 z-40 px-6">
+          <div className="md:hidden absolute bottom-8 left-0 right-0 z-[300] px-6">
             <AnimatePresence mode="wait">
               {viewStep === 'LIST' && (
                 <motion.div
@@ -1196,23 +1226,25 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
           </div>
 
           {/* Desktop Indicator */}
-          {selectedLocation && (
-            <div className="hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2 z-40">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-bee-black text-bee-yellow px-8 py-3 rounded-full shadow-2xl font-black italic tracking-widest text-[10px] flex items-center gap-4 border border-bee-yellow/20"
-              >
-                <div className="w-2 h-2 rounded-full bg-bee-yellow animate-pulse"></div>
-                <span className="max-w-[150px] break-keep">{getLocData(selectedLocation).name}</span>
-                <ChevronRight className="w-4 h-4 opacity-30" />
-                <span className="opacity-70">
-                  {viewStep === 'DETAIL' ? (t.locations_page.label_viewing_branch) : (t.locations_page.label_reserving_now)}
-                </span>
-              </motion.div>
-            </div>
-          )}
-        </section>
+          {
+            selectedLocation && (
+              <div className="hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2 z-40">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-bee-black text-bee-yellow px-8 py-3 rounded-full shadow-2xl font-black italic tracking-widest text-[10px] flex items-center gap-4 border border-bee-yellow/20"
+                >
+                  <div className="w-2 h-2 rounded-full bg-bee-yellow animate-pulse"></div>
+                  <span className="max-w-[150px] break-keep">{getLocData(selectedLocation).name}</span>
+                  <ChevronRight className="w-4 h-4 opacity-30" />
+                  <span className="opacity-70">
+                    {viewStep === 'DETAIL' ? (t.locations_page.label_viewing_branch) : (t.locations_page.label_reserving_now)}
+                  </span>
+                </motion.div>
+              </div>
+            )
+          }
+        </section >
       </div >
 
       {/* No Bee Bot Floating Button as requested */}

@@ -210,6 +210,12 @@ export const ja = {
     locations_page: {
         title: '拠点案内', sidebar_title: 'Global Network', sidebar_subtitle: 'Premium Service Points',
         filter_all: 'すべて', filter_airport: '空港', filter_city: '市内', back: 'ホーム', no_results: '登録された拠点がありません。',
+        my_location: '本部長位置 💅✨',
+        user_marker: 'お客様の位置',
+        service_delivery: '配送',
+        service_storage: '保管',
+        service_exchange: '両替',
+        service_carrier: 'キャリア',
         info_card_delivery: '配送対応', info_card_storage: '保管対応', info_card_book: '今지금予約',
         book_delivery: '配送予約', book_storage: '保管予約',
         search_placeholder: '現在地を検索 (ホテル, 駅など)', search_error: '検索に失敗しました。',

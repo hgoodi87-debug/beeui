@@ -1,0 +1,26 @@
+<svg width="60" height="75" viewBox="0 0 60 75"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- 비리버 마스터피스 v18.0 RED ALERT CARRIER (High Visibility Version) -->
+
+    <!-- Outer Frame (Teardrop-Circle Hybrid - Now Red Alert) -->
+    <path d="M30 72 C30 72 5 45 5 30 C5 16.2 16.2 5 30 5 C43.8 5 55 16.2 55 30 C55 45 30 72 30 72 Z" fill="#FF0000" stroke="#FFFFFF" stroke-width="2"/>
+
+    <!-- Inner White Circle -->
+    <circle cx="30" cy="30" r="20" fill="#FFFFFF"/>
+
+    <!-- Iconic Yellow Carrier (Suitcase) -->
+    <g transform="translate(18, 21)">
+        <!-- Suitcase Body -->
+        <rect x="0" y="0" width="24" height="17" rx="2" fill="#FFCB05" stroke="#BF9B30" stroke-width="1.5"/>
+        <!-- Handle -->
+        <path d="M8 -4 Q12 -7 16 -4 V0 H8 V-4" fill="none" stroke="#FFCB05" stroke-width="2"/>
+        <!-- Detail Lines -->
+        <path d="M6 0 V17 M18 0 V17" stroke="#BF9B30" stroke-width="1.5" opacity="0.6"/>
+        <!-- Wheels -->
+        <circle cx="5" cy="18" r="2" fill="#1A1A1A"/>
+        <circle cx="19" cy="18" r="2" fill="#1A1A1A"/>
+    </g>
+
+    <!-- Ground Connector Dot -->
+    <circle cx="30" cy="30" r="3" fill="#FF0000" opacity="0.1"/>
+</svg>

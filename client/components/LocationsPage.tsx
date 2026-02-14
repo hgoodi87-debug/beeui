@@ -888,8 +888,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({ onBack, onSelectLocation,
           <div
             ref={mapRef}
             id="beeliber-naver-map"
-            style={{ minHeight: '450px', backgroundColor: '#444', zIndex: 1 }}
-            className="w-full h-full absolute inset-0"
+            className="w-full h-full absolute inset-0 min-h-[450px] bg-[#444] z-[1]"
           />
 
 

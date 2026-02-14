@@ -146,54 +146,57 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
 
                             <div className="grid grid-cols-1 gap-3">
                                 {LUGGAGE_DATA.map((size, i) => (
-                                    className = {`p-5 rounded-2xl border-2 transition-all flex items-center justify-between text-left group ${selectedSize === i ? "border-bee-yellow bg-yellow-50 shadow-md scale-[1.02]" : "border-gray-100 bg-white hover:border-yellow-200"
-                                        }`}
-                                title={`${size.label} ${s.height_label}`}
+                                    <button
+                                        key={size.label}
+                                        onClick={() => setSelectedSize(i)}
+                                        className={`p-5 rounded-2xl border-2 transition-all flex items-center justify-between text-left group ${selectedSize === i ? "border-bee-yellow bg-yellow-50 shadow-md scale-[1.02]" : "border-gray-100 bg-white hover:border-yellow-200"
+                                            }`}
+                                        title={`${size.label} ${s.height_label}`}
                                     >
-                                <div className="flex items-center gap-4">
-                                    <div
-                                        className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white shadow-inner"
-                                        style={{ backgroundColor: size.color }}
-                                    >
-                                        {size.label}
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-sm text-bee-black">{size.range}</p>
-                                        <p className="text-[11px] text-gray-400 font-medium">{size.desc}</p>
-                                    </div>
-                                </div>
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedSize === i ? "border-bee-yellow bg-bee-yellow" : "border-gray-200"
-                                    }`}>
-                                    {selectedSize === i && <div className="w-2 h-2 bg-white rounded-full" />}
-                                </div>
-                            </button>
+                                        <div className="flex items-center gap-4">
+                                            <div
+                                                className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white shadow-inner"
+                                                style={{ backgroundColor: size.color }}
+                                            >
+                                                {size.label}
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-sm text-bee-black">{size.range}</p>
+                                                <p className="text-[11px] text-gray-400 font-medium">{size.desc}</p>
+                                            </div>
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedSize === i ? "border-bee-yellow bg-bee-yellow" : "border-gray-200"
+                                            }`}>
+                                            {selectedSize === i && <div className="w-2 h-2 bg-white rounded-full" />}
+                                        </div>
+                                    </button>
                                 ))}
-                        </div>
-
-                        <button
-                            onClick={onClose}
-                            className="w-full bg-bee-black p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-black/80 transition-all shadow-xl active:scale-95"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="text-2xl animate-bounce">🐝</div>
-                                <div className="space-y-0.5 text-left">
-                                    <p className="text-white group-hover:text-bee-yellow text-[11px] font-bold leading-tight">
-                                        {s.hook_text.replace("{size}", LUGGAGE_DATA[selectedSize].label)}
-                                    </p>
-                                    <p className="text-gray-400 group-hover:text-white text-[10px] font-medium">{s.hook_sub}</p>
-                                </div>
                             </div>
-                            <ChevronRight className="text-bee-yellow group-hover:text-white w-5 h-5" />
-                        </button>
+
+                            <button
+                                onClick={onClose}
+                                className="w-full bg-bee-black p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-black/80 transition-all shadow-xl active:scale-95"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="text-2xl animate-bounce">🐝</div>
+                                    <div className="space-y-0.5 text-left">
+                                        <p className="text-white group-hover:text-bee-yellow text-[11px] font-bold leading-tight">
+                                            {s.hook_text.replace("{size}", LUGGAGE_DATA[selectedSize].label)}
+                                        </p>
+                                        <p className="text-gray-400 group-hover:text-white text-[10px] font-medium">{s.hook_sub}</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="text-bee-yellow group-hover:text-white w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mt-10 pt-6 border-t border-gray-100 flex items-start gap-2 text-[10px] text-gray-400 font-medium">
+                        <Info size={12} className="mt-0.5 flex-shrink-0" />
+                        <p>{s.info_note}</p>
                     </div>
                 </div>
-
-                <div className="mt-10 pt-6 border-t border-gray-100 flex items-start gap-2 text-[10px] text-gray-400 font-medium">
-                    <Info size={12} className="mt-0.5 flex-shrink-0" />
-                    <p>{s.info_note}</p>
-                </div>
             </div>
-        </div>
         </div >
     );
 }

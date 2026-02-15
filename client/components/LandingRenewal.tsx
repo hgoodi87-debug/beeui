@@ -35,7 +35,7 @@ const CONFIG = {
         dark: "#0C0C0C",
     },
     video: {
-        src: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EC%98%81%EC%83%811.mp4?alt=media&token=73cc0a9c-790c-4f90-8bd5-de1b691da19d",
+        src: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F0215%20(1).mp4?alt=media&token=d673a42d-a906-48e1-bd8d-a36d93781eac",
     },
     sizes: [
         { label: "M", range: "18-23\"", height: "h-20" },
@@ -249,7 +249,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                         muted
                         playsInline
                         src={CONFIG.video.src}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                     />
                     {/* Dark Overlay for Readability */}
                     <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />

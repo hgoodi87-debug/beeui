@@ -8,7 +8,7 @@ import {
   Users,
   ShieldCheck,
   Globe,
-  PaperPlane,
+  Send,
   CheckCircle2,
   ChevronRight,
   Building2,

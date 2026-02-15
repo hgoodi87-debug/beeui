@@ -87,10 +87,10 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                         <div className="relative group">
                             <button title="Change Language" aria-label="Change Language" className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-black/5 hover:border-black/10 transition-all">
                                 <span className="text-lg">
-                                    {lang === 'ko' ? '🇰🇷' : lang === 'en' ? '🇺🇸' : lang === 'ja' ? '🇯🇵' : '🇨🇳'}
+                                    {lang === 'ko' ? '🇰🇷' : lang === 'en' ? '🇺🇸' : lang === 'ja' ? '🇯🇵' : lang.startsWith('zh-') ? (lang === 'zh-TW' || lang === 'zh-HK' ? '🇭🇰' : '🇨🇳') : '🇨🇳'}
                                 </span>
                                 <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">
-                                    {lang === 'zh' ? 'CN' : lang.toUpperCase()}
+                                    {lang === 'zh' ? 'CN' : lang === 'zh-TW' ? 'TW' : lang === 'zh-HK' ? 'HK' : lang.toUpperCase()}
                                 </span>
                                 <ChevronRight className="w-3 h-3 rotate-90 text-black/20" />
                             </button>
@@ -102,7 +102,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                                         { code: 'ko', flag: '🇰🇷', label: '한국어' },
                                         { code: 'en', flag: '🇺🇸', label: 'English' },
                                         { code: 'ja', flag: '🇯🇵', label: '日本語' },
-                                        { code: 'zh', flag: '🇨🇳', label: '简体中文' }
+                                        { code: 'zh', flag: '🇨🇳', label: '简体中文' },
+                                        { code: 'zh-TW', flag: '🇭🇰', label: '繁體中文' }
                                     ].map((l) => (
                                         <button
                                             key={l.code}

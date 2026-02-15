@@ -56,7 +56,26 @@ export const ja = {
         close: '閉じる',
         dont_show_today: '今日一日表示しない'
     },
-    partnership: { title: '提携お問い合わせ', subtitle: 'Beeliberと共に新しい旅の基準を。', company: '会社名 / 宿泊施設名', contact: '連絡先', location: '位置 / 住所', businessType: '業種', message: 'お問い合わせ内容', submit: '提案する', success: '受付完了', successSub: '近日中にご連絡いたします。', back: 'ホームへ' },
+    partnership: {
+        title: '提携お問い合わせ', subtitle: 'Beeliberと共に新しい旅の基準を。',
+        hero_badge: 'GLOBAL PARTNERSHIP',
+        hero_title: 'Beeliberと共に\n成長の翼を広げましょう',
+        hero_desc: '世界中の旅行者のための最もスマートな手荷物サービス、Beeliberのパートナーになって、新しい収益モデルと顧客体験を創出してください。',
+        benefits_title: 'なぜBeeliberパートナーなのですか？',
+        benefit1_t: '追加収益の創出',
+        benefit1_d: '空기スペースを活用して、安定した手数料収入を創出できます。',
+        benefit2_t: 'トラフィックの増大',
+        benefit2_d: 'Beeliberを利用する世界中の旅行者があなたの店舗を訪れるようになります',
+        benefit3_t: 'ブランドプロモーション',
+        benefit3_d: 'Beeliberプラットフォーム内での拠点露出を通じて、グローバルな認知度を高めましょう。',
+        benefit4_t: '安全な補償システム',
+        benefit4_d: '最大50万ウォンの補償保険加入で、パートナーの運営負担を軽減합니다.',
+        form_title: '今すぐ提携を提案する',
+        company: '会社名 / 宿泊施設名', contact: '連絡先', location: '位置 / 住所', businessType: '業種', message: 'お問い合わせ内容',
+        message_placeholder: '提携内容について簡単に記入してください。',
+        alert_fill: '必須情報を入力してください。', back_to_main: 'メイン画面へ移動',
+        submit: '提案する', success: '受付完了', successSub: '近日中にご連絡いたします。', back: 'ホームへ'
+    },
     booking: {
         delivery: '配送',
         storage: '保管',

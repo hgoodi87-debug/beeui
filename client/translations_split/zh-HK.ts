@@ -61,7 +61,26 @@ export const zhHK = {
         close: '關閉',
         dont_show_today: '今日唔再顯示'
     },
-    partnership: { title: '商務合作諮詢', subtitle: '與 Beeliber 共創旅遊新標準。', company: '公司名 / 酒店名', contact: '聯絡方式', location: '位置 / 地址', businessType: '行業類型', message: '諮詢內容', submit: '提交建議', success: '提交成功', successSub: '我哋會盡快聯絡您。', back: '返回首頁' },
+    partnership: {
+        title: '商務合作諮詢', subtitle: '與 Beeliber 共創旅遊新標準。',
+        hero_badge: 'GLOBAL PARTNERSHIP',
+        hero_title: '同 Beeliber 一齊\n插上成長嘅翼',
+        hero_desc: '成為全球旅行者最醒目嘅行李服務 Beeliber 嘅合作夥伴，創造新嘅收益模型同客戶體驗。',
+        benefits_title: '點解要揀 Beeliber 合作夥伴？',
+        benefit1_t: '創造額外收益',
+        benefit1_d: '利用閒置空間+，創造穩定嘅手續費收入。',
+        benefit2_t: '增加客流量',
+        benefit2_d: '使用 Beeliber 嘅全球旅行者將會探訪您嘅店面。',
+        benefit3_t: '品牌推廣',
+        benefit3_d: '透過 Beeliber 平台內嘅據點曝光，提升全球知名度。',
+        benefit4_t: '安全賠償系統',
+        benefit4_d: '投保最高 50 萬韓元嘅賠償保險，減輕合作夥伴嘅營運負擔。',
+        form_title: '立即提議合作',
+        company: '公司名 / 酒店名', contact: '聯絡方式', location: '位置 / 地址', businessType: '行業類型', message: '諮詢內容',
+        message_placeholder: '請簡要描述合作內容。',
+        alert_fill: '請填寫必要資訊。', back_to_main: '回到首頁',
+        submit: '提交建議', success: '提交成功', successSub: '我哋會盡快聯絡您。', back: '返回首頁'
+    },
     reviews: ["多虧咗配送服務，一身輕咁開始咗旅遊！🍯", "冇行李行街簡直係天堂！👍", "由釜山去首爾都好輕鬆。🚄", "網點好多，非常方便。🐝"],
     booking: {
         delivery: '配送', storage: '寄存', from: '出發 / 寄存地', to: '送達 / 領取地', duration: '寄存時間',

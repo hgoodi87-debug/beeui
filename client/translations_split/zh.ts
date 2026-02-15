@@ -65,7 +65,26 @@ export const zh = {
         status_4: 'Arrived',
         status_5: 'Completed'
     },
-    partnership: { title: '商务合作咨询', subtitle: '与 Beeliber 共创旅游新标准。', company: '公司名 / 酒店名', contact: '联系方式', location: '位置 / 地址', businessType: '行业类型', message: '咨询内容', submit: '提交建议', success: '提交成功', successSub: '我们会尽快联系您。', back: '返回首页' },
+    partnership: {
+        title: '商务合作咨询', subtitle: '与 Beeliber 共创旅游新标准。',
+        hero_badge: 'GLOBAL PARTNERSHIP',
+        hero_title: '与 Beeliber 一起\n插上成长的翅膀',
+        hero_desc: '成为全球旅行者最智慧的行李服务 Beeliber 的合作伙伴，创造新的收益模型和客户体验。',
+        benefits_title: '为什么选择 Beeliber 合作伙伴？',
+        benefit1_t: '创造额外收益',
+        benefit1_d: '利用闲置空间，创造稳定的手续费收入。',
+        benefit2_t: '增加客流量',
+        benefit2_d: '使用 Beeliber 的全球旅行者将会造访您的店面。',
+        benefit3_t: '品牌推广',
+        benefit3_d: '通过 Beeliber 平台内的网点曝光，提升全球知名度。',
+        benefit4_t: '安全赔偿系统',
+        benefit4_d: '投保最高 50 万韩元的赔偿保险，减轻合作伙伴的运营负担。',
+        form_title: '立即提议合作',
+        company: '公司名 / 酒店名', contact: '联系方式', location: '位置 / 地址', businessType: '行业类型', message: '咨询内容',
+        message_placeholder: '请简要描述合作内容。',
+        alert_fill: '请填写必要信息。', back_to_main: '回到首页',
+        submit: '提交建议', success: '提交成功', successSub: '我们会尽快联系您。', back: '返回首页'
+    },
     reviews: ["多亏了配送服务，一身轻地开始了旅行！🍯", "没有行李逛街简直是天堂！👍", "从釜山到首尔也很轻松。🚄", "网点很多，非常方便。🐝"],
     booking: {
         delivery: '配送', storage: '寄存', from: '出发 / 寄存地', to: '送达 / 领取地', duration: '寄存时间',

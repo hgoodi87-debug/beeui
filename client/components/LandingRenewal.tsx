@@ -248,6 +248,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                         loop
                         muted
                         playsInline
+                        preload="auto"
+                        poster="https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=1920"
                         src={CONFIG.video.src}
                         className="w-full h-full object-cover object-center"
                     />

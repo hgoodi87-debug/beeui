@@ -1,0 +1,16 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none"
+    xmlns="http://www.w3.org/2000/svg">
+    <!-- Carrier Handle -->
+    <path d="M12 6C12 4.89543 12.8954 4 14 4H18C19.1046 4 20 4.89543 20 6V8H12V6Z" fill="#0C0C0C"/>
+    <!-- Carrier Body (Beeliber Yellow) -->
+    <rect x="6" y="8" width="20" height="20" rx="4" fill="#FFCB05"/>
+    <!-- Bee Silhouette (Black) -->
+    <path d="M16 12C14.3431 12 13 13.3431 13 15C13 16.6569 14.3431 18 16 18C17.6569 18 19 16.6569 19 15C19 13.3431 17.6569 12 16 12Z" fill="#0C0C0C"/>
+    <path d="M16 18.5C16 18.5 13 21 13 22C13 23 14.3431 23.5 16 23.5C17.6569 23.5 19 23 19 22C19 21 16 18.5 16 18.5Z" fill="#0C0C0C"/>
+    <!-- Wings -->
+    <path d="M13 15C11 14 10 15 10 16C10 17 11 17.5 13 17" stroke="#0C0C0C" stroke-width="1" stroke-linecap="round"/>
+    <path d="M19 15C21 14 22 15 22 16C22 17 21 17.5 19 17" stroke="#0C0C0C" stroke-width="1" stroke-linecap="round"/>
+    <!-- Antennae -->
+    <path d="M15 12L14 10.5" stroke="#0C0C0C" stroke-width="0.8" stroke-linecap="round"/>
+    <path d="M17 12L18 10.5" stroke="#0C0C0C" stroke-width="0.8" stroke-linecap="round"/>
+</svg>

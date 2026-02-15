@@ -354,7 +354,7 @@ const PartnershipPage: React.FC<PartnershipPageProps> = ({ onBack, t }) => {
                           </motion.div>
                         ) : (
                           <motion.div key="btn-content" className="flex items-center gap-6">
-                            <PaperPlane className="w-8 h-8 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform duration-500" />
+                            <Send className="w-8 h-8 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform duration-500" />
                             {t.partnership.submit}
                           </motion.div>
                         )}

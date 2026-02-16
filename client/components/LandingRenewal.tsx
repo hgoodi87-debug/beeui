@@ -35,7 +35,7 @@ const CONFIG = {
         dark: "#0C0C0C",
     },
     video: {
-        src: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2Fbee.mp4?alt=media&token=1d445016-6586-4922-bd40-ff7c677ec125",
+        src: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F0216.mp4?alt=media&token=47660d79-e317-4df8-b4df-ca37ecf95d6b",
     },
     sizes: [
         { label: "M", range: "18-23\"", height: "h-20" },

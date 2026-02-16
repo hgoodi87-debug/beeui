@@ -243,7 +243,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
             <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
 
                 {/* Background Video Layer */}
-                <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 z-0 bg-black">
                     <video
                         autoPlay
                         loop
@@ -252,11 +252,16 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                         preload="auto"
                         poster="https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=1920"
                         src={CONFIG.video.src}
-                        className="w-full h-full object-cover object-center"
+                        className="w-full h-full object-cover object-center opacity-80"
                     />
-                    {/* Dark Overlay for Readability */}
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+
+                    {/* [MASTERPIECE] Luxury Grain Overlay: Masks pixelation & adds cinematic texture */}
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay z-[1]"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+
+                    {/* Dark Overlays for Readability & Depth */}
+                    <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] z-[2]" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 z-[3]" />
                 </div>
 
                 {/* Content Layer */}

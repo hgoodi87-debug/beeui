@@ -275,12 +275,12 @@ export const ko = {
         back_to_top: "맨 위로"
     },
     locations_page: {
-        title: '빌리버 거점 안내', sidebar_title: 'Global Network', sidebar_subtitle: 'Premium Service Points',
-        filter_all: '전체', filter_airport: '공항', filter_city: '도심', back: '메인으로', no_results: '등록된 지점이 없습니다.',
+        title: '빌리버 거점 안내', sidebar_title: 'Global Network', sidebar_subtitle: '빌리버 거점 안내',
+        filter_all: '전체', filter_airport: '공항', filter_partner: '지점 파트너스', filter_city: '도심', back: '메인으로', no_results: '등록된 지점이 없습니다.',
         info_card_delivery: '배송(Delivery)', info_card_storage: '보관(Storage)', info_card_book: '지금 예약하기',
         book_delivery: '배송 예약하기', book_storage: '보관 예약하기',
         search_placeholder: '내 위치 검색 (예: 호텔명, 역 이름)', search_error: '검색에 실패했습니다.',
-        badge_same_day: '당일 배송', badge_scheduled: '예약 배송', badge_storage: '짐 보관',
+        badge_delivery: '배송', badge_same_day: '당일 배송', badge_scheduled: '예약 배송', badge_storage: '짐 보관',
         tag_airport_delivery: '공항 배송', tag_both_services: '배송 | 보관', tag_storage_only: '보관 전용', tag_delivery_only: '배송 전용',
         my_location: '본부장님 위치 💅✨',
         user_marker: '고객 위치',

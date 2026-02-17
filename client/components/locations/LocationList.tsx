@@ -15,6 +15,8 @@ interface LocationListProps {
     currentService: 'SAME_DAY' | 'SCHEDULED' | 'STORAGE';
     onServiceChange: (service: 'SAME_DAY' | 'SCHEDULED' | 'STORAGE') => void;
     onReset: () => void;
+    bookingDate?: string;
+    onDateChange?: (date: string) => void;
     bookingTime?: string;
     onTimeChange?: (time: string) => void;
     baggageCounts: any;

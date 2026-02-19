@@ -348,27 +348,27 @@ const LocationList: React.FC<LocationListProps> = ({
                             whileHover={{ y: -4, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onBranchClick(branch)}
-                            className={`w-[220px] md:w-full p-2.5 md:p-4 rounded-[1.2rem] md:rounded-[2rem] text-center md:text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
+                            className={`w-full max-w-[280px] md:max-w-none md:w-full p-3 md:p-4 rounded-[1.2rem] md:rounded-[2rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
                         >
-                            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-2.5 md:gap-6">
+                            <div className="flex flex-row items-center justify-between gap-3 md:gap-6">
                                 {/* Left Info Area */}
-                                <div className="flex-1 min-w-0 flex flex-col items-center md:items-start">
-                                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 mb-1.5 md:mb-3">
+                                <div className="flex-1 min-w-0 flex flex-col items-start">
+                                    <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-3">
                                         {/* PC에서만 아이콘 노출 💅 */}
                                         <div className={`hidden md:flex w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl items-center justify-center shrink-0 shadow-sm ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-50 text-gray-400'}`}>
                                             {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}
                                         </div>
-                                        <div className="min-w-0 flex flex-col items-center md:items-start">
-                                            <div className="text-[11px] md:text-[14px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-1 md:mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
-                                            <div className={`px-1.5 py-0.5 rounded-full text-[6.5px] md:text-[8px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
+                                        <div className="min-w-0">
+                                            <div className="text-[13px] md:text-[14px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
+                                            <div className={`px-1.5 py-0.5 rounded-full text-[7px] md:text-[8px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
                                         </div>
                                     </div>
 
                                     <div className="hidden md:block text-[10px] md:text-xs font-bold text-gray-400 line-clamp-1 mb-4">{lang === 'ko' ? branch.address : (branch[`address_${lang.replace('-', '_').toLowerCase()}`] || branch.address_en || branch.address)}</div>
 
-                                    <div className="flex flex-wrap justify-center md:justify-start gap-1 md:gap-2">
-                                        {branch.supportsDelivery && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[9px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_delivery || 'DELIVERY'}</span>}
-                                        {branch.supportsStorage && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[9px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_storage || 'STORAGE'}</span>}
+                                    <div className="flex flex-wrap gap-1 md:gap-2">
+                                        {branch.supportsDelivery && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[8px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_delivery || 'DELIVERY'}</span>}
+                                        {branch.supportsStorage && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[8px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_storage || 'STORAGE'}</span>}
                                     </div>
                                 </div>
 

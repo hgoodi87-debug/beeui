@@ -165,7 +165,7 @@ const LocationList: React.FC<LocationListProps> = ({
 
                 <div className="flex flex-col gap-3 md:gap-5">
                     {/* [스봉이] 본부장님 안목에 맞춘 '슬림 & 스마트 & 와이드' 필터바 💅 */}
-                    <div className="flex items-stretch gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1 md:pb-0 w-full">
+                    <div className="flex flex-wrap items-stretch gap-2 md:gap-4 overflow-x-visible no-scrollbar pb-1 md:pb-0 w-full">
                         {/* 서비스 선택 (배송/보관) - 슬림하게 다이어트! */}
                         <div className="flex-1 flex bg-gray-100/60 p-1 md:p-1.5 rounded-full border border-gray-100 shadow-inner min-w-[110px] md:min-w-[180px]">
                             {(['DELIVERY', 'STORAGE'] as const).map((type) => {
@@ -304,7 +304,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                                         onClick={() => {
                                                             if (activeStep === 'PICKUP_TIME') {
                                                                 onTimeChange?.(h);
-                                                                if (isDelivery) setActiveStep('RETURN_DATE');
+                                                                if (isDelivery || currentService === 'STORAGE') setActiveStep('RETURN_DATE');
                                                                 else setActiveStep(null);
                                                             } else {
                                                                 onReturnTimeChange?.(h);
@@ -348,21 +348,40 @@ const LocationList: React.FC<LocationListProps> = ({
                             whileHover={{ y: -4, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onBranchClick(branch)}
-                            className={`w-[130px] md:w-full p-2 md:p-6 rounded-[1rem] md:rounded-[2rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
+                            className={`w-[260px] md:w-full p-3 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
                         >
-                            <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 mb-1 md:mb-3">
-                                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full md:rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-50 text-gray-400'}`}>
-                                    {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}
+                            <div className="flex items-center md:items-start justify-between gap-3 md:gap-6">
+                                {/* Left Info Area */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 md:gap-3 mb-1.5 md:mb-3">
+                                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-50 text-gray-400'}`}>
+                                            {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-[12px] md:text-lg font-[1000] tracking-tighter leading-tight line-clamp-1 mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
+                                            <div className={`px-1.5 py-0.5 rounded-full text-[7px] md:text-[9px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="hidden md:block text-[10px] md:text-xs font-bold text-gray-400 line-clamp-1 mb-4">{lang === 'ko' ? branch.address : (branch[`address_${lang.replace('-', '_').toLowerCase()}`] || branch.address_en || branch.address)}</div>
+
+                                    <div className="flex flex-wrap gap-1 md:gap-2">
+                                        {branch.supportsDelivery && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[9px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_delivery || 'DELIVERY'}</span>}
+                                        {branch.supportsStorage && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[9px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_storage || 'STORAGE'}</span>}
+                                    </div>
                                 </div>
-                                <div className="flex-1 w-full text-center md:text-left">
-                                    <div className="text-[11px] md:text-base font-black tracking-tighter leading-tight line-clamp-1 mb-1">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
-                                    <div className={`px-1.5 py-0.5 rounded-full text-[6px] md:text-[8px] font-black uppercase tracking-tighter w-fit mx-auto md:ml-0 ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
-                                </div>
-                            </div>
-                            <div className="hidden md:block text-[9px] font-bold text-gray-400 line-clamp-1 mb-3">{lang === 'ko' ? branch.address : (branch[`address_${lang.replace('-', '_').toLowerCase()}`] || branch.address_en || branch.address)}</div>
-                            <div className="flex gap-1 justify-center md:justify-start">
-                                {branch.supportsDelivery && <span className={`px-1.5 py-0.5 rounded-full text-[6px] md:text-[8px] font-black border ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_delivery || 'DELIVERY'}</span>}
-                                {branch.supportsStorage && <span className={`px-1.5 py-0.5 rounded-full text-[6px] md:text-[8px] font-black border ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_storage || 'STORAGE'}</span>}
+
+                                {/* Right Image Area */}
+                                {branch.imageUrl && (
+                                    <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-[1.2rem] md:rounded-[1.8rem] overflow-hidden shadow-lg border-2 border-white ring-1 ring-gray-100 bg-gray-50 group-hover:scale-105 transition-transform duration-500">
+                                        <img
+                                            src={branch.imageUrl}
+                                            alt={branch.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </motion.button>
                     );

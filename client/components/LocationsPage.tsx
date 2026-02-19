@@ -8,7 +8,7 @@ import { LocationOption } from '../types';
 
 interface LocationsPageProps {
   onBack: () => void;
-  onSelectLocation: (id: string, type: 'STORAGE' | 'DELIVERY', date?: string, bagCounts?: any, returnDate?: string) => void;
+  onSelectLocation: (id: string, type: 'STORAGE' | 'DELIVERY', date?: string, returnDate?: string, bagCounts?: any) => void;
   t: any;
   lang: string;
   onLangChange: (lang: string) => void;
@@ -199,7 +199,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     if (selectedBranch) {
       const combinedPickup = `${bookingDate} ${bookingTime}`;
       const combinedReturn = `${returnDate} ${returnTime}`;
-      onSelectLocation(selectedBranch.id, type, combinedPickup, baggageCounts, combinedReturn);
+      onSelectLocation(selectedBranch.id, type, combinedPickup, combinedReturn, baggageCounts);
     }
   };
 
@@ -208,7 +208,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
       {/* Sidebar Section - [스봉이 수정] 모바일에서 지점 선택 시 사이드바를 완전히 제거하여 지도/정보에 집중 */}
       {/* Sidebar Section - [스봉이 수정] 모바일에서 지점 선택 시 사이드바를 완전히 제거하여 지도/정보에 집중 */}
       <div
-        className={`absolute inset-0 md:static pointer-events-none md:pointer-events-auto w-full md:w-[450px] lg:w-[500px] h-full flex flex-col z-[70] transition-all duration-500 flex`}
+        className={`absolute inset-0 md:static pointer-events-none md:pointer-events-auto w-full md:w-[480px] lg:w-[520px] h-full flex flex-col z-[70] transition-all duration-500 flex`}
       >
         <LocationList
           t={t}

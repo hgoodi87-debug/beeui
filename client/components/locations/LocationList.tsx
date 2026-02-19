@@ -150,14 +150,14 @@ const LocationList: React.FC<LocationListProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="overflow-hidden pointer-events-auto p-2 md:p-8 bg-white/95 backdrop-blur-xl shadow-2xl border-b border-gray-100 rounded-b-[1.5rem] md:rounded-b-[2.5rem] relative z-30"
+                className="overflow-hidden pointer-events-auto p-2 md:p-5 bg-white/95 backdrop-blur-xl shadow-2xl border-b border-gray-100 rounded-b-[1.5rem] md:rounded-b-[2rem] relative z-30"
             >
-                <div onClick={onReset} className="inline-flex items-center gap-2 md:gap-3 mb-3 md:mb-8 cursor-pointer group px-1">
+                <div onClick={onReset} className="inline-flex items-center gap-2 md:gap-3 mb-3 md:mb-5 cursor-pointer group px-1">
                     <div className="flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-100 group-hover:bg-bee-yellow transition-all shadow-sm">
                         <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-900" />
                     </div>
                     <div className="flex flex-col">
-                        <h1 className="text-lg md:text-3xl font-[1000] tracking-tighter text-gray-900 leading-tight">
+                        <h1 className="text-lg md:text-2xl font-[1000] tracking-tighter text-gray-900 leading-tight">
                             {t.locations_page?.sidebar_subtitle || 'Service Points'}
                         </h1>
                     </div>
@@ -167,7 +167,7 @@ const LocationList: React.FC<LocationListProps> = ({
                     {/* [스봉이] 본부장님 안목에 맞춘 '슬림 & 스마트 & 와이드' 필터바 💅 */}
                     <div className="flex flex-wrap items-stretch gap-2 md:gap-4 overflow-x-visible no-scrollbar pb-1 md:pb-0 w-full">
                         {/* 서비스 선택 (배송/보관) - 슬림하게 다이어트! */}
-                        <div className="flex-1 flex bg-gray-100/60 p-1 md:p-1.5 rounded-full border border-gray-100 shadow-inner min-w-[110px] md:min-w-[180px]">
+                        <div className="flex-1 flex bg-gray-100/60 p-1 md:p-1 rounded-full border border-gray-100 shadow-inner min-w-[110px] md:min-w-[140px]">
                             {(['DELIVERY', 'STORAGE'] as const).map((type) => {
                                 const isCurrent = type === 'DELIVERY' ? (currentService === 'SAME_DAY' || currentService === 'SCHEDULED') : currentService === 'STORAGE';
                                 return (
@@ -190,14 +190,14 @@ const LocationList: React.FC<LocationListProps> = ({
                                 const next = activeStep === 'BAGGAGE' ? null : 'BAGGAGE';
                                 setActiveStep(next);
                             }}
-                            className={`flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-2 px-2.5 md:px-6 py-1.5 md:py-2.5 rounded-full border transition-all duration-300 shadow-md min-w-[45px] md:min-w-[100px] ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900 hover:border-bee-yellow'}`}
+                            className={`flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 px-2.5 md:px-4 py-1.5 md:py-2 rounded-full border transition-all duration-300 shadow-md min-w-[45px] md:min-w-[70px] ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900 hover:border-bee-yellow'}`}
                         >
                             <Luggage className={`w-3.5 h-3.5 md:w-5 md:h-5 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
                             <span className="text-[11px] md:text-[16px] font-[1000] italic tracking-tighter leading-none">{Object.values(baggageCounts as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
                         </button>
 
                         {/* 날짜 & 시간 선택 (맡기기/찾기) - 슬림 와이드 & 스마트 정보 노출 💅 */}
-                        <div className="flex-[3.5] flex items-center gap-1.5 md:gap-4 bg-white rounded-full border border-gray-100 shadow-lg px-2 md:px-6 py-1 md:py-2 shrink-0 transition-all justify-between">
+                        <div className="flex-[3.5] flex items-center gap-1.5 md:gap-2 bg-white rounded-full border border-gray-100 shadow-lg px-2 md:px-4 py-1 md:py-1.5 shrink-0 transition-all justify-between min-w-[200px] flex-wrap md:flex-nowrap">
                             <button onClick={(e) => {
                                 e.stopPropagation();
                                 const next = activeStep === 'PICKUP_DATE' ? null : 'PICKUP_DATE';
@@ -207,8 +207,8 @@ const LocationList: React.FC<LocationListProps> = ({
                                     {lang === 'ko' ? (isDelivery ? '보내는날' : '맡기는 날') : (t.locations_page?.badge_pick?.slice(0, 1) || 'P')}
                                 </div>
                                 <div className="flex items-baseline gap-1 md:gap-2">
-                                    <span className="text-[12px] md:text-[20px] font-[1000] text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(bookingDate)}</span>
-                                    <span className="text-[8px] md:text-[13px] font-[1000] text-bee-black/40 italic tracking-tighter">{bookingTime || '--:--'}</span>
+                                    <span className="text-[12px] md:text-[16px] font-[1000] text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(bookingDate)}</span>
+                                    <span className="text-[8px] md:text-[11px] font-[1000] text-bee-black/40 italic tracking-tighter">{bookingTime || '--:--'}</span>
                                 </div>
                             </button>
                             <div className="w-[1.5px] md:w-[2px] h-6 md:h-10 bg-gray-100 shrink-0" />
@@ -221,8 +221,8 @@ const LocationList: React.FC<LocationListProps> = ({
                                     {lang === 'ko' ? (isDelivery ? '받는날' : '찾는 날') : (t.locations_page?.badge_ret?.slice(0, 1) || 'R')}
                                 </div>
                                 <div className="flex items-baseline gap-1 md:gap-2">
-                                    <span className="text-[12px] md:text-[20px] font-[1000] text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(returnDate)}</span>
-                                    <span className="text-[8px] md:text-[13px] font-[1000] text-gray-400/60 italic tracking-tighter">{returnTime || '--:--'}</span>
+                                    <span className="text-[12px] md:text-[16px] font-[1000] text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(returnDate)}</span>
+                                    <span className="text-[8px] md:text-[11px] font-[1000] text-gray-400/60 italic tracking-tighter">{returnTime || '--:--'}</span>
                                 </div>
                             </button>
                         </div>
@@ -230,13 +230,13 @@ const LocationList: React.FC<LocationListProps> = ({
 
                     {/* 검색바는 하단에 깔끔하게 독채로 💅 */}
                     <div className="relative w-full">
-                        <div className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 text-gray-400"><Search size={14} className="md:w-4 md:h-4" /></div>
+                        <div className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 text-gray-400"><Search size={14} className="md:w-3.5 md:h-3.5" /></div>
                         <input
                             type="text"
-                            placeholder={t.locations_page?.search_placeholder || "Search location..."}
+                            placeholder={t.locations_page?.search_placeholder || "Search..."}
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-10 md:pl-11 pr-4 py-2.5 md:py-3 bg-gray-50 border border-gray-100 rounded-full text-[11px] md:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-bee-yellow/20 shadow-sm"
+                            className="w-full pl-10 md:pl-9 pr-4 py-2.5 md:py-2.5 bg-gray-50 border border-gray-100 rounded-full text-[11px] md:text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-bee-yellow/20 shadow-sm"
                         />
                     </div>
 
@@ -327,7 +327,7 @@ const LocationList: React.FC<LocationListProps> = ({
             </motion.div>
 
             {/* List Area - Floating Cards at the Bottom 💅 */}
-            <div className="flex-none md:flex-1 md:overflow-y-auto no-scrollbar p-3 md:p-6 md:space-y-4 pointer-events-auto bg-transparent border-none mt-auto h-auto flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none gap-3 md:gap-4 pb-12">
+            <div className="flex-none md:flex-1 md:overflow-y-auto no-scrollbar p-3 md:p-4 md:space-y-3 pointer-events-auto bg-transparent border-none mt-auto h-auto flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none gap-3 md:gap-3 pb-12">
                 <AnimatePresence>
                     {!activeStep && (
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-[10px] items-center gap-2 font-black text-white bg-bee-black/30 backdrop-blur-sm px-3 py-1 rounded-full uppercase tracking-widest mb-2 hidden md:flex w-fit">
@@ -348,7 +348,7 @@ const LocationList: React.FC<LocationListProps> = ({
                             whileHover={{ y: -4, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onBranchClick(branch)}
-                            className={`w-[260px] md:w-full p-3 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
+                            className={`w-[260px] md:w-full p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
                         >
                             <div className="flex items-center md:items-start justify-between gap-3 md:gap-6">
                                 {/* Left Info Area */}
@@ -358,8 +358,8 @@ const LocationList: React.FC<LocationListProps> = ({
                                             {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <div className="text-[12px] md:text-lg font-[1000] tracking-tighter leading-tight line-clamp-1 mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
-                                            <div className={`px-1.5 py-0.5 rounded-full text-[7px] md:text-[9px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
+                                            <div className="text-[12px] md:text-[14px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
+                                            <div className={`px-1.5 py-0.5 rounded-full text-[7px] md:text-[8px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
                                         </div>
                                     </div>
 

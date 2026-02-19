@@ -8,7 +8,7 @@ import { LocationOption } from '../types';
 
 interface LocationsPageProps {
   onBack: () => void;
-  onSelectLocation: (id: string, type: 'STORAGE' | 'DELIVERY', date?: string, bagCounts?: any) => void;
+  onSelectLocation: (id: string, type: 'STORAGE' | 'DELIVERY', date?: string, bagCounts?: any, returnDate?: string) => void;
   t: any;
   lang: string;
   onLangChange: (lang: string) => void;

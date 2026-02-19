@@ -86,6 +86,7 @@ const App: React.FC = () => {
     pickupLocation: string,
     serviceType: 'STORAGE' | 'DELIVERY',
     date?: string,
+    returnDate?: string,
     bagCounts?: { S: number, M: number, L: number, XL: number }
   } | null>(null);
   const [preSelectedStorageId, setPreSelectedStorageId] = useState<string | null>(null); // Keep for backward compat if needed, or remove
@@ -156,12 +157,14 @@ const App: React.FC = () => {
     id: string,
     type: 'STORAGE' | 'DELIVERY' = 'STORAGE',
     date?: string,
+    returnDate?: string,
     bagCounts?: { S: number, M: number, L: number, XL: number }
   ) => {
     setPreSelectedBooking({
       pickupLocation: id,
       serviceType: type,
       date,
+      returnDate,
       bagCounts
     });
     navigate('BOOKING');
@@ -328,6 +331,7 @@ const App: React.FC = () => {
               initialLocationId={preSelectedBooking?.pickupLocation}
               initialServiceType={preSelectedBooking?.serviceType as any}
               initialDate={preSelectedBooking?.date}
+              initialReturnDate={preSelectedBooking?.returnDate}
               initialBagSizes={preSelectedBooking?.bagCounts}
               onBack={() => navigate('LOCATIONS')}
               onSuccess={handleBookingSuccess}

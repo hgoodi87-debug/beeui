@@ -28,6 +28,7 @@ interface BookingPageProps {
     initialLocationId?: string;
     initialServiceType?: ServiceType;
     initialDate?: string;
+    initialReturnDate?: string;
     initialBagSizes?: { S: number, M: number, L: number, XL: number };
     onBack: () => void;
     onSuccess: (booking: BookingState) => void;
@@ -43,6 +44,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     initialLocationId,
     initialServiceType = ServiceType.STORAGE,
     initialDate,
+    initialReturnDate,
     initialBagSizes,
     onBack,
     onSuccess,
@@ -71,14 +73,18 @@ const BookingPage: React.FC<BookingPageProps> = ({
         fetchPrices();
     }, []);
 
+    // Parse initial input (Format: "YYYY-MM-DD HH:mm") 💅
+    const [initPickupDate, initPickupTime] = initialDate?.split(' ') || [initialDate, ''];
+    const [initReturnDate, initReturnTime] = initialReturnDate?.split(' ') || [initialReturnDate, ''];
+
     const [booking, setBooking] = useState<Partial<BookingState>>({
         serviceType: initialServiceType,
         pickupLocation: initialLocationId || '',
         dropoffLocation: '',
-        pickupDate: initialDate || defaultDate,
-        pickupTime: initialServiceType === ServiceType.DELIVERY ? '09:00' : '10:00',
-        dropoffDate: initialDate || defaultDate,
-        deliveryTime: initialServiceType === ServiceType.DELIVERY ? '16:00' : '11:00',
+        pickupDate: initPickupDate || defaultDate,
+        pickupTime: initPickupTime || (initialServiceType === ServiceType.DELIVERY ? '09:00' : '10:00'),
+        dropoffDate: initReturnDate || initPickupDate || defaultDate,
+        deliveryTime: initReturnTime || (initialServiceType === ServiceType.DELIVERY ? '16:00' : '14:00'),
         bagSizes: initialBagSizes || { S: 0, M: 0, L: 0, XL: 0 },
         bags: initialBagSizes ? Object.values(initialBagSizes).reduce((a, b) => a + b, 0) : 0,
         userName: isMember ? (user.displayName || user.email?.split('@')[0] || 'Member') : '',

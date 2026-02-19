@@ -75,20 +75,15 @@ const LocationMap: React.FC<LocationMapProps> = ({
 
     const updateMarkers = useCallback(() => {
         if (!mapRef.current || !window.naver || !window.naver.maps || !isMapReady) {
-            console.log("Map or Naver SDK not ready for markers... ☕");
+            console.log("[스봉이] Map or Naver SDK not ready for markers... 🐢");
             return;
         }
 
-        // CRITICAL: Ensure the map's projection is ready before creating markers
-        const projection = mapRef.current.getProjection();
-        if (!projection) {
-            console.log("Map projection not ready yet, skipping marker update... 🐢");
-            return;
-        }
-
-        // Clear existing markers
+        // [스봉이] 마커 업데이트 전 기존 마커 제거
         markersRef.current.forEach(m => m.setMap(null));
         markersRef.current = [];
+
+        console.log(`[스봉이] Drawing ${branches.length} markers... 📍`);
 
         // 1. Branch Markers
         branches.forEach(branch => {
@@ -112,10 +107,8 @@ const LocationMap: React.FC<LocationMapProps> = ({
             `;
 
             if (!branch.lat || !branch.lng) return;
-
             if (!window.naver.maps || !window.naver.maps.Marker) return;
 
-            // [스봉이] 앵커 포인트 정밀 조정: 하단 끝점으로 밀착 (Y축 95% 지점으로 살짝 올림)
             const marker = new window.naver.maps.Marker({
                 position: new window.naver.maps.LatLng(branch.lat, branch.lng),
                 map: mapRef.current,
@@ -132,9 +125,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
 
             markersRef.current.push(marker);
         });
-
-        // Marker update logic only handles markers. Centering is moved to a separate Effect.
-    }, [branches, selectedBranch, currentService, lang, onLocationSelect]);
+    }, [branches, selectedBranch, currentService, lang, onLocationSelect, isMapReady]);
 
     // [스봉이 수정] 지점 선택 시 지도 이동 로직 전담 ( panTo로 부드럽게~ 💅 )
     useEffect(() => {
@@ -149,7 +140,6 @@ const LocationMap: React.FC<LocationMapProps> = ({
     // [스봉이] 사용자 위치 마커 관리 및 최초 센터링 전담 Effect
     useEffect(() => {
         if (!mapRef.current || !window.naver || !isMapReady || !userLocation) {
-            console.log("GPS Centering skip... isMapReady:", isMapReady, "userLocation:", !!userLocation);
             return;
         }
 
@@ -157,7 +147,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
         if (userMarkerRef.current) {
             userMarkerRef.current.setPosition(new window.naver.maps.LatLng(userLocation.lat, userLocation.lng));
         } else {
-            console.log("Creating user marker... 🐝");
+            console.log("[스봉이] Creating user marker... 🐝");
             const beeUrl = `${window.location.origin}/images/markers/Absolute_Bee_v21.svg`;
             const beeContent = `
                 <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
@@ -174,13 +164,14 @@ const LocationMap: React.FC<LocationMapProps> = ({
                     content: beeContent,
                     anchor: new window.naver.maps.Point(26, 44)
                 },
-                zIndex: 200 // 가장 위에 노출
+                zIndex: 200
             });
         }
 
         // 2. 최초 사용자 위치 센터링 (사장님 요청: 접속 시 무조건 내 위치로!)
-        if (!hasInitialCentered.current) {
-            console.log("Force centering on user location... 🐝✨");
+        // selectedBranch가 없을 때만 자동 센터링하여 사용자의 선택을 존중합니다.
+        if (!hasInitialCentered.current && !selectedBranch) {
+            console.log("[스봉이] Force centering on user location... 🐝✨");
             mapRef.current.setCenter(new window.naver.maps.LatLng(userLocation.lat, userLocation.lng));
             mapRef.current.setZoom(14, true);
             hasInitialCentered.current = true;

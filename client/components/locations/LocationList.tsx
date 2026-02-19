@@ -41,6 +41,17 @@ const LocationList: React.FC<LocationListProps> = ({
     const isDelivery = currentService === 'SAME_DAY' || currentService === 'SCHEDULED';
     const timeSlotsOrig = React.useMemo(() => generateTimeSlots(9, 21, 30), []);
 
+    // [스봉이] 날짜 포맷팅 헬퍼 (YYYY-MM-DD -> MM.DD) 💅
+    const formatToMMDD = (dateStr: string | undefined) => {
+        if (!dateStr || dateStr === '--.--') return '--.--';
+        // 숫자가 아닌 문자(공백 등)가 섞여있을 수 있으니 정규식으로 안전하게 추출 💅
+        const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            return `${match[2]}.${match[3]}`;
+        }
+        return dateStr;
+    };
+
     const CalendarView = ({
         selectedDate,
         onSelect,
@@ -139,7 +150,7 @@ const LocationList: React.FC<LocationListProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="overflow-hidden pointer-events-auto p-3 md:p-8 bg-white/95 backdrop-blur-xl shadow-2xl border-b border-gray-100 rounded-b-[1.5rem] md:rounded-b-[2.5rem] relative z-30"
+                className="overflow-hidden pointer-events-auto p-2 md:p-8 bg-white/95 backdrop-blur-xl shadow-2xl border-b border-gray-100 rounded-b-[1.5rem] md:rounded-b-[2.5rem] relative z-30"
             >
                 <div onClick={onReset} className="inline-flex items-center gap-2 md:gap-3 mb-3 md:mb-8 cursor-pointer group px-1">
                     <div className="flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-100 group-hover:bg-bee-yellow transition-all shadow-sm">
@@ -154,7 +165,7 @@ const LocationList: React.FC<LocationListProps> = ({
 
                 <div className="flex flex-col gap-3 md:gap-4">
                     {/* [스봉이] 사장님이 좋아하시는 그 '일렬 횡대' 레이아웃 💅 서비스, 가방, 날짜를 한 줄에! */}
-                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1.5 md:pb-0">
+                    <div className="flex items-center gap-0.5 md:gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
                         {/* 서비스 선택 (배송/보관) */}
                         <div className="flex bg-gray-100/60 p-1 md:p-1.5 rounded-full border border-gray-100 shadow-inner shrink-0">
                             {(['DELIVERY', 'STORAGE'] as const).map((type) => {
@@ -185,24 +196,24 @@ const LocationList: React.FC<LocationListProps> = ({
                             <span className="text-[10px] font-black italic tracking-tighter">{Object.values(baggageCounts as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
                         </button>
 
-                        {/* 날짜 선택 (맡기기/찾기) - 한 줄에 안착! 💅 */}
-                        <div className="flex items-center gap-1 bg-white rounded-full border border-gray-100 shadow-sm px-1.5 py-1.5 shrink-0">
+                        {/* 날짜 선택 (맡기기/찾기) - 본부장님 안목에 맞게 키우고 포맷은 날씬하게! 💅 */}
+                        <div className="flex items-center gap-1 bg-white rounded-full border border-gray-100 shadow-sm px-1 md:px-2 py-1.5 shrink-0">
                             <button onClick={(e) => {
                                 e.stopPropagation();
                                 const next = activeStep === 'PICKUP_DATE' ? null : 'PICKUP_DATE';
                                 setActiveStep(next);
                             }} className="flex items-center gap-1 shrink-0">
-                                <div className="bg-bee-yellow text-bee-black text-[7px] font-black px-1 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_pick || 'PICK'}</div>
-                                <span className="text-[9px] md:text-[11px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{bookingDate || '--.--'}</span>
+                                <div className="bg-bee-yellow text-bee-black text-[7px] md:text-[9px] font-black px-1 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_pick?.slice(0, 1) || 'P'}</div>
+                                <span className="text-[12px] md:text-[14px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(bookingDate)}</span>
                             </button>
-                            <div className="w-[1px] h-2 bg-gray-200 shrink-0" />
+                            <div className="w-[1px] h-3 bg-gray-200 shrink-0" />
                             <button onClick={(e) => {
                                 e.stopPropagation();
                                 const next = activeStep === 'RETURN_DATE' ? null : 'RETURN_DATE';
                                 setActiveStep(next);
                             }} className="flex items-center gap-1 shrink-0">
-                                <div className="bg-gray-100 text-gray-400 text-[7px] font-black px-1 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_ret || 'RET'}</div>
-                                <span className="text-[9px] md:text-[11px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{returnDate || '--.--'}</span>
+                                <div className="bg-gray-100 text-gray-400 text-[7px] md:text-[9px] font-black px-1 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_ret?.slice(0, 1) || 'R'}</div>
+                                <span className="text-[12px] md:text-[14px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(returnDate)}</span>
                             </button>
                         </div>
                     </div>

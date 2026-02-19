@@ -348,18 +348,19 @@ const LocationList: React.FC<LocationListProps> = ({
                             whileHover={{ y: -4, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onBranchClick(branch)}
-                            className={`w-[260px] md:w-full p-4 md:p-4 rounded-[1.5rem] md:rounded-[2rem] text-center md:text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
+                            className={`w-[220px] md:w-full p-2.5 md:p-4 rounded-[1.2rem] md:rounded-[2rem] text-center md:text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
                         >
-                            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4 md:gap-6">
+                            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-2.5 md:gap-6">
                                 {/* Left Info Area */}
                                 <div className="flex-1 min-w-0 flex flex-col items-center md:items-start">
-                                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 mb-2 md:mb-3">
-                                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-50 text-gray-400'}`}>
+                                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 mb-1.5 md:mb-3">
+                                        {/* PC에서만 아이콘 노출 💅 */}
+                                        <div className={`hidden md:flex w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl items-center justify-center shrink-0 shadow-sm ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-50 text-gray-400'}`}>
                                             {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}
                                         </div>
                                         <div className="min-w-0 flex flex-col items-center md:items-start">
-                                            <div className="text-[12px] md:text-[14px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-1 md:mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
-                                            <div className={`px-1.5 py-0.5 rounded-full text-[7px] md:text-[8px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
+                                            <div className="text-[11px] md:text-[14px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-1 md:mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
+                                            <div className={`px-1.5 py-0.5 rounded-full text-[6.5px] md:text-[8px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
                                         </div>
                                     </div>
 
@@ -371,9 +372,9 @@ const LocationList: React.FC<LocationListProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Right Image Area */}
+                                {/* Right Image Area - 모바일에서 더욱 콤팩트하게 💅 */}
                                 {branch.imageUrl && (
-                                    <div className="w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-[1.2rem] md:rounded-[1.8rem] overflow-hidden shadow-lg border-2 border-white ring-1 ring-gray-100 bg-gray-50 group-hover:scale-105 transition-transform duration-500">
+                                    <div className="w-12 h-12 md:w-24 md:h-24 shrink-0 rounded-[0.8rem] md:rounded-[1.8rem] overflow-hidden shadow-lg border-2 border-white ring-1 ring-gray-100 bg-gray-50 group-hover:scale-105 transition-transform duration-500">
                                         <img
                                             src={branch.imageUrl}
                                             alt={branch.name}

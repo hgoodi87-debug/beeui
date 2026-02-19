@@ -348,12 +348,12 @@ const LocationList: React.FC<LocationListProps> = ({
                             whileHover={{ y: -4, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onBranchClick(branch)}
-                            className={`w-full max-w-[280px] md:max-w-none md:w-full p-3 md:p-4 rounded-[1.2rem] md:rounded-[2rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
+                            className={`w-fit min-w-[180px] max-w-[240px] md:max-w-none md:w-full p-2.5 md:p-4 rounded-[1rem] md:rounded-[2rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
                         >
-                            <div className="flex flex-row items-center justify-between gap-3 md:gap-6">
+                            <div className="flex flex-row items-center justify-start gap-3 md:gap-6">
                                 {/* Left Info Area */}
-                                <div className="flex-1 min-w-0 flex flex-col items-start">
-                                    <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-3">
+                                <div className="flex-none min-w-0 flex flex-col items-start">
+                                    <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
                                         {/* PC에서만 아이콘 노출 💅 */}
                                         <div className={`hidden md:flex w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl items-center justify-center shrink-0 shadow-sm ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-50 text-gray-400'}`}>
                                             {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}

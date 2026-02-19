@@ -351,34 +351,34 @@ const LocationList: React.FC<LocationListProps> = ({
                             className={`w-fit md:w-full p-2.5 md:p-4 rounded-[1rem] md:rounded-[2rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
                         >
                             <div className="flex flex-row items-center justify-start gap-2.5 md:gap-6">
-                                {/* Left Info Area */}
-                                <div className="flex-none min-w-0 flex flex-col items-start">
-                                    <div className="flex items-center gap-1.5 md:gap-3 mb-1 md:mb-2">
+                                {/* Left Info Area [스봉이 수정] flex-1 추가하여 우측 이미지를 끝으로 밀어내기 💅 */}
+                                <div className="flex-1 min-w-0 flex flex-col items-start translate-y-0.5">
+                                    <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-3">
                                         {/* PC에서만 아이콘 노출 💅 */}
-                                        <div className={`hidden md:flex w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl items-center justify-center shrink-0 shadow-sm ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-50 text-gray-400'}`}>
+                                        <div className={`hidden md:flex w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl items-center justify-center shrink-0 shadow-lg border-2 border-white/50 ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100/50 text-gray-400'}`}>
                                             {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <div className="text-[13px] md:text-[14px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-0.5">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
-                                            <div className={`px-1.5 py-0.5 rounded-full text-[7px] md:text-[8px] font-black uppercase tracking-tighter w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
+                                            <div className="text-[14px] md:text-[16px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-1">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
+                                            <div className={`px-2 py-0.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
                                         </div>
                                     </div>
 
-                                    <div className="hidden md:block text-[10px] md:text-xs font-bold text-gray-400 line-clamp-1 mb-4">{lang === 'ko' ? branch.address : (branch[`address_${lang.replace('-', '_').toLowerCase()}`] || branch.address_en || branch.address)}</div>
+                                    <div className="hidden md:block text-[11px] md:text-xs font-bold text-gray-400 line-clamp-1 mb-4 italic tracking-tight">{lang === 'ko' ? branch.address : (branch[`address_${lang.replace('-', '_').toLowerCase()}`] || branch.address_en || branch.address)}</div>
 
-                                    <div className="flex flex-wrap gap-1 md:gap-2">
-                                        {branch.supportsDelivery && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[8px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_delivery || 'DELIVERY'}</span>}
-                                        {branch.supportsStorage && <span className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[8px] font-black border uppercase tracking-widest ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_storage || 'STORAGE'}</span>}
+                                    <div className="flex flex-wrap gap-1.5 md:gap-2">
+                                        {branch.supportsDelivery && <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black border uppercase tracking-[0.15em] ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_delivery || 'DELIVERY'}</span>}
+                                        {branch.supportsStorage && <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black border uppercase tracking-[0.15em] ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_storage || 'STORAGE'}</span>}
                                     </div>
                                 </div>
 
-                                {/* Right Image Area - 모바일에서 더욱 콤팩트하게 💅 */}
+                                {/* Right Image Area - [스봉이 수정] 정밀한 정렬과 프리미엄 엣지 💅 */}
                                 {branch.imageUrl && (
-                                    <div className="w-12 h-12 md:w-24 md:h-24 shrink-0 rounded-[0.8rem] md:rounded-[1.8rem] overflow-hidden shadow-lg border-2 border-white ring-1 ring-gray-100 bg-gray-50 group-hover:scale-105 transition-transform duration-500">
+                                    <div className="w-14 h-14 md:w-28 md:h-28 shrink-0 rounded-[1.2rem] md:rounded-[2.2rem] overflow-hidden shadow-2xl border-4 border-white ring-1 ring-gray-100 bg-gray-50 group-hover:scale-110 transition-transform duration-700 ease-in-out">
                                         <img
                                             src={branch.imageUrl}
                                             alt={branch.name}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700"
                                             onError={(e) => (e.currentTarget.style.display = 'none')}
                                         />
                                     </div>

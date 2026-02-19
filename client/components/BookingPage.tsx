@@ -297,6 +297,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const finalBooking: BookingState = {
             ...booking as BookingState,
             id: booking.id || `BEE-${Date.now().toString().slice(-6)}`,
+            pickupLoc: pickupLoc, // Ensure full object is passed for voucher 💅
+            returnLoc: booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined,
             price: priceDetails.total,
             finalPrice: priceDetails.total,
             status: BookingStatus.PENDING,

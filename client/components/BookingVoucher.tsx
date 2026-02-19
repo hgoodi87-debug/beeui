@@ -25,8 +25,14 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
     const getLocName = (l: LocationOption) => {
         if (!l) return 'N/A';
         const dbLang = lang.startsWith('zh') ? 'zh' : lang;
-        if (lang === 'ko') return l.name;
-        return (l[`name_${dbLang}` as keyof LocationOption] as string) || l.name_en || l.name;
+
+        // Priority: name_lang -> name_en -> name
+        const name = (l[`name_${dbLang}` as keyof LocationOption] as string) || l.name_en || l.name;
+
+        // Ensure it's not returning a single shortCode like 'MYN' if full name exists
+        if (name === l.shortCode && l.name && l.name !== l.shortCode) return l.name;
+
+        return name;
     };
 
     const getLocGuide = (l: LocationOption) => {
@@ -34,6 +40,16 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
         const dbLang = lang.startsWith('zh') ? 'zh' : lang;
         if (lang === 'ko') return l.pickupGuide;
         return (l[`pickupGuide_${dbLang}` as keyof LocationOption] as string) || l.pickupGuide_en || l.pickupGuide;
+    };
+
+    const getMapUrl = (l: LocationOption) => {
+        if (!l) return '#';
+        if (l.lat && l.lng) {
+            // Naver Map Deep Link / Web Link with coordinates
+            // Use search with address if coords fail, but coords are better
+            return `https://map.naver.com/v5/search/${encodeURIComponent(l.address || l.name)}?c=${l.lng},${l.lat},15,0,0,0,dh`;
+        }
+        return `https://map.naver.com/v5/search/${encodeURIComponent(l.address || l.name)}`;
     };
 
     const handleSaveCoupon = async () => {
@@ -178,9 +194,20 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                     <div className="w-7 h-7 rounded-full bg-bee-black border-4 border-bee-yellow shadow-md flex items-center justify-center flex-shrink-0">
                                         <div className="w-1.5 h-1.5 rounded-full bg-bee-yellow animate-pulse" />
                                     </div>
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t.booking.from}</p>
-                                        <h4 className="text-base font-black text-bee-black leading-tight mb-1">{getLocName(pickupLoc)}</h4>
+                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                            <h4 className="text-base font-black text-bee-black leading-tight">{getLocName(pickupLoc)}</h4>
+                                            <a
+                                                href={getMapUrl(pickupLoc)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="px-2 py-0.5 bg-bee-yellow text-bee-black rounded-lg text-[10px] font-black italic shadow-sm hover:scale-105 transition-transform flex items-center gap-1 no-print"
+                                            >
+                                                <i className="fa-solid fa-location-arrow text-[8px]"></i>
+                                                {lang === 'ko' ? '길찾기' : 'NAV'}
+                                            </a>
+                                        </div>
                                         <div className="flex items-center gap-2">
                                             <i className="fa-regular fa-calendar-check text-[10px] text-bee-yellow"></i>
                                             <p className="text-[11px] font-bold text-gray-400">{booking.pickupDate} <span className="mx-1 opacity-30">|</span> {booking.pickupTime}</p>
@@ -193,16 +220,29 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                     <div className={`w-7 h-7 rounded-full flex-shrink-0 border-4 border-white shadow-md flex items-center justify-center ${booking.serviceType === ServiceType.DELIVERY ? 'bg-bee-yellow' : 'bg-gray-100'}`}>
                                         <i className={`fa-solid ${booking.serviceType === ServiceType.DELIVERY ? 'fa-truck-fast text-[11px]' : 'fa-warehouse text-[11px]'} text-bee-black`}></i>
                                     </div>
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
                                             {booking.serviceType === ServiceType.DELIVERY ? t.booking.to : t.booking.duration}
                                         </p>
-                                        <h4 className="text-base font-black text-bee-black leading-tight mb-1">
-                                            {booking.serviceType === ServiceType.DELIVERY
-                                                ? (dropoffLoc ? getLocName(dropoffLoc) : (booking.dropoffAddress || 'Address Specified'))
-                                                : `${getLocName(pickupLoc)} (${t.storage_tiers?.[booking.selectedStorageTierId || ''] || (lang === 'ko' ? '보관' : 'Storage')})`
-                                            }
-                                        </h4>
+                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                            <h4 className="text-base font-black text-bee-black leading-tight">
+                                                {booking.serviceType === ServiceType.DELIVERY
+                                                    ? (dropoffLoc ? getLocName(dropoffLoc) : (booking.dropoffAddress || 'Address Specified'))
+                                                    : `${getLocName(pickupLoc)} (${t.storage_tiers?.[booking.selectedStorageTierId || ''] || (lang === 'ko' ? '보관' : 'Storage')})`
+                                                }
+                                            </h4>
+                                            {booking.serviceType === ServiceType.DELIVERY && dropoffLoc && (
+                                                <a
+                                                    href={getMapUrl(dropoffLoc)}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="px-2 py-0.5 bg-bee-yellow text-bee-black rounded-lg text-[10px] font-black italic shadow-sm hover:scale-105 transition-transform flex items-center gap-1 no-print"
+                                                >
+                                                    <i className="fa-solid fa-location-arrow text-[8px]"></i>
+                                                    {lang === 'ko' ? '길찾기' : 'NAV'}
+                                                </a>
+                                            )}
+                                        </div>
                                         <div className="flex items-center gap-2">
                                             <i className="fa-regular fa-clock text-[10px] text-bee-yellow"></i>
                                             <p className="text-[11px] font-bold text-gray-400">

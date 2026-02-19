@@ -176,8 +176,9 @@ export const ko = {
             none: '없음 (None)'
         },
         back_to_list: '목록으로 돌아가기',
-        print_voucher: '바우처 출력/저장',
-        pickup_photo: '픽업 사진',
+        sns_placeholder: '카카오톡 ID 또는 전화번호',
+        extra_storage: '추가 보관료',
+        pickup_title: '수령 정보',
         pickup_guide: '지점 및 픽업 안내',
         agree_premium_checklist: '고가품 체크리스트 및 보상 정책 확인',
         restricted_items: [
@@ -276,11 +277,13 @@ export const ko = {
     },
     locations_page: {
         title: '빌리버 거점 안내', sidebar_title: 'Global Network', sidebar_subtitle: '빌리버 거점 안내',
+        select_baggage_title: '가방 선택', bag_unit_4h: '/4시간~',
         filter_all: '전체', filter_airport: '공항', filter_partner: '지점 파트너스', filter_city: '도심', back: '메인으로', no_results: '등록된 지점이 없습니다.',
         info_card_delivery: '배송(Delivery)', info_card_storage: '보관(Storage)', info_card_book: '지금 예약하기',
         book_delivery: '배송 예약하기', book_storage: '보관 예약하기',
         search_placeholder: '내 위치 검색 (예: 호텔명, 역 이름)', search_error: '검색에 실패했습니다.',
         badge_delivery: '배송', badge_same_day: '당일 배송', badge_scheduled: '예약 배송', badge_storage: '짐 보관',
+        badge_pick: '맡기기', badge_ret: '찾기',
         tag_airport_delivery: '공항 배송', tag_both_services: '배송 | 보관', tag_storage_only: '보관 전용', tag_delivery_only: '배송 전용',
         my_location: '본부장님 위치 💅✨',
         user_marker: '고객 위치',
@@ -310,7 +313,12 @@ export const ko = {
         label_back_to_list: '목록으로',
         label_viewing_branch: '지점 조회 중',
         label_reserving_now: '예약 진행 중',
+        label_deposit_date: '맡기는 날',
         label_arrival_date: '도착 예정일',
+        label_return_date: '찾는 날',
+        date_hint: '원하시는 보관 또는 배송 시작 날짜를 선택해주세요.',
+        return_date_hint: '예상되는 수령 또는 종료 날짜를 선택해주세요.',
+        extra_storage: '추가 보관료: 하루당 ₩{amount}이 추가됩니다.',
         label_baggage_select: '수하물 선택',
         label_bag_count_suffix: '개',
         label_service_default: '서비스',
@@ -485,7 +493,7 @@ export const ko = {
         btn_yes: "네, 예약할게요!",
         branch_hours_template: "{branch} 지점의 운영 시간은 [{hours}] 입니다. ✨",
         storage_note: "📢 20시 이후는 1일 단위 추가 요금이 발생할 수 있어요! 윙윙~",
-        header: "Bee AI 예약"
+        header: "예약"
     },
     size_simulator: {
         header_title: "BEE 사이즈 체크",

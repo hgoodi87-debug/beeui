@@ -137,7 +137,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                     <div className="px-8 py-6 bg-gray-50/50 flex justify-between items-center border-b border-dashed border-gray-200">
                         <div>
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Reservation ID</p>
-                            <h3 className="text-sm font-black text-bee-black">{booking.id}</h3>
+                            <h3 className="text-sm font-black text-bee-black">{booking.reservationCode || booking.id}</h3>
                         </div>
                         <div className="text-right">
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Issue Date</p>
@@ -153,7 +153,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         <div className="flex flex-col items-center pb-6 border-b border-gray-100 text-center">
                             <div className="w-32 h-32 bg-white rounded-3xl p-3 mb-4 border-2 border-bee-yellow/20 flex items-center justify-center relative group shadow-sm">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${booking.id}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${booking.reservationCode || booking.id}`}
                                     alt="QR Code"
                                     className="w-full h-full object-contain"
                                 />
@@ -370,6 +370,15 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                     <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] animate-pulse">
                                         {lang === 'ko' ? '터치하여 쿠폰 이미지 저장' : 'Touch to save coupon image'}
                                     </p>
+                                </div>
+
+                                {/* 💅 QR Code for MoneyBox Coupon */}
+                                <div className="absolute bottom-4 right-4 w-14 h-14 bg-white p-1 rounded-lg shadow-sm border border-gray-100">
+                                    <img
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${booking.reservationCode || booking.id}`}
+                                        alt="QR Code"
+                                        className="w-full h-full object-contain opacity-90"
+                                    />
                                 </div>
                             </div>
                         </div>

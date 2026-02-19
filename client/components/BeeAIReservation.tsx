@@ -90,9 +90,9 @@ export default function BeeAIReservation({ lang, t, onSuccess, initialLocation, 
                 if (initialLocation) {
                     const hours = getLocalizedHours(initialLocation);
                     addBotMessage(t.bee_ai?.branch_hours_template?.replace('{branch}', getBranchName(initialLocation.id)).replace('{hours}', hours) ||
-                        `${getBranchName(initialLocation.id)} 지점의 운영 시간은 [${hours}] 입니다. ✨`, (
+                        (lang === 'ko' ? `${getBranchName(initialLocation.id)} 지점의 운영 시간은 [${hours}] 입니다. ✨` : `Business hours for ${getBranchName(initialLocation.id)} are [${hours}]. ✨`), (
                         <div className="mt-2 p-2 bg-yellow-50 rounded-lg border border-bee-yellow/20 text-[10px] font-bold text-bee-black">
-                            <Clock className="w-3 h-3 inline mr-1" /> {t.booking?.total_price_sub_storage || "21시 이후는 물건을 맡기거나 찾을 수 없습니다."}
+                            <Clock className="w-3 h-3 inline mr-1" /> {t.booking?.total_price_sub_storage || t.bee_ai?.operating_policy || "21시 이후는 물건을 맡기거나 찾을 수 없습니다."}
                         </div>
                     ));
                 }

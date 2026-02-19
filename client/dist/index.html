@@ -68,13 +68,16 @@
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Video Preload for Hero Section -->
-  <link rel="preload" as="video"
+  <!-- Video Preload for Hero Section - Adjusting 'as' to 'fetch' for better compatibility -->
+  <link rel="preload" as="fetch"
     href="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2Fbee.mp4?alt=media&token=1d445016-6586-4922-bd40-ff7c677ec125"
-    type="video/mp4" />
+    crossorigin="anonymous" />
 
   <!-- reCAPTCHA Enterprise -->
   <script src="https://www.google.com/recaptcha/enterprise.js?render=6Lf59FMsAAAAAO-qcqBdXcn_CDR8A7jP6wud0RWP"></script>
+
+  <!-- Naver Maps SDK (Moved to index.html for Stability & Auth Fix) 💅 -->
+  <!-- Naver Map SDK is now dynamically loaded in components (LocationMap.tsx) for better language control -->
 
 
   <style>
@@ -82,7 +85,8 @@
       overflow: auto !important;
       height: auto !important;
     }
-  </style>
+  </style>
+
   <script>
     // Shim process for buggy libraries
     window.process = { env: { NODE_ENV: 'production' } };
@@ -91,8 +95,8 @@
       alert('Critical Error: ' + message + '\nLine: ' + lineno + '\nSource: ' + source);
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-DbTSYmY5.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-smpafrrT.css">
+  <script type="module" crossorigin src="/assets/index-COW9gB2f.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B6Wca9mk.css">
 </head>
 
 <body class="antialiased">

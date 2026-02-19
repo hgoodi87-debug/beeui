@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Naver Map Final Debug</title>
+    <!-- 
+        [Core Params]
+        - ncpClientId: f3gsmqhjcn
+        - submodules: geocoder,gl (Geocoding check!)
+        - mapStyleId: 372d23ff-f7ac-40b3-a900-e4c4545a31e1
+        - ver: 20260218150059 (Cache Buster)
+    -->
+    <script type="text/javascript"
+        src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=f3gsmqhjcn&submodules=geocoder,gl&mapStyleId=372d23ff-f7ac-40b3-a900-e4c4545a31e1&ver=20260218150059"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .log {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Naver Map Final Debug (Localhost)</h1>
+    <div id="map"></div>
+    <div id="log" class="log">Initializing...</div>
+
+    <script>
+        function log(msg) {
+            var el = document.getElementById('log');
+            el.innerHTML += '\n' + msg;
+            console.log(msg);
+        }
+
+        window.onload = function () {
+            log("Window loaded. Checking Naver Object...");
+
+            if (!window.naver) {
+                log("❌ window.naver is undefined! Script loaded?");
+                return;
+            }
+            if (!window.naver.maps) {
+                log("❌ window.naver.maps is undefined!");
+                return;
+            }
+
+            log("✅ Naver Maps SDK detected.");
+
+            try {
+                var mapOptions = {
+                    center: new naver.maps.LatLng(37.3595704, 127.105399),
+                    zoom: 15,
+                    mapTypeId: naver.maps.MapTypeId.NORMAL,
+                    // [Config Check]
+                    // gl: true -> Required for customStyleId
+                    // customStyleId -> Apply style directly
+                    /* @ts-ignore */
+                    gl: true,
+                    /* @ts-ignore */
+                    customStyleId: '372d23ff-f7ac-40b3-a900-e4c4545a31e1'
+                };
+
+                log("Creating Map instance...");
+                var map = new naver.maps.Map('map', mapOptions);
+
+                log("✅ Map created. Check for visual.");
+
+                // Add Marker
+                new naver.maps.Marker({
+                    position: new naver.maps.LatLng(37.3595704, 127.105399),
+                    map: map
+                });
+
+                // Check Geocoder
+                if (naver.maps.Service && naver.maps.Service.geocode) {
+                    log("✅ Geocoding module loaded.");
+                } else {
+                    log("❌ Geocoding module missing!");
+                }
+
+            } catch (e) {
+                log("❌ FATAL ERROR: " + e.message);
+            }
+        };
+    </script>
+</body>
+
+</html>

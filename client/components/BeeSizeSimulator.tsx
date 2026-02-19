@@ -69,7 +69,7 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
                     <div className="flex flex-col lg:flex-row gap-12 items-center">
                         {/* 1. Simulator Visual Area */}
                         <div className="relative w-full lg:w-1/2 h-[450px] bg-white rounded-[32px] border border-gray-100 shadow-inner flex items-end justify-center pb-12 gap-8 overflow-hidden px-4">
-                            <div className="absolute left-0 right-0 border-b border-dashed border-gray-200" style={{ bottom: `${humanDisplayHeight + 48}px` }}>
+                            <div className="absolute left-0 right-0 border-b border-dashed border-gray-200 bottom-[368px]">
                                 <span className="text-[10px] text-gray-400 ml-2">Head Line</span>
                             </div>
 

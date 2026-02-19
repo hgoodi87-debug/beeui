@@ -70,7 +70,7 @@ export const LOCATIONS: LocationOption[] = [
     businessHours_ja: '10:00 - 22:00',
     businessHours_zh: '10:00 - 22:00',
     supportsDelivery: true, supportsStorage: true, lat: 37.555547, lng: 126.92446,
-    isActive: true
+    isActive: true, isPartner: true
   },
   {
     id: 'MYN', shortCode: 'MYN', name: '연남점', type: LocationType.PARTNER,
@@ -86,7 +86,7 @@ export const LOCATIONS: LocationOption[] = [
     businessHours_ja: '10:00 - 21:00',
     businessHours_zh: '10:00 - 21:00',
     supportsDelivery: true, supportsStorage: true, lat: 37.5615, lng: 126.9255,
-    isActive: true
+    isActive: true, isPartner: true
   },
   {
     id: 'MDD', shortCode: 'MDD', name: '동대문점', type: LocationType.PARTNER,

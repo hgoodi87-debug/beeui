@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sendMessageToGemini } from '../services/geminiService';
+import { sendMessageToGemini, translateText } from '../services/geminiService';
 import { StorageService } from '../services/storageService';
 import { ChatMessage, ChatSession } from '../types';
 
@@ -41,6 +41,35 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
     });
 
     const [sessionMeta, setSessionMeta] = useState<ChatSession | null>(null);
+
+    const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
+
+    // [스봉이 수정] 관리자 메시지 실시간 번역 로직 💅
+    useEffect(() => {
+        if (lang === 'ko') return;
+
+        const translateNewAdminMessages = async () => {
+            const adminMsgs = messages.filter(m => m.role === 'admin' && !translatedMessages[m.timestamp]);
+
+            if (adminMsgs.length === 0) return;
+
+            console.log(`[스봉이] ${adminMsgs.length}개의 새로운 관리자 메시지 번역 중... 아시겠어요? 💅`);
+
+            for (const msg of adminMsgs) {
+                try {
+                    const translated = await translateText(msg.text, lang);
+                    setTranslatedMessages(prev => ({
+                        ...prev,
+                        [msg.timestamp]: translated
+                    }));
+                } catch (e) {
+                    console.error("[스봉이] 번역 사고 발생! 🙄", e);
+                }
+            }
+        };
+
+        translateNewAdminMessages();
+    }, [messages, lang, translatedMessages]);
 
     // Subscribe to chat messages
     useEffect(() => {
@@ -380,7 +409,16 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                                                     <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Staff Answer</span>
                                                 </div>
                                             )}
-                                            {msg.text}
+                                            {msg.role === 'admin' ? (
+                                                <div className="space-y-2">
+                                                    <div>{translatedMessages[msg.timestamp] || msg.text}</div>
+                                                    {translatedMessages[msg.timestamp] && (
+                                                        <div className="text-[10px] opacity-40 border-t border-bee-black/10 pt-1 font-medium italic">
+                                                            Original: {msg.text}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : msg.text}
                                         </div>
                                     </div>
                                 ))}
@@ -403,7 +441,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                                     className="absolute inset-x-6 top-1/2 -translate-y-1/2 bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 z-20 border border-gray-50"
                                 >
                                     <p className="text-[11px] font-black text-bee-black uppercase tracking-widest text-center mb-6 opacity-60">
-                                        {t?.topic_menu_title || '원하시는 서비스를 선택해주세요'}
+                                        {t?.chatbot?.topic_menu_title || (lang === 'ko' ? '원하시는 서비스를 선택해주세요' : 'Please select a service')}
                                     </p>
                                     <div className="grid grid-cols-1 gap-3">
                                         <button onClick={() => handleTopicClick('DELIVERY')} className="bg-gray-50 hover:bg-bee-yellow border border-transparent p-4 rounded-2xl text-left transition-all group">

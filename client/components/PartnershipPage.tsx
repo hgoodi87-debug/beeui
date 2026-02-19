@@ -395,7 +395,7 @@ const PartnershipPage: React.FC<PartnershipPageProps> = ({ onBack, t }) => {
 
       </main>
 
-      <style jsx>{`
+      <style>{`
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out forwards;
         }

@@ -26,13 +26,24 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 }) => {
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchAddress, setSearchAddress] = useState('');
   const [selectedBranch, setSelectedBranch] = useState<LocationOption | null>(null);
   const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>('STORAGE');
-  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [bookingDate, setBookingDate] = useState(() => {
+    const d = new Date();
+    const kst = new Date(d.getTime() + (9 * 60 * 60000) + (d.getTimezoneOffset() * 60000));
+    return kst.toISOString().split('T')[0];
+  });
   const [bookingTime, setBookingTime] = useState('09:00');
+  const [returnDate, setReturnDate] = useState(() => {
+    const d = new Date();
+    const kst = new Date(d.getTime() + (9 * 60 * 60000) + (d.getTimezoneOffset() * 60000));
+    return kst.toISOString().split('T')[0];
+  });
+  const [returnTime, setReturnTime] = useState('11:00');
   const [baggageCounts, setBaggageCounts] = useState({ S: 0, M: 0, L: 0, XL: 0 });
+  const [deliveryPrices, setDeliveryPrices] = useState<any>({ S: 20000, M: 20000, L: 25000, XL: 29000 });
 
-  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'AIRPORT' | 'PARTNER'>('ALL');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Helper: Calculate distance between two coordinates (Haversine formula)
@@ -48,7 +59,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     return R * c; // Distance in km
   };
 
-  // 1. Get User Location on Mount
+  // 1. Get User Location & Prices on Mount
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -63,6 +74,11 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
         }
       );
     }
+
+    // Fetch prices for BaggageCounter
+    StorageService.getDeliveryPrices().then(prices => {
+      if (prices) setDeliveryPrices(prices);
+    }).catch(console.error);
   }, []);
 
   // Handle Browser Back Button for Step-by-Step Navigation
@@ -148,7 +164,16 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
       result = result.filter(l =>
         (l.name && l.name.toLowerCase().includes(lower)) ||
         (l.address && l.address.toLowerCase().includes(lower)) ||
-        (l.name_en && l.name_en.toLowerCase().includes(lower))
+        (l.name_en && l.name_en.toLowerCase().includes(lower)) ||
+        (l.address_en && l.address_en.toLowerCase().includes(lower)) ||
+        (l.name_ja && l.name_ja.toLowerCase().includes(lower)) ||
+        (l.address_ja && l.address_ja.toLowerCase().includes(lower)) ||
+        (l.name_zh && l.name_zh.toLowerCase().includes(lower)) ||
+        (l.address_zh && l.address_zh.toLowerCase().includes(lower)) ||
+        (l.name_zh_tw && l.name_zh_tw.toLowerCase().includes(lower)) ||
+        (l.address_zh_tw && l.address_zh_tw.toLowerCase().includes(lower)) ||
+        (l.name_zh_hk && l.name_zh_hk.toLowerCase().includes(lower)) ||
+        (l.address_zh_hk && l.address_zh_hk.toLowerCase().includes(lower))
       );
     }
 
@@ -160,15 +185,8 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
       result = result.filter(l => l.supportsDelivery && (l.isOrigin ?? false) && (l.isActive ?? true));
     }
 
-    // Filter by category
-    if (selectedCategory === 'AIRPORT') {
-      result = result.filter(l => l.type === 'AIRPORT');
-    } else if (selectedCategory === 'PARTNER') {
-      result = result.filter(l => l.isPartner);
-    }
-
     return result;
-  }, [locations, searchTerm, currentService, selectedCategory]);
+  }, [locations, searchTerm, currentService]);
 
   const handleBaggageChange = (size: 'S' | 'M' | 'L' | 'XL', delta: number) => {
     setBaggageCounts(prev => ({
@@ -179,8 +197,9 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 
   const handleBook = (type: 'DELIVERY' | 'STORAGE') => {
     if (selectedBranch) {
-      const combinedDate = `${bookingDate} ${bookingTime}`;
-      onSelectLocation(selectedBranch.id, type, combinedDate, baggageCounts);
+      const combinedPickup = `${bookingDate} ${bookingTime}`;
+      const combinedReturn = `${returnDate} ${returnTime}`;
+      onSelectLocation(selectedBranch.id, type, combinedPickup, baggageCounts, combinedReturn);
     }
   };
 
@@ -189,8 +208,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
       {/* Sidebar Section - [스봉이 수정] 모바일에서 지점 선택 시 사이드바를 완전히 제거하여 지도/정보에 집중 */}
       {/* Sidebar Section - [스봉이 수정] 모바일에서 지점 선택 시 사이드바를 완전히 제거하여 지도/정보에 집중 */}
       <div
-        className={`absolute inset-0 md:static pointer-events-none md:pointer-events-auto w-full md:w-[450px] lg:w-[500px] h-full flex flex-col z-20 transition-all duration-500 ${selectedBranch ? '!hidden md:!flex' : 'flex'}`}
-        style={selectedBranch ? { display: window.innerWidth < 768 ? 'none' : 'flex' } : {}}
+        className={`absolute inset-0 md:static pointer-events-none md:pointer-events-auto w-full md:w-[450px] lg:w-[500px] h-full flex flex-col z-[70] transition-all duration-500 flex`}
       >
         <LocationList
           t={t}
@@ -207,10 +225,13 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
           onDateChange={setBookingDate}
           bookingTime={bookingTime}
           onTimeChange={setBookingTime}
+          returnDate={returnDate}
+          onReturnDateChange={setReturnDate}
+          returnTime={returnTime}
+          onReturnTimeChange={setReturnTime}
           baggageCounts={baggageCounts}
           onBaggageChange={handleBaggageChange}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
+          deliveryPrices={deliveryPrices}
         />
       </div>
 
@@ -225,6 +246,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
           onLocationSelect={handleBranchSelect}
           currentService={currentService}
           userLocation={userLocation}
+          searchAddress={searchAddress}
         />
 
         {/* Branch Details Overlay - [사장님 요청] 모바일 최적화 바텀 시트 */}

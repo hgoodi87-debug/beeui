@@ -319,6 +319,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <label className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-gray-50 p-2 rounded-lg hover:bg-gray-100"><input type="checkbox" checked={locForm.supportsStorage} onChange={e => setLocForm({ ...locForm, supportsStorage: e.target.checked })} /> 보관 (Storage)</label>
                             <label className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-gray-50 p-2 rounded-lg hover:bg-gray-100"><input type="checkbox" checked={locForm.isOrigin} onChange={e => setLocForm({ ...locForm, isOrigin: e.target.checked })} /> 출발 (Origin)</label>
                             <label className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-gray-50 p-2 rounded-lg hover:bg-gray-100"><input type="checkbox" checked={locForm.isDestination} onChange={e => setLocForm({ ...locForm, isDestination: e.target.checked })} /> 목적지 (Dest)</label>
+                            <label className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-yellow-50 text-yellow-700 p-2 rounded-lg hover:bg-yellow-100 border border-yellow-100"><input type="checkbox" checked={locForm.isPartner} onChange={e => setLocForm({ ...locForm, isPartner: e.target.checked })} /> 파트너 지점 (Partner)</label>
                         </div>
                         <div className="pt-2 border-t border-dashed border-gray-200">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">제공 서비스 (Available Services)</label>
@@ -399,6 +400,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                     {loc.supportsStorage && <span className="text-[9px] font-bold bg-blue-50 text-blue-700 px-2 py-1 rounded">보관</span>}
                                     {loc.isOrigin && <span className="text-[9px] font-bold bg-purple-50 text-purple-700 px-2 py-1 rounded">출발</span>}
                                     {loc.isDestination && <span className="text-[9px] font-bold bg-teal-50 text-teal-700 px-2 py-1 rounded">도착</span>}
+                                    {loc.isPartner && <span className="text-[9px] font-bold bg-bee-yellow text-black px-2 py-1 rounded">PARTNER</span>}
                                 </div>
                                 {loc.lat && loc.lng ? (
                                     <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1"><i className="fa-solid fa-location-dot"></i> 좌표 연동됨</span>

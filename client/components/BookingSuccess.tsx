@@ -43,8 +43,8 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
                 <div className="text-center space-y-4">
-                    <p className="font-bold text-gray-500">예약 정보를 찾을 수 없습니다.</p>
-                    <button onClick={onBack} className="px-6 py-3 bg-bee-black text-bee-yellow rounded-2xl font-black">메인으로 돌아가기</button>
+                    <p className="font-bold text-gray-500">{t.booking?.no_booking_found || (lang === 'ko' ? "예약 정보를 찾을 수 없습니다." : "Booking information not found.")}</p>
+                    <button onClick={onBack} className="px-6 py-3 bg-bee-black text-bee-yellow rounded-2xl font-black">{t.locations_page?.back || (lang === 'ko' ? "메인으로 돌아가기" : "Back to Home")}</button>
                 </div>
             </div>
         );
@@ -97,6 +97,30 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
             cancel_refund_title: "取消及退款规定",
             cancel_refund_content: "• 使用前24小时取消可获得100%退款。\n• 使用当天取消或未到店(No-show)将无法退款。\n• 请提前确认相关政策。",
             btn_home: "返回首页",
+            trust_badge: "PREMIUM TRUSTED SERVICE"
+        },
+        'zh-TW': {
+            title: "預約已完成！",
+            subtitle: "感謝您選擇 Beeliber。",
+            thanks: "您的珍貴行李已交給最專業的團隊。我們將以最嚴謹的態度確保您的行李安全送達。請放心開啟您的旅程！嗡嗡~ 🐝✨",
+            info_title: "確認預約詳情",
+            guide_title: "使用指南及規定",
+            business_hours: "據點營業時間",
+            cancel_refund_title: "取消及退款規定",
+            cancel_refund_content: "• 使用前24小時取消可獲得100%退款。\n• 使用當天取消或未到店(No-show)將無法退款。\n• 請提前確認相關政策。",
+            btn_home: "返回首頁",
+            trust_badge: "PREMIUM TRUSTED SERVICE"
+        },
+        'zh-HK': {
+            title: "預約已完成！",
+            subtitle: "感謝您選擇 Beeliber。",
+            thanks: "您的珍貴行李已交給最專業的團隊。我們將以最嚴謹的態度確保您的行李安全送達。請放心開啟您的旅程！嗡嗡~ 🐝✨",
+            info_title: "確認預約詳情",
+            guide_title: "使用指南及規定",
+            business_hours: "網點營業時間",
+            cancel_refund_title: "取消及退款規定",
+            cancel_refund_content: "• 使用前24小時取消可獲得100%退款。\n• 使用當天取消或未到店(No-show)將無法退款。\n• 請提前確認相關政策。",
+            btn_home: "返回首頁",
             trust_badge: "PREMIUM TRUSTED SERVICE"
         }
     };

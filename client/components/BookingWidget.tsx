@@ -4,11 +4,13 @@ import { BookingState, ServiceType, BookingStatus, SnsType, BagSizes, LocationOp
 import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
 import { RecaptchaService } from '../services/recaptchaService';
+import { calculateStoragePrice, STORAGE_RATES } from '../utils/pricing';
+import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot } from '../utils/dateUtils';
 
 interface BookingWidgetProps {
   lang: string;
   t: any;
-  preSelectedBooking?: { id: string; type: 'STORAGE' | 'DELIVERY' } | null;
+  preSelectedBooking?: { id: string; type: 'STORAGE' | 'DELIVERY'; bagCounts?: { S: number; M: number; L: number; XL: number } } | null;
   onLocationsClick?: () => void;
   onTermsClick?: () => void;
   onPrivacyClick?: () => void;
@@ -25,10 +27,10 @@ const INITIAL_STORAGE_TIERS: StorageTier[] = [
   { id: 'st-week', label: '1w', prices: { S: 40000, M: 55000, L: 80000, XL: 110000 } }
 ];
 
-const DELIVERY_PICKUP_HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00'];
-const DELIVERY_DROPOFF_HOURS = ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
-const STORAGE_START_HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-const STORAGE_END_HOURS = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+const DELIVERY_PICKUP_HOURS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
+const DELIVERY_DROPOFF_HOURS = ['16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00'];
+const STORAGE_START_HOURS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
+const STORAGE_END_HOURS = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00'];
 
 const getLocalISODate = (d: Date) => {
   const offset = d.getTimezoneOffset() * 60000;
@@ -36,13 +38,7 @@ const getLocalISODate = (d: Date) => {
 };
 
 const getValidStartDate = () => {
-  const now = new Date();
-  if (now.getHours() >= 14) {
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return getLocalISODate(tomorrow);
-  }
-  return getLocalISODate(now);
+  return formatKSTDate(); // formatKSTDate already handles 21:00 rollover logic if needed, or we just use current KST date.
 };
 
 const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooking, initialBooking, onTermsClick, onPrivacyClick, onFinalBookClick, onSuccess }) => {
@@ -130,15 +126,43 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
       setServiceType(initialBooking.serviceType);
     } else if (preSelectedBooking) {
       setServiceType(preSelectedBooking.type === 'STORAGE' ? ServiceType.STORAGE : ServiceType.DELIVERY);
-      setBooking(prev => ({
-        ...prev,
-        serviceType: preSelectedBooking.type === 'STORAGE' ? ServiceType.STORAGE : ServiceType.DELIVERY,
-        pickupLocation: preSelectedBooking.id,
-        pickupTime: '09:00',
-        deliveryTime: preSelectedBooking.type === 'STORAGE' ? '10:00' : '16:00'
-      }));
+      setBooking(prev => {
+        const bagCounts = preSelectedBooking.bagCounts || { S: 0, M: 0, L: 0, XL: 0 };
+        return {
+          ...prev,
+          serviceType: preSelectedBooking.type === 'STORAGE' ? ServiceType.STORAGE : ServiceType.DELIVERY,
+          pickupLocation: preSelectedBooking.id,
+          pickupTime: '09:00',
+          deliveryTime: preSelectedBooking.type === 'STORAGE' ? '10:00' : '16:00',
+          bagSizes: bagCounts,
+          bags: Object.values(bagCounts).reduce((a, b) => a + b, 0)
+        };
+      });
     }
   }, [preSelectedBooking, initialBooking]);
+
+  // Handle Smart Time Selection 💅✨
+  useEffect(() => {
+    // If it's today, find the first available slot
+    const todayStr = formatKSTDate();
+    if (booking.pickupDate === todayStr) {
+      const slots = serviceType === ServiceType.DELIVERY ? DELIVERY_PICKUP_HOURS : STORAGE_START_HOURS;
+      const firstSlot = getFirstAvailableSlot(todayStr, slots);
+      if (firstSlot && firstSlot !== booking.pickupTime) {
+        setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
+      }
+    }
+  }, [booking.pickupDate, serviceType]);
+
+  useEffect(() => {
+    const todayStr = formatKSTDate();
+    if ((booking.dropoffDate === todayStr || (!booking.dropoffDate && booking.pickupDate === todayStr)) && serviceType === ServiceType.DELIVERY) {
+      const firstSlot = getFirstAvailableSlot(booking.dropoffDate || todayStr, DELIVERY_DROPOFF_HOURS);
+      if (firstSlot && firstSlot !== booking.deliveryTime) {
+        setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
+      }
+    }
+  }, [booking.dropoffDate, booking.pickupDate, serviceType]);
 
   const handleServiceTypeChange = (type: ServiceType) => {
     if (isModification) return; // Disable changing service type in modification mode
@@ -174,7 +198,7 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     }
   }, [booking.pickupLocation]);
 
-  const updateBagSize = (size: 'M' | 'L' | 'XL', delta: number) => {
+  const updateBagSize = (size: 'S' | 'M' | 'L' | 'XL', delta: number) => {
     const currentCount = booking.bagSizes[size];
     const newCount = Math.max(0, currentCount + delta);
     setBooking(prev => {
@@ -182,20 +206,39 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
       return {
         ...prev,
         bagSizes: newSizes,
-        bags: (newSizes.M || 0) + (newSizes.L || 0) + (newSizes.XL || 0)
+        bags: (newSizes.S || 0) + (newSizes.M || 0) + (newSizes.L || 0) + (newSizes.XL || 0)
       };
     });
   };
 
-  const originLocations = useMemo(() => locations.filter(l => (l.isActive !== false) && (serviceType === ServiceType.DELIVERY ? (l.supportsDelivery && l.isOrigin !== false) : l.supportsStorage)), [locations, serviceType]);
-  const destinationLocations = useMemo(() => locations.filter(l => (l.isActive !== false) && (serviceType === ServiceType.DELIVERY ? (l.supportsDelivery && l.id !== booking.pickupLocation && l.supportsDelivery && l.isDestination !== false) : l.supportsStorage)), [locations, serviceType, booking.pickupLocation]);
+  const originLocations = useMemo(() => locations.filter(l => (l.isActive !== false) && (serviceType === ServiceType.DELIVERY ? (l.supportsDelivery && l.isOrigin === true) : l.supportsStorage)), [locations, serviceType]);
+  const destinationLocations = useMemo(() => locations.filter(l => (l.isActive !== false) && (serviceType === ServiceType.DELIVERY ? (l.supportsDelivery && l.id !== booking.pickupLocation && l.supportsDelivery && l.isDestination === true) : l.supportsStorage)), [locations, serviceType, booking.pickupLocation]);
 
   const priceDetails = useMemo(() => {
     const activePrices = serviceType === ServiceType.STORAGE ? (storageTiers.find(t => t.id === 'st-4h')?.prices || INITIAL_STORAGE_TIERS[0].prices) : deliveryPrices;
     if (serviceType === ServiceType.DELIVERY) {
-      const base = (booking.bagSizes.M * (activePrices.M || 0)) +
+      const deliveryBase = (booking.bagSizes.S * (activePrices.S || 0)) +
+        (booking.bagSizes.M * (activePrices.M || 0)) +
         (booking.bagSizes.L * (activePrices.L || 0)) +
         (booking.bagSizes.XL * (activePrices.XL || 0));
+
+      // Overnight Storage Fee calculation
+      const pickupD = new Date(booking.pickupDate);
+      const deliveryD = new Date(booking.dropoffDate);
+      const diffDays = Math.max(0, Math.floor((deliveryD.getTime() - pickupD.getTime()) / (1000 * 60 * 60 * 24)));
+
+      let storageFee = 0;
+      if (diffDays > 0) {
+        const dRate = storageTiers.find(t => t.id === 'st-1d')?.prices || INITIAL_STORAGE_TIERS[1].prices;
+        storageFee = (booking.bagSizes.S * (dRate.S || 0)) +
+          (booking.bagSizes.M * (dRate.M || 0)) +
+          (booking.bagSizes.L * (dRate.L || 0)) +
+          (booking.bagSizes.XL * (dRate.XL || 0));
+        storageFee *= diffDays;
+      }
+
+      const base = deliveryBase + storageFee;
+
       const o = locations.find(l => l.id === booking.pickupLocation);
       const d = locations.find(l => l.id === booking.dropoffLocation);
       const originSurcharge = o?.originSurcharge || 0;
@@ -207,24 +250,49 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
       }
       const weightSurcharge = ((booking.weightSurcharge5kg || 0) * 5000) + ((booking.weightSurcharge10kg || 0) * 10000);
       const discount = appliedCoupon ? appliedCoupon.amountPerBag * booking.bags : 0;
-      return { base, originSurcharge, destSurcharge, premiumSurcharge, weightSurcharge, discount, total: Math.max(0, base + originSurcharge + destSurcharge + premiumSurcharge + weightSurcharge - discount) };
+
+      const breakdown = diffDays > 0
+        ? (lang === 'ko' ? `기본배송 + ${diffDays}일 보관료` : `Base delivery + ${diffDays}d storage`)
+        : '';
+
+      const durationText = diffDays > 0
+        ? (lang === 'ko' ? `${diffDays}일 보관 포함` : `${diffDays}d storage incl.`)
+        : '';
+
+      return {
+        base,
+        originSurcharge,
+        destSurcharge,
+        premiumSurcharge,
+        weightSurcharge,
+        discount,
+        breakdown,
+        durationText,
+        total: Math.max(0, base + originSurcharge + destSurcharge + premiumSurcharge + weightSurcharge - discount)
+      };
     } else {
       const start = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
       const end = new Date(`${booking.dropoffDate}T${booking.deliveryTime}`);
-      const hours = Math.max(4, (end.getTime() - start.getTime()) / (1000 * 60 * 60));
-      const hRate = storageTiers.find(t => t.id === 'st-4h')?.prices || INITIAL_STORAGE_TIERS[0].prices;
-      const dRate = storageTiers.find(t => t.id === 'st-1d')?.prices || INITIAL_STORAGE_TIERS[1].prices;
-      const wRate = storageTiers.find(t => t.id === 'st-week')?.prices || INITIAL_STORAGE_TIERS[2].prices;
-      const calcPrice = (size: keyof BagSizes) => {
-        const count = booking.bagSizes[size as keyof typeof booking.bagSizes] || 0;
-        if (count === 0) return 0;
-        if (hours <= 12) return Math.ceil(hours / 4) * hRate[size] * count;
-        if (hours <= 168) return Math.min(Math.ceil(hours / 24) * dRate[size], wRate[size]) * count;
-        return (wRate[size] + Math.ceil((hours - 168) / 24) * dRate[size]) * count;
-      };
-      const base = calcPrice('S') + calcPrice('M') + calcPrice('L') + calcPrice('XL');
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return { base: 0, originSurcharge: 0, destSurcharge: 0, premiumSurcharge: 0, weightSurcharge: 0, discount: 0, total: 0, breakdown: '', durationText: '' };
+      }
+
+      const result = calculateStoragePrice(start, end, booking.bagSizes, lang);
+      const base = result.total;
       const discount = appliedCoupon ? appliedCoupon.amountPerBag * booking.bags : 0;
-      return { base, originSurcharge: 0, destSurcharge: 0, premiumSurcharge: 0, weightSurcharge: 0, discount, total: Math.max(0, base - discount) };
+
+      return {
+        base,
+        originSurcharge: 0,
+        destSurcharge: 0,
+        premiumSurcharge: 0,
+        weightSurcharge: 0,
+        discount,
+        total: Math.max(0, base - discount),
+        breakdown: result.breakdown,
+        durationText: result.durationText
+      };
     }
   }, [booking, serviceType, locations, storageTiers, deliveryPrices, appliedCoupon]);
 
@@ -395,16 +463,28 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.booking.pickup_schedule}</label>
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <input
-                            type="date"
-                            title="Pickup Date"
-                            value={booking.pickupDate}
-                            min={getValidStartDate()}
-                            onChange={e => updateBooking('pickupDate', e.target.value)}
-                            className="flex-1 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none"
-                          />
-                          <select title="Pickup Time" value={booking.pickupTime} onChange={e => updateBooking('pickupTime', e.target.value)} className="w-24 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none">
-                            {(serviceType === ServiceType.DELIVERY ? DELIVERY_PICKUP_HOURS : STORAGE_START_HOURS).map(h => <option key={h} value={h}>{h}</option>)}
+                          <div className="flex-1 relative">
+                            <input
+                              type="date"
+                              title="Pickup Date"
+                              value={booking.pickupDate}
+                              min={getValidStartDate()}
+                              onChange={e => updateBooking('pickupDate', e.target.value)}
+                              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none text-transparent"
+                            />
+                            <div className="absolute inset-0 flex items-center px-4 pointer-events-none font-bold text-sm text-gray-900">
+                              {getLocalizedDate(booking.pickupDate || '', lang)}
+                            </div>
+                          </div>
+                          <select title="Pickup Time" value={booking.pickupTime} onChange={e => updateBooking('pickupTime', e.target.value)} className="w-32 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none">
+                            {(serviceType === ServiceType.DELIVERY ? DELIVERY_PICKUP_HOURS : STORAGE_START_HOURS).map(h => {
+                              const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                              return (
+                                <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
+                                  {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                </option>
+                              );
+                            })}
                           </select>
                         </div>
                         {new Date().getHours() >= 14 && (
@@ -418,9 +498,28 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{serviceType === ServiceType.DELIVERY ? t.booking.delivery_schedule : (t.booking.return_schedule || 'Retrieval')}</label>
                       <div className="flex gap-2">
-                        <input type="date" title="Drop-off Date" value={booking.dropoffDate} min={booking.pickupDate} onChange={e => updateBooking('dropoffDate', e.target.value)} className="flex-1 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none" />
+                        <div className="flex-1 relative">
+                          <input
+                            type="date"
+                            title="Drop-off Date"
+                            value={booking.dropoffDate}
+                            min={booking.pickupDate}
+                            onChange={e => updateBooking('dropoffDate', e.target.value)}
+                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none text-transparent"
+                          />
+                          <div className="absolute inset-0 flex items-center px-4 pointer-events-none font-bold text-sm text-gray-900">
+                            {getLocalizedDate(booking.dropoffDate || '', lang)}
+                          </div>
+                        </div>
                         <select title="Drop-off/Delivery Time" value={booking.deliveryTime} onChange={e => updateBooking('deliveryTime', e.target.value)} className="w-24 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none">
-                          {(serviceType === ServiceType.DELIVERY ? DELIVERY_DROPOFF_HOURS : STORAGE_END_HOURS).map(h => <option key={h} value={h}>{h}</option>)}
+                          {(serviceType === ServiceType.DELIVERY ? DELIVERY_DROPOFF_HOURS : STORAGE_END_HOURS).map(h => {
+                            const isPast = isPastKSTTime(booking.dropoffDate || booking.pickupDate || '', h);
+                            return (
+                              <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
+                                {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                              </option>
+                            );
+                          })}
                         </select>
                       </div>
                     </div>
@@ -431,23 +530,34 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.booking?.bags_selection_title || "Select Bags"}</label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {(['M', 'L', 'XL'] as const).map(size => {
+                  <div className="grid grid-cols-2 gap-4">
+                    {(['S', 'M', 'L', 'XL'] as const).map(size => {
                       const priceKey = size.toLowerCase() as keyof PriceSettings;
                       const price = serviceType === ServiceType.STORAGE
                         ? (storageTiers.find(t => t.id === 'st-4h')?.prices[priceKey] || 0)
                         : deliveryPrices[priceKey];
 
                       return (
-                        <div key={size} className={`p-6 rounded-3xl border-2 transition-all ${booking.bagSizes[size] > 0 ? 'border-bee-yellow bg-yellow-50/30 shadow-md' : 'border-gray-100 bg-white'}`}>
-                          <div className="text-[10px] font-black text-gray-400 uppercase mb-1">
-                            {size === 'M' ? t.booking.size_m : size === 'L' ? t.booking.size_l : t.booking.size_xl}
+                        <div key={size} className={`p-4 rounded-3xl border-2 transition-all flex flex-col gap-3 shadow-sm ${booking.bagSizes[size] > 0 ? 'border-bee-yellow bg-yellow-50/30' : 'border-gray-50 bg-white'}`}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center shrink-0">
+                              <i className="fa-solid fa-box text-gray-400 text-xs"></i>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[8px] font-black text-gray-400 uppercase truncate leading-none mb-1">
+                                {size === 'S' ? t.booking.size_s : size === 'M' ? t.booking.size_m : size === 'L' ? t.booking.size_l : t.booking.size_xl}
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-lg font-black leading-none">{size}</span>
+                                <span className="text-[10px] font-bold text-bee-yellow leading-tight">₩{(price || 0).toLocaleString()}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-xl font-black mb-4">₩{(price || 0).toLocaleString()}</div>
-                          <div className="flex items-center justify-between">
-                            <button title="Decrease Bag Count" aria-label="Decrease Bag Count" onClick={() => updateBagSize(size, -1)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200"><i className="fa-solid fa-minus text-[10px]"></i></button>
-                            <span className="font-black text-lg">{booking.bagSizes[size]}</span>
-                            <button title="Increase Bag Count" aria-label="Increase Bag Count" onClick={() => updateBagSize(size, 1)} className="w-8 h-8 rounded-lg bg-bee-black text-bee-yellow flex items-center justify-center hover:bg-gray-800 shadow-md"><i className="fa-solid fa-plus text-[10px]"></i></button>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-100/50">
+                            <button title="Decrease Bag Count" aria-label="Decrease Bag Count" onClick={() => updateBagSize(size, -1)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"><i className="fa-solid fa-minus text-[10px]"></i></button>
+                            <span className="font-black text-base">{booking.bagSizes[size]}</span>
+                            <button title="Increase Bag Count" aria-label="Increase Bag Count" onClick={() => updateBagSize(size, 1)} className="w-8 h-8 rounded-lg bg-bee-black text-bee-yellow flex items-center justify-center hover:bg-gray-800 shadow-md transition-colors"><i className="fa-solid fa-plus text-[10px]"></i></button>
                           </div>
                         </div>
                       );
@@ -595,8 +705,8 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                       <span className="text-sm font-black px-4 py-1.5 bg-bee-yellow rounded-full">{serviceType === ServiceType.DELIVERY ? t.booking.delivery : t.booking.storage}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-8">
-                      <div><span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.booking?.pickup_schedule_label || 'Pickup'}</span><p className="text-base font-black">{booking.pickupDate} {booking.pickupTime}</p></div>
-                      <div><span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{serviceType === ServiceType.DELIVERY ? (t.booking?.delivery_schedule_label || 'Delivery') : (t.booking?.return_schedule_label || 'Retrieval')}</span><p className="text-base font-black">{booking.dropoffDate} {booking.deliveryTime}</p></div>
+                      <div><span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.booking?.pickup_schedule_label || 'Pickup'}</span><p className="text-base font-black">{getLocalizedDate(booking.pickupDate || '', lang)} {booking.pickupTime}</p></div>
+                      <div><span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{serviceType === ServiceType.DELIVERY ? (t.booking?.delivery_schedule_label || 'Delivery') : (t.booking?.return_schedule_label || 'Retrieval')}</span><p className="text-base font-black">{getLocalizedDate(booking.dropoffDate || '', lang)} {booking.deliveryTime}</p></div>
                     </div>
                     <div className="pt-4 border-t border-gray-200">
                       <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.booking.destination_label || 'Destination'}</span>
@@ -604,12 +714,20 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                     </div>
                     <div className="pt-4 border-t border-gray-200">
                       <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.booking.bags_label || 'Bags'}</span>
-                      <div className="flex flex-wrap gap-2 mt-1">{(['M', 'L', 'XL'] as const).map(s => booking.bagSizes[s] > 0 && <span key={s} className="bg-white border border-gray-200 px-3 py-1 rounded-lg text-xs font-bold">{s} x {booking.bagSizes[s]}</span>)}</div>
+                      <div className="flex flex-wrap gap-2 mt-1">{(['S', 'M', 'L', 'XL'] as const).map(s => booking.bagSizes[s] > 0 && <span key={s} className="bg-white border border-gray-200 px-3 py-1 rounded-lg text-xs font-bold">{s} x {booking.bagSizes[s]}</span>)}</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center px-4">
                     <span className="text-sm font-black text-gray-400 uppercase">{t.booking?.total_label || 'Total Amount'}</span>
-                    <span className="text-4xl font-black text-bee-black">₩{priceDetails.total.toLocaleString()}</span>
+                    <div className="text-right">
+                      <span className="block text-4xl font-black text-bee-black">₩{priceDetails.total.toLocaleString()}</span>
+                      {priceDetails.durationText && (
+                        <span className="block text-xs text-bee-black font-bold mt-1">
+                          {priceDetails.durationText}
+                          {priceDetails.breakdown && <span className="block text-[10px] text-gray-400 font-normal">{priceDetails.breakdown}</span>}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { LocationOption, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier, DiscountCode } from '../types';
 import { StorageService } from '../services/storageService';
+import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, generateTimeSlots, calculateDaysDifference } from '../utils/dateUtils';
 
 interface BookingDetailedProps {
     t: any;
@@ -113,23 +114,19 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         }
     };
 
-    const generateTimeSlots = (location: LocationOption | undefined, type: 'PICKUP' | 'DELIVERY') => {
+    const getSlotsForType = (location: LocationOption | undefined, type: 'PICKUP' | 'DELIVERY') => {
         if (serviceType === ServiceType.DELIVERY) {
             if (type === 'PICKUP') {
-                return ['09:00', '10:00', '11:00', '12:00', '13:00'];
+                return generateTimeSlots(9, 14, 30); // 09:00 - 14:00 (마지막 슬롯 13:30)
             } else {
-                return ['16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+                return generateTimeSlots(16, 21, 30); // 16:00 - 21:00
             }
         }
 
         // STORAGE Logic: Based on business hours
         const bhStr = location?.businessHours || '09:00-21:00';
         const { start, end } = parseBusinessHours(bhStr);
-        const slots = [];
-        for (let i = start; i <= end; i++) {
-            slots.push(`${i.toString().padStart(2, '0')}:00`);
-        }
-        return slots;
+        return generateTimeSlots(start, end, 30);
     };
 
     useEffect(() => {
@@ -143,13 +140,38 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         }
     }, [user]);
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
     const pickupLoc = useMemo(() => locations.find(l => l.id === booking.pickupLocation), [locations, booking.pickupLocation]);
     const dropoffLoc = useMemo(() => locations.find(l => l.id === booking.dropoffLocation), [locations, booking.dropoffLocation]);
 
+    // Handle Smart Time Selection 💅✨
+    useEffect(() => {
+        // If it's today, find the first available slot
+        const todayStr = formatKSTDate();
+        if (booking.pickupDate === todayStr) {
+            const slots = getSlotsForType(pickupLoc, 'PICKUP');
+            const firstSlot = getFirstAvailableSlot(todayStr, slots);
+            if (firstSlot && firstSlot !== booking.pickupTime) {
+                setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
+            }
+        }
+    }, [booking.pickupDate, pickupLoc, booking.serviceType]);
+
+    useEffect(() => {
+        const todayStr = formatKSTDate();
+        const dropoffDate = booking.dropoffDate || todayStr;
+        if ((dropoffDate === todayStr) && booking.serviceType === ServiceType.DELIVERY) {
+            const slots = getSlotsForType(pickupLoc, 'DELIVERY');
+            const firstSlot = getFirstAvailableSlot(dropoffDate, slots);
+            if (firstSlot && firstSlot !== booking.deliveryTime) {
+                setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
+            }
+        }
+    }, [booking.dropoffDate, booking.pickupDate, pickupLoc, booking.serviceType]);
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const destinationLocations = useMemo(() =>
-        locations.filter(l => l.isActive !== false && l.id !== booking.pickupLocation && l.supportsDelivery && l.isDestination !== false),
+        locations.filter(l => l.isActive !== false && l.id !== booking.pickupLocation && l.supportsDelivery && l.isDestination === true),
         [locations, booking.pickupLocation]
     );
 
@@ -157,17 +179,24 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         const { S = 0, M = 0, L = 0, XL = 0 } = booking.bagSizes || {};
 
         let base = 0;
+        let storageFee = 0;
         if (serviceType === ServiceType.DELIVERY) {
             base = (S * (deliveryPrices.S || 15000)) + (M * deliveryPrices.M) + (L * deliveryPrices.L) + (XL * deliveryPrices.XL);
+
+            // [스봉이 수지타산 로직] 배송인데 날짜가 다르면 보관료 추가 💰💅
+            const daysDiff = calculateDaysDifference(booking.pickupDate || '', booking.dropoffDate || booking.pickupDate || '');
+            if (daysDiff > 0) {
+                const day1Tier = storageTiers.find(t => t.id === 'st-1d') || storageTiers[0];
+                const day1Prices = day1Tier?.prices || { S: 2000, M: 3000, L: 5000, XL: 7000 };
+                storageFee = daysDiff * ((S * (day1Prices.S || 2000)) + (M * day1Prices.M) + (L * day1Prices.L) + (XL * day1Prices.XL));
+            }
         } else {
-            // Storage calculation - default to first tier or simple hourly if complex tier logic is elsewhere
-            // For now, let's use the 1-day (st-1d) as a reference or a default if tier not selected
+            // Storage calculation
             const selectedTierId = booking.selectedStorageTierId || 'st-1d';
             const tier = storageTiers.find(t => t.id === selectedTierId) || storageTiers[0];
             if (tier && tier.prices) {
                 base = ((S || 0) * (tier.prices.S || 2000)) + ((M || 0) * (tier.prices.M || 0)) + ((L || 0) * (tier.prices.L || 0)) + ((XL || 0) * (tier.prices.XL || 0));
             } else {
-                // Fallback hardcoded storage prices if tiers not loaded
                 base = ((S || 0) * 2000) + ((M || 0) * 3000) + ((L || 0) * 5000) + ((XL || 0) * 7000);
             }
         }
@@ -184,11 +213,12 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
 
         return {
             base,
+            storageFee,
             originSurcharge,
             destSurcharge,
             insuranceFee,
             discountAmount,
-            total: Math.max(0, base + originSurcharge + destSurcharge + insuranceFee - discountAmount)
+            total: Math.max(0, base + storageFee + originSurcharge + destSurcharge + insuranceFee - discountAmount)
         };
     }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, booking.bags, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, serviceType, booking.selectedStorageTierId, appliedCoupon]);
 
@@ -333,15 +363,30 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
                                         <div className="flex gap-2">
                                             <div className="flex-1 p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm flex items-center gap-3">
                                                 <Calendar size={16} className="text-gray-400" />
-                                                {booking.pickupDate}
+                                                <input
+                                                    type="date"
+                                                    title="Pickup Date"
+                                                    value={booking.pickupDate}
+                                                    min={formatKSTDate()}
+                                                    onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
+                                                    className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-bee-yellow"
+                                                />
                                             </div>
                                             <select
                                                 title="Pickup Time"
                                                 value={booking.pickupTime}
                                                 onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
-                                                className="w-32 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
+                                                className="w-48 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
+                                                disabled={!booking.pickupDate}
                                             >
-                                                {generateTimeSlots(pickupLoc, 'PICKUP').map(h => <option key={h} value={h}>{h}</option>)}
+                                                {getSlotsForType(pickupLoc, 'PICKUP').map(h => {
+                                                    const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                                                    return (
+                                                        <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
+                                                            {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                        </option>
+                                                    );
+                                                })}
                                             </select>
                                         </div>
                                     </div>
@@ -372,17 +417,33 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{serviceType === ServiceType.DELIVERY ? (t.booking?.delivery_schedule || 'Delivery Schedule') : (t.booking?.return_schedule || 'Retrieval')}</label>
                                         <div className="flex gap-2">
-                                            <div className="flex-1 p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm flex items-center gap-3">
-                                                <Calendar size={16} className="text-gray-400" />
-                                                {booking.dropoffDate}
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="date"
+                                                    title="Drop-off Date"
+                                                    value={booking.dropoffDate?.split(' ')[0]}
+                                                    min={booking.pickupDate?.split(' ')[0] || formatKSTDate()}
+                                                    onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
+                                                    className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none text-transparent"
+                                                />
+                                                <div className="absolute inset-0 flex items-center px-4 pointer-events-none font-bold text-sm text-gray-900">
+                                                    {getLocalizedDate(booking.dropoffDate || '', lang)}
+                                                </div>
                                             </div>
                                             <select
                                                 title="Drop-off/Delivery Time"
                                                 value={booking.deliveryTime}
                                                 onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                className="w-32 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
+                                                className="w-48 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
                                             >
-                                                {generateTimeSlots(dropoffLoc, 'DELIVERY').map(h => <option key={h} value={h}>{h}</option>)}
+                                                {getSlotsForType(dropoffLoc, 'DELIVERY').map(h => {
+                                                    const isPast = isPastKSTTime(booking.dropoffDate || booking.pickupDate || '', h);
+                                                    return (
+                                                        <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
+                                                            {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                        </option>
+                                                    );
+                                                })}
                                             </select>
                                         </div>
                                     </div>
@@ -616,6 +677,12 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
                                             <div className="flex justify-between items-center text-xs font-bold">
                                                 <div className="flex items-center gap-2 text-gray-400"><MapPin size={14} /> {t.booking?.location_surcharge || 'Location Surcharge'}</div>
                                                 <div className="text-white">₩{(priceDetails.originSurcharge + priceDetails.destSurcharge).toLocaleString()}</div>
+                                            </div>
+                                        )}
+                                        {priceDetails.storageFee > 0 && (
+                                            <div className="flex justify-between items-center text-xs font-bold">
+                                                <div className="flex items-center gap-2 text-gray-400"><Vault size={14} /> {t.booking?.extra_storage || 'Extra Storage'}</div>
+                                                <div className="text-white">₩{priceDetails.storageFee.toLocaleString()}</div>
                                             </div>
                                         )}
                                         {priceDetails.insuranceFee > 0 && (

@@ -14,7 +14,7 @@ import AdminDashboard from './components/AdminDashboard';
 
 import AdminLoginPage from './components/AdminLoginPage';
 import ManualPage from './components/ManualPage';
-import LocationsPage from './components/LocationsPage';
+
 import ErrorBoundary from './components/ErrorBoundary';
 
 import BookingSuccess from './components/BookingSuccess';
@@ -28,13 +28,14 @@ import SignupModal from './components/SignupModal';
 import UserTrackingPage from './components/UserTrackingPage';
 import StaffScanPage from './components/StaffScanPage';
 import BookingPage from './components/BookingPage'; // [NEW] Added BookingPage
+import LocationsPage from './components/LocationsPage';
 import SEO from './components/SEO';
 import MyPage from './components/MyPage';
 import { translations } from './translations';
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
 
-type ViewType = 'USER' | 'ADMIN_LOGIN' | 'ADMIN' | 'MANUAL' | 'LOCATIONS' | 'PARTNERSHIP' | 'SERVICES' | 'TERMS' | 'PRIVACY' | 'BOOKING_SUCCESS' | 'TRACKING' | 'STAFF_SCAN' | 'MYPAGE' | 'BOOKING';
+type ViewType = 'USER' | 'ADMIN_LOGIN' | 'ADMIN' | 'MANUAL' | 'PARTNERSHIP' | 'SERVICES' | 'TERMS' | 'PRIVACY' | 'BOOKING_SUCCESS' | 'TRACKING' | 'STAFF_SCAN' | 'MYPAGE' | 'BOOKING' | 'LOCATIONS';
 
 const App: React.FC = () => {
   // Helper to determine view from URL path
@@ -42,7 +43,7 @@ const App: React.FC = () => {
     if (path.startsWith('/admin/dashboard')) return 'ADMIN';
     if (path.startsWith('/admin') || path.startsWith('/yn')) return 'ADMIN_LOGIN';
     if (path.startsWith('/manual')) return 'MANUAL';
-    if (path.startsWith('/locations')) return 'LOCATIONS';
+
     if (path.startsWith('/partnership')) return 'PARTNERSHIP';
     if (path.startsWith('/services')) return 'SERVICES';
     if (path.startsWith('/terms')) return 'TERMS';
@@ -51,7 +52,9 @@ const App: React.FC = () => {
     if (path.startsWith('/tracking')) return 'TRACKING';
     if (path.startsWith('/staff/scan')) return 'STAFF_SCAN';
     if (path.startsWith('/mypage')) return 'MYPAGE';
+    if (path.startsWith('/notice')) return 'USER'; // Default to USER for notices if needed
     if (path.startsWith('/booking')) return 'BOOKING';
+    if (path.startsWith('/locations')) return 'LOCATIONS';
     return 'USER';
   };
 
@@ -60,7 +63,7 @@ const App: React.FC = () => {
       case 'ADMIN_LOGIN': return '/admin';
       case 'ADMIN': return '/admin/dashboard';
       case 'MANUAL': return '/manual';
-      case 'LOCATIONS': return '/locations';
+
       case 'PARTNERSHIP': return '/partnership';
       case 'SERVICES': return '/services';
       case 'TERMS': return '/terms';
@@ -70,6 +73,7 @@ const App: React.FC = () => {
       case 'STAFF_SCAN': return '/staff/scan';
       case 'MYPAGE': return '/mypage';
       case 'BOOKING': return '/booking'; // New path for booking page
+      case 'LOCATIONS': return '/locations';
       case 'USER': default: return '/';
     }
   };
@@ -212,6 +216,10 @@ const App: React.FC = () => {
     ease: [0.23, 1, 0.32, 1], // iOS style ease-out
   };
 
+  const handleError = (error: Error, info: React.ErrorInfo) => {
+    console.error("[App] Component Crash:", error, info);
+  };
+
   const renderView = () => {
     // Security Check: Redirect to login if accessing dashboard without info
     if (view === 'ADMIN' && !adminInfo.name) {
@@ -264,21 +272,21 @@ const App: React.FC = () => {
           </motion.div>
         );
 
+
+
+
       case 'LOCATIONS':
         return (
           <motion.div key="locations" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <ErrorBoundary fallback={<div className="p-10 text-center">지도를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</div>}>
-              <LocationsPage
-                onBack={() => navigate('USER')}
-                onSelectLocation={(id, type, date, bags) => ensureAuthAndExecute(() => handleLocationSelect(id, type, date, bags))}
-                onSuccess={handleBookingSuccess}
-                t={t}
-                lang={lang}
-                onLangChange={setLang}
-                user={currentUser}
-                initialLocationId={preSelectedBooking?.pickupLocation}
-              />
-            </ErrorBoundary>
+            <LocationsPage
+              onBack={() => navigate('USER')}
+              onSelectLocation={handleLocationSelect}
+              t={t}
+              lang={lang}
+              onLangChange={setLang}
+              user={currentUser}
+              initialLocationId={preSelectedBooking?.pickupLocation}
+            />
           </motion.div>
         );
 
@@ -393,9 +401,11 @@ const App: React.FC = () => {
         lang={lang}
         path={window.location.pathname}
       />
-      <AnimatePresence mode="wait">
-        {renderView()}
-      </AnimatePresence>
+      <ErrorBoundary>
+        <AnimatePresence mode="wait">
+          {renderView()}
+        </AnimatePresence>
+      </ErrorBoundary>
 
       {view === 'MYPAGE' && (
         <MyPage

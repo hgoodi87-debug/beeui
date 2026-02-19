@@ -154,7 +154,7 @@ const LocationList: React.FC<LocationListProps> = ({
 
                 <div className="flex flex-col gap-3 md:gap-4">
                     {/* [스봉이] 사장님이 좋아하시는 그 '일렬 횡대' 레이아웃 💅 서비스, 가방, 날짜를 한 줄에! */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1.5 md:pb-0">
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1.5 md:pb-0">
                         {/* 서비스 선택 (배송/보관) */}
                         <div className="flex bg-gray-100/60 p-1 md:p-1.5 rounded-full border border-gray-100 shadow-inner shrink-0">
                             {(['DELIVERY', 'STORAGE'] as const).map((type) => {
@@ -163,7 +163,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                     <button
                                         key={type}
                                         onClick={(e) => { e.stopPropagation(); onServiceChange(type === 'DELIVERY' ? 'SAME_DAY' : 'STORAGE'); }}
-                                        className={`px-4 py-2 rounded-full text-[10px] md:text-[11px] font-black tracking-tighter uppercase transition-all relative z-10 ${isCurrent ? 'text-bee-black' : 'text-gray-400'}`}
+                                        className={`px-1.5 md:px-4 py-1.5 md:py-2 rounded-full text-[9px] md:text-[11px] font-black tracking-tighter uppercase transition-all relative z-10 ${isCurrent ? 'text-bee-black' : 'text-gray-400'}`}
                                     >
                                         <span className="relative z-10">{type === 'DELIVERY' ? (t.locations_page?.badge_delivery || 'DEL') : (t.locations_page?.badge_storage || 'STO')}</span>
                                         {isCurrent && <motion.div layoutId="service-bg-compact-v4" className="absolute inset-0 bg-bee-yellow rounded-full shadow-sm" />}
@@ -179,30 +179,30 @@ const LocationList: React.FC<LocationListProps> = ({
                                 const next = activeStep === 'BAGGAGE' ? null : 'BAGGAGE';
                                 setActiveStep(next);
                             }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 shadow-sm shrink-0 ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900'}`}
+                            className={`flex items-center gap-1 px-2 py-1.5 rounded-full border transition-all duration-300 shadow-sm shrink-0 ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900'}`}
                         >
-                            <Luggage className={`w-4 h-4 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
-                            <span className="text-[12px] font-black italic tracking-tighter">{Object.values(baggageCounts as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
+                            <Luggage className={`w-3 h-3 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
+                            <span className="text-[10px] font-black italic tracking-tighter">{Object.values(baggageCounts as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
                         </button>
 
                         {/* 날짜 선택 (맡기기/찾기) - 한 줄에 안착! 💅 */}
-                        <div className="flex items-center gap-2 bg-white rounded-full border border-gray-100 shadow-sm px-3 py-2 shrink-0">
+                        <div className="flex items-center gap-1 bg-white rounded-full border border-gray-100 shadow-sm px-1.5 py-1.5 shrink-0">
                             <button onClick={(e) => {
                                 e.stopPropagation();
                                 const next = activeStep === 'PICKUP_DATE' ? null : 'PICKUP_DATE';
                                 setActiveStep(next);
-                            }} className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                                <div className="bg-bee-yellow text-bee-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_pick || 'PICK'}</div>
-                                <span className="text-[11px] md:text-[12px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{bookingDate || '--.--'}</span>
+                            }} className="flex items-center gap-1 shrink-0">
+                                <div className="bg-bee-yellow text-bee-black text-[7px] font-black px-1 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_pick || 'PICK'}</div>
+                                <span className="text-[9px] md:text-[11px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{bookingDate || '--.--'}</span>
                             </button>
-                            <div className="w-[1px] h-3 bg-gray-200 shrink-0" />
+                            <div className="w-[1px] h-2 bg-gray-200 shrink-0" />
                             <button onClick={(e) => {
                                 e.stopPropagation();
                                 const next = activeStep === 'RETURN_DATE' ? null : 'RETURN_DATE';
                                 setActiveStep(next);
-                            }} className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                                <div className="bg-gray-100 text-gray-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_ret || 'RET'}</div>
-                                <span className="text-[11px] md:text-[12px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{returnDate || '--.--'}</span>
+                            }} className="flex items-center gap-1 shrink-0">
+                                <div className="bg-gray-100 text-gray-400 text-[7px] font-black px-1 py-0.5 rounded-full uppercase tracking-tighter shrink-0">{t.locations_page?.badge_ret || 'RET'}</div>
+                                <span className="text-[9px] md:text-[11px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap">{returnDate || '--.--'}</span>
                             </button>
                         </div>
                     </div>

@@ -190,7 +190,13 @@ const LocationMap: React.FC<LocationMapProps> = ({
     // [스봉이] 공식 문서 학습 기반 Map 초기화 로직 (고급스럽게~ 💅)
     // Ref: https://navermaps.github.io/maps.js.ncp/docs/naver.maps.html#.MapOptions
     const initMap = useCallback(() => {
-        if (!window.naver || !window.naver.maps || !mapContainerRef.current) return;
+        if (!mapContainerRef.current || !window.naver || !window.naver.maps) {
+            console.log("[스봉이] Naver SDK or Container not ready... 🐢");
+            return;
+        }
+
+        setIsMapReady(false); // [스봉이] 초기화 시작 시 상태 리셋 💅
+
         if (mapRef.current) return; // 중복 방지
 
         const mapOptions = {

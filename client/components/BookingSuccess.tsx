@@ -274,23 +274,12 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                 >
                     <button
                         onClick={onBack}
-                        className="w-full md:w-auto px-16 py-6 bg-bee-black text-bee-yellow font-black rounded-[28px] shadow-[0_25px_50px_rgba(0,0,0,0.2)] hover:scale-[1.05] transition-all active:scale-95 flex items-center justify-center gap-4 mx-auto group"
+                        className="w-full md:w-auto px-20 py-5 bg-bee-black text-bee-yellow font-black rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.2)] hover:scale-[1.05] transition-all active:scale-95 flex items-center justify-center gap-4 mx-auto group"
                     >
                         <i className="fa-solid fa-house group-hover:rotate-12 transition-transform"></i>
                         <span className="text-sm uppercase tracking-widest">{curT.btn_home}</span>
                     </button>
 
-                    <button
-                        onClick={handleSaveImage}
-                        className="w-full md:w-auto px-16 py-5 bg-white text-bee-black font-black rounded-[28px] border-2 border-bee-black/10 shadow-xl hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-4 mx-auto group"
-                    >
-                        <i className="fa-solid fa-download group-hover:bounce transition-transform"></i>
-                        <span className="text-sm uppercase tracking-widest">
-                            {lang === 'ko' ? '바우처 이미지로 저장' :
-                                lang === 'ja' ? 'バウチャーを画像で保存' :
-                                    lang === 'zh' ? '保存凭证图片' : 'Save Voucher as Image'}
-                        </span>
-                    </button>
                     <div className="mt-12 flex flex-col items-center gap-4">
                         <div className="w-10 h-px bg-gray-200"></div>
                         <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.5em]">Beeliber Global Logistics © 2026</p>

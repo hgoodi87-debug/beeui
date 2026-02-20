@@ -334,6 +334,24 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                             </div>
                         </div>
 
+                        {/* Action Buttons */}
+                        <div className="flex gap-3 mt-4">
+                            <button
+                                onClick={() => window.print()}
+                                className="flex-1 py-4 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                            >
+                                <i className="fa-solid fa-download"></i>
+                                {lang === 'ko' ? '바우처 저장' : (t.voucher_save || 'Save Voucher')}
+                            </button>
+                            <button
+                                onClick={onBack}
+                                className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+                            >
+                                <i className="fa-solid fa-house"></i>
+                                {lang === 'ko' ? '홈으로' : (t.back_home || 'Home')}
+                            </button>
+                        </div>
+
                         {/* User Tag */}
                         <div className="p-5 bg-bee-black rounded-[24px] flex items-center gap-4 border border-white/5 shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-bee-yellow/5 rounded-full -mr-12 -mt-12" />

@@ -91,7 +91,7 @@ function getMapLink(lat, lng) {
 // Helper Function: Send Voucher Email
 async function processVoucherEmail(bookingId, booking) {
     const userEmail = booking.userEmail;
-    const lang = booking.language || 'ko';
+    const lang = (booking.language || 'ko').split('-')[0]; // 'ko-KR' -> 'ko'
 
     if (!userEmail) {
         console.log("No user email found for booking:", bookingId);
@@ -104,37 +104,49 @@ async function processVoucherEmail(bookingId, booking) {
     const destLoc = await getLocationData(booking.dropoffLocation);
     const pickupLoc = await getLocationData(booking.pickupLocation);
 
-    const getLocName = (locData) => {
-        if (!locData) return "";
-        if (lang === 'ko') return locData.name || "";
-        if (lang === 'ja') return locData.name_ja || locData.name_en || locData.name || "";
-        if (lang === 'zh') return locData.name_zh || locData.name_en || locData.name || "";
-        return locData.name_en || locData.name || "";
+    // 💅 Improved localized name helper
+    const getLocName = (locData, fallbackId) => {
+        if (!locData) {
+            // Hardcoded fallback for known branches if DB is missing
+            const fallbackMap = {
+                'IN1T': { ko: '인천공항 T1', en: 'Incheon Airport T1', ja: '仁川空港 T1', zh: '仁川机场 T1' },
+                'IN2T': { ko: '인천공항 T2', en: 'Incheon Airport T2', ja: '仁川空港 T2', zh: '仁川机场 T2' },
+                'GMP': { ko: '김포공항', en: 'Gimpo Airport', ja: '金浦空港', zh: '金浦机场' },
+                'MYN': { ko: '연남점 (머니박스)', en: 'Yeonnam Branch', ja: '延南店', zh: '延南店' },
+                'HBO': { ko: '홍대 바오점', en: 'Hongdae Bao Branch', ja: '弘大バオ店', zh: '弘大Bao店' }
+            };
+            const fb = fallbackMap[fallbackId];
+            if (fb) return fb[lang] || fb['en'];
+            return fallbackId || "";
+        }
+
+        const n = lang === 'ko' ? locData.name :
+            (lang === 'ja' ? (locData.name_ja || locData.name_en || locData.name) :
+                (lang === 'zh' ? (locData.name_zh || locData.name_en || locData.name) :
+                    (locData.name_en || locData.name)));
+        return n || fallbackId || "";
     };
 
-    const pickupGuide = pickupLoc?.pickupGuide || "";
+    const pickupBranchName = getLocName(pickupLoc, booking.pickupLocation);
+    const destBranchName = getLocName(destLoc, booking.dropoffLocation || booking.destinationLocation);
+
+    const pickupGuide = pickupLoc?.pickupGuide || (lang === 'ko' ? "지점 카운터에서 빌리버 서비스를 말씀해주세요." : "Please mention Beeliber at the counter.");
     const pickupImageUrl = pickupLoc?.pickupImageUrl || "";
-    const pickupMapLink = getMapLink(pickupLoc?.lat, pickupLoc?.lng);
-    const dropoffMapLink = getMapLink(destLoc?.lat, destLoc?.lng);
 
-    const safeDate = (dateStr) => {
-        if (!dateStr) return 'N/A';
-        const d = new Date(dateStr);
-        return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(lang === 'ko' ? 'ko-KR' : 'en-US');
-    };
+    // 💅 Use reservationCode if available, fallback to bookingId
+    const displayedCode = booking.reservationCode || bookingId;
 
-    console.log(`Processing voucher for booking ${bookingId} to ${userEmail} (${lang})`);
+    console.log(`Processing voucher for ${displayedCode} (ID: ${bookingId}) to ${userEmail} (${lang})`);
 
     // QR Code content: URL to admin status management
     const qrText = `https://beeliber-main.web.app/admin?scan=${bookingId}`;
-    // Generate QR as buffer for CID attachment
     const qrBuffer = await QRCode.toBuffer(qrText, { margin: 1, width: 400 });
 
     const mailOptions = {
         from: `"Beeliber Support" <${SMTP_USER}>`,
         to: userEmail,
         bcc: ADMIN_EMAIL,
-        subject: `[Beeliber] ${t.voucherSubject} (${t.voucherLabel}: ${bookingId})`,
+        subject: `[Beeliber] ${t.voucherSubject} (${displayedCode})`,
         attachments: [
             {
                 filename: 'qrcode.png',
@@ -146,53 +158,62 @@ async function processVoucherEmail(bookingId, booking) {
         <!DOCTYPE html>
         <html lang="${lang}">
         <head>
+            <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-                body { margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; }
-                .wrapper { padding: 40px 10px; }
-                .container { max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 48px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.05); }
+                body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+                .wrapper { width: 100%; table-layout: fixed; background-color: #f8fafc; padding-bottom: 40px; }
+                .webkit { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
                 
-                /* Brand Header */
-                .header { background-color: #1a1a1a; padding: 60px 20px; text-align: center; position: relative; }
-                .header-logo { font-size: 38px; font-weight: 900; color: #ffcb05; letter-spacing: -2px; margin: 0; font-style: italic; }
-                .header-logo span { color: #ffffff; font-style: normal; opacity: 1; }
-                .header-tagline { font-size: 10px; font-weight: 900; color: rgba(255,203,5,0.6); text-transform: uppercase; letter-spacing: 0.4em; margin-top: 10px; display: block; }
-                
-                .content { padding: 50px 40px; text-align: center; }
-                
-                /* Large Success Icon */
-                .success-check { width: 50px; height: 50px; background-color: #ffcb05; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 25px; color: #1a1a1a; font-size: 24px; }
+                /* Layout */
+                .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 0; overflow: hidden; }
+                @media screen and (min-width: 600px) {
+                    .container { border-radius: 40px; margin-top: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); }
+                }
 
-                /* Details Grid */
-                .details-box { text-align: left; background: #ffffff; border-radius: 32px; padding: 30px; border: 1.5px solid #f1f5f9; position: relative; }
-                .section-title { font-size: 13px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #ffcb05; display: inline-block; }
+                .header { background-color: #1a1a1a; padding: 40px 20px; text-align: center; }
+                .header-logo { font-size: 32px; font-weight: 900; color: #ffcb05; letter-spacing: -1.5px; font-style: italic; }
+                .header-logo span { color: #ffffff; font-style: normal; }
                 
-                .route-item { border-left: 3px solid #ffcb05; padding-left: 20px; margin-bottom: 30px; position: relative; }
-                .route-item.arrival { border-left-color: #e2e8f0; }
-                .route-label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; display: block; }
-                .route-name { font-size: 17px; font-weight: 900; color: #1a1a1a; margin-bottom: 4px; display: block; }
-                .route-time { font-size: 12px; font-weight: 700; color: #64748b; background: #f8fafc; padding: 4px 10px; border-radius: 8px; display: inline-block; margin-top: 5px; }
-
-                .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px dashed #e2e8f0; padding-top: 25px; margin-top: 10px; }
-                .meta-item { margin-bottom: 0; }
-                .meta-label { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; display: block; }
-                .meta-value { font-size: 14px; font-weight: 800; color: #1a1a1a; }
-                .meta-value.price { font-size: 24px; font-weight: 950; font-style: italic; color: #1a1a1a; }
-
-                /* QR Scanner Box */
-                .qr-section { margin-top: 50px; padding: 40px; background-color: #f8fafc; border-radius: 40px; text-align: center; }
-                .qr-title { font-size: 12px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 20px; }
-                .qr-img { border-radius: 20px; background: white; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-                .qr-note { font-size: 11px; font-weight: 600; color: #64748b; margin-top: 20px; line-height: 1.6; }
-
-                /* Footer */
-                .footer { background: #1a1a1a; padding: 50px 30px; text-align: center; }
-                .footer-slogan { font-size: 12px; font-weight: 900; color: #ffcb05; text-transform: uppercase; letter-spacing: 0.4em; }
-                .footer-copy { font-size: 10px; color: #475569; margin-top: 25px; }
-                .btn-help { display: inline-block; margin-top: 30px; background: #334155; color: white; padding: 12px 25px; border-radius: 12px; text-decoration: none; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+                .content { padding: 30px 20px; text-align: center; }
                 
-                .pickup-guide-box { margin-top: 30px; padding: 25px; background-color: #fffbeb; border-radius: 24px; border: 1px solid #ffcb05; text-align: left; }
-                .pickup-img-small { width: 100%; border-radius: 16px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+                .status-badge { display: inline-block; background-color: #ffcb05; color: #1a1a1a; padding: 8px 20px; border-radius: 100px; font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 0.05em; }
+                
+                .code-box { background: #1a1a1a; border-radius: 20px; padding: 25px; margin-bottom: 30px; color: #ffffff; }
+                .code-label { font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+                .code-value { font-size: 28px; font-weight: 900; color: #ffcb05; letter-spacing: 0.05em; word-break: break-all; }
+
+                .qr-box { margin-bottom: 35px; }
+                .qr-img { width: 180px; height: 180px; border-radius: 24px; padding: 15px; background: #ffffff; border: 1.5px solid #f1f5f9; box-shadow: 0 10px 25px rgba(0,0,0,0.03); }
+
+                .details-card { background: #ffffff; border: 1.5px solid #f1f5f9; border-radius: 32px; padding: 25px; text-align: left; }
+                .section-title { font-size: 15px; font-weight: 900; color: #1a1a1a; margin-bottom: 20px; display: flex; align-items: center; }
+                .section-title::after { content: ""; flex: 1; height: 1px; background: #f1f5f9; margin-left: 15px; }
+
+                .route-item { position: relative; padding-left: 25px; margin-bottom: 25px; border-left: 3px solid #ffcb05; }
+                .route-item.arrival { border-left-color: #e2e8f0; margin-bottom: 5px; }
+                .route-label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block; }
+                .route-name { font-size: 18px; font-weight: 900; color: #1a1a1a; line-height: 1.3; }
+                .route-badge { font-size: 9px; font-weight: 900; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+                .route-time { font-size: 13px; font-weight: 700; color: #64748b; margin-top: 6px; display: block; }
+
+                .meta-table { width: 100%; border-top: 1px dashed #e2e8f0; margin-top: 25px; padding-top: 25px; }
+                .meta-row { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
+                .meta-key { font-size: 12px; font-weight: 800; color: #94a3b8; }
+                .meta-val { font-size: 12px; font-weight: 800; color: #1a1a1a; text-align: right; }
+                
+                .price-row { margin-top: 20px; padding-top: 20px; border-top: 1.5px solid #f1f5f9; }
+                .price-val { font-size: 24px; font-weight: 950; color: #1a1a1a; }
+
+                .guide-box { margin-top: 30px; background: #fffbeb; border-radius: 24px; padding: 20px; border: 1px solid #fef3c7; }
+                .guide-title { font-size: 12px; font-weight: 900; color: #92400e; margin-bottom: 12px; text-transform: uppercase; }
+
+                /* VIP Coupon */
+                .vip-coupon { margin-top: 40px; background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 32px; padding: 30px; color: #ffffff; text-align: center; border: 1px solid #ffcb05; }
+                .vip-badge { display: inline-block; background: #ffcb05; color: #1a1a1a; padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 950; text-transform: uppercase; margin-bottom: 20px; }
+
+                .footer { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 11px; font-weight: 600; }
+                .btn { display: inline-block; background: #ffcb05; color: #1a1a1a; padding: 16px 30px; border-radius: 16px; text-decoration: none; font-size: 14px; font-weight: 900; margin-top: 30px; box-shadow: 0 10px 20px rgba(255,203,5,0.2); }
             </style>
         </head>
         <body>
@@ -200,116 +221,101 @@ async function processVoucherEmail(bookingId, booking) {
                 <div class="container">
                     <div class="header">
                         <div class="header-logo">bee<span>liber</span></div>
-                        <div class="header-tagline">Official Reservation Voucher</div>
                     </div>
                     
                     <div class="content">
-                        <div class="success-check">✓</div>
-                        <h2 style="font-size: 28px; font-weight: 900; color: #1a1a1a; margin: 0 0 10px; font-style: italic;">CONFRIMED!</h2>
-                        <p style="font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 35px;">${t.thanks}</p>
-
-                        <div class="qr-section" style="margin-top: 0; margin-bottom: 40px; background-color: #fffbeb; border: 2px solid #ffcb05;">
-                            <div class="qr-title">Check-in QR Code</div>
-                            <div style="font-size: 16px; font-weight: 950; color: #1a1a1a; margin-bottom: 15px; letter-spacing: 0.1em;">
-                                DELIVERY CODE: <span style="color: #ffcb05; background: #1a1a1a; padding: 2px 8px; border-radius: 6px;">${bookingId}</span>
-                            </div>
-                            <img src="cid:qrcode" width="160" height="160" class="qr-img" alt="QR" />
-                            <p class="qr-note" style="color: #1a1a1a; font-weight: 800;">${t.footerNote}</p>
+                        <div class="status-badge">${t.voucherLabel} CONFIRMED</div>
+                        
+                        <div class="code-box">
+                            <div class="code-label">DELIVERY CODE</div>
+                            <div class="code-value">${displayedCode}</div>
                         </div>
 
-                        <div class="details-box">
+                        <div class="qr-box">
+                            <img src="cid:qrcode" class="qr-img" alt="Scan QR" />
+                            <p style="font-size: 12px; color: #64748b; font-weight: 700; margin-top: 15px;">${t.footerNote}</p>
+                        </div>
+
+                        <div class="details-card">
                             <div class="section-title">${t.detailsTitle}</div>
                             
-                            <!-- Departure -->
+                            <!-- Pickup -->
                             <div class="route-item">
                                 <span class="route-label">${t.departureLabel}</span>
-                                <div style="margin-bottom: 4px;">
-                                    <span style="font-size: 10px; font-weight: 950; color: #ffcb05; background: #1a1a1a; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.1em;">${pickupLoc?.shortCode || ''}</span>
-                                </div>
-                                <span class="route-name">${getLocName(pickupLoc) || booking.pickupLocation}</span>
+                                <span class="route-name">${pickupBranchName} <span class="route-badge">${pickupLoc?.shortCode || booking.pickupLocation}</span></span>
                                 <span class="route-time">🕒 ${booking.pickupDate} | ${booking.pickupTime}</span>
                             </div>
 
-                            <!-- Arrival -->
+                            <!-- Dropoff -->
                             <div class="route-item arrival">
                                 <span class="route-label">${t.arrivalLabel}</span>
-                                <div style="margin-bottom: 4px;">
-                                    <span style="font-size: 10px; font-weight: 950; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.1em;">${destLoc?.shortCode || (booking.serviceType === 'DELIVERY' ? 'ADDR' : '')}</span>
-                                </div>
-                                <span class="route-name">${getLocName(destLoc) || booking.dropoffLocation || booking.destinationLocation || (booking.serviceType === 'STORAGE' ? t.storageLabel : 'Address Specified')}</span>
+                                <span class="route-name">
+                                    ${destBranchName || booking.dropoffLocation || booking.destinationLocation || (booking.serviceType === 'STORAGE' ? t.storageLabel : 'Address Specified')}
+                                    ${destLoc ? `<span class="route-badge">${destLoc.shortCode}</span>` : (booking.serviceType === 'DELIVERY' ? `<span class="route-badge">ADDR</span>` : '')}
+                                </span>
                                 <span class="route-time">🏁 ${booking.dropoffDate || booking.returnDate || 'N/A'} | ${booking.deliveryTime || booking.returnTime || booking.pickupTime || 'N/A'}</span>
                             </div>
 
-                            <div class="meta-grid">
-                                <div class="meta-item">
-                                    <span class="meta-label">${t.nameLabel}</span>
-                                    <span class="meta-value">${booking.userName}</span>
+                            <div class="meta-table">
+                                <div class="meta-row">
+                                    <span class="meta-key">${t.nameLabel}</span>
+                                    <span class="meta-val">${booking.userName}</span>
                                 </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">${t.bagsLabel}</span>
-                                    <span class="meta-value">${booking.bags} EA</span>
-                                    <!-- Detailed Bag Sizes -->
-                                    <div style="font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 700;">
-                                        ${Object.entries(booking.bagSizes || {}).filter(([_, count]) => count > 0).map(([size, count]) => `${size}:${count}`).join(' / ')}
-                                    </div>
+                                <div class="meta-row">
+                                    <span class="meta-key">${t.bagsLabel}</span>
+                                    <span class="meta-val">${booking.bags} EA (${Object.entries(booking.bagSizes || {}).filter(([_, c]) => c > 0).map(([s, c]) => `${s}:${c}`).join('/')})</span>
                                 </div>
-                                <div class="meta-item" style="grid-column: span 2; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f1f5f9;">
-                                    <span class="meta-label">Policy Agreement</span>
-                                    <div style="font-size: 11px; color: #059669; margin-bottom: 5px; font-weight: 800;">
-                                        ✔️ ${t.agreeHighValueLabel}: ${t.agreedCompleted}
-                                    </div>
-                                </div>
-                                <div class="meta-item" style="grid-column: span 2; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
-                                    <span class="meta-label">${t.paymentLabel}</span>
-                                    <span class="meta-value price">₩${(booking.finalPrice || 0).toLocaleString()}</span>
+                                <div class="meta-row price-row">
+                                    <span class="meta-key" style="font-size: 14px; color: #1a1a1a;">${t.paymentLabel}</span>
+                                    <span class="price-val">₩${(booking.finalPrice || 0).toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
 
-                        ${pickupImageUrl || pickupGuide ? `
-                        <div class="pickup-guide-box">
-                            <div class="section-title" style="margin-bottom: 15px; border-bottom: none; font-size: 11px;">📍 ${lang === 'ko' ? '지점 방문 안내' : 'Branch Pickup Guide'}</div>
-                            ${pickupImageUrl ? `<img src="${pickupImageUrl}" class="pickup-img-small" alt="Pickup Guide" />` : ''}
-                            <p style="font-size: 12px; color: #1a1a1a; line-height: 1.6; margin: 0; font-weight: 600;">${pickupGuide}</p>
+                        ${pickupBranchName && (pickupImageUrl || pickupGuide) ? `
+                        <div class="guide-box">
+                            <div class="guide-title">📍 ${pickupBranchName} ${lang === 'ko' ? '방문 안내' : 'Guide'}</div>
+                            ${pickupImageUrl ? `<img src="${pickupImageUrl}" style="width: 100%; border-radius: 12px; margin-bottom: 15px;" alt="Guide" />` : ''}
+                            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0; font-weight: 600;">${pickupGuide}</p>
                         </div>
                         ` : ''}
 
-                        <a href="https://bee-liber.com/tracking?id=${bookingId}" class="btn-help">View Online Tracking</a>
 
-                        <!-- 💅 MoneyBox Coupon Section -->
-                        <div style="margin-top: 50px; background: linear-gradient(135deg, #1a1a1a 0%, #334155 100%); border-radius: 40px; padding: 40px; text-align: center; border: 1px solid #ffcb05;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                                <div style="text-align: left;">
-                                    <span style="font-size: 24px; font-weight: 900; color: #ffcb05; font-style: italic;">money</span>
-                                    <span style="font-size: 24px; font-weight: 900; color: #ffffff;">box</span>
-                                    <p style="font-size: 10px; font-weight: 900; color: rgba(255,203,5,0.6); text-transform: uppercase; letter-spacing: 0.2em; margin: 5px 0 0;">Yeonnam Branch Official Partner</p>
-                                </div>
-                                <div style="background: #ffcb05; color: #1a1a1a; padding: 5px 15px; border-radius: 50px; font-size: 10px; font-weight: 950; text-transform: uppercase;">VIP Benefit</div>
+                        <a href="https://bee-liber.com/tracking?id=${bookingId}" class="btn">Track My Package</a>
+
+                        <!-- 💅 Action Buttons -->
+                        <div style="margin-top: 20px; text-align: center;">
+                            <a href="https://bee-liber.com/tracking?id=${bookingId}&action=save-qr" 
+                               style="display: inline-block; padding: 12px 20px; background-color: #ffffff; color: #1a1a1a; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 13px; border: 1.5px solid #e2e8f0; margin: 5px;">
+                                📸 Save QR Image
+                            </a>
+                            <a href="https://bee-liber.com/tracking?id=${bookingId}&action=save-voucher" 
+                               style="display: inline-block; padding: 12px 20px; background-color: #ffcb05; color: #1a1a1a; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 13px; margin: 5px;">
+                                📄 Save Voucher
+                            </a>
+                        </div>
+
+                        <!-- 💅 VIP Coupon -->
+                        <div class="vip-coupon">
+                            <div class="vip-badge">Partner Benefit</div>
+                            <div style="font-size: 20px; font-weight: 900; color: #ffcb05; font-style: italic; margin-bottom: 5px;">moneybox</div>
+                            <div style="font-size: 18px; font-weight: 900; margin-bottom: 15px;">SPECIAL VIP COUPON</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #64748b; line-height: 1.6;">
+                                Show this email at <b>Moneybox Yeonnam</b><br/>to get the best currency exchange rates!
                             </div>
-                            
-                            <h3 style="font-size: 24px; font-weight: 900; color: #ffffff; margin-bottom: 10px; font-style: italic;">CURRENCY EXCHANGE</h3>
-                            <p style="font-size: 32px; font-weight: 950; color: #ffcb05; margin: 0 0 25px;">SPECIAL COUPON</p>
-                            
-                            <div style="background: rgba(255,255,255,0.05); border-radius: 24px; padding: 25px; text-align: left; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.1);">
-                                <div style="margin-bottom: 12px; font-size: 12px; color: #ffffff; font-weight: 700;">📍 서울 마포구 월드컵북로2길 93 (연남동)</div>
-                                <div style="margin-bottom: 12px; font-size: 12px; color: #ffffff; font-weight: 700;">🕒 09:00 - 21:00 (Everyday)</div>
-                                <div style="font-size: 14px; color: #ffcb05; font-weight: 900; letter-spacing: 0.1em;">🏷️ CODE: BEELIBER-VIP-2026</div>
-                            </div>
-                            
-                            <p style="font-size: 13px; font-weight: 900; color: #ffffff; font-style: italic; margin-bottom: 15px;">"Show this email to staff"</p>
-                            <p style="font-size: 10px; font-weight: 800; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 8px; border-radius: 10px;">낮은 권종은 우대 환율 적용이 어려울 수 있습니다.</p>
                         </div>
                     </div>
-                    
+
                     <div class="footer">
-                        <div class="footer-slogan">NO BAGS, JUST FREEDOM</div>
-                        <div class="footer-copy">&copy; 2025 Beeliber Global Logistics. All Rights Reserved.</div>
+                        <p style="margin-bottom: 20px; letter-spacing: 0.3em; color: #ffcb05; font-weight: 900;">NO BAGS, JUST FREEDOM</p>
+                        &copy; 2025 Beeliber Global Logistics.
                     </div>
                 </div>
             </div>
         </body>
         </html>
     `,
+
     };
 
     await transporter.sendMail(mailOptions);

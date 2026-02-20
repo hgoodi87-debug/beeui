@@ -210,6 +210,9 @@ async function processVoucherEmail(bookingId, booking) {
 
                         <div class="qr-section" style="margin-top: 0; margin-bottom: 40px; background-color: #fffbeb; border: 2px solid #ffcb05;">
                             <div class="qr-title">Check-in QR Code</div>
+                            <div style="font-size: 16px; font-weight: 950; color: #1a1a1a; margin-bottom: 15px; letter-spacing: 0.1em;">
+                                DELIVERY CODE: <span style="color: #ffcb05; background: #1a1a1a; padding: 2px 8px; border-radius: 6px;">${bookingId}</span>
+                            </div>
                             <img src="cid:qrcode" width="160" height="160" class="qr-img" alt="QR" />
                             <p class="qr-note" style="color: #1a1a1a; font-weight: 800;">${t.footerNote}</p>
                         </div>
@@ -272,6 +275,30 @@ async function processVoucherEmail(bookingId, booking) {
                         ` : ''}
 
                         <a href="https://bee-liber.com/tracking?id=${bookingId}" class="btn-help">View Online Tracking</a>
+
+                        <!-- 💅 MoneyBox Coupon Section -->
+                        <div style="margin-top: 50px; background: linear-gradient(135deg, #1a1a1a 0%, #334155 100%); border-radius: 40px; padding: 40px; text-align: center; border: 1px solid #ffcb05;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                                <div style="text-align: left;">
+                                    <span style="font-size: 24px; font-weight: 900; color: #ffcb05; font-style: italic;">money</span>
+                                    <span style="font-size: 24px; font-weight: 900; color: #ffffff;">box</span>
+                                    <p style="font-size: 10px; font-weight: 900; color: rgba(255,203,5,0.6); text-transform: uppercase; letter-spacing: 0.2em; margin: 5px 0 0;">Yeonnam Branch Official Partner</p>
+                                </div>
+                                <div style="background: #ffcb05; color: #1a1a1a; padding: 5px 15px; border-radius: 50px; font-size: 10px; font-weight: 950; text-transform: uppercase;">VIP Benefit</div>
+                            </div>
+                            
+                            <h3 style="font-size: 24px; font-weight: 900; color: #ffffff; margin-bottom: 10px; font-style: italic;">CURRENCY EXCHANGE</h3>
+                            <p style="font-size: 32px; font-weight: 950; color: #ffcb05; margin: 0 0 25px;">SPECIAL COUPON</p>
+                            
+                            <div style="background: rgba(255,255,255,0.05); border-radius: 24px; padding: 25px; text-align: left; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="margin-bottom: 12px; font-size: 12px; color: #ffffff; font-weight: 700;">📍 서울 마포구 월드컵북로2길 93 (연남동)</div>
+                                <div style="margin-bottom: 12px; font-size: 12px; color: #ffffff; font-weight: 700;">🕒 09:00 - 21:00 (Everyday)</div>
+                                <div style="font-size: 14px; color: #ffcb05; font-weight: 900; letter-spacing: 0.1em;">🏷️ CODE: BEELIBER-VIP-2026</div>
+                            </div>
+                            
+                            <p style="font-size: 13px; font-weight: 900; color: #ffffff; font-style: italic; margin-bottom: 15px;">"Show this email to staff"</p>
+                            <p style="font-size: 10px; font-weight: 800; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 8px; border-radius: 10px;">낮은 권종은 우대 환율 적용이 어려울 수 있습니다.</p>
+                        </div>
                     </div>
                     
                     <div class="footer">

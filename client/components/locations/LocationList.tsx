@@ -93,8 +93,8 @@ const LocationList: React.FC<LocationListProps> = ({
                                     `${year}. ${String(month + 1).padStart(2, '0')}`}
                     </span>
                     <div className="flex items-center gap-1">
-                        <button onClick={handlePrevMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronLeft className="w-3.5 h-3.5" /></button>
-                        <button onClick={handleNextMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronRight className="w-3.5 h-3.5" /></button>
+                        <button title="이전 달" onClick={handlePrevMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                        <button title="다음 달" onClick={handleNextMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronRight className="w-3.5 h-3.5" /></button>
                     </div>
                 </div>
                 <div className="grid grid-cols-7 gap-0.5">
@@ -257,7 +257,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                                     activeStep === 'PICKUP_TIME' ? (t.booking?.select_time || 'Select Pickup Time') :
                                                         activeStep === 'RETURN_DATE' ? (t.booking?.delivery_schedule || 'Select Return Date') : (t.booking?.select_time || 'Select Return Time')}
                                         </h3>
-                                        <button onClick={() => setActiveStep(null)}><X size={16} className="text-gray-400" /></button>
+                                        <button title="닫기" onClick={() => setActiveStep(null)}><X size={16} className="text-gray-400" /></button>
                                     </div>
 
                                     {activeStep === 'BAGGAGE' ? (

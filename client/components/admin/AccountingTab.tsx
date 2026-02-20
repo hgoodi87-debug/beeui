@@ -9,6 +9,7 @@ interface AccountingTabProps {
     handleExportCSV: () => void;
     revenueStats: any;
     accountingDailyStats: any[];
+    accountingMonthlyStats: any[];
     setSelectedDetailDate: (d: string) => void;
     expForm: any;
     setExpForm: (f: any) => void;
@@ -25,6 +26,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     handleExportCSV,
     revenueStats,
     accountingDailyStats,
+    accountingMonthlyStats,
     setSelectedDetailDate,
     expForm,
     setExpForm,
@@ -48,18 +50,18 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                 <div className="flex flex-wrap items-center gap-4 mb-6">
                     <div>
                         <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">시작일 (Start)</label>
-                        <input type="date" value={revenueStartDate} onChange={e => setRevenueStartDate(e.target.value)} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
+                        <input type="date" title="시작 날짜 선택" placeholder="YYYY-MM-DD" value={revenueStartDate} onChange={e => setRevenueStartDate(e.target.value)} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
                     </div>
                     <span className="text-gray-300 font-bold">~</span>
                     <div>
                         <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">종료일 (End)</label>
-                        <input type="date" value={revenueEndDate} onChange={e => setRevenueEndDate(e.target.value)} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
+                        <input type="date" title="종료 날짜 선택" placeholder="YYYY-MM-DD" value={revenueEndDate} onChange={e => setRevenueEndDate(e.target.value)} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                     <div className="bg-bee-yellow/10 p-5 rounded-[24px] border border-bee-yellow/20">
-                        <span className="text-[10px] font-black text-bee-black/50 uppercase">누격 매출 (Total Revenue)</span>
+                        <span className="text-[10px] font-black text-bee-black/50 uppercase">누적 매출 (Total Revenue)</span>
                         <h3 className="text-xl md:text-2xl font-black text-bee-black mt-1">₩{revenueStats.total.toLocaleString()}</h3>
                         <span className="text-[10px] font-bold text-gray-500">{revenueStats.count}건</span>
                     </div>
@@ -127,13 +129,48 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
 
                     <div className="space-y-4">
                         <h3 className="text-lg font-black flex items-center gap-2">
+                            <i className="fa-solid fa-calendar-days"></i> 월간 정산 요약
+                        </h3>
+                        <div className="overflow-x-auto bg-gray-50/50 rounded-2xl border border-gray-100 p-2 max-h-[400px]">
+                            <table className="w-full text-left">
+                                <thead className="bg-bee-black text-[10px] font-black uppercase text-bee-yellow border-b">
+                                    <tr>
+                                        <th className="px-4 py-3">월별 (Month)</th>
+                                        <th className="px-4 py-3">건수</th>
+                                        <th className="px-4 py-3">매출액</th>
+                                        <th className="px-4 py-3">누적</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {accountingMonthlyStats.length > 0 ? accountingMonthlyStats.map(s => (
+                                        <tr
+                                            key={s.month}
+                                            className="text-[11px] hover:bg-white transition-all group"
+                                        >
+                                            <td className="px-4 py-3 font-black">{s.month}</td>
+                                            <td className="px-4 py-3 font-bold">{s.count}건</td>
+                                            <td className="px-4 py-3 font-black text-bee-black">₩{s.total.toLocaleString()}</td>
+                                            <td className="px-4 py-3 font-bold text-bee-blue">₩{s.cumulative.toLocaleString()}</td>
+                                        </tr>
+                                    )) : (
+                                        <tr><td colSpan={4} className="px-4 py-10 text-center text-gray-400 font-bold">월별 내역 없음</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12 pt-12 border-t border-gray-100">
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-black flex items-center gap-2">
                             <i className="fa-solid fa-receipt"></i> 지출 등록 및 내역
                         </h3>
                         <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-[9px] font-black text-gray-400 uppercase">날짜</label>
-                                    <input type="date" value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
+                                    <input type="date" title="지출 날짜 선택" placeholder="YYYY-MM-DD" value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
                                 </div>
                                 <div>
                                     <label className="text-[9px] font-black text-gray-400 uppercase">항목 (카테고리)</label>
@@ -143,7 +180,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-[9px] font-black text-gray-400 uppercase">금액</label>
-                                    <input type="number" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: Number(e.target.value) })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
+                                    <input type="number" title="지출 금액 입력" placeholder="0" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: Number(e.target.value) })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
                                 </div>
                                 <div className="flex items-end">
                                     <button onClick={handleSaveExpenditure} className="w-full bg-bee-black text-white py-2 rounded-lg font-black text-xs hover:bg-gray-800 transition-all">지출 저장</button>
@@ -172,7 +209,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                             <td className="px-4 py-3 font-bold">{e.category}</td>
                                             <td className="px-4 py-3 font-black text-red-500">₩{e.amount?.toLocaleString()}</td>
                                             <td className="px-4 py-3 text-right">
-                                                <button onClick={() => deleteExpenditure(e.id!)} className="text-gray-300 hover:text-red-500 transition-colors"><i className="fa-solid fa-trash-can"></i></button>
+                                                <button title="지출 내역 삭제" onClick={() => deleteExpenditure(e.id!)} className="text-gray-300 hover:text-red-500 transition-colors"><i className="fa-solid fa-trash-can"></i></button>
                                             </td>
                                         </tr>
                                     ))}

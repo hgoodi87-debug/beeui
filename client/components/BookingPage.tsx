@@ -345,10 +345,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
         finalBooking.reservationCode = generateShortCode();
 
         try {
-            // Call parent success handler directly (App.tsx will handle saving if needed, but usually App.tsx expects the component to save?)
-            // DetailedBooking usually didn't save? Wait, App.tsx's handleBookingSuccess DOES save. 
-            // So we just pass the object up.
-            await onSuccess(finalBooking);
+            // 💅 데이터를 확실하게 클론해서 넘겨줍니다. (App.tsx에서 상태 업데이트가 꼬이지 않게!)
+            const clonedBooking = JSON.parse(JSON.stringify(finalBooking));
+            await onSuccess(clonedBooking);
         } catch (e) {
             console.error("Booking Error", e);
             alert("Booking Failed. Please try again.");

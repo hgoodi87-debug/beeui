@@ -185,6 +185,8 @@ const App: React.FC = () => {
 
   const handleBookingSuccess = async (booking: any) => {
     try {
+      console.log("[App] handleBookingSuccess started for:", booking.id || 'NEW');
+
       // AI bookings might be missing fields
       const finalBooking = {
         ...booking,
@@ -193,11 +195,15 @@ const App: React.FC = () => {
         createdAt: booking.createdAt || new Date().toISOString()
       };
 
+      // Set state FIRST to ensure it's ready for the next page 💅
+      setLastBooking(finalBooking);
+      console.log("[App] lastBooking state scheduled:", finalBooking.id);
+
       // Save to Firebase (Critical Step)
       await StorageService.saveBooking(finalBooking);
-      console.log("[App] Booking saved:", finalBooking.id);
+      console.log("[App] Booking saved to Cloud:", finalBooking.id);
 
-      setLastBooking(finalBooking);
+      // Final navigation
       navigate('BOOKING_SUCCESS');
     } catch (saveError: any) {
       console.error("[App] Booking Save failed:", saveError);

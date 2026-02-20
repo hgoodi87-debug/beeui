@@ -14,6 +14,7 @@ interface BookingVoucherProps {
 
 const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, pickupLoc, dropoffLoc, onBack }) => {
     const couponRef = React.useRef<HTMLDivElement>(null);
+    const simpleQRRef = React.useRef<HTMLDivElement>(null);
 
     // 폰트 깨짐 방지 및 언어별 폰트 설정
     const safeDate = (dateStr: string) => {
@@ -50,6 +51,25 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
             return `https://map.naver.com/v5/search/${encodeURIComponent(l.address || l.name)}?c=${l.lng},${l.lat},15,0,0,0,dh`;
         }
         return `https://map.naver.com/v5/search/${encodeURIComponent(l.address || l.name)}`;
+    };
+
+    const handleSaveSimpleQR = async () => {
+        if (!simpleQRRef.current) return;
+        try {
+            const canvas = await html2canvas(simpleQRRef.current, {
+                scale: 3,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                logging: false,
+            });
+            const link = document.createElement('a');
+            link.download = `Beeliber_Simple_QR_${booking.id}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (err) {
+            console.error('Failed to save simple QR image:', err);
+            alert(lang === 'ko' ? '이미지 저장에 실패했습니다.' : 'Failed to save QR image.');
+        }
     };
 
     const handleSaveCoupon = async () => {
@@ -439,6 +459,15 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
             {/* Actions Area */}
             <div className="mt-8 space-y-4 max-w-sm mx-auto w-full">
                 <button
+                    onClick={handleSaveSimpleQR}
+                    className="w-full py-5 border-2 border-transparent bg-bee-yellow text-bee-black font-black rounded-[24px] transition-all shadow-xl flex items-center justify-center gap-3 group animate-bounce-subtle"
+                >
+                    <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center group-hover:bg-bee-black group-hover:text-bee-yellow transition-colors">
+                        <i className="fa-solid fa-qrcode"></i>
+                    </div>
+                    <span className="text-xs uppercase tracking-widest">{lang === 'ko' ? '심플 QR 이미지 저장' : 'Save Simple QR Image'}</span>
+                </button>
+                <button
                     onClick={() => window.print()}
                     className="w-full py-5 border-2 border-transparent bg-white hover:border-bee-yellow font-black rounded-[24px] transition-all shadow-sm flex items-center justify-center gap-3 group"
                 >
@@ -453,6 +482,29 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                 >
                     {t.locations_page.back_to_list || '목록으로 돌아가기'}
                 </button>
+            </div>
+            {/* Hidden Simple QR for Export - [스봉이 제작] 럭셔리 & 심플 💅 */}
+            <div className="fixed left-[-9999px] top-[-9999px]">
+                <div ref={simpleQRRef} className="w-[400px] bg-white p-10 flex flex-col items-center text-center">
+                    <div className="mb-6 flex justify-center gap-1">
+                        <span className="text-2xl font-black italic text-bee-yellow">bee</span>
+                        <span className="text-2xl font-black text-bee-black">liber</span>
+                    </div>
+                    <div className="w-64 h-64 bg-white rounded-[40px] p-6 mb-6 border-4 border-bee-yellow/10 flex items-center justify-center shadow-sm">
+                        <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${booking.reservationCode || booking.id}`}
+                            alt="QR Code"
+                            className="w-full h-full object-contain"
+                        />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">Reservation Code</p>
+                        <h3 className="text-xl font-black text-bee-black tracking-tighter">{booking.reservationCode || booking.id}</h3>
+                    </div>
+                    <div className="mt-8 pt-6 border-t border-gray-100 w-full text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                        Official Service Voucher
+                    </div>
+                </div>
             </div>
         </motion.div>
     );

@@ -15,6 +15,8 @@ interface DailySettlementTabProps {
     closings: CashClosing[];
     clearClosingHistory: () => void;
     bookings: BookingState[];
+    expenditures: Expenditure[];
+    deleteExpenditure: (id: string) => void;
     setSelectedBooking: (b: BookingState | null) => void;
 }
 
@@ -32,6 +34,8 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
     closings,
     clearClosingHistory,
     bookings,
+    expenditures,
+    deleteExpenditure,
     setSelectedBooking
 }) => {
     return (
@@ -42,7 +46,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
             <div className="bg-white p-6 rounded-[30px] shadow-sm border border-gray-100 flex items-center gap-4">
                 <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">정산일 (Date)</label>
-                    <input type="date" value={revenueEndDate} onChange={e => { setRevenueStartDate(e.target.value); setRevenueEndDate(e.target.value); }} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
+                    <input type="date" title="정산 날짜 선택" placeholder="YYYY-MM-DD" value={revenueEndDate} onChange={e => { setRevenueStartDate(e.target.value); setRevenueEndDate(e.target.value); }} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
                 </div>
                 <p className="text-xs text-gray-400 font-bold mt-5">* 일일 정산은 선택한 하루의 데이터를 집계합니다.</p>
             </div>
@@ -235,7 +239,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">금액 (Amount)</label>
-                                <input type="number" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: Number(e.target.value) })} className="w-full bg-gray-50 p-3 rounded-xl border border-gray-100 font-bold text-sm outline-none" />
+                                <input type="number" title="지출 금액 입력" placeholder="0" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: Number(e.target.value) })} className="w-full bg-gray-50 p-3 rounded-xl border border-gray-100 font-bold text-sm outline-none" />
                             </div>
                         </div>
                         <div>
@@ -245,6 +249,43 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         <button onClick={handleSaveExpenditure} className="w-full py-3 bg-gray-100 text-gray-600 font-black rounded-xl hover:bg-gray-200 transition-all border border-gray-200">
                             지출 내역 저장
                         </button>
+                    </div>
+
+                    {/* New: Display current day's expenditures */}
+                    <div className="mt-6 pt-6 border-t border-gray-100 space-y-4">
+                        <h4 className="text-sm font-black flex items-center gap-2">
+                            <i className="fa-solid fa-list-ul"></i> 당일 지출 내역
+                        </h4>
+                        <div className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+                            <table className="w-full text-left text-xs">
+                                <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-400">
+                                    <tr>
+                                        <th className="px-4 py-3">항목</th>
+                                        <th className="px-4 py-3 text-right">금액</th>
+                                        <th className="px-4 py-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 bg-white">
+                                    {expenditures.length > 0 ? expenditures.map(e => (
+                                        <tr key={e.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-3 font-bold">{e.category}</td>
+                                            <td className="px-4 py-3 text-right font-black text-red-500">₩{e.amount?.toLocaleString()}</td>
+                                            <td className="px-4 py-3 text-right">
+                                                <button
+                                                    title="지출 내역 삭제"
+                                                    onClick={() => deleteExpenditure(e.id!)}
+                                                    className="text-gray-300 hover:text-red-500 transition-colors"
+                                                >
+                                                    <i className="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400 italic">지출 내역 없음</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

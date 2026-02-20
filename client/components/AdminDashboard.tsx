@@ -272,17 +272,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const [closings, setClosings] = useState<CashClosing[]>([]);
   const [expenditures, setExpenditures] = useState<Expenditure[]>([]);
 
-  // Update dates when todayKST changes
+  // Update dates when todayKST or activeTab changes
   useEffect(() => {
-    // Default revenue range: From 1st of current month to today
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
     const firstDayStr = firstDay.toISOString().split('T')[0];
 
-    setRevenueStartDate(firstDayStr);
+    // Change: For Daily Settlement, default to today only. For others, default to month-to-date.
+    if (activeTab === 'DAILY_SETTLEMENT') {
+      setRevenueStartDate(todayKST);
+    } else {
+      setRevenueStartDate(firstDayStr);
+    }
+
     setRevenueEndDate(todayKST);
     setExpForm(prev => ({ ...prev, date: todayKST }));
-  }, [todayKST]);
+  }, [todayKST, activeTab]);
   const [expForm, setExpForm] = useState<Partial<Expenditure>>({
     date: new Date().toISOString().split('T')[0],
     category: '',
@@ -347,6 +352,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     });
 
     const sortedStats = Object.values(statsMap).sort((a, b) => a.date.localeCompare(b.date));
+    let acc = 0;
+    sortedStats.forEach(s => {
+      acc += s.total;
+      s.cumulative = acc;
+    });
+
+    return sortedStats.reverse(); // Latest first
+  }, [bookings, revenueStartDate, revenueEndDate]);
+
+  const accountingMonthlyStats = useMemo(() => {
+    const statsMap: Record<string, { month: string, count: number, total: number, cumulative: number }> = {};
+    const start = new Date(revenueStartDate);
+    const end = new Date(revenueEndDate);
+    end.setHours(23, 59, 59, 999);
+
+    const targetBookings = bookings.filter(b => {
+      const d = new Date(b.pickupDate || '');
+      return d >= start && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
+    });
+
+    targetBookings.forEach(b => {
+      const dateKey = b.pickupDate || 'Unknown';
+      if (dateKey === 'Unknown') return;
+      const monthKey = dateKey.slice(0, 7); // YYYY-MM
+      if (!statsMap[monthKey]) {
+        statsMap[monthKey] = { month: monthKey, count: 0, total: 0, cumulative: 0 };
+      }
+      statsMap[monthKey].count++;
+      statsMap[monthKey].total += (b.finalPrice || 0);
+    });
+
+    const sortedStats = Object.values(statsMap).sort((a, b) => a.month.localeCompare(b.month));
     let acc = 0;
     sortedStats.forEach(s => {
       acc += s.total;
@@ -432,22 +469,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     const netProfit = totalRevenue - totalExp;
     const vat = Math.floor(totalRevenue * 0.1); // Assuming 10% VAT
-
     return {
-      deliveryCount: deliveryBookings.length,
-      storageCount: storageBookings.length,
-      totalCount: targetBookings.length,
-      bagSizes,
-      revenueByMethod,
       totalRevenue,
       totalExp,
+      netProfit: totalRevenue - totalExp,
+      vat: Math.round(totalRevenue / 11),
+      deliveryCount: deliveryBookings.length,
+      storageCount: storageBookings.length,
+      bagSizes,
+      revenueByMethod,
       expByCategory,
-      discountCodeCounts,
-      netProfit,
-      vat,
-      periodClosing
+      discountCodeCounts
     };
-  }, [bookings, expenditures, closings, revenueStartDate, revenueEndDate]);
+  }, [bookings, expenditures, revenueStartDate, revenueEndDate]);
+
+  const filteredExpenditures = useMemo(() => {
+    const start = new Date(revenueStartDate);
+    const end = new Date(revenueEndDate);
+    end.setHours(23, 59, 59, 999);
+
+    return expenditures.filter(e => {
+      const d = new Date(e.date);
+      return d >= start && d <= end;
+    }).sort((a, b) => b.date.localeCompare(a.date));
+  }, [expenditures, revenueStartDate, revenueEndDate]);
 
   const handleCashClose = async () => {
     if (!confirm('마감 처리 하시겠습니까?')) return;
@@ -515,15 +560,52 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
   const handleExportCSV = () => {
-    if (closings.length === 0) {
-      alert('내보낼 정산 내역이 없습니다.');
+    // 1. Filter bookings based on the currently selected revenue range
+    const start = new Date(revenueStartDate);
+    const end = new Date(revenueEndDate);
+    end.setHours(23, 59, 59, 999);
+
+    const filteredForExport = bookings.filter(b => {
+      const d = new Date(b.pickupDate || '');
+      return d >= start && d <= end && !b.isDeleted;
+    }).sort((a, b) => (b.pickupDate || '').localeCompare(a.pickupDate || ''));
+
+    if (filteredForExport.length === 0 && closings.length === 0) {
+      alert('내보낼 데이터가 없습니다.');
       return;
     }
 
     const BOM = '\uFEFF';
-    const headers = ['날짜', '총 매출', '카드 매출', '현금 매출', '실제 시재', '차액', '메모', '마감자', '생성일'];
+    let csvContent = BOM;
 
-    const rows = closings.map(c => [
+    // --- Section 1: Detailed Booking Records ---
+    const bookingHeaders = ['예약번호', '상태', '성함', '픽업날짜', '반납날짜', '픽업장소', '반납장소', '서비스타입', '결제금액', '생성일'];
+    csvContent += bookingHeaders.join(',') + '\n';
+
+    const bookingRows = filteredForExport.map(b => {
+      const pickupLoc = locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation;
+      const dropoffLoc = locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation;
+      return [
+        b.id,
+        b.status,
+        `"${(b.userName || '').replace(/"/g, '""')}"`,
+        b.pickupDate,
+        b.returnDate || '-',
+        `"${(pickupLoc || '').replace(/"/g, '""')}"`,
+        `"${(dropoffLoc || '').replace(/"/g, '""')}"`,
+        b.serviceType,
+        b.finalPrice,
+        b.createdAt
+      ].join(',');
+    });
+    csvContent += bookingRows.join('\n') + '\n\n';
+
+    // --- Section 2: Cash Closing Summary (Legacy) ---
+    csvContent += '--- 시재 마감 내역 (Cash Closings) ---\n';
+    const closingHeaders = ['마감날짜', '총 매출', '카드 매출', '현금 매출', '실제 시재', '차액', '메모', '마감자', '생성일'];
+    csvContent += closingHeaders.join(',') + '\n';
+
+    const closingRows = closings.map(c => [
       c.date,
       c.totalRevenue,
       c.cardRevenue,
@@ -534,13 +616,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       c.closedBy,
       c.createdAt
     ].join(','));
+    csvContent += closingRows.join('\n');
 
-    const csvContent = BOM + headers.join(',') + '\n' + rows.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `beeliber_accounting_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `beeliber_detail_report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1912,6 +1994,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               closings={closings}
               clearClosingHistory={clearClosingHistory}
               bookings={bookings}
+              expenditures={filteredExpenditures}
+              deleteExpenditure={deleteExpenditure}
               setSelectedBooking={setSelectedBooking}
             />
           )}
@@ -1925,11 +2009,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handleExportCSV={handleExportCSV}
               revenueStats={revenueStats}
               accountingDailyStats={accountingDailyStats}
+              accountingMonthlyStats={accountingMonthlyStats}
               setSelectedDetailDate={setSelectedDetailDate}
               expForm={expForm}
               setExpForm={setExpForm}
               handleSaveExpenditure={handleSaveExpenditure}
-              expenditures={expenditures}
+              expenditures={filteredExpenditures}
               deleteExpenditure={deleteExpenditure}
             />
           )}

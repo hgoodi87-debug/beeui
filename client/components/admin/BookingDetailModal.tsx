@@ -286,7 +286,52 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                     </div>
                 </div>
 
-                {/* Section 4: AI Analysis */}
+                {/* Section 4: Payment Summary - [스봉이 신설] 럭셔리 영수증 섹션 💅 */}
+                <div className="p-8 bg-gray-900 rounded-[32px] border border-white/5 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-bee-yellow/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-6">
+                        <span className="w-1 h-3 bg-bee-yellow rounded-full"></span> Payment Summary
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-8 relative z-10">
+                        <div>
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Method</label>
+                            <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-bee-yellow text-xs">
+                                    <i className={`fa-solid ${selectedBooking.paymentMethod === 'Cash' ? 'fa-money-bill-1' : 'fa-credit-card'}`}></i>
+                                </div>
+                                <span className="text-white text-xs font-black">{selectedBooking.paymentMethod || 'Credit Card'}</span>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Status</label>
+                            <span className="px-2 py-0.5 bg-green-500/10 text-green-500 rounded-lg text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
+                                Paid
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-white/5 space-y-2 relative z-10">
+                        <div className="flex justify-between items-center text-[10px]">
+                            <span className="font-bold text-gray-500 uppercase">Subtotal</span>
+                            <span className="font-bold text-gray-400">₩{((selectedBooking.finalPrice || 0) + (selectedBooking.discountAmount || 0)).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                            <span className="font-bold text-red-400 uppercase">Discount</span>
+                            <span className="font-black text-red-500">- ₩{(selectedBooking.discountAmount || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                            <span className="text-[10px] font-black text-bee-yellow uppercase tracking-widest">Final Amount</span>
+                            <span className="text-2xl font-black text-white tracking-tighter">
+                                <span className="text-bee-yellow text-xs mr-0.5">₩</span>
+                                {(selectedBooking.finalPrice || 0).toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 5: AI Analysis */}
                 {selectedBooking.aiAnalysis && (
                     <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100 italic text-sm text-purple-700 font-medium">
                         <i className="fa-solid fa-wand-magic-sparkles mr-2 text-purple-500"></i>

@@ -76,7 +76,11 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                             {currentService !== 'STORAGE' ? 'Branch Info' : 'Storage Hub'}
                         </span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-[1000] tracking-[-0.05em] leading-tight text-gray-900 text-center">
+                    <h2
+                        onClick={handleGetDirections}
+                        className="text-2xl md:text-3xl font-[1000] tracking-[-0.05em] leading-tight text-gray-900 text-center cursor-pointer hover:text-bee-yellow transition-colors"
+                        title={t.locations_page?.btn_get_directions || 'Get Directions'}
+                    >
                         {getName()}
                     </h2>
 

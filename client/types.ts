@@ -262,6 +262,7 @@ export interface AdminUser {
   jobTitle: string;
   password: string;
   role?: 'super' | 'staff';
+  branchId?: string; // 소속 지점 ID
   createdAt: string;
 }
 

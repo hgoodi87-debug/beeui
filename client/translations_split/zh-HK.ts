@@ -467,7 +467,7 @@ export const zhHK = {
         pain_section: {
             badge: "TRAVEL CHALLENGES",
             title_1: "在陌生城市的樓梯前，",
-            title_2: "正為沈重的行李發愁嗎？",
+            title_2: "正為沈重的行李發售嗎？",
             highlight: "感到無助的瞬間",
             item1_t: "無盡的樓梯，沈重的行李箱",
             item1_d: "您是否在機場快線和地鐵站的深長樓梯下，正因沈重的行李而筋疲力盡？",
@@ -476,6 +476,49 @@ export const zhHK = {
             item3_t: "奔波找寄存處的寶貴時間",
             item3_d: "在入住前後，因找不到寄存行李的地方而在陌生的街道上浪費寶貴時間嗎？",
             solution: "Beeliber 是將您從所有這些辛勞中解放出來的完美方案。"
+        },
+        stats: {
+            users: "24,800+ 位旅伴",
+            items: "152,400+ 件安全配送",
+            satisfaction: "99.2% 的滿意度"
+        },
+        pain: {
+            badge: "旅行的現實",
+            title_1: "還在親手提著",
+            title_2: "沈重的行李嗎？",
+            title_3: "壓垮您的行囊。",
+            desc: "旅行不是體力測試。為什麼要在韓國有限的時間裡，與沈重的行李箱搏斗呢？交給 Beeliber，享受真正的自由。",
+            point1: "樓梯是您的最大敵人",
+            point2: "別浪費最後의 4 小時",
+            point3: "提著 30kg 行李擠滿員電車的痛苦"
+        },
+        howitworks: {
+            subtitle: "從機場到酒店，從酒店到機場的智能行李配送服務。",
+            step1_title: "在線預註",
+            step1_desc: "1 分鐘內完成簡單快捷的預訂。",
+            step2_title: "寄存行李",
+            step2_desc: "在站點分店寄存您的行李。",
+            step3_title: "安全配送",
+            step3_desc: "實時查看配送狀態。",
+            step4_title: "領取行李",
+            step4_desc: "在酒店大堂或機場領取行李。"
+        },
+        servicedetails: {
+            delivery_title: "輕裝上陣",
+            delivery_accent: "輕鬆抵達",
+            delivery_desc: "在站點到達處寄存行李，我們將直接配送至您的酒店大堂。解放雙手，即刻開啟旅程。",
+            handsfree_title: "優雅從容",
+            handsfree_accent: "完滿啟程",
+            handsfree_desc: "退房後寄存行李去明洞購物。上車前在站點領取行李即可！"
+        },
+        trust: {
+            title: "您的安心",
+            point1_title: "安全存儲",
+            point1_desc: "在設有監控的安保設施中安全管理。",
+            point2_title: "100% 賠償保障",
+            point2_desc: "每件物品均享有最高 50 萬韓元的保險。",
+            point3_title: "專家搬運",
+            point3_desc: "由擁有 10 年以上經驗的物流專家進行配送。"
         }
     }
 };

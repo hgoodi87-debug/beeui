@@ -4,7 +4,7 @@ import { AdminUser } from '../types';
 import { StorageService } from '../services/storageService';
 
 interface AdminLoginPageProps {
-  onLogin: (name: string, jobTitle: string) => void;
+  onLogin: (name: string, jobTitle: string, branchId?: string) => void;
   onCancel: () => void;
 }
 
@@ -101,7 +101,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       });
 
       if (admin) {
-        onLogin(admin.name, admin.jobTitle || 'Staff');
+        onLogin(admin.name, admin.jobTitle || 'Staff', admin.branchId);
       } else {
         setError('이름 또는 비밀번호가 올바르지 않습니다.');
       }

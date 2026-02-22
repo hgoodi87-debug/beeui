@@ -1,7 +1,7 @@
 export const ko = {
     seo: {
         title: '서울/홍대 캐리어 짐 보관 & 당일 짐 배송',
-        description: '머니박스 파트너쉽 빌리버 연남점: 홍대입구역 3번 출구 도보 2분. 운영시간: 09:00 ~ 21:00. 홍대/서울 캐리어 짐 보관 및 공항 당일 짐 배송 서비스. 빌리버배송 예약시 2천원 할인쿠폰 코드(BEE2) + 최고 우대 환율. 무거운 짐은 맡기고 가볍게 여행하세요.',
+        description: '머니박스 파트너십 빌리버 연남점: 홍대입구역 3번 출구 도보 2분. 운영시간: 09:00 ~ 21:00. 홍대/서울 캐리어 짐 보관 및 공항 당일 짐 배송 서비스. 빌리버 배송 예약 시 2천원 할인 쿠폰 코드(BEE2) + 최고 우대 환율. 무거운 짐은 맡기고 가볍게 여행하세요.',
         keywords: '홍대 짐보관, 홍대 짐배송, 서울 짐보관, 짐캐리, 물품보관함, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 수하물 배송'
     },
     nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털' },
@@ -39,7 +39,7 @@ export const ko = {
     },
     hero: {
         badge: '글로벌 여행 파트너', title1: '짐 없이', title2: '자유롭게.',
-        hook_text: '✨ 이곳에서 내 캐리어를 맡길수있는 장소를 확인하고 예약하세요 !',
+        hook_text: '✨ 이곳에서 내 캐리어를 맡길 수 있는 장소를 확인하고 예약하세요!',
         insurance_title: '안전 보상 보험',
         insurance_desc: "분실 및 파손 시 가방당 최대 50만원(약 $380)까지 보상해 드립니다. 안심하고 여행하세요.",
         insurance_badge: '안전 보상 보험 가입 완료',
@@ -94,7 +94,7 @@ export const ko = {
         "인천공항 배송 덕분에 입국하자마자 빈손으로 여행 시작했어요! 🍯",
         "명동에서 짐 없이 쇼핑하니까 진짜 천국이네요. 추천합니다! 👍",
         "부산에서 서울까지 무거운 캐리어 걱정 없이 KTX 탔어요. 🚄",
-        "파트너지점 지점이 많아서 짐 맡기기가 너무 수월해요. 🐝"
+        "파트너 지점이 많아서 짐 맡기기가 너무 수월해요. 🐝"
     ],
     booking: {
         delivery: '배송', storage: '보관', from: '출발 / 맡길 지점', to: '도착 / 찾을 지점', duration: '보관 기간', dropoff_schedule: '찾는 날짜 & 시간',
@@ -208,9 +208,9 @@ export const ko = {
         sub: '우리의 전문성',
         title: '빠르고, 안전하고, 자유롭게.',
         highlight_title: '여행의 시작과 끝이 놀랍도록 가벼워집니다.',
-        highlight_desc: '무거운 짐은 비리버에게 맡기고, 당신은 오직 여행의 순간에만 집중하세요.\n서울 주요 거점 어디서나 스마트한 보관과 배송 서비스를 경험할 수 있습니다.',
+        highlight_desc: '무거운 짐은 빌리버에게 맡기고, 당신은 오직 여행의 순간에만 집중하세요.\n서울 주요 거점 어디서나 스마트한 보관과 배송 서비스를 경험할 수 있습니다.',
         f1_t: '공항 ↔ 호텔 배송', f1_d: '숙소까지 짐이 먼저 체크인합니다.',
-        f2_t: '스마트 짐 보관', f2_d: '파트너지점 지점에서 편리하게 보관하세요.',
+        f2_t: '스마트 짐 보관', f2_d: '파트너 지점에서 편리하게 보관하세요.',
         f3_t: '광역 배송 시스템', f3_d: '전국 어디든 짐 없이 여행하세요.',
         delivery_title: 'Bee AI 스마트 배송',
         delivery_desc: '붕붕이에게 말만 하세요. AI가 최적의 배송\n경로와 시간을 즉시 알려드립니다.',
@@ -262,7 +262,7 @@ export const ko = {
         alert_cancel_error: '취소 중 오류가 발생했습니다. 고객센터로 문의해주세요.'
     },
     footer: {
-        desc: '빌리버는 여행의 가치의 "가벼움"을 제안합니다.',
+        desc: '빌리버는 여행의 가치인 "가벼움"을 제안합니다.',
         service: "서비스",
         home: "홈",
         locations: "지점 안내",
@@ -372,7 +372,7 @@ export const ko = {
         notify_template: '[🚨 챗봇 알림] 고객이 \'{userText}\' 버튼을 클릭했습니다.',
         request_consult: '상담 요청',
         ai_delivery_prompt: '짐 배송 서비스의 이용 방법, 가격(2만원~), 공항-호텔 간 이동 절차에 대해 자세히 설명해줘.',
-        ai_storage_prompt: '짐 보관 서비스의 이용 방법, 파트너지점 지점 위치, 보관료(4시간, 1일 등)에 대해 설명해줘.',
+        ai_storage_prompt: '짐 보관 서비스의 이용 방법, 파트너 지점 위치, 보관료(4시간, 1일 등)에 대해 설명해줘.',
         ai_other_prompt: '예약 취소 환불 규정이나 고객센터 연결 방법에 대해 안내해줘.',
         ai_refund_prompt: '예약 취소 및 환불 규정에 대해 상세히 설명해줘. (24시간 전 100%, 12시간 전 50% 등)'
     },
@@ -468,7 +468,7 @@ export const ko = {
         sync_status: "{count}개 지점 실시간 연동 중!",
         placeholder: "예: 서울에서 T2로 L사이즈 2개 보내줘! 윙윙~",
         btn_analyze: "분석 시작! 슝~",
-        result_intro: "\"지점 정보를 쏙쏙~ 찾았어요! 윙윙~ ✨ 비어리버 지점 데이터와 비교한 결과예요!\"",
+        result_intro: "\"지점 정보를 쏙쏙~ 찾았어요! 윙윙~ ✨ 빌리버 지점 데이터와 비교한 결과예요!\"",
         label_delivery: "배송",
         label_storage: "보관",
         label_bags: "가방 {count}개",
@@ -510,6 +510,22 @@ export const ko = {
         hook_text: "\"고객님 키에는 {size} 사이즈가 딱이네요!\"",
         hook_sub: "이대로 예약을 도와드릴까요? 윙윙~ ✨",
         info_note: "본 시물레이션은 실제 촬영된 이미지를 기반으로 한 안내 가이드이며, 여행 가방의 브랜드 및 디자인에 따라 약간의 차이가 있을 수 있습니다. 윙윙~!"
+    },
+    branch_admin: {
+        title: '지점 관리 시스템',
+        manual_booking: '수동 예약 (현장)',
+        reservation_list: '예약 현황',
+        all_bookings: '전체 예약',
+        pending_bookings: '대기 중',
+        active_bookings: '이동/보관 중',
+        completed_bookings: '완료된 예약',
+        no_bookings: '표시할 예약이 없습니다.',
+        refresh: '새로고침',
+        branch_info: '지점 정보',
+        manual_booking_btn: '현장 수동 예약',
+        search_placeholder: '고객명 또는 예약번호 검색',
+        status_update_success: '상태가 변경되었습니다.',
+        booking_created_success: '수동 예약이 생성되었습니다.'
     },
     common: {
         confirm: '확인',
@@ -581,5 +597,48 @@ export const ko = {
             item3_d: "체크인 전후, 무거운 짐을 맡길 곳을 찾지 못해 낯선 길 위에서 금쪽같은 시간을 낭비하고 계신가요?",
             solution: "Beeliber는 이 모든 고단함으로부터 여러분을 해방시켜 드릴 완벽한 해결책입니다."
         }
+    },
+    stats: {
+        users: "24,800+ 명의 여행자",
+        items: "152,400+ 건의 안전 배송",
+        satisfaction: "99.2% 이용 만족도"
+    },
+    pain: {
+        badge: "여행의 현실",
+        title_1: "아직도 무거운 짐",
+        title_2: "직접 들고 계시나요?",
+        title_3: "여러분을 짓누르는 짐.",
+        desc: "여행은 체력 테스트가 아닙니다. 왜 한국에서의 제한된 시간을 무거운 캐리어와 씨름하며 보내시나요? 빌리버에게 맡기고 진정한 자유를 만끽하세요.",
+        point1: "계단은 당신의 최대 적입니다",
+        point2: "마지막 4시간을 낭비하지 마세요",
+        point3: "30kg 가방을 들고 만원 전철을 타는 고통"
+    },
+    howitworks: {
+        subtitle: "공항에서 호텔까지, 호텔에서 공항까지 스마트한 짐 배송 서비스.",
+        step1_title: "온라인 예약",
+        step1_desc: "1분 만에 끝나는 쉽고 빠른 예약.",
+        step2_title: "짐 맡기기",
+        step2_desc: "역 근처 지점에서 짐을 맡기세요.",
+        step3_title: "안전 배송",
+        step3_desc: "실시간으로 배송 상태를 확인하세요.",
+        step4_title: "짐 찾기",
+        step4_desc: "호텔 로비나 공항에서 짐을 찾으세요."
+    },
+    servicedetails: {
+        delivery_title: "짐 없이",
+        delivery_accent: "가벼운 도착",
+        delivery_desc: "역 근처 도착 지점에 짐을 맡기면 호텔 로비로 직접 배송해 드립니다. 두 손 가볍게 여행을 시작하세요.",
+        handsfree_title: "우아하고",
+        handsfree_accent: "완벽한 출발",
+        handsfree_desc: "숙소 체크아웃 후 짐을 맡기고 명동에서 쇼핑하세요. 열차 타기 직전 역에서 짐을 찾으면 끝!"
+    },
+    trust: {
+        title: "당신의 안심",
+        point1_title: "안전한 보관",
+        point1_desc: "CCTV가 설치된 보안 시설에서 안전하게 관리합니다.",
+        point2_title: "100% 보상 보장",
+        point2_desc: "모든 물품에 대해 최대 50만원 보험이 적용됩니다.",
+        point3_title: "전문가 핸들링",
+        point3_desc: "10년 이상의 경력을 가진 물류 전문가가 배송합니다."
     }
 };

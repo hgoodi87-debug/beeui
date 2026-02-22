@@ -11,6 +11,8 @@ interface BookingDetailModalProps {
     handlePrintLabel: (b: BookingState) => void;
     handleUpdateBooking: () => void;
     isSaving: boolean;
+    handleResendEmail: (booking: BookingState) => void;
+    sendingEmailId: string | null;
 }
 
 const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
@@ -20,7 +22,9 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
     getStatusStyle,
     handlePrintLabel,
     handleUpdateBooking,
-    isSaving
+    isSaving,
+    handleResendEmail,
+    sendingEmailId
 }) => {
     const [promoCode, setPromoCode] = React.useState('');
     const [isApplyingPromo, setIsApplyingPromo] = React.useState(false);
@@ -284,128 +288,146 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                             )}
                         </div>
                     </div>
-                </div>
+                    {/* Section 4: Payment Summary - [스봉이 신설] 럭셔리 영수증 섹션 💅 */}
+                    <div className="p-8 bg-gray-900 rounded-[32px] border border-white/5 shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-bee-yellow/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
 
-                {/* Section 4: Payment Summary - [스봉이 신설] 럭셔리 영수증 섹션 💅 */}
-                <div className="p-8 bg-gray-900 rounded-[32px] border border-white/5 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-bee-yellow/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-6">
+                            <span className="w-1 h-3 bg-bee-yellow rounded-full"></span> Payment Summary
+                        </h3>
 
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-6">
-                        <span className="w-1 h-3 bg-bee-yellow rounded-full"></span> Payment Summary
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-8 relative z-10">
-                        <div>
-                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Method</label>
-                            <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-bee-yellow text-xs">
-                                    <i className={`fa-solid ${selectedBooking.paymentMethod === 'Cash' ? 'fa-money-bill-1' : 'fa-credit-card'}`}></i>
-                                </div>
-                                <span className="text-white text-xs font-black">{selectedBooking.paymentMethod || 'Credit Card'}</span>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Status</label>
-                            <span className="px-2 py-0.5 bg-green-500/10 text-green-500 rounded-lg text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
-                                Paid
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="mt-6 pt-6 border-t border-white/5 space-y-2 relative z-10">
-                        <div className="flex justify-between items-center text-[10px]">
-                            <span className="font-bold text-gray-500 uppercase">Subtotal</span>
-                            <span className="font-bold text-gray-400">₩{((selectedBooking.finalPrice || 0) + (selectedBooking.discountAmount || 0)).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px]">
-                            <span className="font-bold text-red-400 uppercase">Discount</span>
-                            <span className="font-black text-red-500">- ₩{(selectedBooking.discountAmount || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center pt-4 border-t border-white/10">
-                            <span className="text-[10px] font-black text-bee-yellow uppercase tracking-widest">Final Amount</span>
-                            <span className="text-2xl font-black text-white tracking-tighter">
-                                <span className="text-bee-yellow text-xs mr-0.5">₩</span>
-                                {(selectedBooking.finalPrice || 0).toLocaleString()}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Section 5: AI Analysis */}
-                {selectedBooking.aiAnalysis && (
-                    <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100 italic text-sm text-purple-700 font-medium">
-                        <i className="fa-solid fa-wand-magic-sparkles mr-2 text-purple-500"></i>
-                        {selectedBooking.aiAnalysis}
-                    </div>
-                )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                    <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-gray-400 uppercase">할인 상세 (Discount):</span>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-black px-2 py-0.5 rounded ${selectedBooking.promoCode ? 'bg-bee-yellow text-bee-black' : 'bg-gray-100 text-gray-400'}`}>
-                                    {selectedBooking.promoCode || 'No Code'}
-                                </span>
+                        <div className="grid grid-cols-2 gap-8 relative z-10">
+                            <div>
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Method</label>
                                 <div className="flex items-center gap-2">
-                                    <input
-                                        title="신규 할인 코드"
-                                        type="text"
-                                        placeholder="신규 할인 코드"
-                                        value={promoCode}
-                                        onChange={e => setPromoCode(e.target.value)}
-                                        className="w-32 bg-white border border-gray-200 rounded-lg p-2 text-xs font-bold focus:outline-none focus:border-bee-yellow"
-                                    />
-                                    <button
-                                        onClick={handleApplyPromo}
-                                        disabled={isApplyingPromo || !promoCode.trim()}
-                                        className="px-3 py-2 bg-bee-yellow text-bee-black text-[10px] font-black rounded-lg hover:bg-bee-black hover:text-bee-yellow transition-all"
-                                    >
-                                        {isApplyingPromo ? <i className="fa-solid fa-spinner animate-spin"></i> : '적용'}
-                                    </button>
+                                    <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-bee-yellow text-xs">
+                                        <i className={`fa-solid ${selectedBooking.paymentMethod === 'cash' ? 'fa-money-bill-1' : 'fa-credit-card'}`}></i>
+                                    </div>
+                                    <span className="text-white text-xs font-black">{selectedBooking.paymentMethod || 'Credit Card'}</span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1 text-red-500">
-                                <span className="font-black">-₩</span>
-                                <input
-                                    title="할인 금액"
-                                    type="number"
-                                    value={selectedBooking.discountAmount || 0}
-                                    onChange={e => {
-                                        const disc = Number(e.target.value);
-                                        const currentFinal = selectedBooking.finalPrice || 0;
-                                        const currentDiscount = selectedBooking.discountAmount || 0;
-                                        const basePrice = currentFinal + currentDiscount;
-                                        const newFinal = Math.max(0, basePrice - disc);
+                            <div className="text-right">
+                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Status</label>
+                                <span className="px-2 py-0.5 bg-green-500/10 text-green-500 rounded-lg text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
+                                    Paid
+                                </span>
+                            </div>
+                        </div>
 
-                                        setSelectedBooking({
-                                            ...selectedBooking,
-                                            discountAmount: disc,
-                                            finalPrice: newFinal
-                                        });
-                                    }}
-                                    className="w-24 bg-white border border-red-100 rounded-lg p-1 text-sm font-black text-center focus:outline-none"
-                                />
+                        <div className="mt-6 pt-6 border-t border-white/5 space-y-2 relative z-10">
+                            <div className="flex justify-between items-center text-[10px]">
+                                <span className="font-bold text-gray-500 uppercase">Subtotal</span>
+                                <span className="font-bold text-gray-400">₩{((selectedBooking.finalPrice || 0) + (selectedBooking.discountAmount || 0)).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px]">
+                                <span className="font-bold text-red-400 uppercase">Discount</span>
+                                <span className="font-black text-red-500">- ₩{(selectedBooking.discountAmount || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                                <span className="text-[10px] font-black text-bee-yellow uppercase tracking-widest">Final Amount</span>
+                                <span className="text-2xl font-black text-white tracking-tighter">
+                                    <span className="text-bee-yellow text-xs mr-0.5">₩</span>
+                                    {(selectedBooking.finalPrice || 0).toLocaleString()}
+                                </span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-gray-400 uppercase">최종 결제 금액:</span>
-                        <span className="text-2xl font-black text-bee-black">₩{(selectedBooking.finalPrice || 0).toLocaleString()}</span>
+
+                    {/* Section 5: AI Analysis */}
+                    {selectedBooking.aiAnalysis && (
+                        <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100 italic text-sm text-purple-700 font-medium">
+                            <i className="fa-solid fa-wand-magic-sparkles mr-2 text-purple-500"></i>
+                            {selectedBooking.aiAnalysis}
+                        </div>
+                    )}
+
+                    {/* Section 6: Discount & Final Payment [스봉이 이동] 💅 */}
+                    <div className="p-8 bg-gray-50 rounded-[32px] border border-gray-100 space-y-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">할인 상세 (Discount):</span>
+                                <div className="space-y-3">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <span className={`text-[10px] font-black px-3 py-1 rounded-full ${selectedBooking.promoCode ? 'bg-bee-yellow text-bee-black shadow-sm' : 'bg-gray-200 text-gray-400'}`}>
+                                            {selectedBooking.promoCode || 'No Code'}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                title="신규 할인 코드"
+                                                type="text"
+                                                placeholder="신규 할인 코드"
+                                                value={promoCode}
+                                                onChange={e => setPromoCode(e.target.value)}
+                                                className="w-32 bg-white border border-gray-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-bee-yellow shadow-sm"
+                                            />
+                                            <button
+                                                onClick={handleApplyPromo}
+                                                disabled={isApplyingPromo || !promoCode.trim()}
+                                                className="px-4 py-2.5 bg-bee-yellow text-bee-black text-[10px] font-black rounded-xl hover:bg-bee-black hover:text-bee-yellow transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                            >
+                                                {isApplyingPromo ? <i className="fa-solid fa-spinner animate-spin"></i> : '코드 적용'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-red-500 bg-white/50 p-2 rounded-xl border border-red-50 w-fit">
+                                        <span className="font-black text-sm">추가 할인: -₩</span>
+                                        <input
+                                            title="할인 금액"
+                                            type="number"
+                                            value={selectedBooking.discountAmount || 0}
+                                            onChange={e => {
+                                                const disc = Number(e.target.value);
+                                                const currentFinal = selectedBooking.finalPrice || 0;
+                                                const currentDiscount = selectedBooking.discountAmount || 0;
+                                                const basePrice = currentFinal + currentDiscount;
+                                                const newFinal = Math.max(0, basePrice - disc);
+
+                                                setSelectedBooking({
+                                                    ...selectedBooking,
+                                                    discountAmount: disc,
+                                                    finalPrice: newFinal
+                                                });
+                                            }}
+                                            className="w-24 bg-transparent font-black text-sm focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="text-right">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">최종 결제 금액 합계:</span>
+                                <div className="text-3xl font-black text-bee-black flex items-center justify-end gap-1">
+                                    <span className="text-sm">₩</span>
+                                    <span>{(selectedBooking.finalPrice || 0).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={() => handlePrintLabel(selectedBooking)} className="bg-white text-gray-600 border border-gray-200 px-6 py-4 rounded-2xl font-black text-sm hover:bg-gray-100 transition-all flex items-center gap-2"><i className="fa-solid fa-print"></i> 라벨 출력</button>
+
+                {/* Modal Footer [스봉이 가벼워졌어요] 💅 */}
+                <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-end gap-4">
+                    <button
+                        onClick={() => handlePrintLabel(selectedBooking)}
+                        className="bg-white text-gray-600 border border-gray-200 px-8 py-4 rounded-2xl font-black text-sm hover:bg-gray-100 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                    >
+                        <i className="fa-solid fa-print"></i> 라벨 출력
+                    </button>
                     <button
                         onClick={handleUpdateBooking}
                         disabled={isSaving}
-                        className="bg-bee-black text-bee-yellow px-10 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-xl flex items-center gap-2"
+                        className="bg-bee-black text-bee-yellow px-12 py-4 rounded-2xl font-black text-sm hover:scale-105 hover:bg-gray-800 transition-all shadow-xl flex items-center gap-2 active:scale-95 disabled:opacity-50"
                     >
                         {isSaving ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-check"></i>}
-                        확인 완료
+                        정보 업데이트 완료
+                    </button>
+                    <button
+                        onClick={() => handleResendEmail(selectedBooking)}
+                        disabled={sendingEmailId === selectedBooking.id}
+                        className="bg-bee-yellow text-bee-black px-8 py-4 rounded-2xl font-black text-sm hover:scale-105 hover:bg-bee-black hover:text-bee-yellow transition-all shadow-xl flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                    >
+                        {sendingEmailId === selectedBooking.id ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-envelope"></i>}
+                        바우처 재발송
                     </button>
                 </div>
             </div>

@@ -10,17 +10,21 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Pretendard', 'Inter', 'sans-serif'],
+                sans: ['Pretendard', 'Outfit', 'Inter', 'sans-serif'],
+                display: ['Montserrat', 'Pretendard', 'sans-serif'],
+                outfit: ['Outfit', 'sans-serif'],
             },
             colors: {
                 bee: {
                     yellow: '#ffcb05',
+                    gold: '#FFD700',
                     blue: '#7ba0c9',
-                    black: '#1a1a1a',
+                    black: '#0C0C0C',
                     grey: '#4a4a4a',
-                    light: '#f8fafc'
+                    muted: '#71717A',
+                    light: '#F5F5F5'
                 },
-                primary: '#ffee05',
+                primary: '#ffcb05',
             },
             borderRadius: {
                 'bee': '40px'

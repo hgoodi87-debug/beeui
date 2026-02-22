@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { db, storage } from '../firebaseApp';
+import { app, db, storage } from '../firebaseApp';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   collection,
@@ -187,7 +187,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setSendingEmailId(booking.id);
     try {
-      const functions = getFunctions();
+      const functions = getFunctions(app, 'us-central1');
       const resendVoucher = httpsCallable(functions, 'resendBookingVoucher');
       await resendVoucher({ bookingId: booking.id });
       alert('Email sent successfully!');
@@ -207,7 +207,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setRefundingId(booking.id);
     try {
-      const functions = getFunctions();
+      const functions = getFunctions(app, 'us-central1');
       const processRefund = httpsCallable(functions, 'processBookingRefund');
       await processRefund({ bookingId: booking.id });
       alert('반품(환불) 처리가 완료되었습니다.');
@@ -2049,6 +2049,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               saveAdmin={saveAdmin}
               deleteAdmin={deleteAdmin}
               isSaving={isSaving}
+              locations={locations}
             />
           )}
 
@@ -2117,6 +2118,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         handlePrintLabel={handlePrintLabel}
         handleUpdateBooking={handleUpdateBooking}
         isSaving={isSaving}
+        handleResendEmail={handleResendEmail}
+        sendingEmailId={sendingEmailId}
       />
 
       {/* 2. MANUAL BOOKING MODAL */}

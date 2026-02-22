@@ -1,8 +1,0 @@
-﻿components/BeeAIReservation.tsx(620,44): error TS2345: Argument of type '{ pickupDate: string; pickupTime: string; returnDate: string; deliveryTime: string; location: string | null; destinationLocation: null; serviceType: "STORAGE" | "DELIVERY" | null; bagSizes: { ...; }; userName: string; userEmail: string; snsChannel: string; snsId: string; }' is not assignable to parameter of type 'SetStateAction<BookingData>'.
-  Property 'dropoffDate' is missing in type '{ pickupDate: string; pickupTime: string; returnDate: string; deliveryTime: string; location: string | null; destinationLocation: null; serviceType: "STORAGE" | "DELIVERY" | null; bagSizes: { ...; }; userName: string; userEmail: string; snsChannel: string; snsId: string; }' but required in type 'BookingData'.
-components/BookingDetailed.tsx(442,101): error TS2304: Cannot find name 'Package'.
-components/StaffScanPage.tsx(268,23): error TS2339: Property 'imageUrl' does not exist on type 'BookingState'.
-components/StaffScanPage.tsx(268,43): error TS2339: Property 'pickupImageUrl' does not exist on type 'BookingState'.
-components/StaffScanPage.tsx(270,239): error TS2339: Property 'imageUrl' does not exist on type 'BookingState'.
-components/StaffScanPage.tsx(270,259): error TS2339: Property 'pickupImageUrl' does not exist on type 'BookingState'.
-services/geminiService.ts(91,22): error TS2339: Property 'getGenerativeModel' does not exist on type 'GoogleGenAI'.

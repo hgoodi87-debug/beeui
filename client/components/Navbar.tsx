@@ -59,14 +59,6 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
         </div>
 
         <div className="flex items-center gap-4 md:gap-8">
-          {/* Admin Mobile Access */}
-          <button
-            onClick={onAdminClick}
-            className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 hover:bg-bee-black hover:text-bee-yellow transition-all flex items-center justify-center lg:hidden"
-            title={t.admin_portal}
-          >
-            <i className="fa-solid fa-lock text-[10px]"></i>
-          </button>
 
           {/* Language Selector - Dropdown (Vertical Scroll) */}
           <div className="relative" ref={langMenuRef}>
@@ -100,7 +92,6 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
             <button onClick={() => window.location.hash = '#tracking'} className="text-xs font-black text-bee-grey hover:text-bee-black uppercase tracking-widest">{t.tracking}</button>
             <button onClick={onPartnersClick} className="text-xs font-black text-bee-grey hover:text-bee-black uppercase tracking-widest">{t.partners}</button>
             <div className="w-px h-4 bg-gray-200"></div>
-            <button onClick={onAdminClick} className="text-[10px] font-black uppercase text-gray-300 hover:text-bee-black tracking-widest">{t.admin_portal}</button>
             {user && !user.isAnonymous ? (
               <button
                 onClick={onMyPageClick}

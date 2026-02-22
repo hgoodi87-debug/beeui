@@ -140,7 +140,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
 
     const sendToGoogleChat = async (role: 'user' | 'model', text: string) => {
         // Core Webhook URL (Direct fallback)
-        const directWebhook = 'https://chat.googleapis.com/v1/spaces/AAQALERgHe8/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=mz0YiIHWi0H1pZ1tMH1JxwFb0W3UiUc-eGh24YKQMos';
+        const directWebhook = 'https://chat.googleapis.com/v1/spaces/AAQAYv-uO-w/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=PvUyJgNn0B7fB4AYJ-TLq18cSTnl3qykj3YshKpj-_Y';
         const functionUrl = `${window.location.origin}/api/notify-google-chat`;
 
         const displayRole = role === 'user' ? `👤 ${userInfo.name || t?.user_label || '고객'} (${userInfo.email || 'N/A'})` : `🤖 ${t?.header || 'BeeBot'}`;

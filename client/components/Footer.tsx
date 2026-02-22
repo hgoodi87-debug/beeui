@@ -5,10 +5,9 @@ interface FooterProps {
   t: any;
   onTermsClick?: () => void;
   onPrivacyClick?: () => void;
-  onAdminClick?: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ t, onTermsClick, onPrivacyClick, onAdminClick }) => {
+const Footer: React.FC<FooterProps> = ({ t, onTermsClick, onPrivacyClick }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

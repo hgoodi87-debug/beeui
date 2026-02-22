@@ -385,7 +385,7 @@ const PartnershipPage: React.FC<PartnershipPageProps> = ({ onBack, t }) => {
               "Expanding the horizons of travel, together with Beeliber."
             </blockquote>
             <div className="flex items-center justify-center gap-6">
-              <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center grayscale opacity-30 border border-black/5">
+              <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center opacity-70 border border-black/5">
                 <Handshake size={24} />
               </div>
               <span className="text-xs font-black uppercase tracking-[0.3em] text-black/20">Beeliber Strategic Alliance</span>

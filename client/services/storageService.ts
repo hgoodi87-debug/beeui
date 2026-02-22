@@ -1,7 +1,7 @@
 
 import { db, storage } from '../firebaseApp';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc, or } from "firebase/firestore";
 import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 
@@ -20,7 +20,7 @@ const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
   measurementId: "G-PQBL1SG842",
   isActive: true, // Force Active
   enableGeminiAutomation: true,
-  googleChatWebhookUrl: 'https://chat.googleapis.com/v1/spaces/AAQALERgHe8/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=mz0YiIHWi0H1pZ1tMH1JxwFb0W3UiUc-eGh24YKQMos'
+  googleChatWebhookUrl: 'https://chat.googleapis.com/v1/spaces/AAQAYv-uO-w/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=PvUyJgNn0B7fB4AYJ-TLq18cSTnl3qykj3YshKpj-_Y'
 };
 
 // Helper for safe JSON parse (utility)
@@ -171,6 +171,44 @@ export const StorageService = {
       });
     } catch (e) {
       console.error("Failed to subscribe bookings", e);
+      return () => { };
+    }
+  },
+
+  subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
+    try {
+      // OR query: pickupLocation is ID OR dropoffLocation is ID
+      const q = query(
+        collection(db, "bookings"),
+        or(
+          where("pickupLocation", "==", locationId),
+          where("dropoffLocation", "==", locationId)
+        ),
+        orderBy("pickupDate", "desc"),
+        limit(500)
+      );
+      return onSnapshot(q, (snapshot) => {
+        const bookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+        bookings.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+        callback(bookings);
+      }, (error) => {
+        console.error("Location booking sub error, falling back to simple filter:", error);
+        // Fallback for cases without composite indices or older environments
+        const simpleQ = query(
+          collection(db, "bookings"),
+          or(
+            where("pickupLocation", "==", locationId),
+            where("dropoffLocation", "==", locationId)
+          )
+        );
+        return onSnapshot(simpleQ, (snapshot) => {
+          const bks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+          bks.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+          callback(bks);
+        });
+      });
+    } catch (e) {
+      console.error("Failed to subscribe bookings by location", e);
       return () => { };
     }
   },

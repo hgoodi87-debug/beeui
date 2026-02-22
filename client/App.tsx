@@ -31,11 +31,12 @@ import BookingPage from './components/BookingPage'; // [NEW] Added BookingPage
 import LocationsPage from './components/LocationsPage';
 import SEO from './components/SEO';
 import MyPage from './components/MyPage';
+import BranchAdminPage from './components/BranchAdminPage';
 import { translations } from './translations';
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
 
-type ViewType = 'USER' | 'ADMIN_LOGIN' | 'ADMIN' | 'MANUAL' | 'PARTNERSHIP' | 'SERVICES' | 'TERMS' | 'PRIVACY' | 'BOOKING_SUCCESS' | 'TRACKING' | 'STAFF_SCAN' | 'MYPAGE' | 'BOOKING' | 'LOCATIONS';
+type ViewType = 'USER' | 'ADMIN_LOGIN' | 'ADMIN' | 'MANUAL' | 'PARTNERSHIP' | 'SERVICES' | 'TERMS' | 'PRIVACY' | 'BOOKING_SUCCESS' | 'TRACKING' | 'STAFF_SCAN' | 'MYPAGE' | 'BOOKING' | 'LOCATIONS' | 'BRANCH_ADMIN';
 
 const App: React.FC = () => {
   // Helper to determine view from URL path
@@ -55,6 +56,7 @@ const App: React.FC = () => {
     if (path.startsWith('/notice')) return 'USER'; // Default to USER for notices if needed
     if (path.startsWith('/booking')) return 'BOOKING';
     if (path.startsWith('/locations')) return 'LOCATIONS';
+    if (path.startsWith('/branch')) return 'BRANCH_ADMIN';
     return 'USER';
   };
 
@@ -74,6 +76,10 @@ const App: React.FC = () => {
       case 'MYPAGE': return '/mypage';
       case 'BOOKING': return '/booking'; // New path for booking page
       case 'LOCATIONS': return '/locations';
+      case 'BRANCH_ADMIN': {
+        const id = adminInfo.branchId || window.location.pathname.split('/').pop() || '';
+        return `/branch/${id}`;
+      }
       case 'USER': default: return '/';
     }
   };
@@ -81,7 +87,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewType>(() => getViewFromPath(window.location.pathname));
   // Initialize language from localStorage or default to 'ko'
   const [lang, setLang] = useState(() => localStorage.getItem('beeliber_lang') || 'ko');
-  const [adminInfo, setAdminInfo] = useState({ name: '', jobTitle: '' });
+  const [adminInfo, setAdminInfo] = useState({ name: '', jobTitle: '', branchId: '' });
   const [preSelectedBooking, setPreSelectedBooking] = useState<{
     pickupLocation: string,
     serviceType: 'STORAGE' | 'DELIVERY',
@@ -235,9 +241,13 @@ const App: React.FC = () => {
       return (
         <motion.div key="admin-login-required" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
           <AdminLoginPage
-            onLogin={(name, jobTitle) => {
-              setAdminInfo({ name, jobTitle });
-              navigate('ADMIN');
+            onLogin={(name, jobTitle, branchId) => {
+              setAdminInfo({ name, jobTitle, branchId: branchId || '' });
+              if (branchId) {
+                navigate('BRANCH_ADMIN');
+              } else {
+                navigate('ADMIN');
+              }
             }}
             onCancel={() => navigate('USER')}
           />
@@ -265,9 +275,15 @@ const App: React.FC = () => {
         return (
           <motion.div key="admin-login" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
             <AdminLoginPage
-              onLogin={(name, jobTitle) => {
-                setAdminInfo({ name, jobTitle });
-                navigate('ADMIN');
+              onLogin={(name, jobTitle, branchId) => {
+                setAdminInfo({ name, jobTitle, branchId: branchId || '' });
+                if (branchId) {
+                  // If branch admin, navigate to their specific branch page
+                  window.history.pushState(null, '', `/branch/${branchId}`);
+                  setView('BRANCH_ADMIN');
+                } else {
+                  navigate('ADMIN');
+                }
               }}
               onCancel={() => navigate('USER')}
             />
@@ -382,6 +398,18 @@ const App: React.FC = () => {
           </motion.div>
         );
 
+      case 'BRANCH_ADMIN':
+        return (
+          <motion.div key="branch-admin" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
+            <BranchAdminPage
+              branchId={window.location.pathname.split('/')[2] || ''}
+              lang={lang}
+              t={t}
+              onBack={() => navigate('USER')}
+            />
+          </motion.div>
+        );
+
       case 'USER':
       default:
         return (
@@ -429,7 +457,6 @@ const App: React.FC = () => {
           t={t}
           onTermsClick={() => navigate('TERMS')}
           onPrivacyClick={() => navigate('PRIVACY')}
-          onAdminClick={() => navigate('ADMIN_LOGIN')}
         />
       )}
       {view === 'USER' && (

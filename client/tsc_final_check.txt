@@ -1,1 +1,0 @@
-﻿components/BookingDetailed.tsx(513,60): error TS2304: Cannot find name 'ChevronRight'.

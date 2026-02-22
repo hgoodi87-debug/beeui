@@ -343,7 +343,7 @@ exports.sendBookingVoucherFinal = functions.region("us-central1").firestore
 
             // Hardcoded fallback
             if (!webhook) {
-                webhook = 'https://chat.googleapis.com/v1/spaces/AAQALERgHe8/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=mz0YiIHWi0H1pZ1tMH1JxwFb0W3UiUc-eGh24YKQMos';
+                webhook = 'https://chat.googleapis.com/v1/spaces/AAQAYv-uO-w/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=PvUyJgNn0B7fB4AYJ-TLq18cSTnl3qykj3YshKpj-_Y';
             }
 
             if (webhook) {
@@ -429,11 +429,12 @@ async function processArrivalEmail(bookingId, booking) {
 
     const getLoc = (id, locData) => locData?.name || LOCATION_FALLBACKS[id] || id;
 
-    const t = getTranslations(booking.language);
+    const lang = (booking.language || 'ko').split('-')[0];
+    const t = getTranslations(lang);
     const safeDate = (dateStr) => {
         if (!dateStr) return 'N/A';
         const d = new Date(dateStr);
-        return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(booking.language === 'ko' ? 'ko-KR' : 'en-US');
+        return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(lang === 'ko' ? 'ko-KR' : 'en-US');
     };
 
     const mailOptions = {
@@ -806,14 +807,17 @@ exports.notifyGoogleChat = functions.region("us-central1").https.onRequest(async
 
         // Hardcoded fallback
         if (!webhook) {
-            webhook = 'https://chat.googleapis.com/v1/spaces/AAQALERgHe8/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=mz0YiIHWi0H1pZ1tMH1JxwFb0W3UiUc-eGh24YKQMos';
+            webhook = 'https://chat.googleapis.com/v1/spaces/AAQAYv-uO-w/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=PvUyJgNn0B7fB4AYJ-TLq18cSTnl3qykj3YshKpj-_Y';
         }
 
         if (!webhook) {
             return res.status(400).send('Webhook URL not configured');
         }
 
-        const displayRole = role === 'user' ? `👤 ${senderName || 'Customer'} (${senderEmail || 'N/A'})` : '🤖 BeeBot';
+        const { snsChannel, snsId } = req.body;
+        const snsInfo = (snsChannel && snsId) ? `\n[${snsChannel}: ${snsId}]` : '';
+
+        const displayRole = role === 'user' ? `👤 ${senderName || 'Customer'} (${senderEmail || 'N/A'})${snsInfo}` : '🤖 BeeBot';
         const payload = {
             text: `*${displayRole}*: ${text}`,
             thread: { threadKey: sessionId }

@@ -28,7 +28,7 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
       setHasSearched(true);
     } catch (error) {
       console.error(error);
-      alert(t.common?.error_msg || (lang === 'ko' ? "조회 중 오류가 발생했습니다." : "An error occurred during search."));
+      alert(t.common?.error_msg || ((t.common?.lang || 'ko') === 'ko' ? "조회 중 오류가 발생했습니다." : "An error occurred during search."));
     } finally {
       setIsLoading(false);
     }
@@ -159,8 +159,8 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
                 <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                   <i className="fa-solid fa-magnifying-glass text-xl text-gray-500"></i>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">{t.tracking?.noResult || (lang === 'ko' ? "조회된 예약이 없습니다." : "No bookings found.")}</h3>
-                <p className="text-gray-500 text-xs">{t.tracking?.check_info || (lang === 'ko' ? "입력하신 정보가 정확한지 다시 한 번 확인해주세요." : "Please double-check your information.")}</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t.tracking?.noResult || ((t.common?.lang || 'ko') === 'ko' ? "조회된 예약이 없습니다." : "No bookings found.")}</h3>
+                <p className="text-gray-500 text-xs">{t.tracking?.check_info || ((t.common?.lang || 'ko') === 'ko' ? "입력하신 정보가 정확한지 다시 한 번 확인해주세요." : "Please double-check your information.")}</p>
               </div>
             )}
           </motion.div>

@@ -156,6 +156,8 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-[38px] text-gray-400 hover:text-bee-black transition-colors"
+                title={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
               >
                 <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
               </button>

@@ -62,7 +62,7 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                         <h2 className="text-xl font-black text-bee-yellow">지점 수동 예약 추가</h2>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{currentBranch?.name || branchId} 센터 전용</p>
                     </div>
-                    <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 text-white hover:bg-bee-yellow hover:text-bee-black transition-colors flex items-center justify-center">
+                    <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 text-white hover:bg-bee-yellow hover:text-bee-black transition-colors flex items-center justify-center" title="모달 닫기" aria-label="모달 닫기">
                         <i className="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -75,6 +75,8 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                                 value={formData.serviceType}
                                 onChange={e => setFormData({ ...formData, serviceType: e.target.value as ServiceType })}
                                 className="w-full bg-gray-50 p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
+                                title="서비스 유형 선택"
+                                aria-label="서비스 유형 선택"
                             >
                                 <option value={ServiceType.STORAGE}>보관 (Storage)</option>
                                 <option value={ServiceType.DELIVERY}>배송 (Delivery)</option>
@@ -131,6 +133,8 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                                         value={formData.dropoffLocation}
                                         onChange={e => setFormData({ ...formData, dropoffLocation: e.target.value })}
                                         className="w-full bg-white p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
+                                        title="도착 지점 선택"
+                                        aria-label="도착 지점 선택"
                                     >
                                         <option value="">도착 지점 선택</option>
                                         {locations.filter(l => l.id !== branchId && l.supportsDelivery).map(l => (
@@ -150,6 +154,8 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                                 value={formData.pickupDate}
                                 onChange={e => setFormData({ ...formData, pickupDate: e.target.value })}
                                 className="w-full bg-gray-50 p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
+                                title="예약 날짜 선택"
+                                aria-label="예약 날짜 선택"
                             />
                         </div>
                         <div>
@@ -159,6 +165,8 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                                 value={formData.pickupTime}
                                 onChange={e => setFormData({ ...formData, pickupTime: e.target.value })}
                                 className="w-full bg-gray-50 p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
+                                title="예약 시간 선택"
+                                aria-label="예약 시간 선택"
                             />
                         </div>
                     </div>
@@ -173,6 +181,9 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                                     value={formData.finalPrice}
                                     onChange={e => setFormData({ ...formData, finalPrice: Number(e.target.value) })}
                                     className="w-32 bg-transparent text-2xl font-black text-bee-black border-b-2 border-bee-yellow focus:outline-none text-center tabular-nums"
+                                    title="최종 결제 금액 입력"
+                                    aria-label="최종 결제 금액 입력"
+                                    placeholder="0"
                                 />
                             </div>
                         </div>

@@ -52,7 +52,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                                 <div className="w-20 h-20 rounded-3xl bg-bee-black text-bee-yellow flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-xl">
                                     {step.icon}
                                 </div>
-                                <div className="absolute top-6 right-8 text-5xl font-display font-black text-bee-black/5 group-hover:text-bee-yellow/10 transition-colors">
+                                <div className="absolute top-6 right-8 text-5xl font-display font-black text-bee-yellow/20 group-hover:text-bee-yellow/40 transition-colors">
                                     0{i + 1}
                                 </div>
                                 <h3 className="text-2xl font-display font-black text-bee-black mb-4">

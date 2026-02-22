@@ -47,6 +47,8 @@ const HRTab: React.FC<HRTabProps> = ({
                                 value={adminForm.branchId || ''}
                                 onChange={e => setAdminForm({ ...adminForm, branchId: e.target.value })}
                                 className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-black outline-none text-xs"
+                                title="소속 지점 선택"
+                                aria-label="소속 지점 선택"
                             >
                                 <option value="">전체 관리자 (슈퍼)</option>
                                 {locations
@@ -69,6 +71,8 @@ const HRTab: React.FC<HRTabProps> = ({
                                 type="button"
                                 onClick={() => setShowAdminPassword(!showAdminPassword)}
                                 className="absolute right-3 top-[34px] text-gray-300 hover:text-bee-black transition-colors"
+                                title={showAdminPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                                aria-label={showAdminPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
                             >
                                 <i className={`fa-solid ${showAdminPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                             </button>
@@ -127,6 +131,8 @@ const HRTab: React.FC<HRTabProps> = ({
                                     <button
                                         onClick={() => setAdminForm(admin)}
                                         className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-white transition-all flex items-center justify-center"
+                                        title="관리자 정보 수정"
+                                        aria-label="관리자 정보 수정"
                                     >
                                         <i className="fa-solid fa-pen-to-square text-xs"></i>
                                     </button>
@@ -137,6 +143,8 @@ const HRTab: React.FC<HRTabProps> = ({
                                             }
                                         }}
                                         className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                                        title="관리자 계정 삭제"
+                                        aria-label="관리자 계정 삭제"
                                     >
                                         <i className="fa-solid fa-trash-can text-xs"></i>
                                     </button>

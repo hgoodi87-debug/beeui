@@ -135,7 +135,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                         <i className="fa-solid fa-plus"></i>
                         {bt.manual_booking_btn}
                     </button>
-                    <button onClick={onBack} className="w-10 h-10 rounded-xl bg-gray-100 text-gray-400 hover:text-bee-black transition-colors flex items-center justify-center">
+                    <button onClick={onBack} className="w-10 h-10 rounded-xl bg-gray-100 text-gray-400 hover:text-bee-black transition-colors flex items-center justify-center" title="로그아웃" aria-label="로그아웃">
                         <i className="fa-solid fa-arrow-right-from-bracket"></i>
                     </button>
                 </div>
@@ -224,6 +224,8 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                                                 b.status === BookingStatus.ARRIVED ? 'bg-purple-50 text-purple-500' :
                                                                     b.status === BookingStatus.COMPLETED ? 'bg-green-50 text-green-500' : 'bg-gray-100 text-gray-400'
                                                         }`}
+                                                    title="예약 상태 변경"
+                                                    aria-label="예약 상태 변경"
                                                 >
                                                     {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                                 </select>
@@ -233,7 +235,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                                 <div className="text-[10px] text-gray-400">{b.pickupTime}</div>
                                             </td>
                                             <td className="px-8 py-6 text-right">
-                                                <button onClick={() => setSelectedBooking(b)} className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-bee-yellow transition-all flex items-center justify-center ml-auto">
+                                                <button onClick={() => setSelectedBooking(b)} className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-bee-yellow transition-all flex items-center justify-center ml-auto" title="예약 상세 보기" aria-label="예약 상세 보기">
                                                     <i className="fa-solid fa-eye text-xs"></i>
                                                 </button>
                                             </td>

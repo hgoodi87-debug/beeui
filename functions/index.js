@@ -3,7 +3,13 @@ const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 const QRCode = require("qrcode");
 
-admin.initializeApp();
+// Explicitly set project ID for environments where it might not be auto-detected
+const projectId = "beeliber-main";
+admin.initializeApp({
+    projectId: projectId
+});
+
+console.log(`Functions starting up for project: ${projectId} 💅`);
 
 // Configure Transporter
 // TODO: User must replace this with an App Password
@@ -553,7 +559,8 @@ exports.resendBookingVoucher = functions.region("us-central1").https.onCall(asyn
         return result;
     } catch (error) {
         console.error("Error in resendBookingVoucher:", error);
-        throw new functions.https.HttpsError('internal', error.message);
+        // Include more details in the error message for debugging
+        throw new functions.https.HttpsError('internal', `[Firestore Error] ${error.message}`);
     }
 });
 

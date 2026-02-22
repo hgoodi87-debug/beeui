@@ -76,7 +76,7 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
                             {/* Person Illustration */}
                             <motion.div
                                 className="relative flex flex-col items-center flex-shrink-0"
-                                style={{ height: humanDisplayHeight }}
+                                initial={{ height: humanDisplayHeight }}
                                 animate={{ height: humanDisplayHeight }}
                                 transition={{ type: "spring", stiffness: 100 }}
                             >
@@ -101,11 +101,9 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
                                 >
                                     <motion.div
                                         className="w-32 md:w-40 rounded-t-[24px] rounded-b-[12px] border-4 border-black relative shadow-2xl overflow-hidden group"
-                                        style={{
-                                            height: luggageDisplayHeight,
-                                            backgroundColor: LUGGAGE_DATA[selectedSize].color
-                                        }}
+                                        style={{ height: luggageDisplayHeight, backgroundColor: LUGGAGE_DATA[selectedSize].color }}
                                         transition={{ type: "spring", stiffness: 100 }}
+                                        title={`${LUGGAGE_DATA[selectedSize].label} 사이즈 가방`}
                                     >
                                         <div className="absolute inset-x-2 top-2 bottom-2 border-2 border-black/10 rounded-xl" />
                                         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-black/10" />

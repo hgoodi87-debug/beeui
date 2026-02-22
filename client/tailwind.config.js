@@ -20,7 +20,7 @@ export default {
                     gold: '#FFD700',
                     blue: '#7ba0c9',
                     black: '#0C0C0C',
-                    grey: '#4a4a4a',
+                    grey: '#1a1a1a',
                     muted: '#71717A',
                     light: '#F5F5F5'
                 },

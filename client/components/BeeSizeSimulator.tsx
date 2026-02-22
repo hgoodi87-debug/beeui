@@ -20,7 +20,7 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
         header_title: "BEE 사이즈 체크",
         header_subtitle: "내 키와 직접 비교해보세요! 윙윙~",
         height_label: "내 키 설정하기",
-        size_m_range: "18~23인치",
+        size_m_range: "20~23인치",
         size_m_desc: "기내용/단기여행",
         size_l_range: "24~26인치",
         size_l_desc: "일주일 여행용",

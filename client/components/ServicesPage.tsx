@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Smartphone, ChevronRight } from 'lucide-react';
 import TrackingWidget from './TrackingWidget';
+import Logo from './Logo';
 
 interface ServicesPageProps {
     onBack: () => void;
@@ -26,12 +27,11 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
     return (
         <div className="min-h-screen bg-white font-sans text-bee-black">
             {/* Sticky Header */}
-            <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center shadow-sm">
+            <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 py-3 px-6 md:px-12 flex justify-between items-center shadow-sm">
                 <div className="flex items-center gap-1 cursor-pointer" onClick={onBack}>
-                    <span className="text-2xl font-black italic text-bee-yellow">bee</span>
-                    <span className="text-2xl font-black text-bee-black">liber</span>
+                    <Logo size="sm" />
                 </div>
-                <button onClick={onBack} className="text-sm font-bold text-gray-500 hover:text-bee-black flex items-center gap-2 px-4 py-2 rounded-full hover:bg-gray-50 transition-all">
+                <button onClick={onBack} className="text-[10px] font-black text-gray-400 hover:text-bee-black flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-gray-50 transition-all uppercase tracking-widest">
                     <i className="fa-solid fa-arrow-left"></i> {t.back || 'Back'}
                 </button>
             </nav>

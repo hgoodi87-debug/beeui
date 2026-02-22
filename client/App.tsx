@@ -466,8 +466,7 @@ const App: React.FC = () => {
       {view === 'USER' && (
         <Footer
           t={t}
-          onTermsClick={() => navigate('TERMS')}
-          onPrivacyClick={() => navigate('PRIVACY')}
+          onNavigate={navigate}
         />
       )}
       {view === 'USER' && (

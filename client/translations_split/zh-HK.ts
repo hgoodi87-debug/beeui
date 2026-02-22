@@ -33,7 +33,7 @@ export const zhHK = {
         badge: '全球旅遊夥伴', trust_badge: 'GLOBAL PARTNER', title1: '免行李', title2: '更自由',
         hook_text: '✨ 喺呢度查看同預訂可以寄存行李箱嘅地方！',
         insurance_badge: '已加入安全賠償保險',
-        subtitle: '將沉重嘅行李交畀 Beeliber，輕鬆享受旅遊嘅每一刻。',
+        subtitle: '將沉重嘅行李交畀 Beeliber，\n輕鬆享受旅遊嘅每一刻。',
         btn1: '立即預訂', btn2: '使用指南', quote: '行李無憂，輕鬆出發！',
         live_satisfaction: '實時滿意度',
         book_delivery: '預訂配送',
@@ -84,6 +84,7 @@ export const zhHK = {
     reviews: ["多虧咗配送服務，一身輕咁開始咗旅遊！🍯", "冇行李行街簡直係天堂！👍", "由釜山去首爾都好輕鬆。🚄", "網點好多，非常方便。🐝"],
     booking: {
         delivery: '配送', storage: '寄存', from: '出發 / 寄存地', to: '送達 / 領取地', duration: '寄存時間',
+        slot_past: '已截止',
         select_origin: '選擇出發地', select_dest: '選擇目的地', select_storage: '選擇寄存選項',
         pickup_schedule: '寄存日期同時間', delivery_schedule: '送達日期同時間',
         pickup_note: '* 可選時間 09:00 ~ 13:00', delivery_note: '* 可選時間 16:00 ~ 21:00',
@@ -116,8 +117,8 @@ export const zhHK = {
         insurance_bags_label: '適用行李數量 (Number of Bags)',
         insurance_limit_1: '50~100萬韓元',
         insurance_limit_2: '100~200萬韓元',
-        size_s: '21英吋以下',
-        size_m: '18~23英吋',
+        size_s: '小型行李, 購物袋',
+        size_m: '20~23英吋, 大型購物袋',
         size_l: '24~26英吋',
         size_xl: '27~30英吋',
         weight_info: '標準重量為20KG。如果超過20KG，每5KG將收取5,000韓元的額外費用（最大30KG）。',
@@ -146,7 +147,7 @@ export const zhHK = {
         contact_info_title: '請輸入預訂人資訊',
         size_m_desc: '登機箱、背包',
         size_l_desc: '託運行李',
-        size_xl_desc: '大型行李、高爾夫球袋',
+        size_xl_desc: '大型行李',
         sns_channels: {
             kakao: 'KakaoTalk',
             line: 'LINE',
@@ -230,7 +231,17 @@ export const zhHK = {
         cta_main_title: "準備好開啟自由之旅了嗎？",
         btn_book_now: "現在開始"
     },
-    tracking: { title: '實時查詢', desc: '輸入電郵查看位置。', placeholder: '輸入電郵', btn: '查詢', noResult: '冇查詢結果。', status_suffix: '狀態' },
+    pricing: {
+        headline: "比的士更便宜，\n一天的完美自由",
+        desc: "唔使複雜嘅重量/尺寸計算，\n提供直觀嘅定額費用。",
+        airport_hotel: "標準行李箱 (機場 ↔ 酒店)",
+        extra_large: "特大型行李",
+        price_standard: "₩20,000",
+        price_extra: "₩29,000",
+        features_standard: ["23吋以下所有尺寸", "機場 ↔ 酒店當日配送", "實時電郵狀態提醒", "包含基礎損壞保險"],
+        features_extra: ["超過27吋", "重型行李特化管理", "當日安全配送保證", "適用高級保險"]
+    },
+    tracking: { title: '即時查詢', desc: '請輸入姓名同電子郵件地址，確認您嘅預訂記錄。', placeholder: '輸入電子郵件', name_placeholder: '輸入預訂人姓名', btn: '查詢', noResult: '搵唔到相關預訂記錄。', check_info: '請再次確認您輸入嘅資訊係咪正確。', status_suffix: '狀態' },
     footer: {
         desc: 'Beeliber 致力於讓旅遊更輕便。',
         service: "服務",
@@ -277,8 +288,8 @@ export const zhHK = {
         currently_closed: '該網點目前已暫停服務。',
         ai_prompt: 'Bee AI 將協助您完成預訂。',
         bag_size_s_desc: '~20英吋 (機內隨身)',
-        bag_size_m_desc: '~24英吋 (託運行李)',
-        bag_size_l_desc: '~28英吋 (大型行李)',
+        bag_size_m_desc: '~23英吋 (機內隨身)',
+        bag_size_l_desc: '~27英吋 (託運行李)',
         bag_size_xl_desc: '~32英吋+ (特大型)',
         btn_apply: '應用',
         btn_reload_page: '重新整理',
@@ -308,6 +319,7 @@ export const zhHK = {
         reservation_title: '預訂',
         label_map_error: '地圖載入失敗'
     },
+
     tracking_page: {
         title: '配送查詢',
         subtitle: '請通過訂單號或電子郵件查詢您的行李狀態。',
@@ -434,7 +446,7 @@ export const zhHK = {
         header_title: "BEE 尺寸檢查",
         header_subtitle: "與您嘅身高直接對比！ 嗡嗡~",
         height_label: "設置您嘅身高",
-        size_m_range: "18~23英吋",
+        size_m_range: "20~23英吋",
         size_m_desc: "登機箱/短期旅行",
         size_l_range: "24~26英吋",
         size_l_desc: "一周旅行用",
@@ -467,7 +479,7 @@ export const zhHK = {
         pain_section: {
             badge: "TRAVEL CHALLENGES",
             title_1: "在陌生城市的樓梯前，",
-            title_2: "正為沈重的行李發售嗎？",
+            title_2: "正為沈重的行李發愁嗎？",
             highlight: "感到無助的瞬間",
             item1_t: "無盡的樓梯，沈重的行李箱",
             item1_d: "您是否在機場快線和地鐵站的深長樓梯下，正因沈重的行李而筋疲力盡？",
@@ -487,9 +499,9 @@ export const zhHK = {
             title_1: "還在親手提著",
             title_2: "沈重的行李嗎？",
             title_3: "壓垮您的行囊。",
-            desc: "旅行不是體力測試。為什麼要在韓國有限的時間裡，與沈重的行李箱搏斗呢？交給 Beeliber，享受真正的自由。",
+            desc: "旅行不是體力測試。\n為什麼要在韓國有限的時間裡，與沉重的行李箱搏斗呢？\n\n交給 Beeliber，享受真正的自由。",
             point1: "樓梯是您的最大敵人",
-            point2: "別浪費最後의 4 小時",
+            point2: "別浪費最後的 4 小時",
             point3: "提著 30kg 行李擠滿員電車的痛苦"
         },
         howitworks: {
@@ -501,7 +513,7 @@ export const zhHK = {
             step3_title: "安全配送",
             step3_desc: "實時查看配送狀態。",
             step4_title: "領取行李",
-            step4_desc: "在酒店大堂或機場領取行李。"
+            step4_desc: "結束行程回到機場，您的行李已在那裡靜候您的光臨。"
         },
         servicedetails: {
             delivery_title: "輕裝上陣",
@@ -520,5 +532,39 @@ export const zhHK = {
             point3_title: "專家搬運",
             point3_desc: "由擁有 10 年以上經驗的物流專家進行配送。"
         }
+    },
+    pain: {
+        headline: "首爾的樓梯，\n對 28 吋嘅行李箱並不友好。",
+        sub_copy: "旅行最寶貴嘅第一日同最後一日，\n因行李浪費嘅時間平均長達 4.5 小時。\n\nBeeliber 將呢段時間還返俾您。",
+        point1: "樓梯係您最大嘅敵人",
+        point2: "唔好浪費最後 4 小時",
+        point3: "提住 30kg 行李擠地鐵嘅痛苦",
+        badge_without: "冇 Beeliber",
+        badge_with: "有 Beeliber 💅",
+        quote_bad: "\"樓梯係地獄\"",
+        quote_good: "\"踩喺雲端嘅感覺\""
+    },
+    howitworks: {
+        headline: "只需 3 次點擊，行李如魔法般消失",
+        step1: { title: "Drop（寄存）", desc: "喺機場（或酒店）嘅 Beeliber 櫃台/合作夥伴處\n交出您嘅重行李。" },
+        step2: { title: "Enjoy（享受）", desc: "雙手自由，即刻開始\n觀光、美食、購物之旅。" },
+        step3: { title: "Meet（提取）", desc: "行程結束到達機場，\n行李已經先喺嗰度等您。" }
+    },
+    reviews_section: {
+        headline: "冇行李行係首爾有幾靚，由佢哋來證明。",
+        review1: "寄咗行李直接去景福宮。呢世最好嘅決定！ - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
+        review2: "去機場前寄咗行李，輕鬆逛咗成日！ - 李某 ⭐️⭐️⭐️⭐️⭐️",
+        review3: "實時追蹤功能超好用，強烈推薦！ - 金某 ⭐️⭐️⭐️⭐️⭐️"
+    },
+    final_cta: {
+        headline: "啱落機呀？\n定係快啲出發？",
+        btn_airport_hotel: "預訂 機場 ➔ 酒店 配送",
+        btn_hotel_airport: "預訂 酒店 ➔ 機場 配送"
+    },
+    trust: {
+        headline: "您嘅行李，將享受比您更 VIP 嘅待遇。",
+        tracking: { title: "100% 即時追蹤", desc: "以 GPS 即時查看行李嘅移動路線同狀態。" },
+        insurance: { title: "頂級損壞保險", desc: "包含連一道刮痕都負責到底嘅全球級保險。" },
+        seal: { title: "安全封條系統", desc: "智慧安全封條保證送達前完全唔被開啟。" }
     }
 };

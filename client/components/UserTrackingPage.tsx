@@ -133,7 +133,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                         type="text"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        placeholder={t.tracking.name_placeholder}
+                                        placeholder={t.tracking?.name_placeholder || 'Name'}
                                         className="w-full bg-gray-50 border-2 border-transparent focus:border-bee-yellow rounded-2xl p-4 pl-12 text-sm font-bold outline-none transition-all"
                                     />
                                     <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -148,7 +148,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder={t.tracking.placeholder}
+                                        placeholder={t.tracking?.placeholder || 'Email'}
                                         className="w-full bg-gray-50 border-2 border-transparent focus:border-bee-yellow rounded-2xl p-4 pl-12 text-sm font-bold outline-none transition-all"
                                     />
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400">@</div>
@@ -188,7 +188,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                                     </span>
                                                     <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{booking.id}</span>
                                                 </div>
-                                                <h3 className="text-xl font-black">{booking.pickupDate} {t.tracking.status_suffix}</h3>
+                                                <h3 className="text-xl font-black">{booking.pickupDate} {t.tracking?.status_suffix || ''}</h3>
                                             </div>
                                             <div className={`px-5 py-2 rounded-full text-xs font-black ${booking.status === BookingStatus.CANCELLED ? 'bg-red-50 text-red-500' : 'bg-bee-yellow text-bee-black'
                                                 }`}>
@@ -281,7 +281,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                         ) : (
                             <div className="bg-white rounded-[32px] p-20 text-center shadow-lg">
                                 <AlertCircle className="w-12 h-12 text-gray-200 mx-auto mb-6" />
-                                <h3 className="text-xl font-black text-gray-300">{t.tracking.noResult}</h3>
+                                <h3 className="text-xl font-black text-gray-300">{t.tracking?.noResult || 'No bookings found.'}</h3>
                             </div>
                         )}
                     </div>

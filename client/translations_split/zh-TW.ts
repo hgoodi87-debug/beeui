@@ -35,7 +35,7 @@ export const zhTW = {
         insurance_title: '安全賠償保險',
         insurance_desc: '遺失或損壞時，每件行李最高可獲得50萬韓元（約380美元）的 賠償。請放心旅行。',
         insurance_badge: '已加入安全賠償保險',
-        subtitle: '將沉重的行李交給 Beeliber，輕鬆享受旅遊的每一刻。',
+        subtitle: '將沉重的行李交給 Beeliber，\n輕鬆享受旅遊的每一刻。',
         btn1: '立即預訂', btn2: '使用指南', quote: '行李無憂，輕鬆出發！',
         live_satisfaction: '實時滿意度',
         book_delivery: '預訂配送',
@@ -43,6 +43,8 @@ export const zhTW = {
         book_branch: '據點預約 (地圖)',
         main_title_1: '從行李中，',
         main_title_2: '獲得自由。',
+        main_title_bags: '行李',
+        main_title_city: '自由',
         insurance_badge_text: '每件行李最高賠償50萬韓元',
         track_booking: '查詢預約',
         reviews: [
@@ -86,6 +88,7 @@ export const zhTW = {
     reviews: ["多虧了配送服務，一身輕地開始了旅遊！🍯", "沒有行李逛街簡直是天堂！👍", "從釜山到首爾也很快。🚄", "據點很多，非常便利。🐝"],
     booking: {
         delivery: '配送', storage: '寄存', from: '出發 / 寄存地', to: '送達 / 領取地', duration: '寄存時間',
+        slot_past: '已截止',
         select_origin: '選擇出發地', select_dest: '選擇目的地', select_storage: '選擇寄存選項',
         pickup_schedule: '寄存日期和時間', delivery_schedule: '送達日期和時間',
         pickup_note: '* 可選時間 09:00 ~ 13:00', delivery_note: '* 可選時間 16:00 ~ 21:00',
@@ -118,8 +121,8 @@ export const zhTW = {
         insurance_bags_label: '適用行李數量 (Number of Bags)',
         insurance_limit_1: '50~100萬韓元',
         insurance_limit_2: '100~200萬韓元',
-        size_s: '21英吋以下',
-        size_m: '18~23英吋',
+        size_s: '小型行李, 購物袋',
+        size_m: '20~23英吋, 大型購物袋',
         size_l: '24~26英吋',
         size_xl: '27~30英吋',
         weight_info: '標準重量為20KG。如果超過20KG，每5KG將收取5,000韓元的額外費用（最大30KG）。',
@@ -148,7 +151,7 @@ export const zhTW = {
         contact_info_title: '請輸入預訂人資訊',
         size_m_desc: '登機箱、背包',
         size_l_desc: '託運行李',
-        size_xl_desc: '大型行李、高爾夫球袋',
+        size_xl_desc: '大型行李',
         sns_channels: {
             kakao: 'KakaoTalk',
             line: 'LINE',
@@ -249,7 +252,16 @@ export const zhTW = {
             btn: "預訂寄存"
         },
     },
-    tracking: { title: '實時查詢', desc: '輸入信箱查看位置。', placeholder: '輸入信箱', btn: '查詢', noResult: '無查詢結果。', status_suffix: '狀態' },
+    pricing: {
+        headline: "比計程車更便宜，\n一天的完美自由",
+        desc: "不需複雜的重量/尺寸計算，\n提供直觀的定額費用。",
+        airport_hotel: "標準行李箱 (機場 ↔ 飯店)",
+        extra_large: "特大型行李",
+        price_standard: "₩20,000",
+        price_extra: "₩29,000",
+        features_standard: ["23吋以下所有尺寸", "機場 ↔ 飯店當日配送", "實時郵件狀態提醒", "包含基礎損壞保險"],
+        features_extra: ["超過27吋、大件行李等", "重型行李特化管理", "當日安全配送保證", "適用高級保險"]
+    },
     footer: {
         desc: 'Beeliber 致力於讓旅遊更輕便。',
         service: "服務",
@@ -296,8 +308,8 @@ export const zhTW = {
         currently_closed: '該據點目前已暫停服務。',
         ai_prompt: 'Bee AI 將協助您完成預訂。',
         bag_size_s_desc: '~20英吋 (機內隨身)',
-        bag_size_m_desc: '~24英吋 (託運行李)',
-        bag_size_l_desc: '~28英吋 (大型行李)',
+        bag_size_m_desc: '~23英吋 (機內隨身)',
+        bag_size_l_desc: '~27英吋 (託運行李)',
         bag_size_xl_desc: '~32英吋+ (特大型)',
         btn_apply: '應用',
         btn_reload_page: '整理頁面',
@@ -500,7 +512,7 @@ export const zhTW = {
         header_title: "BEE 尺寸檢查",
         header_subtitle: "與您的身高直接對比！ 嗡嗡~",
         height_label: "設置您的身高",
-        size_m_range: "18~23英吋",
+        size_m_range: "20~23英吋",
         size_m_desc: "登機箱/短期旅行",
         size_l_range: "24~26英吋",
         size_l_desc: "一周旅行用",
@@ -550,41 +562,47 @@ export const zhTW = {
         satisfaction: "99.2% 的滿意度"
     },
     pain: {
-        badge: "旅行的現實",
-        title_1: "還在親手提著",
-        title_2: "沈重的行李嗎？",
-        title_3: "壓垮您的行囊。",
-        desc: "旅行不是體力測試。為什麼要在韓國有限的時間裡，與沈重的行李箱搏斗呢？交給 Beeliber，享受真正的自由。",
-        point1: "樓梯是您的最大敵人",
-        point2: "別浪費最後的 4 小時",
-        point3: "提著 30kg 行李擠滿員電車的痛苦"
+        headline: "首爾的樓梯，\n對 28 吋的行李箱並不友好。",
+        sub_copy: "旅行最珍貴的第一天和最後一天，\n因行李浪費的時間平均長達 4.5 小時。\n\nBeeliber 將這段時間還給您。",
+        point1: "樓梯是您最大的敵人",
+        point2: "不要浪費最後 4 小時",
+        point3: "提著 30kg 行李擠捷運的痛苦",
+        badge_without: "沒有 Beeliber",
+        badge_with: "有 Beeliber 💅",
+        quote_bad: "\"樓梯是地獄\"",
+        quote_good: "\"踩在雲端的感覺\""
     },
     howitworks: {
-        subtitle: "從機場到酒店，從酒店到機場的智能行李配送服務。",
-        step1_title: "在線預訂",
-        step1_desc: "1 分鐘內完成簡單快捷的預訂。",
-        step2_title: "寄存行李",
-        step2_desc: "在站點分店寄存您的行李。",
-        step3_title: "安全配送",
-        step3_desc: "實時查看配送狀態。",
-        step4_title: "領取行李",
-        step4_desc: "在酒店大堂或機場領取行李。"
+        headline: "只需 3 次點擊，行李如魔法般消失",
+        step1: { title: "Drop（寄放）", desc: "在機場（或飯店）的 Beeliber 櫃台/合作夥伴處\n交出您的重行李。" },
+        step2: { title: "Enjoy（享受）", desc: "雙手自由，立即開始\n觀光、美食、購物之旅。" },
+        step3: { title: "Meet（領取）", desc: "行程結束抵達機場，\n行李已先在那裡等您。" }
     },
-    servicedetails: {
-        delivery_title: "輕裝上陣",
-        delivery_accent: "輕鬆抵達",
-        delivery_desc: "在站點到達處寄存行李，我們將直接配送至您的酒店大堂。解放雙手，即刻開啟旅程。",
-        handsfree_title: "優雅從容",
-        handsfree_accent: "完滿啟程",
-        handsfree_desc: "退房後寄存行李去明洞購物。上車前在站點領取行李即可！"
+    reviews_section: {
+        headline: "沒有行李走在首爾有多美好，讓他們來證明。",
+        review1: "寄了行李直接去景福宮了。此生最棒的決定！ - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
+        review2: "去機場前寄了行李，輕鬆逛了一整天！ - 李某 ⭐️⭐️⭐️⭐️⭐️",
+        review3: "即時追蹤功能超好用，強烈推薦！ - 金某 ⭐️⭐️⭐️⭐️⭐️"
+    },
+    final_cta: {
+        headline: "剛下飛機嗎？\n還是即將出發？",
+        btn_airport_hotel: "預訂 機場 ➔ 飯店 配送",
+        btn_hotel_airport: "預訂 飯店 ➔ 機場 配送"
     },
     trust: {
-        title: "您的安心",
-        point1_title: "安全存儲",
-        point1_desc: "在設有監控的安保設施中安全管理。",
-        point2_title: "100% 賠償保障",
-        point2_desc: "每件物品均享有最高 50 萬韓元的保險。",
-        point3_title: "專家搬運",
-        point3_desc: "由擁有 10 年以上經驗的物流專家進行配送。"
+        headline: "您的行李，將享受比您更 VIP 的待遇。",
+        tracking: { title: "即時 100% 追蹤", desc: "基於 GPS 即時確認行李的移動路線與狀態。" },
+        insurance: { title: "頂級破損保險", desc: "連一道刮痕也負責的全球水準基本保險。" },
+        seal: { title: "安全封條系統", desc: "保證在抵達前絕對不會被打開的智慧安全封條。" }
+    },
+    tracking: {
+        title: '即時查詢',
+        desc: '請輸入姓名與電子郵件地址，確認您的預訂記錄。',
+        placeholder: '輸入電子郵件',
+        name_placeholder: '輸入預訂人姓名',
+        btn: '查詢',
+        noResult: '找不到相關預訂記錄。',
+        check_info: '請再次確認您輸入的資訊是否正確。',
+        status_suffix: '狀態'
     }
 };

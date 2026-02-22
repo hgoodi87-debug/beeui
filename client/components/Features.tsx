@@ -7,7 +7,7 @@ const FeatureCard = ({ icon, title, desc, color }: { icon: string, title: string
       <i className={`fa-solid ${icon} text-2xl text-bee-black`}></i>
     </div>
     <h3 className="text-2xl font-black text-bee-black mb-4 tracking-tight italic">{title}</h3>
-    <p className="text-bee-grey font-medium leading-relaxed">{desc}</p>
+    <p className="text-bee-black font-medium leading-relaxed opacity-80">{desc}</p>
   </div>
 );
 

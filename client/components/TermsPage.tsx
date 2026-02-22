@@ -42,7 +42,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
           <span className="text-3xl md:text-4xl font-black italic text-bee-yellow">bee</span>
           <span className="text-3xl md:text-4xl font-black text-bee-black">liber</span>
         </div>
-        <button onClick={onBack} className="text-xs font-black text-bee-grey hover:text-bee-black uppercase tracking-widest flex items-center gap-2 px-6 py-3 bg-gray-100 rounded-full transition-all hover:scale-105">
+        <button onClick={onBack} className="text-xs font-black text-bee-black hover:text-red-500 uppercase tracking-widest flex items-center gap-2 px-6 py-3 bg-gray-100 rounded-full transition-all hover:scale-105">
           <i className="fa-solid fa-arrow-left"></i> {t.notice?.close || 'Back'}
         </button>
       </nav>
@@ -61,7 +61,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
 
         {/* Intro */}
         {intro && (
-          <div className="mb-12 p-8 md:p-12 bg-white rounded-[40px] text-bee-grey font-medium leading-loose whitespace-pre-wrap animate-fade-in-up border border-gray-100 shadow-xl shadow-gray-200/50">
+          <div className="mb-12 p-8 md:p-12 bg-white rounded-[40px] text-bee-black font-bold leading-loose whitespace-pre-wrap animate-fade-in-up border border-gray-100 shadow-xl shadow-gray-200/50">
             {intro}
           </div>
         )}
@@ -75,7 +75,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
                 </span>
                 {section.title}
               </h2>
-              <div className="pl-0 md:pl-16 text-bee-grey font-medium leading-relaxed whitespace-pre-wrap text-base md:text-lg select-none">
+              <div className="pl-0 md:pl-16 text-bee-black font-bold leading-relaxed whitespace-pre-wrap text-base md:text-lg select-none">
                 {section.text}
               </div>
             </div>

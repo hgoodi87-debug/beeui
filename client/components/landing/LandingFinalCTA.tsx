@@ -1,0 +1,76 @@
+
+import React from "react";
+import { motion } from "framer-motion";
+import { Plane, Navigation } from "lucide-react";
+
+interface LandingFinalCTAProps {
+    t: any;
+    onNavigate: (view: any) => void;
+}
+
+const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
+    return (
+        <section className="relative h-screen flex items-center justify-center overflow-hidden">
+            {/* Background Image Container */}
+            <div className="absolute inset-0">
+                <img
+                    src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=2000" // 공항에서 손 흔들며 자유롭게 떠나는 뒷모습
+                    alt="Travel Freedom"
+                    className="w-full h-full object-cover brightness-[0.4]"
+                />
+            </div>
+
+            {/* Overlay Gradient for Visibility */}
+            <div className="absolute inset-0 bg-gradient-to-b from-bee-yellow/80 via-bee-yellow/40 to-bee-yellow/90" />
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none noise-overlay" />
+
+            <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    className="mb-16"
+                >
+                    <div className="inline-flex items-center gap-4 text-bee-black mb-12">
+                        <div className="w-12 h-12 rounded-full border-2 border-bee-black flex items-center justify-center">
+                            <Plane className="w-6 h-6 animate-bounce" />
+                        </div>
+                        <div className="h-px w-12 bg-bee-black opacity-30" />
+                        <div className="w-12 h-12 rounded-full border-2 border-bee-black flex items-center justify-center">
+                            <Navigation className="w-6 h-6 rotate-45" />
+                        </div>
+                    </div>
+
+                    <h2 className="text-6xl md:text-[10rem] font-display font-black text-bee-black leading-[0.9] tracking-tighter mb-20 break-keep whitespace-pre-line">
+                        {t.final_cta.headline}
+                    </h2>
+
+                    <div className="flex flex-col md:flex-row gap-6 justify-center">
+                        <button
+                            onClick={() => onNavigate('LOCATIONS')}
+                            className="px-12 py-5 bg-bee-black text-bee-yellow text-lg md:text-xl font-black rounded-[2rem] shadow-xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3"
+                        >
+                            {t.final_cta.btn_airport_hotel} ➔
+                        </button>
+                        <button
+                            onClick={() => onNavigate('LOCATIONS')}
+                            className="px-12 py-5 bg-white text-bee-black text-lg md:text-xl font-black rounded-[2rem] shadow-xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3 border-2 border-bee-black"
+                        >
+                            {t.final_cta.btn_hotel_airport} ➔
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full text-center z-20">
+                <div className="text-[10px] font-black uppercase tracking-[0.5em] text-bee-black opacity-30">
+                    © 2026 BEELIBER GLOBAL LOGISTICS ✨ TRUSTED BY THOUSANDS
+                </div>
+            </div>
+
+            {/* Glowing Accent */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-bee-yellow/20 blur-[150px] -z-10" />
+        </section>
+    );
+};
+
+export default LandingFinalCTA;

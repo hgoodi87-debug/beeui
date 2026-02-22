@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import Logo from './Logo';
 
 interface NavbarProps {
   onAdminClick?: () => void;
@@ -47,14 +48,13 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
   }, []);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-md py-3' : 'bg-transparent py-5'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+    <nav className={`fixed top-0 left-0 right-0 z-[100] px-4 py-4 transition-all duration-300`}>
+      <div className={`max-w-[1200px] mx-auto flex items-center justify-between backdrop-blur-xl border border-white/10 rounded-full px-6 py-2 shadow-2xl transition-all duration-300 ${scrolled ? 'bg-black/60 shadow-lg' : 'bg-black/40'}`}>
 
         {/* Brand Logo Area */}
         <div className="flex flex-col items-start group">
           <div className="flex items-center gap-1 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <span className="text-4xl md:text-5xl font-black italic text-bee-yellow group-hover:scale-110 transition-transform">bee</span>
-            <span className="text-4xl md:text-5xl font-black text-bee-black">liber</span>
+            <Logo size="sm" />
           </div>
         </div>
 
@@ -88,9 +88,9 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
             )}
           </div>
           <div className="hidden lg:flex items-center gap-8">
-            <button onClick={onServicesClick} className="text-xs font-black text-bee-grey hover:text-bee-black uppercase tracking-widest">{t.services}</button>
-            <button onClick={() => window.location.hash = '#tracking'} className="text-xs font-black text-bee-grey hover:text-bee-black uppercase tracking-widest">{t.tracking}</button>
-            <button onClick={onPartnersClick} className="text-xs font-black text-bee-grey hover:text-bee-black uppercase tracking-widest">{t.partners}</button>
+            <button onClick={onServicesClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.services}</button>
+            <button onClick={() => window.location.hash = '#tracking'} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.tracking}</button>
+            <button onClick={onPartnersClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.partners}</button>
             <div className="w-px h-4 bg-gray-200"></div>
             {user && !user.isAnonymous ? (
               <button
@@ -108,7 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
                 {t.login || 'LOGIN'}
               </button>
             )}
-            <button onClick={() => window.location.pathname !== '/booking' && (window.history.pushState(null, '', '/booking'), window.dispatchEvent(new PopStateEvent('popstate')))} className="bg-bee-black text-bee-yellow px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-black/5">{t.book}</button>
+            <button onClick={() => window.location.pathname !== '/booking' && (window.history.pushState(null, '', '/booking'), window.dispatchEvent(new PopStateEvent('popstate')))} className="bg-bee-black text-bee-yellow px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md shadow-black/5">{t.book}</button>
           </div>
         </div>
       </div>

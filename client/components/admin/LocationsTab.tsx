@@ -377,7 +377,17 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <div className="flex items-center gap-3 mb-3">
                                 <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-500'}`}>{loc.type}</span>
                                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{loc.id}</span>
-                                <div className="ml-auto">
+                                <div className="ml-auto flex items-center gap-2">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(`/branch/${loc.id}`, '_blank');
+                                        }}
+                                        className="text-[8px] font-black bg-bee-black text-bee-yellow px-2 py-0.5 rounded-full hover:scale-110 transition-all flex items-center gap-1 shadow-sm"
+                                        title="지점 전용 대시보드 열기"
+                                    >
+                                        <i className="fa-solid fa-chart-pie"></i> DASHBOARD
+                                    </button>
                                     {loc.isActive !== false ? (
                                         <span className="flex items-center gap-1.5 text-[8px] font-black text-green-500 bg-green-50 px-2 py-0.5 rounded-full ring-1 ring-green-100">
                                             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> Active

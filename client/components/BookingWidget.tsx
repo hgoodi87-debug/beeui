@@ -353,19 +353,15 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
         // The user mentioned checking `StorageService.updateBooking`.
         await StorageService.updateBooking(initialBooking.id, updates);
       } else {
-        // New Booking
-        const sequence = Date.now().toString().slice(-4);
-        let bookingId = `BL-${sequence}`;
-        const loc = locations.find(l => l.id === booking.pickupLocation);
-        const locCode = loc?.shortCode || loc?.id?.substring(0, 3).toUpperCase() || 'UNK';
-        if (serviceType === ServiceType.DELIVERY) {
-          const dLoc = locations.find(l => l.id === booking.dropoffLocation);
-          const dCode = dLoc?.shortCode || dLoc?.id?.substring(0, 3).toUpperCase() || 'UNK';
-          bookingId = `${locCode}-${dCode}-${sequence}`;
-        } else {
-          bookingId = `${locCode}-${sequence}`;
-        }
-        const newBooking = { ...booking, id: bookingId, status: BookingStatus.CONFIRMED, createdAt: new Date().toISOString(), finalPrice: priceDetails.total, language: lang, recaptchaToken: recaptchaToken || undefined };
+        // New Booking - Delegate standardized ID generation to StorageService 💅
+        const newBooking = {
+          ...booking,
+          status: BookingStatus.CONFIRMED,
+          createdAt: new Date().toISOString(),
+          finalPrice: priceDetails.total,
+          language: lang,
+          recaptchaToken: recaptchaToken || undefined
+        };
         await StorageService.saveBooking(newBooking);
       }
 

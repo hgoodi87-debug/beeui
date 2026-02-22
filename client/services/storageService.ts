@@ -78,6 +78,19 @@ export const StorageService = {
   },
 
 
+  // --- Helpers ---
+  generateBookingId: (booking: Partial<BookingState>): string => {
+    const getCode = (id: string) => INITIAL_LOCATIONS.find(l => l.id === id)?.shortCode || id.substring(0, 3).toUpperCase();
+
+    const originCode = getCode(booking.pickupLocation || 'UNK');
+    const destCode = booking.serviceType === 'DELIVERY'
+      ? (booking.dropoffLocation ? getCode(booking.dropoffLocation) : (booking.serviceType === 'DELIVERY' ? 'ADDR' : 'UNK'))
+      : originCode;
+
+    const randomStr = Math.floor(1000 + Math.random() * 9000).toString();
+    return `${originCode}-${destCode}-${randomStr}`;
+  },
+
   // --- Bookings ---
   saveBooking: async (booking: BookingState): Promise<void> => {
     const safeBooking = JSON.parse(JSON.stringify(booking));
@@ -90,22 +103,12 @@ export const StorageService = {
       if (booking.id) {
         await setDoc(doc(db, "bookings", booking.id), safeBooking);
       } else {
-        // Generate Custom ID: ORIGIN-DEST-RANDOM4
+        // Generate Standardized Custom ID: ORIGIN-DEST-RANDOM4 (e.g. MYN-IN1T-1234)
         try {
-          // Get shortCodes from INITIAL_LOCATIONS constant for speed and consistency
-          const getCode = (id: string) => INITIAL_LOCATIONS.find(l => l.id === id)?.shortCode || id.substring(0, 3).toUpperCase();
-
-          const originCode = getCode(booking.pickupLocation || '');
-          const destId = booking.serviceType === 'DELIVERY' ? booking.dropoffLocation : booking.pickupLocation;
-          const destCode = booking.serviceType === 'DELIVERY'
-            ? (booking.dropoffLocation ? getCode(booking.dropoffLocation) : (booking.serviceType === 'DELIVERY' ? 'ADDR' : 'UNK'))
-            : originCode;
-
-          // Generate 4 random digits
-          const randomStr = Math.floor(1000 + Math.random() * 9000).toString();
-          const newId = `${originCode}-${destCode}-${randomStr}`;
+          const newId = StorageService.generateBookingId(booking);
 
           safeBooking.id = newId;
+          safeBooking.reservationCode = newId; // Standardize reservationCode for vouchers
           safeBooking.createdAt = new Date().toISOString();
           await setDoc(doc(db, "bookings", newId), safeBooking);
         } catch (genError) {

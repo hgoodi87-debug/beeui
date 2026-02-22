@@ -153,8 +153,7 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
                                     >
                                         <div className="flex items-center gap-4">
                                             <div
-                                                className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white shadow-inner"
-                                                style={{ backgroundColor: size.color }}
+                                                className={`w-10 h-10 rounded-lg flex items-center justify-center font-black text-white shadow-inner luggage-${size.label.toLowerCase()}`}
                                             >
                                                 {size.label}
                                             </div>

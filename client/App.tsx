@@ -237,14 +237,16 @@ const App: React.FC = () => {
 
   const renderView = () => {
     // Security Check: Redirect to login if accessing dashboard without info
-    if (view === 'ADMIN' && !adminInfo.name) {
+    if ((view === 'ADMIN' || view === 'BRANCH_ADMIN') && !adminInfo.name) {
       return (
         <motion.div key="admin-login-required" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
           <AdminLoginPage
             onLogin={(name, jobTitle, branchId) => {
               setAdminInfo({ name, jobTitle, branchId: branchId || '' });
               if (branchId) {
-                navigate('BRANCH_ADMIN');
+                // 특정 지점 관리자인 경우 해당 지점으로 이동
+                window.history.pushState(null, '', `/branch/${branchId}`);
+                setView('BRANCH_ADMIN');
               } else {
                 navigate('ADMIN');
               }
@@ -253,6 +255,15 @@ const App: React.FC = () => {
           />
         </motion.div>
       );
+    }
+
+    // Branch Security: Prevent cross-branch access
+    if (view === 'BRANCH_ADMIN' && adminInfo.branchId) {
+      const urlBranchId = window.location.pathname.split('/')[2];
+      if (urlBranchId && urlBranchId !== adminInfo.branchId) {
+        // 권한 없는 지점 접근 시 자신의 지점으로 강제 소환 💅
+        window.history.replaceState(null, '', `/branch/${adminInfo.branchId}`);
+      }
     }
 
     switch (view) {

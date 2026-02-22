@@ -70,8 +70,7 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                     <div className="flex flex-wrap justify-center gap-12 md:gap-20">
                         {/* Placeholder for real partner logos with grayscale effect for premium look */}
                         <div className="text-xl md:text-2xl font-display font-black tracking-widest text-white/30 hover:text-bee-yellow transition-colors cursor-default">NAVERMAP</div>
-                        <div className="text-xl md:text-2xl font-display font-black tracking-widest text-white/30 hover:text-bee-yellow transition-colors cursor-default">INCOCO</div>
-                        <div className="text-xl md:text-2xl font-display font-black tracking-widest text-white/30 hover:text-bee-yellow transition-colors cursor-default">K-TRAVEL</div>
+                        <div className="text-xl md:text-2xl font-display font-black tracking-widest text-white/30 hover:text-bee-yellow transition-colors cursor-default">MONEYBOX</div>
                     </div>
                 </div>
             </div>

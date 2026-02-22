@@ -28,12 +28,16 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
     const [selectedBooking, setSelectedBooking] = useState<BookingState | null>(null);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [storageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!branchId) return;
+        setIsLoading(true);
         StorageService.getLocations().then(setLocations);
-        const unsubscribe = StorageService.subscribeBookingsByLocation(branchId, setBookings);
+        const unsubscribe = StorageService.subscribeBookingsByLocation(branchId, (data) => {
+            setBookings(data);
+            setIsLoading(false);
+        });
         return () => unsubscribe();
     }, [branchId]);
 
@@ -173,11 +177,21 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                    {filteredBookings.length === 0 ? (
-                        <div className="p-20 text-center space-y-4">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto"><i className="fa-solid fa-folder-open text-gray-200 text-2xl"></i></div>
-                            <p className="text-gray-400 font-bold">검색 결과가 없습니다.</p>
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+                    {isLoading ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-20 space-y-4">
+                            <div className="w-12 h-12 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-gray-400 font-bold animate-pulse">데이터를 수사 중입니다...💅</p>
+                        </div>
+                    ) : filteredBookings.length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-20 text-center space-y-4">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                                <i className="fa-solid fa-folder-open text-gray-200 text-2xl"></i>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-bee-black font-black">표시할 예약 데이터가 없습니다.</p>
+                                <p className="text-gray-400 text-xs font-medium">해당 지점과 관련된 출발/도착 예약이 있는지 확인해주세요. 🕵️‍♀️</p>
+                            </div>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">

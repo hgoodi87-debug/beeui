@@ -177,6 +177,7 @@ export const StorageService = {
 
   subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
     try {
+      console.log(`[Storage] Subscribing to bookings for location: ${locationId}`);
       // OR query: pickupLocation is ID OR dropoffLocation is ID
       const q = query(
         collection(db, "bookings"),
@@ -187,28 +188,26 @@ export const StorageService = {
         orderBy("pickupDate", "desc"),
         limit(500)
       );
+
       return onSnapshot(q, (snapshot) => {
         const bookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
-        bookings.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-        callback(bookings);
+        // Ensure strictly sorted and filtered in memory as back-up
+        const filtered = bookings.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId);
+        filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+        callback(filtered);
       }, (error) => {
-        console.error("Location booking sub error, falling back to simple filter:", error);
-        // Fallback for cases without composite indices or older environments
-        const simpleQ = query(
-          collection(db, "bookings"),
-          or(
-            where("pickupLocation", "==", locationId),
-            where("dropoffLocation", "==", locationId)
-          )
-        );
+        console.error("Location booking sub error, falling back to all-fetch filter:", error);
+        // If index is missing or query fails, fetch all and filter client-side for immediate recovery 💅
+        const simpleQ = query(collection(db, "bookings"), limit(1000));
         return onSnapshot(simpleQ, (snapshot) => {
           const bks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
-          bks.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-          callback(bks);
+          const filtered = bks.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId);
+          filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+          callback(filtered);
         });
       });
     } catch (e) {
-      console.error("Failed to subscribe bookings by location", e);
+      console.error("Critical failure in location subscription", e);
       return () => { };
     }
   },

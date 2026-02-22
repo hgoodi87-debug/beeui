@@ -13,6 +13,7 @@ interface BookingDetailModalProps {
     isSaving: boolean;
     handleResendEmail: (booking: BookingState) => void;
     sendingEmailId: string | null;
+    handleRefund?: (booking: BookingState) => void;
 }
 
 const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
@@ -24,7 +25,8 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
     handleUpdateBooking,
     isSaving,
     handleResendEmail,
-    sendingEmailId
+    sendingEmailId,
+    handleRefund
 }) => {
     const [promoCode, setPromoCode] = React.useState('');
     const [isApplyingPromo, setIsApplyingPromo] = React.useState(false);
@@ -429,6 +431,14 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                         {sendingEmailId === selectedBooking.id ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-envelope"></i>}
                         바우처 재발송
                     </button>
+                    {handleRefund && (
+                        <button
+                            onClick={() => handleRefund(selectedBooking)}
+                            className="bg-red-50 text-red-500 border border-red-100 px-8 py-4 rounded-2xl font-black text-sm hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                        >
+                            <i className="fa-solid fa-rotate-left"></i> 반품(환불) 처리
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

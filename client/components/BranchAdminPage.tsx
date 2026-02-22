@@ -211,19 +211,6 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         printWindow.print();
     };
 
-    const handleSaveManualBooking = async (formData: any) => {
-        setIsSaving(true);
-        try {
-            await StorageService.saveBooking(formData);
-            setIsManualModalOpen(false);
-            alert(bt.booking_created_success || 'Booking created successfully');
-        } catch (error) {
-            console.error(error);
-            alert('Failed to save booking');
-        } finally {
-            setIsSaving(false);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gray-50 text-bee-black font-sans">

@@ -93,18 +93,19 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                         <div className="relative group">
                             <button title="Change Language" className="flex items-center gap-2 px-3 md:px-4 py-2 bg-gray-50 rounded-full border border-black/5 hover:border-black/10 transition-all hover:bg-gray-100 active:scale-95">
                                 <span className="text-base md:text-lg">
-                                    {lang === 'ko' ? '🇰🇷' : lang === 'en' ? '🇺🇸' : lang === 'ja' ? '🇯🇵' : lang.startsWith('zh-') ? (lang === 'zh-TW' || lang === 'zh-HK' ? '🇭🇰' : '🇨🇳') : '🇨🇳'}
+                                    {lang === 'ko' ? '🇰🇷' : lang === 'en' ? '🇺🇸' : lang === 'ja' ? '🇯🇵' : lang === 'zh-HK' ? '🇭🇰' : lang === 'zh-TW' ? '🇹🇼' : '🇨🇳'}
                                 </span>
                                 <ChevronRight className="w-3 h-3 rotate-90 text-black/20" />
                             </button>
                             <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[99999]">
                                 <div className="bg-white border border-black/5 rounded-2xl shadow-2xl p-2 min-w-[140px]">
                                     {[
-                                        { code: 'ko', label: '한국어 (KR)' },
-                                        { code: 'en', label: 'English (US)' },
-                                        { code: 'ja', label: '日本語 (JP)' },
-                                        { code: 'zh', label: '简体中文 (CN)' },
-                                        { code: 'zh-TW', label: '繁體中文 (TW)' }
+                                        { code: 'ko', label: '🇰🇷 한국어 (KR)' },
+                                        { code: 'en', label: '🇺🇸 English (US)' },
+                                        { code: 'ja', label: '🇯🇵 日本語 (JP)' },
+                                        { code: 'zh', label: '🇨🇳 简体中文 (CN)' },
+                                        { code: 'zh-HK', label: '🇭🇰 繁體中文 (HK)' },
+                                        { code: 'zh-TW', label: '🇹🇼 繁體中文 (TW)' }
                                     ].map((item) => (
                                         <button key={item.code} onClick={() => { onLangChange(item.code); setIsMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors font-black text-[10px] uppercase tracking-wider ${lang === item.code ? 'bg-bee-black text-bee-yellow' : 'hover:bg-gray-50 text-black/40 hover:text-black'}`}>
                                             <span>{item.label}</span>
@@ -129,69 +130,71 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                             {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
                         </button>
                     </div>
-                </div>
+                </div >
 
                 {/* Mobile Menu Dropdown Slide */}
                 <AnimatePresence>
-                    {isMenuOpen && (
-                        <>
-                            {/* Backdrop for click outside */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="fixed inset-0 top-16 bg-black/40 backdrop-blur-sm z-[-1] md:hidden"
-                            />
-                            <motion.div
-                                initial={{ y: "-100%" }}
-                                animate={{ y: 0 }}
-                                exit={{ y: "-100%" }}
-                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                className="absolute top-full left-0 right-0 bg-white border-b border-black/5 shadow-2xl overflow-hidden md:hidden z-10"
-                            >
-                                <div className="p-6 space-y-2">
-                                    {[
-                                        { id: 'SERVICES', label: t.nav.services, icon: <Smartphone className="w-5 h-5 text-bee-yellow" /> },
-                                        { id: 'LOCATIONS', label: t.nav.locations, icon: <MapPin className="w-5 h-5 text-bee-yellow" /> },
-                                        { id: 'PARTNERSHIP', label: t.nav.partners, icon: <Users className="w-5 h-5 text-bee-yellow" /> }
-                                    ].map((item) => (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => {
-                                                onNavigate(item.id);
-                                                setIsMenuOpen(false);
-                                            }}
-                                            className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-2xl hover:bg-bee-black hover:text-bee-yellow transition-all group active:scale-95"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-white border border-black/5 flex items-center justify-center group-hover:bg-bee-yellow/10 group-hover:border-bee-yellow/20 transition-all">
-                                                    {item.icon}
+                    {
+                        isMenuOpen && (
+                            <>
+                                {/* Backdrop for click outside */}
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="fixed inset-0 top-16 bg-black/40 backdrop-blur-sm z-[-1] md:hidden"
+                                />
+                                <motion.div
+                                    initial={{ y: "-100%" }}
+                                    animate={{ y: 0 }}
+                                    exit={{ y: "-100%" }}
+                                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                    className="absolute top-full left-0 right-0 bg-white border-b border-black/5 shadow-2xl overflow-hidden md:hidden z-10"
+                                >
+                                    <div className="p-6 space-y-2">
+                                        {[
+                                            { id: 'SERVICES', label: t.nav.services, icon: <Smartphone className="w-5 h-5 text-bee-yellow" /> },
+                                            { id: 'LOCATIONS', label: t.nav.locations, icon: <MapPin className="w-5 h-5 text-bee-yellow" /> },
+                                            { id: 'PARTNERSHIP', label: t.nav.partners, icon: <Users className="w-5 h-5 text-bee-yellow" /> }
+                                        ].map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    onNavigate(item.id);
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                className="w-full flex items-center justify-between p-5 bg-gray-50 rounded-2xl hover:bg-bee-black hover:text-bee-yellow transition-all group active:scale-95"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-white border border-black/5 flex items-center justify-center group-hover:bg-bee-yellow/10 group-hover:border-bee-yellow/20 transition-all">
+                                                        {item.icon}
+                                                    </div>
+                                                    <span className="font-black text-sm uppercase tracking-widest">{item.label}</span>
                                                 </div>
-                                                <span className="font-black text-sm uppercase tracking-widest">{item.label}</span>
-                                            </div>
-                                            <ChevronRight className="w-4 h-4 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                                        </button>
-                                    ))}
+                                                <ChevronRight className="w-4 h-4 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                            </button>
+                                        ))}
 
-                                    <div className="pt-6 mt-4 border-t border-black/5 flex flex-col gap-3">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Account</p>
-                                        <button
-                                            onClick={() => { onLoginClick(); setIsMenuOpen(false); }}
-                                            className="w-full py-4 px-6 rounded-2xl border border-black text-black font-black text-sm uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95"
-                                        >
-                                            {user && !user.isAnonymous ? t.nav.mypage || 'My Page' : t.nav.login || 'Login'}
-                                        </button>
+                                        <div className="pt-6 mt-4 border-t border-black/5 flex flex-col gap-3">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Account</p>
+                                            <button
+                                                onClick={() => { onLoginClick(); setIsMenuOpen(false); }}
+                                                className="w-full py-4 px-6 rounded-2xl border border-black text-black font-black text-sm uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95"
+                                            >
+                                                {user && !user.isAnonymous ? t.nav.mypage || 'My Page' : t.nav.login || 'Login'}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-            </nav>
+                                </motion.div>
+                            </>
+                        )
+                    }
+                </AnimatePresence >
+            </nav >
 
             {/* 2. HERO SECTION */}
-            <section className="relative min-h-[90vh] md:min-h-screen flex items-center justify-center overflow-hidden pt-16">
+            < section className="relative min-h-[90vh] md:min-h-screen flex items-center justify-center overflow-hidden pt-16" >
                 <div className="absolute inset-0 z-0 bg-black">
                     <video autoPlay loop muted playsInline preload="auto" poster="https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=1920" src={CONFIG.video.src} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 opacity-[0.03] noise-overlay z-[1]" />
@@ -223,13 +226,13 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                         </div>
                     </motion.div>
                 </div>
-            </section>
+            </section >
 
             {/* 3. PAIN SECTION: The Problem 😫 (Staff Idea #1) */}
-            <LandingPainSection t={t} />
+            < LandingPainSection t={t} />
 
             {/* 4. HOW IT WORKS: The Solution 🛡️ (Staff Idea #2 - Updated) */}
-            <LandingHowItWorks t={t} />
+            < LandingHowItWorks t={t} />
 
             <section className="py-24 bg-white border-y border-gray-100 relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -266,7 +269,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({ t, lang, onNavigate, on
                 </motion.div>
             </section>
 
-        </div>
+        </div >
     );
 };
 

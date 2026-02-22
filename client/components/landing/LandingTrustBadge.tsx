@@ -24,8 +24,8 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                         <ShieldCheck className="w-5 h-5 text-bee-yellow" />
                         <span className="text-xs font-black uppercase tracking-[0.3em] text-white/60 font-outfit">Our Safety Philosophy</span>
                     </motion.div>
-                    <h2 className="text-4xl md:text-7xl font-display font-black text-white leading-tight tracking-tighter mb-8">
-                        {t.trust?.title || "Your Peace of Mind"}<br />
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-tight tracking-tighter mb-8 break-keep">
+                        {t.trust?.title || "Your Peace of Mind"}<br className="hidden md:block" />
                         <span className="text-bee-yellow italic opacity-80">is our Standard.</span>
                     </h2>
                 </div>

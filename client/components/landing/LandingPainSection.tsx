@@ -72,10 +72,10 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="text-4xl md:text-7xl lg:text-8xl font-display font-black text-bee-black leading-[1.1] md:leading-[0.95] tracking-tighter mb-10 break-keep"
+                            className="text-4xl md:text-6xl lg:text-7xl font-display font-black text-bee-black leading-[1.2] md:leading-[1.1] tracking-tighter mb-10 break-keep"
                         >
-                            {t.pain?.title_1 || "Your luggage"}<br />
-                            <span className="text-bee-yellow drop-shadow-sm">{t.pain?.title_2 || "is actually"}</span><br />
+                            {t.pain?.title_1 || "Your luggage"} <br className="hidden md:block" />
+                            <span className="text-bee-yellow drop-shadow-sm">{t.pain?.title_2 || "is actually"}</span> <br className="hidden md:block" />
                             {t.pain?.title_3 || "Holding you back."}
                         </motion.h2>
 

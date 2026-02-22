@@ -27,7 +27,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                     >
                         Success Flow 🚀
                     </motion.span>
-                    <h2 className="text-5xl md:text-9xl font-display font-black tracking-tighter text-bee-black leading-[1.1] md:leading-none mb-10">
+                    <h2 className="text-5xl md:text-7xl lg:text-8xl font-display font-black tracking-tighter text-bee-black leading-[1.1] md:leading-none mb-10">
                         How it <span className="text-bee-yellow italic">Works</span>
                     </h2>
                     <p className="text-lg md:text-2xl text-bee-muted font-bold max-w-2xl mx-auto font-outfit break-keep">

@@ -77,7 +77,7 @@ const LocationList: React.FC<LocationListProps> = ({
         for (let i = 1; i <= daysInMonth; i++) days.push(i);
         const weekDays = lang === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] :
             lang === 'ja' ? ['日', '月', '화', '水', '木', '金', '土'] :
-                (lang === 'zh' || lang === 'zh-tw' || lang === 'zh-hk') ? ['日', '一', '二', '三', '四', '五', '六'] :
+                (lang.toLowerCase() === 'zh' || lang.toLowerCase() === 'zh-tw' || lang.toLowerCase() === 'zh-hk') ? ['日', '一', '二', '三', '四', '五', '六'] :
                     ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         const handlePrevMonth = (e: React.MouseEvent) => { e.stopPropagation(); setViewDate(new Date(year, month - 1, 1, 12, 0, 0)); };
@@ -89,7 +89,7 @@ const LocationList: React.FC<LocationListProps> = ({
                     <span className="text-xs font-black text-gray-900 italic tracking-tighter">
                         {lang === 'ko' ? `${year}년 ${month + 1}월` :
                             lang === 'ja' ? `${year}年 ${month + 1}月` :
-                                (lang === 'zh' || lang === 'zh-tw' || lang === 'zh-hk') ? `${year}年 ${month + 1}月` :
+                                (lang.toLowerCase() === 'zh' || lang.toLowerCase() === 'zh-tw' || lang.toLowerCase() === 'zh-hk') ? `${year}年 ${month + 1}月` :
                                     `${year}. ${String(month + 1).padStart(2, '0')}`}
                     </span>
                     <div className="flex items-center gap-1">

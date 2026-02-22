@@ -88,7 +88,11 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const getLocName = (id?: string) => {
         if (!id) return 'N/A';
         const loc = locations.find(l => l.id === id);
-        return loc ? (lang === 'ko' ? loc.name : loc.name_en || loc.name) : id;
+        if (!loc) return id;
+        if (lang === 'ko') return loc.name;
+        const fieldSuffix = lang.replace('-', '_').toLowerCase();
+        const key = `name_${fieldSuffix}` as keyof LocationOption;
+        return (loc[key] as string) || loc.name_zh || loc.name_en || loc.name;
     };
 
     // Status Badge Helper

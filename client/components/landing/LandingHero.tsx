@@ -51,8 +51,8 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                         {t.hero.badge || "No more heavy luggage"}
                     </motion.span>
 
-                    <h1 className="text-5xl md:text-[120px] font-black leading-[1.15] tracking-tighter mb-8 text-white">
-                        {t.hero.main_title_1}<br />
+                    <h1 className="text-5xl md:text-8xl lg:text-9xl font-black leading-[1.1] tracking-tighter mb-8 text-white break-keep mx-auto">
+                        {t.hero.main_title_1}<br className="hidden md:block" />
                         <span className="text-bee-yellow drop-shadow-[0_15px_40px_rgba(255,203,5,0.4)] relative inline-block">
                             {t.hero.main_title_2}
                             <motion.div

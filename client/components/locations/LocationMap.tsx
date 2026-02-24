@@ -81,22 +81,10 @@ const LocationMap: React.FC<LocationMapProps> = ({
 
         if (!mapRef.current || !window.naver || !isMapReady || !userLocation) return;
 
-        console.log("[스봉이] 내 위치 버튼 클릭! 지도 이동 한다! 💅");
+        console.log("[스봉이] 내 위치 버튼 클릭! 지도 정중앙으로 이동! 💅");
         mapRef.current.setZoom(16, false);
-
         const userLatLon = new window.naver.maps.LatLng(userLocation.lat, userLocation.lng);
-        const isMobile = window.innerWidth < 768;
-        const offsetPixel = isMobile ? 180 : 250;
-
-        const proj = mapRef.current.getProjection();
-        if (proj) {
-            const point = proj.fromCoordToOffset(userLatLon);
-            point.y += offsetPixel;
-            const offsetLocation = proj.fromOffsetToCoord(point);
-            mapRef.current.panTo(offsetLocation);
-        } else {
-            mapRef.current.panTo(userLatLon);
-        }
+        mapRef.current.panTo(userLatLon);
     }, [panToUserTrigger, isMapReady, userLocation]);
 
 
@@ -156,27 +144,13 @@ const LocationMap: React.FC<LocationMapProps> = ({
         });
     }, [branches, selectedBranch, currentService, lang, onLocationSelect, isMapReady]);
 
-    // [스봉이 수정] 지점 선택 시 지도 이동 로직 전담 ( panTo로 부드럽게~ 💅 )
+    // [스봉이 수정] 지점 선택 시 지도 이동 로직 - 마커가 화면 정중앙에 오도록 직접 panTo 💅
     useEffect(() => {
         if (selectedBranch && selectedBranch.lat && selectedBranch.lng && mapRef.current && isMapReady) {
             console.log("Auto-centering on selected branch:", selectedBranch.name);
             const moveLatLon = new window.naver.maps.LatLng(selectedBranch.lat, selectedBranch.lng);
-
-            // 모바일일때와 PC일때 가려지는 하단 UI 영역을 고려하여 오프셋(화면 위에 마커가 오도록) 적용 💅
-            mapRef.current.setZoom(16, false); // 줌 레벨을 먼저 맞춤
-
-            const isMobile = window.innerWidth < 768;
-            const offsetPixel = isMobile ? 180 : 250; // 아래로 카메라를 내리기 위한 픽셀 값
-
-            const proj = mapRef.current.getProjection();
-            if (proj) {
-                const point = proj.fromCoordToOffset(moveLatLon);
-                point.y += offsetPixel;
-                const offsetLocation = proj.fromOffsetToCoord(point);
-                mapRef.current.panTo(offsetLocation);
-            } else {
-                mapRef.current.panTo(moveLatLon);
-            }
+            mapRef.current.setZoom(16, false);
+            mapRef.current.panTo(moveLatLon);
         }
     }, [selectedBranch, isMapReady]);
 
@@ -211,26 +185,12 @@ const LocationMap: React.FC<LocationMapProps> = ({
             });
         }
 
-        // 2. 최초 사용자 위치 센터링 (사장님 요청: 접속 시 무조건 내 위치로!)
-        // selectedBranch가 없을 때만 자동 센터링하여 사용자의 선택을 존중합니다.
+        // 2. 최초 사용자 위치 센터링 - 마커가 정중앙에 오도록 직접 panTo 💅
         if (!hasInitialCentered.current && !selectedBranch) {
             console.log("[스봉이] Smooth centering on user location... 🐝✨");
             mapRef.current.setZoom(14, false);
-
             const userLatLon = new window.naver.maps.LatLng(userLocation.lat, userLocation.lng);
-            const isMobile = window.innerWidth < 768;
-            const offsetPixel = isMobile ? 180 : 250;
-
-            const proj = mapRef.current.getProjection();
-            if (proj) {
-                const point = proj.fromCoordToOffset(userLatLon);
-                point.y += offsetPixel;
-                const offsetLocation = proj.fromOffsetToCoord(point);
-                mapRef.current.panTo(offsetLocation);
-            } else {
-                mapRef.current.panTo(userLatLon);
-            }
-
+            mapRef.current.panTo(userLatLon);
             hasInitialCentered.current = true;
         }
     }, [userLocation, isMapReady, selectedBranch]);

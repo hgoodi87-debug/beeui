@@ -38,6 +38,7 @@ import ManualBookingModal from './admin/ManualBookingModal';
 import ChatTab from './admin/ChatTab';
 import DiscountTab from './admin/DiscountTab';
 import ReportsTab from './admin/ReportsTab';
+import RoadmapTab from './admin/RoadmapTab';
 
 
 const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
@@ -1856,6 +1857,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">System Admin</div>
             <nav className="space-y-1">
               {[
+                { id: 'ROADMAP', label: '전체 페이지 로드맵', icon: 'fa-map-location-dot' },
                 { id: 'LOCATIONS', label: '지점 통합 관리', icon: 'fa-location-dot' },
                 { id: 'DISCOUNTS', label: '할인 코드 관리', icon: 'fa-tags' },
                 { id: 'SYSTEM', label: '가격 정책 설정', icon: 'fa-sliders' },
@@ -1944,6 +1946,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         </div>
 
         <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
+          {activeTab === 'ROADMAP' && (
+            <RoadmapTab t={t} lang={lang} locations={locations} />
+          )}
 
           {activeTab === 'OVERVIEW' && (
             <OverviewTab

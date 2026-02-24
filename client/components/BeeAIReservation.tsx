@@ -111,15 +111,15 @@ export default function BeeAIReservation({ lang, t, onSuccess, initialLocation, 
     const getBranchName = (locId: string) => {
         const loc = locations.find(l => l.id === locId);
         if (!loc) return locId;
-        const dbLang = lang.startsWith('zh') ? 'zh' : lang;
-        if (lang === 'ko') return loc.name;
-        return (loc[`name_${dbLang}` as keyof LocationOption] as string) || t.location_names?.[loc.id.toUpperCase()] || loc.name;
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
+        if (lang === 'ko' || lang === 'ko-KR') return loc.name;
+        return (loc[`name_${lang}` as keyof LocationOption] as string) || (loc[`name_${dbLang}` as keyof LocationOption] as string) || t.location_names?.[loc.id] || loc.name_en || loc.name;
     };
 
     const getLocalizedHours = (loc: LocationOption) => {
-        const dbLang = lang.startsWith('zh') ? 'zh' : lang;
-        if (lang === 'ko') return loc.businessHours || "09:00 - 21:00";
-        return (loc[`businessHours_${dbLang}` as keyof LocationOption] as string) || loc.businessHours || "09:00 - 21:00";
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
+        if (lang === 'ko' || lang === 'ko-KR') return loc.businessHours || "09:00 - 21:00";
+        return (loc[`businessHours_${lang}` as keyof LocationOption] as string) || (loc[`businessHours_${dbLang}` as keyof LocationOption] as string) || loc.businessHours || "09:00 - 21:00";
     };
 
     // Step Logic

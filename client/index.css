@@ -5,6 +5,21 @@
 @tailwind utilities;
 
 :root {
+  --beeliber-yellow: #FFC700;
+  /* Primary / CTA  */
+  --trust-black: #000000;
+  /* Headline / Logo  */
+  --pure-white: #FFFFFF;
+  /* Background  */
+  --warm-gray: #F5F5F0;
+  /* Card Background */
+  --dark-gray: #333333;
+  /* Body Text */
+
+  --font-main: 'Pretendard', sans-serif;
+  /* 국문 폰트  */
+
+  /* Legacy vars */
   --bee-gold: #ffcb05;
   --bee-gold-deep: #e6b800;
   --bee-black: #0C0C0C;
@@ -14,15 +29,116 @@
   --bee-gray-100: #F5F5F5;
 }
 
-body {
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background-color: #ffffff;
-  color: var(--bee-black);
-  font-family: 'Pretendard', 'Outfit', sans-serif;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--pure-white);
+  color: var(--dark-gray);
+  line-height: 1.6;
+  /* 브랜드 절대 규칙: 좌자간 -5% 계승  */
+  letter-spacing: -0.05em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 3. 로고 시스템 (Absolute Rules) */
+.logo {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: var(--trust-black);
+  display: flex;
+  align-items: center;
+}
+
+.logo .bee {
+  font-style: normal;
+}
+
+.logo .liber {
+  display: inline-block;
+  transform: skewX(-15deg);
+  color: var(--beeliber-yellow);
+}
+
+/* 4. 히어로 및 헤드라인 스타일 */
+.hero-section {
+  padding: 120px 20px;
+  text-align: center;
+}
+
+.brand-headline {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--trust-black);
+  margin-bottom: 20px;
+  letter-spacing: -0.05em;
+}
+
+/* 5. CTA 버튼 (Active 모드) */
+.cta-button {
+  background-color: var(--beeliber-yellow);
+  color: var(--trust-black);
+  border: none;
+  padding: 16px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: -0.05em;
+  transition: 0.3s ease;
+  margin-top: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cta-button:hover {
+  transform: scale(1.05);
+}
+
+/* 6. 신뢰 카드 (Trust Card) */
+.trust-container {
+  padding: 60px 20px;
+  background-color: var(--warm-gray);
+}
+
+.trust-card {
+  background-color: var(--pure-white);
+  padding: 32px;
+  border-radius: 12px;
+  max-width: 400px;
+  margin: 0 auto;
+  border-left: 5px solid var(--beeliber-yellow);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* 7. 마이크로 인터랙션 */
+@keyframes bee-shake {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-3px) rotate(-10deg);
+  }
+
+  75% {
+    transform: translateY(2px) rotate(15deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+.hover-bee-btn:hover .bee-emoji {
+  animation: bee-shake 0.5s ease infinite alternate;
 }
 
 .btn-primary {

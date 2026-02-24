@@ -4,12 +4,19 @@ import { StorageService } from '../services/storageService';
 import LocationList from './locations/LocationList';
 import LocationMap from './locations/LocationMap';
 import BranchDetails from './locations/BranchDetails';
-import { LocationOption } from '../types';
+import SEO from './SEO';
+import { LocationOption, ServiceType } from '../types';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 
 interface LocationsPageProps {
   onBack: () => void;
-  onSelectLocation: (id: string, type: 'STORAGE' | 'DELIVERY', date?: string, returnDate?: string, bagCounts?: any) => void;
+  onSelectLocation: (
+    id: string,
+    type: ServiceType,
+    date?: string,
+    returnDate?: string,
+    bagCounts?: { S: number, M: number, L: number, XL: number }
+  ) => void;
   t: any;
   lang: string;
   onLangChange: (lang: string) => void;
@@ -190,93 +197,101 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   }, []);
 
   return (
-    <div className="relative flex flex-col h-screen w-full bg-gray-50 overflow-hidden font-pretendard">
-      {/* 1. Map as Full Background */}
-      <div className="absolute inset-0 z-0">
-        <LocationMap
-          t={t}
-          lang={lang}
-          branches={filteredLocations}
-          selectedBranch={selectedBranch}
-          onLocationSelect={handleBranchSelect}
-          currentService={currentService}
-          userLocation={userLocation}
-          searchAddress={searchTerm}
-          panToUserTrigger={panToUserTrigger}
-        />
-      </div>
+    <div className="relative min-h-screen bg-slate-50 font-sans text-bee-black">
+      <SEO
+        title={t.seo?.locations_title || `Locations & Booking - Beeliber`}
+        description={t.seo?.locations_desc || 'Find Beeliber luggage storage and delivery locations near you.'}
+        keywords={t.seo?.keywords}
+        lang={lang}
+      />
+      <div className="fixed inset-0 z-0 font-pretendard">
+        {/* 1. Map as Full Background */}
+        <div className="absolute inset-0 z-0">
+          <LocationMap
+            t={t}
+            lang={lang}
+            branches={filteredLocations}
+            selectedBranch={selectedBranch}
+            onLocationSelect={handleBranchSelect}
+            currentService={currentService}
+            userLocation={userLocation}
+            searchAddress={searchTerm}
+            panToUserTrigger={panToUserTrigger}
+          />
+        </div>
 
-      {/* 2. Fullscreen UI Overlay - Filters (Top) & Horizontal Cards (Bottom) 💅 */}
-      <div className="absolute top-0 left-0 bottom-0 z-10 pointer-events-none flex flex-col w-full h-full md:w-[420px] md:bg-transparent">
-        <LocationList
-          t={t}
-          lang={lang}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onFindMyLocation={findMyLocation}
-          filteredBranches={filteredLocations}
-          selectedBranch={selectedBranch}
-          onBranchClick={handleBranchSelect}
-          currentService={currentService}
-          onServiceChange={setCurrentService}
-          onReset={() => {
-            setSearchTerm('');
-            handleBranchSelect(null);
-          }}
-          bookingDate={bookingDate}
-          onDateChange={setBookingDate}
-          bookingTime={bookingTime}
-          onTimeChange={setBookingTime}
-          returnDate={returnDate}
-          onReturnDateChange={setReturnDate}
-          returnTime={returnTime}
-          onReturnTimeChange={setReturnTime}
-          baggageCounts={baggageCounts}
-          onBaggageChange={(size, delta) => {
-            setBaggageCounts(prev => ({
-              ...prev,
-              [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
-            }));
-          }}
-          deliveryPrices={deliveryPrices}
-          onBack={onBack}
-        />
-      </div>
+        {/* 2. Fullscreen UI Overlay - Filters (Top) & Horizontal Cards (Bottom) 💅 */}
+        <div className="absolute top-0 left-0 bottom-0 z-10 pointer-events-none flex flex-col w-full h-full md:w-[420px] md:bg-transparent">
+          <LocationList
+            t={t}
+            lang={lang}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onFindMyLocation={findMyLocation}
+            filteredBranches={filteredLocations}
+            selectedBranch={selectedBranch}
+            onBranchClick={handleBranchSelect}
+            currentService={currentService}
+            onServiceChange={setCurrentService}
+            onReset={() => {
+              setSearchTerm('');
+              handleBranchSelect(null);
+            }}
+            bookingDate={bookingDate}
+            onDateChange={setBookingDate}
+            bookingTime={bookingTime}
+            onTimeChange={setBookingTime}
+            returnDate={returnDate}
+            onReturnDateChange={setReturnDate}
+            returnTime={returnTime}
+            onReturnTimeChange={setReturnTime}
+            baggageCounts={baggageCounts}
+            onBaggageChange={(size, delta) => {
+              setBaggageCounts(prev => ({
+                ...prev,
+                [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
+              }));
+            }}
+            deliveryPrices={deliveryPrices}
+            onBack={onBack}
+          />
+        </div>
 
-      <AnimatePresence>
-        {selectedBranch && (
-          <div className="absolute inset-0 z-50 pointer-events-none flex items-end md:items-center justify-center">
-            <div className="pointer-events-auto w-full md:max-w-2xl px-2 md:px-0">
-              <BranchDetails
-                selectedBranch={selectedBranch}
-                onClose={() => handleBranchSelect(null)}
-                currentService={currentService}
-                onBook={(type) => {
-                  if (!selectedBranch.id) return;
-                  onSelectLocation(
-                    selectedBranch.id,
-                    type,
-                    bookingDate,
-                    returnDate,
-                    baggageCounts
-                  );
-                }}
-                bookingDate={bookingDate}
-                onDateChange={setBookingDate}
-                baggageCounts={baggageCounts as any}
-                onBaggageChange={(size, delta) => {
-                  setBaggageCounts((prev: any) => ({
-                    ...prev,
-                    [size]: Math.max(0, (prev[size] || 0) + delta)
-                  }));
-                }}
-                t={t}
-                lang={lang}
-              />
+        <AnimatePresence>
+          {selectedBranch && (
+            <div className="absolute inset-0 z-50 pointer-events-none flex items-end md:items-center justify-center">
+              <div className="pointer-events-auto w-full md:max-w-2xl px-2 md:px-0">
+                <BranchDetails
+                  selectedBranch={selectedBranch}
+                  onClose={() => handleBranchSelect(null)}
+                  currentService={currentService}
+                  onBook={(type) => {
+                    if (!selectedBranch.id) return;
+                    onSelectLocation(
+                      selectedBranch.id,
+                      type as ServiceType,
+                      bookingDate,
+                      returnDate,
+                      baggageCounts
+                    );
+                  }}
+                  bookingDate={bookingDate}
+                  onDateChange={setBookingDate}
+                  baggageCounts={baggageCounts as any}
+                  onBaggageChange={(size, delta) => {
+                    setBaggageCounts((prev: any) => ({
+                      ...prev,
+                      [size]: Math.max(0, (prev[size] || 0) + delta)
+                    }));
+                  }}
+                  t={t}
+                  lang={lang}
+                />
+              </div>
             </div>
-          </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

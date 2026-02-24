@@ -311,12 +311,11 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
 
     const getLocName = (l: LocationOption | undefined) => {
         if (!l) return '';
-        const currentLang = lang.split('-')[0];
-        const dbLang = currentLang === 'zh' ? 'zh' : currentLang;
+        const dbLang = (lang === 'zh' || lang === 'zh-HK' || lang === 'zh-TW') ? 'zh' : lang.split('-')[0];
 
-        if (currentLang === 'ko') return l.name;
-        // Priority: name_lang -> name_en -> name
-        return (l[`name_${dbLang}` as keyof LocationOption] as string) || l.name_en || l.name;
+        if (lang === 'ko' || lang === 'ko-KR') return l.name;
+        // Priority: name_lang -> location_names (translations) -> name_en -> name
+        return (l[`name_${dbLang}` as keyof LocationOption] as string) || (t.location_names && t.location_names[l.id]) || l.name_en || l.name;
     };
 
     return (

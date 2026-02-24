@@ -16,15 +16,15 @@ export default {
             },
             colors: {
                 bee: {
-                    yellow: '#ffcb05',
+                    yellow: 'var(--beeliber-yellow)', /* Primary Yellow */
                     gold: '#FFD700',
                     blue: '#7ba0c9',
-                    black: '#0C0C0C',
-                    grey: '#1a1a1a',
+                    black: 'var(--trust-black)',      /* Trust Black */
+                    grey: 'var(--dark-gray)',
                     muted: '#71717A',
-                    light: '#F5F5F5'
+                    light: 'var(--warm-gray)'
                 },
-                primary: '#ffcb05',
+                primary: 'var(--beeliber-yellow)',
             },
             borderRadius: {
                 'bee': '40px'

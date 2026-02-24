@@ -315,7 +315,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
             dropoffDate: booking.dropoffDate || '',
             deliveryTime: booking.deliveryTime || '',
             bagSizes: booking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 },
-            language: lang.split('-')[0], // 'ko-KR' -> 'ko' 형식으로 저장
+            language: lang, // 'ko', 'en', 'zh', 'zh-HK', 'zh-TW', etc 그대로 저장
             branchId: customerBranchId,
             branchCommissionRates: customerBranchRates
         };
@@ -364,10 +364,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
     const getLocName = (l: LocationOption | undefined) => {
         if (!l) return '';
-        const currentLang = lang.split('-')[0]; // Handle 'zh-HK', 'en-US' etc.
-        const dbLang = currentLang === 'zh' ? 'zh' : currentLang;
+        // 'zh', 'zh-HK', 'zh-TW' 지원을 위한 개선
+        const dbLang = (lang === 'zh' || lang === 'zh-HK' || lang === 'zh-TW') ? 'zh' : lang;
 
-        if (currentLang === 'ko') return l.name;
+        if (lang === 'ko' || lang === 'ko-KR') return l.name;
         // Priority: name_lang -> name_en -> name
         return (l[`name_${dbLang}` as keyof LocationOption] as string) || l.name_en || l.name;
     };

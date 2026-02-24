@@ -1,121 +1,93 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { BookingState, LocationOption, BookingStatus, Branch, ServiceType } from './types';
 import { User } from 'firebase/auth';
 // Deployment trigger: 2026-01-23 01:35 (Recovery from rollback)
 
-import LandingRenewal from './components/LandingRenewal';
-import BeeAIReservation from './components/BeeAIReservation';
-import BookingWidget from './components/BookingWidget';
+// Lazy load components
+const LandingRenewal = lazy(() => import('./components/LandingRenewal'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const AdminLoginPage = lazy(() => import('./components/AdminLoginPage'));
+const ManualPage = lazy(() => import('./components/ManualPage'));
+const BookingSuccess = lazy(() => import('./components/BookingSuccess'));
+const PartnershipPage = lazy(() => import('./components/PartnershipPage'));
+const ServicesPage = lazy(() => import('./components/ServicesPage'));
+const TermsPage = lazy(() => import('./components/TermsPage'));
+const PrivacyPage = lazy(() => import('./components/PrivacyPage'));
+const UserTrackingPage = lazy(() => import('./components/UserTrackingPage'));
+const StaffScanPage = lazy(() => import('./components/StaffScanPage'));
+const BookingPage = lazy(() => import('./components/BookingPage'));
+const LocationsPage = lazy(() => import('./components/LocationsPage'));
+const MyPage = lazy(() => import('./components/MyPage'));
+const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
+
 import Footer from './components/Footer';
 import ChatBot from './components/ChatBot';
-import AdminDashboard from './components/AdminDashboard';
-
-import AdminLoginPage from './components/AdminLoginPage';
-import ManualPage from './components/ManualPage';
-
 import ErrorBoundary from './components/ErrorBoundary';
-
-import BookingSuccess from './components/BookingSuccess';
-import PartnershipPage from './components/PartnershipPage';
-import ServicesPage from './components/ServicesPage';
-import TermsPage from './components/TermsPage';
-import PrivacyPage from './components/PrivacyPage';
 import NoticePopup from './components/NoticePopup';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
-import UserTrackingPage from './components/UserTrackingPage';
-import StaffScanPage from './components/StaffScanPage';
-import BookingPage from './components/BookingPage'; // [NEW] Added BookingPage
-import LocationsPage from './components/LocationsPage';
 import SEO from './components/SEO';
-import MyPage from './components/MyPage';
-import BranchAdminPage from './components/BranchAdminPage';
-import { translations } from './translations';
+
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
 import { useLocations } from './src/domains/location/hooks/useLocations';
 import { useCurrentUser } from './src/domains/user/hooks/useCurrentUser';
 
-type ViewType = 'USER' | 'ADMIN_LOGIN' | 'ADMIN' | 'MANUAL' | 'PARTNERSHIP' | 'SERVICES' | 'TERMS' | 'PRIVACY' | 'BOOKING_SUCCESS' | 'TRACKING' | 'STAFF_SCAN' | 'MYPAGE' | 'BOOKING' | 'LOCATIONS' | 'BRANCH_ADMIN';
+import { useAppStore } from './src/store/appStore';
+import { useBookingStore } from './src/store/bookingStore';
 
 const App: React.FC = () => {
-  // Helper to determine view from URL path
-  const getViewFromPath = (path: string): ViewType => {
-    if (path.startsWith('/admin/dashboard')) return 'ADMIN';
-    if (path.startsWith('/admin/branch')) return 'BRANCH_ADMIN';
-    if (path.startsWith('/admin') || path.startsWith('/yn')) return 'ADMIN_LOGIN';
-    if (path.startsWith('/manual')) return 'MANUAL';
+  const location = useLocation();
+  const navigate = useNavigate();
 
-    if (path.startsWith('/partnership')) return 'PARTNERSHIP';
-    if (path.startsWith('/services')) return 'SERVICES';
-    if (path.startsWith('/terms')) return 'TERMS';
-    if (path.startsWith('/privacy')) return 'PRIVACY';
-    if (path.startsWith('/booking-success')) return 'BOOKING_SUCCESS';
-    if (path.startsWith('/tracking')) return 'TRACKING';
-    if (path.startsWith('/staff/scan')) return 'STAFF_SCAN';
-    if (path.startsWith('/mypage')) return 'MYPAGE';
-    if (path.startsWith('/notice')) return 'USER'; // Default to USER for notices if needed
-    if (path.startsWith('/booking')) return 'BOOKING';
-    if (path.startsWith('/locations')) return 'LOCATIONS';
+  const { lang, setLang, adminInfo, setAdminInfo } = useAppStore();
+  const {
+    preSelectedBooking, setPreSelectedBooking,
+    lastBooking, setLastBooking,
+    customerBranchCode, setCustomerBranchCode,
+    customerBranch, setCustomerBranch
+  } = useBookingStore();
 
-    // B2C Customer routing for specific branch: /branch/:branchCode
-    if (path.startsWith('/branch/')) return 'USER';
-    return 'USER';
-  };
-
-  const getPathFromView = (view: ViewType): string => {
-    switch (view) {
-      case 'ADMIN_LOGIN': return '/admin';
-      case 'ADMIN': return '/admin/dashboard';
-      case 'MANUAL': return '/manual';
-
-      case 'PARTNERSHIP': return '/partnership';
-      case 'SERVICES': return '/services';
-      case 'TERMS': return '/terms';
-      case 'PRIVACY': return '/privacy';
-      case 'BOOKING_SUCCESS': return '/booking-success';
-      case 'TRACKING': return '/tracking';
-      case 'STAFF_SCAN': return '/staff/scan';
-      case 'MYPAGE': return '/mypage';
-      case 'BOOKING': return '/booking'; // New path for booking page
-      case 'LOCATIONS': return '/locations';
-      case 'BRANCH_ADMIN': {
-        const id = adminInfo.branchId || window.location.pathname.split('/').pop() || '';
-        return `/admin/branch/${id}`;
-      }
-      case 'USER': default: return '/';
-    }
-  };
-
-  const [view, setView] = useState<ViewType>(() => getViewFromPath(window.location.pathname));
-  // Initialize language from localStorage or default to 'ko'
-  const [lang, setLang] = useState(() => localStorage.getItem('beeliber_lang') || 'ko');
-  const [adminInfo, setAdminInfo] = useState({ name: '', jobTitle: '', branchId: '' });
-  const [preSelectedBooking, setPreSelectedBooking] = useState<{
-    pickupLocation: string,
-    serviceType: 'STORAGE' | 'DELIVERY',
-    date?: string,
-    returnDate?: string,
-    bagCounts?: { S: number, M: number, L: number, XL: number }
-  } | null>(null);
-  const [preSelectedStorageId, setPreSelectedStorageId] = useState<string | null>(null); // Keep for backward compat if needed, or remove
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const { data: currentUser } = useCurrentUser();
   const { data: locations = [] } = useLocations();
-  const [lastBooking, setLastBooking] = useState<BookingState | null>(null);
 
-  // B2C Customer Branch selection
-  const [customerBranchCode, setCustomerBranchCode] = useState<string | null>(null);
-  const [customerBranch, setCustomerBranch] = useState<Branch | null>(null);
+  const [t, setT] = useState<any>(null);
 
   useEffect(() => {
-    // Check if entered via /branch/:code
+    let isMounted = true;
+    const loadTranslations = async () => {
+      try {
+        let loadedT;
+        switch (lang) {
+          case 'en': { const m = await import('./translations_split/en'); loadedT = m.en; break; }
+          case 'zh':
+          case 'zh-CN': { const m = await import('./translations_split/zh'); loadedT = m.zh; break; }
+          case 'zh-HK': { const m = await import('./translations_split/zh-HK'); loadedT = m.zhHK; break; }
+          case 'zh-TW': { const m = await import('./translations_split/zh-TW'); loadedT = m.zhTW; break; }
+          case 'ja': { const m = await import('./translations_split/ja'); loadedT = m.ja; break; }
+          case 'ko':
+          default: { const m = await import('./translations_split/ko'); loadedT = m.ko; break; }
+        }
+        if (isMounted) setT(loadedT);
+      } catch (error) {
+        console.error("Failed to load translation:", error);
+        if (isMounted) {
+          const fallback = await import('./translations_split/ko');
+          setT(fallback.ko);
+        }
+      }
+    };
+    loadTranslations();
+    return () => { isMounted = false; };
+  }, [lang]);
+
+  useEffect(() => {
     const checkBranch = async () => {
-      const path = window.location.pathname;
+      const path = location.pathname;
       if (path.startsWith('/branch/')) {
         const code = path.split('/').pop();
         if (code) {
@@ -128,21 +100,18 @@ const App: React.FC = () => {
             }
           } catch (e) { console.error("Error fetching branch via code", e); }
         }
+      } else if (customerBranchCode && !path.startsWith('/branch/')) {
+        setCustomerBranchCode(null);
+        setCustomerBranch(null);
       }
     };
     checkBranch();
-  }, []);
-
-  // No longer require non-anonymous login logic here as we use currentUser state
-  const isLoggedIn = !!currentUser && !currentUser.isAnonymous;
+  }, [location.pathname, customerBranchCode, setCustomerBranchCode, setCustomerBranch]);
 
   const ensureAuthAndExecute = (action: () => void) => {
-    // Since we handle anonymous auth in firebaseApp.ts, we can just execute the action.
-    // If for some reason auth is not ready, we wait for it.
     if (auth.currentUser) {
       action();
     } else {
-      // This case should be rare due to auto-login in firebaseApp.ts
       const unsubscribe = auth.onAuthStateChanged((user) => {
         if (user) {
           unsubscribe();
@@ -152,35 +121,13 @@ const App: React.FC = () => {
     }
   };
 
-  // Persist language choice
   useEffect(() => {
     localStorage.setItem('beeliber_lang', lang);
   }, [lang]);
 
-  const t = translations[lang] || translations['ko'];
-
-  // Handle browser back/forward navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      setView(getViewFromPath(window.location.pathname));
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Centralized Navigation Function
-  const navigate = (newView: ViewType) => {
-    const path = getPathFromView(newView);
-    if (window.location.pathname !== path) {
-      window.history.pushState(null, '', path);
-    }
-    setView(newView);
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  };
-
   const handleLocationSelect = (
     id: string,
-    type: 'STORAGE' | 'DELIVERY' = 'STORAGE',
+    type: ServiceType = ServiceType.STORAGE,
     date?: string,
     returnDate?: string,
     bagCounts?: { S: number, M: number, L: number, XL: number }
@@ -192,53 +139,62 @@ const App: React.FC = () => {
       returnDate,
       bagCounts
     });
-    navigate('BOOKING');
-  };
-
-  const handleBookingScroll = (type: 'DELIVERY' | 'STORAGE') => {
-    const element = document.getElementById('booking');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      // Switch booking mode within the widget
-      window.dispatchEvent(new CustomEvent('switch-booking-mode', { detail: type }));
-    }
-  };
-
-  const handleFinalBookClick = (action: () => void) => {
-    ensureAuthAndExecute(action);
+    navigate('/booking');
   };
 
   const handleBookingSuccess = async (booking: BookingState) => {
     try {
-      console.log("[App] handleBookingSuccess started for:", booking.id || 'NEW');
-
-      // AI bookings might be missing fields
       const finalBooking = {
         ...booking,
         id: booking.id || `${(booking.pickupLocation || 'UNK').substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`,
         status: booking.status || '접수완료',
         createdAt: booking.createdAt || new Date().toISOString()
       };
-
-      // Set state FIRST to ensure it's ready for the next page 💅
       setLastBooking(finalBooking);
-      console.log("[App] lastBooking state scheduled:", finalBooking.id);
-
-      // Save to Firebase (Critical Step)
       await StorageService.saveBooking(finalBooking);
-      console.log("[App] Booking saved to Cloud:", finalBooking.id);
-
-      // Final navigation
-      navigate('BOOKING_SUCCESS');
+      navigate('/booking-success');
     } catch (saveError: any) {
       console.error("[App] Booking Save failed:", saveError);
       alert(`예약 저장 중 오류가 발생했습니다.\n\n${saveError.message || saveError}\n관리자에게 문의해주세요.`);
     }
   };
 
-  const [scanId] = useState(() => new URLSearchParams(window.location.search).get('scan'));
+  // Legacy navigations handler to not break hardcoded prop strings in subcomponents
+  const legacyNavigate = (view: string) => {
+    switch (view) {
+      case 'ADMIN_LOGIN': return navigate('/admin');
+      case 'ADMIN': return navigate('/admin/dashboard');
+      case 'MANUAL': return navigate('/manual');
+      case 'PARTNERSHIP': return navigate('/partnership');
+      case 'SERVICES': return navigate('/services');
+      case 'TERMS': return navigate('/terms');
+      case 'PRIVACY': return navigate('/privacy');
+      case 'BOOKING_SUCCESS': return navigate('/booking-success');
+      case 'TRACKING': return navigate('/tracking');
+      case 'STAFF_SCAN': return navigate('/staff/scan');
+      case 'MYPAGE': return navigate('/mypage');
+      case 'BOOKING': return navigate('/booking');
+      case 'LOCATIONS': return navigate('/locations');
+      case 'BRANCH_ADMIN':
+        if (adminInfo.branchId) return navigate(`/admin/branch/${adminInfo.branchId}`);
+        return navigate('/admin');
+      case 'USER': default: return navigate('/');
+    }
+  };
 
-  // Animation variants for page transitions
+
+  const BranchAdminGuard = ({ children }: { children: React.ReactNode }) => {
+    if (!adminInfo.name) return <Navigate to="/admin" replace />;
+    const urlBranchId = location.pathname.split('/').pop();
+    if (adminInfo.branchId && urlBranchId !== adminInfo.branchId) return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
+    return <>{children}</>;
+  };
+
+  const AdminGuard = ({ children }: { children: React.ReactNode }) => {
+    if (!adminInfo.name) return <Navigate to="/admin" replace />;
+    return <>{children}</>;
+  };
+
   const pageVariants: Variants = {
     initial: { opacity: 0, x: 20, scale: 0.99 },
     animate: { opacity: 1, x: 0, scale: 1 },
@@ -247,291 +203,118 @@ const App: React.FC = () => {
 
   const pageTransition: Transition = {
     duration: 0.4,
-    ease: [0.23, 1, 0.32, 1], // iOS style ease-out
+    ease: [0.23, 1, 0.32, 1],
   };
 
-  const handleError = (error: Error, info: React.ErrorInfo) => {
-    console.error("[App] Component Crash:", error, info);
-  };
+  const AnimatedRoute = ({ children }: { children: React.ReactNode }) => (
+    <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
+      {children}
+    </motion.div>
+  );
 
-  const renderView = () => {
-    // Security Check: Redirect to login if accessing dashboard without info
-    if ((view === 'ADMIN' || view === 'BRANCH_ADMIN') && !adminInfo.name) {
-      return (
-        <motion.div key="admin-login-required" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-          <AdminLoginPage
-            onLogin={(name, jobTitle, branchId) => {
-              setAdminInfo({ name, jobTitle, branchId: branchId || '' });
-              if (branchId) {
-                // 특정 지점 관리자인 경우 해당 지점으로 이동
-                window.history.pushState(null, '', `/admin/branch/${branchId}`);
-                setView('BRANCH_ADMIN');
-              } else {
-                navigate('ADMIN');
-              }
-            }}
-            onCancel={() => navigate('USER')}
-          />
-        </motion.div>
-      );
-    }
-
-    // Branch Security: Prevent cross-branch access
-    if (view === 'BRANCH_ADMIN' && adminInfo.branchId) {
-      const urlBranchId = window.location.pathname.split('/').pop();
-      if (urlBranchId && urlBranchId !== adminInfo.branchId) {
-        // 권한 없는 지점 접근 시 자신의 지점으로 강제 소환 💅
-        window.history.replaceState(null, '', `/admin/branch/${adminInfo.branchId}`);
-      }
-    }
-
-    switch (view) {
-      case 'ADMIN':
-        return (
-          <motion.div key="admin" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <AdminDashboard
-              onBack={() => navigate('USER')}
-              onStaffMode={() => navigate('STAFF_SCAN')}
-              adminName={adminInfo.name}
-              jobTitle={adminInfo.jobTitle}
-              scanId={scanId || undefined}
-              lang={lang}
-              t={t}
-            />
-          </motion.div>
-        );
-
-      case 'ADMIN_LOGIN':
-        return (
-          <motion.div key="admin-login" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <AdminLoginPage
-              onLogin={(name, jobTitle, branchId) => {
-                setAdminInfo({ name, jobTitle, branchId: branchId || '' });
-                if (branchId) {
-                  // If branch admin, navigate to their specific branch page
-                  window.history.pushState(null, '', `/admin/branch/${branchId}`);
-                  setView('BRANCH_ADMIN');
-                } else {
-                  navigate('ADMIN');
-                }
-              }}
-              onCancel={() => navigate('USER')}
-            />
-          </motion.div>
-        );
-
-      case 'MANUAL':
-        return (
-          <motion.div key="manual" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <ManualPage onBack={() => navigate('USER')} t={t.manual} />
-          </motion.div>
-        );
-
-
-
-
-      case 'LOCATIONS':
-        return (
-          <motion.div key="locations" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <LocationsPage
-              onBack={() => navigate('USER')}
-              onSelectLocation={handleLocationSelect}
-              t={t}
-              lang={lang}
-              onLangChange={setLang}
-              user={currentUser}
-              initialLocationId={preSelectedBooking?.pickupLocation}
-            />
-          </motion.div>
-        );
-
-      case 'PARTNERSHIP':
-        return (
-          <motion.div key="partnership" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <PartnershipPage onBack={() => navigate('USER')} t={t} />
-          </motion.div>
-        );
-
-      case 'SERVICES':
-        return (
-          <motion.div key="services" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <ServicesPage onBack={() => navigate('USER')} t={t.services_page} landingT={t.landing_renewal} />
-          </motion.div>
-        );
-
-      case 'TERMS':
-        return (
-          <motion.div key="terms" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <TermsPage onBack={() => navigate('USER')} t={t} />
-          </motion.div>
-        );
-
-      case 'PRIVACY':
-        return (
-          <motion.div key="privacy" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <PrivacyPage onBack={() => navigate('USER')} t={t} />
-          </motion.div>
-        );
-
-      case 'BOOKING':
-        return (
-          <motion.div key="booking-page" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <BookingPage
-              t={t}
-              lang={lang}
-              locations={locations}
-              initialLocationId={preSelectedBooking?.pickupLocation}
-              initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined}
-              initialDate={preSelectedBooking?.date}
-              initialReturnDate={preSelectedBooking?.returnDate}
-              initialBagSizes={preSelectedBooking?.bagCounts}
-              onBack={() => navigate('LOCATIONS')}
-              onSuccess={handleBookingSuccess}
-              user={currentUser}
-              customerBranchId={customerBranch?.id}
-              customerBranchRates={customerBranch?.commissionRates}
-            />
-          </motion.div>
-        );
-
-      case 'BOOKING_SUCCESS':
-        return (
-          <motion.div key="booking-success" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <BookingSuccess
-              booking={lastBooking}
-              locations={locations}
-              onBack={() => navigate('USER')}
-              t={t}
-              lang={lang}
-            />
-          </motion.div>
-        );
-
-      case 'TRACKING':
-        return (
-          <motion.div key="tracking" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <UserTrackingPage
-              onBack={() => navigate('USER')}
-              t={t}
-              lang={lang}
-            />
-          </motion.div>
-        );
-
-      case 'STAFF_SCAN':
-        return (
-          <motion.div key="staff-scan" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <StaffScanPage
-              onBack={() => navigate('ADMIN')}
-              adminName={adminInfo.name}
-              t={t}
-              lang={lang}
-            />
-          </motion.div>
-        );
-
-      case 'BRANCH_ADMIN':
-        return (
-          <motion.div key="branch-admin" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <BranchAdminPage
-              branchId={window.location.pathname.split('/').pop() || ''}
-              lang={lang}
-              t={t}
-              onBack={() => navigate('USER')}
-            />
-          </motion.div>
-        );
-
-      case 'USER':
-      default: {
-        let branchSchema = undefined;
-        if (customerBranch) {
-          branchSchema = {
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            "name": `Beeliber - ${customerBranch.name}`,
-            "image": "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=1200",
-            "url": `https://bee-liber.com/branch/${customerBranchCode}`,
-            "telephone": customerBranch.contactNumber || "+82-10-1234-5678", // Fallback if no contact
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": customerBranch.address || "[본사 상세 주소 입력]",
-              "addressLocality": customerBranch.city || "Seoul",
-              "addressRegion": customerBranch.region || "Seoul",
-              "postalCode": customerBranch.postalCode || "04050",
-              "addressCountry": "KR"
-            },
-            "openingHoursSpecification": [
-              {
-                "@type": "OpeningHoursSpecification",
-                "dayOfWeek": [
-                  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-                ],
-                "opens": customerBranch.operatingHours?.start || "09:00",
-                "closes": customerBranch.operatingHours?.end || "18:00"
-              }
-            ],
-            "priceRange": "₩10,000 - ₩50,000"
-          };
+  let branchSchema: any = undefined;
+  if (customerBranch) {
+    branchSchema = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": `Beeliber - ${customerBranch.name}`,
+      "image": "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=1200",
+      "url": `https://bee-liber.com/branch/${customerBranchCode}`,
+      "telephone": customerBranch.contactNumber || "+82-10-1234-5678",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": customerBranch.address || "[본사 상세 주소 입력]",
+        "addressLocality": customerBranch.city || "Seoul",
+        "addressRegion": customerBranch.region || "Seoul",
+        "postalCode": customerBranch.postalCode || "04050",
+        "addressCountry": "KR"
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": customerBranch.operatingHours?.start || "09:00",
+          "closes": customerBranch.operatingHours?.end || "18:00"
         }
+      ],
+      "priceRange": "₩10,000 - ₩50,000"
+    };
+  }
 
-        return (
-          <motion.div key="landing" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
-            <SEO
-              title={customerBranch ? `Beeliber - ${customerBranch.name} Luggage Delivery & Storage` : t.meta_title}
-              description={customerBranch ? `Professional luggage storage and delivery service at ${customerBranch.name}. Same-day luggage delivery between hotel and airport.` : t.meta_description}
-              keywords={t.meta_keywords}
-              schema={branchSchema}
-            />
-            <LandingRenewal
-              t={t}
-              lang={lang}
-              onNavigate={navigate}
-              onLangChange={setLang}
-              onAdminClick={() => navigate('ADMIN_LOGIN')}
-              onLoginClick={() => setShowLoginModal(true)}
-              onMyPageClick={() => navigate('MYPAGE')}
-              user={currentUser}
-              onSuccess={handleBookingSuccess}
-              branchCode={customerBranchCode || undefined} // Pass branchCode if exists
-            />
-          </motion.div>
-        );
-      }
-    }
-  };
+  if (!t) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-16 h-16 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-slate-50 font-sans selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden">
       <SEO
-        title={view === 'USER' ? t.seo?.title : `${t.nav[view.toLowerCase()] || t.seo?.title} - Beeliber`}
+        title={customerBranch ? `Beeliber - ${customerBranch.name}` : t.seo?.title}
         description={t.seo?.description}
         keywords={t.seo?.keywords}
         lang={lang}
-        path={window.location.pathname}
+        path={location.pathname}
+        schema={branchSchema}
       />
       <ErrorBoundary>
-        <AnimatePresence mode="wait">
-          {renderView()}
-        </AnimatePresence>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-16 h-16 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div></div>}>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {/* USER */}
+              <Route path="/" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /></AnimatedRoute>} />
+              <Route path="/branch/:code" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /></AnimatedRoute>} />
+
+              {/* OTHER */}
+              <Route path="/services" element={<AnimatedRoute><ServicesPage onBack={() => navigate('/')} t={t.services_page} landingT={t.landing_renewal} /></AnimatedRoute>} />
+              <Route path="/locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate('/')} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={setLang} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} /></AnimatedRoute>} />
+              <Route path="/booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate('/locations')} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
+              <Route path="/booking-success" element={<AnimatedRoute><BookingSuccess booking={lastBooking} locations={locations} onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
+              <Route path="/tracking" element={<AnimatedRoute><UserTrackingPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
+              <Route path="/partnership" element={<AnimatedRoute><PartnershipPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+              <Route path="/manual" element={<AnimatedRoute><ManualPage onBack={() => navigate('/')} t={t.manual} /></AnimatedRoute>} />
+              <Route path="/terms" element={<AnimatedRoute><TermsPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+              <Route path="/privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+
+              {/* ADMIN */}
+              <Route path="/admin" element={<AnimatedRoute><AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} /></AnimatedRoute>} />
+              <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={() => navigate('/')} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
+              <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={() => navigate('/')} /></AnimatedRoute></BranchAdminGuard>} />
+              <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
+
+              {/* FALLBACK */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AnimatePresence>
+        </Suspense>
       </ErrorBoundary>
 
-      {view === 'MYPAGE' && (
-        <MyPage
-          t={t}
-          onClose={() => navigate('USER')}
-        />
+      <Routes>
+        <Route path="/" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+        <Route path="/branch/:code" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+        <Route path="/services" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+        <Route path="/tracking" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+        <Route path="*" element={null} />
+      </Routes>
+
+      <Routes>
+        <Route path="/" element={<ChatBot t={t.chatbot} lang={lang} />} />
+        <Route path="/branch/:code" element={<ChatBot t={t.chatbot} lang={lang} />} />
+        <Route path="*" element={null} />
+      </Routes>
+
+      {location.pathname === '/mypage' && (
+        <>
+          <div className="fixed inset-0 z-0 pointer-events-none">
+            <LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} />
+            <div className="absolute inset-0 bg-black/50 pointer-events-auto" />
+          </div>
+          <MyPage t={t} onClose={() => { navigate(-1); }} />
+        </>
       )}
 
-      {view === 'USER' && (
-        <Footer
-          t={t}
-          onNavigate={navigate}
-        />
-      )}
-      {view === 'USER' && (
-        <ChatBot t={t.chatbot} lang={lang} />
-      )}
       <NoticePopup t={t} />
       <LoginModal
         isOpen={showLoginModal}

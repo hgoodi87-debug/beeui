@@ -25,10 +25,10 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
 
     const getLocName = (l: LocationOption) => {
         if (!l) return 'N/A';
-        const dbLang = lang.startsWith('zh') ? 'zh' : lang;
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
 
-        // Priority: name_lang -> name_en -> name
-        const name = (l[`name_${dbLang}` as keyof LocationOption] as string) || l.name_en || l.name;
+        // Priority: name_lang(exact) -> name_lang(base) -> translation -> name_en -> name
+        const name = (l[`name_${lang}` as keyof LocationOption] as string) || (l[`name_${dbLang}` as keyof LocationOption] as string) || (t.location_names && t.location_names[l.id]) || l.name_en || l.name;
 
         // Ensure it's not returning a single shortCode like 'MYN' if full name exists
         if (name === l.shortCode && l.name && l.name !== l.shortCode) return l.name;
@@ -38,9 +38,9 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
 
     const getLocGuide = (l: LocationOption) => {
         if (!l) return '';
-        const dbLang = lang.startsWith('zh') ? 'zh' : lang;
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
         if (lang === 'ko') return l.pickupGuide;
-        return (l[`pickupGuide_${dbLang}` as keyof LocationOption] as string) || l.pickupGuide_en || l.pickupGuide;
+        return (l[`pickupGuide_${lang}` as keyof LocationOption] as string) || (l[`pickupGuide_${dbLang}` as keyof LocationOption] as string) || l.pickupGuide_en || l.pickupGuide;
     };
 
     const getMapUrl = (l: LocationOption) => {

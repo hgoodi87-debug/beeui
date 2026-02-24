@@ -33,9 +33,9 @@ export const calculateBookingStoragePrice = (
 ): PriceResult => {
     // Language Map
     const t = {
-        d: lang.startsWith('ko') ? '일' : (lang.startsWith('ja') ? '日' : (lang.startsWith('zh') ? '天' : 'd')),
-        h: lang.startsWith('ko') ? '시간' : (lang.startsWith('ja') ? '時間' : (lang.startsWith('zh') ? '小时' : 'h')),
-        w: lang.startsWith('ko') ? '주' : (lang.startsWith('ja') ? '週' : (lang.startsWith('zh') ? '周' : 'w')),
+        d: lang.startsWith('ko') ? '일' : (lang.startsWith('ja') ? '日' : (lang === 'zh-TW' || lang === 'zh-HK' ? '天' : lang.startsWith('zh') ? '天' : 'd')),
+        h: lang.startsWith('ko') ? '시간' : (lang.startsWith('ja') ? '時間' : (lang === 'zh-TW' || lang === 'zh-HK' ? '小時' : lang.startsWith('zh') ? '小时' : 'h')),
+        w: lang.startsWith('ko') ? '주' : (lang.startsWith('ja') ? '週' : (lang === 'zh-TW' || lang === 'zh-HK' ? '週' : lang.startsWith('zh') ? '周' : 'w')),
     };
 
     if (start >= end) {

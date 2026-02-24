@@ -128,20 +128,22 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
     const curT = t_success[lang as keyof typeof t_success] || t_success.en;
 
     const getLocName = (l: LocationOption) => {
-        const dbLang = lang.startsWith('zh') ? 'zh' : lang;
-        if (lang === 'ko') return l.name;
-        return (l[`name_${dbLang}` as keyof LocationOption] as string) || (t.location_names && t.location_names[l.id.toUpperCase()]) || l.name;
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
+        if (lang === 'ko' || lang === 'ko-KR') return l.name;
+        return (l[`name_${lang}` as keyof LocationOption] as string) || (l[`name_${dbLang}` as keyof LocationOption] as string) || (t.location_names && t.location_names[l.id]) || l.name_en || l.name;
     };
 
     const pickupLoc = locations.find(l => l.id === booking.pickupLocation);
     const dropoffLoc = locations.find(l => l.id === booking.dropoffLocation);
 
-    const businessHoursText = pickupLoc
-        ? (lang === 'ko' ? (pickupLoc.businessHours || "09:00 - 21:00")
-            : lang === 'ja' ? (pickupLoc.businessHours_ja || pickupLoc.businessHours || "09:00 - 21:00")
-                : lang === 'zh' ? (pickupLoc.businessHours_zh || pickupLoc.businessHours || "09:00 - 21:00")
-                    : (pickupLoc.businessHours_en || pickupLoc.businessHours || "09:00 - 21:00"))
-        : "09:00 - 21:00";
+    const getBusinessHoursText = (loc?: LocationOption) => {
+        if (!loc) return "09:00 - 21:00";
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
+        if (lang === 'ko' || lang === 'ko-KR') return loc.businessHours || "09:00 - 21:00";
+        return (loc[`businessHours_${lang}` as keyof LocationOption] as string) || (loc[`businessHours_${dbLang}` as keyof LocationOption] as string) || loc.businessHours_en || loc.businessHours || "09:00 - 21:00";
+    };
+
+    const businessHoursText = getBusinessHoursText(pickupLoc);
 
     return (
         <div className="min-h-screen bg-[#fafafb] font-sans selection:bg-bee-yellow selection:text-bee-black pb-20">

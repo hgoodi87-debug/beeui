@@ -212,6 +212,51 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     </div>
                 </motion.div>
 
+                {/* Payment & Receipt Info */}
+                <motion.div
+                    initial={{ y: 35, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                    className="bg-white rounded-[32px] p-6 shadow-xl border border-gray-100"
+                >
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                <i className="fa-solid fa-receipt"></i>
+                            </div>
+                            <span className="text-sm font-black text-bee-black">Payment Details</span>
+                        </div>
+                        <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${booking.paymentStatus === 'paid' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                            {booking.paymentStatus || 'unknown'}
+                        </span>
+                    </div>
+
+                    <div className="space-y-3 pt-3 border-t border-gray-100">
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-gray-400">Method</span>
+                            <span className="text-xs font-black text-bee-black uppercase">
+                                {booking.paymentMethod || 'Card'}
+                            </span>
+                        </div>
+                        {booking.discountAmount ? (
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-gray-400">
+                                    Discount {booking.promoCode ? <span className="text-[9px] bg-red-50 text-red-500 px-1.5 py-0.5 rounded ml-1">{booking.promoCode}</span> : ''}
+                                </span>
+                                <span className="text-xs font-bold text-red-500">
+                                    -{booking.discountAmount.toLocaleString()} KRW
+                                </span>
+                            </div>
+                        ) : null}
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+                            <span className="text-xs font-black text-gray-500">Total Amount</span>
+                            <span className="text-lg font-black text-blue-600">
+                                {(booking.finalPrice ?? booking.price ?? 0).toLocaleString()} <span className="text-xs ml-1 text-gray-400">KRW</span>
+                            </span>
+                        </div>
+                    </div>
+                </motion.div>
+
                 {/* Update Actions */}
                 <motion.div
                     initial={{ y: 40, opacity: 0 }}

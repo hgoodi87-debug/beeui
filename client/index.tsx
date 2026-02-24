@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -25,7 +26,9 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
-        <App />
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
       </HelmetProvider>
     </QueryClientProvider>
   </React.StrictMode>

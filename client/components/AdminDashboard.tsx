@@ -19,6 +19,12 @@ import { StorageService } from '../services/storageService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAdminStore } from '../src/store/adminStore';
+import { useAdmins } from '../src/domains/admin/hooks/useAdmins';
+import { useInquiries } from '../src/domains/admin/hooks/useInquiries';
+import { useBranchProspects } from '../src/domains/admin/hooks/useBranchProspects';
+import { useCashClosings } from '../src/domains/admin/hooks/useCashClosings';
+import { useExpenditures } from '../src/domains/admin/hooks/useExpenditures';
 import { sendMessageToGemini } from '../services/geminiService';
 import DailyDetailModal from './admin/DailyDetailModal';
 import OverviewTab from './admin/OverviewTab';
@@ -79,6 +85,8 @@ interface AdminDashboardProps {
   t: any;
 }
 
+export type StatusTab = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+
 declare global {
   interface Window {
     naver: any;
@@ -106,14 +114,10 @@ const getKSTDateString = () => {
 };
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, scanId, lang, t }) => {
-  const [activeTab, setActiveTab] = useState<AdminTab>('OVERVIEW');
-  // New: Status Tabs state
-  type StatusTab = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-  const [activeStatusTab, setActiveStatusTab] = useState<StatusTab>('ALL');
+  const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
 
   const queryClient = useQueryClient();
   const { data: allBookings = [] } = useBookings();
-  const [globalBranchFilter, setGlobalBranchFilter] = useState<string>('ALL');
 
   const bookings = useMemo(() => {
     if (globalBranchFilter === 'ALL') return allBookings;
@@ -125,11 +129,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   }, [allBookings, globalBranchFilter]);
 
   const { data: locations = [] } = useLocations();
+  const { data: admins = [] } = useAdmins();
+  const { data: inquiries = [] } = useInquiries();
+  const { data: branchProspects = [] } = useBranchProspects();
+  const { data: closings = [], refetch: refetchCashClosings } = useCashClosings();
+  const { data: expenditures = [], refetch: refetchExpenditures } = useExpenditures();
+
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
-  const [admins, setAdmins] = useState<AdminUser[]>([]);
-  const [inquiries, setInquiries] = useState<PartnershipInquiry[]>([]);
-  const [branchProspects, setBranchProspects] = useState<BranchProspect[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
@@ -285,8 +292,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     actualCash: 0,
     notes: ''
   });
-  const [closings, setClosings] = useState<CashClosing[]>([]);
-  const [expenditures, setExpenditures] = useState<Expenditure[]>([]);
+
+  // Use refetch handles declared above
+  // (Removed duplicate hook calls here)
 
   // Update dates when todayKST or activeTab changes
   useEffect(() => {
@@ -316,7 +324,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const end = new Date(revenueEndDate);
     end.setHours(23, 59, 59, 999);
 
-    const targetBookings = bookings.filter(b => {
+    const targetBookings = bookings.filter((b: BookingState) => {
       const d = new Date(b.pickupDate || '');
       // Strict exclusion: No deleted, no cancelled, no refunded
       return d >= start && d <= end &&
@@ -325,24 +333,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         b.status !== BookingStatus.REFUNDED;
     });
 
-    const targetExps = expenditures.filter(e => {
+    const targetExps = expenditures.filter((e: Expenditure) => {
       const d = new Date(e.date);
       return d >= start && d <= end;
     });
 
     // Detailed stats for the period
-    const totalRevenue = targetBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const totalExp = targetExps.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
 
-    const cash = targetBookings.filter(b => b.paymentMethod === 'cash').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const card = targetBookings.filter(b => b.paymentMethod === 'card').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const apple = targetBookings.filter(b => b.paymentMethod === 'apple').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const samsung = targetBookings.filter(b => b.paymentMethod === 'samsung').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const wechat = targetBookings.filter(b => b.paymentMethod === 'wechat').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const alipay = targetBookings.filter(b => b.paymentMethod === 'alipay').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const naver = targetBookings.filter(b => b.paymentMethod === 'naver').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const kakao = targetBookings.filter(b => b.paymentMethod === 'kakao').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const paypal = targetBookings.filter(b => b.paymentMethod === 'paypal').reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+    const cash = targetBookings.filter((b: BookingState) => b.paymentMethod === 'cash').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const card = targetBookings.filter((b: BookingState) => b.paymentMethod === 'card').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const apple = targetBookings.filter((b: BookingState) => b.paymentMethod === 'apple').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const samsung = targetBookings.filter((b: BookingState) => b.paymentMethod === 'samsung').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const wechat = targetBookings.filter((b: BookingState) => b.paymentMethod === 'wechat').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const alipay = targetBookings.filter((b: BookingState) => b.paymentMethod === 'alipay').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const naver = targetBookings.filter((b: BookingState) => b.paymentMethod === 'naver').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const kakao = targetBookings.filter((b: BookingState) => b.paymentMethod === 'kakao').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const paypal = targetBookings.filter((b: BookingState) => b.paymentMethod === 'paypal').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
 
     return { total: totalRevenue, cash, card, apple, samsung, wechat, alipay, naver, kakao, paypal, count: targetBookings.length, expenditure: totalExp };
   }, [bookings, expenditures, revenueStartDate, revenueEndDate]);
@@ -414,12 +422,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const end = new Date(revenueEndDate);
     end.setHours(23, 59, 59, 999);
 
-    const targetBookings = bookings.filter(b => {
+    const targetBookings = bookings.filter((b: BookingState) => {
       const d = new Date(b.pickupDate || '');
       return d >= start && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
     });
 
-    const targetExps = expenditures.filter(e => {
+    const targetExps = expenditures.filter((e: Expenditure) => {
       const d = new Date(e.date);
       return d >= start && d <= end;
     });
@@ -458,12 +466,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
     });
 
-    const totalRevenue = targetBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-    const totalExp = targetExps.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+    const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
 
     // Expenditure breakdown by category
     const expByCategory: Record<string, number> = {};
-    targetExps.forEach(e => {
+    targetExps.forEach((e: Expenditure) => {
       const cat = e.category || '기타';
       expByCategory[cat] = (expByCategory[cat] || 0) + (e.amount || 0);
     });
@@ -481,7 +489,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     });
 
     // Cash Closing for this period
-    const periodClosing = closings.find(c => c.date === revenueEndDate);
+    const periodClosing = closings.find((c: CashClosing) => c.date === revenueEndDate);
 
     const netProfit = totalRevenue - totalExp;
     const vat = Math.floor(totalRevenue * 0.1); // Assuming 10% VAT
@@ -504,10 +512,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const end = new Date(revenueEndDate);
     end.setHours(23, 59, 59, 999);
 
-    return expenditures.filter(e => {
+    return expenditures.filter((e: Expenditure) => {
       const d = new Date(e.date);
       return d >= start && d <= end;
-    }).sort((a, b) => b.date.localeCompare(a.date));
+    }).sort((a: Expenditure, b: Expenditure) => b.date.localeCompare(a.date));
   }, [expenditures, revenueStartDate, revenueEndDate]);
 
   const handleCashClose = async () => {
@@ -598,7 +606,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const bookingHeaders = ['예약번호', '상태', '성함', '픽업날짜', '반납날짜', '픽업장소', '반납장소', '서비스타입', '결제금액', '생성일'];
     csvContent += bookingHeaders.join(',') + '\n';
 
-    const bookingRows = filteredForExport.map(b => {
+    const bookingRows = filteredForExport.map((b: BookingState) => {
       const pickupLoc = locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation;
       const dropoffLoc = locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation;
       return [
@@ -621,7 +629,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const closingHeaders = ['마감날짜', '총 매출', '카드 매출', '현금 매출', '실제 시재', '차액', '메모', '마감자', '생성일'];
     csvContent += closingHeaders.join(',') + '\n';
 
-    const closingRows = closings.map(c => [
+    const closingRows = closings.map((c: CashClosing) => [
       c.date,
       c.totalRevenue,
       c.cardRevenue,
@@ -667,26 +675,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['locations'] }),
         queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['admins'] }),
+        queryClient.invalidateQueries({ queryKey: ['inquiries'] }),
+        queryClient.invalidateQueries({ queryKey: ['branchProspects'] }),
+        queryClient.invalidateQueries({ queryKey: ['cashClosings'] }),
+        queryClient.invalidateQueries({ queryKey: ['expenditures'] }),
       ]);
-
-      const [loadedInquiries, loadedProspects] = await Promise.all([
-        StorageService.getInquiries(),
-        StorageService.getBranchProspects()
-      ]);
-
-      if (Array.isArray(loadedInquiries)) {
-        loadedInquiries.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-        setInquiries(loadedInquiries);
-      } else {
-        setInquiries([]);
-      }
-
-      if (Array.isArray(loadedProspects)) {
-        loadedProspects.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-        setBranchProspects(loadedProspects);
-      } else {
-        setBranchProspects([]);
-      }
 
       // Sync local storage items using safe parse
       const cloudDeliveryPrices = await StorageService.getDeliveryPrices();
@@ -726,15 +720,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   useEffect(() => {
     refreshData();
 
-    // Subscribe to real-time updates for Inquiries and Prospects (Bookings and Locs handled by hooks)
-    const unsubscribeInquiries = StorageService.subscribeInquiries((data) => {
-      setInquiries(Array.isArray(data) ? data : []);
-    });
-
-    const unsubscribeProspects = StorageService.subscribeBranchProspects((data) => {
-      setBranchProspects(Array.isArray(data) ? data : []);
-    });
-
     // Listen for visibility change (tab focus) to refresh static data
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -742,18 +727,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    const unsubscribeClosings = StorageService.subscribeCashClosings((data) => {
-      setClosings(Array.isArray(data) ? data : []);
-    });
-
-    const unsubscribeExps = StorageService.subscribeExpenditures((data) => {
-      setExpenditures(Array.isArray(data) ? data : []);
-    });
-
-    const unsubscribeAdmins = StorageService.subscribeAdmins((data) => {
-      setAdmins(Array.isArray(data) ? data : []);
-    });
 
     // KST Refresh Timer - Check every minute if day has changed
     const timer = setInterval(() => {
@@ -769,11 +742,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     return () => {
       clearInterval(timer);
-      unsubscribeInquiries();
-      unsubscribeProspects();
-      unsubscribeClosings();
-      unsubscribeExps();
-      unsubscribeAdmins();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);

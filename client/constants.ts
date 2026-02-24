@@ -215,6 +215,27 @@ export const LOCATIONS: LocationOption[] = [
     businessHours_zh: '10:00 - 22:00',
     supportsDelivery: true, supportsStorage: true, lat: 37.5292, lng: 126.9647,
     isActive: false
+  },
+  {
+    id: 'MIT', shortCode: 'MIT', name: '이태원지점', type: LocationType.PARTNER,
+    description: '이태원역 1번 출구 도보 3분', address: '서울시 용산구 이태원로 177',
+    name_en: 'Itaewon Branch', description_en: 'Itaewon Stn Exit 1, 3 min walk', address_en: '177, Itaewon-ro, Yongsan-gu, Seoul',
+    name_ja: '梨泰院店', description_ja: '梨泰院駅 1番出口 徒歩 3分', address_ja: 'ソウル市 龍山区 梨泰院路 177',
+    name_zh: '梨泰院店', description_zh: '梨泰院站 1号出口 步行 3分钟', address_zh: '首尔市 龙山区 梨泰院路 177',
+    name_zh_tw: '梨泰院店', description_zh_tw: '梨泰院站 1號出口 步行 3分鐘', address_zh_tw: '首爾市 龍山區 梨泰院路 177',
+    name_zh_hk: '梨泰院店', description_zh_hk: '梨泰院站 1號出口 步行 3分鐘', address_zh_hk: '首爾市 龍山區 梨泰院路 177',
+    pickupGuide: '이태원역 1번 출구 나와서 직진 3분, 비리버 이태원지점 간판을 찾으세요.',
+    pickupGuide_en: 'Exit Itaewon Station (Exit 1) and walk straight for 3 minutes. Look for the Beeliber Itaewon Branch sign.',
+    pickupGuide_ja: '梨泰院駅 1番出口を出て直進3分。Beeliber梨泰院店の看板を探してください。',
+    pickupGuide_zh: '从梨泰院站1号出口出来直走3分钟，寻找Beeliber梨泰院店招牌。',
+    pickupGuide_zh_tw: '從梨泰院站1號出口出來直走3分鐘，尋找Beeliber梨泰院店招牌。',
+    pickupGuide_zh_hk: '從梨泰院站1號出口出來直走3分鐘，尋找Beeliber梨泰院店招牌。',
+    businessHours: '10:00 - 22:00',
+    businessHours_en: '10:00 - 22:00',
+    businessHours_ja: '10:00 - 22:00',
+    businessHours_zh: '10:00 - 22:00',
+    supportsDelivery: true, supportsStorage: true, lat: 37.5346, lng: 126.9947,
+    isActive: true, isPartner: true
   }
 ];
 

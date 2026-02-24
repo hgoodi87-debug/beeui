@@ -166,128 +166,73 @@ async function processVoucherEmail(bookingId, booking) {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-                .wrapper { width: 100%; table-layout: fixed; background-color: #f8fafc; padding-bottom: 40px; }
-                .webkit { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-                
-                /* Layout */
-                .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 0; overflow: hidden; }
-                @media screen and (min-width: 600px) {
-                    .container { border-radius: 40px; margin-top: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); }
-                }
-
-                .header { background-color: #1a1a1a; padding: 40px 20px; text-align: center; }
-                .header-logo { font-size: 32px; font-weight: 900; color: #ffcb05; letter-spacing: -1.5px; font-style: italic; }
-                .header-logo span { color: #ffffff; font-style: normal; }
-                
-                .content { padding: 30px 20px; text-align: center; }
-                
-                .status-badge { display: inline-block; background-color: #ffcb05; color: #1a1a1a; padding: 8px 20px; border-radius: 100px; font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 0.05em; }
-                
-                .code-box { background: #1a1a1a; border-radius: 20px; padding: 25px; margin-bottom: 30px; color: #ffffff; }
-                .code-label { font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-                .code-value { font-size: 28px; font-weight: 900; color: #ffcb05; letter-spacing: 0.05em; word-break: break-all; }
-
-                .qr-box { margin-bottom: 35px; }
-                .qr-img { width: 180px; height: 180px; border-radius: 24px; padding: 15px; background: #ffffff; border: 1.5px solid #f1f5f9; box-shadow: 0 10px 25px rgba(0,0,0,0.03); }
-
-                .details-card { background: #ffffff; border: 1.5px solid #f1f5f9; border-radius: 32px; padding: 25px; text-align: left; }
-                .section-title { font-size: 15px; font-weight: 900; color: #1a1a1a; margin-bottom: 20px; display: flex; align-items: center; }
-                .section-title::after { content: ""; flex: 1; height: 1px; background: #f1f5f9; margin-left: 15px; }
-
-                .route-item { position: relative; padding-left: 25px; margin-bottom: 25px; border-left: 3px solid #ffcb05; }
-                .route-item.arrival { border-left-color: #e2e8f0; margin-bottom: 5px; }
-                .route-label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block; }
-                .route-name { font-size: 18px; font-weight: 900; color: #1a1a1a; line-height: 1.3; }
-                .route-badge { font-size: 9px; font-weight: 900; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
-                .route-time { font-size: 13px; font-weight: 700; color: #64748b; margin-top: 6px; display: block; }
-
-                .meta-table { width: 100%; border-top: 1px dashed #e2e8f0; margin-top: 25px; padding-top: 25px; }
-                .meta-row { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
-                .meta-key { font-size: 12px; font-weight: 800; color: #94a3b8; }
-                .meta-val { font-size: 12px; font-weight: 800; color: #1a1a1a; text-align: right; }
-                
-                .price-row { margin-top: 20px; padding-top: 20px; border-top: 1.5px solid #f1f5f9; }
-                .price-val { font-size: 24px; font-weight: 950; color: #1a1a1a; }
-
-                .guide-box { margin-top: 30px; background: #fffbeb; border-radius: 24px; padding: 20px; border: 1px solid #fef3c7; }
-                .guide-title { font-size: 12px; font-weight: 900; color: #92400e; margin-bottom: 12px; text-transform: uppercase; }
-
-                /* VIP Coupon */
-                .vip-coupon { margin-top: 40px; background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 32px; padding: 30px; color: #ffffff; text-align: center; border: 1px solid #ffcb05; }
-                .vip-badge { display: inline-block; background: #ffcb05; color: #1a1a1a; padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 950; text-transform: uppercase; margin-bottom: 20px; }
-
-                .footer { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 11px; font-weight: 600; }
-                .btn { display: inline-block; background: #ffcb05; color: #1a1a1a; padding: 16px 30px; border-radius: 16px; text-decoration: none; font-size: 14px; font-weight: 900; margin-top: 30px; box-shadow: 0 10px 20px rgba(255,203,5,0.2); }
-            </style>
         </head>
-        <body>
-            <div class="wrapper">
-                <div class="container">
-                    <div class="header">
-                        <div class="header-logo">bee<span>liber</span></div>
+        <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+            <div style="width: 100%; table-layout: fixed; background-color: #f8fafc; padding-bottom: 40px;">
+                <div style="width: 100%; max-width: 600px; margin: 40px auto 0; background-color: #ffffff; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); overflow: hidden;">
+                    <div style="background-color: #1a1a1a; padding: 40px 20px; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 900; color: #ffcb05; letter-spacing: -1.5px; font-style: italic;">bee<span style="color: #ffffff; font-style: normal;">liber</span></div>
                     </div>
                     
-                    <div class="content">
-                        <div class="status-badge">${t.voucherLabel} CONFIRMED</div>
+                    <div style="padding: 30px 20px; text-align: center;">
+                        <div style="display: inline-block; background-color: #ffcb05; color: #1a1a1a; padding: 8px 20px; border-radius: 100px; font-size: 13px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 0.05em;">${t.voucherLabel} CONFIRMED</div>
                         
-                        <div class="code-box">
-                            <div class="code-label">DELIVERY CODE</div>
-                            <div class="code-value">${displayedCode}</div>
+                        <div style="background: #1a1a1a; border-radius: 20px; padding: 25px; margin-bottom: 30px; color: #ffffff;">
+                            <div style="font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">DELIVERY CODE</div>
+                            <div style="font-size: 28px; font-weight: 900; color: #ffcb05; letter-spacing: 0.05em; word-break: break-all;">${displayedCode}</div>
                         </div>
 
-                        <div class="qr-box">
-                            <img src="cid:qrcode" class="qr-img" alt="Scan QR" />
+                        <div style="margin-bottom: 35px;">
+                            <img src="cid:qrcode" style="width: 180px; height: 180px; border-radius: 24px; padding: 15px; background: #ffffff; border: 1.5px solid #f1f5f9; box-shadow: 0 10px 25px rgba(0,0,0,0.03);" alt="Scan QR" />
                             <p style="font-size: 12px; color: #64748b; font-weight: 700; margin-top: 15px;">${t.footerNote}</p>
                         </div>
 
-                        <div class="details-card">
-                            <div class="section-title">${t.detailsTitle}</div>
+                        <div style="background: #ffffff; border: 1.5px solid #f1f5f9; border-radius: 32px; padding: 25px; text-align: left;">
+                            <div style="font-size: 15px; font-weight: 900; color: #1a1a1a; margin-bottom: 20px; display: flex; align-items: center;">${t.detailsTitle}</div>
                             
                             <!-- Pickup -->
-                            <div class="route-item">
-                                <span class="route-label">${t.departureLabel}</span>
-                                <span class="route-name">${pickupBranchName} <span class="route-badge">${pickupLoc?.shortCode || booking.pickupLocation}</span></span>
-                                <span class="route-time">🕒 ${booking.pickupDate} | ${booking.pickupTime}</span>
+                            <div style="padding-left: 25px; margin-bottom: 25px; border-left: 3px solid #ffcb05;">
+                                <span style="font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block;">${t.departureLabel}</span>
+                                <span style="font-size: 18px; font-weight: 900; color: #1a1a1a; line-height: 1.3;">${pickupBranchName} <span style="font-size: 9px; font-weight: 900; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">${pickupLoc?.shortCode || booking.pickupLocation}</span></span>
+                                <span style="font-size: 13px; font-weight: 700; color: #64748b; margin-top: 6px; display: block;">🕒 ${booking.pickupDate} | ${booking.pickupTime}</span>
                             </div>
 
                             <!-- Dropoff -->
-                            <div class="route-item arrival">
-                                <span class="route-label">${t.arrivalLabel}</span>
-                                <span class="route-name">
+                            <div style="padding-left: 25px; margin-bottom: 5px; border-left: 3px solid #e2e8f0;">
+                                <span style="font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block;">${t.arrivalLabel}</span>
+                                <span style="font-size: 18px; font-weight: 900; color: #1a1a1a; line-height: 1.3;">
                                     ${destBranchName || booking.dropoffLocation || booking.destinationLocation || (booking.serviceType === 'STORAGE' ? t.storageLabel : 'Address Specified')}
-                                    ${destLoc ? `<span class="route-badge">${destLoc.shortCode}</span>` : (booking.serviceType === 'DELIVERY' ? `<span class="route-badge">ADDR</span>` : '')}
+                                    ${destLoc ? `<span style="font-size: 9px; font-weight: 900; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">${destLoc.shortCode}</span>` : (booking.serviceType === 'DELIVERY' ? `<span style="font-size: 9px; font-weight: 900; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">ADDR</span>` : '')}
                                 </span>
-                                <span class="route-time">🏁 ${booking.dropoffDate || booking.returnDate || 'N/A'} | ${booking.deliveryTime || booking.returnTime || booking.pickupTime || 'N/A'}</span>
+                                <span style="font-size: 13px; font-weight: 700; color: #64748b; margin-top: 6px; display: block;">🏁 ${booking.dropoffDate || booking.returnDate || 'N/A'} | ${booking.deliveryTime || booking.returnTime || booking.pickupTime || 'N/A'}</span>
                             </div>
 
-                            <div class="meta-table">
-                                <div class="meta-row">
-                                    <span class="meta-key">${t.nameLabel}</span>
-                                    <span class="meta-val">${booking.userName}</span>
+                            <div style="width: 100%; border-top: 1px dashed #e2e8f0; margin-top: 25px; padding-top: 25px;">
+                                <div style="margin-bottom: 12px;">
+                                    <span style="font-size: 12px; font-weight: 800; color: #94a3b8; display: inline-block; width: 45%;">${t.nameLabel}</span>
+                                    <span style="font-size: 12px; font-weight: 800; color: #1a1a1a; display: inline-block; width: 50%; text-align: right;">${booking.userName}</span>
                                 </div>
-                                <div class="meta-row">
-                                    <span class="meta-key">${t.bagsLabel}</span>
-                                    <span class="meta-val">${booking.bags} EA (${Object.entries(booking.bagSizes || {}).filter(([_, c]) => c > 0).map(([s, c]) => `${s}:${c}`).join('/')})</span>
+                                <div style="margin-bottom: 12px;">
+                                    <span style="font-size: 12px; font-weight: 800; color: #94a3b8; display: inline-block; width: 45%;">${t.bagsLabel}</span>
+                                    <span style="font-size: 12px; font-weight: 800; color: #1a1a1a; display: inline-block; width: 50%; text-align: right;">${booking.bags} EA (${Object.entries(booking.bagSizes || {}).filter(([_, c]) => c > 0).map(([s, c]) => `${s}:${c}`).join('/')})</span>
                                 </div>
-                                <div class="meta-row price-row">
-                                    <span class="meta-key" style="font-size: 14px; color: #1a1a1a;">${t.paymentLabel}</span>
-                                    <span class="price-val">₩${(booking.finalPrice || 0).toLocaleString()}</span>
+                                <div style="margin-top: 20px; padding-top: 20px; border-top: 1.5px solid #f1f5f9;">
+                                    <span style="font-size: 14px; font-weight: 800; color: #1a1a1a; display: inline-block; width: 45%;">${t.paymentLabel}</span>
+                                    <span style="font-size: 24px; font-weight: 950; color: #1a1a1a; display: inline-block; width: 50%; text-align: right;">₩${(booking.finalPrice || 0).toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
 
                         ${pickupBranchName && (pickupImageUrl || pickupGuide) ? `
-                        <div class="guide-box">
-                            <div class="guide-title">📍 ${pickupBranchName} ${lang === 'ko' ? '방문 안내' : 'Guide'}</div>
+                        <div style="margin-top: 30px; background: #fffbeb; border-radius: 24px; padding: 20px; border: 1px solid #fef3c7; text-align: left;">
+                            <div style="font-size: 12px; font-weight: 900; color: #92400e; margin-bottom: 12px; text-transform: uppercase;">📍 ${pickupBranchName} ${lang === 'ko' ? '방문 안내' : 'Guide'}</div>
                             ${pickupImageUrl ? `<img src="${pickupImageUrl}" style="width: 100%; border-radius: 12px; margin-bottom: 15px;" alt="Guide" />` : ''}
                             <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0; font-weight: 600;">${pickupGuide}</p>
                         </div>
                         ` : ''}
 
 
-                        <a href="https://bee-liber.com/tracking?id=${bookingId}" class="btn">Track My Package</a>
+                        <a href="https://bee-liber.com/tracking?id=${bookingId}" style="display: inline-block; background: #ffcb05; color: #1a1a1a; padding: 16px 30px; border-radius: 16px; text-decoration: none; font-size: 14px; font-weight: 900; margin-top: 30px; box-shadow: 0 10px 20px rgba(255,203,5,0.2);">Track My Package</a>
 
                         <!-- 💅 Action Buttons -->
                         <div style="margin-top: 20px; text-align: center;">
@@ -302,17 +247,17 @@ async function processVoucherEmail(bookingId, booking) {
                         </div>
 
                         <!-- 💅 VIP Coupon -->
-                        <div class="vip-coupon">
-                            <div class="vip-badge">Partner Benefit</div>
+                        <div style="margin-top: 40px; background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 32px; padding: 30px; color: #ffffff; text-align: center; border: 1px solid #ffcb05;">
+                            <div style="display: inline-block; background: #ffcb05; color: #1a1a1a; padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 950; text-transform: uppercase; margin-bottom: 20px;">Partner Benefit</div>
                             <div style="font-size: 20px; font-weight: 900; color: #ffcb05; font-style: italic; margin-bottom: 5px;">moneybox</div>
                             <div style="font-size: 18px; font-weight: 900; margin-bottom: 15px;">SPECIAL VIP COUPON</div>
                             <div style="font-size: 12px; font-weight: 700; color: #64748b; line-height: 1.6;">
-                                Show this email at <b>Moneybox Yeonnam</b><br/>to get the best currency exchange rates!
+                                Show this email at <b style="color: #ffffff;">Moneybox Yeonnam</b><br/>to get the best currency exchange rates!
                             </div>
                         </div>
                     </div>
 
-                    <div class="footer">
+                    <div style="padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 11px; font-weight: 600;">
                         <p style="margin-bottom: 20px; letter-spacing: 0.3em; color: #ffcb05; font-weight: 900;">NO BAGS, JUST FREEDOM</p>
                         &copy; 2025 Beeliber Global Logistics.
                     </div>
@@ -454,81 +399,50 @@ async function processArrivalEmail(bookingId, booking) {
         <html>
         <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body { margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; }
-                .wrapper { padding: 40px 10px; }
-                .container { max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 48px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.05); }
-                
-                .header { background-color: #1a1a1a; padding: 60px 20px; text-align: center; border-bottom: 8px solid #ffcb05; }
-                .logo { font-size: 38px; font-weight: 900; color: #ffcb05; letter-spacing: -2px; margin: 0; font-style: italic; }
-                .logo span { color: #ffffff; font-style: normal; }
-                
-                .content { padding: 50px 40px; text-align: center; }
-                .arrival-badge { width: 80px; height: 80px; background-color: #ffcb05; border-radius: 30px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 30px; font-size: 40px; color: #1a1a1a; }
-                
-                .title { font-size: 28px; font-weight: 900; color: #1a1a1a; margin-bottom: 15px; font-style: italic; }
-                .desc { font-size: 15px; color: #64748b; line-height: 1.6; margin-bottom: 40px; font-weight: 600; }
-
-                .details-box { text-align: left; background: #ffffff; border-radius: 32px; padding: 30px; border: 1.5px solid #f1f5f9; }
-                .section-title { font-size: 12px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; border-bottom: 2px solid #ffcb05; padding-bottom: 10px; display: inline-block; }
-                
-                .detail-item { margin-bottom: 20px; }
-                .detail-label { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px; }
-                .detail-value { font-size: 16px; font-weight: 800; color: #1a1a1a; }
-                .time-badge { background: #1a1a1a; color: #ffcb05; padding: 4px 12px; border-radius: 8px; font-size: 13px; margin-top: 6px; display: inline-block; }
-
-                .map-btn { display: block; background: #ffcb05; color: #1a1a1a; padding: 18px 20px; border-radius: 20px; font-size: 14px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 40px; transition: all 0.3s; }
-                
-                .pickup-guide { margin-top: 40px; background: #f8fafc; border-radius: 32px; padding: 30px; text-align: left; }
-                .pickup-img { width: 100%; border-radius: 20px; margin-top: 20px; display: block; border: 1px solid #e2e8f0; }
-                
-                .footer { background: #1a1a1a; padding: 50px 30px; text-align: center; color: #ffffff; }
-                .footer-slogan { font-size: 12px; font-weight: 900; color: #ffcb05; text-transform: uppercase; letter-spacing: 0.4em; }
-            </style>
         </head>
-        <body>
-            <div class="wrapper">
-                <div class="container">
-                    <div class="header">
-                        <h1 class="logo">bee<span>liber</span></h1>
+        <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a;">
+            <div style="padding: 40px 10px;">
+                <div style="max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 48px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.05);">
+                    <div style="background-color: #1a1a1a; padding: 60px 20px; text-align: center; border-bottom: 8px solid #ffcb05;">
+                        <h1 style="font-size: 38px; font-weight: 900; color: #ffcb05; letter-spacing: -2px; margin: 0; font-style: italic;">bee<span style="color: #ffffff; font-style: normal;">liber</span></h1>
                     </div>
                     
-                    <div class="content">
-                        <div class="arrival-badge">🚚</div>
-                        <h2 class="title">${t.arrivalTitle}</h2>
-                        <div class="desc">${t.arrivalDesc}</div>
+                    <div style="padding: 50px 40px; text-align: center;">
+                        <div style="width: 80px; height: 80px; background-color: #ffcb05; border-radius: 30px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 30px; font-size: 40px; color: #1a1a1a;">🚚</div>
+                        <h2 style="font-size: 28px; font-weight: 900; color: #1a1a1a; margin-bottom: 15px; font-style: italic;">${t.arrivalTitle}</h2>
+                        <div style="font-size: 15px; color: #64748b; line-height: 1.6; margin-bottom: 40px; font-weight: 600;">${t.arrivalDesc}</div>
  
-                        <div class="details-box">
-                            <div class="section-title">${t.detailsTitle}</div>
-                            <div class="detail-item">
-                                <span class="detail-label">${t.arrivalLabel}</span>
-                                <span class="detail-value"><strong>${getLoc(booking.dropoffLocation, destLoc)}</strong></span>
+                        <div style="text-align: left; background: #ffffff; border-radius: 32px; padding: 30px; border: 1.5px solid #f1f5f9;">
+                            <div style="font-size: 12px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; border-bottom: 2px solid #ffcb05; padding-bottom: 10px; display: inline-block;">${t.detailsTitle}</div>
+                            <div style="margin-bottom: 20px;">
+                                <span style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">${t.arrivalLabel}</span>
+                                <span style="font-size: 16px; font-weight: 800; color: #1a1a1a;"><strong>${getLoc(booking.dropoffLocation, destLoc)}</strong></span>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">${t.arrivalTimeLabel}</span>
-                                <span class="detail-value"><span class="time-badge">🏁 ${safeDate(booking.dropoffDate)} | ${booking.deliveryTime || 'N/A'}</span></span>
+                            <div style="margin-bottom: 20px;">
+                                <span style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">${t.arrivalTimeLabel}</span>
+                                <span style="font-size: 16px; font-weight: 800; color: #1a1a1a;"><span style="background: #1a1a1a; color: #ffcb05; padding: 4px 12px; border-radius: 8px; font-size: 13px; margin-top: 6px; display: inline-block;">🏁 ${safeDate(booking.dropoffDate)} | ${booking.deliveryTime || 'N/A'}</span></span>
                             </div>
-                            <div class="detail-item" style="margin-bottom: 0;">
-                                <span class="detail-label">Reservation ID</span>
-                                <span class="detail-value">${bookingId}</span>
+                            <div style="margin-bottom: 0;">
+                                <span style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">Reservation ID</span>
+                                <span style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${bookingId}</span>
                             </div>
                         </div>
 
-                        <a href="${pickupMapLink}" class="map-btn">📍 ${t.mapBtn}</a>
+                        <a href="${pickupMapLink}" style="display: block; background: #ffcb05; color: #1a1a1a; padding: 18px 20px; border-radius: 20px; font-size: 14px; font-weight: 900; text-decoration: none; text-align: center; margin-top: 40px; transition: all 0.3s;">📍 ${t.mapBtn}</a>
 
                         ${pickupGuide || pickupImageUrl ? `
-                            <div class="pickup-guide">
-                                <div class="section-title" style="margin:0 0 15px; border-bottom: none; padding-bottom: 0;">📍 ${t.pickupGuideTitle}</div>
-                                <div class="detail-value" style="font-size: 14px; color: #475569; line-height: 1.6;">${pickupGuide}</div>
-                                ${pickupImageUrl ? `<img src="${pickupImageUrl}" class="pickup-img" alt="Pickup Guide" />` : ""}
+                            <div style="margin-top: 40px; background: #f8fafc; border-radius: 32px; padding: 30px; text-align: left;">
+                                <div style="font-size: 12px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 15px; display: inline-block;">📍 ${t.pickupGuideTitle}</div>
+                                <div style="font-size: 14px; color: #475569; line-height: 1.6; font-weight: 800;">${pickupGuide}</div>
+                                ${pickupImageUrl ? `<img src="${pickupImageUrl}" style="width: 100%; border-radius: 20px; margin-top: 20px; display: block; border: 1px solid #e2e8f0;" alt="Pickup Guide" />` : ""}
                             </div>
                         ` : ""}
 
                         <p style="font-size: 14px; color: #94a3b8; font-weight: 700; margin-top: 50px;">${t.thanks}</p>
                     </div>
                     
-                    <div class="footer">
-                        <div class="footer-slogan">NO BAGS, JUST FREEDOM</div>
+                    <div style="background: #1a1a1a; padding: 50px 30px; text-align: center; color: #ffffff;">
+                        <div style="font-size: 12px; font-weight: 900; color: #ffcb05; text-transform: uppercase; letter-spacing: 0.4em;">NO BAGS, JUST FREEDOM</div>
                         <p style="font-size: 10px; color: #475569; margin-top: 25px;">&copy; 2025 Beeliber Global Logistics. All Rights Reserved.</p>
                     </div>
                 </div>
@@ -618,70 +532,44 @@ exports.processBookingRefund = functions.region("us-central1").https.onCall(asyn
                 <html lang="${booking.language || 'ko'}">
                 <head>
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <style>
-                        body { margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; }
-                        .wrapper { padding: 40px 10px; }
-                        .container { max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 48px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.05); }
-                        
-                        .header { background-color: #1a1a1a; padding: 60px 20px; text-align: center; border-bottom: 8px solid #ef4444; }
-                        .logo { font-size: 38px; font-weight: 900; color: #ffffff; letter-spacing: -2px; margin: 0; font-style: italic; }
-                        .logo span { color: #ef4444; font-style: normal; }
-                        
-                        .content { padding: 50px 40px; text-align: center; }
-                        .refund-badge { width: 80px; height: 80px; background-color: #fee2e2; border-radius: 30px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 30px; font-size: 40px; color: #ef4444; }
-                        
-                        .title { font-size: 28px; font-weight: 900; color: #1a1a1a; margin-bottom: 15px; font-style: italic; }
-                        .desc { font-size: 15px; color: #64748b; line-height: 1.6; margin-bottom: 40px; font-weight: 600; }
-
-                        .details-box { text-align: left; background: #ffffff; border-radius: 32px; padding: 30px; border: 1.5px solid #f1f5f9; }
-                        .section-title { font-size: 12px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; border-bottom: 2px solid #ef4444; padding-bottom: 10px; display: inline-block; }
-                        
-                        .detail-item { margin-bottom: 20px; }
-                        .detail-label { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px; }
-                        .detail-value { font-size: 16px; font-weight: 800; color: #1a1a1a; }
-                        .price-value { font-size: 24px; font-weight: 950; color: #ef4444; font-style: italic; }
-
-                        .footer { background: #1a1a1a; padding: 50px 30px; text-align: center; color: #ffffff; }
-                        .footer-slogan { font-size: 12px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.4em; }
-                    </style>
                 </head>
-                <body>
-                    <div class="wrapper">
-                        <div class="container">
-                            <div class="header">
-                                <h1 class="logo">bee<span>liber</span></h1>
+                <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a;">
+                    <div style="padding: 40px 10px;">
+                        <div style="max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 48px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.05);">
+                            <div style="background-color: #1a1a1a; padding: 60px 20px; text-align: center; border-bottom: 8px solid #ef4444;">
+                                <h1 style="font-size: 38px; font-weight: 900; color: #ffffff; letter-spacing: -2px; margin: 0; font-style: italic;">bee<span style="color: #ef4444; font-style: normal;">liber</span></h1>
                             </div>
                             
-                            <div class="content">
-                                <div class="refund-badge">💸</div>
-                                <h2 class="title">${t.refundTitle}</h2>
-                                <div class="desc">
+                            <div style="padding: 50px 40px; text-align: center;">
+                                <div style="width: 80px; height: 80px; background-color: #fee2e2; border-radius: 30px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 30px; font-size: 40px; color: #ef4444;">💸</div>
+                                <h2 style="font-size: 28px; font-weight: 900; color: #1a1a1a; margin-bottom: 15px; font-style: italic;">${t.refundTitle}</h2>
+                                <div style="font-size: 15px; color: #64748b; line-height: 1.6; margin-bottom: 40px; font-weight: 600;">
                                     ${t.greeting}, <strong>${booking.userName || 'Guest'}</strong><br/>
                                     ${t.refundDesc}<br/>
                                     <span style="font-size: 13px; color: #94a3b8;">${t.refundNote}</span>
                                 </div>
                                 
-                                <div class="details-box">
-                                    <div class="section-title">Refund Details</div>
-                                    <div class="detail-item">
-                                        <span class="detail-label">${t.statusLabel}</span>
-                                        <span class="detail-value" style="color: #ef4444;">Refunded Successfully</span>
+                                <div style="text-align: left; background: #ffffff; border-radius: 32px; padding: 30px; border: 1.5px solid #f1f5f9;">
+                                    <div style="font-size: 12px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; border-bottom: 2px solid #ef4444; padding-bottom: 10px; display: inline-block;">Refund Details</div>
+                                    <div style="margin-bottom: 20px;">
+                                        <span style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">${t.statusLabel}</span>
+                                        <span style="font-size: 16px; font-weight: 800; color: #ef4444;">Refunded Successfully</span>
                                     </div>
-                                    <div class="detail-item">
-                                        <span class="detail-label">${t.refundAmountLabel}</span>
-                                        <span class="price-value">₩${(booking.finalPrice || 0).toLocaleString()}</span>
+                                    <div style="margin-bottom: 20px;">
+                                        <span style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">${t.refundAmountLabel}</span>
+                                        <span style="font-size: 24px; font-weight: 950; color: #ef4444; font-style: italic;">₩${(booking.finalPrice || 0).toLocaleString()}</span>
                                     </div>
-                                    <div class="detail-item" style="margin-bottom: 0;">
-                                        <span class="detail-label">Reservation ID</span>
-                                        <span class="detail-value">${bookingId}</span>
+                                    <div style="margin-bottom: 0;">
+                                        <span style="font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">Reservation ID</span>
+                                        <span style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${bookingId}</span>
                                     </div>
                                 </div>
 
                                 <p style="font-size: 14px; color: #94a3b8; font-weight: 700; margin-top: 50px;">${t.thanks}</p>
                             </div>
                             
-                            <div class="footer">
-                                <div class="footer-slogan">NO BAGS, JUST FREEDOM</div>
+                            <div style="background: #1a1a1a; padding: 50px 30px; text-align: center; color: #ffffff;">
+                                <div style="font-size: 12px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 0.4em;">NO BAGS, JUST FREEDOM</div>
                                 <p style="font-size: 10px; color: #475569; margin-top: 25px;">&copy; 2025 Beeliber Global Logistics. All Rights Reserved.</p>
                             </div>
                         </div>
@@ -863,4 +751,42 @@ exports.runClaudeAgent = functions.region("us-central1").runWith({
     console.log("Starting Claude Agent with task:", data.task);
     return await claudeAgent.runAgent(data);
 });
+
+// --- SETTLEMENT ENGINE ---
+// Trigger: On Booking Write (Calculate Commission)
+exports.calculateCommission = functions.region("us-central1").firestore
+    .document("bookings/{bookingId}")
+    .onWrite(async (change, context) => {
+        // Exit if document is deleted
+        if (!change.after.exists) return null;
+
+        const booking = change.after.data();
+        const before = change.before.exists ? change.before.data() : null;
+
+        // Only calculate if branchId exists and rates are attached
+        if (!booking.branchId || !booking.branchCommissionRates) return null;
+
+        // Skip if settlement amount already matches to avoid infinite loops
+        const rate = booking.serviceType === 'DELIVERY'
+            ? (booking.branchCommissionRates.delivery || 0)
+            : (booking.branchCommissionRates.storage || 0);
+
+        // Calculate base commission
+        let settlementAmount = Math.round((booking.finalPrice || 0) * (rate / 100));
+
+        // Adjust for cancellations/refunds
+        if (booking.status === '취소됨' || booking.status === '환불완료') {
+            settlementAmount = 0; // Or keep negative if needed, but 0 means no settlement
+        }
+
+        // Avoid infinite loop if no change
+        if (before && before.branchSettlementAmount === settlementAmount) {
+            return null;
+        }
+
+        return change.after.ref.update({
+            branchSettlementAmount: settlementAmount
+        });
+    });
+
 

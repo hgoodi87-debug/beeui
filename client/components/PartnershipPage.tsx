@@ -86,8 +86,8 @@ const PartnershipPage: React.FC<PartnershipPageProps> = ({ onBack, t }) => {
           <div className="w-8 h-8 bg-bee-yellow rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform">
             <Handshake size={18} className="text-black" />
           </div>
-          <span className="text-xl font-black italic text-bee-yellow ml-1">bee</span>
-          <span className="text-xl font-black text-bee-black">liber</span>
+          <span className="text-xl font-black text-bee-black ml-1">bee</span>
+          <span className="text-xl font-black text-bee-yellow italic pr-1">liber</span>
         </div>
         <button
           onClick={onBack}

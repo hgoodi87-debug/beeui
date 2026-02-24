@@ -7,6 +7,7 @@ interface SEOProps {
     keywords?: string;
     lang?: string;
     path?: string;
+    schema?: object; // Add schema prop
 }
 
 const SEO: React.FC<SEOProps> = ({
@@ -14,7 +15,8 @@ const SEO: React.FC<SEOProps> = ({
     description,
     keywords,
     lang = 'ko',
-    path = ''
+    path = '',
+    schema
 }) => {
     const siteUrl = 'https://bee-liber.com';
     const currentUrl = `${siteUrl}${path}`;
@@ -52,7 +54,13 @@ const SEO: React.FC<SEOProps> = ({
             <meta property="twitter:description" content={metaDescription} />
             <meta property="twitter:image" content="https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=1200" />
 
-            {/* Alternate Language Links for SEO */}
+            {/* Dynamic Schema Injection */}
+            {schema && (
+                <script type="application/ld+json">
+                    {JSON.stringify(schema)}
+                </script>
+            )}
+
             {/* Alternate Language Links for SEO */}
             <link rel="alternate" hrefLang="ko" href={`${siteUrl}${path}`} />
             <link rel="alternate" hrefLang="en" href={`${siteUrl}${path}?lang=en`} />

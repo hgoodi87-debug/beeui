@@ -205,6 +205,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 
   return (
     <div className="relative w-full h-[100dvh] bg-white flex flex-col md:flex-row overflow-hidden font-sans">
+      <h1 className="sr-only">{t.locations_page?.sidebar_subtitle || 'Beeliber Locations'}</h1>
       {/* Sidebar Section - [스봉이 수정] 모바일에서 지점 선택 시 사이드바를 완전히 제거하여 지도/정보에 집중 */}
       {/* Sidebar Section - [스봉이 수정] 모바일에서 지점 선택 시 사이드바를 완전히 제거하여 지도/정보에 집중 */}
       <div

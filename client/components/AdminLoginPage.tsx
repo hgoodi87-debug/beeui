@@ -114,20 +114,25 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   };
 
   return (
-    <div className="min-h-screen bg-bee-light flex items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full animate-fade-in">
+    <div className="min-h-screen bg-bee-black flex items-center justify-center p-6 font-sans relative overflow-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-bee-yellow rounded-full blur-[150px] opacity-20 pointer-events-none animate-pulse-slow"></div>
+      <div className="absolute bottom-[-10%] left-[-5%] w-80 h-80 bg-bee-yellow rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
+
+      <div className="max-w-md w-full animate-fade-in relative z-10">
         <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-bee-yellow rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-yellow-100">
-            <i className="fa-solid fa-shield-halved text-bee-black text-3xl"></i>
+          <div className="w-20 h-20 bg-gradient-to-br from-bee-yellow to-[#E5C100] rounded-[24px] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-bee-yellow/20 relative group overflow-hidden">
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>
+            <i className="fa-solid fa-shield-halved text-bee-black text-3xl font-black relative z-10 drop-shadow-sm group-hover:scale-110 transition-transform duration-300"></i>
           </div>
           <div className="flex items-center justify-center gap-1 mb-2 scale-110">
-            <span className="text-3xl font-black italic text-bee-yellow">bee</span>
-            <span className="text-3xl font-black text-bee-black">liber</span>
+            <span className="text-4xl font-black italic text-bee-yellow">bee</span>
+            <span className="text-4xl font-black text-white">liber</span>
           </div>
-          <p className="text-bee-grey font-bold uppercase tracking-[0.2em] text-[10px] mt-2">Logistics Control Portal</p>
+          <p className="text-bee-yellow font-black uppercase tracking-[0.3em] text-[10px] mt-3 drop-shadow-sm">Logistics Control Portal</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-2xl space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white/5 backdrop-blur-2xl p-10 rounded-[40px] border border-white/10 shadow-2xl space-y-6 hover:shadow-bee-yellow/5 transition-all duration-500">
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">Admin Name</label>
@@ -137,7 +142,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="관리자 이름 (Name)"
-                className="w-full bg-gray-50 border-2 border-transparent rounded-2xl py-4 px-6 text-bee-black font-bold focus:outline-none focus:border-bee-yellow focus:bg-white transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold placeholder-gray-500 focus:outline-none focus:border-bee-yellow focus:bg-white/10 transition-all shadow-inner"
                 autoFocus
               />
             </div>
@@ -150,12 +155,12 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="비밀번호"
-                className="w-full bg-gray-50 border-2 border-transparent rounded-2xl py-4 px-6 text-bee-black font-black tracking-widest focus:outline-none focus:border-bee-yellow focus:bg-white transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white font-black tracking-widest placeholder-gray-500 focus:outline-none focus:border-bee-yellow focus:bg-white/10 transition-all shadow-inner"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-[38px] text-gray-400 hover:text-bee-black transition-colors"
+                className="absolute right-5 top-[38px] text-gray-500 hover:text-bee-yellow transition-colors"
                 title={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
                 aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
               >
@@ -164,37 +169,39 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
             </div>
           </div>
 
-          {error && <p className="text-red-500 text-xs text-center font-bold animate-pulse">{error}</p>}
+          {error && <p className="text-red-400 text-xs text-center font-bold animate-pulse bg-red-400/10 py-2 rounded-lg border border-red-400/20">{error}</p>}
 
           <div className="pt-2">
             <button
               type="submit"
               disabled={loading}
-              className={`w-full btn-primary py-5 rounded-2xl shadow-xl shadow-yellow-100 text-lg mb-4 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full bg-bee-yellow text-bee-black font-black hover:bg-[#E5C100] py-5 rounded-2xl shadow-xl shadow-bee-yellow/20 text-lg mb-4 hover:scale-[1.02] active:scale-95 transition-all ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <i className="fa-solid fa-circle-notch animate-spin"></i>
-                  <span>확인 중...</span>
+                  <span>Connecting...</span>
                 </div>
               ) : (
-                '대시보드 접속'
+                <span className="flex items-center justify-center gap-2">
+                  SECURE LOGIN <i className="fa-solid fa-arrow-right"></i>
+                </span>
               )}
             </button>
 
             <button
               type="button"
               onClick={onCancel}
-              className="w-full text-gray-400 hover:text-bee-black text-sm font-bold transition-colors mb-4"
+              className="w-full text-gray-500 hover:text-white text-sm font-bold transition-colors mb-4 flex items-center justify-center gap-2"
             >
-              돌아가기
+              <i className="fa-solid fa-house"></i> 메인으로 돌아가기
             </button>
 
 
           </div>
         </form>
 
-        <p className="mt-12 text-center text-[10px] text-gray-300 font-bold uppercase tracking-[0.4em]">
+        <p className="mt-12 text-center text-[10px] text-gray-500 font-bold uppercase tracking-[0.4em]">
           Beeliber Systems &copy; 2025
         </p>
       </div>

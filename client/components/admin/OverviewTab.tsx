@@ -126,26 +126,26 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Daily Revenue Summary */}
-                <div className="bg-bee-black text-white p-8 rounded-[40px] shadow-lg shadow-bee-black/20 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-10">
+                <div className="bg-white/80 p-8 rounded-[40px] shadow-lg border border-gray-200 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-5 text-bee-black">
                         <i className="fa-solid fa-coins text-9xl -mr-8 -mt-8"></i>
                     </div>
-                    <h3 className="text-sm font-bold text-bee-yellow uppercase tracking-widest mb-2">Today's Revenue</h3>
-                    <div className="text-4xl font-black mb-8">₩{(deliveryTotal + storageTotal).toLocaleString()}</div>
+                    <h3 className="text-sm font-bold text-bee-black uppercase tracking-widest mb-2">Today's Revenue</h3>
+                    <div className="text-4xl font-black mb-8 text-bee-black">₩{(deliveryTotal + storageTotal).toLocaleString()}</div>
 
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Delivery</span>
-                            <span className="font-bold">₩{deliveryTotal.toLocaleString()}</span>
+                            <span className="text-gray-500 font-bold">Delivery</span>
+                            <span className="font-black text-bee-black">₩{deliveryTotal.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Storage</span>
-                            <span className="font-bold">₩{storageTotal.toLocaleString()}</span>
+                            <span className="text-gray-500 font-bold">Storage</span>
+                            <span className="font-black text-bee-black">₩{storageTotal.toLocaleString()}</span>
                         </div>
-                        <hr className="border-white/10" />
+                        <hr className="border-gray-200" />
                         <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Total Bookings</span>
-                            <span className="font-bold text-bee-yellow">{todayBookings.length} 건</span>
+                            <span className="text-gray-500 font-bold">Total Bookings</span>
+                            <span className="font-black text-bee-yellow">{todayBookings.length} 건</span>
                         </div>
                     </div>
                 </div>

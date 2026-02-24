@@ -38,6 +38,7 @@ interface LandingRenewalProps {
     onMyPageClick: () => void;
     user: any;
     onSuccess?: (booking: any) => Promise<void>;
+    branchCode?: string;
 }
 
 const LandingRenewal: React.FC<LandingRenewalProps> = ({
@@ -49,7 +50,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
     onLoginClick,
     onMyPageClick,
     user,
-    onSuccess
+    onSuccess,
+    branchCode
 }) => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const [showTracking, setShowTracking] = React.useState(false);
@@ -72,19 +74,40 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     <div className="flex items-center gap-3">
                         {/* Language Picker */}
                         <div className="relative group">
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-white text-[10px] font-black tracking-widest hover:bg-white/10 transition-all uppercase">
-                                <Globe className="w-3.5 h-3.5 text-bee-yellow" />
-                                {lang}
+                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full text-white text-[11px] font-black tracking-wider hover:bg-white/20 transition-all uppercase shadow-lg">
+                                <img
+                                    src={`https://flagcdn.com/w40/${lang === 'ko' ? 'kr' : lang === 'en' ? 'us' : lang === 'ja' ? 'jp' : lang === 'zh' ? 'cn' : lang === 'zh-TW' ? 'tw' : 'hk'}.png`}
+                                    alt={lang}
+                                    className="w-4 h-auto rounded-sm shadow-sm"
+                                />
+                                <span className="opacity-90">
+                                    {lang === 'ko' ? 'KR' : lang === 'en' ? 'EN' : lang === 'ja' ? 'JP' : lang === 'zh' ? 'CN' : lang === 'zh-TW' ? 'TW' : 'HK'}
+                                </span>
                             </button>
                             <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[101]">
-                                <div className="bg-white rounded-2xl shadow-2xl p-2 min-w-[140px] border border-black/5">
-                                    {['ko', 'en', 'ja', 'zh', 'zh-TW', 'zh-HK'].map(l => (
+                                <div className="bg-white rounded-2xl shadow-2xl p-2 min-w-[150px] border border-black/5">
+                                    {[
+                                        { id: 'ko', name: '한국어', flag: 'kr' },
+                                        { id: 'en', name: 'English', flag: 'us' },
+                                        { id: 'ja', name: '日本語', flag: 'jp' },
+                                        { id: 'zh', name: '中文(简)', flag: 'cn' },
+                                        { id: 'zh-TW', name: '繁體中文', flag: 'tw' },
+                                        { id: 'zh-HK', name: '廣東話', flag: 'hk' }
+                                    ].map(item => (
                                         <button
-                                            key={l}
-                                            onClick={() => onLangChange(l)}
-                                            className={`w-full text-left px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${lang === l ? 'bg-bee-black text-bee-yellow' : 'hover:bg-gray-50 text-bee-muted'}`}
+                                            key={item.id}
+                                            onClick={() => onLangChange(item.id)}
+                                            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${lang === item.id ? 'bg-bee-black text-bee-yellow' : 'hover:bg-gray-50 text-bee-muted'}`}
                                         >
-                                            {l === 'ko' ? '한국어' : l === 'en' ? 'English' : l === 'ja' ? '日本語' : l === 'zh' ? '中文(简)' : l === 'zh-TW' ? '繁體中文' : '廣東話'}
+                                            <div className="flex items-center gap-2.5">
+                                                <img
+                                                    src={`https://flagcdn.com/w40/${item.flag}.png`}
+                                                    alt={item.name}
+                                                    className="w-4 h-auto rounded-sm shadow-sm"
+                                                />
+                                                <span>{item.name}</span>
+                                            </div>
+                                            {lang === item.id && <div className="w-1 h-1 rounded-full bg-bee-yellow" />}
                                         </button>
                                     ))}
                                 </div>
@@ -135,6 +158,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     onNavigate={onNavigate}
                     onTrackClick={() => setShowTracking(true)}
                     videoSrc={VIDEO_URL}
+                    branchCode={branchCode}
                 />
                 <LandingPainSection t={t} />
                 <LandingHowItWorks t={t} />
@@ -170,6 +194,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                     <button
                                         onClick={() => setShowTracking(false)}
                                         className="w-14 h-14 rounded-full bg-bee-light flex items-center justify-center hover:bg-bee-yellow transition-all active:scale-90"
+                                        title="Close Tracking Widget"
                                     >
                                         <X className="w-6 h-6" />
                                     </button>

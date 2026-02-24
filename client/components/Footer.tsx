@@ -18,8 +18,8 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
           {/* Brand & Social */}
           <div className="space-y-6 md:space-y-8 flex flex-col items-center md:items-start md:w-1/3">
             <div className="flex items-center gap-1">
-              <span className="text-4xl font-black italic text-bee-yellow">bee</span>
-              <span className="text-4xl font-black text-white">liber</span>
+              <span className="text-4xl font-black text-white">bee</span>
+              <span className="text-4xl font-black text-bee-yellow italic pr-1">liber</span>
             </div>
             <p className="text-gray-400 font-medium leading-relaxed text-sm text-center md:text-left">
               {t.footer?.desc || "Experience the freedom of travel without baggage."}
@@ -41,8 +41,8 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
           <div className="flex flex-row justify-between md:justify-end gap-x-8 gap-y-12 md:gap-x-16 flex-wrap md:flex-nowrap md:w-2/3">
             {/* Service Links */}
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
-              <h3 className="font-bold text-lg text-white">{t.footer?.service || "Service"}</h3>
-              <ul className="space-y-3 md:space-y-4 text-sm text-gray-400">
+              <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.service || "Service"}</h3>
+              <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('USER'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</button></li>
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</button></li>
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</button></li>
@@ -51,18 +51,17 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
 
             {/* Legal Links */}
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
-              <h3 className="font-bold text-lg text-white">{t.footer?.legal || "Legal"}</h3>
-              <ul className="space-y-3 md:space-y-4 text-sm text-gray-400">
+              <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.legal || "Legal"}</h3>
+              <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('PRIVACY'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</button></li>
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('TERMS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('ADMIN_LOGIN'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.admin || "Admin Portal"}</button></li>
               </ul>
             </div>
 
             {/* Contact Info */}
             <div className="space-y-4 md:space-y-6 flex-[2] min-w-[200px]">
-              <h3 className="font-bold text-lg text-white">{t.footer?.contact || "Contact Us"}</h3>
-              <ul className="space-y-3 md:space-y-4 text-sm text-gray-400">
+              <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.contact || "Contact Us"}</h3>
+              <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
                 <li className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-bee-yellow shrink-0" />
                   <span>{t.footer?.address || "Seoul Station Branch, 123 Han River Blvd, Seoul, South Korea"}</span>

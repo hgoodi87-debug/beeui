@@ -13,7 +13,7 @@ import {
   getDoc,
   addDoc
 } from 'firebase/firestore';
-import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, DiscountCode, PriceSettings, StorageTier, RoutePrice, AdminUser, PartnershipInquiry, SystemNotice, HeroConfig, GoogleCloudConfig, PrivacyPolicyData, TermsPolicyData, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
+import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, DiscountCode, PriceSettings, StorageTier, RoutePrice, AdminUser, PartnershipInquiry, SystemNotice, HeroConfig, GoogleCloudConfig, PrivacyPolicyData, TermsPolicyData, SnsType, BagSizes, CashClosing, Expenditure, AdminTab, Branch, BranchProspect } from '../types';
 import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
 import { sendMessageToGemini } from '../services/geminiService';
@@ -35,7 +35,7 @@ import ManualBookingModal from './admin/ManualBookingModal';
 import ChatTab from './admin/ChatTab';
 import DiscountTab from './admin/DiscountTab';
 import ReportsTab from './admin/ReportsTab';
-
+import RoadmapTab from './admin/RoadmapTab';
 
 
 const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
@@ -108,12 +108,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   type StatusTab = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   const [activeStatusTab, setActiveStatusTab] = useState<StatusTab>('ALL');
 
-  const [bookings, setBookings] = useState<BookingState[]>([]);
+  const [allBookings, setAllBookings] = useState<BookingState[]>([]);
+  const [globalBranchFilter, setGlobalBranchFilter] = useState<string>('ALL');
+
+  const bookings = useMemo(() => {
+    if (globalBranchFilter === 'ALL') return allBookings;
+    return allBookings.filter(b =>
+      b.branchId === globalBranchFilter ||
+      b.pickupLocation === globalBranchFilter ||
+      b.dropoffLocation === globalBranchFilter
+    );
+  }, [allBookings, globalBranchFilter]);
+
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [inquiries, setInquiries] = useState<PartnershipInquiry[]>([]);
+  const [branchProspects, setBranchProspects] = useState<BranchProspect[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
@@ -648,10 +660,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
-      const [loadedLocs, loadedBookings, loadedInquiries] = await Promise.all([
+      const [loadedLocs, loadedBookings, loadedInquiries, loadedProspects] = await Promise.all([
         StorageService.getLocations(),
         StorageService.getBookings(),
-        StorageService.getInquiries()
+        StorageService.getInquiries(),
+        StorageService.getBranchProspects()
       ]);
 
       // Validate types before setting state to avoid crashes
@@ -660,12 +673,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const savedHero = await StorageService.getHeroConfig();
       if (savedHero) setHeroConfig(savedHero);
 
-
       if (Array.isArray(loadedBookings)) {
         loadedBookings.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-        setBookings(loadedBookings);
+        setAllBookings(loadedBookings);
       } else {
-        setBookings([]);
+        setAllBookings([]);
       }
 
       if (Array.isArray(loadedInquiries)) {
@@ -673,6 +685,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         setInquiries(loadedInquiries);
       } else {
         setInquiries([]);
+      }
+
+      if (Array.isArray(loadedProspects)) {
+        loadedProspects.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+        setBranchProspects(loadedProspects);
+      } else {
+        setBranchProspects([]);
       }
 
       // Sync local storage items using safe parse
@@ -715,11 +734,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     // Subscribe to real-time updates for Bookings and Inquiries
     const unsubscribeBookings = StorageService.subscribeBookings((data) => {
-      setBookings(Array.isArray(data) ? data : []);
+      setAllBookings(Array.isArray(data) ? data : []);
     });
 
     const unsubscribeInquiries = StorageService.subscribeInquiries((data) => {
       setInquiries(Array.isArray(data) ? data : []);
+    });
+
+    const unsubscribeProspects = StorageService.subscribeBranchProspects((data) => {
+      setBranchProspects(Array.isArray(data) ? data : []);
     });
 
     // Listen for visibility change (tab focus) to refresh static data
@@ -758,6 +781,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       clearInterval(timer);
       unsubscribeBookings();
       unsubscribeInquiries();
+      unsubscribeProspects();
       unsubscribeClosings();
       unsubscribeExps();
       unsubscribeAdmins();
@@ -1767,7 +1791,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   // renderOverview extracted to ./admin/OverviewTab.tsx
 
   return (
-    <div className="min-h-screen bg-bee-light text-bee-black font-sans flex">
+    <div className="min-h-screen bg-gray-50 text-bee-black font-sans flex relative overflow-hidden">
+      {/* Ambient Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-bee-yellow/10 rounded-full blur-[150px] pointer-events-none"></div>
+
       <DailyDetailModal
         selectedDetailDate={selectedDetailDate}
         setSelectedDetailDate={setSelectedDetailDate}
@@ -1777,10 +1804,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       />
 
       {/* CEMS Sidebar */}
-      <aside className="w-64 bg-bee-black text-white hidden lg:flex flex-col sticky top-0 h-screen z-50 overflow-hidden">
+      <aside className="w-64 bg-white/80 backdrop-blur-3xl border-r border-gray-200 text-bee-black hidden lg:flex flex-col sticky top-0 h-screen z-50 overflow-hidden shadow-2xl">
         <div className="p-8 flex items-center gap-2">
           <span className="text-2xl font-black italic text-bee-yellow">bee</span>
-          <span className="text-2xl font-black text-white">liber</span>
+          <span className="text-2xl font-black text-bee-black">liber</span>
         </div>
 
         <div className="px-6 flex-1 overflow-y-auto no-scrollbar space-y-8 py-4">
@@ -1796,7 +1823,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
                 >
                   <i className={`fa-solid ${item.icon} w-5`}></i>
                   {item.label}
@@ -1817,7 +1844,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
                 >
                   <i className={`fa-solid ${item.icon} w-5`}></i>
                   {item.label}
@@ -1836,7 +1863,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
                 >
                   <i className={`fa-solid ${item.icon} w-5`}></i>
                   {item.label}
@@ -1850,7 +1877,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">System Admin</div>
             <nav className="space-y-1">
               {[
-                { id: 'LOCATIONS', label: '거점 지점 관리', icon: 'fa-location-dot' },
+                { id: 'ROADMAP', label: '전체 페이지 로드맵', icon: 'fa-map-location-dot' },
+                { id: 'LOCATIONS', label: '지점 통합 관리', icon: 'fa-location-dot' },
                 { id: 'DISCOUNTS', label: '할인 코드 관리', icon: 'fa-tags' },
                 { id: 'SYSTEM', label: '가격 정책 설정', icon: 'fa-sliders' },
                 { id: 'HR', label: '직원 권한 관리', icon: 'fa-user-tie' },
@@ -1860,7 +1888,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
                 >
                   <i className={`fa-solid ${item.icon} w-5`}></i>
                   {item.label}
@@ -1871,10 +1899,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-6 border-t border-white/5 bg-white/5 space-y-3">
+        <div className="p-6 border-t border-gray-200 bg-white/50 space-y-3">
           <div className="flex flex-col">
             <span className="text-xs font-black text-bee-yellow uppercase">{jobTitle}</span>
-            <span className="text-sm font-bold text-white mb-2">{adminName} 님</span>
+            <span className="text-sm font-bold text-bee-black mb-2">{adminName} 님</span>
           </div>
 
           {onStaffMode && (
@@ -1886,27 +1914,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             </button>
           )}
 
-          <button onClick={onBack} className="w-full flex items-center justify-center gap-2 p-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold transition-all text-white">
+          <button onClick={onBack} className="w-full flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold transition-all text-gray-600">
             <i className="fa-solid fa-power-off"></i> 시스템 종료
           </button>
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-40 lg:hidden">
+      <div className="flex-1 flex flex-col min-h-screen relative z-10">
+        <header className="bg-white/80 backdrop-blur-3xl border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-40 lg:hidden shadow-lg">
           <div className="flex items-center gap-2">
             <span className="text-xl font-black italic text-bee-yellow">bee</span>
             <span className="text-xl font-black text-bee-black">liber</span>
           </div>
-          <button title="Logout" aria-label="Logout" onClick={onBack} className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400"><i className="fa-solid fa-power-off"></i></button>
+          <button title="Logout" aria-label="Logout" onClick={onBack} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 transition-colors rounded-xl flex items-center justify-center text-gray-500"><i className="fa-solid fa-power-off"></i></button>
         </header>
 
         {/* Global Toolbar */}
-        <div className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 lg:top-0 z-40 shadow-sm hidden lg:flex">
+        <div className="bg-white/80 backdrop-blur-3xl border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 lg:top-0 z-40 shadow-lg hidden lg:flex">
           <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+            <div className="px-4 py-2 bg-gray-100 flex items-center gap-3 rounded-full border border-gray-200">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-xs font-black text-bee-black uppercase tracking-widest">Server Live</span>
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Server Live</span>
             </div>
             <div className="text-xs font-bold text-gray-400">
               <i className="fa-regular fa-calendar mr-1"></i> {todayKST} (KST)
@@ -1914,10 +1942,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           </div>
 
           <div className="flex items-center gap-3">
+            <select
+              value={globalBranchFilter}
+              onChange={(e) => setGlobalBranchFilter(e.target.value)}
+              title="지점 필터"
+              aria-label="지점 필터"
+              className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-bee-black focus:border-bee-yellow hover:border-gray-300 outline-none cursor-pointer transition-colors"
+            >
+              <option value="ALL">전체 지점 보관/배송</option>
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.id}>{loc.name} - 지점</option>
+              ))}
+            </select>
             <button
               onClick={refreshData}
               disabled={isRefreshing}
-              className="px-4 py-2.5 bg-gray-50 text-bee-grey hover:bg-bee-black hover:text-bee-yellow rounded-xl text-xs font-black transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent rounded-xl text-xs font-black transition-all flex items-center gap-2"
             >
               <i className={`fa-solid fa-rotate-right ${isRefreshing ? 'animate-spin' : ''}`}></i>
               Refresh
@@ -1926,6 +1966,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         </div>
 
         <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
+          {activeTab === 'ROADMAP' && (
+            <RoadmapTab t={t} lang={lang} locations={locations} />
+          )}
+
           {activeTab === 'OVERVIEW' && (
             <OverviewTab
               todayKST={todayKST}
@@ -1978,6 +2022,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               t={t}
             />
           )}
+
 
           {activeTab === 'DAILY_SETTLEMENT' && (
             <DailySettlementTab
@@ -2192,7 +2237,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         try {
                           await StorageService.updateBooking(scannedBooking.id, { status: item.status });
                           // Local state update
-                          setBookings(prev => prev.map(b => b.id === scannedBooking.id ? { ...b, status: item.status } : b));
+                          setAllBookings(prev => prev.map((b: BookingState) => b.id === scannedBooking.id ? { ...b, status: item.status } : b));
                           setScannedBooking({ ...scannedBooking, status: item.status });
                           alert(`상태가 [${item.label}] (으)로 변경되었습니다.`);
                         } catch (e) {

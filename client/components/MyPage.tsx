@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { auth, db } from "../firebaseApp";
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { UserProfile } from "../types";
+import { StorageService } from "../services/storageService";
 import BookingHistoryTab from "./BookingHistoryTab";
 import CouponBoxTab from "./CouponBoxTab";
 
@@ -23,7 +25,8 @@ interface MyPageProps {
 
 const MyPage: React.FC<MyPageProps> = ({ t, onClose }) => {
     const [activeTab, setActiveTab] = useState<'BOOKING' | 'COUPON'>('BOOKING');
-    const [userData, setUserData] = useState<any>(null);
+    const [userData, setUserData] = useState<UserProfile | null>(null);
+    const [couponCount, setCouponCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -35,10 +38,29 @@ const MyPage: React.FC<MyPageProps> = ({ t, onClose }) => {
             }
 
             try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    setUserData(userDoc.data());
+                let profile = await StorageService.getUserProfile(user.uid);
+
+                // If profile doesn't exist, create one (Welcome!)
+                if (!profile) {
+                    const newProfile: UserProfile = {
+                        uid: user.uid,
+                        email: user.email || '',
+                        displayName: user.displayName || 'Traveler',
+                        points: 1000, // Initial welcome points
+                        level: 'BRONZE',
+                        createdAt: new Date().toISOString()
+                    };
+                    await StorageService.updateUserProfile(user.uid, newProfile);
+                    await StorageService.issueWelcomeCoupon(user.uid);
+                    profile = newProfile;
                 }
+
+                setUserData(profile);
+
+                // Fetch coupons count
+                const coupons = await StorageService.getUserCoupons(user.uid);
+                setCouponCount(coupons.length);
+
             } catch (error) {
                 console.error("Error fetching user data:", error);
             } finally {
@@ -98,26 +120,34 @@ const MyPage: React.FC<MyPageProps> = ({ t, onClose }) => {
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="px-2 py-0.5 bg-bee-yellow/20 text-bee-yellow text-[9px] font-black rounded-md uppercase tracking-tighter">Premium Member</span>
                                 </div>
-                                <h2 className="text-2xl font-black tracking-tight">{userData?.nickname || auth.currentUser?.displayName || 'Traveler'}</h2>
+                                <h2 className="text-2xl font-black tracking-tight">{userData?.displayName || auth.currentUser?.displayName || 'Traveler'}</h2>
                                 <p className="text-xs font-bold text-white/40">{auth.currentUser?.email}</p>
                             </div>
                         </div>
 
                         <div className="mt-8 grid grid-cols-2 gap-4 relative z-10">
-                            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                            >
                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Mileage</p>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-xl font-black text-bee-yellow">{userData?.points?.toLocaleString() || 0}</span>
                                     <span className="text-[10px] font-black text-white/40">bee</span>
                                 </div>
-                            </div>
-                            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+                            </motion.div>
+                            <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                            >
                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Coupons</p>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-xl font-black text-bee-yellow">1</span>
+                                    <span className="text-xl font-black text-bee-yellow">{couponCount}</span>
                                     <span className="text-[10px] font-black text-white/40">pcs</span>
                                 </div>
-                            </div>
+                            </motion.div>
                         </div>
                     </motion.div>
                 </div>
@@ -159,7 +189,7 @@ const MyPage: React.FC<MyPageProps> = ({ t, onClose }) => {
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -10 }}
                             >
-                                <CouponBoxTab t={t} />
+                                <CouponBoxTab t={t} uid={auth.currentUser?.uid || ''} />
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -36,8 +36,8 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack, t }) => {
       {/* Header */}
       <nav className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md shadow-sm py-4 px-6 md:px-12 flex justify-between items-center transition-all">
         <div className="flex items-center gap-1 cursor-pointer" onClick={onBack}>
-          <span className="text-3xl md:text-4xl font-black italic text-bee-yellow">bee</span>
-          <span className="text-3xl md:text-4xl font-black text-bee-black">liber</span>
+          <span className="text-3xl md:text-4xl font-black text-bee-black">bee</span>
+          <span className="text-3xl md:text-4xl font-black text-bee-yellow italic pr-1">liber</span>
         </div>
         <button onClick={onBack} className="text-xs font-black text-bee-black hover:text-red-500 uppercase tracking-widest flex items-center gap-2 px-6 py-3 bg-gray-100 rounded-full transition-all hover:scale-105">
           <i className="fa-solid fa-arrow-left"></i> {t.notice?.close || 'Back'}

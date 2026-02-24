@@ -30,7 +30,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-4xl md:text-7xl font-display font-black text-bee-black leading-tight tracking-tighter break-keep"
+                        className="text-4xl md:text-7xl font-display font-black text-bee-black leading-[1.2] tracking-tight break-keep"
                     >
                         {t.pain.headline}
                     </motion.h2>
@@ -55,7 +55,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         <div className="absolute bottom-6 left-8 right-8 z-20">
                             <div className="px-2 py-2">
                                 <div className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest text-white/80 uppercase mb-3 border border-white/20">{t.pain.badge_without || 'Without Beeliber'}</div>
-                                <h3 className="text-2xl md:text-3xl font-display font-black text-red-500 tracking-tighter italic leading-tight drop-shadow-md">{t.pain.quote_bad || '"STAIRS ARE HELL"'}</h3>
+                                <h3 className="text-2xl md:text-3xl font-display font-black text-red-500 tracking-tight italic leading-snug drop-shadow-md">{t.pain.quote_bad || '"STAIRS ARE HELL"'}</h3>
                             </div>
                         </div>
                     </motion.div>
@@ -78,7 +78,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         <div className="absolute bottom-6 left-8 right-8 z-20">
                             <div className="px-2 py-2">
                                 <div className="inline-block px-4 py-1.5 bg-bee-black/80 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest text-bee-yellow uppercase mb-3 border border-bee-yellow/30">{t.pain.badge_with || 'With Beeliber 💅'}</div>
-                                <h3 className="text-2xl md:text-3xl font-display font-black text-bee-yellow tracking-tighter leading-tight drop-shadow-md">{t.pain.quote_good || '"WALKING ON CLOUDS"'}</h3>
+                                <h3 className="text-2xl md:text-3xl font-display font-black text-bee-yellow tracking-tight leading-snug drop-shadow-md">{t.pain.quote_good || '"WALKING ON CLOUDS"'}</h3>
                             </div>
                         </div>
                     </motion.div>
@@ -90,7 +90,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
-                        className="text-xl md:text-3xl text-bee-black font-bold font-outfit leading-relaxed break-keep"
+                        className="text-xl md:text-3xl text-bee-black font-bold font-outfit leading-relaxed tracking-tight break-keep"
                     >
                         {t.pain.sub_copy.split('\n').map((line: string, index: number) => (
                             <React.Fragment key={index}>

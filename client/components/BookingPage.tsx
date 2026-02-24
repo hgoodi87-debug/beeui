@@ -33,6 +33,8 @@ interface BookingPageProps {
     onBack: () => void;
     onSuccess: (booking: BookingState) => void;
     user?: any;
+    customerBranchId?: string;
+    customerBranchRates?: { delivery: number; storage: number };
 }
 
 const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
@@ -48,7 +50,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
     initialBagSizes,
     onBack,
     onSuccess,
-    user
+    user,
+    customerBranchId,
+    customerBranchRates
 }) => {
     const isMember = !!user && !user.isAnonymous;
     const defaultDate = formatKSTDate();
@@ -311,7 +315,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
             dropoffDate: booking.dropoffDate || '',
             deliveryTime: booking.deliveryTime || '',
             bagSizes: booking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 },
-            language: lang.split('-')[0] // 'ko-KR' -> 'ko' 형식으로 저장
+            language: lang.split('-')[0], // 'ko-KR' -> 'ko' 형식으로 저장
+            branchId: customerBranchId,
+            branchCommissionRates: customerBranchRates
         };
 
         const channelMap: Record<string, any> = {

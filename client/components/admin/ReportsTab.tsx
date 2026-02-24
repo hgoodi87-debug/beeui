@@ -88,27 +88,27 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {stats.yearly.map(y => (
-                        <div key={y.year} className="p-6 bg-bee-black text-bee-yellow rounded-3xl border border-white/10">
+                        <div key={y.year} className="p-6 bg-gray-50 text-bee-black rounded-3xl border border-gray-100">
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-lg font-black">{y.year}년</span>
-                                <i className="fa-solid fa-ranking-star opacity-50"></i>
+                                <i className="fa-solid fa-ranking-star text-bee-yellow"></i>
                             </div>
                             <div className="space-y-4">
                                 <div className="flex justify-between items-end">
-                                    <span className="text-[10px] font-black uppercase opacity-60">총 성공 매출</span>
+                                    <span className="text-[10px] font-black uppercase text-gray-400">총 성공 매출</span>
                                     <div className="text-right">
                                         <p className="text-xl font-black italic">₩{y.success.sum.toLocaleString()}</p>
-                                        <p className="text-[10px] font-bold opacity-60">{y.success.count}건</p>
+                                        <p className="text-[10px] font-bold text-gray-400">{y.success.count}건</p>
                                     </div>
                                 </div>
-                                <div className="pt-4 border-t border-white/10 grid grid-cols-2 gap-4">
+                                <div className="pt-4 border-t border-gray-200 grid grid-cols-2 gap-4">
                                     <div>
-                                        <p className="text-[9px] font-black uppercase opacity-40">취소 (₩)</p>
-                                        <p className="text-sm font-black italic">₩{(y.cancelled.sum / 1000).toFixed(0)}k</p>
+                                        <p className="text-[9px] font-black uppercase text-gray-400 mb-1">취소 (₩)</p>
+                                        <p className="text-sm font-black italic text-gray-600">₩{(y.cancelled.sum / 1000).toFixed(0)}k</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black uppercase opacity-40">환불 (₩)</p>
-                                        <p className="text-sm font-black italic">₩{(y.refunded.sum / 1000).toFixed(0)}k</p>
+                                        <p className="text-[9px] font-black uppercase text-gray-400 mb-1">환불 (₩)</p>
+                                        <p className="text-sm font-black italic text-gray-600">₩{(y.refunded.sum / 1000).toFixed(0)}k</p>
                                     </div>
                                 </div>
                             </div>

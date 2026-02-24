@@ -17,12 +17,12 @@ interface NavbarProps {
 }
 
 const LANGUAGES = [
-  { code: 'ko', name: 'KR', flag: '🇰🇷' },
-  { code: 'en', name: 'EN', flag: '🇺🇸' },
-  { code: 'zh-CN', name: 'CN', flag: '🇨🇳' },
-  { code: 'zh-TW', name: 'TW', flag: '🇹🇼' },
-  { code: 'zh-HK', name: 'HK', flag: '🇭🇰' },
-  { code: 'ja', name: 'JP', flag: '🇯🇵' },
+  { code: 'ko', name: 'KR', flag: 'kr' },
+  { code: 'en', name: 'EN', flag: 'us' },
+  { code: 'zh', name: 'CN', flag: 'cn' },
+  { code: 'zh-TW', name: 'TW', flag: 'tw' },
+  { code: 'zh-HK', name: 'HK', flag: 'hk' },
+  { code: 'ja', name: 'JP', flag: 'jp' },
 ];
 
 const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartnersClick, onServicesClick, onTermsClick, onLoginClick, onMyPageClick, user, currentLang, onLangChange, t }) => {
@@ -66,7 +66,11 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
               onClick={() => setIsLangOpen(!isLangOpen)}
               className="flex items-center gap-2 bg-gray-100/50 hover:bg-gray-100 p-2 pl-3 pr-3 rounded-full transition-all backdrop-blur-sm"
             >
-              <span className="text-sm">{LANGUAGES.find(l => l.code === currentLang)?.flag}</span>
+              <img
+                src={`https://flagcdn.com/w40/${LANGUAGES.find(l => l.code === currentLang)?.flag || 'kr'}.png`}
+                alt={currentLang}
+                className="w-4 h-auto rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
+              />
               <span className="text-[10px] font-black uppercase tracking-widest">{LANGUAGES.find(l => l.code === currentLang)?.name}</span>
               <i className={`fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-300 ${isLangOpen ? 'rotate-180' : ''}`}></i>
             </button>
@@ -79,7 +83,11 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
                     onClick={() => { onLangChange(lang.code); setIsLangOpen(false); }}
                     className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-all text-left w-full ${currentLang === lang.code ? 'bg-bee-yellow text-bee-black' : 'text-gray-500'}`}
                   >
-                    <span className="text-lg">{lang.flag}</span>
+                    <img
+                      src={`https://flagcdn.com/w40/${lang.flag}.png`}
+                      alt={lang.name}
+                      className="w-4 h-auto rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
+                    />
                     <span className="text-xs font-black uppercase tracking-wider">{lang.name}</span>
                     {currentLang === lang.code && <i className="fa-solid fa-check text-[10px] ml-auto"></i>}
                   </button>

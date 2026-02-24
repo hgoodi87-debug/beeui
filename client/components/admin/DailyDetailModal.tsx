@@ -27,12 +27,12 @@ const DailyDetailModal: React.FC<DailyDetailModalProps> = ({
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
             <div className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="bg-bee-black p-8 flex justify-between items-center text-white">
+                <div className="bg-white/80 backdrop-blur-3xl border-b border-gray-200 p-8 flex justify-between items-center text-bee-black">
                     <div>
                         <h2 className="text-2xl font-black">{selectedDetailDate} 상세 정산 내역</h2>
-                        <p className="text-bee-yellow text-xs font-bold mt-1">Daily Revenue & Expenditure Details</p>
+                        <p className="text-gray-500 text-xs font-bold mt-1">Daily Revenue & Expenditure Details</p>
                     </div>
-                    <button onClick={() => setSelectedDetailDate(null)} className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+                    <button title="닫기" aria-label="닫기" onClick={() => setSelectedDetailDate(null)} className="w-12 h-12 rounded-2xl bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-bee-black flex items-center justify-center transition-all">
                         <i className="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>

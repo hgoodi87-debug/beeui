@@ -66,17 +66,19 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                 </div>
 
                 {/* Proof Ticker */}
-                <div className="mt-32 overflow-hidden flex whitespace-nowrap gap-12 opacity-20 hover:opacity-100 transition-opacity duration-1000">
-                    {[1, 2].map(ticker => (
-                        <div key={ticker} className="flex gap-12 font-display font-black text-3xl md:text-5xl tracking-tighter italic text-bee-black animate-infinite-scroll">
-                            <span>15,000+ CUSTOMERS JOINED</span>
-                            <span className="text-bee-yellow">★</span>
-                            <span>CERTIFIED BY MONEYBOX</span>
-                            <span className="text-bee-yellow">★</span>
-                            <span>SAFE HANDLING GUARANTEED</span>
-                            <span className="text-bee-yellow">★</span>
-                        </div>
-                    ))}
+                <div className="mt-24 md:mt-32 overflow-hidden flex whitespace-nowrap gap-12 opacity-20 hover:opacity-100 transition-opacity duration-1000 border-y border-bee-black/5 py-8">
+                    <div className="flex gap-16 animate-infinite-scroll w-max">
+                        {[1, 2, 3, 4].map(ticker => (
+                            <div key={ticker} className="flex gap-16 items-center font-display font-black text-xl md:text-5xl tracking-tighter italic text-bee-black uppercase">
+                                <span>15,000+ CUSTOMERS JOINED</span>
+                                <span className="text-bee-yellow text-2xl">★</span>
+                                <span>CERTIFIED BY MONEYBOX</span>
+                                <span className="text-bee-yellow text-2xl">★</span>
+                                <span>SAFE HANDLING GUARANTEED</span>
+                                <span className="text-bee-yellow text-2xl">★</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </section>

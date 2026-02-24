@@ -321,6 +321,57 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <label className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-gray-50 p-2 rounded-lg hover:bg-gray-100"><input type="checkbox" checked={locForm.isDestination} onChange={e => setLocForm({ ...locForm, isDestination: e.target.checked })} /> 목적지 (Dest)</label>
                             <label className="flex items-center gap-2 text-xs font-bold cursor-pointer bg-yellow-50 text-yellow-700 p-2 rounded-lg hover:bg-yellow-100 border border-yellow-100"><input type="checkbox" checked={locForm.isPartner} onChange={e => setLocForm({ ...locForm, isPartner: e.target.checked })} /> 파트너 지점 (Partner)</label>
                         </div>
+
+                        {locForm.isPartner && (
+                            <div className="pt-4 mt-2 border-t border-dashed border-gray-200 space-y-4 animate-fade-in">
+                                <h4 className="text-[11px] font-black text-bee-yellow uppercase tracking-widest flex items-center gap-2"><i className="fa-solid fa-handshake"></i> 파트너 지점 상세 정보 (Partner Details)</h4>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점장 성함</label>
+                                        <input value={locForm.ownerName || ''} onChange={e => setLocForm({ ...locForm, ownerName: e.target.value })} placeholder="예: 홍길동" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">연락처</label>
+                                        <input value={locForm.ownerPhone || ''} onChange={e => setLocForm({ ...locForm, ownerPhone: e.target.value })} placeholder="예: 010-1234-5678" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">이메일</label>
+                                        <input value={locForm.ownerEmail || ''} onChange={e => setLocForm({ ...locForm, ownerEmail: e.target.value })} placeholder="예: owner@email.com" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">사업자등록번호</label>
+                                        <input value={locForm.businessRegNumber || ''} onChange={e => setLocForm({ ...locForm, businessRegNumber: e.target.value })} placeholder="예: 123-45-67890" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                    </div>
+                                </div>
+
+                                <div className="bg-yellow-50/50 p-4 rounded-2xl border border-yellow-100/50 space-y-3">
+                                    <h5 className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-1.5"><i className="fa-solid fa-percent"></i> 수수료율 설정 (%)</h5>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="text-[9px] font-black text-gray-400 uppercase">보관 (Storage)</label>
+                                            <input title="Storage Commission" placeholder="0" type="number" value={locForm.commissionRates?.storage || 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, storage: Number(e.target.value) } })} className="w-full bg-white p-2.5 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-black text-gray-400 uppercase">배송 (Delivery)</label>
+                                            <input title="Delivery Commission" placeholder="0" type="number" value={locForm.commissionRates?.delivery || 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, delivery: Number(e.target.value) } })} className="w-full bg-white p-2.5 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-black text-gray-400 uppercase">티켓 (Ticket)</label>
+                                            <input title="Ticket Commission" placeholder="0" type="number" value={locForm.commissionRates?.ticket || 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, ticket: Number(e.target.value) } })} className="w-full bg-white p-2.5 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-black text-gray-400 uppercase">유심 (USIM)</label>
+                                            <input title="USIM Commission" placeholder="0" type="number" value={locForm.commissionRates?.usim || 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, usim: Number(e.target.value) } })} className="w-full bg-white p-2.5 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="text-[9px] font-black text-gray-400 uppercase">기타 (Others)</label>
+                                            <input title="Other Commission" placeholder="0" type="number" value={locForm.commissionRates?.others || 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, others: Number(e.target.value) } })} className="w-full bg-white p-2.5 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div className="pt-2 border-t border-dashed border-gray-200">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">제공 서비스 (Available Services)</label>
                             <div className="grid grid-cols-2 gap-2">
@@ -378,16 +429,19 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-500'}`}>{loc.type}</span>
                                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{loc.id}</span>
                                 <div className="ml-auto flex items-center gap-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            window.open(`/branch/${loc.id}`, '_blank');
-                                        }}
-                                        className="text-[8px] font-black bg-bee-black text-bee-yellow px-2 py-0.5 rounded-full hover:scale-110 transition-all flex items-center gap-1 shadow-sm"
-                                        title="지점 전용 대시보드 열기"
-                                    >
-                                        <i className="fa-solid fa-chart-pie"></i> DASHBOARD
-                                    </button>
+                                    {loc.type !== LocationType.AIRPORT && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.open(`/branch/${loc.id}`, '_blank');
+                                            }}
+                                            className="text-[8px] font-black bg-bee-black text-bee-yellow px-2 py-0.5 rounded-full hover:scale-110 transition-all flex items-center gap-1 shadow-sm"
+                                            title="지점 전용 대시보드 열기"
+                                        >
+                                            <i className="fa-solid fa-chart-pie"></i> DASHBOARD
+                                        </button>
+                                    )}
+
                                     {loc.isActive !== false ? (
                                         <span className="flex items-center gap-1.5 text-[8px] font-black text-green-500 bg-green-50 px-2 py-0.5 rounded-full ring-1 ring-green-100">
                                             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> Active
@@ -404,6 +458,23 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 {lang !== 'ko' && <p className="text-[10px] text-gray-300 font-bold">{loc.name}</p>}
                             </div>
                             <p className="text-xs text-gray-400 font-medium truncate mb-4">{getLocAddress(loc)}</p>
+
+                            {loc.isPartner && loc.commissionRates && (
+                                <div className="mb-4 bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex items-center gap-3">
+                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest"><i className="fa-solid fa-coins mr-1"></i>Commission</span>
+                                    <div className="flex items-center gap-3 ml-auto">
+                                        <div className="flex items-center gap-1.5 text-[10px] font-black">
+                                            <span className="text-gray-400">보관</span>
+                                            <span className="text-bee-black bg-white px-1.5 py-0.5 rounded-md border border-gray-100">{loc.commissionRates.storage || 0}%</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-[10px] font-black">
+                                            <span className="text-gray-400">배송</span>
+                                            <span className="text-bee-black bg-white px-1.5 py-0.5 rounded-md border border-gray-100">{loc.commissionRates.delivery || 0}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-center justify-between">
                                 <div className="flex flex-wrap gap-2">
                                     {loc.supportsDelivery && <span className="text-[9px] font-bold bg-yellow-50 text-yellow-700 px-2 py-1 rounded">배송</span>}

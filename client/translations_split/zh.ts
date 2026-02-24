@@ -41,7 +41,7 @@ export const zh = {
         main_title_2: '换取自由。'
     },
     pain: {
-        headline: "首尔的阶梯，\n对28寸的行李箱并不友好。",
+        headline: "把28寸的重量交给Beeliber，\n让您的双手只留下心动。",
         sub_copy: "在旅行最宝贵的首日和末日，\n因行李而浪费的时间平均长达4.5小时。\n\nBeeliber 将这些时间归还给您。",
         point1: "楼梯是您的最大敌人",
         point2: "别浪费最后的 4 小时",
@@ -58,7 +58,7 @@ export const zh = {
         step3: { title: "Meet (提取)", desc: "结束行程回到机场，您的行李已在那里静候您的光临。" }
     },
     trust: {
-        headline: "您的行李，将享受比您更 VIP 的待遇。",
+        headline: "您的行李，将享受 VIP 待遇。",
         tracking: { title: "实时邮件通知", desc: "通过电子邮件实时接收您的行李状态更新。" },
         insurance: { title: "高级损坏保险", desc: "默认涵盖国际级保险，甚至对细微划痕也负责到底。" },
         seal: { title: "安全封条系统", desc: "配备智能安全封条，保证在送达前绝对无人开启。" }
@@ -74,7 +74,7 @@ export const zh = {
         features_extra: ["超过27英寸、大件行李等", "重型行李特化管理", "当日安全配送保证", "适用高级保险"]
     },
     reviews_section: {
-        headline: "他们将证明，没有行李的首尔有多美。",
+        headline: "Beeliber将证明，没有行李的旅程有多美。",
         review1: "寄了行李直接去景福宫了。这是我旅行中最棒的决定！ - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
         review2: "去机场前寄了行李，轻松逛了一整天！ - 李某 ⭐️⭐️⭐️⭐️⭐️",
         review3: "实时追踪功能太好用了，强烈推荐！ - 金某 ⭐️⭐️⭐️⭐️⭐️"

@@ -63,7 +63,7 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack, t }) => {
           </div>
         )}
 
-        <div className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <div className="space-y-8 animate-fade-in-up [animation-delay:100ms]">
           {content.map((section: any, idx: number) => (
             <div key={idx} className="bg-white rounded-[40px] p-8 md:p-12 border border-gray-50 shadow-xl shadow-gray-200/50 hover:border-bee-yellow/20 transition-all group">
               <h2 className="text-2xl md:text-3xl font-black mb-6 flex items-center gap-4">

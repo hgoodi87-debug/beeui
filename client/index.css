@@ -272,3 +272,22 @@ body {
   color: transparent !important;
   -webkit-text-stroke: 2px rgba(255, 255, 255, 0.4);
 }
+
+@keyframes infinite-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* hide recaptcha badge */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
+.animate-infinite-scroll {
+  animation: infinite-scroll 40s linear infinite;
+}

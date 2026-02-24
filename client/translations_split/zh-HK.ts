@@ -534,7 +534,7 @@ export const zhHK = {
         }
     },
     pain: {
-        headline: "首爾的樓梯，\n對 28 吋嘅行李箱並不友好。",
+        headline: "把 28 吋嘅重量交畀 Beeliber，\n讓您雙手只留下心動。",
         sub_copy: "旅行最寶貴嘅第一日同最後一日，\n因行李浪費嘅時間平均長達 4.5 小時。\n\nBeeliber 將呢段時間還返俾您。",
         point1: "樓梯係您最大嘅敵人",
         point2: "唔好浪費最後 4 小時",
@@ -551,7 +551,7 @@ export const zhHK = {
         step3: { title: "Meet（提取）", desc: "行程結束到達機場，\n行李已經先喺嗰度等您。" }
     },
     reviews_section: {
-        headline: "冇行李行係首爾有幾靚，由佢哋來證明。",
+        headline: "冇行李嘅旅程有幾靚，由 Beeliber 來證明。",
         review1: "寄咗行李直接去景福宮。呢世最好嘅決定！ - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
         review2: "去機場前寄咗行李，輕鬆逛咗成日！ - 李某 ⭐️⭐️⭐️⭐️⭐️",
         review3: "實時追蹤功能超好用，強烈推薦！ - 金某 ⭐️⭐️⭐️⭐️⭐️"
@@ -562,7 +562,7 @@ export const zhHK = {
         btn_hotel_airport: "預訂 酒店 ➔ 機場 配送"
     },
     trust: {
-        headline: "您嘅行李，將享受比您更 VIP 嘅待遇。",
+        headline: "您嘅行李，將享受 VIP 待遇。",
         tracking: { title: "100% 即時追蹤", desc: "以 GPS 即時查看行李嘅移動路線同狀態。" },
         insurance: { title: "頂級損壞保險", desc: "包含連一道刮痕都負責到底嘅全球級保險。" },
         seal: { title: "安全封條系統", desc: "智慧安全封條保證送達前完全唔被開啟。" }

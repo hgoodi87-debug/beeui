@@ -2,7 +2,7 @@
 import { db, storage } from '../firebaseApp';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc, or } from "firebase/firestore";
-import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession } from "../types";
+import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
@@ -60,7 +60,8 @@ export const StorageService = {
       await uploadBytes(storageRef, file, metadata);
       console.log("[Storage] Upload success, getting URL...");
       return await getDownloadURL(storageRef);
-    } catch (e: any) {
+    } catch (err: unknown) {
+      const e = err as any; // Cast for specific properties access
       console.error("[Storage] Critical Upload Error:", e);
       // Detailed error reporting to user
       let errMsg = e.message || "Unknown error";
@@ -97,27 +98,16 @@ export const StorageService = {
 
     try {
       // Ensure Auth exists before writing
-      const { ensureAuth } = await import('../firebaseApp');
+      const { ensureAuth, functions } = await import('../firebaseApp');
+      const { httpsCallable } = await import('firebase/functions');
       await ensureAuth();
 
-      if (booking.id) {
-        await setDoc(doc(db, "bookings", booking.id), safeBooking);
-      } else {
-        // Generate Standardized Custom ID: ORIGIN-DEST-RANDOM4 (e.g. MYN-IN1T-1234)
-        try {
-          const newId = StorageService.generateBookingId(booking);
+      // [Phase 2] Call backend API for single source of truth and validation
+      const createBookingApi = httpsCallable(functions, 'createBooking');
+      await createBookingApi({ booking: safeBooking });
 
-          safeBooking.id = newId;
-          safeBooking.reservationCode = newId; // Standardize reservationCode for vouchers
-          safeBooking.createdAt = new Date().toISOString();
-          await setDoc(doc(db, "bookings", newId), safeBooking);
-        } catch (genError) {
-          console.error("ID Gen Failed, fallback to auto-ID", genError);
-          await addDoc(collection(db, "bookings"), safeBooking);
-        }
-      }
     } catch (e) {
-      console.error("Cloud Save Failed (Booking):", e);
+      console.error("Cloud Save Failed (Booking via API):", e);
       throw e;
     }
   },
@@ -249,15 +239,51 @@ export const StorageService = {
 
   cancelBooking: async (id: string): Promise<void> => {
     try {
-      const bookingRef = doc(db, "bookings", id);
-      await updateDoc(bookingRef, { status: BookingStatus.CANCELLED });
+      const { ensureAuth, functions } = await import('../firebaseApp');
+      const { httpsCallable } = await import('firebase/functions');
+      await ensureAuth();
+
+      // [Phase 2] Call backend API for cancellation rules and status change
+      const cancelBookingApi = httpsCallable(functions, 'cancelBooking');
+      await cancelBookingApi({ bookingId: id });
     } catch (e) {
-      console.error("Cancel error", e);
+      console.error("Cancel error (via API):", e);
       throw e;
     }
   },
 
   // --- Locations ---
+  subscribeLocations: (callback: (data: LocationOption[]) => void): (() => void) => {
+    try {
+      console.log("[Storage] Subscribing to locations real-time...");
+      return onSnapshot(collection(db, "locations"), (snap) => {
+        if (snap.empty) {
+          callback([]);
+          return;
+        }
+        const mergedLocations = snap.docs.map(doc => {
+          const cloudLoc = { ...doc.data(), id: doc.id } as unknown as LocationOption;
+          const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
+          if (initialLoc) {
+            const enriched = { ...cloudLoc };
+            Object.keys(initialLoc).forEach((key) => {
+              const k = key as keyof LocationOption;
+              if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
+                (enriched as Record<string, any>)[k] = initialLoc[k];
+              }
+            });
+            return enriched;
+          }
+          return cloudLoc;
+        });
+        callback(mergedLocations);
+      });
+    } catch (e) {
+      console.error("Failed to subscribe locations", e);
+      return () => { };
+    }
+  },
+
   getLocations: async (): Promise<LocationOption[]> => {
     try {
       const querySnapshot = await getDocs(collection(db, "locations"));
@@ -283,7 +309,7 @@ export const StorageService = {
             const k = key as keyof LocationOption;
             // If cloud data is missing or empty string, use initial data
             if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
-              (enriched as any)[k] = initialLoc[k];
+              (enriched as Record<string, any>)[k] = initialLoc[k];
             }
           });
 
@@ -628,6 +654,65 @@ export const StorageService = {
     }
   },
 
+  // --- User Profiles ---
+  getUserProfile: async (uid: string): Promise<UserProfile | null> => {
+    try {
+      const docRef = doc(db, "users", uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data() as UserProfile;
+      }
+      return null;
+    } catch (err) {
+      console.error("[Storage] Error getting user profile:", err);
+      return null;
+    }
+  },
+
+  updateUserProfile: async (uid: string, updates: Partial<UserProfile>): Promise<void> => {
+    try {
+      const docRef = doc(db, "users", uid);
+      await setDoc(docRef, updates, { merge: true });
+    } catch (err) {
+      console.error("[Storage] Error updating user profile:", err);
+    }
+  },
+
+  // --- User Coupons ---
+  getUserCoupons: async (uid: string): Promise<UserCoupon[]> => {
+    try {
+      const q = query(collection(db, "userCoupons"), where("uid", "==", uid), where("isUsed", "==", false));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as UserCoupon));
+    } catch (err) {
+      console.error("[Storage] Error getting user coupons:", err);
+      return [];
+    }
+  },
+
+  issueWelcomeCoupon: async (uid: string): Promise<void> => {
+    try {
+      const q = query(collection(db, "discountCodes"), where("code", "==", "WELCOME"), where("isActive", "==", true));
+      const snap = await getDocs(q);
+      if (snap.empty) return;
+
+      const discount = snap.docs[0].data() as DiscountCode;
+      const coupon: Omit<UserCoupon, 'id'> = {
+        uid,
+        codeId: snap.docs[0].id || '',
+        code: discount.code,
+        amountPerBag: discount.amountPerBag,
+        description: discount.description,
+        isUsed: false,
+        issuedAt: new Date().toISOString(),
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+      };
+      await addDoc(collection(db, "userCoupons"), coupon);
+    } catch (err) {
+      console.error("[Storage] Error issuing welcome coupon:", err);
+    }
+  },
+
   subscribeAdmins: (callback: (data: AdminUser[]) => void): (() => void) => {
     try {
       const q = query(collection(db, "admins"), orderBy("createdAt", "desc"));
@@ -641,7 +726,7 @@ export const StorageService = {
   },
 
   // --- AI Translation Service (Gemini) ---
-  translateLocationData: async (data: { name: string; address: string; pickupGuide: string; description: string }): Promise<any> => {
+  translateLocationData: async (data: { name: string; address: string; pickupGuide: string; description: string }): Promise<TranslatedLocationData> => {
     const config = StorageService.getCloudConfig();
     if (!config || !config.apiKey) throw new Error("Google Cloud API Key is missing.");
 
@@ -858,10 +943,76 @@ export const StorageService = {
       const q = query(collection(db, "promo_codes"), where("code", "==", codeStr.toUpperCase()), where("isActive", "==", true));
       const snap = await getDocs(q);
       if (snap.empty) return null;
-      return { ...snap.docs[0].data(), id: snap.docs[0].id } as DiscountCode;
+      return { id: snap.docs[0].id, ...snap.docs[0].data() } as DiscountCode;
     } catch (e) {
-      console.error("Failed to validate discount code", e);
+      console.error(e);
       return null;
     }
+  },
+
+  // --- Branches ---
+  getBranches: async (): Promise<any[]> => {
+    try {
+      const snap = await getDocs(collection(db, "branches"));
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) { console.error(e); return []; }
+  },
+  subscribeBranches: (callback: (data: any[]) => void) => {
+    const q = query(collection(db, "branches"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snapshot) => {
+      callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+  },
+  saveBranch: async (branch: any): Promise<void> => {
+    try {
+      const safeData = { ...branch };
+      if (!safeData.id) {
+        safeData.createdAt = new Date().toISOString();
+        await addDoc(collection(db, "branches"), safeData);
+      } else {
+        const id = safeData.id;
+        delete safeData.id;
+        await updateDoc(doc(db, "branches", id), safeData);
+      }
+    } catch (e) { console.error(e); throw e; }
+  },
+  deleteBranch: async (id: string): Promise<void> => {
+    try {
+      await deleteDoc(doc(db, "branches", id));
+    } catch (e) { throw e; }
+  },
+
+  // --- Branch Prospects (Expansion Scouts) ---
+  getBranchProspects: async (): Promise<BranchProspect[]> => {
+    try {
+      const snap = await getDocs(collection(db, "branch_prospects"));
+      return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as BranchProspect));
+    } catch (e) { console.error(e); return []; }
+  },
+  subscribeBranchProspects: (callback: (data: BranchProspect[]) => void) => {
+    const q = query(collection(db, "branch_prospects"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snapshot) => {
+      callback(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BranchProspect)));
+    });
+  },
+  saveBranchProspect: async (prospect: BranchProspect): Promise<void> => {
+    try {
+      const safeData = { ...prospect, updatedAt: new Date().toISOString() };
+      if (!safeData.id || safeData.id.startsWith('PROSPECT-TEMP-')) {
+        // New prospect or unsaved temp id
+        if (safeData.id) delete (safeData as any).id;
+        safeData.createdAt = new Date().toISOString();
+        await addDoc(collection(db, "branch_prospects"), safeData);
+      } else {
+        const id = safeData.id;
+        delete (safeData as any).id;
+        await updateDoc(doc(db, "branch_prospects", id), safeData);
+      }
+    } catch (e) { console.error(e); throw e; }
+  },
+  deleteBranchProspect: async (id: string): Promise<void> => {
+    try {
+      await deleteDoc(doc(db, "branch_prospects", id));
+    } catch (e) { throw e; }
   }
 };

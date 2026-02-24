@@ -1,0 +1,200 @@
+﻿  env: { BASE_URL: '/', MO
+DE: 'production', DEV: fal
+se, PROD: true },
+  assetsInclude: [Function
+: assetsInclude],
+  logger: {
+    hasWarned: false,
+    info: [Function: info]
+,
+    warn: [Function: warn]
+,
+    warnOnce: [Function: w
+arnOnce],
+    error: [Function: erro
+r],
+    clearScreen: [Function
+: clearScreen],
+    hasErrorLogged: [Funct
+ion: hasErrorLogged]
+  },
+  packageCache: Map(1) {
+    'fnpd_C:/Users/dbcjs/D
+esktop/beeliber/beeliber/b
+eeliber-main-main/beeliber
+-main/client' => {
+      dir: 'C:/Users/dbcjs
+/Desktop/beeliber/beeliber
+/beeliber-main-main/beelib
+er-main/client',
+      data: {
+        name: 'beeliber-we
+b',
+        private: true,
+        version: '1.0.0',
+        type: 'module',
+        scripts: {
+          dev: 'vite',
+          build: 'vite bui
+ld',
+          preview: 'vite p
+review',
+          test: 'vitest',
+          'test:ui': 'vite
+st --ui',
+          'test:coverage':
+ 'vitest run --coverage'
+        },
+        dependencies: {
+          '@google/genai':
+ '^1.34.0',
+          '@google/generat
+ive-ai': '^0.24.1',
+          firebase: '^10.8
+.0',
+          'framer-motion':
+ '^12.29.2',
+          html2canvas: '^1
+.4.1',
+          i18next: '^25.8.
+12',
+          'lucide-react': 
+'^0.563.0',
+          react: '^19.2.3'
+,
+          'react-dom': '^1
+9.2.3',
+          'react-helmet-as
+ync': '^2.0.5',
+          'react-i18next':
+ '^16.5.4'
+        },
+        devDependencies: {
+          '@testing-librar
+y/jest-dom': '^6.9.1',
+          '@testing-librar
+y/react': '^16.3.2',
+          '@testing-librar
+y/user-event': '^14.6.1',
+          '@types/node': '
+^22.0.0',
+          '@types/react': 
+'^19.0.0',
+          '@types/react-do
+m': '^19.0.0',
+          '@vitejs/plugin-
+react': '^4.3.4',
+          '@vitest/ui': '^
+4.0.18',
+          autoprefixer: '^
+10.4.23',
+          jsdom: '^28.1.0'
+,
+          postcss: '^8.5.6
+',
+          tailwindcss: '^3
+.4.19',
+          terser: '^5.44.1
+',
+          typescript: '^5.
+7.3',
+          vite: '^6.1.0',
+          vitest: '^4.0.18
+'
+        }
+      },
+      hasSideEffects: [Fun
+ction: hasSideEffects],
+      setResolvedCache: [F
+unction: setResolvedCache]
+,
+      getResolvedCache: [F
+unction: getResolvedCache]
+    },
+    set: [Function (anonym
+ous)]
+  },
+  worker: { format: 'iife'
+, plugins: '() => plugins'
+, rollupOptions: {} },
+  appType: 'spa',
+  experimental: { importGl
+obRestoreExtension: false,
+ hmrPartialAccept: false }
+,
+  future: undefined,
+  ssr: {
+    target: 'node',
+    optimizeDeps: { esbuil
+dOptions: { preserveSymlin
+ks: false } },
+    resolve: { conditions:
+ undefined, externalCondit
+ions: undefined }
+  },
+  dev: {
+    warmup: [],
+    sourcemap: { js: true 
+},
+    sourcemapIgnoreList: [
+Function: isInNodeModules$
+1],
+    preTransformRequests: 
+false,
+    createEnvironment: [Fu
+nction: defaultCreateDevEn
+vironment],
+    recoverable: false,
+    moduleRunnerTransform:
+ false
+  },
+  webSocketToken: '1FkHggH
+gjDpj',
+  getSortedPlugins: [Funct
+ion: getSortedPlugins],
+  getSortedPluginHooks: [F
+unction: getSortedPluginHo
+oks],
+  createResolver: [Functio
+n: createResolver],
+  fsDenyGlob: [Function: a
+rrayMatcher],
+  safeModulePaths: Set(0) 
+{},
+  additionalAllowedHosts: 
+[],
+  Symbol(vite:resolved-con
+fig): true
+}
+transforming...
+[32m??[39m 2211 modules transformed.
+[31m??[39m Build failed i
+n 3.94s
+[31merror during build:
+[31mCould not resolve ent
+ry module "react-router-do
+m".[31m
+    at getRollupError (fil
+e:///C:/Users/dbcjs/Deskto
+p/beeliber/beeliber/beelib
+er-main-main/beeliber-main
+/node_modules/rollup/dist/
+es/shared/parseAst.js:401:
+41)
+    at error (file:///C:/U
+sers/dbcjs/Desktop/beelibe
+r/beeliber/beeliber-main-m
+ain/beeliber-main/node_mod
+ules/rollup/dist/es/shared
+/parseAst.js:397:42)
+    at ModuleLoader.loadEn
+tryModule (file:///C:/User
+s/dbcjs/Desktop/beeliber/b
+eeliber/beeliber-main-main
+/beeliber-main/node_module
+s/rollup/dist/es/shared/no
+de-entry.js:21731:20)
+    at async Promise.all (
+index 2)
+    at async Promise.all (
+index 0)[39m

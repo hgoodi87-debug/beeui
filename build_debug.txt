@@ -1,0 +1,731 @@
+﻿node.exe : 2026-02-23T11:2
+5:32.910Z vite:config conf
+ig file loaded in 54.82ms
+위치 줄:1 문자:1
++ & "C:\Program Files\node
+js/node.exe" "C:\Program F
+iles\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (2  
+  026-02-23T11:2...aded   
+  in 54.82ms:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+2026-02-23T11:25:32.913Z v
+ite:env loading env files:
+ [
+  'C:/Users/dbcjs/Desktop/
+beeliber/beeliber/beeliber
+-main-main/beeliber-main/c
+lient/.env',
+  'C:/Users/dbcjs/Desktop/
+beeliber/beeliber/beeliber
+-main-main/beeliber-main/c
+lient/.env.local',
+  'C:/Users/dbcjs/Desktop/
+beeliber/beeliber/beeliber
+-main-main/beeliber-main/c
+lient/.env.production',
+  'C:/Users/dbcjs/Desktop/
+beeliber/beeliber/beeliber
+-main-main/beeliber-main/c
+lient/.env.production.loca
+l'
+]
+2026-02-23T11:25:32.913Z v
+ite:env env files loaded i
+n 0.57ms
+2026-02-23T11:25:32.914Z v
+ite:env using resolved env
+: {}
+2026-02-23T11:25:32.934Z v
+ite:config using resolved 
+config: {
+  plugins: [
+    'vite:build-metadata',
+    'vite:watch-package-da
+ta',
+    'alias',
+    'vite:react-babel',
+    'vite:react-refresh',
+    'vite:modulepreload-po
+lyfill',
+    'vite:resolve',
+    'vite:html-inline-prox
+y',
+    'vite:css',
+    'vite:esbuild',
+    'vite:json',
+    'vite:wasm-helper',
+    'vite:worker',
+    'vite:asset',
+    'vite:wasm-fallback',
+    'vite:define',
+    'vite:css-post',
+    'vite:build-html',
+    'vite:worker-import-me
+ta-url',
+    'vite:asset-import-met
+a-url',
+    'vite:force-systemjs-w
+rap-complete',
+    'commonjs',
+    'vite:data-uri',
+    'vite:rollup-options-p
+lugins',
+    'vite:dynamic-import-v
+ars',
+    'vite:import-glob',
+    'vite:build-import-ana
+lysis',
+    'vite:esbuild-transpil
+e',
+    'vite:terser',
+    'vite:manifest',
+    'vite:ssr-manifest',
+    'vite:reporter',
+    'vite:load-fallback'
+  ],
+  build: {
+    target: [ 'es2020', 'e
+dge88', 'firefox78', 'chro
+me87', 'safari14' ],
+    polyfillModulePreload:
+ true,
+    modulePreload: { polyf
+ill: true },
+    outDir: 'dist',
+    assetsDir: 'assets',
+    assetsInlineLimit: 409
+6,
+    sourcemap: false,
+    terserOptions: {},
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-
+dom',
+            'framer-motion
+',
+            'lucide-react'
+          ],
+          firebase: [
+            'firebase/app'
+,
+            'firebase/fire
+store',
+            'firebase/stor
+age',
+            'firebase/auth
+'
+          ]
+        }
+      },
+      onwarn: [Function: o
+nwarn]
+    },
+    commonjsOptions: { inc
+lude: [ /node_modules/ ], 
+extensions: [ '.js', '.cjs
+' ] },
+    dynamicImportVarsOptio
+ns: { warnOnError: true, e
+xclude: [ /node_modules/ ]
+ },
+    write: true,
+    emptyOutDir: null,
+    copyPublicDir: true,
+    manifest: false,
+    lib: false,
+    ssrManifest: false,
+    ssrEmitAssets: false,
+    reportCompressedSize: 
+true,
+    chunkSizeWarningLimit:
+ 500,
+    watch: null,
+    cssCodeSplit: true,
+    minify: 'terser',
+    ssr: false,
+    emitAssets: true,
+    createEnvironment: [Fu
+nction: createEnvironment]
+,
+    cssTarget: [ 'es2020',
+ 'edge88', 'firefox78', 'c
+hrome87', 'safari14' ],
+    cssMinify: true
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './setupTe
+sts.ts',
+    css: true
+  },
+  esbuild: { jsxDev: false
+, jsx: 'automatic', jsxImp
+ortSource: undefined },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react/jsx-dev-runti
+me',
+      'react/jsx-runtime'
+    ],
+    exclude: [],
+    needsInterop: [],
+    extensions: [],
+    disabled: undefined,
+    holdUntilCrawlEnd: tru
+e,
+    force: false,
+    noDiscovery: false,
+    esbuildOptions: { pres
+erveSymlinks: false, jsx: 
+'automatic' }
+  },
+  resolve: {
+    externalConditions: [ 
+'node' ],
+    extensions: [
+      '.mjs',  '.js',
+      '.mts',  '.ts',
+      '.jsx',  '.tsx',
+      '.json'
+    ],
+    dedupe: [ 'react', 're
+act-dom' ],
+    noExternal: [],
+    external: [],
+    preserveSymlinks: fals
+e,
+    alias: [
+      {
+        find: /^\/?@vite\/
+env/,
+        replacement: '/@fs
+/C:/Users/dbcjs/Desktop/be
+eliber/beeliber/beeliber-m
+ain-main/beeliber-main/nod
+e_modules/vite/dist/client
+/env.mjs'
+      },
+      {
+        find: /^\/?@vite\/
+client/,
+        replacement: '/@fs
+/C:/Users/dbcjs/Desktop/be
+eliber/beeliber/beeliber-m
+ain-main/beeliber-main/nod
+e_modules/vite/dist/client
+/client.mjs'
+      }
+    ],
+    mainFields: [ 'browser
+', 'module', 'jsnext:main'
+, 'jsnext' ],
+    conditions: [ 'module'
+, 'browser', 'development|
+production' ],
+    builtins: []
+  },
+  environments: {
+    client: {
+      define: undefined,
+      resolve: {
+        externalConditions
+: [ 'node' ],
+        extensions: [
+          '.mjs',  '.js',
+          '.mts',  '.ts',
+          '.jsx',  '.tsx',
+          '.json'
+        ],
+        dedupe: [ 'react',
+ 'react-dom' ],
+        noExternal: [],
+        external: [],
+        preserveSymlinks: 
+false,
+        alias: [
+          {
+            find: /^\/?@vi
+te\/env/,
+            replacement: '
+/@fs/C:/Users/dbcjs/Deskto
+p/beeliber/beeliber/beelib
+er-main-main/beeliber-main
+/node_modules/vite/dist/cl
+ient/env.mjs'
+          },
+          {
+            find: /^\/?@vi
+te\/client/,
+            replacement: '
+/@fs/C:/Users/dbcjs/Deskto
+p/beeliber/beeliber/beelib
+er-main-main/beeliber-main
+/node_modules/vite/dist/cl
+ient/client.mjs'
+          }
+        ],
+        mainFields: [ 'bro
+wser', 'module', 'jsnext:m
+ain', 'jsnext' ],
+        conditions: [ 'mod
+ule', 'browser', 'developm
+ent|production' ],
+        builtins: []
+      },
+      keepProcessEnv: fals
+e,
+      consumer: 'client',
+      optimizeDeps: {
+        include: [
+[36mvite v6.4.1 [32mbuilding for production...[36m[39m
+          'react',
+          'react-dom',
+          'react/jsx-dev-r
+untime',
+          'react/jsx-runti
+me'
+        ],
+        exclude: [],
+        needsInterop: [],
+        extensions: [],
+        disabled: undefine
+d,
+        holdUntilCrawlEnd:
+ true,
+        force: false,
+        noDiscovery: false
+,
+        esbuildOptions: { 
+preserveSymlinks: false, j
+sx: 'automatic' }
+      },
+      dev: {
+        warmup: [],
+        sourcemap: { js: t
+rue },
+        sourcemapIgnoreLis
+t: [Function: isInNodeModu
+les$1],
+        preTransformReques
+ts: true,
+        createEnvironment:
+ [Function: defaultCreateC
+lientDevEnvironment],
+        recoverable: true,
+        moduleRunnerTransf
+orm: false
+      },
+      build: {
+        target: [ 'es2020'
+, 'edge88', 'firefox78', '
+chrome87', 'safari14' ],
+        polyfillModulePrel
+oad: true,
+        modulePreload: { p
+olyfill: true },
+        outDir: 'dist',
+        assetsDir: 'assets
+',
+        assetsInlineLimit:
+ 4096,
+        sourcemap: false,
+        terserOptions: {},
+        rollupOptions: {
+          output: {
+            manualChunks: 
+{
+              vendor: [
+                'react',
+                'react-dom
+',
+                'react-rou
+ter-dom',
+                'framer-mo
+tion',
+                'lucide-re
+act'
+              ],
+              firebase: [
+                'firebase/
+app',
+                'firebase/
+firestore',
+                'firebase/
+storage',
+                'firebase/
+auth'
+              ]
+            }
+          },
+          onwarn: [Functio
+n: onwarn]
+        },
+        commonjsOptions: {
+ include: [ /node_modules/
+ ], extensions: [ '.js', '
+.cjs' ] },
+        dynamicImportVarsO
+ptions: { warnOnError: tru
+e, exclude: [ /node_module
+s/ ] },
+        write: true,
+        emptyOutDir: null,
+        copyPublicDir: tru
+e,
+        manifest: false,
+        lib: false,
+        ssrManifest: false
+,
+        ssrEmitAssets: fal
+se,
+        reportCompressedSi
+ze: true,
+        chunkSizeWarningLi
+mit: 500,
+        watch: null,
+        cssCodeSplit: true
+,
+        minify: 'terser',
+        ssr: false,
+        emitAssets: true,
+        createEnvironment:
+ [Function: createEnvironm
+ent],
+        cssTarget: [ 'es20
+20', 'edge88', 'firefox78'
+, 'chrome87', 'safari14' ]
+,
+        cssMinify: true
+      }
+    }
+  },
+  configFile: 'C:/Users/db
+cjs/Desktop/beeliber/beeli
+ber/beeliber-main-main/bee
+liber-main/client/vite.con
+fig.ts',
+  configFileDependencies: 
+[
+    'C:/Users/dbcjs/Deskto
+p/beeliber/beeliber/beelib
+er-main-main/beeliber-main
+/client/vite.config.ts'
+  ],
+  inlineConfig: {
+    root: undefined,
+    base: undefined,
+    mode: undefined,
+    configFile: undefined,
+    configLoader: undefine
+d,
+    logLevel: undefined,
+    clearScreen: undefined
+,
+    build: {}
+  },
+  root: 'C:/Users/dbcjs/De
+sktop/beeliber/beeliber/be
+eliber-main-main/beeliber-
+main/client',
+  base: '/',
+  decodedBase: '/',
+  rawBase: '/',
+  publicDir: 'C:/Users/dbc
+js/Desktop/beeliber/beelib
+er/beeliber-main-main/beel
+iber-main/client/public',
+  cacheDir: 'C:/Users/dbcj
+s/Desktop/beeliber/beelibe
+r/beeliber-main-main/beeli
+ber-main/client/node_modul
+es/.vite',
+  command: 'build',
+  mode: 'production',
+  isWorker: false,
+  mainConfig: null,
+  bundleChain: [],
+  isProduction: true,
+  css: {
+    transformer: 'postcss'
+,
+    preprocessorMaxWorkers
+: 0,
+    devSourcemap: false
+  },
+  json: { namedExports: tr
+ue, stringify: 'auto' },
+  server: {
+    port: 5173,
+    strictPort: false,
+    host: undefined,
+    allowedHosts: [],
+    https: undefined,
+    open: false,
+    proxy: undefined,
+    cors: {
+      origin: /^https?:\/\
+/(?:(?:[^:]+\.)?localhost|
+127\.0\.0\.1|\[::1\])(?::\
+d+)?$/
+    },
+    headers: {},
+    warmup: { clientFiles:
+ [], ssrFiles: [] },
+    middlewareMode: false,
+    fs: {
+      strict: true,
+      deny: [ '.env', '.en
+v.*', '*.{crt,pem}', '**/.
+git/**' ],
+      allow: [
+        'C:/Users/dbcjs/De
+sktop/beeliber/beeliber/be
+eliber-main-main/beeliber-
+main'
+      ]
+    },
+    preTransformRequests: 
+true,
+    perEnvironmentStartEnd
+DuringDev: false,
+    sourcemapIgnoreList: [
+Function: isInNodeModules$
+1]
+  },
+  builder: undefined,
+  preview: {
+    port: 4173,
+    strictPort: false,
+    host: undefined,
+    allowedHosts: [],
+    https: undefined,
+    open: false,
+    proxy: undefined,
+    cors: {
+      origin: /^https?:\/\
+/(?:(?:[^:]+\.)?localhost|
+127\.0\.0\.1|\[::1\])(?::\
+d+)?$/
+    },
+    headers: {}
+  },
+  envDir: 'C:/Users/dbcjs/
+Desktop/beeliber/beeliber/
+beeliber-main-main/beelibe
+r-main/client',
+  env: { BASE_URL: '/', MO
+DE: 'production', DEV: fal
+se, PROD: true },
+  assetsInclude: [Function
+: assetsInclude],
+  logger: {
+    hasWarned: false,
+    info: [Function: info]
+,
+    warn: [Function: warn]
+,
+    warnOnce: [Function: w
+arnOnce],
+    error: [Function: erro
+r],
+    clearScreen: [Function
+: clearScreen],
+    hasErrorLogged: [Funct
+ion: hasErrorLogged]
+  },
+  packageCache: Map(1) {
+    'fnpd_C:/Users/dbcjs/D
+esktop/beeliber/beeliber/b
+eeliber-main-main/beeliber
+-main/client' => {
+      dir: 'C:/Users/dbcjs
+/Desktop/beeliber/beeliber
+/beeliber-main-main/beelib
+er-main/client',
+      data: {
+        name: 'beeliber-we
+b',
+        private: true,
+        version: '1.0.0',
+        type: 'module',
+        scripts: {
+          dev: 'vite',
+          build: 'vite bui
+ld',
+          preview: 'vite p
+review',
+          test: 'vitest',
+          'test:ui': 'vite
+st --ui',
+          'test:coverage':
+ 'vitest run --coverage'
+        },
+        dependencies: {
+          '@google/genai':
+ '^1.34.0',
+          '@google/generat
+ive-ai': '^0.24.1',
+          firebase: '^10.8
+.0',
+          'framer-motion':
+ '^12.29.2',
+          html2canvas: '^1
+.4.1',
+          i18next: '^25.8.
+12',
+          'lucide-react': 
+'^0.563.0',
+          react: '^19.2.3'
+,
+          'react-dom': '^1
+9.2.3',
+          'react-helmet-as
+ync': '^2.0.5',
+          'react-i18next':
+ '^16.5.4'
+        },
+        devDependencies: {
+          '@testing-librar
+y/jest-dom': '^6.9.1',
+          '@testing-librar
+y/react': '^16.3.2',
+          '@testing-librar
+y/user-event': '^14.6.1',
+          '@types/node': '
+^22.0.0',
+          '@types/react': 
+'^19.0.0',
+          '@types/react-do
+m': '^19.0.0',
+          '@vitejs/plugin-
+react': '^4.3.4',
+          '@vitest/ui': '^
+4.0.18',
+          autoprefixer: '^
+10.4.23',
+          jsdom: '^28.1.0'
+,
+          postcss: '^8.5.6
+',
+          tailwindcss: '^3
+.4.19',
+          terser: '^5.44.1
+',
+          typescript: '^5.
+7.3',
+          vite: '^6.1.0',
+          vitest: '^4.0.18
+'
+        }
+      },
+      hasSideEffects: [Fun
+ction: hasSideEffects],
+      setResolvedCache: [F
+unction: setResolvedCache]
+,
+      getResolvedCache: [F
+unction: getResolvedCache]
+    },
+    set: [Function (anonym
+ous)]
+  },
+  worker: { format: 'iife'
+, plugins: '() => plugins'
+, rollupOptions: {} },
+  appType: 'spa',
+  experimental: { importGl
+obRestoreExtension: false,
+ hmrPartialAccept: false }
+,
+  future: undefined,
+  ssr: {
+    target: 'node',
+    optimizeDeps: { esbuil
+dOptions: { preserveSymlin
+ks: false } },
+    resolve: { conditions:
+ undefined, externalCondit
+ions: undefined }
+  },
+  dev: {
+    warmup: [],
+    sourcemap: { js: true 
+},
+    sourcemapIgnoreList: [
+Function: isInNodeModules$
+1],
+    preTransformRequests: 
+false,
+    createEnvironment: [Fu
+nction: defaultCreateDevEn
+vironment],
+    recoverable: false,
+    moduleRunnerTransform:
+ false
+  },
+  webSocketToken: '6uAQgm6
+FnO0v',
+  getSortedPlugins: [Funct
+ion: getSortedPlugins],
+  getSortedPluginHooks: [F
+unction: getSortedPluginHo
+oks],
+  createResolver: [Functio
+n: createResolver],
+  fsDenyGlob: [Function: a
+rrayMatcher],
+  safeModulePaths: Set(0) 
+{},
+  additionalAllowedHosts: 
+[],
+  Symbol(vite:resolved-con
+fig): true
+}
+transforming...
+[32m??[39m 2211 modules transformed.
+[31m??[39m Build failed i
+n 4.29s
+[31merror during build:
+[31mCould not resolve ent
+ry module "react-router-do
+m".[31m
+    at getRollupError (fil
+e:///C:/Users/dbcjs/Deskto
+p/beeliber/beeliber/beelib
+er-main-main/beeliber-main
+/node_modules/rollup/dist/
+es/shared/parseAst.js:401:
+41)
+    at error (file:///C:/U
+sers/dbcjs/Desktop/beelibe
+r/beeliber/beeliber-main-m
+ain/beeliber-main/node_mod
+ules/rollup/dist/es/shared
+/parseAst.js:397:42)
+    at ModuleLoader.loadEn
+tryModule (file:///C:/User
+s/dbcjs/Desktop/beeliber/b
+eeliber/beeliber-main-main
+/beeliber-main/node_module
+s/rollup/dist/es/shared/no
+de-entry.js:21731:20)
+    at async Promise.all (
+index 2)
+    at async Promise.all (
+index 0)[39m

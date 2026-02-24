@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getFunctions } from "firebase/functions";
 
 const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "beeliber-main.firebasestorage.app";
 
@@ -18,6 +19,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
+const functions = getFunctions(app, "us-central1"); // Keep region consistent with backend
 
 // Enable persistence so users don't have to log in every time
 setPersistence(auth, browserLocalPersistence).catch(console.error);
@@ -54,4 +56,4 @@ signInAnonymously(auth).then((user) => {
     console.error("Firebase Anonymous Auth Failed:", error);
 });
 
-export { app, db, storage, auth };
+export { app, db, storage, auth, functions };

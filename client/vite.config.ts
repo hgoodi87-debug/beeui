@@ -4,9 +4,19 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
-    // Optimization for large bundles
-    // Temporarily disabled minify due to STATUS_STACK_BUFFER_OVERRUN on Node v24
-    minify: false,
+    minify: 'terser',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Removing manualChunks to simplify build and isolate errors
+      }
+    }
+  },
+  // @ts-ignore - Vitest types might be missing in some environments
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './setupTests.ts',
+    css: true,
   }
 });

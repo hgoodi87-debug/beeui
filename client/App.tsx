@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
-import { BookingState, LocationOption, BookingStatus } from './types';
+import { BookingState, LocationOption, BookingStatus, Branch, ServiceType } from './types';
+import { User } from 'firebase/auth';
 // Deployment trigger: 2026-01-23 01:35 (Recovery from rollback)
 
 import LandingRenewal from './components/LandingRenewal';
@@ -35,6 +36,8 @@ import BranchAdminPage from './components/BranchAdminPage';
 import { translations } from './translations';
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
+import { useLocations } from './src/domains/location/hooks/useLocations';
+import { useCurrentUser } from './src/domains/user/hooks/useCurrentUser';
 
 type ViewType = 'USER' | 'ADMIN_LOGIN' | 'ADMIN' | 'MANUAL' | 'PARTNERSHIP' | 'SERVICES' | 'TERMS' | 'PRIVACY' | 'BOOKING_SUCCESS' | 'TRACKING' | 'STAFF_SCAN' | 'MYPAGE' | 'BOOKING' | 'LOCATIONS' | 'BRANCH_ADMIN';
 
@@ -42,6 +45,7 @@ const App: React.FC = () => {
   // Helper to determine view from URL path
   const getViewFromPath = (path: string): ViewType => {
     if (path.startsWith('/admin/dashboard')) return 'ADMIN';
+    if (path.startsWith('/admin/branch')) return 'BRANCH_ADMIN';
     if (path.startsWith('/admin') || path.startsWith('/yn')) return 'ADMIN_LOGIN';
     if (path.startsWith('/manual')) return 'MANUAL';
 
@@ -56,7 +60,9 @@ const App: React.FC = () => {
     if (path.startsWith('/notice')) return 'USER'; // Default to USER for notices if needed
     if (path.startsWith('/booking')) return 'BOOKING';
     if (path.startsWith('/locations')) return 'LOCATIONS';
-    if (path.startsWith('/branch')) return 'BRANCH_ADMIN';
+
+    // B2C Customer routing for specific branch: /branch/:branchCode
+    if (path.startsWith('/branch/')) return 'USER';
     return 'USER';
   };
 
@@ -78,7 +84,7 @@ const App: React.FC = () => {
       case 'LOCATIONS': return '/locations';
       case 'BRANCH_ADMIN': {
         const id = adminInfo.branchId || window.location.pathname.split('/').pop() || '';
-        return `/branch/${id}`;
+        return `/admin/branch/${id}`;
       }
       case 'USER': default: return '/';
     }
@@ -98,20 +104,33 @@ const App: React.FC = () => {
   const [preSelectedStorageId, setPreSelectedStorageId] = useState<string | null>(null); // Keep for backward compat if needed, or remove
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const { data: currentUser } = useCurrentUser();
+  const { data: locations = [] } = useLocations();
   const [lastBooking, setLastBooking] = useState<BookingState | null>(null);
-  const [locations, setLocations] = useState<LocationOption[]>([]);
+
+  // B2C Customer Branch selection
+  const [customerBranchCode, setCustomerBranchCode] = useState<string | null>(null);
+  const [customerBranch, setCustomerBranch] = useState<Branch | null>(null);
 
   useEffect(() => {
-    StorageService.getLocations().then(setLocations).catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setCurrentUser(user);
-    });
-    return () => unsubscribe();
+    // Check if entered via /branch/:code
+    const checkBranch = async () => {
+      const path = window.location.pathname;
+      if (path.startsWith('/branch/')) {
+        const code = path.split('/').pop();
+        if (code) {
+          setCustomerBranchCode(code);
+          try {
+            const branches = await StorageService.getBranches();
+            const branch = branches.find(b => b.branchCode === code && b.isActive);
+            if (branch) {
+              setCustomerBranch(branch);
+            }
+          } catch (e) { console.error("Error fetching branch via code", e); }
+        }
+      }
+    };
+    checkBranch();
   }, []);
 
   // No longer require non-anonymous login logic here as we use currentUser state
@@ -189,7 +208,7 @@ const App: React.FC = () => {
     ensureAuthAndExecute(action);
   };
 
-  const handleBookingSuccess = async (booking: any) => {
+  const handleBookingSuccess = async (booking: BookingState) => {
     try {
       console.log("[App] handleBookingSuccess started for:", booking.id || 'NEW');
 
@@ -245,7 +264,7 @@ const App: React.FC = () => {
               setAdminInfo({ name, jobTitle, branchId: branchId || '' });
               if (branchId) {
                 // 특정 지점 관리자인 경우 해당 지점으로 이동
-                window.history.pushState(null, '', `/branch/${branchId}`);
+                window.history.pushState(null, '', `/admin/branch/${branchId}`);
                 setView('BRANCH_ADMIN');
               } else {
                 navigate('ADMIN');
@@ -259,10 +278,10 @@ const App: React.FC = () => {
 
     // Branch Security: Prevent cross-branch access
     if (view === 'BRANCH_ADMIN' && adminInfo.branchId) {
-      const urlBranchId = window.location.pathname.split('/')[2];
+      const urlBranchId = window.location.pathname.split('/').pop();
       if (urlBranchId && urlBranchId !== adminInfo.branchId) {
         // 권한 없는 지점 접근 시 자신의 지점으로 강제 소환 💅
-        window.history.replaceState(null, '', `/branch/${adminInfo.branchId}`);
+        window.history.replaceState(null, '', `/admin/branch/${adminInfo.branchId}`);
       }
     }
 
@@ -290,7 +309,7 @@ const App: React.FC = () => {
                 setAdminInfo({ name, jobTitle, branchId: branchId || '' });
                 if (branchId) {
                   // If branch admin, navigate to their specific branch page
-                  window.history.pushState(null, '', `/branch/${branchId}`);
+                  window.history.pushState(null, '', `/admin/branch/${branchId}`);
                   setView('BRANCH_ADMIN');
                 } else {
                   navigate('ADMIN');
@@ -362,13 +381,15 @@ const App: React.FC = () => {
               lang={lang}
               locations={locations}
               initialLocationId={preSelectedBooking?.pickupLocation}
-              initialServiceType={preSelectedBooking?.serviceType as any}
+              initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined}
               initialDate={preSelectedBooking?.date}
               initialReturnDate={preSelectedBooking?.returnDate}
               initialBagSizes={preSelectedBooking?.bagCounts}
               onBack={() => navigate('LOCATIONS')}
               onSuccess={handleBookingSuccess}
               user={currentUser}
+              customerBranchId={customerBranch?.id}
+              customerBranchRates={customerBranch?.commissionRates}
             />
           </motion.div>
         );
@@ -413,7 +434,7 @@ const App: React.FC = () => {
         return (
           <motion.div key="branch-admin" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
             <BranchAdminPage
-              branchId={window.location.pathname.split('/')[2] || ''}
+              branchId={window.location.pathname.split('/').pop() || ''}
               lang={lang}
               t={t}
               onBack={() => navigate('USER')}
@@ -422,9 +443,46 @@ const App: React.FC = () => {
         );
 
       case 'USER':
-      default:
+      default: {
+        let branchSchema = undefined;
+        if (customerBranch) {
+          branchSchema = {
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "name": `Beeliber - ${customerBranch.name}`,
+            "image": "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&q=80&w=1200",
+            "url": `https://bee-liber.com/branch/${customerBranchCode}`,
+            "telephone": customerBranch.contactNumber || "+82-10-1234-5678", // Fallback if no contact
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": customerBranch.address || "[본사 상세 주소 입력]",
+              "addressLocality": customerBranch.city || "Seoul",
+              "addressRegion": customerBranch.region || "Seoul",
+              "postalCode": customerBranch.postalCode || "04050",
+              "addressCountry": "KR"
+            },
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": [
+                  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+                ],
+                "opens": customerBranch.operatingHours?.start || "09:00",
+                "closes": customerBranch.operatingHours?.end || "18:00"
+              }
+            ],
+            "priceRange": "₩10,000 - ₩50,000"
+          };
+        }
+
         return (
-          <motion.div key="user-landing" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
+          <motion.div key="landing" initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
+            <SEO
+              title={customerBranch ? `Beeliber - ${customerBranch.name} Luggage Delivery & Storage` : t.meta_title}
+              description={customerBranch ? `Professional luggage storage and delivery service at ${customerBranch.name}. Same-day luggage delivery between hotel and airport.` : t.meta_description}
+              keywords={t.meta_keywords}
+              schema={branchSchema}
+            />
             <LandingRenewal
               t={t}
               lang={lang}
@@ -435,9 +493,11 @@ const App: React.FC = () => {
               onMyPageClick={() => navigate('MYPAGE')}
               user={currentUser}
               onSuccess={handleBookingSuccess}
+              branchCode={customerBranchCode || undefined} // Pass branchCode if exists
             />
           </motion.div>
         );
+      }
     }
   };
 

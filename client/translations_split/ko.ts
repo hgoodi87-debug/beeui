@@ -42,7 +42,7 @@ export const ko = {
         title1: '짐으로부터',
         title2: '자유롭게.',
         subtitle: '호텔에서 공항까지, 무거운 짐은 빌리버에게 맡기고\n가장 가벼운 마음으로 여행의 모든 순간을 만끽하세요.',
-        btn_now: '지금 두 손 가벼워지기 ➔',
+        btn_now: '예약하기',
         track_booking: '예약 및 배송 확인',
         book_branch: '예약하기',
         main_title_1: '짐으로부터,',
@@ -51,7 +51,7 @@ export const ko = {
         main_title_city: '자유.'
     },
     pain: {
-        headline: "서울의 계단은 28인치 캐리어에게\n친절하지 않습니다.",
+        headline: "28인치의 무게는 Beeliber에 맡기고,\n당신의 두 손에는 설렘만 담으세요.",
         sub_copy: "여행의 황금 같은 첫날과 마지막 날,\n짐 때문에 버리는 시간 평균 4.5시간.\n\nbeeliber가 그 시간을 당신에게 돌려드립니다.",
         point1: "계단은 당신의 최대 적입니다",
         point2: "마지막 4시간을 낭비하지 마세요",
@@ -68,7 +68,7 @@ export const ko = {
         step3: { title: "Meet (만나기)", desc: "일정을 마치고 공항에 도착하면\n짐이 먼저 당신을 기다리고 있습니다." }
     },
     trust: {
-        headline: "당신의 짐은 당신보다 VIP 대우를 받습니다.",
+        headline: "당신의 짐은 VIP 대우를 받습니다.",
         tracking: { title: "실시간 이메일 알림", desc: "내 짐의 상태를 실시간으로 이메일로 전송 받으세요." },
         insurance: { title: "프리미엄 파손 보험", desc: "스크래치 하나까지 책임지는 글로벌 수준의 보험 기본 가입." },
         seal: { title: "보안 씰(Seal) 시스템", desc: "도착 전까지 절대 열리지 않음을 보장하는 스마트 보안 씰." }
@@ -84,7 +84,7 @@ export const ko = {
         features_extra: ["27인치 초과", "무거운 수하물 특화 관리", "당일 안전 배송 보장", "프리미엄 보험 적용"]
     },
     reviews_section: {
-        headline: "짐 없이 걷는 서울이 얼마나 아름다운지, 그들이 증명합니다.",
+        headline: "짐 없이 걷는 여행이 얼마나 아름다운지, Beeliber가 증명합니다.",
         review1: "짐을 맡기고 바로 경복궁으로 갔어요. 내 생애 최고의 결정! - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
         review2: "공항 가기 전 짐 맡기고 가볍게 여행했어요! - 김*태 ⭐️⭐️⭐️⭐️⭐️",
         review3: "실시간 트래킹 기능이 정말 최고예요. 강력 추천! - Lee J. ⭐️⭐️⭐️⭐️⭐️"

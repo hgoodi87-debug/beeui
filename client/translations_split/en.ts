@@ -43,7 +43,7 @@ export const en = {
         main_title_city: 'CITY.'
     },
     pain: {
-        headline: "Seoul's stairs are not friendly to\n28-inch suitcases.",
+        headline: "Leave the weight of 28 inches to Beeliber,\nand keep only excitement in your hands.",
         sub_copy: "On the golden first and last days of your trip,\nan average of 4.5 hours is wasted because of luggage.\n\nBeeliber gives that time back to you.",
         point1: "Stairs are your worst enemy",
         point2: "Don't waste your last 4 hours",
@@ -60,7 +60,7 @@ export const en = {
         step3: { title: "Meet", desc: "When you arrive at the airport after your schedule,\nyour luggage is waiting for you." }
     },
     trust: {
-        headline: "Your luggage receives better VIP treatment than you.",
+        headline: "Your luggage receives VIP treatment.",
         tracking: { title: "Real-time Email Status", desc: "Receive real-time email updates on your baggage status." },
         insurance: { title: "Premium Damage Insurance", desc: "Global-level insurance that takes responsibility for even a single scratch." },
         seal: { title: "Security Seal System", desc: "Smart security seal ensures it never opens until arrival." }
@@ -76,7 +76,7 @@ export const en = {
         features_extra: ["Over 27\"", "Heavy Duty Handling", "Safe Same-day Delivery", "Premium Insurance Applied"]
     },
     reviews_section: {
-        headline: "They prove how beautiful Seoul is when walking without luggage.",
+        headline: "They prove how beautiful your journey is when walking without luggage with Beeliber.",
         review1: "I dropped my bags and went straight to Gyeongbokgung. Best decision of my life! - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
         review2: "Stored bags before airport and traveled light! - Kim T. ⭐️⭐️⭐️⭐️⭐️",
         review3: "Real-time tracking is awesome. Highly recommended! - Lee J. ⭐️⭐️⭐️⭐️⭐️"

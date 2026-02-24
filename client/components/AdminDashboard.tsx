@@ -16,6 +16,9 @@ import {
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, DiscountCode, PriceSettings, StorageTier, RoutePrice, AdminUser, PartnershipInquiry, SystemNotice, HeroConfig, GoogleCloudConfig, PrivacyPolicyData, TermsPolicyData, SnsType, BagSizes, CashClosing, Expenditure, AdminTab, Branch, BranchProspect } from '../types';
 import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
+import { useBookings } from '../src/domains/booking/hooks/useBookings';
+import { useLocations } from '../src/domains/location/hooks/useLocations';
+import { useQueryClient } from '@tanstack/react-query';
 import { sendMessageToGemini } from '../services/geminiService';
 import DailyDetailModal from './admin/DailyDetailModal';
 import OverviewTab from './admin/OverviewTab';
@@ -108,7 +111,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   type StatusTab = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   const [activeStatusTab, setActiveStatusTab] = useState<StatusTab>('ALL');
 
-  const [allBookings, setAllBookings] = useState<BookingState[]>([]);
+  const queryClient = useQueryClient();
+  const { data: allBookings = [] } = useBookings();
   const [globalBranchFilter, setGlobalBranchFilter] = useState<string>('ALL');
 
   const bookings = useMemo(() => {
@@ -120,7 +124,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     );
   }, [allBookings, globalBranchFilter]);
 
-  const [locations, setLocations] = useState<LocationOption[]>([]);
+  const { data: locations = [] } = useLocations();
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
@@ -660,25 +664,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
-      const [loadedLocs, loadedBookings, loadedInquiries, loadedProspects] = await Promise.all([
-        StorageService.getLocations(),
-        StorageService.getBookings(),
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['locations'] }),
+        queryClient.invalidateQueries({ queryKey: ['bookings'] }),
+      ]);
+
+      const [loadedInquiries, loadedProspects] = await Promise.all([
         StorageService.getInquiries(),
         StorageService.getBranchProspects()
       ]);
-
-      // Validate types before setting state to avoid crashes
-      setLocations(Array.isArray(loadedLocs) ? loadedLocs : []);
-
-      const savedHero = await StorageService.getHeroConfig();
-      if (savedHero) setHeroConfig(savedHero);
-
-      if (Array.isArray(loadedBookings)) {
-        loadedBookings.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-        setAllBookings(loadedBookings);
-      } else {
-        setAllBookings([]);
-      }
 
       if (Array.isArray(loadedInquiries)) {
         loadedInquiries.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
@@ -732,11 +726,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   useEffect(() => {
     refreshData();
 
-    // Subscribe to real-time updates for Bookings and Inquiries
-    const unsubscribeBookings = StorageService.subscribeBookings((data) => {
-      setAllBookings(Array.isArray(data) ? data : []);
-    });
-
+    // Subscribe to real-time updates for Inquiries and Prospects (Bookings and Locs handled by hooks)
     const unsubscribeInquiries = StorageService.subscribeInquiries((data) => {
       setInquiries(Array.isArray(data) ? data : []);
     });
@@ -779,7 +769,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     return () => {
       clearInterval(timer);
-      unsubscribeBookings();
       unsubscribeInquiries();
       unsubscribeProspects();
       unsubscribeClosings();
@@ -937,15 +926,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
       await StorageService.saveLocation(newLoc);
 
-      // Update local state immediately for UI responsiveness
-      setLocations(prev => {
-        const existing = prev.find(l => l.id === newLoc.id);
-        if (existing) {
-          return prev.map(l => l.id === newLoc.id ? newLoc : l);
-        } else {
-          return [...prev, newLoc];
-        }
-      });
+      await StorageService.saveLocation(newLoc);
 
       setLocForm({
         id: '', shortCode: '', name: '', type: LocationType.HOTEL, supportsDelivery: true, supportsStorage: true,
@@ -1184,7 +1165,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     try {
       await StorageService.deleteLocation(id);
-      setLocations(prev => prev.filter(l => l.id !== id));
 
       if (locForm.id === id) {
         setLocForm({
@@ -2236,8 +2216,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         setIsSaving(true);
                         try {
                           await StorageService.updateBooking(scannedBooking.id, { status: item.status });
-                          // Local state update
-                          setAllBookings(prev => prev.map((b: BookingState) => b.id === scannedBooking.id ? { ...b, status: item.status } : b));
+                          // scannedBooking is local state for the modal, keep it updated for UI
                           setScannedBooking({ ...scannedBooking, status: item.status });
                           alert(`상태가 [${item.label}] (으)로 변경되었습니다.`);
                         } catch (e) {

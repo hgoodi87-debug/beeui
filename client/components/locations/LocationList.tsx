@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MapPin, Navigation, Plane, Store, Calendar, Clock, Wallet, Luggage, Handshake, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, MapPin, LocateFixed, Plane, Store, Calendar, Clock, Wallet, Luggage, Handshake, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import BaggageCounter from './BaggageCounter';
 import { generateTimeSlots, isPastKSTTime, getFirstAvailableSlot, formatKSTDate } from '../../utils/dateUtils';
 
@@ -27,6 +27,8 @@ interface LocationListProps {
     baggageCounts: any;
     onBaggageChange: (size: 'S' | 'M' | 'L' | 'XL', delta: number) => void;
     deliveryPrices?: any;
+    onBack?: () => void;
+    onFindMyLocation?: () => void;
 }
 
 const LocationList: React.FC<LocationListProps> = ({
@@ -34,7 +36,9 @@ const LocationList: React.FC<LocationListProps> = ({
     bookingDate, onDateChange, bookingTime, onTimeChange,
     returnDate, onReturnDateChange, returnTime, onReturnTimeChange,
     baggageCounts, onBaggageChange,
-    deliveryPrices
+    deliveryPrices,
+    onBack,
+    onFindMyLocation
 }) => {
     const [activeStep, setActiveStep] = React.useState<'BAGGAGE' | 'PICKUP_DATE' | 'PICKUP_TIME' | 'RETURN_DATE' | 'RETURN_TIME' | null>(null);
 
@@ -145,14 +149,14 @@ const LocationList: React.FC<LocationListProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-transparent relative z-20 overflow-hidden md:pointer-events-auto select-none pointer-events-none">
-            {/* Header / Search Area - Floating Card Design 💅 */}
+        <div className="flex flex-col justify-between md:justify-start h-full bg-transparent relative z-20 overflow-hidden md:pointer-events-auto select-none pointer-events-none md:bg-white/90 md:backdrop-blur-xl md:shadow-2xl">
+            {/* Header / Search Area - Floating Card Design on Mobile, Sticky Header on PC 💅 */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="overflow-hidden pointer-events-auto p-2 md:p-5 bg-white/95 backdrop-blur-xl shadow-2xl border-b border-gray-100 rounded-b-[1.5rem] md:rounded-b-[2rem] relative z-30"
+                className="flex-none overflow-hidden pointer-events-auto p-2 md:p-5 bg-white/95 backdrop-blur-xl shadow-2xl md:shadow-none border-b border-gray-100 rounded-b-[1.5rem] md:rounded-b-none relative z-30"
             >
-                <div onClick={onReset} className="inline-flex items-center gap-2 md:gap-3 mb-3 md:mb-5 cursor-pointer group px-1">
+                <div onClick={onBack} className="inline-flex items-center gap-2 md:gap-3 mb-3 md:mb-5 cursor-pointer group px-1">
                     <div className="flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-100 group-hover:bg-bee-yellow transition-all shadow-sm">
                         <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-900" />
                     </div>
@@ -228,16 +232,29 @@ const LocationList: React.FC<LocationListProps> = ({
                         </div>
                     </div>
 
-                    {/* 검색바는 하단에 깔끔하게 독채로 💅 */}
-                    <div className="relative w-full">
-                        <div className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 text-gray-400"><Search size={14} className="md:w-3.5 md:h-3.5" /></div>
-                        <input
-                            type="text"
-                            placeholder={t.locations_page?.search_placeholder || "Search..."}
-                            value={searchTerm}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-10 md:pl-9 pr-4 py-2.5 md:py-2.5 bg-gray-50 border border-gray-100 rounded-full text-[11px] md:text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-bee-yellow/20 shadow-sm"
-                        />
+                    {/* 검색바 사이즈 축소 및 내 위치 버튼 통합 💅 */}
+                    <div className="flex items-center gap-2 w-full">
+                        <div className="relative flex-1">
+                            <div className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 text-gray-400"><Search size={14} className="md:w-3.5 md:h-3.5" /></div>
+                            <input
+                                type="text"
+                                placeholder={t.locations_page?.search_placeholder || "Search..."}
+                                value={searchTerm}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                className="w-full pl-10 md:pl-9 pr-4 py-2.5 md:py-2.5 bg-gray-50 border border-gray-100 rounded-full text-[11px] md:text-[11px] font-[900] focus:outline-none focus:ring-2 focus:ring-bee-yellow/20 shadow-sm"
+                            />
+                        </div>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onFindMyLocation?.(); }}
+                            className="flex items-center gap-1.5 px-3 py-2.5 md:py-2.5 bg-white border border-gray-100 rounded-full shadow-sm hover:bg-gray-50 transition-all shrink-0 active:scale-95 pointer-events-auto"
+                        >
+                            <div className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-50 text-blue-500">
+                                <LocateFixed className="w-3 h-3 fill-current" />
+                            </div>
+                            <span className="text-[11px] md:text-[12px] font-[1000] text-gray-900 tracking-tighter whitespace-nowrap">
+                                {t.locations_page?.find_my_location_short || '내 위치'}
+                            </span>
+                        </button>
                     </div>
 
                     {/* Date/Time Accordion - 날짜는 이전처럼 팝업 말고 레이아웃 내에서! 💅 */}
@@ -326,67 +343,69 @@ const LocationList: React.FC<LocationListProps> = ({
                 </div>
             </motion.div>
 
-            {/* List Area - Floating Cards at the Bottom 💅 */}
-            <div className="flex-none md:flex-1 md:overflow-y-auto no-scrollbar p-3 md:p-4 md:space-y-3 pointer-events-auto bg-transparent border-none mt-auto h-auto flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden snap-x snap-mandatory md:snap-none gap-3 md:gap-3 pb-12">
-                <AnimatePresence>
-                    {!activeStep && (
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-[10px] items-center gap-2 font-black text-white bg-bee-black/30 backdrop-blur-sm px-3 py-1 rounded-full uppercase tracking-widest mb-2 hidden md:flex w-fit">
-                            <MapPin className="w-3 h-3" />
-                            <span>{filteredBranches.length} {t.locations_page?.found_units || 'Locations'}</span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+            {/* List Area - Horizontal Cards on Mobile, Vertical Scroll on PC 💅 */}
+            <div className="flex-none md:flex-1 pointer-events-auto bg-transparent border-none mt-auto md:mt-0 h-auto md:h-full w-full max-w-full relative z-20 pb-6 md:pb-0 md:overflow-hidden">
+                <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto no-scrollbar snap-x snap-mandatory gap-3 md:gap-4 px-4 md:px-6 pt-2 md:pt-4 pb-4 md:h-full">
+                    {filteredBranches.map((branch) => {
+                        const isSelected = selectedBranch?.id === branch.id;
+                        const isActive = branch.services?.[currentService]?.isActive ?? true;
 
-                {filteredBranches.map((branch) => {
-                    const isSelected = selectedBranch?.id === branch.id;
-                    const isActive = branch.services?.[currentService]?.isActive ?? true;
-
-                    return (
-                        <motion.button
-                            key={branch.id}
-                            layout
-                            whileHover={{ y: -4, scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => onBranchClick(branch)}
-                            className={`w-fit md:w-full p-2.5 md:p-4 rounded-[1rem] md:rounded-[2rem] text-left border transition-all relative group overflow-hidden shrink-0 shadow-2xl backdrop-blur-xl ${isSelected ? 'bg-bee-yellow border-bee-yellow ring-4 ring-white/50' : 'bg-white/90 border-white/50'}`}
-                        >
-                            <div className="flex flex-row items-center justify-start gap-2.5 md:gap-6">
-                                {/* Left Info Area [스봉이 수정] flex-1 추가하여 우측 이미지를 끝으로 밀어내기 💅 */}
-                                <div className="flex-1 min-w-0 flex flex-col items-start translate-y-0.5">
-                                    <div className="flex items-center gap-2 md:gap-4 mb-2 md:mb-3">
-                                        {/* PC에서만 아이콘 노출 💅 */}
-                                        <div className={`hidden md:flex w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl items-center justify-center shrink-0 shadow-lg border-2 border-white/50 ${isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100/50 text-gray-400'}`}>
-                                            {branch.isPartner ? <Handshake className="w-4 h-4 md:w-5 md:h-5" /> : branch.type === 'AIRPORT' ? <Plane className="w-4 h-4 md:w-5 md:h-5" /> : <Store className="w-4 h-4 md:w-5 md:h-5" />}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="text-[14px] md:text-[16px] font-[1000] tracking-tighter leading-tight line-clamp-1 mb-1">{lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}</div>
-                                            <div className={`px-2 py-0.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest w-fit ${isActive ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>{isActive ? 'Active' : 'Close'}</div>
-                                        </div>
+                        return (
+                            <motion.button
+                                key={branch.id}
+                                layout
+                                whileHover={{ y: -4, scale: 1.01 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => onBranchClick(branch)}
+                                className={`group flex flex-row items-center gap-1.5 md:gap-3 p-1.5 md:p-3 rounded-[1.2rem] md:rounded-[1.4rem] text-left transition-all relative shrink-0 snap-center md:snap-start w-[115px] md:w-full md:max-w-[340px] md:mx-auto shadow-lg ${isSelected ? 'bg-white ring-4 ring-bee-yellow/50 shadow-xl' : 'bg-[#F2F2F6] hover:bg-white hover:shadow-xl'}`}
+                            >
+                                <div className="flex-1 flex flex-col items-start gap-0.5 md:gap-1.5 min-w-0">
+                                    {/* 지점명 - 초소형 3열 최적화 */}
+                                    <div className="text-[11px] md:text-[16px] font-[950] tracking-tighter md:tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full text-gray-900 group-hover:text-bee-black transition-colors">
+                                        {lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}
                                     </div>
 
-                                    <div className="hidden md:block text-[11px] md:text-xs font-bold text-gray-400 line-clamp-1 mb-4 italic tracking-tight">{lang === 'ko' ? branch.address : (branch[`address_${lang.replace('-', '_').toLowerCase()}`] || branch.address_en || branch.address)}</div>
+                                    {/* 상태 뱃지 - 더 작고 타이트하게 */}
+                                    <div className={`px-1 py-0.5 rounded-full text-[6px] md:text-[9px] font-[800] uppercase tracking-wider w-fit ${isActive ? 'bg-[#E3F6ED] text-[#13A35E]' : 'bg-red-100 text-red-600'}`}>
+                                        {isActive ? 'ACTIVE' : 'CLOSE'}
+                                    </div>
 
-                                    <div className="flex flex-wrap gap-1.5 md:gap-2">
-                                        {branch.supportsDelivery && <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black border uppercase tracking-[0.15em] ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_delivery || 'DELIVERY'}</span>}
-                                        {branch.supportsStorage && <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black border uppercase tracking-[0.15em] ${isSelected ? 'border-bee-black/20 bg-bee-black/10' : 'border-gray-100 bg-gray-50 text-gray-400'}`}>{t.locations_page?.service_storage || 'STORAGE'}</span>}
+                                    {/* 서비스 태그들 - 초미니 레이아웃 */}
+                                    <div className="flex flex-wrap gap-0.5 mt-0.5">
+                                        {branch.supportsDelivery && (
+                                            <span className="px-1 py-0.5 rounded-full text-[6px] md:text-[9px] font-black uppercase tracking-tighter md:tracking-wider bg-white/90 text-gray-500 shadow-sm border border-black/5 whitespace-nowrap">
+                                                {t.locations_page?.service_delivery || '배송'}
+                                            </span>
+                                        )}
+                                        {branch.supportsStorage && (
+                                            <span className="px-1 py-0.5 rounded-full text-[6px] md:text-[9px] font-black uppercase tracking-tighter md:tracking-wider bg-white/90 text-gray-500 shadow-sm border border-black/5 whitespace-nowrap">
+                                                {t.locations_page?.service_storage || '보관'}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Right Image Area - [스봉이 수정] 정밀한 정렬과 프리미엄 엣지 💅 */}
-                                {branch.imageUrl && (
-                                    <div className="w-14 h-14 md:w-28 md:h-28 shrink-0 rounded-[1.2rem] md:rounded-[2.2rem] overflow-hidden shadow-2xl border-4 border-white ring-1 ring-gray-100 bg-gray-50 group-hover:scale-110 transition-transform duration-700 ease-in-out">
+                                {/* 우측 이미지 - 초밀착 사이즈 💅 */}
+                                <div className="relative w-10 h-10 md:w-16 md:h-16 shrink-0 rounded-[0.5rem] md:rounded-[0.9rem] overflow-hidden shadow-inner border-[1px] md:border-[1.5px] border-white/80 bg-gray-200">
+                                    {branch.imageUrl ? (
                                         <img
                                             src={branch.imageUrl}
                                             alt={branch.name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700"
-                                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-115"
+                                            onError={(e) => {
+                                                (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1580978640103-ba69fa7a9003?q=80&w=2670&auto=format&fit=crop';
+                                            }}
                                         />
-                                    </div>
-                                )}
-                            </div>
-                        </motion.button>
-                    );
-                })}
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+                                            <i className="fa-solid fa-store text-sm md:text-xl"></i>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.button>
+                        );
+                    })}
+                </div>
 
                 {filteredBranches.length === 0 && (
                     <div className="py-10 text-center flex flex-col items-center w-full bg-white/50 backdrop-blur-sm rounded-[2rem]">

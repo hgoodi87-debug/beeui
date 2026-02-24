@@ -75,26 +75,34 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   }, [rawLocations, userLocation]);
 
   // 1. Get User Location & Prices on Mount
+  // [스봉이 수정] 진입 시 무조건 내 위치부터 센터링 💅
   useEffect(() => {
-    if (navigator.geolocation) {
+    let mounted = true;
+    if (navigator.geolocation && !initialLocationId) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
+          if (mounted) {
+            console.log("[스봉이] Got user location on mount 🐝✨", position.coords);
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+          }
         },
         (error) => {
-          console.log("GPS access denied or error:", error);
-        }
+          console.warn("Geolocation Error:", error);
+        },
+        { timeout: 5000, maximumAge: 60000, enableHighAccuracy: true } // Add proper options here
       );
     }
 
     // Fetch prices for BaggageCounter
     StorageService.getDeliveryPrices().then(prices => {
-      if (prices) setDeliveryPrices(prices);
+      if (mounted && prices) setDeliveryPrices(prices);
     }).catch(console.error);
-  }, []);
+
+    return () => { mounted = false; };
+  }, [initialLocationId]);
 
   // Handle Browser Back Button for Step-by-Step Navigation
   useEffect(() => {
@@ -160,100 +168,113 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     return result;
   }, [locations, searchTerm, currentService]);
 
+  // [스봉이 수정] 버튼 클릭 시 지도가 이동하지 않는 버그 수정 💅
+  // panToUserTrigger 카운터를 증가시켜 LocationMap이 명시적 요청을 구분할 수 있도록 함
+  const [panToUserTrigger, setPanToUserTrigger] = React.useState(0);
+
+  const findMyLocation = useCallback(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          // 명시적 버튼 클릭 시 트리거 증가 → 지도가 강제로 이동함
+          setPanToUserTrigger(prev => prev + 1);
+        },
+        (error) => console.warn("Geolocation Error:", error),
+        { timeout: 5000, enableHighAccuracy: true }
+      );
+    }
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden font-pretendard">
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="flex items-center space-x-4 mb-8">
-            <button onClick={onBack} title={t?.common?.back || '뒤로가기'} className="p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow">
-              <i className="fa-solid fa-arrow-left text-gray-400"></i>
-            </button>
-            <h1 className="text-2xl font-black text-gray-900">{t?.locations_page?.title || '빌리버 거점 안내'}</h1>
-          </div>
+    <div className="relative flex flex-col h-screen w-full bg-gray-50 overflow-hidden font-pretendard">
+      {/* 1. Map as Full Background */}
+      <div className="absolute inset-0 z-0">
+        <LocationMap
+          t={t}
+          lang={lang}
+          branches={filteredLocations}
+          selectedBranch={selectedBranch}
+          onLocationSelect={handleBranchSelect}
+          currentService={currentService}
+          userLocation={userLocation}
+          searchAddress={searchTerm}
+          panToUserTrigger={panToUserTrigger}
+        />
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden h-auto">
-                <LocationList
-                  t={t}
-                  lang={lang}
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  filteredBranches={filteredLocations}
-                  selectedBranch={selectedBranch}
-                  onBranchClick={handleBranchSelect}
-                  currentService={currentService}
-                  onServiceChange={setCurrentService}
-                  onReset={() => {
-                    setSearchTerm('');
-                    handleBranchSelect(null);
-                  }}
-                  bookingDate={bookingDate}
-                  onDateChange={setBookingDate}
-                  bookingTime={bookingTime}
-                  onTimeChange={setBookingTime}
-                  returnDate={returnDate}
-                  onReturnDateChange={setReturnDate}
-                  returnTime={returnTime}
-                  onReturnTimeChange={setReturnTime}
-                  baggageCounts={baggageCounts}
-                  onBaggageChange={(size, delta) => {
-                    setBaggageCounts(prev => ({
-                      ...prev,
-                      [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
-                    }));
-                  }}
-                  deliveryPrices={deliveryPrices}
-                />
-              </div>
-            </div>
-
-            <div className="h-[400px] lg:h-[calc(100vh-200px)] sticky top-8">
-              <div className="w-full h-full bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
-                <LocationMap
-                  t={t}
-                  lang={lang}
-                  branches={filteredLocations}
-                  selectedBranch={selectedBranch}
-                  onLocationSelect={handleBranchSelect}
-                  currentService={currentService}
-                  userLocation={userLocation}
-                  searchAddress={searchTerm}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* 2. Fullscreen UI Overlay - Filters (Top) & Horizontal Cards (Bottom) 💅 */}
+      <div className="absolute top-0 left-0 bottom-0 z-10 pointer-events-none flex flex-col w-full h-full md:w-[420px] md:bg-transparent">
+        <LocationList
+          t={t}
+          lang={lang}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onFindMyLocation={findMyLocation}
+          filteredBranches={filteredLocations}
+          selectedBranch={selectedBranch}
+          onBranchClick={handleBranchSelect}
+          currentService={currentService}
+          onServiceChange={setCurrentService}
+          onReset={() => {
+            setSearchTerm('');
+            handleBranchSelect(null);
+          }}
+          bookingDate={bookingDate}
+          onDateChange={setBookingDate}
+          bookingTime={bookingTime}
+          onTimeChange={setBookingTime}
+          returnDate={returnDate}
+          onReturnDateChange={setReturnDate}
+          returnTime={returnTime}
+          onReturnTimeChange={setReturnTime}
+          baggageCounts={baggageCounts}
+          onBaggageChange={(size, delta) => {
+            setBaggageCounts(prev => ({
+              ...prev,
+              [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
+            }));
+          }}
+          deliveryPrices={deliveryPrices}
+          onBack={onBack}
+        />
       </div>
 
       <AnimatePresence>
         {selectedBranch && (
-          <BranchDetails
-            selectedBranch={selectedBranch}
-            onClose={() => handleBranchSelect(null)}
-            currentService={currentService}
-            onBook={(type) => {
-              if (!selectedBranch.id) return;
-              onSelectLocation(
-                selectedBranch.id,
-                type,
-                bookingDate,
-                returnDate,
-                baggageCounts
-              );
-            }}
-            bookingDate={bookingDate}
-            onDateChange={setBookingDate}
-            baggageCounts={baggageCounts as any}
-            onBaggageChange={(size, delta) => {
-              setBaggageCounts((prev: any) => ({
-                ...prev,
-                [size]: Math.max(0, (prev[size] || 0) + delta)
-              }));
-            }}
-            t={t}
-            lang={lang}
-          />
+          <div className="absolute inset-0 z-50 pointer-events-none flex items-end md:items-center justify-center">
+            <div className="pointer-events-auto w-full md:max-w-2xl px-2 md:px-0">
+              <BranchDetails
+                selectedBranch={selectedBranch}
+                onClose={() => handleBranchSelect(null)}
+                currentService={currentService}
+                onBook={(type) => {
+                  if (!selectedBranch.id) return;
+                  onSelectLocation(
+                    selectedBranch.id,
+                    type,
+                    bookingDate,
+                    returnDate,
+                    baggageCounts
+                  );
+                }}
+                bookingDate={bookingDate}
+                onDateChange={setBookingDate}
+                baggageCounts={baggageCounts as any}
+                onBaggageChange={(size, delta) => {
+                  setBaggageCounts((prev: any) => ({
+                    ...prev,
+                    [size]: Math.max(0, (prev[size] || 0) + delta)
+                  }));
+                }}
+                t={t}
+                lang={lang}
+              />
+            </div>
+          </div>
         )}
       </AnimatePresence>
     </div>

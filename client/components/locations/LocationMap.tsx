@@ -10,6 +10,8 @@ interface LocationMapProps {
     currentService: 'SAME_DAY' | 'SCHEDULED' | 'STORAGE';
     userLocation: { lat: number; lng: number } | null;
     searchAddress?: string;
+    // [스봉이 추가] 쬴명적 '내 위치' 지도 이동 트리거 폄로트 💅
+    panToUserTrigger?: number;
 }
 
 declare global {
@@ -19,7 +21,7 @@ declare global {
 }
 
 const LocationMap: React.FC<LocationMapProps> = ({
-    t, lang, branches, selectedBranch, onLocationSelect, currentService, userLocation, searchAddress
+    t, lang, branches, selectedBranch, onLocationSelect, currentService, userLocation, searchAddress, panToUserTrigger
 }) => {
     const mapRef = useRef<any>(null);
     const markersRef = useRef<any[]>([]);
@@ -28,6 +30,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
     const [isMapReady, setIsMapReady] = React.useState(false);
     const hasInitialCentered = useRef(false);
     const searchMarkerRef = useRef<any>(null);
+    const prevPanTrigger = useRef(panToUserTrigger ?? 0);
 
     // [스봉이 추가] 주소 검색 및 지도 이동 로직 💅
     useEffect(() => {
@@ -71,7 +74,31 @@ const LocationMap: React.FC<LocationMapProps> = ({
         });
     }, [searchAddress, isMapReady]);
 
-    // [스봉이 수정] userLocation fetch 로직 제거 (부모 컴포넌트에서 전달받음)
+    // [스봉이 추가] '내 위치' 버튼 명시적 클릭 시 지도를 강제이동하는 Effect 💅
+    useEffect(() => {
+        if (!panToUserTrigger || panToUserTrigger === prevPanTrigger.current) return;
+        prevPanTrigger.current = panToUserTrigger;
+
+        if (!mapRef.current || !window.naver || !isMapReady || !userLocation) return;
+
+        console.log("[스봉이] 내 위치 버튼 클릭! 지도 이동 한다! 💅");
+        mapRef.current.setZoom(16, false);
+
+        const userLatLon = new window.naver.maps.LatLng(userLocation.lat, userLocation.lng);
+        const isMobile = window.innerWidth < 768;
+        const offsetPixel = isMobile ? 180 : 250;
+
+        const proj = mapRef.current.getProjection();
+        if (proj) {
+            const point = proj.fromCoordToOffset(userLatLon);
+            point.y += offsetPixel;
+            const offsetLocation = proj.fromOffsetToCoord(point);
+            mapRef.current.panTo(offsetLocation);
+        } else {
+            mapRef.current.panTo(userLatLon);
+        }
+    }, [panToUserTrigger, isMapReady, userLocation]);
+
 
     const updateMarkers = useCallback(() => {
         if (!mapRef.current || !window.naver || !window.naver.maps || !isMapReady) {
@@ -92,7 +119,8 @@ const LocationMap: React.FC<LocationMapProps> = ({
             const isActive = branch.services?.[serviceKey]?.isActive ?? true;
 
             const isAirport = branch.type === 'AIRPORT';
-            const markerFileName = isAirport ? 'Absolute_Airport_v22.svg' : 'Absolute_Logo_v25.svg';
+            // [스봉이 수정] 일반 지점은 빨간 핀(Absolute_Bee_v21.svg)으로 교체 💅
+            const markerFileName = isAirport ? 'Absolute_Airport_v22.svg' : 'Absolute_Bee_v21.svg';
             const markerUrl = `${window.location.origin}/images/markers/${markerFileName}`;
 
             const markerOpacity = isActive ? 1 : 0.5;
@@ -114,7 +142,8 @@ const LocationMap: React.FC<LocationMapProps> = ({
                 map: mapRef.current,
                 icon: {
                     content: content,
-                    anchor: new window.naver.maps.Point(isSelected ? 50 : 40, isSelected ? 92 : 72)
+                    // [스봉이 수정] 빨간 핀 마커의 하단 팁 위치에 맞춰 앵커 조정 💅
+                    anchor: new window.naver.maps.Point(isSelected ? 50 : 30, isSelected ? 92 : 95)
                 },
                 zIndex: isSelected ? 100 : 10
             });
@@ -132,8 +161,22 @@ const LocationMap: React.FC<LocationMapProps> = ({
         if (selectedBranch && selectedBranch.lat && selectedBranch.lng && mapRef.current && isMapReady) {
             console.log("Auto-centering on selected branch:", selectedBranch.name);
             const moveLatLon = new window.naver.maps.LatLng(selectedBranch.lat, selectedBranch.lng);
-            mapRef.current.panTo(moveLatLon);
-            mapRef.current.setZoom(16, true);
+
+            // 모바일일때와 PC일때 가려지는 하단 UI 영역을 고려하여 오프셋(화면 위에 마커가 오도록) 적용 💅
+            mapRef.current.setZoom(16, false); // 줌 레벨을 먼저 맞춤
+
+            const isMobile = window.innerWidth < 768;
+            const offsetPixel = isMobile ? 180 : 250; // 아래로 카메라를 내리기 위한 픽셀 값
+
+            const proj = mapRef.current.getProjection();
+            if (proj) {
+                const point = proj.fromCoordToOffset(moveLatLon);
+                point.y += offsetPixel;
+                const offsetLocation = proj.fromOffsetToCoord(point);
+                mapRef.current.panTo(offsetLocation);
+            } else {
+                mapRef.current.panTo(moveLatLon);
+            }
         }
     }, [selectedBranch, isMapReady]);
 
@@ -143,15 +186,15 @@ const LocationMap: React.FC<LocationMapProps> = ({
             return;
         }
 
-        // 1. 사용자 마커(꿀벌) 생성 및 위치 업데이트
+        // 1. 사용자 마커(여행자) 생성 및 위치 업데이트
         if (userMarkerRef.current) {
             userMarkerRef.current.setPosition(new window.naver.maps.LatLng(userLocation.lat, userLocation.lng));
         } else {
-            console.log("[스봉이] Creating user marker... 🐝");
-            const beeUrl = `${window.location.origin}/images/markers/Absolute_Bee_v21.svg`;
-            const beeContent = `
+            console.log("[스봉이] Creating traveler marker... 🚶‍♂️✨");
+            const travelerUrl = `${window.location.origin}/images/markers/Traveler_v1.svg`;
+            const travelerContent = `
                 <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-                    <img src="${beeUrl}" style="width: 52px; height: 52px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); animation: bounce 2s infinite;" alt="Me" />
+                    <img src="${travelerUrl}" style="width: 52px; height: 52px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));" alt="Me" />
                     <div style="background: #ffffff; padding: 2px 10px; border-radius: 20px; border: 1.5px solid #ffcb05; margin-top: -8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 10;">
                         <span style="font-size: 11px; font-weight: 900; color: #000; letter-spacing: -0.02em;">ME</span>
                     </div>
@@ -161,8 +204,8 @@ const LocationMap: React.FC<LocationMapProps> = ({
                 position: new window.naver.maps.LatLng(userLocation.lat, userLocation.lng),
                 map: mapRef.current,
                 icon: {
-                    content: beeContent,
-                    anchor: new window.naver.maps.Point(26, 44)
+                    content: travelerContent,
+                    anchor: new window.naver.maps.Point(26, 26) // 원형 마커이므로 중앙 앵커 💅
                 },
                 zIndex: 200
             });
@@ -171,9 +214,23 @@ const LocationMap: React.FC<LocationMapProps> = ({
         // 2. 최초 사용자 위치 센터링 (사장님 요청: 접속 시 무조건 내 위치로!)
         // selectedBranch가 없을 때만 자동 센터링하여 사용자의 선택을 존중합니다.
         if (!hasInitialCentered.current && !selectedBranch) {
-            console.log("[스봉이] Force centering on user location... 🐝✨");
-            mapRef.current.setCenter(new window.naver.maps.LatLng(userLocation.lat, userLocation.lng));
-            mapRef.current.setZoom(14, true);
+            console.log("[스봉이] Smooth centering on user location... 🐝✨");
+            mapRef.current.setZoom(14, false);
+
+            const userLatLon = new window.naver.maps.LatLng(userLocation.lat, userLocation.lng);
+            const isMobile = window.innerWidth < 768;
+            const offsetPixel = isMobile ? 180 : 250;
+
+            const proj = mapRef.current.getProjection();
+            if (proj) {
+                const point = proj.fromCoordToOffset(userLatLon);
+                point.y += offsetPixel;
+                const offsetLocation = proj.fromOffsetToCoord(point);
+                mapRef.current.panTo(offsetLocation);
+            } else {
+                mapRef.current.panTo(userLatLon);
+            }
+
             hasInitialCentered.current = true;
         }
     }, [userLocation, isMapReady, selectedBranch]);
@@ -306,29 +363,6 @@ const LocationMap: React.FC<LocationMapProps> = ({
                     <div className="w-2 h-2 rounded-full bg-bee-yellow animate-pulse" />
                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Real-time Status Active</span>
                 </div>
-            </div>
-
-            {/* [스봉이] 내 위치 센터링 버튼 (프리미엄 💅 - 사장님 요청 위치 상향 조정) */}
-            <div className="absolute top-[160px] md:top-6 right-6 z-[60] flex flex-col gap-3">
-                <button
-                    onClick={() => {
-                        if (userLocation && mapRef.current) {
-                            mapRef.current.setCenter(new window.naver.maps.LatLng(userLocation.lat, userLocation.lng));
-                            mapRef.current.setZoom(15, true);
-                        } else {
-                            alert("GPS를 불러오는 중이거나 권한이 필요해요! 🐝");
-                        }
-                    }}
-                    className="w-10 h-10 md:w-12 md:h-12 bg-white/95 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-xl flex items-center justify-center text-bee-yellow hover:scale-110 active:scale-95 transition-all duration-300 group"
-                    title="Find Me"
-                >
-                    <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 md:w-5 md:h-5 stroke-[2.5]" stroke="currentColor">
-                        <path d="M12 21V19M12 5V3M12 12L12.01 12M5 12H3M21 12H19M12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7C14.7614 7 17 9.23858 17 12C17 14.7614 14.7614 17 12 17Z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div className="absolute top-full right-0 mt-2 bg-black/80 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
-                        MY LOCATION 🐝
-                    </div>
-                </button>
             </div>
 
         </div>

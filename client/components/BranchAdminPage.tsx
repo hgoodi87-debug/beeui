@@ -86,7 +86,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
             if (activeTab === 'PENDING') return b.status === BookingStatus.PENDING;
             if (activeTab === 'ACTIVE') return [BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any);
             if (activeTab === 'COMPLETED') {
-                if (b.status !== BookingStatus.COMPLETED) return false;
+                if (b.status !== BookingStatus.COMPLETED && b.status !== BookingStatus.CONFIRMED) return false;
                 const bDateStr = (b.createdAt || b.pickupDate || '').split('T')[0];
                 if (bDateStr) {
                     return bDateStr >= completedStartDate && bDateStr <= completedEndDate;
@@ -379,7 +379,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                         { label: '전체 예약', count: bookings.length, icon: 'fa-list' },
                         { label: '요청됨', count: bookings.filter(b => b.status === BookingStatus.PENDING).length, icon: 'fa-clock' },
                         { label: '활성(이동/보관)', count: bookings.filter(b => [BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any)).length, icon: 'fa-truck-fast' },
-                        { label: '완료됨', count: bookings.filter(b => b.status === BookingStatus.COMPLETED).length, icon: 'fa-check-double' }
+                        { label: '완료됨', count: bookings.filter(b => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CONFIRMED).length, icon: 'fa-check-double' }
                     ].map((stat, idx) => (
                         <div key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                             <div className="flex items-center gap-3 mb-2">
@@ -650,10 +650,11 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                                     value={b.status}
                                                     onChange={(e) => handleStatusUpdate(b.id!, e.target.value as BookingStatus)}
                                                     className={`text-xs font-black p-2 rounded-xl border-none outline-none cursor-pointer ${b.status === BookingStatus.PENDING ? 'bg-orange-50 text-orange-500' :
-                                                        b.status === BookingStatus.TRANSIT ? 'bg-blue-50 text-blue-500' :
-                                                            b.status === BookingStatus.STORAGE ? 'bg-indigo-50 text-indigo-500' :
-                                                                b.status === BookingStatus.ARRIVED ? 'bg-purple-50 text-purple-500' :
-                                                                    b.status === BookingStatus.COMPLETED ? 'bg-green-50 text-green-500' : 'bg-gray-100 text-gray-400'
+                                                        b.status === BookingStatus.CONFIRMED ? 'bg-teal-50 text-teal-600' :
+                                                            b.status === BookingStatus.TRANSIT ? 'bg-blue-50 text-blue-500' :
+                                                                b.status === BookingStatus.STORAGE ? 'bg-indigo-50 text-indigo-500' :
+                                                                    b.status === BookingStatus.ARRIVED ? 'bg-purple-50 text-purple-500' :
+                                                                        b.status === BookingStatus.COMPLETED ? 'bg-green-50 text-green-500' : 'bg-gray-100 text-gray-400'
                                                         }`}
                                                     title="예약 상태 변경"
                                                     aria-label="예약 상태 변경"

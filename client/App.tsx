@@ -241,16 +241,20 @@ const App: React.FC = () => {
     };
   }
 
+  const LoaderOverlay = () => (
+    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+      <div className="w-16 h-16 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+
   if (!t) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-16 h-16 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoaderOverlay />;
   }
 
+  const isDarkBg = location.pathname === '/' || location.pathname.startsWith('/branch/');
+
   return (
-    <div className="w-full bg-slate-50 font-sans selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden">
+    <div className={`w-full font-sans selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden ${isDarkBg ? 'bg-black' : 'bg-slate-50'}`}>
       <SEO
         title={customerBranch ? `Beeliber - ${customerBranch.name}` : t.seo?.title}
         description={t.seo?.description}
@@ -260,8 +264,8 @@ const App: React.FC = () => {
         schema={branchSchema}
       />
       <ErrorBoundary>
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-16 h-16 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div></div>}>
-          <AnimatePresence mode="wait">
+        <Suspense fallback={<LoaderOverlay />}>
+          <AnimatePresence mode="wait" initial={false}>
             <Routes location={location} key={location.pathname}>
               {/* USER */}
               <Route path="/" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /></AnimatedRoute>} />

@@ -275,10 +275,32 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
 
         setIsSubmitting(true);
 
+        // 💅 Custom Reservation Code Generation
+        // Delivery: [OriginShort]-[DestShort]-[Random4] (e.g. MYN-IN1T-1234)
+        // Storage: [BranchShort]-[Random4] (e.g. MYN-5678)
+        const generateShortCode = () => {
+            const random4 = Math.floor(1000 + Math.random() * 9000).toString();
+
+            if (serviceType === ServiceType.DELIVERY) {
+                const origin = locations.find(l => l.id === booking.pickupLocation);
+                const dest = locations.find(l => l.id === booking.dropoffLocation);
+                const originCode = origin?.shortCode || booking.pickupLocation || 'UNK';
+                const destCode = dest?.shortCode || booking.dropoffLocation || 'UNK';
+                return `${originCode}-${destCode}-${random4}`;
+            } else {
+                const storageLoc = locations.find(l => l.id === booking.pickupLocation);
+                const locCode = storageLoc?.shortCode || booking.pickupLocation || 'UNK';
+                return `${locCode}-${random4}`;
+            }
+        };
+
+        const generatedCode = generateShortCode();
+
         // Construct valid BookingState with all mandatory fields
         const finalBooking: BookingState = {
             ...booking as BookingState,
-            id: booking.id || `BEE-${Date.now().toString().slice(-6)}`,
+            id: booking.id || generatedCode,
+            reservationCode: generatedCode,
             price: priceDetails.total,
             finalPrice: priceDetails.total,
             status: BookingStatus.PENDING,

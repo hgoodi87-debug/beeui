@@ -270,8 +270,8 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
                     onSelectLocation(
                       selectedBranch.id,
                       type as ServiceType,
-                      bookingDate,
-                      returnDate,
+                      `${bookingDate} ${bookingTime}`,
+                      `${returnDate} ${returnTime}`,
                       baggageCounts
                     );
                   }}

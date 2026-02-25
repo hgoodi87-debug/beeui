@@ -12,6 +12,10 @@ export default defineConfig({
       }
     }
   },
+  server: {
+    host: '0.0.0.0',
+    port: 5173
+  },
   // @ts-ignore - Vitest types might be missing in some environments
   test: {
     globals: true,

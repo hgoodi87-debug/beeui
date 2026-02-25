@@ -21,7 +21,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
             title: t.howitworks.step2.title,
             desc: t.howitworks.step2.desc,
             badge: "STEP 2. Enjoy",
-            img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2FThe_background_showcases_202602230136.jpeg?alt=media&token=3a1f18c5-c059-40b3-9418-e98af2a14159"
+            img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EB%B0%98%ED%8F%AC%20%ED%95%9C%EA%B0%95%EA%B3%B5%EC%9B%90.jpeg?alt=media&token=96d6f70c-dde8-4a6e-ae90-7be885db1b91"
         },
         {
             icon: <Plane className="w-10 h-10" />,

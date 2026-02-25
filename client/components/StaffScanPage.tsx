@@ -51,7 +51,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             // *개선*: StorageService에 getBooking(id) 추가하면 좋겠지만, 일단 기존 함수 활용.
 
             const allBookings = await StorageService.getBookings();
-            const found = allBookings.find(b => b.id === id);
+            const found = allBookings.find(b => b.id === id || b.reservationCode === id);
 
             if (found) {
                 setBooking(found);

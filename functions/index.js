@@ -2,6 +2,7 @@ const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 const QRCode = require("qrcode");
+const cors = require('cors')({ origin: true });
 const { calculateBookingStoragePrice } = require('./pricing');
 
 // Explicitly set project ID for environments where it might not be auto-detected
@@ -793,41 +794,54 @@ exports.calculateCommission = functions.region("us-central1").firestore
 // --- DDD PHASE 2 (BACKEND CORE API) ---
 
 /**
- * [Phase 2] createBooking API (Server-side validation)
- * Replaces direct client setDoc for enhanced security and DDD alignment.
+ * [Phase 3] Event-Driven Booking Processing
+ * Replaces HTTP function entirely to bypass GCP IAM Precondition/CORS issues.
  */
-exports.createBooking = functions.region("us-central1").https.onCall(async (data, context) => {
-    // 1. App Authentication Check
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated (Anonymous allowed) to create a booking.');
+exports.onBookingRequested = functions.region("us-central1").firestore.document('bookings/{bookingId}').onCreate(async (snap, context) => {
+    const booking = snap.data();
+    const bookingId = context.params.bookingId;
+
+    // Only process bookings that need server validation
+    if (booking.status !== 'SERVER_VALIDATION_PENDING') {
+        return null;
     }
 
-    try {
-        const { booking } = data;
+    console.log(`[API] Processing new booking request: ${bookingId}`);
 
+    try {
         if (!booking || !booking.serviceType || !booking.pickupLocation) {
-            throw new functions.https.HttpsError('invalid-argument', 'Missing core booking payload.');
+            throw new Error('Missing core booking payload.');
         }
 
         const db = admin.firestore();
 
         // 2. Price Validation (Single Source of Truth Check)
-        // Here we recreate the price calculation from the backend just to ensure
-        // the user didn't modify `booking.finalPrice` on the client.
         if (booking.serviceType === 'STORAGE') {
-            const start = new Date(booking.pickupDate + "T" + (booking.pickupTime || "00:00:00") + "+09:00");
-            const end = new Date((booking.dropoffDate || booking.pickupDate) + "T" + (booking.deliveryTime || booking.pickupTime || "23:59:00") + "+09:00");
+            const pickupD = booking.pickupDate;
+            const pickupT = booking.pickupTime || "00:00:00";
+            const dropoffD = booking.dropoffDate || booking.pickupDate;
+            const dropoffT = booking.deliveryTime || booking.pickupTime || "23:59:00";
+
+            if (!pickupD) {
+                throw new Error('Missing pickupDate for storage.');
+            }
+
+            const startStr = `${pickupD}T${pickupT}+09:00`;
+            const endStr = `${dropoffD}T${dropoffT}+09:00`;
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                throw new Error('Invalid date format provided.');
+            }
 
             const serverPrice = calculateBookingStoragePrice(start, end, booking.bagSizes || {}, booking.language);
-
-            // Allow slight discrepancies (e.g. coupons) but log if massive deviation.
-            // In a strict setup, we completely override the finalPrice:
-            // booking.finalPrice = Math.max(0, serverPrice.total - (booking.discountAmount || 0));
+            console.log("[API] Server calculated price:", serverPrice.total);
+            booking.price = serverPrice.total; // Overwrite client price
         }
 
-        // 3. ID Generation (Origin-Dest-Random)
+        // 3. ID Generation
         const getCode = (id) => id ? id.substring(0, 3).toUpperCase() : 'UNK';
-
         let originCode = 'UNK';
         let destCode = 'UNK';
 
@@ -845,7 +859,6 @@ exports.createBooking = functions.region("us-central1").https.onCall(async (data
             }
         }
 
-        // Search Locations for ShortCodes map if possible
         const locSnap = await db.collection("locations").get();
         locSnap.forEach(doc => {
             const l = doc.data();
@@ -854,27 +867,21 @@ exports.createBooking = functions.region("us-central1").https.onCall(async (data
         });
 
         const randomStr = Math.floor(1000 + Math.random() * 9000).toString();
-        const newId = `${originCode}-${destCode}-${randomStr}`;
+        const customResCode = `${originCode}-${destCode}-${randomStr}`;
 
-        // 4. Set final properties and Save
         const safeBooking = {
             ...booking,
-            id: booking.id || newId, // allow passed ID if modifying
-            reservationCode: booking.reservationCode || newId,
-            createdAt: booking.createdAt || new Date().toISOString(),
-            status: booking.status || '접수완료', // default
+            reservationCode: booking.reservationCode || customResCode,
+            status: '접수완료',
         };
 
-        const targetRef = db.collection("bookings").doc(safeBooking.id);
+        // Update the document to trigger the client listener
+        await snap.ref.update(safeBooking);
+        console.log(`[API] Created booking ${bookingId} successfully.`);
 
-        // Execute within a safe context
-        await targetRef.set(safeBooking);
-        console.log(`[API] Created booking ${safeBooking.id} successfully.`);
-
-        return { success: true, id: safeBooking.id };
     } catch (e) {
-        console.error("[API] Error creating booking:", e);
-        throw new functions.https.HttpsError('internal', 'Booking creation failed: ' + e.message);
+        console.error("[API] Error processing booking:", e);
+        await snap.ref.update({ status: '예약실패', error: e.message });
     }
 });
 

@@ -353,9 +353,32 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
         // The user mentioned checking `StorageService.updateBooking`.
         await StorageService.updateBooking(initialBooking.id, updates);
       } else {
-        // New Booking - Delegate standardized ID generation to StorageService 💅
+        // New Booking
+        // 💅 Custom Reservation Code Generation
+        // Delivery: [OriginShort]-[DestShort]-[Random4] (e.g. MYN-IN1T-1234)
+        // Storage: [BranchShort]-[Random4] (e.g. MYN-5678)
+        const generateShortCode = () => {
+          const random4 = Math.floor(1000 + Math.random() * 9000).toString();
+
+          if (serviceType === ServiceType.DELIVERY) {
+            const origin = locations.find(l => l.id === booking.pickupLocation);
+            const dest = locations.find(l => l.id === booking.dropoffLocation);
+            const originCode = origin?.shortCode || booking.pickupLocation || 'UNK';
+            const destCode = dest?.shortCode || booking.dropoffLocation || 'UNK';
+            return `${originCode}-${destCode}-${random4}`;
+          } else {
+            const storageLoc = locations.find(l => l.id === booking.pickupLocation);
+            const locCode = storageLoc?.shortCode || booking.pickupLocation || 'UNK';
+            return `${locCode}-${random4}`;
+          }
+        };
+
+        const generatedCode = generateShortCode();
+
         const newBooking = {
           ...booking,
+          id: generatedCode,
+          reservationCode: generatedCode,
           status: BookingStatus.CONFIRMED,
           createdAt: new Date().toISOString(),
           finalPrice: priceDetails.total,
@@ -472,16 +495,29 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                               {getLocalizedDate(booking.pickupDate || '', lang)}
                             </div>
                           </div>
-                          <select title="Pickup Time" value={booking.pickupTime} onChange={e => updateBooking('pickupTime', e.target.value)} className="w-32 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none">
+                          <div className="grid grid-cols-4 gap-2">
                             {(serviceType === ServiceType.DELIVERY ? DELIVERY_PICKUP_HOURS : STORAGE_START_HOURS).map(h => {
                               const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                              const isSelected = booking.pickupTime === h;
                               return (
-                                <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
-                                  {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                                </option>
+                                <button
+                                  key={h}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => updateBooking('pickupTime', h)}
+                                  className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
+                                      ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
+                                      : isPast
+                                        ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
+                                    }`}
+                                >
+                                  {h}
+                                  {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
+                                </button>
                               );
                             })}
-                          </select>
+                          </div>
                         </div>
                         {new Date().getHours() >= 14 && (
                           <p className="text-[10px] text-red-500 font-bold ml-1">
@@ -507,16 +543,29 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                             {getLocalizedDate(booking.dropoffDate || '', lang)}
                           </div>
                         </div>
-                        <select title="Drop-off/Delivery Time" value={booking.deliveryTime} onChange={e => updateBooking('deliveryTime', e.target.value)} className="w-24 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none">
+                        <div className="grid grid-cols-4 gap-2">
                           {(serviceType === ServiceType.DELIVERY ? DELIVERY_DROPOFF_HOURS : STORAGE_END_HOURS).map(h => {
                             const isPast = isPastKSTTime(booking.dropoffDate || booking.pickupDate || '', h);
+                            const isSelected = booking.deliveryTime === h;
                             return (
-                              <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
-                                {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                              </option>
+                              <button
+                                key={h}
+                                type="button"
+                                disabled={isPast}
+                                onClick={() => updateBooking('deliveryTime', h)}
+                                className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
+                                  ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
+                                  : isPast
+                                    ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
+                                  }`}
+                              >
+                                {h}
+                                {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
+                              </button>
                             );
                           })}
-                        </select>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -540,8 +589,11 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                               <i className="fa-solid fa-box text-gray-400 text-xs"></i>
                             </div>
                             <div className="min-w-0">
-                              <div className="text-[8px] font-black text-gray-400 uppercase truncate leading-none mb-1">
-                                {size === 'S' ? t.booking.size_s : size === 'M' ? t.booking.size_m : size === 'L' ? t.booking.size_l : t.booking.size_xl}
+                              <div className="text-[8px] font-black text-gray-400 uppercase truncate leading-none mb-1 opacity-80">
+                                {size === 'S' && (lang.startsWith('ko') ? '기내용/소형백' : 'Cabin/Small')}
+                                {size === 'M' && (lang.startsWith('ko') ? '작은 캐리어' : 'Carry-on Bag')}
+                                {size === 'L' && (lang.startsWith('ko') ? '위탁 수하물' : 'Checked Bag')}
+                                {size === 'XL' && (lang.startsWith('ko') ? '대형/특입' : 'Extra Large')}
                               </div>
                               <div className="flex flex-col gap-0.5">
                                 <span className="text-lg font-black leading-none">{size}</span>

@@ -80,7 +80,7 @@ const DailyDetailModal: React.FC<DailyDetailModalProps> = ({
                                                         {b.userName}
                                                         <i className="fa-solid fa-magnifying-glass text-[10px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                                     </div>
-                                                    <div className="text-[10px] text-gray-400">{b.id}</div>
+                                                    <div className="text-[10px] text-gray-400">{b.reservationCode || b.id}</div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="font-bold">{b.serviceType}</div>

@@ -14,7 +14,8 @@ import {
     CheckCircle2,
     AlertCircle,
     Package,
-    ChevronLeft
+    ChevronLeft,
+    RefreshCcw
 } from 'lucide-react';
 import { LocationOption, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
@@ -278,8 +279,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
         };
     }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, booking.serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime]);
 
+    const tBooking = t.booking || {};
     const handleBook = async () => {
-        const tBooking = t.booking || {}; // Safety guard
+        console.log("[BookingPage] handleBook triggered. Current state:", booking);
 
         if (!isMember) {
             if (!booking.userName || !booking.userEmail || !booking.snsId) {
@@ -298,36 +300,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
         setIsSubmitting(true);
 
-        const finalBooking: BookingState = {
-            ...booking as BookingState,
-            id: booking.id || `BEE-${Date.now().toString().slice(-6)}`,
-            pickupLoc: pickupLoc, // Ensure full object is passed for voucher 💅
-            returnLoc: booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined,
-            price: priceDetails.total,
-            finalPrice: priceDetails.total,
-            status: BookingStatus.PENDING,
-            createdAt: new Date().toISOString(),
-            bags: (booking.bagSizes?.S || 0) + (booking.bagSizes?.M || 0) + (booking.bagSizes?.L || 0) + (booking.bagSizes?.XL || 0),
-            pickupLocation: booking.pickupLocation || '',
-            dropoffLocation: booking.dropoffLocation || '',
-            pickupDate: booking.pickupDate || '',
-            pickupTime: booking.pickupTime || '',
-            dropoffDate: booking.dropoffDate || '',
-            deliveryTime: booking.deliveryTime || '',
-            bagSizes: booking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 },
-            language: lang, // 'ko', 'en', 'zh', 'zh-HK', 'zh-TW', etc 그대로 저장
-            branchId: customerBranchId,
-            branchCommissionRates: customerBranchRates
-        };
-
-        const channelMap: Record<string, any> = {
-            kakao: 'KakaoTalk',
-            line: 'Line',
-            instagram: 'Instagram',
-            whatsapp: 'WhatsApp',
-            wechat: 'WeChat'
-        };
-        finalBooking.snsType = channelMap[booking.snsChannel || 'kakao'] || 'None';
 
         // 💅 Custom Reservation Code Generation
         // Delivery: [OriginShort]-[DestShort]-[Random4] (e.g. MYN-IN1T-1234)
@@ -348,7 +320,41 @@ const BookingPage: React.FC<BookingPageProps> = ({
             }
         };
 
-        finalBooking.reservationCode = generateShortCode();
+        const generatedCode = generateShortCode();
+
+        const finalBooking: BookingState = {
+            ...booking as BookingState,
+            id: booking.id || generatedCode,
+            reservationCode: generatedCode,
+            pickupLoc: pickupLoc, // Ensure full object is passed for voucher 💅
+            returnLoc: booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined,
+            price: priceDetails.total,
+            finalPrice: priceDetails.total,
+            status: BookingStatus.PENDING,
+            createdAt: new Date().toISOString(),
+            bags: (booking.bagSizes?.S || 0) + (booking.bagSizes?.M || 0) + (booking.bagSizes?.L || 0) + (booking.bagSizes?.XL || 0),
+            pickupLocation: booking.pickupLocation || '',
+            dropoffLocation: booking.dropoffLocation || '',
+            pickupDate: booking.pickupDate || '',
+            pickupTime: booking.pickupTime || '',
+            dropoffDate: booking.dropoffDate || '',
+            deliveryTime: booking.deliveryTime || '',
+            bagSizes: booking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 },
+            language: lang, // 'ko', 'en', 'zh', 'zh-HK', 'zh-TW', etc 그대로 저장
+            branchId: customerBranchId,
+            branchCommissionRates: customerBranchRates
+        };
+
+        console.log("[BookingPage] Final booking data object created:", finalBooking);
+
+        const channelMap: Record<string, any> = {
+            kakao: 'KakaoTalk',
+            line: 'Line',
+            instagram: 'Instagram',
+            whatsapp: 'WhatsApp',
+            wechat: 'WeChat'
+        };
+        finalBooking.snsType = channelMap[booking.snsChannel || 'kakao'] || 'None';
 
         try {
             // 💅 데이터를 확실하게 클론해서 넘겨줍니다. (App.tsx에서 상태 업데이트가 꼬이지 않게!)
@@ -372,7 +378,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
         return (l[`name_${dbLang}` as keyof LocationOption] as string) || l.name_en || l.name;
     };
 
-    const tBooking = t.booking || {};
 
     return (
         <div className="w-full min-h-screen bg-white">
@@ -456,22 +461,29 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         {getLocalizedDate(booking.pickupDate || '', lang)}
                                                     </div>
                                                 </div>
-                                                <select
-                                                    title="Pickup Time"
-                                                    aria-label="Pickup Time"
-                                                    value={booking.pickupTime}
-                                                    onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
-                                                    className="w-32 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
-                                                >
+                                                <div className="grid grid-cols-4 gap-2">
                                                     {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
                                                         const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                                                        const isSelected = booking.pickupTime === h;
                                                         return (
-                                                            <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
-                                                                {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                                                            </option>
+                                                            <button
+                                                                key={h}
+                                                                type="button"
+                                                                disabled={isPast}
+                                                                onClick={() => setBooking(prev => ({ ...prev, pickupTime: h }))}
+                                                                className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
+                                                                    ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
+                                                                    : isPast
+                                                                        ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
+                                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
+                                                                    }`}
+                                                            >
+                                                                {h}
+                                                                {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
+                                                            </button>
                                                         );
                                                     })}
-                                                </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -515,22 +527,29 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 {getLocalizedDate(booking.dropoffDate || '', lang)}
                                                             </div>
                                                         </div>
-                                                        <select
-                                                            title="Delivery Time"
-                                                            aria-label="Delivery Time"
-                                                            value={booking.deliveryTime}
-                                                            onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                            className="w-32 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
-                                                        >
+                                                        <div className="grid grid-cols-4 gap-2">
                                                             {generateTimeSlots(pickupLoc, 'DELIVERY').map(h => {
                                                                 const isPast = isPastKSTTime(booking.dropoffDate || '', h);
+                                                                const isSelected = booking.deliveryTime === h;
                                                                 return (
-                                                                    <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
-                                                                        {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                                                                    </option>
+                                                                    <button
+                                                                        key={h}
+                                                                        type="button"
+                                                                        disabled={isPast}
+                                                                        onClick={() => setBooking(prev => ({ ...prev, deliveryTime: h }))}
+                                                                        className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
+                                                                            ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
+                                                                            : isPast
+                                                                                ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
+                                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
+                                                                            }`}
+                                                                    >
+                                                                        {h}
+                                                                        {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
+                                                                    </button>
                                                                 );
                                                             })}
-                                                        </select>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </>
@@ -557,21 +576,29 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 {getLocalizedDate(booking.dropoffDate || '', lang)}
                                                             </div>
                                                         </div>
-                                                        <select
-                                                            title="Retrieval Time"
-                                                            value={booking.deliveryTime}
-                                                            onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                            className="w-32 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
-                                                        >
+                                                        <div className="grid grid-cols-4 gap-2">
                                                             {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
                                                                 const isRetrievalPast = isPastKSTTime(booking.dropoffDate || '', h);
+                                                                const isSelected = booking.deliveryTime === h;
                                                                 return (
-                                                                    <option key={h} value={h} disabled={isRetrievalPast} className={isRetrievalPast ? "text-gray-300" : ""}>
-                                                                        {h} {isRetrievalPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                                                                    </option>
+                                                                    <button
+                                                                        key={h}
+                                                                        type="button"
+                                                                        disabled={isRetrievalPast}
+                                                                        onClick={() => setBooking(prev => ({ ...prev, deliveryTime: h }))}
+                                                                        className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
+                                                                            ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
+                                                                            : isRetrievalPast
+                                                                                ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
+                                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
+                                                                            }`}
+                                                                    >
+                                                                        {h}
+                                                                        {isRetrievalPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
+                                                                    </button>
                                                                 );
                                                             })}
-                                                        </select>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </>
@@ -602,11 +629,11 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                     <Package className="text-gray-400" size={20} />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="text-[9px] text-gray-500 font-bold truncate mb-0.5">
-                                                        {size === 'S' ? (tBooking.size_s || 'S') :
-                                                            size === 'M' ? (tBooking.size_m || 'M') :
-                                                                size === 'L' ? (tBooking.size_l || 'L') :
-                                                                    (tBooking.size_xl || 'XL')}
+                                                    <div className="text-[9px] text-gray-500 font-bold truncate mb-0.5 uppercase tracking-tighter opacity-80">
+                                                        {size === 'S' && (lang.startsWith('ko') ? '기내용/소형백' : 'Cabin/Small')}
+                                                        {size === 'M' && (lang.startsWith('ko') ? '작은 캐리어' : 'Carry-on Bag')}
+                                                        {size === 'L' && (lang.startsWith('ko') ? '위탁 수하물' : 'Checked Bag')}
+                                                        {size === 'XL' && (lang.startsWith('ko') ? '대형/특입' : 'Extra Large')}
                                                     </div>
                                                     <div className="flex flex-col gap-0.5">
                                                         <span className="font-black text-xl leading-none">{size}</span>
@@ -867,6 +894,32 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         </div>
                     </div>
 
+                </div>
+            </div>
+
+            {/* Floating Action Bar (Mobile Only) 💅✨ */}
+            <div className="lg:hidden fixed bottom-6 left-6 right-6 z-[60]">
+                <div className="bg-bee-black text-white p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 flex items-center justify-between backdrop-blur-xl bg-opacity-90">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.total_label || 'TOTAL'}</span>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-black italic text-bee-yellow">₩{priceDetails.total.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleBook}
+                        disabled={isSubmitting || !booking.agreedToTerms || !booking.agreedToPrivacy || !booking.agreedToHighValue || (booking.bags === 0)}
+                        className="py-3 px-8 bg-bee-yellow text-bee-black rounded-2xl font-black italic text-sm shadow-lg active:scale-95 transition-all disabled:opacity-30 disabled:grayscale"
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <RefreshCcw className="animate-spin w-4 h-4" />
+                                <span>...</span>
+                            </div>
+                        ) : (
+                            t.landing?.hero_cta || 'BOOK NOW'
+                        )}
+                    </button>
                 </div>
             </div>
         </div>

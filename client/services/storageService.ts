@@ -97,17 +97,61 @@ export const StorageService = {
     const safeBooking = JSON.parse(JSON.stringify(booking));
 
     try {
-      // Ensure Auth exists before writing
-      const { ensureAuth, functions } = await import('../firebaseApp');
-      const { httpsCallable } = await import('firebase/functions');
+      const { auth, ensureAuth, db } = await import('../firebaseApp');
+      const { collection, doc, setDoc, onSnapshot } = await import('firebase/firestore');
       await ensureAuth();
 
-      // [Phase 2] Call backend API for single source of truth and validation
-      const createBookingApi = httpsCallable(functions, 'createBooking');
-      await createBookingApi({ booking: safeBooking });
+      const docRef = safeBooking.id ? doc(db, 'bookings', safeBooking.id) : doc(collection(db, 'bookings'));
+      safeBooking.id = docRef.id;
 
-    } catch (e) {
+      console.log("[StorageService] Initiating Event-Driven Booking flow... docId:", docRef.id);
+
+      return new Promise((resolve, reject) => {
+        let isResolved = false;
+
+        const unsubscribe = onSnapshot(docRef, (snap) => {
+          if (!snap.exists()) return;
+          const data = snap.data();
+
+          if (data.status === '접수완료') {
+            isResolved = true;
+            unsubscribe();
+            console.log("[StorageService] Backend validation successful! 🎉", data);
+            resolve();
+          } else if (data.status === 'ERROR' || data.status === '예약실패') {
+            isResolved = true;
+            unsubscribe();
+            console.error("[StorageService] Backend validation failed! 🚨", data);
+            reject(new Error(data.error || 'Server validation failed.'));
+          }
+        }, (err) => {
+          if (!isResolved) {
+            isResolved = true;
+            unsubscribe();
+            reject(err);
+          }
+        });
+
+        // Write the request to trigger the backend Cloud Function
+        setDoc(docRef, {
+          ...safeBooking,
+          status: 'SERVER_VALIDATION_PENDING',
+          price: 0,
+          createdAt: new Date().toISOString()
+        }).catch(err => {
+          if (!isResolved) {
+            isResolved = true;
+            unsubscribe();
+            reject(err);
+          }
+        });
+      });
+
+    } catch (e: any) {
       console.error("Cloud Save Failed (Booking via API):", e);
+      // Log more details if it's a Firebase error
+      if (e.code) console.error("Firebase Error Code:", e.code);
+      if (e.details) console.error("Firebase Error Details:", e.details);
       throw e;
     }
   },
@@ -176,7 +220,8 @@ export const StorageService = {
         collection(db, "bookings"),
         or(
           where("pickupLocation", "==", locationId),
-          where("dropoffLocation", "==", locationId)
+          where("dropoffLocation", "==", locationId),
+          where("branchId", "==", locationId)
         ),
         orderBy("pickupDate", "desc"),
         limit(500)
@@ -185,16 +230,16 @@ export const StorageService = {
       return onSnapshot(q, (snapshot) => {
         const bookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
         // Ensure strictly sorted and filtered in memory as back-up
-        const filtered = bookings.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId);
+        const filtered = bookings.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
         filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
         callback(filtered);
       }, (error) => {
         console.error("Location booking sub error, falling back to all-fetch filter:", error);
         // If index is missing or query fails, fetch all and filter client-side for immediate recovery 💅
-        const simpleQ = query(collection(db, "bookings"), limit(1000));
+        const simpleQ = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(1000));
         return onSnapshot(simpleQ, (snapshot) => {
           const bks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
-          const filtered = bks.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId);
+          const filtered = bks.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
           filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
           callback(filtered);
         });

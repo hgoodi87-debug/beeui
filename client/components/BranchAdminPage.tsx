@@ -76,6 +76,14 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                 (b.reservationCode?.toUpperCase().startsWith('BEE'));
             if (isInternalBee) return false;
 
+            // 지점 연동 확인: pickupLocation, dropoffLocation 또는 branchId가 일치해야 함
+            const isRelatedToBranch =
+                b.pickupLocation === branchId ||
+                b.dropoffLocation === branchId ||
+                b.branchId === branchId;
+
+            if (!isRelatedToBranch) return false;
+
             const matchesSearch =
                 b.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 b.reservationCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -570,7 +578,6 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                                 <th className="px-6 py-5">#</th>
                                                 <th className="px-6 py-5">일시 / 예약정보</th>
                                                 <th className="px-6 py-5">유형</th>
-                                                <th className="px-6 py-5 text-right">고객 결제액</th>
                                                 <th className="px-6 py-5 text-center">적용 요율</th>
                                                 <th className="px-6 py-5 text-right text-bee-black">수익(정산)액</th>
                                             </tr>
@@ -588,7 +595,6 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                                             {item.isDelivery ? '배송' : '보관'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 text-right">₩{item.calculatedFinalPrice.toLocaleString()}</td>
                                                     <td className="px-6 py-4 text-center">
                                                         <span className="bg-gray-100 px-2 flex justify-center py-1 rounded-md text-[10px]">{item.commissionRate}%</span>
                                                     </td>
@@ -599,7 +605,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                             ))}
                                             {revenueData.items.length === 0 && (
                                                 <tr>
-                                                    <td colSpan={6} className="px-6 py-16 text-center text-gray-400 border-dashed border-2 border-gray-50 rounded-2xl m-4">
+                                                    <td colSpan={5} className="px-6 py-16 text-center text-gray-400 border-dashed border-2 border-gray-50 rounded-2xl m-4">
                                                         <i className="fa-solid fa-folder-open mb-3 text-2xl text-gray-200 block"></i>
                                                         해당 기간의 정산 완료 건이 없습니다.
                                                     </td>

@@ -113,7 +113,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                         className="p-3 bg-white border border-gray-100 rounded-xl hover:border-bee-yellow hover:shadow-sm cursor-pointer transition-all flex justify-between items-center group/item"
                                     >
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-gray-400">ID: {b.id}</span>
+                                            <span className="text-[10px] font-black text-gray-400">ID: {b.reservationCode || b.id}</span>
                                             <span className="text-xs font-bold text-bee-black">{b.userName} 님</span>
                                         </div>
                                         <div className="text-right">
@@ -150,7 +150,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                         className="p-3 bg-white border border-gray-100 rounded-xl hover:border-bee-blue hover:shadow-sm cursor-pointer transition-all flex justify-between items-center group/item"
                                     >
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-gray-400">ID: {b.id}</span>
+                                            <span className="text-[10px] font-black text-gray-400">ID: {b.reservationCode || b.id}</span>
                                             <span className="text-xs font-bold text-bee-black">{b.userName} 님</span>
                                         </div>
                                         <div className="text-right">

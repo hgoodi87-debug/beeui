@@ -96,7 +96,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                 <tr key={b.id} className="group hover:bg-white/80 transition-colors">
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{b.id}</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{b.reservationCode || b.id}</span>
                                             <span className="font-black text-bee-black group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>{b.userName}</span>
                                             <span className="text-[10px] text-gray-400 font-bold">{b.userEmail}</span>
                                         </div>
@@ -197,7 +197,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                             <div className="flex justify-between items-start">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{b.id}</span>
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{b.reservationCode || b.id}</span>
                                         <span className="text-[10px] font-bold text-gray-300">|</span>
                                         <span className="text-[10px] font-bold text-gray-400">{b.pickupDate}</span>
                                     </div>

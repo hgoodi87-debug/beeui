@@ -143,6 +143,7 @@ const App: React.FC = () => {
   };
 
   const handleBookingSuccess = async (booking: BookingState) => {
+    console.log("[App] handleBookingSuccess triggered with data:", booking);
     try {
       const finalBooking = {
         ...booking,
@@ -150,12 +151,15 @@ const App: React.FC = () => {
         status: booking.status || '접수완료',
         createdAt: booking.createdAt || new Date().toISOString()
       };
+      console.log("[App] Final Booking to save:", finalBooking);
       setLastBooking(finalBooking);
       await StorageService.saveBooking(finalBooking);
+      console.log("[App] Booking saved successfully. Navigating to success page.");
       navigate('/booking-success');
     } catch (saveError: any) {
       console.error("[App] Booking Save failed:", saveError);
-      alert(`예약 저장 중 오류가 발생했습니다.\n\n${saveError.message || saveError}\n관리자에게 문의해주세요.`);
+      const detail = saveError.details ? JSON.stringify(saveError.details) : (saveError.message || saveError);
+      alert(`예약 저장 중 오류가 발생했습니다.\n\n코드: ${saveError.code || '알수없음'}\n내용: ${detail}\n\n관리자에게 문의해주세요.`);
     }
   };
 

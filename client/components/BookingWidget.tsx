@@ -5,7 +5,7 @@ import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
 import { RecaptchaService } from '../services/recaptchaService';
 import { calculateStoragePrice, STORAGE_RATES } from '../utils/pricing';
-import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot } from '../utils/dateUtils';
+import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 
 interface BookingWidgetProps {
   lang: string;
@@ -147,9 +147,18 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     const todayStr = formatKSTDate();
     if (booking.pickupDate === todayStr) {
       const slots = serviceType === ServiceType.DELIVERY ? DELIVERY_PICKUP_HOURS : STORAGE_START_HOURS;
-      const firstSlot = getFirstAvailableSlot(todayStr, slots);
-      if (firstSlot && firstSlot !== booking.pickupTime) {
-        setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
+      if (isAllSlotsPast(todayStr, slots)) {
+        const tomorrowStr = addDaysToDateStr(todayStr, 1);
+        setBooking(prev => ({
+          ...prev,
+          pickupDate: tomorrowStr,
+          dropoffDate: (prev.dropoffDate === todayStr || (prev.dropoffDate || '') < tomorrowStr) ? tomorrowStr : prev.dropoffDate
+        }));
+      } else {
+        const firstSlot = getFirstAvailableSlot(todayStr, slots);
+        if (firstSlot && firstSlot !== booking.pickupTime) {
+          setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
+        }
       }
     }
   }, [booking.pickupDate, serviceType]);
@@ -157,12 +166,38 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
   useEffect(() => {
     const todayStr = formatKSTDate();
     if ((booking.dropoffDate === todayStr || (!booking.dropoffDate && booking.pickupDate === todayStr)) && serviceType === ServiceType.DELIVERY) {
-      const firstSlot = getFirstAvailableSlot(booking.dropoffDate || todayStr, DELIVERY_DROPOFF_HOURS);
-      if (firstSlot && firstSlot !== booking.deliveryTime) {
-        setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
+      const slots = DELIVERY_DROPOFF_HOURS;
+      if (isAllSlotsPast(booking.dropoffDate || todayStr, slots)) {
+        const tomorrowStr = addDaysToDateStr(booking.dropoffDate || todayStr, 1);
+        setBooking(prev => ({ ...prev, dropoffDate: tomorrowStr }));
+      } else {
+        const firstSlot = getFirstAvailableSlot(booking.dropoffDate || todayStr, slots);
+        if (firstSlot && firstSlot !== booking.deliveryTime) {
+          setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
+        }
       }
     }
-  }, [booking.dropoffDate, booking.pickupDate, serviceType]);
+
+    if (serviceType === ServiceType.STORAGE) {
+      const pDate = booking.pickupDate || todayStr;
+      if (!booking.dropoffDate || booking.dropoffDate < pDate) {
+        setBooking(prev => ({ ...prev, dropoffDate: pDate }));
+      }
+      if (booking.dropoffDate === pDate && booking.pickupTime) {
+        if (!booking.deliveryTime || booking.deliveryTime <= booking.pickupTime) {
+          const slots = STORAGE_END_HOURS;
+          const nextSlotIdx = slots.indexOf(booking.pickupTime) + 1;
+          if (nextSlotIdx > 0 && nextSlotIdx < slots.length) {
+            setBooking(prev => ({ ...prev, deliveryTime: slots[nextSlotIdx] }));
+          } else {
+            setBooking(prev => ({ ...prev, dropoffDate: addDaysToDateStr(pDate, 1), deliveryTime: slots[0] || '10:00' }));
+          }
+        }
+      } else if (!booking.deliveryTime) {
+        setBooking(prev => ({ ...prev, deliveryTime: '18:00' }));
+      }
+    }
+  }, [booking.dropoffDate, booking.pickupDate, serviceType, booking.deliveryTime, booking.pickupTime]);
 
   const handleServiceTypeChange = (type: ServiceType) => {
     if (isModification) return; // Disable changing service type in modification mode
@@ -495,28 +530,25 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                               {getLocalizedDate(booking.pickupDate || '', lang)}
                             </div>
                           </div>
-                          <div className="grid grid-cols-4 gap-2">
-                            {(serviceType === ServiceType.DELIVERY ? DELIVERY_PICKUP_HOURS : STORAGE_START_HOURS).map(h => {
-                              const isPast = isPastKSTTime(booking.pickupDate || '', h);
-                              const isSelected = booking.pickupTime === h;
-                              return (
-                                <button
-                                  key={h}
-                                  type="button"
-                                  disabled={isPast}
-                                  onClick={() => updateBooking('pickupTime', h)}
-                                  className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
-                                      ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
-                                      : isPast
-                                        ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
-                                        : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
-                                    }`}
-                                >
-                                  {h}
-                                  {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
-                                </button>
-                              );
-                            })}
+                          <div className="flex-1 relative">
+                            <select
+                              title="Pickup Time"
+                              value={booking.pickupTime}
+                              onChange={e => updateBooking('pickupTime', e.target.value)}
+                              className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                            >
+                              {(serviceType === ServiceType.DELIVERY ? DELIVERY_PICKUP_HOURS : STORAGE_START_HOURS).map(h => {
+                                const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                                return (
+                                  <option key={h} value={h} disabled={isPast}>
+                                    {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                              <i className="fa-solid fa-clock"></i>
+                            </div>
                           </div>
                         </div>
                         {new Date().getHours() >= 14 && (
@@ -543,28 +575,27 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                             {getLocalizedDate(booking.dropoffDate || '', lang)}
                           </div>
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
-                          {(serviceType === ServiceType.DELIVERY ? DELIVERY_DROPOFF_HOURS : STORAGE_END_HOURS).map(h => {
-                            const isPast = isPastKSTTime(booking.dropoffDate || booking.pickupDate || '', h);
-                            const isSelected = booking.deliveryTime === h;
-                            return (
-                              <button
-                                key={h}
-                                type="button"
-                                disabled={isPast}
-                                onClick={() => updateBooking('deliveryTime', h)}
-                                className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
-                                  ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
-                                  : isPast
-                                    ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
-                                  }`}
-                              >
-                                {h}
-                                {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
-                              </button>
-                            );
-                          })}
+                        <div className="flex-1 relative">
+                          <select
+                            title="Drop-off Time"
+                            value={booking.deliveryTime}
+                            onChange={e => updateBooking('deliveryTime', e.target.value)}
+                            className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                          >
+                            {(serviceType === ServiceType.DELIVERY ? DELIVERY_DROPOFF_HOURS : STORAGE_END_HOURS).map(h => {
+                              const isPast = isPastKSTTime(booking.dropoffDate || booking.pickupDate || '', h);
+                              const isBeforePickup = serviceType === ServiceType.STORAGE && (booking.dropoffDate === booking.pickupDate) && (h <= (booking.pickupTime || '00:00'));
+                              const isDisabled = isPast || (isBeforePickup as boolean);
+                              return (
+                                <option key={h} value={h} disabled={isDisabled}>
+                                  {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                            <i className="fa-solid fa-clock"></i>
+                          </div>
                         </div>
                       </div>
                     </div>

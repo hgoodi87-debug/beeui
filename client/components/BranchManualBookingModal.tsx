@@ -51,6 +51,14 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
     const currentBranch = locations.find(l => l.id === branchId);
 
     const handleSave = async () => {
+        if (!formData.userName) {
+            alert('고객 성함을 입력해주세요. 💅');
+            return;
+        }
+        if (formData.serviceType === ServiceType.DELIVERY && !formData.dropoffLocation) {
+            alert('배송 도착지를 선택해주세요. 🙄');
+            return;
+        }
         await onSave(formData);
     };
 
@@ -73,7 +81,15 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 ml-1">서비스 유형</label>
                             <select
                                 value={formData.serviceType}
-                                onChange={e => setFormData({ ...formData, serviceType: e.target.value as ServiceType })}
+                                onChange={e => {
+                                    const newType = e.target.value as ServiceType;
+                                    setFormData({
+                                        ...formData,
+                                        serviceType: newType,
+                                        // 보관이면 도착지도 해당 지점으로 강제 💅
+                                        dropoffLocation: newType === ServiceType.STORAGE ? branchId : ''
+                                    });
+                                }}
                                 className="w-full bg-gray-50 p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
                                 title="서비스 유형 선택"
                                 aria-label="서비스 유형 선택"
@@ -146,28 +162,51 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 ml-1">날짜</label>
-                            <input
-                                type="date"
-                                value={formData.pickupDate}
-                                onChange={e => setFormData({ ...formData, pickupDate: e.target.value })}
-                                className="w-full bg-gray-50 p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
-                                title="예약 날짜 선택"
-                                aria-label="예약 날짜 선택"
-                            />
+                    <div className="p-6 bg-gray-50 rounded-[32px] border border-gray-100 space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 ml-1">{formData.serviceType === ServiceType.DELIVERY ? '픽업 날짜' : '보관 시작일'}</label>
+                                <input
+                                    type="date"
+                                    value={formData.pickupDate}
+                                    onChange={e => setFormData({ ...formData, pickupDate: e.target.value })}
+                                    className="w-full bg-white p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-sm"
+                                    title="날짜 선택"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 ml-1">시간</label>
+                                <input
+                                    type="time"
+                                    value={formData.pickupTime}
+                                    onChange={e => setFormData({ ...formData, pickupTime: e.target.value })}
+                                    className="w-full bg-white p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-sm"
+                                    title="시간 선택"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 ml-1">시간</label>
-                            <input
-                                type="time"
-                                value={formData.pickupTime}
-                                onChange={e => setFormData({ ...formData, pickupTime: e.target.value })}
-                                className="w-full bg-gray-50 p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
-                                title="예약 시간 선택"
-                                aria-label="예약 시간 선택"
-                            />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 ml-1">{formData.serviceType === ServiceType.DELIVERY ? '배송 완료일' : '보관 종료일'}</label>
+                                <input
+                                    type="date"
+                                    value={formData.dropoffDate}
+                                    onChange={e => setFormData({ ...formData, dropoffDate: e.target.value })}
+                                    className="w-full bg-white p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-sm"
+                                    title="날짜 선택"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 ml-1">시간</label>
+                                <input
+                                    type="time"
+                                    value={formData.deliveryTime}
+                                    onChange={e => setFormData({ ...formData, deliveryTime: e.target.value })}
+                                    className="w-full bg-white p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-sm"
+                                    title="시간 선택"
+                                />
+                            </div>
                         </div>
                     </div>
 

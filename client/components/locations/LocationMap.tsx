@@ -160,18 +160,17 @@ const LocationMap: React.FC<LocationMapProps> = ({
             return;
         }
 
-        // 1. 사용자 마커(여행자) 생성 및 위치 업데이트
+        // 1. 사용자 마커(내 위치) 생성 및 위치 업데이트
         if (userMarkerRef.current) {
             userMarkerRef.current.setPosition(new window.naver.maps.LatLng(userLocation.lat, userLocation.lng));
         } else {
-            console.log("[스봉이] Creating traveler marker... 🚶‍♂️✨");
-            const travelerUrl = `${window.location.origin}/images/markers/Traveler_v1.svg`;
+            console.log("[스봉이] Creating sleek 'ME' marker... 💅✨");
             const travelerContent = `
                 <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-                    <img src="${travelerUrl}" style="width: 52px; height: 52px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));" alt="Me" />
-                    <div style="background: #ffffff; padding: 2px 10px; border-radius: 20px; border: 1.5px solid #ffcb05; margin-top: -8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 10;">
-                        <span style="font-size: 11px; font-weight: 900; color: #000; letter-spacing: -0.02em;">ME</span>
+                    <div style="background: #ffffff; padding: 4px 12px; border-radius: 20px; border: 2px solid #ffcb05; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10; animation: bounce 2s infinite;">
+                        <span style="font-size: 13px; font-weight: 900; color: #000; letter-spacing: 0.05em;">ME</span>
                     </div>
+                    <div style="width: 2px; height: 6px; background: #ffcb05; margin-top: -1px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                 </div>
             `;
             userMarkerRef.current = new window.naver.maps.Marker({
@@ -179,7 +178,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
                 map: mapRef.current,
                 icon: {
                     content: travelerContent,
-                    anchor: new window.naver.maps.Point(26, 26) // 원형 마커이므로 중앙 앵커 💅
+                    anchor: new window.naver.maps.Point(22, 28) // 'ME' 쉴드와 꼬리 부분 중앙 앵커 💅
                 },
                 zIndex: 200
             });

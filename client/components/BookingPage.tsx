@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { LocationOption, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
-import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot } from '../utils/dateUtils';
+import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 
 interface BookingPageProps {
@@ -173,9 +173,18 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const todayStr = formatKSTDate();
         if (booking.pickupDate === todayStr) {
             const slots = generateTimeSlots(pickupLoc, 'PICKUP');
-            const firstSlot = getFirstAvailableSlot(todayStr, slots);
-            if (firstSlot && firstSlot !== booking.pickupTime) {
-                setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
+            if (isAllSlotsPast(todayStr, slots)) {
+                const tomorrowStr = addDaysToDateStr(todayStr, 1);
+                setBooking(prev => ({
+                    ...prev,
+                    pickupDate: tomorrowStr,
+                    dropoffDate: (prev.dropoffDate === todayStr || (prev.dropoffDate || '') < tomorrowStr) ? tomorrowStr : prev.dropoffDate
+                }));
+            } else {
+                const firstSlot = getFirstAvailableSlot(todayStr, slots);
+                if (firstSlot && firstSlot !== booking.pickupTime) {
+                    setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
+                }
             }
         }
     }, [booking.pickupDate, pickupLoc, booking.serviceType]);
@@ -184,23 +193,41 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const todayStr = formatKSTDate();
         if ((booking.dropoffDate === todayStr || (!booking.dropoffDate && booking.pickupDate === todayStr)) && booking.serviceType === ServiceType.DELIVERY) {
             const slots = generateTimeSlots(pickupLoc, 'DELIVERY');
-            const firstSlot = getFirstAvailableSlot(booking.dropoffDate || todayStr, slots);
-            if (firstSlot && firstSlot !== booking.deliveryTime) {
-                setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
+            if (isAllSlotsPast(booking.dropoffDate || todayStr, slots)) {
+                const tomorrowStr = addDaysToDateStr(booking.dropoffDate || todayStr, 1);
+                setBooking(prev => ({ ...prev, dropoffDate: tomorrowStr }));
+            } else {
+                const firstSlot = getFirstAvailableSlot(booking.dropoffDate || todayStr, slots);
+                if (firstSlot && firstSlot !== booking.deliveryTime) {
+                    setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
+                }
             }
         }
 
         // 💅 Storage: Ensure dropoffDate >= pickupDate AND Initialize Retrieval Time
         if (booking.serviceType === ServiceType.STORAGE) {
-            if (!booking.dropoffDate || booking.dropoffDate < (booking.pickupDate || todayStr)) {
-                setBooking(prev => ({ ...prev, dropoffDate: booking.pickupDate || todayStr }));
+            const pDate = booking.pickupDate || todayStr;
+            if (!booking.dropoffDate || booking.dropoffDate < pDate) {
+                setBooking(prev => ({ ...prev, dropoffDate: pDate }));
             }
-            // Fix: Initialize deliveryTime (Retrieval) if empty, otherwise price is 0
-            if (!booking.deliveryTime) {
+
+            // If dropoff date is same as pickup date, check if deliveryTime is before pickupTime
+            if (booking.dropoffDate === pDate && booking.pickupTime) {
+                if (!booking.deliveryTime || booking.deliveryTime <= booking.pickupTime) {
+                    const slots = generateTimeSlots(pickupLoc, 'PICKUP');
+                    const nextSlotIdx = slots.indexOf(booking.pickupTime) + 1;
+                    if (nextSlotIdx > 0 && nextSlotIdx < slots.length) {
+                        setBooking(prev => ({ ...prev, deliveryTime: slots[nextSlotIdx] }));
+                    } else {
+                        // if no next slot today, shift dropoff date to tomorrow
+                        setBooking(prev => ({ ...prev, dropoffDate: addDaysToDateStr(pDate, 1), deliveryTime: slots[0] || '10:00' }));
+                    }
+                }
+            } else if (!booking.deliveryTime) {
                 setBooking(prev => ({ ...prev, deliveryTime: '18:00' })); // Default to evening
             }
         }
-    }, [booking.dropoffDate, booking.pickupDate, pickupLoc, booking.serviceType, booking.deliveryTime]);
+    }, [booking.dropoffDate, booking.pickupDate, pickupLoc, booking.serviceType, booking.deliveryTime, booking.pickupTime]);
 
     const updateBagCount = (size: keyof BagSizes, delta: number) => {
         setBooking(prev => {
@@ -461,28 +488,26 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         {getLocalizedDate(booking.pickupDate || '', lang)}
                                                     </div>
                                                 </div>
-                                                <div className="grid grid-cols-4 gap-2">
-                                                    {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
-                                                        const isPast = isPastKSTTime(booking.pickupDate || '', h);
-                                                        const isSelected = booking.pickupTime === h;
-                                                        return (
-                                                            <button
-                                                                key={h}
-                                                                type="button"
-                                                                disabled={isPast}
-                                                                onClick={() => setBooking(prev => ({ ...prev, pickupTime: h }))}
-                                                                className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
-                                                                    ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
-                                                                    : isPast
-                                                                        ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
-                                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
-                                                                    }`}
-                                                            >
-                                                                {h}
-                                                                {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
-                                                            </button>
-                                                        );
-                                                    })}
+                                                <div className="flex-1 relative">
+                                                    <select
+                                                        title="Pickup Time"
+                                                        aria-label="Pickup Time"
+                                                        value={booking.pickupTime}
+                                                        onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
+                                                        className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                                                    >
+                                                        {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
+                                                            const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                                                            return (
+                                                                <option key={h} value={h} disabled={isPast}>
+                                                                    {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                                </option>
+                                                            );
+                                                        })}
+                                                    </select>
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                        <Clock size={16} />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -527,28 +552,26 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 {getLocalizedDate(booking.dropoffDate || '', lang)}
                                                             </div>
                                                         </div>
-                                                        <div className="grid grid-cols-4 gap-2">
-                                                            {generateTimeSlots(pickupLoc, 'DELIVERY').map(h => {
-                                                                const isPast = isPastKSTTime(booking.dropoffDate || '', h);
-                                                                const isSelected = booking.deliveryTime === h;
-                                                                return (
-                                                                    <button
-                                                                        key={h}
-                                                                        type="button"
-                                                                        disabled={isPast}
-                                                                        onClick={() => setBooking(prev => ({ ...prev, deliveryTime: h }))}
-                                                                        className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
-                                                                            ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
-                                                                            : isPast
-                                                                                ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
-                                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
-                                                                            }`}
-                                                                    >
-                                                                        {h}
-                                                                        {isPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
-                                                                    </button>
-                                                                );
-                                                            })}
+                                                        <div className="flex-1 relative">
+                                                            <select
+                                                                title="Delivery Time"
+                                                                aria-label="Delivery Time"
+                                                                value={booking.deliveryTime}
+                                                                onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
+                                                                className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                                                            >
+                                                                {generateTimeSlots(pickupLoc, 'DELIVERY').map(h => {
+                                                                    const isPast = isPastKSTTime(booking.dropoffDate || '', h);
+                                                                    return (
+                                                                        <option key={h} value={h} disabled={isPast}>
+                                                                            {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                                        </option>
+                                                                    );
+                                                                })}
+                                                            </select>
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                                <Clock size={16} />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -576,28 +599,28 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 {getLocalizedDate(booking.dropoffDate || '', lang)}
                                                             </div>
                                                         </div>
-                                                        <div className="grid grid-cols-4 gap-2">
-                                                            {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
-                                                                const isRetrievalPast = isPastKSTTime(booking.dropoffDate || '', h);
-                                                                const isSelected = booking.deliveryTime === h;
-                                                                return (
-                                                                    <button
-                                                                        key={h}
-                                                                        type="button"
-                                                                        disabled={isRetrievalPast}
-                                                                        onClick={() => setBooking(prev => ({ ...prev, deliveryTime: h }))}
-                                                                        className={`py-2 px-1 rounded-xl text-[11px] font-black transition-all border ${isSelected
-                                                                            ? 'bg-bee-black text-bee-yellow border-bee-black shadow-md'
-                                                                            : isRetrievalPast
-                                                                                ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
-                                                                                : 'bg-white text-gray-600 border-gray-200 hover:border-bee-yellow hover:text-bee-black'
-                                                                            }`}
-                                                                    >
-                                                                        {h}
-                                                                        {isRetrievalPast && <span className="block text-[8px] opacity-60">{t.booking?.slot_past || '마감'}</span>}
-                                                                    </button>
-                                                                );
-                                                            })}
+                                                        <div className="flex-1 relative">
+                                                            <select
+                                                                title="Retrieval Time"
+                                                                aria-label="Retrieval Time"
+                                                                value={booking.deliveryTime}
+                                                                onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
+                                                                className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                                                            >
+                                                                {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
+                                                                    const isRetrievalPast = isPastKSTTime(booking.dropoffDate || '', h);
+                                                                    const isBeforePickup = (booking.dropoffDate === booking.pickupDate) && (h <= (booking.pickupTime || '00:00'));
+                                                                    const isDisabled = isRetrievalPast || isBeforePickup;
+                                                                    return (
+                                                                        <option key={h} value={h} disabled={isDisabled}>
+                                                                            {h} {isRetrievalPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                                        </option>
+                                                                    );
+                                                                })}
+                                                            </select>
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                                <Clock size={16} />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -897,31 +920,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
                 </div>
             </div>
 
-            {/* Floating Action Bar (Mobile Only) 💅✨ */}
-            <div className="lg:hidden fixed bottom-6 left-6 right-6 z-[60]">
-                <div className="bg-bee-black text-white p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 flex items-center justify-between backdrop-blur-xl bg-opacity-90">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.total_label || 'TOTAL'}</span>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-black italic text-bee-yellow">₩{priceDetails.total.toLocaleString()}</span>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleBook}
-                        disabled={isSubmitting || !booking.agreedToTerms || !booking.agreedToPrivacy || !booking.agreedToHighValue || (booking.bags === 0)}
-                        className="py-3 px-8 bg-bee-yellow text-bee-black rounded-2xl font-black italic text-sm shadow-lg active:scale-95 transition-all disabled:opacity-30 disabled:grayscale"
-                    >
-                        {isSubmitting ? (
-                            <div className="flex items-center gap-2">
-                                <RefreshCcw className="animate-spin w-4 h-4" />
-                                <span>...</span>
-                            </div>
-                        ) : (
-                            t.landing?.hero_cta || 'BOOK NOW'
-                        )}
-                    </button>
-                </div>
-            </div>
         </div>
     );
 };

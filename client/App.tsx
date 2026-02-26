@@ -163,6 +163,23 @@ const App: React.FC = () => {
     }
   };
 
+  const handleBranchManualBookingSuccess = async (booking: BookingState) => {
+    console.log("[App] handleBranchManualBookingSuccess triggered:", booking);
+    try {
+      const finalBooking = {
+        ...booking,
+        status: BookingStatus.CONFIRMED, // 수동 예약은 즉시 확정 💅
+        createdAt: new Date().toISOString()
+      };
+      await StorageService.saveBooking(finalBooking);
+      alert('지점 수동 예약이 성공적으로 저장되었습니다. 💅');
+      navigate(`/admin/branch/${adminInfo.branchId}`);
+    } catch (e) {
+      console.error(e);
+      alert('수동 예약 저장 실패');
+    }
+  };
+
   // Legacy navigations handler to not break hardcoded prop strings in subcomponents
   const legacyNavigate = (view: string) => {
     switch (view) {
@@ -290,6 +307,7 @@ const App: React.FC = () => {
               <Route path="/admin" element={<AnimatedRoute><AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} /></AnimatedRoute>} />
               <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={() => navigate('/')} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
               <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={() => navigate('/')} /></AnimatedRoute></BranchAdminGuard>} />
+              <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
               <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
 
               {/* FALLBACK */}

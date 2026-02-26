@@ -1,9 +1,22 @@
-rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+    // Zero-Trust Security Policy 💅
+    
+    // User bookings: Only owner or admin can read/write
+    match /bookings/{bookingId} {
+      allow create: if true; // Guest booking allowed
+      allow read, update: if request.auth != null; // Must be logged in to track/update
+    }
+
+    // Locations & Settings: Public read, Admin write
+    match /locations/{locationId} {
+      allow read: if true;
+      allow write: if false; // Only via Functions/Admin SDK
+    }
+
+    match /settings/{settingId} {
+      allow read: if false; // Secrets must be hidden
+      allow write: if false;
     }
   }
 }

@@ -158,3 +158,25 @@ export const calculateDaysDifference = (date1: string, date2: string): number =>
     const diffTime = d2.getTime() - d1.getTime();
     return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 };
+
+/**
+ * Checks if all provided time slots for a given date are in the past.
+ */
+export const isAllSlotsPast = (dateStr: string, slots: string[]): boolean => {
+    if (!slots || slots.length === 0) return true;
+    return slots.every(slot => isPastKSTTime(dateStr, slot));
+};
+
+/**
+ * Adds a specific number of days to a YYYY-MM-DD date string and returns the new YYYY-MM-DD string.
+ */
+export const addDaysToDateStr = (dateStr: string, days: number): string => {
+    const date = new Date(dateStr.split(' ')[0]);
+    if (isNaN(date.getTime())) return formatKSTDate();
+    date.setDate(date.getDate() + days);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};

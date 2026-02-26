@@ -36,8 +36,8 @@
 - **Section 1 (Hero):** Full-bleed image of a 'hands-free' traveler in natural sunlight. Headline: "Travel light, live more. Let Beeliber handle your bags!". CTA Button in #FFC700 with text "Start Free Travel 🐝".
 - **Section 2 (Pain Point):** A 3-column grid showing 'Struggling with heavy bags' in desaturated tones vs. 'Beeliber's freedom' in warm tones.
 - **Section 3 (Process):** A clean, horizontal 3-step timeline (Book -> Hand-over -> Hands-free) using minimal icons.
-- **Section 4 (Trust):** A dashboard-style UI snippet showing 'Real-time GPS Tracking' and a 'Safety Insurance' badge.
-- **Section 5 (Persona):** Soft Yellow (#FFF8E1) background cards featuring specific traveler types (First-day, Last-day, Pro-walker).
+- **Section 4 (Trust & Tech):** A dashboard-style UI snippet showing 'Digital Twin Luggage Visualization' and a 'Blockchain-Based Smart Contract Insurance' badge. Mention 'Zero-PII Secure QR Tracking'.
+- **Section 5 (Persona & Context):** Soft Yellow (#FFF8E1) background cards featuring traveler types (First-day, Last-day). Implement 'Context-Aware UI' that suggests the best action based on user GPS and flight time.
 - **Section 6 (Footer):** Signature sign-off: "Enjoy your light travel! 🐝".
 
 **Design Constraints (Don'ts):**

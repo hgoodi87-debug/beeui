@@ -393,22 +393,27 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
                                                     className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-bee-yellow"
                                                 />
                                             </div>
-                                            <select
-                                                title="Pickup Time"
-                                                value={booking.pickupTime}
-                                                onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
-                                                className="w-48 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
-                                                disabled={!booking.pickupDate}
-                                            >
-                                                {getSlotsForType(pickupLoc, 'PICKUP').map(h => {
-                                                    const isPast = isPastKSTTime(booking.pickupDate || '', h);
-                                                    return (
-                                                        <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
-                                                            {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                                                        </option>
-                                                    );
-                                                })}
-                                            </select>
+                                            <div className="flex-1 relative">
+                                                <select
+                                                    title="Pickup Time"
+                                                    value={booking.pickupTime}
+                                                    onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
+                                                    className="w-full bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                                                    disabled={!booking.pickupDate}
+                                                >
+                                                    {getSlotsForType(pickupLoc, 'PICKUP').map(h => {
+                                                        const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                                                        return (
+                                                            <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
+                                                                {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                    <Clock size={16} />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -451,21 +456,26 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
                                                     {getLocalizedDate(booking.dropoffDate || '', lang)}
                                                 </div>
                                             </div>
-                                            <select
-                                                title="Drop-off/Delivery Time"
-                                                value={booking.deliveryTime}
-                                                onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                className="w-48 bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow"
-                                            >
-                                                {getSlotsForType(dropoffLoc, 'DELIVERY').map(h => {
-                                                    const isPast = isPastKSTTime(booking.dropoffDate || booking.pickupDate || '', h);
-                                                    return (
-                                                        <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
-                                                            {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                                                        </option>
-                                                    );
-                                                })}
-                                            </select>
+                                            <div className="flex-1 relative">
+                                                <select
+                                                    title="Drop-off/Delivery Time"
+                                                    value={booking.deliveryTime}
+                                                    onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
+                                                    className="w-full bg-white border border-gray-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                                                >
+                                                    {getSlotsForType(dropoffLoc, 'DELIVERY').map(h => {
+                                                        const isPast = isPastKSTTime(booking.dropoffDate || booking.pickupDate || '', h);
+                                                        return (
+                                                            <option key={h} value={h} disabled={isPast} className={isPast ? "text-gray-300" : ""}>
+                                                                {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                    <Clock size={16} />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

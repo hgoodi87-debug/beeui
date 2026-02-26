@@ -21,7 +21,7 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
             </div>
 
             {/* Overlay Gradient for Visibility */}
-            <div className="absolute inset-0 bg-gradient-to-b from-bee-yellow/80 via-bee-yellow/40 to-bee-yellow/90" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90" />
             <div className="absolute inset-0 opacity-[0.05] pointer-events-none noise-overlay" />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
@@ -40,7 +40,7 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
                         </div>
                     </div>
 
-                    <h2 className="text-6xl md:text-[10rem] font-display font-black text-bee-black leading-[0.9] tracking-tighter mb-20 break-keep whitespace-pre-line">
+                    <h2 className="text-5xl md:text-[8rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-16 break-keep whitespace-pre-line">
                         {t.final_cta.headline}
                     </h2>
 

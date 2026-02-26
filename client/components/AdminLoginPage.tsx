@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { AdminUser } from '../types';
 import { StorageService } from '../services/storageService';
+import { ensureAuth } from '../firebaseApp';
 
 interface AdminLoginPageProps {
   onLogin: (name: string, jobTitle: string, branchId?: string) => void;
@@ -84,18 +85,21 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
 
     setLoading(true);
     try {
-      // Fetch admins from Cloud (Firestore) instead of localStorage
+      // 1. Ensure Auth Context is ready (Anonymous sign-in) 💅
+      await ensureAuth();
+
+      // 2. Fetch admins from Cloud (Firestore)
       const storedAdmins = await StorageService.getAdmins();
 
-      // Robust matching: remove all spaces, lowercase, normalize
-      const normalize = (str: string) => str.replace(/\s+/g, '').toLowerCase().normalize('NFC');
+      // Robust matching: remove all spaces, lowercase, normalize to NFC (Win/Mac compatibility)
+      const normalize = (str: string) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
 
       const inputName = normalize(formData.name);
       const inputPassword = formData.password.trim();
 
-      // Find matching user by Name and Password
+      // Find matching user
       const admin = storedAdmins.find(u => {
-        const storedName = normalize(u.name || '');
+        const storedName = normalize(u.name);
         const storedPass = (u.password || '').trim();
         return storedName === inputName && storedPass === inputPassword;
       });
@@ -103,11 +107,21 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       if (admin) {
         onLogin(admin.name, admin.jobTitle || 'Staff', admin.branchId);
       } else {
-        setError('이름 또는 비밀번호가 올바르지 않습니다.');
+        // Detailed feedback for debugging 💅
+        const nameExists = storedAdmins.some(u => normalize(u.name) === inputName);
+        if (nameExists) {
+          setError('비밀번호가 일치하지 않습니다.');
+        } else {
+          setError('등록되지 않은 관리자 이름입니다.');
+        }
       }
-    } catch (e) {
-      console.error("Login Error:", e);
-      setError('로그인 처리 중 오류가 발생했습니다.');
+    } catch (err: any) {
+      console.error("Login Error:", err);
+      if (err.code === 'permission-denied') {
+        setError('데이터 접근 권한이 없습니다. (보안 규칙 확인 필요)');
+      } else {
+        setError('시스템 준비 중입니다. 잠시 후 다시 시도해주세요.');
+      }
     } finally {
       setLoading(false);
     }
@@ -133,6 +147,11 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white/5 backdrop-blur-2xl p-10 rounded-[40px] border border-white/10 shadow-2xl space-y-6 hover:shadow-bee-yellow/5 transition-all duration-500">
+          {error && (
+            <div className="p-4 mb-2 text-sm bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl text-center animate-shake font-bold">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">Admin Name</label>

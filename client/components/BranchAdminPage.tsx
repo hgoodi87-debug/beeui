@@ -348,7 +348,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
             <nav className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 z-40">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-bee-black">
+                        <button onClick={onBack} title="Back" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-bee-black">
                             <i className="fa-solid fa-chevron-left"></i>
                         </button>
                         <h1 className="text-xl font-black italic tracking-tighter">

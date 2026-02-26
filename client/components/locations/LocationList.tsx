@@ -43,7 +43,25 @@ const LocationList: React.FC<LocationListProps> = ({
     const [activeStep, setActiveStep] = React.useState<'BAGGAGE' | 'PICKUP_DATE' | 'PICKUP_TIME' | 'RETURN_DATE' | 'RETURN_TIME' | null>(null);
 
     const isDelivery = currentService === 'SAME_DAY' || currentService === 'SCHEDULED';
-    const timeSlotsOrig = React.useMemo(() => generateTimeSlots(9, 21, 30), []);
+
+    // [스봉이] 영업시간 파싱 및 동적 슬롯 생성 💅
+    const bh = React.useMemo(() => {
+        const bhStr = selectedBranch?.businessHours || '09:00-21:00';
+        if (!bhStr || bhStr === '24시간' || bhStr === '24 Hours') return { start: 0, end: 24 };
+        try {
+            const parts = bhStr.split('-').map(p => p.trim());
+            return { start: parseInt(parts[0].split(':')[0]), end: parseInt(parts[1].split(':')[0]) };
+        } catch (e) { return { start: 9, end: 21 }; }
+    }, [selectedBranch]);
+
+    const timeSlotsOrig = React.useMemo(() => {
+        const slots = [];
+        for (let i = bh.start; i <= bh.end; i++) {
+            slots.push(`${i.toString().padStart(2, '0')}:00`);
+            if (i < bh.end) slots.push(`${i.toString().padStart(2, '0')}:30`);
+        }
+        return slots;
+    }, [bh]);
 
     // [스봉이] 날짜 포맷팅 헬퍼 (YYYY-MM-DD -> MM.DD) 💅
     const formatToMMDD = (dateStr: string | undefined) => {
@@ -116,12 +134,21 @@ const LocationList: React.FC<LocationListProps> = ({
                             if (dStr < nowKST) return true;
 
                             if (dStr === nowKST) {
-                                const pickupSlots = timeSlotsOrig.filter(h => !isDelivery || (h >= '09:00' && h <= '13:30'));
+                                // [스봉이] 지점별 영업시간 반영하여 마감 여부 판단 💅
+                                const pickupEndLimit = isDelivery ? Math.min(bh.end, 15) : (bh.end - 1);
+                                const pickupSlots = timeSlotsOrig.filter(h => {
+                                    const hour = parseInt(h.split(':')[0]);
+                                    return hour >= bh.start && hour < pickupEndLimit;
+                                });
                                 const hasPickup = !!getFirstAvailableSlot(dStr, pickupSlots);
 
                                 let hasReturn = true;
                                 if (currentService === 'SAME_DAY') {
-                                    const returnSlots = timeSlotsOrig.filter(h => h >= '16:00' && h <= '21:00');
+                                    const returnStartLimit = Math.max(bh.start, 16);
+                                    const returnSlots = timeSlotsOrig.filter(h => {
+                                        const hour = parseInt(h.split(':')[0]);
+                                        return hour >= returnStartLimit && hour <= bh.end;
+                                    });
                                     hasReturn = !!getFirstAvailableSlot(dStr, returnSlots);
                                 }
 
@@ -312,7 +339,15 @@ const LocationList: React.FC<LocationListProps> = ({
                                             {timeSlotsOrig.map((h) => {
                                                 const isPast = activeStep === 'PICKUP_TIME' ? isPastKSTTime(bookingDate || '', h) : (isPastKSTTime(returnDate || '', h) || (returnDate === bookingDate && h <= (bookingTime || '')));
                                                 const isSelected = activeStep === 'PICKUP_TIME' ? bookingTime === h : returnTime === h;
-                                                const serviceOk = !isDelivery || (activeStep === 'PICKUP_TIME' ? (h >= '09:00' && h <= '13:30') : (h >= '16:00' && h <= '21:00'));
+
+                                                // [스봉이] 서비스별/지점별 다이내믹 가드 💅
+                                                const pickupEndLimit = isDelivery ? Math.min(bh.end, 15) : (bh.end - 1);
+                                                const returnStartLimit = isDelivery ? Math.max(bh.start, 16) : bh.start;
+
+                                                const serviceOk = activeStep.includes('PICKUP')
+                                                    ? (parseInt(h.split(':')[0]) >= bh.start && h <= `${pickupEndLimit}:30`)
+                                                    : (parseInt(h.split(':')[0]) >= returnStartLimit && parseInt(h.split(':')[0]) <= bh.end);
+
                                                 if (!serviceOk) return null;
                                                 return (
                                                     <button
@@ -328,9 +363,10 @@ const LocationList: React.FC<LocationListProps> = ({
                                                                 setActiveStep(null);
                                                             }
                                                         }}
-                                                        className={`py-3 px-4 rounded-xl text-[11px] font-black transition-all ${isPast ? 'opacity-20' : isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-white border border-gray-100 hover:border-bee-yellow'}`}
+                                                        className={`py-3 px-4 rounded-xl text-[10px] font-black transition-all flex flex-col items-center justify-center gap-0.5 ${isPast ? 'bg-gray-50 text-gray-200 border-gray-50' : isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-white border border-gray-100 hover:border-bee-yellow'}`}
                                                     >
-                                                        {h}
+                                                        <span>{h}</span>
+                                                        {isPast && <span className="text-[7px] opacity-60">({lang === 'ko' ? '마감' : 'Closed'})</span>}
                                                     </button>
                                                 );
                                             })}

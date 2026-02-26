@@ -121,17 +121,33 @@ const BookingPage: React.FC<BookingPageProps> = ({
     };
 
     const generateTimeSlots = (location: LocationOption | undefined, type: 'PICKUP' | 'DELIVERY') => {
+        const bhStr = location?.businessHours || '09:00-21:00';
+        const { start, end } = parseBusinessHours(bhStr);
+
         if (booking.serviceType === ServiceType.DELIVERY) {
+            // [스봉이 수정] 배송도 지점 영업시간 내에서만 슬롯 생성 💅
+            const slots = [];
+
             if (type === 'PICKUP') {
-                return ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
+                // Pickup is usually morning/early afternoon
+                const pickupEnd = Math.min(end, 15); // Max pickup around 15:00 for same day
+                for (let i = start; i < pickupEnd; i++) {
+                    slots.push(`${i.toString().padStart(2, '0')}:00`);
+                    slots.push(`${i.toString().padStart(2, '0')}:30`);
+                }
             } else {
-                return ['16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00'];
+                // Delivery is usually late afternoon/evening
+                const deliveryStart = Math.max(start, 15);
+                for (let i = deliveryStart; i < end; i++) {
+                    slots.push(`${i.toString().padStart(2, '0')}:00`);
+                    slots.push(`${i.toString().padStart(2, '0')}:30`);
+                }
+                slots.push(`${end.toString().padStart(2, '0')}:00`);
             }
+            return slots;
         }
 
         // STORAGE Logic: Based on business hours with 30min intervals
-        const bhStr = location?.businessHours || '09:00-21:00';
-        const { start, end } = parseBusinessHours(bhStr);
         const slots = [];
         for (let i = start; i < end; i++) {
             slots.push(`${i.toString().padStart(2, '0')}:00`);

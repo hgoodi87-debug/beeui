@@ -7,6 +7,7 @@ import BranchDetails from './locations/BranchDetails';
 import SEO from './SEO';
 import { LocationOption, ServiceType } from '../types';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
+import { formatKSTDate, isAllSlotsPast, addDaysToDateStr, getFirstAvailableSlot, isPastKSTTime } from '../utils/dateUtils';
 
 interface LocationsPageProps {
   onBack: () => void;
@@ -37,20 +38,71 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   const [searchAddress, setSearchAddress] = useState('');
   const [selectedBranch, setSelectedBranch] = useState<LocationOption | null>(null);
   const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>('STORAGE');
-  const [bookingDate, setBookingDate] = useState(() => {
-    const d = new Date();
-    const kst = new Date(d.getTime() + (9 * 60 * 60000) + (d.getTimezoneOffset() * 60000));
-    return kst.toISOString().split('T')[0];
-  });
+  const [bookingDate, setBookingDate] = useState(formatKSTDate());
   const [bookingTime, setBookingTime] = useState('09:00');
-  const [returnDate, setReturnDate] = useState(() => {
-    const d = new Date();
-    const kst = new Date(d.getTime() + (9 * 60 * 60000) + (d.getTimezoneOffset() * 60000));
-    return kst.toISOString().split('T')[0];
-  });
+  const [returnDate, setReturnDate] = useState(formatKSTDate());
   const [returnTime, setReturnTime] = useState('11:00');
   const [baggageCounts, setBaggageCounts] = useState({ S: 0, M: 0, L: 0, XL: 0 });
   const [deliveryPrices, setDeliveryPrices] = useState<any>({ S: 20000, M: 20000, L: 25000, XL: 29000 });
+
+  // [스봉이 추가] 지점 및 서비스 타입에 따른 지능적 시간 설정 💅
+  const DELIVERY_PICKUP_HOURS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
+  const STORAGE_START_HOURS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
+
+  // [스봉이 추가] 지점 및 서비스 타입에 따른 지능적 시간 설정 💅
+  useEffect(() => {
+    const todayStr = formatKSTDate();
+    const targetDate = bookingDate || todayStr;
+
+    // 지점별 영업시간 파싱 헬퍼
+    const getBH = () => {
+      const bhStr = selectedBranch?.businessHours || '09:00-21:00';
+      if (!bhStr || bhStr === '24시간' || bhStr === '24 Hours') return { start: 0, end: 24 };
+      try {
+        const parts = bhStr.split('-').map(p => p.trim());
+        return { start: parseInt(parts[0].split(':')[0]), end: parseInt(parts[1].split(':')[0]) };
+      } catch (e) { return { start: 9, end: 21 }; }
+    };
+
+    const { start, end } = getBH();
+    const isDelivery = currentService !== 'STORAGE';
+
+    // 동적 슬롯 생성 (유효성 검사용)
+    const slots: string[] = [];
+    if (isDelivery) {
+      const pEnd = Math.min(end, 15);
+      for (let i = start; i < pEnd; i++) {
+        slots.push(`${i.toString().padStart(2, '0')}:00`);
+        slots.push(`${i.toString().padStart(2, '0')}:30`);
+      }
+    } else {
+      const sEnd = end - 1;
+      for (let i = start; i < sEnd; i++) {
+        slots.push(`${i.toString().padStart(2, '0')}:00`);
+        slots.push(`${i.toString().padStart(2, '0')}:30`);
+      }
+    }
+
+    if (targetDate === todayStr) {
+      if (isAllSlotsPast(todayStr, slots)) {
+        const tomorrowStr = addDaysToDateStr(todayStr, 1);
+        setBookingDate(tomorrowStr);
+        setReturnDate(prev => (prev === todayStr || prev < tomorrowStr) ? tomorrowStr : prev);
+        setBookingTime(slots[0] || (isDelivery ? '09:00' : '10:00'));
+      } else {
+        const firstSlot = getFirstAvailableSlot(todayStr, slots);
+        // 현재 선택된 시간이 마감되었거나, 서비스 전환으로 인해 유효하지 않을 경우 리셋
+        if (!bookingTime || isPastKSTTime(todayStr, bookingTime) || !slots.includes(bookingTime)) {
+          if (firstSlot) setBookingTime(firstSlot);
+        }
+      }
+    } else {
+      // 미래 날짜라도 서비스 전환 시 시간이 슬롯에 없으면 첫 슬롯으로!
+      if (!slots.includes(bookingTime)) {
+        setBookingTime(slots[0] || (isDelivery ? '09:00' : '10:00'));
+      }
+    }
+  }, [currentService, bookingDate, selectedBranch]);
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 

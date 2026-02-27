@@ -157,7 +157,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", stiffness: 200, damping: 12 }}
+                        transition={{ type: "spring", stiffness: 260, damping: 14 }}
                         className="w-24 h-24 bg-bee-yellow text-bee-black rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-[0_20px_40px_rgba(255,203,5,0.3)] border-4 border-white/20"
                     >
                         <i className="fa-solid fa-check text-4xl"></i>
@@ -166,7 +166,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                     <motion.h1
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.2 }}
+                        transition={{ delay: 0.1 }}
                         className="text-3xl md:text-5xl font-black italic tracking-tighter mb-4"
                     >
                         {curT.title}
@@ -174,7 +174,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                     <motion.div
                         initial={{ y: 15, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.3 }}
+                        transition={{ delay: 0.18 }}
                         className="inline-block px-4 py-1.5 bg-bee-yellow/10 border border-bee-yellow/20 rounded-full"
                     >
                         <p className="text-bee-yellow font-black uppercase tracking-[0.25em] text-[11px]">
@@ -189,7 +189,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                 <motion.div
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
+                    transition={{ delay: 0.2 }}
                     className="bg-white rounded-[40px] p-8 md:p-10 shadow-2xl border border-gray-100 relative overflow-hidden group"
                 >
                     <div className="absolute top-0 left-0 w-2 h-full bg-bee-yellow group-hover:w-4 transition-all duration-500"></div>
@@ -210,7 +210,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                 <motion.div
                     initial={{ y: 40, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
+                    transition={{ delay: 0.28 }}
                 >
                     <div className="flex items-center gap-3 mb-6 px-4">
                         <div className="w-2 h-8 bg-bee-black rounded-full"></div>
@@ -232,7 +232,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                 <motion.div
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.6 }}
+                    transition={{ delay: 0.35 }}
                     className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
                     <div className="bg-white rounded-[32px] p-7 shadow-xl border border-gray-100 hover:scale-[1.02] transition-transform duration-300">
@@ -271,7 +271,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
+                    transition={{ delay: 0.42 }}
                     className="pt-12 text-center"
                 >
                     <button

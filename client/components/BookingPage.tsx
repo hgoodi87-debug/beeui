@@ -159,6 +159,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // 💅 BookingSuccess 첩크 미리 로딩 (lazy 플리커 방지)
+    const prefetchBookingSuccess = () => {
+        import('../components/BookingSuccess').catch(() => {
+            // prefetch 실패해도 문제없음
+        });
+    };
+
     const pickupLoc = useMemo(() => locations.find(l => l.id === booking.pickupLocation), [locations, booking.pickupLocation]);
     const dropoffLoc = useMemo(() => locations.find(l => l.id === booking.dropoffLocation), [locations, booking.dropoffLocation]);
 
@@ -400,13 +407,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
         finalBooking.snsType = channelMap[booking.snsChannel || 'kakao'] || 'None';
 
         try {
-            // 💅 데이터를 확실하게 클론해서 넘겨줍니다. (App.tsx에서 상태 업데이트가 꼬이지 않게!)
+            // 💅 데이터를 확실하게 클론해서 넘겼줍니다. (App.tsx에서 상태 업데이트가 꼬이지 않게!)
             const clonedBooking = JSON.parse(JSON.stringify(finalBooking));
-            await onSuccess(clonedBooking);
+            setIsSubmitting(false); // navigate 전에 스피너 해제
+            onSuccess(clonedBooking);
         } catch (e) {
             console.error("Booking Error", e);
             alert("Booking Failed. Please try again.");
-        } finally {
             setIsSubmitting(false);
         }
     };
@@ -918,6 +925,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
                                 <button
                                     onClick={handleBook}
+                                    onMouseEnter={prefetchBookingSuccess}
+                                    onFocus={prefetchBookingSuccess}
                                     disabled={isSubmitting}
                                     className="w-full mt-8 py-4 bg-bee-yellow text-bee-black font-black text-lg rounded-2xl shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >

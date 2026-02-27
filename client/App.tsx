@@ -142,25 +142,29 @@ const App: React.FC = () => {
     navigate('/booking');
   };
 
-  const handleBookingSuccess = async (booking: BookingState) => {
+  const handleBookingSuccess = (booking: BookingState) => {
     console.log("[App] handleBookingSuccess triggered with data:", booking);
-    try {
-      const finalBooking = {
-        ...booking,
-        id: booking.id || `${(booking.pickupLocation || 'UNK').substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`,
-        status: booking.status || '접수완료',
-        createdAt: booking.createdAt || new Date().toISOString()
-      };
-      console.log("[App] Final Booking to save:", finalBooking);
-      setLastBooking(finalBooking);
-      await StorageService.saveBooking(finalBooking);
-      console.log("[App] Booking saved successfully. Navigating to success page.");
-      navigate('/booking-success');
-    } catch (saveError: any) {
-      console.error("[App] Booking Save failed:", saveError);
-      const detail = saveError.details ? JSON.stringify(saveError.details) : (saveError.message || saveError);
-      alert(`예약 저장 중 오류가 발생했습니다.\n\n코드: ${saveError.code || '알수없음'}\n내용: ${detail}\n\n관리자에게 문의해주세요.`);
-    }
+    const finalBooking = {
+      ...booking,
+      id: booking.id || `${(booking.pickupLocation || 'UNK').substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`,
+      status: booking.status || '접수완료',
+      createdAt: booking.createdAt || new Date().toISOString()
+    };
+    console.log("[App] Final Booking prepared. Navigating immediately.", finalBooking);
+
+    // 💅 1단계: 상태 저장 & 즉시 화면 전환 (지연 제거)
+    setLastBooking(finalBooking);
+    navigate('/booking-success');
+
+    // 💅 2단계: Firestore 저장은 백그라운드에서 처리 (await 없음)
+    StorageService.saveBooking(finalBooking)
+      .then(() => console.log("[App] Booking saved to Firestore successfully."))
+      .catch((saveError: any) => {
+        console.error("[App] Booking Save failed (background):", saveError);
+        // 저장 실패 시 사용자에게 통보 (이미 성공 페이지에 있으므로 비침습적으로)
+        const detail = saveError.details ? JSON.stringify(saveError.details) : (saveError.message || saveError);
+        alert(`예약 저장 중 오류가 발생했습니다.\n코드: ${saveError.code || '알수없음'}\n내용: ${detail}\n\n관리자에게 문의해주세요.`);
+      });
   };
 
   const handleBranchManualBookingSuccess = async (booking: BookingState) => {
@@ -222,13 +226,32 @@ const App: React.FC = () => {
     exit: { opacity: 0, x: -20, scale: 1.01 },
   };
 
+  // 💅 예약 성공 페이지는 플리커 방지를 위해 x 이동 없이 fade-only 전환
+  const fadeVariants: Variants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  };
+
   const pageTransition: Transition = {
-    duration: 0.4,
+    duration: 0.35,
     ease: [0.23, 1, 0.32, 1],
   };
 
-  const AnimatedRoute = ({ children }: { children: React.ReactNode }) => (
-    <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={pageTransition}>
+  const fastTransition: Transition = {
+    duration: 0.2,
+    ease: 'easeOut',
+  };
+
+  const AnimatedRoute = ({ children, fade }: { children: React.ReactNode; fade?: boolean }) => (
+    <motion.div
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={fade ? fadeVariants : pageVariants}
+      transition={fade ? fastTransition : pageTransition}
+      style={{ willChange: 'opacity' }}
+    >
       {children}
     </motion.div>
   );
@@ -296,7 +319,7 @@ const App: React.FC = () => {
               <Route path="/services" element={<AnimatedRoute><ServicesPage onBack={() => navigate('/')} t={t.services_page} landingT={t.landing_renewal} /></AnimatedRoute>} />
               <Route path="/locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate('/')} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={setLang} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} /></AnimatedRoute>} />
               <Route path="/booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate('/locations')} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
-              <Route path="/booking-success" element={<AnimatedRoute><BookingSuccess booking={lastBooking} locations={locations} onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
+              <Route path="/booking-success" element={<AnimatedRoute fade><BookingSuccess booking={lastBooking} locations={locations} onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
               <Route path="/tracking" element={<AnimatedRoute><UserTrackingPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
               <Route path="/partnership" element={<AnimatedRoute><PartnershipPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
               <Route path="/manual" element={<AnimatedRoute><ManualPage onBack={() => navigate('/')} t={t.manual} /></AnimatedRoute>} />

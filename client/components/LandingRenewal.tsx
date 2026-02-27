@@ -37,7 +37,7 @@ interface LandingRenewalProps {
     onLoginClick: () => void;
     onMyPageClick: () => void;
     user: any;
-    onSuccess?: (booking: any) => Promise<void>;
+    onSuccess?: (booking: any) => void | Promise<void>;
     branchCode?: string;
 }
 

@@ -5,7 +5,7 @@ declare global {
     }
 }
 
-const RECAPTCHA_SITE_KEY = '6Lf59FMsAAAAAO-qcqBdXcn_CDR8A7jP6wud0RWP';
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 export const RecaptchaService = {
     execute: async (action: string = 'submit'): Promise<string | null> => {

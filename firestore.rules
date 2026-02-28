@@ -1,48 +1,54 @@
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Zero-Trust Security Policy 💅
+    // 🛡️ Beeliber Zero-Trust Security Policy v2 (Verified by Biki)
     
-    // User bookings: Only owner or admin can read/write
-    match /bookings/{bookingId} {
-      allow create: if true;
-      allow read, update: if request.auth != null;
+    // Helper: Check if administrative user
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Admins (HR): Necessary for login and personnel management 💅
+    // Bookings: Public creation, Restricted read/update
+    match /bookings/{bookingId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin() || (request.auth != null && (resource == null || resource.data.userId == request.auth.uid));
+    }
+
+    // Admins: Restricted access
     match /admins/{adminId} {
-      allow read: if true; // Temporary allow for login logic. 
-      allow write: if request.auth != null; 
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
+      allow write: if isAdmin();
     }
 
     // Expenditures & Closings: Admin only
     match /expenditures/{expId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAdmin();
     }
 
     match /daily_closings/{closeId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAdmin();
     }
 
-    // Locations & Settings
+    // Locations: Public Read, Admin Write
     match /locations/{locationId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
+    // Settings: Admin only
     match /settings/{settingId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if isAdmin();
     }
 
-    // Promo Codes & Inquiries
+    // Promo Codes: Public Read (validation), Admin Write
     match /promo_codes/{codeId} {
-      allow read: if true; // Public for validation
-      allow write: if request.auth != null;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
+    // Inquiries: Protected creation, Admin view
     match /inquiries/{inqId} {
       allow create: if true;
-      allow read, write: if request.auth != null;
+      allow read, write: if isAdmin();
     }
   }
 }

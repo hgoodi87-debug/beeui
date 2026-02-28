@@ -3,7 +3,7 @@ const nodemailer = require("nodemailer");
 
 // Configuration from index.js legacy
 const SMTP_USER = "ceo@bee-liber.com";
-const SMTP_PASS = "labi qzqv qaxh nxgk"; // Should be moved to Secret Manager later 💅
+const SMTP_PASS = process.env.SMTP_PASS; // Moved to env/Secret Manager 🛡️
 
 const transporter = nodemailer.createTransport({
     service: "gmail",

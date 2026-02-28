@@ -1,10 +1,32 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      // Only allow authenticated users. 🛡️
-      // In production, you should restrict by folder (e.g., users/{uid}/...)
+    
+    // Helper: Check if administrative user from Firestore
+    function isAdmin() {
+      return request.auth != null && 
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    // 📍 Locations: Public read for branding/guide images, Admin only write
+    match /locations/{locationId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 📦 Bookings: Baggage photos and receipts (Auth required)
+    match /bookings/{bookingId}/{allPaths=**} {
       allow read, write: if request.auth != null;
+    }
+
+    // 👤 User Private Space: Locked to the UID
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Default: Deny if not matched above
+    match /{allPaths=**} {
+      allow read, write: if isAdmin();
     }
   }
 }

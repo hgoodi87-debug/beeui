@@ -169,7 +169,8 @@ export const zhHK = {
         ],
         agree_premium_checklist: '確認禁止攜帶物品清單同賠償政策',
         restricted_items_note: '* 如果包含上述物品，可能會被拒絕賠償。',
-        msg_same_day_limit: '當日預訂僅限於下午 2 點前辦理。'
+        msg_same_day_limit: '當日預訂僅限於下午 2 點前辦理。',
+        airport_late_notice: "機場分店需要根據預約嘅時間準時抵達。遲到可能會產生額外嘅保管費用，請務必準時！ 🍯"
     },
     status_mapping: {
         '접수완료': '已受理', '보관중': '寄存中', '이동중': '運輸中',

@@ -190,7 +190,8 @@ export const en = {
         ],
         agree_premium_checklist: "Confirm restricted items & compensation policy",
         restricted_items_note: "* Compensation may be denied for these items.",
-        slot_past: "Sold out"
+        slot_past: "Sold out",
+        airport_late_notice: "Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual! 🍯"
     },
     status_mapping: {
         '접수완료': 'Pending', '보관중': 'Storing', '이동중': 'In Transit',

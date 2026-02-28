@@ -40,18 +40,8 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const loadBooking = async (id: string) => {
         setIsLoading(true);
         try {
-            // 직접 ID로 문서 조회 (StorageService에 getBookingById가 없으므로 getBookings안에서 찾거나, 직접 구현 필요)
-            // 여기서는 효율성을 위해 전체 로드 대신 getBookings를 사용하지만, 추후 최적화 가능
-            // StorageService.getBookings는 전체를 가져오므로 비효율적일 수 있음. 
-            // 하지만 현재 API 구조상 getDoc을 직접 쓰는게 나음. 
-            // StorageService.getBooking(id)가 없으므로... 일단 getBookings에서 찾거나, 
-            // AdminDashboard.tsx 처럼 실시간 구독 데이터를 쓰거나 해야함.
-            // 하지만 여기는 단독 페이지이므로 직접 조회가 맞음.
-            // -> StorageService에 getBooking이 없으므로, 임시로 getBookings() 사용 (데이터가 적다는 가정하에)
-            // *개선*: StorageService에 getBooking(id) 추가하면 좋겠지만, 일단 기존 함수 활용.
-
-            const allBookings = await StorageService.getBookings();
-            const found = allBookings.find(b => b.id === id || b.reservationCode === id);
+            // [스봉이] 전체 데이터 긁어오지 마세요! 💅 단일 문서만 보안 조회합니다. 🛡️
+            const found = await StorageService.getBooking(id);
 
             if (found) {
                 setBooking(found);

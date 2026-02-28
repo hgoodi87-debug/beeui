@@ -17,7 +17,7 @@ import {
     ChevronLeft,
     RefreshCcw
 } from 'lucide-react';
-import { LocationOption, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
+import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
 import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
@@ -171,6 +171,12 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
     const pickupLoc = useMemo(() => locations.find(l => l.id === booking.pickupLocation), [locations, booking.pickupLocation]);
     const dropoffLoc = useMemo(() => locations.find(l => l.id === booking.dropoffLocation), [locations, booking.dropoffLocation]);
+
+    // [스봉이] 공항 지각 안내 (인라인 알림으로 변경) 💅✨
+    const isAirportSelection = useMemo(() => {
+        const retrievalLoc = booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : pickupLoc;
+        return !!(retrievalLoc && (retrievalLoc.type === LocationType.AIRPORT || retrievalLoc.name?.includes('공항') || retrievalLoc.name_en?.toLowerCase().includes('airport')));
+    }, [booking.serviceType, pickupLoc, dropoffLoc]);
 
     const originLocations = useMemo(() =>
         locations.filter(l => (l.isActive !== false) && (booking.serviceType === ServiceType.DELIVERY ? (l.supportsDelivery && l.isOrigin !== false) : l.supportsStorage)),
@@ -659,6 +665,30 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             </>
                                         )}
                                     </div>
+
+                                    {/* [스봉이] 공항 지각 인라인 안내 🐝 */}
+                                    <AnimatePresence>
+                                        {isAirportSelection && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                                animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
+                                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="p-5 bg-bee-yellow/10 border border-bee-yellow/30 rounded-3xl flex items-start gap-4 shadow-sm">
+                                                    <div className="w-10 h-10 bg-bee-yellow/20 rounded-full flex items-center justify-center shrink-0 shadow-inner">
+                                                        <AlertCircle className="text-bee-yellow" size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-bee-black mb-1 italic uppercase tracking-widest opacity-60">Airport Notice</p>
+                                                        <p className="text-xs font-bold text-bee-black leading-relaxed">
+                                                            {t.booking?.airport_late_notice}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
                         </section>

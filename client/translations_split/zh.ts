@@ -197,7 +197,8 @@ export const zh = {
         order_details_title: '订单详情',
         processing: '预订处理中...',
         storage_only: '仅限寄存服务',
-        insurance_desc: '每件行李最高可获得 1,000,000 韩元的损坏及丢失赔偿。'
+        insurance_desc: '每件行李最高可获得 1,000,000 韩元的损坏及丢失赔偿。',
+        airport_late_notice: "机场分店需要根据预约的时间准时到达。迟到可能会产生额外的保管费用，请务必准时！ 🍯"
     },
     status_mapping: {
         '접수완료': '已受理', '보관중': '寄存中', '이동중': '运输中',

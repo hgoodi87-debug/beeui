@@ -43,7 +43,11 @@ const getTranslations = (lang) => {
         infoLabel: isKo ? '정보' : (isJa ? '情報' : (isZh ? '信息' : 'Info')),
         timeLabel: isKo ? '시간' : (isJa ? '時間' : (isZh ? '时间' : 'Time')),
         agreeHighValueLabel: isKo ? '고가 물품 관리 정책 동의' : (isJa ? '高価品管理政策への同意' : (isZh ? '高价物品管理政策同意' : 'Agreement to High Value Items Policy')),
-        agreedCompleted: isKo ? '동의 완료' : (isJa ? '同意済み' : (isZh ? '已同意' : 'Agreed'))
+        agreedCompleted: isKo ? '동의 완료' : (isJa ? '同意済み' : (isZh ? '已同意' : 'Agreed')),
+        airportLateNotice: isKo ? '공항 지점은 정해진 수령 시간에 맞춰 방문해주셔야 합니다. 지연 도착 시 별도의 추가 보관료가 발생할 수 있으니 시간을 꼭 준수해 주세요! 🍯' :
+            (isJa ? '空港の店舗は、決められた受取時間に合わせてお越しいただく必要があります。到着が遅れると別途保管料が発生することがありますので、時間を必ず守ってください! 🍯' :
+                (isZh ? '机场分店需要根据预约的时间准时到达。迟到可能会产生额外的保管费用，请务必准时！ 🍯' :
+                    'Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual! 🍯'))
     };
 };
 

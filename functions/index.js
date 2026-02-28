@@ -83,6 +83,31 @@ exports.runClaudeAgent = onCall({ timeoutSeconds: 540, memory: "1GiB" }, async (
     return await claudeAgent.runAgent(request.data);
 });
 
+// 4-1. Secure Admin Verification 🛡️
+exports.verifyAdmin = onCall(async (request) => {
+    const { name, password } = request.data;
+    if (!name || !password) throw new HttpsError('invalid-argument', 'Name and password required.');
+
+    const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
+    const inputName = normalize(name);
+    const inputPassword = password.trim();
+
+    try {
+        const adminsSnap = await admin.firestore().collection('admins').get();
+        const adminDoc = adminsSnap.docs.find(doc => {
+            const data = doc.data();
+            return normalize(data.name) === inputName && (data.password || '').trim() === inputPassword;
+        });
+
+        if (!adminDoc) throw new HttpsError('unauthenticated', 'Invalid credentials');
+
+        const { password: _, ...adminData } = adminDoc.data();
+        return { ...adminData, id: adminDoc.id };
+    } catch (e) {
+        throw new HttpsError('internal', e.message);
+    }
+});
+
 // --- HTTP Requests (v2) ---
 
 // 5. Partner API

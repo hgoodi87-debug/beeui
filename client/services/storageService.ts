@@ -11,16 +11,17 @@ const KEYS = {
 };
 
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
-  apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
-  authDomain: "beeliber-main.firebaseapp.com",
-  projectId: "beeliber-main",
-  storageBucket: "beeliber-main.firebasestorage.app",
-  messagingSenderId: "591358308612",
-  appId: "1:591358308612:web:fb3928d12b0e1bb000a051",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "beeliber-main.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "beeliber-main",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "beeliber-main.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
   measurementId: "G-PQBL1SG842",
   isActive: true, // Force Active
   enableGeminiAutomation: true,
-  googleChatWebhookUrl: 'https://chat.googleapis.com/v1/spaces/AAQAYv-uO-w/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=PvUyJgNn0B7fB4AYJ-TLq18cSTnl3qykj3YshKpj-_Y'
+  // [보안] 클라이언트 웹훅 노출 금지! 🛡️ 세팅은 DB 또는 환경변수(Server)에서 관리합니다.
+  googleChatWebhookUrl: ""
 };
 
 // Helper for safe JSON parse (utility)
@@ -185,6 +186,29 @@ export const StorageService = {
     } catch (e) {
       console.error("Error fetching bookings by creation date", e);
       return [];
+    }
+  },
+
+  getBooking: async (id: string): Promise<BookingState | null> => {
+    try {
+      if (!id) return null;
+      const snap = await getDoc(doc(db, "bookings", id));
+      if (snap.exists()) {
+        return { ...snap.data(), id: snap.id } as BookingState;
+      }
+
+      // Try searching by reservationCode if direct ID fails 🛡️
+      const q = query(collection(db, "bookings"), where("reservationCode", "==", id), limit(1));
+      const querySnap = await getDocs(q);
+      if (!querySnap.empty) {
+        const doc = querySnap.docs[0];
+        return { ...doc.data(), id: doc.id } as BookingState;
+      }
+
+      return null;
+    } catch (e) {
+      console.error("Error fetching single booking:", e);
+      return null;
     }
   },
 

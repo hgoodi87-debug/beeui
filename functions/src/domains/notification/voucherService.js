@@ -31,6 +31,10 @@ const processVoucherEmail = async (bookingId, booking, admin) => {
     const destBranchName = getLocName(destLoc, booking.dropoffLocation || booking.destinationLocation);
     const displayedCode = booking.reservationCode || bookingId;
 
+    // [스봉이] 공항 지점 여부 체크 💅
+    const retrievalLoc = booking.serviceType === 'DELIVERY' ? destLoc : pickupLoc;
+    const isAirport = retrievalLoc && (retrievalLoc.type === 'AIRPORT' || retrievalLoc.name?.includes('공항') || retrievalLoc.name_en?.toLowerCase().includes('airport'));
+
     const qrText = `https://bee-liber.com/admin?scan=${bookingId}`;
     const qrBuffer = await QRCode.toBuffer(qrText, { margin: 1, width: 400 });
 
@@ -107,6 +111,18 @@ const processVoucherEmail = async (bookingId, booking, admin) => {
                             <div style="font-size: 12px; font-weight: 900; color: #92400e; margin-bottom: 12px; text-transform: uppercase;">📍 ${pickupBranchName} ${lang === 'ko' ? '방문 안내' : 'Guide'}</div>
                             ${pickupLoc?.pickupImageUrl ? `<img src="${pickupLoc.pickupImageUrl}" style="width: 100%; border-radius: 12px; margin-bottom: 15px;" alt="Guide" />` : ''}
                             <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0; font-weight: 600;">${pickupLoc?.pickupGuide || ""}</p>
+                        </div>
+                        ` : ''}
+
+                        <!-- [스봉이] 공항 지각 안내 인라인 (이메일용) 💅✨ -->
+                        ${isAirport ? `
+                        <div style="margin-top: 20px; background: #fffbeb; border-radius: 24px; padding: 20px; border: 1.5px solid #ffcb05; text-align: left;">
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <div style="font-size: 12px; font-weight: 900; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em;">📢 AIRPORT NOTICE</div>
+                            </div>
+                            <p style="font-size: 13px; color: #1a1a1a; line-height: 1.6; margin: 0; font-weight: 700;">
+                                ${t.airportLateNotice}
+                            </p>
                         </div>
                         ` : ''}
 

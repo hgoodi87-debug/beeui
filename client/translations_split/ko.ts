@@ -198,7 +198,8 @@ export const ko = {
         ],
         agree_premium_checklist: "취급 제한 물품 확인 및 보상 정책 동의",
         restricted_items_note: "* 상기 물품이 포함된 경우 보상이 거절될 수 있습니다.",
-        slot_past: "마감"
+        slot_past: "마감",
+        airport_late_notice: "공항 지점은 정해진 수령 시간에 맞춰 방문해주셔야 합니다. 지연 도착 시 별도의 추가 보관료가 발생할 수 있으니 시간을 꼭 준수해 주세요! 🍯"
     },
     status_mapping: {
         '접수완료': '접수완료', '예약완료': '예약완료', '보관중': '보관중', '이동중': '이동중',

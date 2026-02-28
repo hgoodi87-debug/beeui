@@ -13,9 +13,10 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin() || (request.auth != null && (resource == null || resource.data.userId == request.auth.uid));
     }
 
-    // Admins: Restricted access
+    // Admins: ONLY Admins can see or list admins. No public leaks! 🛡️
     match /admins/{adminId} {
-      allow read: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
+      allow get: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
+      allow list: if isAdmin();
       allow write: if isAdmin();
     }
 
@@ -39,10 +40,10 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Promo Codes: Public Read (validation), Admin Write
+    // Promo Codes: Admin Only for list/write, Public Get (validation only)
     match /promo_codes/{codeId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow get: if true; // Used for validation in booking
+      allow list, write: if isAdmin();
     }
 
     // Inquiries: Protected creation, Admin view

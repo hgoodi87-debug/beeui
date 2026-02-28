@@ -26,45 +26,9 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Seed initial admin data if empty or invalid, AND sanitize existing data
+  // Remove insecure local storage seeding 💅
   useEffect(() => {
-    const storedAdmins = localStorage.getItem('beeliber_admins');
-
-    if (!storedAdmins) {
-      localStorage.setItem('beeliber_admins', JSON.stringify(INITIAL_ADMINS));
-    } else {
-      try {
-        const parsed = JSON.parse(storedAdmins);
-
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-          localStorage.setItem('beeliber_admins', JSON.stringify(INITIAL_ADMINS));
-        } else {
-          // DATA SANITIZATION:
-          const cleanedAdmins: AdminUser[] = parsed.map((u: any) => ({
-            ...u,
-            name: (u.name || '').trim(),
-            jobTitle: (u.jobTitle || '').trim(),
-            password: (u.password || '').trim()
-          }));
-
-          // MERGE NEW INITIAL ADMINS (Migration)
-          let changed = false;
-          INITIAL_ADMINS.forEach(initAdmin => {
-            // Check if an admin with this name already exists
-            if (!cleanedAdmins.some(a => a.name === initAdmin.name)) {
-              cleanedAdmins.push(initAdmin);
-              changed = true;
-            }
-          });
-
-          if (changed || JSON.stringify(cleanedAdmins) !== JSON.stringify(parsed)) {
-            localStorage.setItem('beeliber_admins', JSON.stringify(cleanedAdmins));
-          }
-        }
-      } catch (e) {
-        localStorage.setItem('beeliber_admins', JSON.stringify(INITIAL_ADMINS));
-      }
-    }
+    localStorage.removeItem('beeliber_admins');
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,39 +52,31 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       // 1. Ensure Auth Context is ready (Anonymous sign-in) 💅
       await ensureAuth();
 
-      // 2. Fetch admins from Cloud (Firestore)
-      const storedAdmins = await StorageService.getAdmins();
+      // 2. Call secure backend verification 🛡️
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const functions = getFunctions(app, "us-central1");
+      const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
 
-      // Robust matching: remove all spaces, lowercase, normalize to NFC (Win/Mac compatibility)
-      const normalize = (str: string) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
-
-      const inputName = normalize(formData.name);
-      const inputPassword = formData.password.trim();
-
-      // Find matching user
-      const admin = storedAdmins.find(u => {
-        const storedName = normalize(u.name);
-        const storedPass = (u.password || '').trim();
-        return storedName === inputName && storedPass === inputPassword;
+      const result = await verifyAdmin({
+        name: formData.name,
+        password: formData.password
       });
 
+      const admin: any = result.data;
       if (admin) {
         onLogin(admin.name, admin.jobTitle || 'Staff', admin.branchId);
       } else {
-        // Detailed feedback for debugging 💅
-        const nameExists = storedAdmins.some(u => normalize(u.name) === inputName);
-        if (nameExists) {
-          setError('비밀번호가 일치하지 않습니다.');
-        } else {
-          setError('등록되지 않은 관리자 이름입니다.');
-        }
+        setError('로그인 정보가 올바르지 않습니다.');
       }
+
     } catch (err: any) {
       console.error("Login Error:", err);
-      if (err.code === 'permission-denied') {
-        setError('데이터 접근 권한이 없습니다. (보안 규칙 확인 필요)');
+      if (err.code === 'unauthenticated') {
+        setError('이름 또는 비밀번호가 올바르지 않습니다.');
+      } else if (err.code === 'permission-denied') {
+        setError('데이터 접근 권한이 없습니다.');
       } else {
-        setError('시스템 준비 중입니다. 잠시 후 다시 시도해주세요.');
+        setError('시스템 점검 중입니다. 잠시 후 다시 시도해주세요.');
       }
     } finally {
       setLoading(false);

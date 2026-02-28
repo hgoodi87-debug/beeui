@@ -146,14 +146,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const [isScanDetailVisible, setIsScanDetailVisible] = useState(false);
 
   useEffect(() => {
-    if (scanId && bookings.length > 0) {
-      const found = bookings.find(b => b.id === scanId);
-      if (found) {
-        setScannedBooking(found);
-        setIsScanDetailVisible(true);
+    if (scanId) {
+      // 1. Check bookings
+      if (bookings.length > 0) {
+        const found = bookings.find(b => b.id === scanId);
+        if (found) {
+          setScannedBooking(found);
+          setIsScanDetailVisible(true);
+          return;
+        }
+      }
+
+      // 2. Check admins (HR)
+      if (admins.length > 0) {
+        const foundAdmin = admins.find(a => a.id === scanId);
+        if (foundAdmin) {
+          setActiveTab('HR');
+          setAdminForm(foundAdmin);
+          return;
+        }
       }
     }
-  }, [scanId, bookings]);
+  }, [scanId, bookings, admins, setActiveTab]);
 
   // Notice State
   const [notice, setNotice] = useState<SystemNotice>({ isActive: false, imageUrl: '', content: '' });

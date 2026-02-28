@@ -66,8 +66,8 @@ export const isPastKSTTime = (dateStr: string, timeStr?: string): boolean => {
     const currentH = nowKST.getHours();
     const currentM = nowKST.getMinutes();
 
-    // 30 minutes buffer for safe booking
-    const bufferMinutes = 30;
+    // 10 minutes buffer for safe booking (사장님 요청으로 30분에서 10분으로 줄였어요! 💅)
+    const bufferMinutes = 10;
     const totalCurrentMinutes = (currentH * 60) + currentM;
     const totalSlotMinutes = (h * 60) + m;
 
@@ -130,7 +130,7 @@ export const getFirstAvailableSlot = (dateStr: string, slots: string[]): string 
             return slot;
         }
     }
-    return slots.length > 0 ? slots[0] : null;
+    return null; // 가용 슬롯이 없으면 명시적으로 null을 줍니다. (사장님, 이게 더 정직하죠? 🙄)
 };
 
 /**

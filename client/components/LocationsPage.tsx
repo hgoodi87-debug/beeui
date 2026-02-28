@@ -67,19 +67,33 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     const { start, end } = getBH();
     const isDelivery = currentService !== 'STORAGE';
 
-    // 동적 슬롯 생성 (유효성 검사용)
-    const slots: string[] = [];
-    if (isDelivery) {
-      const pEnd = Math.min(end, 15);
-      for (let i = start; i < pEnd; i++) {
-        slots.push(`${i.toString().padStart(2, '0')}:00`);
+    // 동적 슬롯 생성 (유효성 검사용) - [스봉이] 배송은 13:30 마감, 보관은 영업시간 마감 30분 전까지! 💅
+    let slots: string[] = [];
+    const pickupStartLimit = isDelivery ? 13.5 : (end - 0.5);
+    const pickupEndLoop = isDelivery ? 13 : end;
+
+    for (let i = start; i <= pickupEndLoop; i++) {
+      if (i < start) continue;
+      slots.push(`${i.toString().padStart(2, '0')}:00`);
+      if (i + 0.5 <= pickupStartLimit) {
         slots.push(`${i.toString().padStart(2, '0')}:30`);
       }
-    } else {
-      const sEnd = end - 1;
-      for (let i = start; i < sEnd; i++) {
-        slots.push(`${i.toString().padStart(2, '0')}:00`);
-        slots.push(`${i.toString().padStart(2, '0')}:30`);
+    }
+
+    // [스봉이] 반납 시간(Return Time) 슬롯 생성 및 유효성 검사 💅
+    // 배송은 16:00 시작, 21:00 마감! 보관은 영업시작시간부터! ✨
+    const returnSlots: string[] = [];
+    const rStart = isDelivery ? 16 : start;
+    const rEnd = isDelivery ? Math.min(end, 21) : end;
+    const rLimit = rEnd - 0.5;
+
+    for (let h = rStart; h <= rEnd; h += 0.5) {
+      if (h < start) continue;
+      const hour = Math.floor(h);
+      const min = Math.round((h % 1) * 60);
+      const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+      if (!returnSlots.includes(timeStr)) {
+        returnSlots.push(timeStr);
       }
     }
 
@@ -88,21 +102,38 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
         const tomorrowStr = addDaysToDateStr(todayStr, 1);
         setBookingDate(tomorrowStr);
         setReturnDate(prev => (prev === todayStr || prev < tomorrowStr) ? tomorrowStr : prev);
-        setBookingTime(slots[0] || (isDelivery ? '09:00' : '10:00'));
+        if (slots.length > 0) setBookingTime(slots[0]);
       } else {
         const firstSlot = getFirstAvailableSlot(todayStr, slots);
-        // 현재 선택된 시간이 마감되었거나, 서비스 전환으로 인해 유효하지 않을 경우 리셋
-        if (!bookingTime || isPastKSTTime(todayStr, bookingTime) || !slots.includes(bookingTime)) {
-          if (firstSlot) setBookingTime(firstSlot);
+        if (firstSlot && (!bookingTime || isPastKSTTime(todayStr, bookingTime) || !slots.includes(bookingTime))) {
+          setBookingTime(firstSlot);
         }
       }
     } else {
-      // 미래 날짜라도 서비스 전환 시 시간이 슬롯에 없으면 첫 슬롯으로!
-      if (!slots.includes(bookingTime)) {
-        setBookingTime(slots[0] || (isDelivery ? '09:00' : '10:00'));
+      if (slots.length > 0 && !slots.includes(bookingTime)) {
+        setBookingTime(slots[0]);
       }
     }
-  }, [currentService, bookingDate, selectedBranch]);
+
+    // [스봉이] 반납 시간도 깐깐하게 체크! 🙄
+    const currentRDate = returnDate || todayStr;
+    if (currentRDate === todayStr) {
+      if (isAllSlotsPast(todayStr, returnSlots)) {
+        const nextDay = addDaysToDateStr(todayStr, 1);
+        setReturnDate(nextDay);
+        setReturnTime(returnSlots[0] || '16:00');
+      } else {
+        const firstR = getFirstAvailableSlot(todayStr, returnSlots);
+        if (!returnTime || isPastKSTTime(todayStr, returnTime) || !returnSlots.includes(returnTime)) {
+          if (firstR) setReturnTime(firstR);
+        }
+      }
+    } else {
+      if (!returnSlots.includes(returnTime)) {
+        setReturnTime(returnSlots[0] || '16:00');
+      }
+    }
+  }, [currentService, bookingDate, returnDate, selectedBranch]);
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 

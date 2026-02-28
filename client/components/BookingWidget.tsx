@@ -116,41 +116,52 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     const bhStr = location?.businessHours || '09:00-21:00';
     const { start, end } = parseBusinessHours(bhStr);
 
-    if (serviceType === ServiceType.DELIVERY) {
-      const slots = [];
-      if (type === 'PICKUP') {
-        const pickupEnd = Math.min(end, 15);
-        for (let i = start; i < pickupEnd; i++) {
-          slots.push(`${i.toString().padStart(2, '0')}:00`);
+    let slots: string[] = [];
+
+    // [스봉이] 배송(DELIVERY) 픽업은 무조건 13:30 마감! 💅✨
+    if (type === 'PICKUP') {
+      const pickupEnd = Math.min(end, 14);
+      for (let i = start; i < pickupEnd; i++) {
+        slots.push(`${i.toString().padStart(2, '0')}:00`);
+        if (i < 13 || i === 13) {
           slots.push(`${i.toString().padStart(2, '0')}:30`);
         }
-      } else {
-        const deliveryStart = Math.max(start, 15);
-        for (let i = deliveryStart; i < end; i++) {
-          slots.push(`${i.toString().padStart(2, '0')}:00`);
+      }
+      return slots.filter(s => {
+        const [h, m] = s.split(':').map(Number);
+        const timeVal = h + m / 60;
+        return timeVal >= start && timeVal <= 13.5;
+      });
+    }
+    // [스봉이] 보관(STORAGE) 시작/종료는 지점 영업시간 내 마감 30분 전까지만 자유롭게! 💅✨
+    else if (type === 'STORAGE_START' || type === 'STORAGE_END') {
+      for (let i = start; i < end; i++) {
+        slots.push(`${i.toString().padStart(2, '0')}:00`);
+        if (i + 0.5 < end) {
           slots.push(`${i.toString().padStart(2, '0')}:30`);
         }
-        slots.push(`${end.toString().padStart(2, '0')}:00`);
       }
       return slots;
     }
-
-    const slots = [];
-    const s = type === 'STORAGE_END' ? start + 1 : start;
-    const e = type === 'STORAGE_START' ? end - 1 : end;
-    for (let i = s; i < e; i++) {
-      slots.push(`${i.toString().padStart(2, '0')}:00`);
-      slots.push(`${i.toString().padStart(2, '0')}:30`);
+    // [스봉이] 배송(DELIVERY) 반납은 무조건 16:00 시작! 영업종료 30분 전 마감! 💅✨
+    else {
+      const deliveryStart = Math.max(start, 16);
+      for (let i = deliveryStart; i < end; i++) {
+        slots.push(`${i.toString().padStart(2, '0')}:00`);
+        if (i + 0.5 < end) {
+          slots.push(`${i.toString().padStart(2, '0')}:30`);
+        }
+      }
+      return slots;
     }
-    slots.push(`${e.toString().padStart(2, '0')}:00`);
-    return slots;
   };
 
   useEffect(() => {
     const todayStr = formatKSTDate();
     if (booking.pickupDate === todayStr) {
-      const slots = generateTimeSlots(selectedBranch, serviceType === ServiceType.DELIVERY ? 'PICKUP' : 'STORAGE_START');
+      const slots = generateTimeSlots(selectedBranch, 'PICKUP');
       if (isAllSlotsPast(todayStr, slots)) {
+        // 모든 슬롯이 지났거나 13:30 이후라면 다음날로 넘깁니다. 💅
         const tomorrowStr = addDaysToDateStr(todayStr, 1);
         setBooking(prev => ({
           ...prev,
@@ -159,47 +170,52 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
         }));
       } else {
         const firstSlot = getFirstAvailableSlot(todayStr, slots);
-        if (firstSlot && firstSlot !== booking.pickupTime) {
+        if (firstSlot && (!booking.pickupTime || !slots.includes(booking.pickupTime) || isPastKSTTime(todayStr, booking.pickupTime))) {
           setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
         }
       }
     }
-  }, [booking.pickupDate, serviceType, selectedBranch]);
+  }, [booking.pickupDate, selectedBranch, serviceType]);
 
   useEffect(() => {
     const todayStr = formatKSTDate();
-    if ((booking.dropoffDate === todayStr || (!booking.dropoffDate && booking.pickupDate === todayStr)) && serviceType === ServiceType.DELIVERY) {
-      const slots = generateTimeSlots(selectedBranch, 'DELIVERY');
-      if (isAllSlotsPast(booking.dropoffDate || todayStr, slots)) {
-        const tomorrowStr = addDaysToDateStr(booking.dropoffDate || todayStr, 1);
+    const isDelivery = serviceType === ServiceType.DELIVERY;
+    const slots = generateTimeSlots(selectedBranch, isDelivery ? 'DELIVERY' : 'STORAGE_END');
+    const targetRDate = booking.dropoffDate || todayStr;
+
+    if (targetRDate === todayStr && isDelivery) {
+      if (isAllSlotsPast(todayStr, slots)) {
+        const tomorrowStr = addDaysToDateStr(todayStr, 1);
         setBooking(prev => ({ ...prev, dropoffDate: tomorrowStr }));
       } else {
-        const firstSlot = getFirstAvailableSlot(booking.dropoffDate || todayStr, slots);
-        if (firstSlot && firstSlot !== booking.deliveryTime) {
+        const firstSlot = getFirstAvailableSlot(todayStr, slots);
+        if (firstSlot && (!booking.deliveryTime || !slots.includes(booking.deliveryTime) || isPastKSTTime(todayStr, booking.deliveryTime))) {
           setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
         }
       }
-    }
-
-    if (serviceType === ServiceType.STORAGE) {
+    } else if (serviceType === ServiceType.STORAGE) {
       const pDate = booking.pickupDate || todayStr;
       if (!booking.dropoffDate || booking.dropoffDate < pDate) {
         setBooking(prev => ({ ...prev, dropoffDate: pDate }));
       }
-      if (booking.dropoffDate === pDate && booking.pickupTime) {
-        const slots = generateTimeSlots(selectedBranch, 'STORAGE_END');
-        if (!booking.deliveryTime || booking.deliveryTime <= booking.pickupTime) {
-          const nextSlotIdx = slots.indexOf(booking.pickupTime) + 1;
-          if (nextSlotIdx > 0 && nextSlotIdx < slots.length) {
-            setBooking(prev => ({ ...prev, deliveryTime: slots[nextSlotIdx] }));
+      if (booking.dropoffDate === pDate) {
+        const rSlots = generateTimeSlots(selectedBranch, 'STORAGE_END');
+        if (!booking.deliveryTime || !rSlots.includes(booking.deliveryTime) || (booking.pickupTime && booking.deliveryTime <= booking.pickupTime)) {
+          const nextSlotIdx = rSlots.indexOf(booking.pickupTime || '') + 1;
+          if (nextSlotIdx > 0 && nextSlotIdx < rSlots.length) {
+            setBooking(prev => ({ ...prev, deliveryTime: rSlots[nextSlotIdx] }));
           } else {
             const nextDay = addDaysToDateStr(pDate, 1);
-            setBooking(prev => ({ ...prev, dropoffDate: nextDay, deliveryTime: slots[0] || '10:00' }));
+            setBooking(prev => ({ ...prev, dropoffDate: nextDay, deliveryTime: rSlots[0] || '10:00' }));
           }
         }
       }
+    } else {
+      if (slots.length > 0 && (!booking.deliveryTime || !slots.includes(booking.deliveryTime))) {
+        setBooking(prev => ({ ...prev, deliveryTime: slots[0] }));
+      }
     }
-  }, [booking.dropoffDate, booking.pickupDate, serviceType, booking.deliveryTime, booking.pickupTime, selectedBranch]);
+  }, [booking.dropoffDate, booking.pickupDate, serviceType, booking.pickupTime, selectedBranch]);
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
@@ -258,12 +274,12 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
   const handleFinalBook = async () => {
     setIsSubmitting(true);
     try {
-      const recaptchaToken = await RecaptchaService.execute('BOOKING');
+      const recaptchaToken = (await RecaptchaService.execute('BOOKING')) || undefined;
       const finalBooking = { ...booking, finalPrice: priceDetails.total, createdAt: new Date().toISOString(), recaptchaToken };
-      if (isModification) {
-        await StorageService.updateBooking(initialBooking.id, finalBooking);
+      if (isModification && initialBooking?.id) {
+        await StorageService.updateBooking(initialBooking.id, finalBooking as any);
       } else {
-        await StorageService.saveBooking(finalBooking);
+        await StorageService.saveBooking(finalBooking as any);
       }
       setIsSuccess(true);
       if (onSuccess) onSuccess(finalBooking);

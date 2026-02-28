@@ -123,28 +123,53 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                             <div className="bg-gray-50 p-6 rounded-3xl space-y-4 border border-gray-100">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">날짜 (Date)</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                            {selectedBooking.serviceType === ServiceType.STORAGE ? '보관 시작 날짜' : '날짜 (Date)'}
+                                        </label>
                                         <input title="수거 날짜" type="date" value={selectedBooking.pickupDate || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupDate: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                     </div>
+                                    {selectedBooking.serviceType === ServiceType.STORAGE ? (
+                                        <div>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">찾는 날짜 (Return Date)</label>
+                                            <input title="찾는 날짜" type="date" value={selectedBooking.dropoffDate || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffDate: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-100 font-bold text-sm" />
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">상태 (Status)</label>
+                                            <select title="예약 상태" value={selectedBooking.status} onChange={e => setSelectedBooking({ ...selectedBooking, status: e.target.value as BookingStatus })} className={`w-full p-2.5 rounded-xl border-none outline-none font-black text-xs cursor-pointer shadow-sm ${getStatusStyle(selectedBooking.status || BookingStatus.PENDING)}`}>
+                                                {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                            {selectedBooking.serviceType === ServiceType.STORAGE ? '보관 시작 시간' : '수거 시간'}
+                                        </label>
+                                        <input title="수거 시간" type="time" value={selectedBooking.pickupTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupTime: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-100 font-bold text-sm" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                            {selectedBooking.serviceType === ServiceType.STORAGE ? '찾는 시간 (Return Time)' : '배송 완료 시간'}
+                                        </label>
+                                        <input
+                                            title={selectedBooking.serviceType === ServiceType.STORAGE ? "찾는 시간" : "배송 시간"}
+                                            type="time"
+                                            value={selectedBooking.deliveryTime || ''}
+                                            onChange={e => setSelectedBooking({ ...selectedBooking, deliveryTime: e.target.value })}
+                                            className="w-full bg-white p-3 rounded-xl border border-gray-100 font-bold text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                {selectedBooking.serviceType === ServiceType.STORAGE && (
+                                    <div className="pt-2 border-t border-gray-50 mt-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">상태 (Status)</label>
                                         <select title="예약 상태" value={selectedBooking.status} onChange={e => setSelectedBooking({ ...selectedBooking, status: e.target.value as BookingStatus })} className={`w-full p-2.5 rounded-xl border-none outline-none font-black text-xs cursor-pointer shadow-sm ${getStatusStyle(selectedBooking.status || BookingStatus.PENDING)}`}>
                                             {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">수거/보관 시작 시간</label>
-                                        <input title="수거 시간" type="time" value={selectedBooking.pickupTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupTime: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
-                                    </div>
-                                    {selectedBooking.serviceType === ServiceType.DELIVERY && (
-                                        <div>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">배송 완료 시간</label>
-                                            <input title="배송 시간" type="time" value={selectedBooking.deliveryTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, deliveryTime: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>

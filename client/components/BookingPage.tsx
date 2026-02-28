@@ -125,24 +125,27 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const { start, end } = parseBusinessHours(bhStr);
 
         if (booking.serviceType === ServiceType.DELIVERY) {
-            // [스봉이 수정] 배송도 지점 영업시간 내에서만 슬롯 생성 💅
             const slots = [];
-
             if (type === 'PICKUP') {
-                // Pickup is usually morning/early afternoon
-                const pickupEnd = Math.min(end, 15); // Max pickup around 15:00 for same day
-                for (let i = start; i < pickupEnd; i++) {
+                // Pickup: 09:00 ~ 13:30 (Max 13:30) 💅
+                const pickupEnd = 13.5;
+                for (let i = start; i <= 13; i++) {
+                    if (i < start) continue;
                     slots.push(`${i.toString().padStart(2, '0')}:00`);
-                    slots.push(`${i.toString().padStart(2, '0')}:30`);
+                    if (i + 0.5 <= pickupEnd) {
+                        slots.push(`${i.toString().padStart(2, '0')}:30`);
+                    }
                 }
             } else {
-                // Delivery is usually late afternoon/evening
-                const deliveryStart = Math.max(start, 15);
-                for (let i = deliveryStart; i < end; i++) {
+                // Delivery: 16:00 ~ 21:00 (Max 21:00 or Business End) 💅
+                const deliveryStart = 16;
+                const deliveryEnd = Math.min(end, 21);
+                for (let i = deliveryStart; i <= deliveryEnd; i++) {
                     slots.push(`${i.toString().padStart(2, '0')}:00`);
-                    slots.push(`${i.toString().padStart(2, '0')}:30`);
+                    if (i < deliveryEnd) {
+                        slots.push(`${i.toString().padStart(2, '0')}:30`);
+                    }
                 }
-                slots.push(`${end.toString().padStart(2, '0')}:00`);
             }
             return slots;
         }
@@ -205,7 +208,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
                 }));
             } else {
                 const firstSlot = getFirstAvailableSlot(todayStr, slots);
-                if (firstSlot && firstSlot !== booking.pickupTime) {
+                // [스봉이 수정] 이미 선택한 시간이 유효하면 첫 슬롯으로 강제 변경 금지! 💅 
+                const isCurrentValid = booking.pickupTime && !isPastKSTTime(todayStr, booking.pickupTime) && slots.includes(booking.pickupTime);
+
+                if (!isCurrentValid && firstSlot && firstSlot !== booking.pickupTime) {
                     setBooking(prev => ({ ...prev, pickupTime: firstSlot }));
                 }
             }
@@ -221,7 +227,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
                 setBooking(prev => ({ ...prev, dropoffDate: tomorrowStr }));
             } else {
                 const firstSlot = getFirstAvailableSlot(booking.dropoffDate || todayStr, slots);
-                if (firstSlot && firstSlot !== booking.deliveryTime) {
+                // [스봉이 수정] 이미 선택한 시간이 유효하면(마감 안됐고 슬롯에 있으면) 그대로 유지! 💅
+                const isCurrentValid = booking.deliveryTime && !isPastKSTTime(booking.dropoffDate || todayStr, booking.deliveryTime) && slots.includes(booking.deliveryTime);
+
+                if (!isCurrentValid && firstSlot && firstSlot !== booking.deliveryTime) {
                     setBooking(prev => ({ ...prev, deliveryTime: firstSlot }));
                 }
             }

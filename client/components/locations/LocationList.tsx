@@ -49,7 +49,7 @@ const LocationList: React.FC<LocationListProps> = ({
         const bhStr = selectedBranch?.businessHours || '09:00-21:00';
         if (!bhStr || bhStr === '24시간' || bhStr === '24 Hours') return { start: 0, end: 24 };
         try {
-            const parts = bhStr.split('-').map(p => p.trim());
+            const parts = bhStr.split('-').map((p: string) => p.trim());
             return { start: parseInt(parts[0].split(':')[0]), end: parseInt(parts[1].split(':')[0]) };
         } catch (e) { return { start: 9, end: 21 }; }
     }, [selectedBranch]);
@@ -134,20 +134,23 @@ const LocationList: React.FC<LocationListProps> = ({
                             if (dStr < nowKST) return true;
 
                             if (dStr === nowKST) {
-                                // [스봉이] 지점별 영업시간 반영하여 마감 여부 판단 💅
-                                const pickupEndLimit = isDelivery ? Math.min(bh.end, 15) : (bh.end - 1);
+                                // [스봉이] 지점별 영업시간 반영하여 마감 여부 판단 💅 - 사장님 표 13:30 & 16:00 룰 적용!
+                                const pickupLimit = isDelivery ? 13.5 : (bh.end - 1);
                                 const pickupSlots = timeSlotsOrig.filter(h => {
-                                    const hour = parseInt(h.split(':')[0]);
-                                    return hour >= bh.start && hour < pickupEndLimit;
+                                    const [hour, min] = h.split(':').map(Number);
+                                    const timeVal = hour + min / 60;
+                                    return timeVal >= bh.start && timeVal <= pickupLimit;
                                 });
                                 const hasPickup = !!getFirstAvailableSlot(dStr, pickupSlots);
 
                                 let hasReturn = true;
                                 if (currentService === 'SAME_DAY') {
-                                    const returnStartLimit = Math.max(bh.start, 16);
+                                    const returnStart = 16;
+                                    const returnLimit = bh.end - 0.5;
                                     const returnSlots = timeSlotsOrig.filter(h => {
-                                        const hour = parseInt(h.split(':')[0]);
-                                        return hour >= returnStartLimit && hour <= bh.end;
+                                        const [hour, min] = h.split(':').map(Number);
+                                        const timeVal = hour + min / 60;
+                                        return timeVal >= returnStart && timeVal <= returnLimit;
                                     });
                                     hasReturn = !!getFirstAvailableSlot(dStr, returnSlots);
                                 }
@@ -340,13 +343,21 @@ const LocationList: React.FC<LocationListProps> = ({
                                                 const isPast = activeStep === 'PICKUP_TIME' ? isPastKSTTime(bookingDate || '', h) : (isPastKSTTime(returnDate || '', h) || (returnDate === bookingDate && h <= (bookingTime || '')));
                                                 const isSelected = activeStep === 'PICKUP_TIME' ? bookingTime === h : returnTime === h;
 
-                                                // [스봉이] 서비스별/지점별 다이내믹 가드 💅
-                                                const pickupEndLimit = isDelivery ? Math.min(bh.end, 15) : (bh.end - 1);
-                                                const returnStartLimit = isDelivery ? Math.max(bh.start, 16) : bh.start;
+                                                // [스봉이] 배송은 13:30/16:00 픽스, 보관은 영업시간 반영 다이내믹 가드 💅
+                                                const isPickupStep = activeStep.includes('PICKUP');
+                                                const pickupLimit = isDelivery ? 13.5 : (bh.end - 0.5);
+                                                const returnStart = isDelivery ? 16 : bh.start;
+                                                const returnLimit = isDelivery ? Math.min(21, bh.end) : (bh.end - 0.5);
 
-                                                const serviceOk = activeStep.includes('PICKUP')
-                                                    ? (parseInt(h.split(':')[0]) >= bh.start && h <= `${pickupEndLimit}:30`)
-                                                    : (parseInt(h.split(':')[0]) >= returnStartLimit && parseInt(h.split(':')[0]) <= bh.end);
+                                                const [hour, min] = h.split(':').map(Number);
+                                                const timeVal = hour + min / 60;
+
+                                                let serviceOk = false;
+                                                if (isPickupStep) {
+                                                    serviceOk = timeVal >= bh.start && timeVal <= pickupLimit;
+                                                } else {
+                                                    serviceOk = timeVal >= returnStart && timeVal <= returnLimit;
+                                                }
 
                                                 if (!serviceOk) return null;
                                                 return (

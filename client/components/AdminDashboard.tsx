@@ -1355,7 +1355,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         <head>
           <title>Beeliber Label - ${booking.id}</title>
           <style>
-            @page { size: 750mm 500mm landscape; margin: 0; }
+            @page { 
+              size: 750mm 500mm landscape; 
+              margin: 0; 
+            }
             * { box-sizing: border-box; }
             body {
               font-family: 'Inter', 'Apple SD Gothic Neo', sans-serif;
@@ -1368,6 +1371,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               background-color: #fff;
               color: #000;
               overflow: hidden;
+              /* [스봉이] 사장님 요청대로 배율 10%로 압축! 💅 */
+              zoom: 0.1;
+              -moz-transform: scale(0.1);
+              -moz-transform-origin: 0 0;
             }
             .header {
               display: flex;

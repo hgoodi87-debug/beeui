@@ -293,12 +293,209 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
     };
 
     const handlePrintLabel = (booking: BookingState) => {
-        // Simple label print logic
-        const printWindow = window.open('', '', 'width=800,height=600');
+        const originName = locations.find(l => l.id === booking.pickupLocation)?.name || booking.pickupLocation;
+        const destName = locations.find(l => l.id === booking.dropoffLocation)?.name || booking.dropoffLocation;
+
+        const printWindow = window.open('', '', 'width=1200,height=800');
         if (!printWindow) return;
-        printWindow.document.write(`<html><body><h1>Beeliber Label: ${booking.reservationCode || booking.id}</h1><p>Customer: ${booking.userName}</p></body></html>`);
+
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Beeliber Label - ${booking.id}</title>
+              <style>
+                @page { 
+                  size: 750mm 500mm landscape; 
+                  margin: 0; 
+                }
+                * { box-sizing: border-box; }
+                body {
+                  font-family: 'Inter', 'Apple SD Gothic Neo', sans-serif;
+                  margin: 0;
+                  padding: 30mm;
+                  width: 750mm;
+                  height: 500mm;
+                  display: flex;
+                  flex-direction: column;
+                  background-color: #fff;
+                  color: #000;
+                  overflow: hidden;
+                  /* [스봉이] 사장님 요청대로 배율 10%로 압축! 💅 */
+                  zoom: 0.1;
+                  -moz-transform: scale(0.1);
+                  -moz-transform-origin: 0 0;
+                }
+                .header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  border-bottom: 15px solid #ffcb05;
+                  padding-bottom: 15mm;
+                  margin-bottom: 20mm;
+                }
+                .logo { font-size: 100px; font-weight: 1000; font-style: italic; letter-spacing: -5px; }
+                .service-type {
+                  font-size: 60px;
+                  font-weight: 900;
+                  background: #000;
+                  color: #ffcb05;
+                  padding: 8mm 25mm;
+                  border-radius: 30px;
+                  text-transform: uppercase;
+                }
+
+                .main-content {
+                  flex: 1;
+                  display: grid;
+                  grid-template-columns: 1.2fr 1fr;
+                  gap: 30mm;
+                }
+
+                .info-box {
+                  background: #fdfdfd;
+                  border: 5px solid #f0f0f0;
+                  border-radius: 60px;
+                  padding: 20mm;
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                }
+
+                .label {
+                  font-size: 32px;
+                  color: #999;
+                  font-weight: 900;
+                  text-transform: uppercase;
+                  letter-spacing: 8px;
+                  margin-bottom: 10mm;
+                }
+                .value {
+                  font-size: 85px;
+                  font-weight: 1000;
+                  line-height: 1.1;
+                  word-break: break-all;
+                }
+
+                .highlight-value {
+                  color: #ffcb05;
+                  background: #000;
+                  display: inline-block;
+                  padding: 5mm 15mm;
+                  border-radius: 20px;
+                }
+
+                .booking-id-section {
+                  grid-column: span 2;
+                  background: #ffcb05;
+                  padding: 15mm;
+                  border-radius: 50px;
+                  text-align: center;
+                  margin-top: 10mm;
+                }
+                .booking-id-label {
+                  font-size: 32px;
+                  font-weight: 900;
+                  color: rgba(0,0,0,0.5);
+                  letter-spacing: 15px;
+                  margin-bottom: 5mm;
+                }
+                .booking-id-value {
+                  font-size: 180px;
+                  font-weight: 1000;
+                  letter-spacing: -5px;
+                  color: #000;
+                }
+
+                .footer {
+                  margin-top: 20mm;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  border-top: 4px solid #f0f0f0;
+                  padding-top: 10mm;
+                  font-size: 28px;
+                  font-weight: bold;
+                  color: #bbb;
+                  letter-spacing: 2px;
+                }
+
+                .route-info {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 10mm;
+                }
+                .route-step {
+                   display: flex;
+                   align-items: center;
+                   gap: 10mm;
+                }
+                .route-dot {
+                  width: 30px;
+                  height: 30px;
+                  border-radius: 50%;
+                  background: #ffcb05;
+                }
+                .route-dot-end { background: #000; }
+                .route-arrow { color: #ffcb05; font-size: 60px; margin-left: 20mm; margin-top: -5mm; margin-bottom: -5mm; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo">beeliber</div>
+                <div class="service-type">${booking.serviceType}</div>
+              </div>
+
+              <div class="main-content">
+                <div class="info-box">
+                  <div class="info-group">
+                    <div class="label">Customer</div>
+                    <div class="value">${booking.userName}</div>
+                  </div>
+                  <div class="info-group" style="margin-top: 15mm;">
+                    <div class="label">Schedule</div>
+                    <div class="value">
+                      ${booking.pickupDate}<br/>
+                      <span class="highlight-value">${booking.pickupTime}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="info-box" style="border-left: 15px solid #ffcb05;">
+                  <div class="label">Route</div>
+                  <div class="route-info">
+                    <div class="route-step">
+                       <div class="route-dot"></div>
+                       <div class="value">${originName}</div>
+                    </div>
+                    <div class="route-arrow">↓</div>
+                    <div class="route-step">
+                       <div class="route-dot route-dot-end"></div>
+                       <div class="value">${destName || '-'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="booking-id-section">
+                    <div class="booking-id-label">DELIVERY CODE</div>
+                    <div class="booking-id-value">${booking.id}</div>
+                </div>
+              </div>
+
+              <div class="footer">
+                 <div>BEELIBER GLOBAL LOGISTICS</div>
+                 <div>PRINTED: ${new Date().toLocaleString()}</div>
+              </div>
+
+              <script>
+                window.onload = function() {
+                  window.print();
+                  window.onafterprint = function() { window.close(); }
+                }
+              </script>
+            </body>
+          </html>
+        `);
         printWindow.document.close();
-        printWindow.print();
     };
     const handleExportCSV = () => {
         if (bookings.length === 0) {

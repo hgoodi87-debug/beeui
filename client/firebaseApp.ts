@@ -7,12 +7,12 @@ import { getFunctions } from "firebase/functions";
 const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "beeliber-main.firebasestorage.app";
 
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
+    authDomain: "beeliber-main.firebaseapp.com",
+    projectId: "beeliber-main",
     storageBucket: storageBucket,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID
+    messagingSenderId: "591358308612",
+    appId: "1:591358308612:web:fb3928d12b0e1bb000a051"
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
@@ -50,10 +50,11 @@ export const ensureAuth = (): Promise<any> => {
     });
 };
 
-signInAnonymously(auth).then((user) => {
-    console.log("[Firebase] Anonymous Auth Success:", user.user.uid);
-}).catch((error) => {
-    console.error("Firebase Anonymous Auth Failed:", error);
-});
+// [스봉이] 부팅 시 즉시 인증 시도하는 대신, 필요한 시점에 ensureAuth를 호출하세요! 🛡️
+// signInAnonymously(auth).then((user) => {
+//     console.log("[Firebase] Anonymous Auth Success:", user.user.uid);
+// }).catch((error) => {
+//     console.error("Firebase Anonymous Auth Failed:", error);
+// });
 
 export { app, db, storage, auth, functions };

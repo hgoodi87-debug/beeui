@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { AdminUser } from '../types';
 import { StorageService } from '../services/storageService';
-import { ensureAuth } from '../firebaseApp';
+import { app, ensureAuth } from '../firebaseApp';
 
 interface AdminLoginPageProps {
   onLogin: (name: string, jobTitle: string, branchId?: string) => void;
@@ -53,8 +53,8 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       await ensureAuth();
 
       // 2. Call secure backend verification 🛡️
-      const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const functions = getFunctions(app, "us-central1");
+      const { httpsCallable } = await import('firebase/functions');
+      const { functions } = await import('../firebaseApp');
       const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
 
       const result = await verifyAdmin({
@@ -180,7 +180,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
           Beeliber Systems &copy; 2025
         </p>
       </div>
-    </div>
+    </div >
   );
 };
 

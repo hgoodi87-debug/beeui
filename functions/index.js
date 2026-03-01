@@ -83,10 +83,11 @@ exports.runClaudeAgent = onCall({ timeoutSeconds: 540, memory: "1GiB" }, async (
     return await claudeAgent.runAgent(request.data);
 });
 
-// 4-1. Secure Admin Verification 🛡️
-exports.verifyAdmin = onCall(async (request) => {
+// 4-1. Secure Admin Verification (Full CORS Permitted) 🛡️💅
+exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) => {
+    const { onCall: _, HttpsError: HE } = require("firebase-functions/v2/https");
     const { name, password } = request.data;
-    if (!name || !password) throw new HttpsError('invalid-argument', 'Name and password required.');
+    if (!name || !password) throw new HE('invalid-argument', 'Name and password required.');
 
     const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
     const inputName = normalize(name);
@@ -118,7 +119,7 @@ exports.verifyAdmin = onCall(async (request) => {
 
         if (!adminDoc) {
             console.warn(`Login failed for name: ${name}`);
-            throw new HttpsError('unauthenticated', 'Invalid credentials');
+            throw new HE('unauthenticated', 'Invalid credentials');
         }
 
         const adminData = adminDoc.data();
@@ -138,8 +139,9 @@ exports.verifyAdmin = onCall(async (request) => {
         return { ...safeAdminData, id: adminDoc.id };
     } catch (e) {
         console.error("verifyAdmin ERROR:", e);
-        if (e instanceof HttpsError) throw e;
-        throw new HttpsError('internal', e.message);
+        // [스봉이] 이미 HttpsError 형식의 객체라면 그대로 던집니다! 🛡️
+        if (e.code && (typeof e.code === 'string')) throw e;
+        throw new HE('internal', e.message);
     }
 });
 

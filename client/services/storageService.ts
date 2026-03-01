@@ -11,12 +11,12 @@ const KEYS = {
 };
 
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "beeliber-main.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "beeliber-main",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "beeliber-main.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
+  authDomain: "beeliber-main.firebaseapp.com",
+  projectId: "beeliber-main",
+  storageBucket: "beeliber-main.firebasestorage.app",
+  messagingSenderId: "591358308612",
+  appId: "1:591358308612:web:fb3928d12b0e1bb000a051",
   measurementId: "G-PQBL1SG842",
   isActive: true, // Force Active
   enableGeminiAutomation: true,

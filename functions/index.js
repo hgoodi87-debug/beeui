@@ -93,17 +93,52 @@ exports.verifyAdmin = onCall(async (request) => {
     const inputPassword = password.trim();
 
     try {
-        const adminsSnap = await admin.firestore().collection('admins').get();
+        const db = admin.firestore();
+        let adminsSnap = await db.collection('admins').get();
+
+        // [스봉이] 클라우드에 관리자가 없으면 초기 데이터 심어두기! 💅
+        if (adminsSnap.empty) {
+            console.log("No admins found in cloud. Seeding initial data...");
+            const initialAdmins = [
+                { id: 'admin-001', name: '천명', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
+                { id: 'admin-002', name: '매니저', jobTitle: 'General Manager', password: '1234', createdAt: new Date().toISOString() },
+                { id: 'admin-003', name: '스태프', jobTitle: 'Staff', password: '0000', createdAt: new Date().toISOString() },
+                { id: 'admin-004', name: '진호', jobTitle: 'Master', password: '4608', createdAt: new Date().toISOString() }
+            ];
+            const batch = db.batch();
+            initialAdmins.forEach(adm => batch.set(db.collection('admins').doc(adm.id), adm));
+            await batch.commit();
+            adminsSnap = await db.collection('admins').get();
+        }
+
         const adminDoc = adminsSnap.docs.find(doc => {
             const data = doc.data();
             return normalize(data.name) === inputName && (data.password || '').trim() === inputPassword;
         });
 
-        if (!adminDoc) throw new HttpsError('unauthenticated', 'Invalid credentials');
+        if (!adminDoc) {
+            console.warn(`Login failed for name: ${name}`);
+            throw new HttpsError('unauthenticated', 'Invalid credentials');
+        }
 
-        const { password: _, ...adminData } = adminDoc.data();
-        return { ...adminData, id: adminDoc.id };
+        const adminData = adminDoc.data();
+        const { password: _, ...safeAdminData } = adminData;
+
+        // [보안 핵심] 현재 로그인한 사용자의 UID를 관리자 권한과 매핑합니다! 🛡️💅
+        // 이렇게 해야 firestore.rules의 isAdmin() 체크를 통과할 수 있어요.
+        if (request.auth && request.auth.uid) {
+            console.log(`Mapping UID ${request.auth.uid} to Admin ${adminData.name}`);
+            await db.collection('admins').doc(request.auth.uid).set({
+                ...safeAdminData,
+                uid: request.auth.uid,
+                lastLogin: new Date().toISOString()
+            }, { merge: true });
+        }
+
+        return { ...safeAdminData, id: adminDoc.id };
     } catch (e) {
+        console.error("verifyAdmin ERROR:", e);
+        if (e instanceof HttpsError) throw e;
         throw new HttpsError('internal', e.message);
     }
 });

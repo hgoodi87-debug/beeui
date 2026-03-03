@@ -51,16 +51,24 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
         </button>
       )}
 
-      <div className={`text-center ${isModal ? 'mb-8' : 'mb-12 animate-fade-in'}`}>
-        <h2 className={`${isModal ? 'text-2xl' : 'text-3xl md:text-4xl'} font-black ${theme === 'light' ? 'text-bee-black' : 'text-white'} mb-4 tracking-tight`}>
-          예약 현황 및 배송 상태 조회
+      <div className={`text-center ${isModal ? 'mb-12' : 'mb-16 animate-fade-in-up'}`}>
+        <div className="inline-block px-4 py-1.5 bg-bee-yellow/10 border border-bee-yellow/20 rounded-full mb-6">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-bee-yellow flex items-center gap-2">
+            <i className="fa-solid fa-satellite-dish animate-pulse"></i>
+            {t.tracking?.live_label || "Live Status Feed"}
+          </span>
+        </div>
+        <h2 className={`${isModal ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl'} font-black ${theme === 'light' ? 'text-bee-black' : 'text-white'} mb-6 tracking-tighter leading-tight break-keep`}>
+          {t.tracking_page?.title || "예약 현황 및 배송 상태 조회"}
         </h2>
-        <p className={`${theme === 'light' ? 'text-gray-500' : 'text-gray-400'} font-medium text-sm md:text-base`}>
-          이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요.
-        </p>
+        <div className="max-w-xl mx-auto">
+          <p className={`${theme === 'light' ? 'text-gray-500 bg-gray-50' : 'text-gray-400 bg-black/40'} font-bold text-sm md:text-base leading-relaxed break-keep py-4 px-8 rounded-2xl border ${theme === 'light' ? 'border-gray-100' : 'border-white/10'} shadow-sm`}>
+            {t.tracking_page?.subtitle || "이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요."}
+          </p>
+        </div>
       </div>
 
-      <div className={`${isModal ? 'w-full' : 'max-w-4xl mx-auto'} ${theme === 'light' ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'} border p-3 rounded-[2rem] flex flex-col md:flex-row gap-3 mb-8 backdrop-blur-sm`}>
+      <div className={`${isModal ? 'w-full' : 'max-w-4xl mx-auto'} ${theme === 'light' ? 'bg-white border-gray-200 shadow-sm' : 'bg-black/20 border-white/10'} border p-4 rounded-[2.5rem] flex flex-col md:flex-row gap-4 mb-8`}>
         <div className="flex-1 flex flex-col md:flex-row gap-3">
           <div className="flex-1 relative group">
             <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-bee-yellow transition-colors pointer-events-none">
@@ -96,14 +104,14 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
           disabled={isLoading}
           title="Search Booking"
           aria-label="Search Booking"
-          className="md:w-auto w-full bg-bee-yellow hover:bg-yellow-400 text-bee-black px-8 py-4 rounded-xl font-black transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,215,0,0.1)] hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap text-sm"
+          className="md:w-64 w-full h-16 bg-bee-yellow hover:bg-yellow-400 text-bee-black rounded-2xl font-black transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(255,215,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(255,215,0,0.5)] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap text-base"
         >
           {isLoading ? (
-            <i className="fa-solid fa-circle-notch animate-spin"></i>
+            <i className="fa-solid fa-circle-notch animate-spin text-xl"></i>
           ) : (
-            <i className="fa-solid fa-magnifying-glass"></i>
+            <i className="fa-solid fa-magnifying-glass text-xl"></i>
           )}
-          {t.tracking?.btn || "Search"}
+          <span>{t.tracking?.btn || "조회하기"}</span>
         </button>
       </div>
 

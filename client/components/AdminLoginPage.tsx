@@ -26,9 +26,9 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Remove insecure local storage seeding 💅
+  // Pre-warm Auth and Functions 💅
   useEffect(() => {
-    localStorage.removeItem('beeliber_admins');
+    ensureAuth().catch(console.error);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,10 +49,10 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
 
     setLoading(true);
     try {
-      // 1. Ensure Auth Context is ready (Anonymous sign-in) 💅
+      // 1. Auth is likely already ready due to useEffect
       await ensureAuth();
 
-      // 2. Call secure backend verification 🛡️
+      // 2. Import functions immediately (Vite will bundle this efficiently)
       const { httpsCallable } = await import('firebase/functions');
       const { functions } = await import('../firebaseApp');
       const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
@@ -86,10 +86,10 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   return (
     <div className="min-h-screen bg-bee-black flex items-center justify-center p-6 font-sans relative overflow-hidden">
       {/* Dynamic Background Elements */}
-      <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-bee-yellow rounded-full blur-[150px] opacity-20 pointer-events-none animate-pulse-slow"></div>
-      <div className="absolute bottom-[-10%] left-[-5%] w-80 h-80 bg-bee-yellow rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
+      <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-bee-yellow rounded-full blur-[100px] opacity-20 pointer-events-none animate-pulse"></div>
+      <div className="absolute bottom-[-10%] left-[-5%] w-80 h-80 bg-bee-yellow rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
 
-      <div className="max-w-md w-full animate-fade-in relative z-10">
+      <div className="max-w-md w-full relative z-10">
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-gradient-to-br from-bee-yellow to-[#E5C100] rounded-[24px] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-bee-yellow/20 relative group overflow-hidden">
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>

@@ -340,7 +340,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     const targetBookings = bookings.filter((b: BookingState) => {
       const d = new Date(b.pickupDate || '');
-      // Strict exclusion: No deleted, no cancelled, no refunded
       return d >= start && d <= end &&
         !b.isDeleted &&
         b.status !== BookingStatus.CANCELLED &&
@@ -352,7 +351,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       return d >= start && d <= end;
     });
 
-    // Detailed stats for the period
+    // MTD (Month to Date) calculations
+    const firstDayOfMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+    const mtdBookings = bookings.filter(b => {
+      const d = new Date(b.pickupDate || '');
+      return d >= firstDayOfMonth && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
+    });
+    const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+
+    // Lifetime calculations
+    const lifetimeBookings = bookings.filter(b => !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED);
+    const lifetimeRevenue = lifetimeBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+
     const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
     const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
 
@@ -366,7 +376,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const kakao = targetBookings.filter((b: BookingState) => b.paymentMethod === 'kakao').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
     const paypal = targetBookings.filter((b: BookingState) => b.paymentMethod === 'paypal').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
 
-    return { total: totalRevenue, cash, card, apple, samsung, wechat, alipay, naver, kakao, paypal, count: targetBookings.length, expenditure: totalExp };
+    return {
+      total: totalRevenue,
+      cash,
+      card,
+      apple,
+      samsung,
+      wechat,
+      alipay,
+      naver,
+      kakao,
+      paypal,
+      count: targetBookings.length,
+      expenditure: totalExp,
+      netTotal: totalRevenue - totalExp,
+      vat: Math.round(totalRevenue / 11),
+      mtdRevenue,
+      lifetimeRevenue,
+      lifetimeCount: lifetimeBookings.length
+    };
   }, [bookings, expenditures, revenueStartDate, revenueEndDate]);
 
   const accountingDailyStats = useMemo(() => {
@@ -446,11 +474,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       return d >= start && d <= end;
     });
 
-    // Counts
+    // MTD (Month to Date) for Daily Settlement
+    const firstDayOfMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+    const mtdBookings = bookings.filter(b => {
+      const d = new Date(b.pickupDate || '');
+      return d >= firstDayOfMonth && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
+    });
+    const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+
     const deliveryBookings = targetBookings.filter(b => b.serviceType === ServiceType.DELIVERY);
     const storageBookings = targetBookings.filter(b => b.serviceType === ServiceType.STORAGE);
 
-    // Bag Sizes
+    const cancelledBookings = bookings.filter(b => {
+      const d = new Date(b.pickupDate || '');
+      return d >= start && d <= end && !b.isDeleted && b.status === BookingStatus.CANCELLED;
+    });
+    const refundedBookings = bookings.filter(b => {
+      const d = new Date(b.pickupDate || '');
+      return d >= start && d <= end && !b.isDeleted && b.status === BookingStatus.REFUNDED;
+    });
+
     const bagSizes = { S: 0, M: 0, L: 0, XL: 0 };
     targetBookings.forEach(b => {
       if (b.bagSizes) {
@@ -461,7 +504,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
     });
 
-    // Revenue by channel (Method)
     const revenueByMethod = {
       card: 0,
       cash: 0,
@@ -474,7 +516,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       paypal: 0
     };
     targetBookings.forEach(b => {
-      const method = b.paymentMethod || 'cash'; // Default to cash if unspecified
+      const method = b.paymentMethod || 'cash';
       if (method in revenueByMethod) {
         revenueByMethod[method as keyof typeof revenueByMethod] += (b.finalPrice || 0);
       }
@@ -483,30 +525,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
     const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
 
-    // Expenditure breakdown by category
     const expByCategory: Record<string, number> = {};
     targetExps.forEach((e: Expenditure) => {
       const cat = e.category || '기타';
       expByCategory[cat] = (expByCategory[cat] || 0) + (e.amount || 0);
     });
 
-    // Discounts
-    // Note: We don't have a direct 'discountAmount' in BookingState, 
-    // but we can infer it if we know the base price vs final price.
-    // For now, let's aggregate finalPrice and mention if it uses a discountCode.
-    const bookingsWithDiscount = targetBookings.filter(b => b.discountCode);
     const discountCodeCounts: Record<string, number> = {};
-    bookingsWithDiscount.forEach(b => {
+    targetBookings.filter(b => b.discountCode).forEach(b => {
       if (b.discountCode) {
         discountCodeCounts[b.discountCode] = (discountCodeCounts[b.discountCode] || 0) + 1;
       }
     });
 
-    // Cash Closing for this period
-    const periodClosing = closings.find((c: CashClosing) => c.date === revenueEndDate);
+    // Opening Cash (from previous day's closing)
+    const prevDate = new Date(end);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevDateStr = prevDate.toISOString().split('T')[0];
+    const prevClosing = (closings || []).find((c: CashClosing) => c.date === prevDateStr);
+    const openingCash = prevClosing ? prevClosing.actualCashOnHand : 0;
 
-    const netProfit = totalRevenue - totalExp;
-    const vat = Math.floor(totalRevenue * 0.1); // Assuming 10% VAT
     return {
       totalRevenue,
       totalExp,
@@ -514,12 +552,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       vat: Math.round(totalRevenue / 11),
       deliveryCount: deliveryBookings.length,
       storageCount: storageBookings.length,
+      cancelledCount: cancelledBookings.length,
+      refundedCount: refundedBookings.length,
       bagSizes,
       revenueByMethod,
       expByCategory,
-      discountCodeCounts
+      discountCodeCounts,
+      mtdRevenue,
+      openingCash, // Added opening cash for better flow tracking
     };
-  }, [bookings, expenditures, revenueStartDate, revenueEndDate]);
+  }, [bookings, expenditures, revenueStartDate, revenueEndDate, closings]);
 
   const filteredExpenditures = useMemo(() => {
     const start = new Date(revenueStartDate);
@@ -908,8 +950,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
       await StorageService.saveLocation(newLoc);
 
-      await StorageService.saveLocation(newLoc);
-
       setLocForm({
         id: '', shortCode: '', name: '', type: LocationType.HOTEL, supportsDelivery: true, supportsStorage: true,
         isOrigin: true, isDestination: true, originSurcharge: 0, destinationSurcharge: 0,
@@ -996,7 +1036,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           // Regex to match CSV fields including quoted ones
           const matches = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
           // Fallback to simple split if regex fails or for unquoted
-          const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+          const cols = lines[i].split(',').map((c: string) => c.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
 
           if (cols.length < 5) continue;
 
@@ -1193,13 +1233,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
   const deleteAdmin = async (id: string) => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    // Note: HRTab handles the initial confirmation. Removing redundant confirm to improve UX.
+    setIsSaving(true);
     try {
       await StorageService.deleteAdmin(id);
+      // Force cache invalidation to ensure UI is in sync
+      queryClient.invalidateQueries({ queryKey: ['admins'] });
       alert("삭제되었습니다.");
     } catch (e) {
       console.error("Delete error", e);
       alert("삭제 실패");
+    } finally {
+      setIsSaving(false);
     }
   };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { BookingState, Expenditure, CashClosing, AdminTab } from '../../types';
 
 interface AccountingTabProps {
@@ -18,6 +18,8 @@ interface AccountingTabProps {
     deleteExpenditure: (id: string) => void;
 }
 
+type SubTab = 'revenue' | 'expenditure' | 'calendar';
+
 const AccountingTab: React.FC<AccountingTabProps> = ({
     revenueStartDate,
     setRevenueStartDate,
@@ -34,190 +36,428 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     expenditures,
     deleteExpenditure
 }) => {
+    const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
+
+    // Calendar logic
+    const calendarDays = useMemo(() => {
+        const start = new Date(revenueStartDate);
+        const end = new Date(revenueEndDate);
+        const days = [];
+        const curr = new Date(start);
+
+        while (curr <= end) {
+            days.push(new Date(curr));
+            curr.setDate(curr.getDate() + 1);
+        }
+        return days;
+    }, [revenueStartDate, revenueEndDate]);
+
+    const getDailyTotal = (dateStr: string) => {
+        const stat = accountingDailyStats.find(s => s.date === dateStr);
+        return stat ? stat.total : 0;
+    };
+
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl md:text-3xl font-black tracking-tight mb-2">매출 결산 (Revenue & Closing)</h1>
-                <button
-                    onClick={handleExportCSV}
-                    className="bg-green-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-green-700 transition-all shadow-lg flex items-center gap-2"
-                >
-                    <i className="fa-solid fa-file-csv"></i> 스프레드시트 내보내기 (CSV)
-                </button>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm overflow-hidden group">
+                <div className="space-y-1 relative z-10">
+                    <h1 className="text-xl md:text-2xl font-black tracking-tight">매출 결산 <span className="text-bee-yellow italic">Accounting</span></h1>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Unified Period Performance & Financial Statistics 🛡️</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 relative z-10">
+                    <div className="flex bg-gray-50/80 p-1 rounded-2xl border border-gray-100">
+                        <button
+                            onClick={() => setActiveSubTab('revenue')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'revenue' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                        >
+                            매출(Revenue)
+                        </button>
+                        <button
+                            onClick={() => setActiveSubTab('expenditure')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'expenditure' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                        >
+                            지출(Expense)
+                        </button>
+                        <button
+                            onClick={() => setActiveSubTab('calendar')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'calendar' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                        >
+                            캘린더(Matrix)
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div className="bg-white p-6 md:p-8 rounded-[30px] shadow-sm border border-gray-100">
-                <div className="flex flex-wrap items-center gap-4 mb-6">
+            {/* Premium Summary Grid - Optimized Space */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-bee-yellow transition-all">
                     <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">시작일 (Start)</label>
-                        <input type="date" title="시작 날짜 선택" placeholder="YYYY-MM-DD" value={revenueStartDate} onChange={e => setRevenueStartDate(e.target.value)} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">Period Total</p>
+                        <h3 className="text-xl font-black italic text-bee-black">₩{(revenueStats?.total || 0).toLocaleString()}</h3>
                     </div>
-                    <span className="text-gray-300 font-bold">~</span>
+                    <div className="mt-3">
+                        <span className="px-2 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow tracking-tighter">{(revenueStats?.count || 0)} Bookings</span>
+                    </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-red-400 transition-all">
                     <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">종료일 (End)</label>
-                        <input type="date" title="종료 날짜 선택" placeholder="YYYY-MM-DD" value={revenueEndDate} onChange={e => setRevenueEndDate(e.target.value)} className="bg-gray-50 p-3 rounded-xl font-bold text-sm border border-gray-100" />
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">Total Exp</p>
+                        <h3 className="text-xl font-black italic text-red-500">₩{(revenueStats?.expenditure || 0).toLocaleString()}</h3>
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-bee-yellow/10 p-5 rounded-[24px] border border-bee-yellow/20">
-                        <span className="text-[10px] font-black text-bee-black/50 uppercase">누적 매출 (Total Revenue)</span>
-                        <h3 className="text-xl md:text-2xl font-black text-bee-black mt-1">₩{revenueStats.total.toLocaleString()}</h3>
-                        <span className="text-[10px] font-bold text-gray-500">{revenueStats.count}건</span>
-                    </div>
-                    <div className="bg-red-50 p-5 rounded-[24px] border border-red-100">
-                        <span className="text-[10px] font-black text-red-800/50 uppercase">누적 지출 (Total Expenditure)</span>
-                        <h3 className="text-xl md:text-2xl font-black text-red-900 mt-1">₩{revenueStats.expenditure.toLocaleString()}</h3>
-                    </div>
-                    <div className="bg-emerald-50 p-5 rounded-[24px] border border-emerald-100">
-                        <span className="text-[10px] font-black text-emerald-800/50 uppercase">순이익 (Net Profit)</span>
-                        <h3 className="text-xl md:text-2xl font-black text-emerald-900 mt-1">₩{(revenueStats.total - revenueStats.expenditure).toLocaleString()}</h3>
-                    </div>
-                    <div className="bg-gray-50 p-5 rounded-[24px] border border-gray-100">
-                        <span className="text-[10px] font-black text-gray-400 uppercase">결제 수단별 비중</span>
-                        <div className="mt-1 text-[11px] font-bold text-gray-600 grid grid-cols-2 gap-x-4">
-                            <span>카드: ₩{revenueStats.card.toLocaleString()}</span>
-                            <span>현금: ₩{revenueStats.cash.toLocaleString()}</span>
-                            <span>애플Pay: ₩{revenueStats.apple.toLocaleString()}</span>
-                            <span>삼성Pay: ₩{revenueStats.samsung.toLocaleString()}</span>
-                            <span>네이버: ₩{revenueStats.naver.toLocaleString()}</span>
-                            <span>카카오: ₩{revenueStats.kakao.toLocaleString()}</span>
-                            <span>PayPal: ₩{revenueStats.paypal.toLocaleString()}</span>
-                            <span>위챗: ₩{revenueStats.wechat.toLocaleString()}</span>
-                            <span>알리: ₩{revenueStats.alipay.toLocaleString()}</span>
+                    <div className="mt-4">
+                        <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden" title="Expenditure percentage of revenue">
+                            <div className="bg-red-400 h-full transition-all duration-1000" style={{ width: `${Math.min(((revenueStats?.expenditure || 0) / (revenueStats?.total || 1)) * 100, 100)}%` }}></div>
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-black flex items-center gap-2">
-                            <i className="fa-solid fa-chart-line"></i> 기간 내 일별 매출 내역
-                        </h3>
-                        <div className="overflow-x-auto bg-gray-50/50 rounded-2xl border border-gray-100 p-2 max-h-[400px]">
-                            <table className="w-full text-left">
-                                <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-500 border-b">
-                                    <tr>
-                                        <th className="px-4 py-3">날짜</th>
-                                        <th className="px-4 py-3">건수</th>
-                                        <th className="px-4 py-3">매출액</th>
-                                        <th className="px-4 py-3">누적</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {accountingDailyStats.length > 0 ? accountingDailyStats.map(s => (
-                                        <tr
-                                            key={s.date}
-                                            onClick={() => setSelectedDetailDate(s.date)}
-                                            className="text-[11px] hover:bg-white transition-all cursor-pointer group"
-                                        >
-                                            <td className="px-4 py-3 font-black flex items-center gap-2">
-                                                {s.date}
-                                                <i className="fa-solid fa-magnifying-glass text-[8px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                            </td>
-                                            <td className="px-4 py-3 font-bold">{s.count}건</td>
-                                            <td className="px-4 py-3 font-black text-bee-black">₩{s.total.toLocaleString()}</td>
-                                            <td className="px-4 py-3 font-bold text-bee-blue">₩{s.cumulative.toLocaleString()}</td>
-                                        </tr>
-                                    )) : (
-                                        <tr><td colSpan={4} className="px-4 py-10 text-center text-gray-400 font-bold">매출 내역 없음</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
+                <div className="bg-bee-black p-5 rounded-[28px] shadow-lg flex flex-col justify-between relative overflow-hidden group/card hover:-translate-y-1 transition-all">
+                    <div className="absolute top-0 right-0 p-3 opacity-10 text-bee-yellow group-hover/card:rotate-12 transition-transform">
+                        <i className="fa-solid fa-chart-line text-2xl"></i>
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Net Profit</p>
+                        <h3 className="text-xl font-black italic text-bee-yellow">₩{(revenueStats?.netTotal || 0).toLocaleString()}</h3>
+                    </div>
+                    <p className="text-[8px] font-black text-emerald-400 mt-2 uppercase">Margin: {Math.round(((revenueStats?.netTotal || 0) / (revenueStats?.total || 1)) * 100)}%</p>
+                </div>
+
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-blue-400 transition-all">
+                    <div>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">VAT Estimate</p>
+                        <h3 className="text-xl font-black italic text-blue-500">₩{(revenueStats?.vat || 0).toLocaleString()}</h3>
+                    </div>
+                    <p className="text-[8px] font-black text-gray-300 mt-2 uppercase tracking-tighter">Approx. 1/11 Breakdown</p>
+                </div>
+
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-purple-400 transition-all col-span-2 md:col-span-1 lg:col-span-1">
+                    <div>
+                        <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1.5 line-clamp-1">Lifetime Growth</p>
+                        <h3 className="text-xl font-black italic text-bee-black">₩{(revenueStats?.lifetimeRevenue || 0).toLocaleString()}</h3>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-gray-50">
+                        <p className="text-[8px] font-black text-gray-300 uppercase">Total: {(revenueStats?.lifetimeCount || 0).toLocaleString()} Bookings</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Date Range Selector & Audit Section */}
+            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-wrap items-center gap-6 group hover:border-bee-yellow transition-all duration-500">
+                <div className="flex items-center gap-4">
+                    <div className="space-y-1 text-left">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">Period Start</label>
+                        <div className="relative">
+                            <i className="fa-solid fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-[10px]"></i>
+                            <input
+                                type="date"
+                                title="조회 시작일"
+                                value={revenueStartDate}
+                                onChange={e => setRevenueStartDate(e.target.value)}
+                                className="bg-gray-50 pl-10 pr-6 py-2.5 rounded-2xl font-black text-[11px] border border-transparent outline-none focus:bg-white focus:border-bee-black transition-all"
+                            />
                         </div>
                     </div>
-
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-black flex items-center gap-2">
-                            <i className="fa-solid fa-calendar-days"></i> 월간 정산 요약
-                        </h3>
-                        <div className="overflow-x-auto bg-gray-50/50 rounded-2xl border border-gray-100 p-2 max-h-[400px]">
-                            <table className="w-full text-left">
-                                <thead className="bg-bee-black text-[10px] font-black uppercase text-bee-yellow border-b">
-                                    <tr>
-                                        <th className="px-4 py-3">월별 (Month)</th>
-                                        <th className="px-4 py-3">건수</th>
-                                        <th className="px-4 py-3">매출액</th>
-                                        <th className="px-4 py-3">누적</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {accountingMonthlyStats.length > 0 ? accountingMonthlyStats.map(s => (
-                                        <tr
-                                            key={s.month}
-                                            className="text-[11px] hover:bg-white transition-all group"
-                                        >
-                                            <td className="px-4 py-3 font-black">{s.month}</td>
-                                            <td className="px-4 py-3 font-bold">{s.count}건</td>
-                                            <td className="px-4 py-3 font-black text-bee-black">₩{s.total.toLocaleString()}</td>
-                                            <td className="px-4 py-3 font-bold text-bee-blue">₩{s.cumulative.toLocaleString()}</td>
-                                        </tr>
-                                    )) : (
-                                        <tr><td colSpan={4} className="px-4 py-10 text-center text-gray-400 font-bold">월별 내역 없음</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
+                    <div className="pt-4 text-gray-200 font-black">~</div>
+                    <div className="space-y-1 text-left">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">Period End</label>
+                        <div className="relative">
+                            <i className="fa-solid fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-[10px]"></i>
+                            <input
+                                type="date"
+                                title="조회 종료일"
+                                value={revenueEndDate}
+                                onChange={e => setRevenueEndDate(e.target.value)}
+                                className="bg-gray-50 pl-10 pr-6 py-2.5 rounded-2xl font-black text-[11px] border border-transparent outline-none focus:bg-white focus:border-bee-black transition-all"
+                            />
                         </div>
                     </div>
                 </div>
+                <div className="flex-1"></div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleExportCSV}
+                        className="px-5 py-2.5 bg-bee-yellow text-bee-black rounded-[20px] text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-bee-yellow/10 flex items-center gap-2"
+                    >
+                        <i className="fa-solid fa-file-excel"></i> CSV EXPORT
+                    </button>
+                </div>
+            </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12 pt-12 border-t border-gray-100">
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-black flex items-center gap-2">
-                            <i className="fa-solid fa-receipt"></i> 지출 등록 및 내역
-                        </h3>
-                        <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-[9px] font-black text-gray-400 uppercase">날짜</label>
-                                    <input type="date" title="지출 날짜 선택" placeholder="YYYY-MM-DD" value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
-                                </div>
-                                <div>
-                                    <label className="text-[9px] font-black text-gray-400 uppercase">항목 (카테고리)</label>
-                                    <input type="text" value={expForm.category} onChange={e => setExpForm({ ...expForm, category: e.target.value })} placeholder="예: 유류비, 소모품" className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
-                                </div>
+            {/* Payment Method Matrix */}
+            <div className="bg-gray-50/50 p-6 rounded-[32px] border border-gray-50 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Card</span>
+                    <span className="text-[11px] font-black">₩{(revenueStats?.card || 0).toLocaleString()}</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Cash</span>
+                    <span className="text-[11px] font-black text-emerald-500">₩{(revenueStats?.cash || 0).toLocaleString()}</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Naver</span>
+                    <span className="text-[11px] font-black text-green-500">₩{(revenueStats?.naver || 0).toLocaleString()}</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Kakao</span>
+                    <span className="text-[11px] font-black text-yellow-500">₩{(revenueStats?.kakao || 0).toLocaleString()}</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Apple</span>
+                    <span className="text-[11px] font-black">₩{(revenueStats?.apple || 0).toLocaleString()}</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Samsung</span>
+                    <span className="text-[11px] font-black text-blue-400">₩{(revenueStats?.samsung || 0).toLocaleString()}</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">PayPal</span>
+                    <span className="text-[11px] font-black text-blue-600">₩{(revenueStats?.paypal || 0).toLocaleString()}</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Mobile</span>
+                    <span className="text-[11px] font-black text-gray-400">₩{(revenueStats?.alipay + revenueStats?.wechat || 0).toLocaleString()}</span>
+                </div>
+            </div>
+
+            {/* SubTab Content */}
+            <div className="animate-fade-in">
+                {activeSubTab === 'revenue' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                        <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-black flex items-center gap-2"><i className="fa-solid fa-chart-line text-blue-500"></i> 일별 상세 매출</h3>
+                                <span className="text-[10px] font-black text-gray-300 uppercase">{accountingDailyStats.length} Days Tracked</span>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-[9px] font-black text-gray-400 uppercase">금액</label>
-                                    <input type="number" title="지출 금액 입력" placeholder="0" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: Number(e.target.value) })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
+                            <div className="overflow-hidden rounded-[32px] border border-gray-50">
+                                <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                                    <table className="w-full text-left">
+                                        <thead className="sticky top-0 bg-gray-50 text-[10px] font-black uppercase text-gray-400 z-10">
+                                            <tr>
+                                                <th className="px-6 py-4">날짜</th>
+                                                <th className="px-6 py-4">건수</th>
+                                                <th className="px-6 py-4 text-right">매출액</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {accountingDailyStats.map(s => (
+                                                <tr
+                                                    key={s.date}
+                                                    onClick={() => setSelectedDetailDate(s.date)}
+                                                    className="hover:bg-blue-50/20 cursor-pointer transition-colors group"
+                                                >
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-1.5 h-4 rounded-full bg-blue-100 group-hover:bg-blue-400 transition-colors"></div>
+                                                            <span className="font-black text-xs text-gray-700">{s.date}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-bold text-gray-400 text-xs">{s.count} 건</td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <span className="font-black text-xs text-bee-black">₩{s.total.toLocaleString()}</span>
+                                                        <p className="text-[9px] font-bold text-blue-300 mt-1">Cum. ₩{s.cumulative.toLocaleString()}</p>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {accountingDailyStats.length === 0 && (
+                                                <tr><td colSpan={3} className="px-6 py-20 text-center text-gray-300 font-black italic">No records in this period.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div className="flex items-end">
-                                    <button onClick={handleSaveExpenditure} className="w-full bg-bee-black text-white py-2 rounded-lg font-black text-xs hover:bg-gray-800 transition-all">지출 저장</button>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-[9px] font-black text-gray-400 uppercase">상세 내용</label>
-                                <input type="text" value={expForm.description} onChange={e => setExpForm({ ...expForm, description: e.target.value })} placeholder="지출 상세 내용을 입력하세요..." className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold" />
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto bg-gray-50/50 rounded-2xl border border-gray-100 p-2 max-h-[250px]">
+                        <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-black flex items-center gap-2"><i className="fa-solid fa-calendar-check text-purple-500"></i> 월간 정산 요약</h3>
+                            </div>
+                            <div className="overflow-hidden rounded-[32px] border border-gray-50">
+                                <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-bee-black text-[10px] font-black uppercase text-bee-yellow">
+                                            <tr>
+                                                <th className="px-6 py-5">Month</th>
+                                                <th className="px-6 py-5">Volume</th>
+                                                <th className="px-6 py-5 text-right">Revenue</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50 text-xs">
+                                            {accountingMonthlyStats.map(s => (
+                                                <tr key={s.month} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-5 font-black text-gray-800">{s.month}</td>
+                                                    <td className="px-6 py-5 font-bold text-gray-400">{s.count} 건</td>
+                                                    <td className="px-6 py-5 text-right">
+                                                        <span className="font-black text-bee-black text-sm">₩{s.total.toLocaleString()}</span>
+                                                        <p className="text-[9px] font-bold text-bee-blue mt-0.5">累積 ₩{s.cumulative.toLocaleString()}</p>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {accountingMonthlyStats.length === 0 && (
+                                                <tr><td colSpan={3} className="px-6 py-20 text-center text-gray-300 font-black italic">No monthly records.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeSubTab === 'expenditure' && (
+                    <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 max-w-4xl mx-auto">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-black flex items-center gap-2">
+                                <i className="fa-solid fa-receipt text-red-400"></i> 지출 항목 관리
+                            </h3>
+                            <span className="text-[10px] font-black text-gray-300 uppercase">Total Items: {expenditures.length}</span>
+                        </div>
+
+                        <div className="bg-gray-50/50 p-6 rounded-[32px] border border-gray-50 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2 text-left">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Expense Date</label>
+                                    <input
+                                        type="date"
+                                        title="지출 발생일"
+                                        value={expForm.date}
+                                        onChange={e => setExpForm({ ...expForm, date: e.target.value })}
+                                        className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm"
+                                    />
+                                </div>
+                                <div className="space-y-2 text-left">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Category</label>
+                                    <input
+                                        type="text"
+                                        value={expForm.category}
+                                        onChange={e => setExpForm({ ...expForm, category: e.target.value })}
+                                        placeholder="e.g. Fuel, Supplies"
+                                        className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm"
+                                    />
+                                </div>
+                                <div className="space-y-2 text-left">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Amount</label>
+                                    <input
+                                        type="number"
+                                        value={expForm.amount}
+                                        onChange={e => setExpForm({ ...expForm, amount: Number(e.target.value) })}
+                                        placeholder="0"
+                                        className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm text-red-500"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2 text-left">
+                                <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Detailed Description</label>
+                                <input
+                                    type="text"
+                                    value={expForm.description}
+                                    onChange={e => setExpForm({ ...expForm, description: e.target.value })}
+                                    placeholder="Enter expense details..."
+                                    className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm"
+                                />
+                            </div>
+                            <button
+                                onClick={handleSaveExpenditure}
+                                className="w-full py-5 bg-red-400 text-white font-black rounded-[24px] hover:bg-red-500 transition-all shadow-xl shadow-red-100 hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center gap-2"
+                            >
+                                <i className="fa-solid fa-plus-circle"></i> 지출 내역 신규 등록
+                            </button>
+                        </div>
+
+                        <div className="overflow-hidden rounded-[32px] border border-gray-50">
                             <table className="w-full text-left">
-                                <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-500 border-b">
+                                <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-400">
                                     <tr>
-                                        <th className="px-4 py-3">날짜</th>
-                                        <th className="px-4 py-3">항목</th>
-                                        <th className="px-4 py-3">금액</th>
-                                        <th className="px-4 py-3"></th>
+                                        <th className="px-6 py-4">Date</th>
+                                        <th className="px-6 py-4">Category</th>
+                                        <th className="px-6 py-4 text-right">Amount</th>
+                                        <th className="px-6 py-4 w-10"></th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-gray-50">
                                     {expenditures.map(e => (
-                                        <tr key={e.id} className="text-[11px] hover:bg-white transition-colors">
-                                            <td className="px-4 py-3 font-black">{e.date}</td>
-                                            <td className="px-4 py-3 font-bold">{e.category}</td>
-                                            <td className="px-4 py-3 font-black text-red-500">₩{e.amount?.toLocaleString()}</td>
-                                            <td className="px-4 py-3 text-right">
-                                                <button title="지출 내역 삭제" onClick={() => deleteExpenditure(e.id!)} className="text-gray-300 hover:text-red-500 transition-colors"><i className="fa-solid fa-trash-can"></i></button>
+                                        <tr key={e.id} className="hover:bg-red-50/20 transition-colors group">
+                                            <td className="px-6 py-4 font-black text-gray-500 text-xs">{e.date}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-xs text-bee-black">{e.category}</span>
+                                                    <span className="text-[10px] text-gray-400 font-bold">{e.description}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-black text-red-500 text-xs">₩{e.amount?.toLocaleString()}</td>
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => deleteExpenditure(e.id!)}
+                                                    title="Delete"
+                                                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-200 hover:bg-red-100 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <i className="fa-solid fa-trash-can text-[10px]"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
+                                    {expenditures.length === 0 && (
+                                        <tr><td colSpan={4} className="px-6 py-20 text-center text-gray-300 font-black italic">표시할 지출 내역이 없습니다.</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {activeSubTab === 'calendar' && (
+                    <div className="bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-10">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-xl font-black flex items-center gap-2"><i className="fa-solid fa-calendar-alt text-bee-yellow"></i> 캘린더 요약 보기</h3>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-bee-yellow"></div>
+                                    <span className="text-[10px] font-black text-gray-400">High Revenue</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-gray-100"></div>
+                                    <span className="text-[10px] font-black text-gray-400">Regular</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-4">
+                            {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                                <div key={day} className="text-center text-[10px] font-black text-gray-300 uppercase tracking-widest pb-4 border-b border-gray-50">{day}</div>
+                            ))}
+                            {calendarDays.map((day, idx) => {
+                                const dateStr = day.toISOString().split('T')[0];
+                                const total = getDailyTotal(dateStr);
+                                const isSelected = revenueEndDate === dateStr;
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        onClick={() => setSelectedDetailDate(dateStr)}
+                                        className={`min-h-[100px] p-4 rounded-[28px] border-2 cursor-pointer transition-all hover:-translate-y-1 ${isSelected ? 'bg-bee-black border-bee-black shadow-xl shadow-bee-black/20' : 'bg-gray-50/50 border-transparent hover:border-bee-yellow/20 hover:bg-white hover:shadow-lg'
+                                            }`}
+                                    >
+                                        <div className="flex justify-between items-start mb-4">
+                                            <span className={`text-xs font-black ${isSelected ? 'text-bee-yellow' : 'text-gray-400'}`}>{day.getDate()}</span>
+                                            {total > 1000000 && <div className="w-1.5 h-1.5 rounded-full bg-bee-yellow animate-pulse"></div>}
+                                        </div>
+                                        <div className="space-y-1">
+                                            {total > 0 && (
+                                                <>
+                                                    <p className={`text-[10px] font-black leading-tight ${isSelected ? 'text-white' : 'text-bee-black'}`}>₩{(total / 1000).toFixed(0)}k</p>
+                                                    <div className="w-full h-1 bg-bee-yellow/20 rounded-full overflow-hidden">
+                                                        <div className="bg-bee-yellow h-full" style={{ width: `${Math.min((total / 2000000) * 100, 100)}%` }}></div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

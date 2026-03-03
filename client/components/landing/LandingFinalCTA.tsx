@@ -16,6 +16,7 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
                 <img
                     src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=2000" // 공항에서 손 흔들며 자유롭게 떠나는 뒷모습
                     alt="Travel Freedom"
+                    loading="lazy"
                     className="w-full h-full object-cover brightness-[0.4]"
                 />
             </div>
@@ -44,16 +45,16 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
                         {t.final_cta.headline}
                     </h2>
 
-                    <div className="flex flex-col md:flex-row gap-6 justify-center">
+                    <div className="flex flex-col md:flex-row gap-6 md:gap-10 justify-center">
                         <button
                             onClick={() => onNavigate('LOCATIONS')}
-                            className="px-12 py-5 bg-bee-black text-bee-yellow text-lg md:text-xl font-black rounded-[2rem] shadow-xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3"
+                            className="px-12 py-5 md:px-20 md:py-8 bg-bee-black text-bee-yellow text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3"
                         >
                             {t.final_cta.btn_airport_hotel} ➔
                         </button>
                         <button
                             onClick={() => onNavigate('LOCATIONS')}
-                            className="px-12 py-5 bg-white text-bee-black text-lg md:text-xl font-black rounded-[2rem] shadow-xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3 border-2 border-bee-black"
+                            className="px-12 py-5 md:px-20 md:py-8 bg-white text-bee-black text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3 border-2 border-bee-black"
                         >
                             {t.final_cta.btn_hotel_airport} ➔
                         </button>

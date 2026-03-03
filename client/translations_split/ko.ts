@@ -40,15 +40,15 @@ export const ko = {
     hero: {
         badge: '글로벌 여행 파트너',
         title1: '짐으로부터',
-        title2: '자유롭게.',
+        title2: '자유롭게',
         subtitle: '호텔에서 공항까지, 무거운 짐은 빌리버에게 맡기고\n가장 가벼운 마음으로 여행의 모든 순간을 만끽하세요.',
         btn_now: '예약하기',
         track_booking: '예약 및 배송 확인',
         book_branch: '예약하기',
-        main_title_1: '짐으로부터,',
-        main_title_2: '자유롭게.',
-        main_title_bags: '짐.',
-        main_title_city: '자유.'
+        main_title_1: '짐으로부터',
+        main_title_2: '자유롭게',
+        main_title_bags: '',
+        main_title_city: ''
     },
     pain: {
         headline: "28인치의 무게는 Beeliber에 맡기고,\n당신의 두 손에는 설렘만 담으세요.",
@@ -94,6 +94,41 @@ export const ko = {
         btn_airport_hotel: "공항 ➔ 호텔 배송 예약하기",
         btn_hotel_airport: "호텔 ➔ 공항 배송 예약하기"
     },
+    partnership: {
+        title: '제휴 문의',
+        subtitle: '빌리버(Beeliber)와 함께 새로운 여행의 기준을 만드세요.',
+        hero_badge: 'GLOBAL PARTNERSHIP',
+        hero_title: '빌리버와 함께\n성장의 날개를 펼치세요',
+        hero_desc: '전 세계 여행자를 위한 가장 스마트한 수하물 서비스, 빌리버의 파트너가 되어 새로운 수익 모델과 고객 경험을 창출하세요.',
+        benefits_title: '왜 빌리버 파트너인가요?',
+        benefit1_t: '추가 수익 창출',
+        benefit1_d: '유휴 공간을 활용하여 안정적인 수수료 수익을 창출할 수 있습니다.',
+        benefit2_t: '트래픽 증대',
+        benefit2_d: '빌리버를 이용하는 전 세계 여행자들이 당신의 매장을 방문하게 됩니다.',
+        benefit3_t: '브랜드 홍보',
+        benefit3_d: '빌리버 플랫폼 내 거점 노출을 통해 글로벌 인지도를 높이세요.',
+        benefit4_t: '안전한 보상 시스템',
+        benefit4_d: '최대 50만 원 보상 보험 가입으로 파트너의 운영 부담을 덜어드립니다.',
+        form_title: '지금 바로 제휴를 제안하세요',
+        company: '업체명 / 숙소명',
+        contact: '연락처',
+        location: '위치 / 주소',
+        businessType: '업종',
+        message: '문의 내용',
+        message_placeholder: '제휴 내용에 대해 간단히 기재해 주세요.',
+        alert_fill: '필수 정보를 입력해 주세요.',
+        back_to_main: '메인으로 이동',
+        submit: '제안하기',
+        success: '접수 완료',
+        successSub: '검토 후 빠른 시일 내에 연락드리겠습니다.',
+        back: '홈으로'
+    },
+    notice: {
+        title: '공지사항',
+        close: '닫기',
+        dont_show_today: '오늘 하루 보지 않기'
+    },
+
     booking: {
         delivery: "배송",
         storage: "보관",
@@ -138,7 +173,6 @@ export const ko = {
         agree_privacy: "[필수] 개인정보 수집 및 이용 동의 (수하물 사진 및 위치 정보 포함)",
         agree_privacy_simple: "[필수] 개인정보 수집 및 이용 동의",
         agree_privacy_link: "[내용보기]",
-        agree_privacy_required: "[필수]",
         agree_premium: "[필수] 고가 물품 안전 보장 및 제3자 정보 제공 동의",
         agree_high_value_simple: "[필수] 고가 물품 관리 정책 동의",
         premium_note: "(미가입 시 파손/분실 최대 배상 한도가 50만원으로 제한됩니다.)",
@@ -243,8 +277,8 @@ export const ko = {
     },
     tracking: { title: '실시간 조회', desc: '이름과 이메일 주소를 입력하여 예약 내역을 확인하세요.', placeholder: '이메일 입력', name_placeholder: '예약자 성함 입력', btn: '조회하기', noResult: '결과가 없습니다.', status_suffix: '상태' },
     tracking_page: {
-        title: '나의 예약 내역',
-        subtitle: '배송 및 보관의 진행 상황을 실시간으로 확인하세요.',
+        title: '예약 현황 및 배송 상태 조회',
+        subtitle: '이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요.',
         search_btn: '예약 조회',
         cancel_btn: '예약 취소 / 환불',
         progress: '진행 상태',

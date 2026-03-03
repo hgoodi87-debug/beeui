@@ -22,10 +22,11 @@ const LocationsPage = lazy(() => import('./components/LocationsPage'));
 const MyPage = lazy(() => import('./components/MyPage'));
 const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
 
-import Footer from './components/Footer';
-import ChatBot from './components/ChatBot';
+const Footer = lazy(() => import('./components/Footer'));
+const ChatBot = lazy(() => import('./components/ChatBot'));
 import ErrorBoundary from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
+import LanguagePopup from './components/LanguagePopup';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import SEO from './components/SEO';
@@ -245,7 +246,7 @@ const App: React.FC = () => {
 
   const AnimatedRoute = ({ children, fade }: { children: React.ReactNode; fade?: boolean }) => (
     <motion.div
-      initial="initial"
+      initial={isInitialLoad ? "animate" : "initial"}
       animate="animate"
       exit="exit"
       variants={fade ? fadeVariants : pageVariants}
@@ -285,100 +286,117 @@ const App: React.FC = () => {
     };
   }
 
-  const LoaderOverlay = () => (
-    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  useEffect(() => {
+    if (t) {
+      // Small delay to ensure styles are ready before removing overlay
+      const timer = setTimeout(() => setIsInitialLoad(false), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [t]);
+
+  const LoaderOverlay = ({ fadeOut }: { fadeOut: boolean }) => (
+    <div className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center transition-opacity duration-500 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       <div className="w-16 h-16 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
-
-  if (!t) {
-    return <LoaderOverlay />;
-  }
 
   const isDarkBg = location.pathname === '/' || location.pathname.startsWith('/branch/');
 
   return (
     <div className={`w-full font-sans selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden ${isDarkBg ? 'bg-black' : 'bg-slate-50'}`}>
-      <SEO
-        title={customerBranch ? `Beeliber - ${customerBranch.name}` : t.seo?.title}
-        description={t.seo?.description}
-        keywords={t.seo?.keywords}
-        lang={lang}
-        path={location.pathname}
-        schema={branchSchema}
-      />
-      <ErrorBoundary>
-        <Suspense fallback={<LoaderOverlay />}>
-          <AnimatePresence mode="wait" initial={false}>
-            <Routes location={location} key={location.pathname}>
-              {/* USER */}
-              <Route path="/" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /></AnimatedRoute>} />
-              <Route path="/branch/:code" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /></AnimatedRoute>} />
+      {isInitialLoad && <LoaderOverlay fadeOut={!!t} />}
 
-              {/* OTHER */}
-              <Route path="/services" element={<AnimatedRoute><ServicesPage onBack={() => navigate('/')} t={t.services_page} landingT={t.landing_renewal} /></AnimatedRoute>} />
-              <Route path="/locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate('/')} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={setLang} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} /></AnimatedRoute>} />
-              <Route path="/booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate('/locations')} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
-              <Route path="/booking-success" element={<AnimatedRoute fade><BookingSuccess booking={lastBooking} locations={locations} onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
-              <Route path="/tracking" element={<AnimatedRoute><UserTrackingPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
-              <Route path="/partnership" element={<AnimatedRoute><PartnershipPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
-              <Route path="/manual" element={<AnimatedRoute><ManualPage onBack={() => navigate('/')} t={t.manual} /></AnimatedRoute>} />
-              <Route path="/terms" element={<AnimatedRoute><TermsPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
-              <Route path="/privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
-
-              {/* ADMIN */}
-              <Route path="/admin" element={<AnimatedRoute><AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} /></AnimatedRoute>} />
-              <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={() => navigate('/')} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
-              <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={() => navigate('/')} /></AnimatedRoute></BranchAdminGuard>} />
-              <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
-              <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
-
-              {/* FALLBACK */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </AnimatePresence>
-        </Suspense>
-      </ErrorBoundary>
-
-      <Routes>
-        <Route path="/" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
-        <Route path="/branch/:code" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
-        <Route path="/services" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
-        <Route path="/tracking" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
-        <Route path="*" element={null} />
-      </Routes>
-
-      <Routes>
-        <Route path="/" element={<ChatBot t={t.chatbot} lang={lang} />} />
-        <Route path="/branch/:code" element={<ChatBot t={t.chatbot} lang={lang} />} />
-        <Route path="*" element={null} />
-      </Routes>
-
-      {location.pathname === '/mypage' && (
+      {t && (
         <>
-          <div className="fixed inset-0 z-0 pointer-events-none">
-            <LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} />
-            <div className="absolute inset-0 bg-black/50 pointer-events-auto" />
-          </div>
-          <MyPage t={t} onClose={() => { navigate(-1); }} />
+          <SEO
+            title={customerBranch ? `Beeliber - ${customerBranch.name}` : t.seo?.title}
+            description={t.seo?.description}
+            keywords={t.seo?.keywords}
+            lang={lang}
+            path={location.pathname}
+            schema={branchSchema}
+          />
+          <ErrorBoundary>
+            <Suspense fallback={<LoaderOverlay fadeOut={false} />}>
+              <AnimatePresence mode="wait" initial={false}>
+                <Routes location={location} key={location.pathname}>
+                  {/* USER */}
+                  <Route path="/" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /></AnimatedRoute>} />
+                  <Route path="/branch/:code" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /></AnimatedRoute>} />
+
+                  {/* OTHER */}
+                  <Route path="/services" element={<AnimatedRoute><ServicesPage onBack={() => navigate('/')} t={t.services_page} landingT={t.landing_renewal} /></AnimatedRoute>} />
+                  <Route path="/locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate('/')} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={setLang} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} /></AnimatedRoute>} />
+                  <Route path="/booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate('/locations')} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
+                  <Route path="/booking-success" element={<AnimatedRoute fade><BookingSuccess booking={lastBooking} locations={locations} onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tracking" element={<AnimatedRoute><UserTrackingPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/partnership" element={<AnimatedRoute><PartnershipPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+                  <Route path="/manual" element={<AnimatedRoute><ManualPage onBack={() => navigate('/')} t={t.manual} /></AnimatedRoute>} />
+                  <Route path="/terms" element={<AnimatedRoute><TermsPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+                  <Route path="/privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+
+                  {/* ADMIN */}
+                  <Route path="/admin" element={<AnimatedRoute fade><AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} /></AnimatedRoute>} />
+                  <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={() => navigate('/')} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
+                  <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={() => navigate('/')} /></AnimatedRoute></BranchAdminGuard>} />
+                  <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
+                  <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
+
+                  {/* FALLBACK */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </AnimatePresence>
+            </Suspense>
+          </ErrorBoundary>
+
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+              <Route path="/branch/:code" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+              <Route path="/services" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+              <Route path="/tracking" element={<Footer t={t} onNavigate={(val) => legacyNavigate(val)} />} />
+              <Route path="*" element={null} />
+            </Routes>
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<ChatBot t={t.chatbot} lang={lang} />} />
+              <Route path="/branch/:code" element={<ChatBot t={t.chatbot} lang={lang} />} />
+              <Route path="*" element={null} />
+            </Routes>
+          </Suspense>
+
+          {location.pathname === '/mypage' && (
+            <>
+              <div className="fixed inset-0 z-0 pointer-events-none">
+                <LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} />
+                <div className="absolute inset-0 bg-black/50 pointer-events-auto" />
+              </div>
+              <MyPage t={t} onClose={() => { navigate(-1); }} />
+            </>
+          )}
+
+          <NoticePopup t={t} />
+          <LanguagePopup t={t} />
+          <LoginModal
+            isOpen={showLoginModal}
+            t={t}
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={() => setShowLoginModal(false)}
+            onSwitchToSignup={() => { setShowLoginModal(false); setShowSignupModal(true); }}
+          />
+          <SignupModal
+            isOpen={showSignupModal}
+            t={t}
+            onClose={() => setShowSignupModal(false)}
+            onSignupSuccess={() => setShowSignupModal(false)}
+            onSwitchToLogin={() => { setShowSignupModal(false); setShowLoginModal(true); }}
+          />
         </>
       )}
-
-      <NoticePopup t={t} />
-      <LoginModal
-        isOpen={showLoginModal}
-        t={t}
-        onClose={() => setShowLoginModal(false)}
-        onLoginSuccess={() => setShowLoginModal(false)}
-        onSwitchToSignup={() => { setShowLoginModal(false); setShowSignupModal(true); }}
-      />
-      <SignupModal
-        isOpen={showSignupModal}
-        t={t}
-        onClose={() => setShowSignupModal(false)}
-        onSignupSuccess={() => setShowSignupModal(false)}
-        onSwitchToLogin={() => { setShowSignupModal(false); setShowLoginModal(true); }}
-      />
     </div>
   );
 };

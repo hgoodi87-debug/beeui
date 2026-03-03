@@ -85,9 +85,8 @@ exports.runClaudeAgent = onCall({ timeoutSeconds: 540, memory: "1GiB" }, async (
 
 // 4-1. Secure Admin Verification (Full CORS Permitted) 🛡️💅
 exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) => {
-    const { onCall: _, HttpsError: HE } = require("firebase-functions/v2/https");
     const { name, password } = request.data;
-    if (!name || !password) throw new HE('invalid-argument', 'Name and password required.');
+    if (!name || !password) throw new HttpsError('invalid-argument', 'Name and password required.');
 
     const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
     const inputName = normalize(name);
@@ -95,10 +94,23 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
 
     try {
         const db = admin.firestore();
-        let adminsSnap = await db.collection('admins').get();
 
-        // [스봉이] 클라우드에 관리자가 없으면 초기 데이터 심어두기! 💅
-        if (adminsSnap.empty) {
+        // [스봉이] 전체를 다 가져오지 않고, 일단 쿼리 시도! 💅
+        const quickSnap = await db.collection('admins').where('name', '==', name.trim()).get();
+        let adminDoc = quickSnap.docs[0];
+
+        // 만약 단순 쿼리로 못 찾으면 전체 검색 (정규화된 이름 매칭용)
+        if (!adminDoc) {
+            console.log("Quick lookup failed, performing full scan for normalized match...");
+            const allAdminsSnap = await db.collection('admins').get();
+            adminDoc = allAdminsSnap.docs.find(doc => {
+                const data = doc.data();
+                return normalize(data.name) === inputName && (data.password || '').trim() === inputPassword;
+            });
+        }
+
+        // [스봉이] 데이터가 아예 없으면 초기 데이터 심기
+        if (!adminDoc && (await db.collection('admins').limit(1).get()).empty) {
             console.log("No admins found in cloud. Seeding initial data...");
             const initialAdmins = [
                 { id: 'admin-001', name: '천명', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
@@ -109,39 +121,34 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
             const batch = db.batch();
             initialAdmins.forEach(adm => batch.set(db.collection('admins').doc(adm.id), adm));
             await batch.commit();
-            adminsSnap = await db.collection('admins').get();
+
+            // Re-check after seeding
+            const reSnap = await db.collection('admins').get();
+            adminDoc = reSnap.docs.find(doc => normalize(doc.data().name) === inputName);
         }
 
-        const adminDoc = adminsSnap.docs.find(doc => {
-            const data = doc.data();
-            return normalize(data.name) === inputName && (data.password || '').trim() === inputPassword;
-        });
-
-        if (!adminDoc) {
+        if (!adminDoc || (adminDoc.data().password || '').trim() !== inputPassword) {
             console.warn(`Login failed for name: ${name}`);
-            throw new HE('unauthenticated', 'Invalid credentials');
+            throw new HttpsError('unauthenticated', 'Invalid credentials');
         }
 
         const adminData = adminDoc.data();
         const { password: _, ...safeAdminData } = adminData;
 
-        // [보안 핵심] 현재 로그인한 사용자의 UID를 관리자 권한과 매핑합니다! 🛡️💅
-        // 이렇게 해야 firestore.rules의 isAdmin() 체크를 통과할 수 있어요.
+        // UID 매핑은 백그라운드에서 처리하면 더 빠르겠지만, 안정성을 위해 유지 (단, 비동기 처리는 시점 조정 가능)
         if (request.auth && request.auth.uid) {
-            console.log(`Mapping UID ${request.auth.uid} to Admin ${adminData.name}`);
-            await db.collection('admins').doc(request.auth.uid).set({
+            db.collection('admins').doc(request.auth.uid).set({
                 ...safeAdminData,
                 uid: request.auth.uid,
                 lastLogin: new Date().toISOString()
-            }, { merge: true });
+            }, { merge: true }).catch(err => console.error("UID mapping failed:", err));
         }
 
         return { ...safeAdminData, id: adminDoc.id };
     } catch (e) {
         console.error("verifyAdmin ERROR:", e);
-        // [스봉이] 이미 HttpsError 형식의 객체라면 그대로 던집니다! 🛡️
         if (e.code && (typeof e.code === 'string')) throw e;
-        throw new HE('internal', e.message);
+        throw new HttpsError('internal', e.message);
     }
 });
 

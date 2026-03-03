@@ -90,7 +90,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate }) => {
 
                             <button
                                 onClick={() => onNavigate('LOCATIONS')}
-                                className={`w-full py-6 rounded-[2rem] font-black text-xl md:text-2xl tracking-[0.1em] transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3 ${item.popular ? 'bg-bee-black text-bee-yellow hover:bg-bee-yellow hover:text-bee-black' : 'bg-bee-yellow text-bee-black hover:bg-bee-black hover:text-bee-yellow'
+                                className={`w-full py-6 md:py-8 rounded-[2rem] font-black text-xl md:text-2xl tracking-[0.1em] transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3 ${item.popular ? 'bg-bee-black text-bee-yellow hover:bg-bee-yellow hover:text-bee-black' : 'bg-bee-yellow text-bee-black hover:bg-bee-black hover:text-bee-yellow'
                                     }`}
                             >
                                 CHOOSE SERVICE <span className="text-2xl md:text-3xl">➔</span>

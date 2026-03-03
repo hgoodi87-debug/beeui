@@ -104,10 +104,10 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans pb-20">
+        <div className="min-h-screen bg-white font-sans pb-20">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+                <button onClick={onBack} title="Go Back" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                     <ChevronLeft className="w-6 h-6" />
                 </button>
                 <h1 className="text-lg font-black tracking-tight">{t.tracking_page.title}</h1>
@@ -119,7 +119,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                 <section className="bg-white rounded-[32px] shadow-xl p-8 md:p-12 mb-12">
                     <div className="mb-8 text-center md:text-left">
                         <h2 className="text-2xl font-black mb-2">{t.tracking_page.title}</h2>
-                        <p className="text-gray-400 font-medium">{t.tracking_page.subtitle}</p>
+                        <p className="text-gray-500 font-bold">{t.tracking_page.subtitle}</p>
                     </div>
 
                     <form onSubmit={handleSearch} className="space-y-6">
@@ -301,7 +301,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                             <div className="p-8 md:p-12">
                                 <div className="flex justify-between items-center mb-8">
                                     <h3 className="text-2xl font-black tracking-tight">{t.refund.title}</h3>
-                                    <button onClick={() => setShowRefundModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                    <button onClick={() => setShowRefundModal(false)} title="Close Modal" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <X className="w-6 h-6" />
                                     </button>
                                 </div>

@@ -77,9 +77,9 @@ const HRTab: React.FC<HRTabProps> = ({
                     <button onClick={saveAdmin} disabled={isSaving} className={`w-full py-4 rounded-2xl font-black text-sm transition-all shadow-lg ${isSaving ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-bee-yellow text-bee-black shadow-yellow-100 hover:scale-[1.02] active:scale-95'}`}>
                         {isSaving ? '저장 중...' : adminForm.id ? '수정 완료 💅' : '관리자 추가 ✨'}
                     </button>
-                    {adminForm.id && (
-                        <button onClick={() => { setAdminForm({}); setShowAdminPassword(false); }} className="w-full py-4 text-xs font-bold text-gray-400 hover:text-bee-black transition-colors">
-                            취소하고 새로 등록하기
+                    {(adminForm.id || adminForm.name || adminForm.jobTitle || adminForm.password) && (
+                        <button onClick={() => { setAdminForm({ name: '', jobTitle: '', password: '' }); setShowAdminPassword(false); }} className="w-full py-4 text-xs font-bold text-gray-400 hover:text-bee-black transition-colors">
+                            {adminForm.id ? '취소하고 새로 등록하기' : '입력 내용 초기화 폼 🧹'}
                         </button>
                     )}
                 </div>

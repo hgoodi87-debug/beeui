@@ -1,0 +1,16 @@
+{
+    "trigger": "marketing_automation",
+    "campaign": "Travel Liberty 2026 - Taiwan Native",
+    "language": "zh-TW",
+    "thread_planning": {
+        "headline": "到首爾玩還在辛苦搬行李？解放雙手就靠這招 🐝 Beeliber",
+        "content": "大家出國玩最怕的就是重死人的行李箱吧 😭 尤其是在首爾逛街，拖著大包小包真的會瘋掉！\n\n現在就把行李交給 **Beeliber**，不管是機場送到飯店，還是飯店互送都超方便 🧳✨\n\n重點是手機就能 **即時追蹤配送進度**，讓您可以輕輕鬆鬆地去踩點拍照！📷💅\n\n首爾自由行就是要這樣玩才夠優雅、夠 Smart 啊 🐝✨",
+        "hashtags": "#首爾旅遊 #韓國自由行 #解放雙手 #Beeliber #首爾攻略 #行李運送",
+        "link": "https://bee-liber.com"
+    },
+    "images": [
+        "https://raw.githubusercontent.com/example/beeliber/main/marketing/threads_image_1.png",
+        "https://raw.githubusercontent.com/example/beeliber/main/marketing/threads_image_2.png"
+    ],
+    "fixed_comment": "✨ 新用戶現折 2,000 韓元！快去官網領取優惠吧 🎁 💅"
+}

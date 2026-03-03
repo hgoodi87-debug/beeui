@@ -11,12 +11,12 @@ const KEYS = {
 };
 
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
-  apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
-  authDomain: "beeliber-main.firebaseapp.com",
-  projectId: "beeliber-main",
-  storageBucket: "beeliber-main.firebasestorage.app",
-  messagingSenderId: "591358308612",
-  appId: "1:591358308612:web:fb3928d12b0e1bb000a051",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
   measurementId: "G-PQBL1SG842",
   isActive: true, // Force Active
   enableGeminiAutomation: true,
@@ -784,12 +784,23 @@ export const StorageService = {
 
   subscribeAdmins: (callback: (data: AdminUser[]) => void): (() => void) => {
     try {
-      const q = query(collection(db, "admins"), orderBy("createdAt", "desc"));
+      const dbRef = collection(db, "admins");
+      const q = query(dbRef, orderBy("createdAt", "desc"));
       return onSnapshot(q, (snapshot) => {
         const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
         callback(items);
-      }, (error) => console.error("Admins sub error", error));
+      }, (error) => {
+        console.error("Admins subscription error (likely index missing):", error);
+        // Fallback: Simple query without ordering
+        const simpleQ = query(dbRef, limit(100));
+        onSnapshot(simpleQ, (snap) => {
+          const items = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
+          items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+          callback(items);
+        });
+      });
     } catch (e) {
+      console.error("Admins subscription critical failure:", e);
       return () => { };
     }
   },

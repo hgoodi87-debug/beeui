@@ -26,7 +26,6 @@ import LandingReviews from "./landing/LandingReviews";
 import LandingFinalCTA from "./landing/LandingFinalCTA";
 import Logo from "./Logo";
 
-const VIDEO_URL = "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2Fbg_video_v3_optimized.mp4?alt=media&token=8e953c44-e1d5-4e78-bc5a-493ba5627e45";
 
 interface LandingRenewalProps {
     t: any;
@@ -157,7 +156,6 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     t={t}
                     onNavigate={onNavigate}
                     onTrackClick={() => setShowTracking(true)}
-                    videoSrc={VIDEO_URL}
                     branchCode={branchCode}
                 />
                 <LandingPainSection t={t} />
@@ -187,9 +185,13 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                         >
                             <div className="p-10 md:p-16">
                                 <div className="flex justify-between items-center mb-12">
-                                    <div>
-                                        <h3 className="text-4xl font-display font-black text-bee-black tracking-tighter">Tracking Status 💅</h3>
-                                        <p className="text-sm text-bee-muted font-bold font-outfit uppercase tracking-widest mt-2">Real-time GPS Monitoring</p>
+                                    <div className="space-y-4">
+                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-bee-yellow text-bee-black rounded-full shadow-lg shadow-bee-yellow/20">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Tracking Status 💅</span>
+                                        </div>
+                                        <h3 className="text-4xl md:text-5xl font-display font-black text-bee-black tracking-tighter leading-tight">
+                                            Real-time GPS <br /> Monitoring
+                                        </h3>
                                     </div>
                                     <button
                                         onClick={() => setShowTracking(false)}

@@ -38,15 +38,27 @@ export const ensureAuth = (): Promise<any> => {
             return;
         }
 
+        const timeout = setTimeout(() => {
+            reject(new Error("Firebase Auth Timeout - Please check internet connection or authorized domains (Referrer)."));
+        }, 8000);
+
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) {
+                clearTimeout(timeout);
                 unsubscribe();
                 resolve(user);
             }
-        }, reject);
+        }, (error) => {
+            clearTimeout(timeout);
+            reject(error);
+        });
 
         // Fallback: trigger sign in if nothing happens
-        signInAnonymously(auth).catch(reject);
+        signInAnonymously(auth).catch((error) => {
+            clearTimeout(timeout);
+            console.error("[Firebase] signInAnonymously Error:", error);
+            reject(error);
+        });
     });
 };
 

@@ -109,20 +109,20 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
 
             {/* 4. CTA: Apple-style 심플 버튼 & Micro-interaction 🚀 */}
             <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute bottom-12 md:bottom-20 inset-x-0 z-40 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-8 px-6"
+                className="absolute bottom-12 md:bottom-20 inset-x-0 z-40 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-5 px-6"
             >
                 <motion.button
                     whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     onClick={() => onNavigate('LOCATIONS')}
-                    className="w-full sm:w-auto group relative px-6 py-4 md:px-16 md:py-6 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-2xl flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden"
+                    className="w-full sm:w-[280px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-xl flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden"
                 >
                     <span className="relative z-10">{t.hero.btn_now || "BOOK NOW & FREE YOUR HANDS"}</span>
-                    <ChevronRight className="relative z-10 w-4 h-4 md:w-7 md:h-7 group-hover:translate-x-2 transition-transform" />
+                    <ChevronRight className="relative z-10 w-4 h-4 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
                 </motion.button>
 
                 <motion.button
@@ -130,9 +130,9 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     onClick={onTrackClick}
-                    className="w-full sm:w-auto group px-6 py-4 md:px-16 md:py-6 bg-white/5 text-white font-black rounded-full text-sm md:text-2xl flex items-center justify-center gap-3 border border-white/10 backdrop-blur-xl shadow-xl"
+                    className="w-full sm:w-[280px] group py-4 md:py-5 bg-white/5 text-white font-black rounded-full text-sm md:text-xl flex items-center justify-center gap-3 border border-white/10 backdrop-blur-xl shadow-xl"
                 >
-                    <Smartphone className="w-4 h-4 md:w-7 md:h-7 text-bee-yellow group-hover:scale-110 transition-transform" />
+                    <Smartphone className="w-4 h-4 md:w-6 md:h-6 text-bee-yellow group-hover:scale-110 transition-transform" />
                     <span>{t.hero.track_booking}</span>
                 </motion.button>
             </motion.div>

@@ -260,9 +260,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div className="text-[10px] font-black text-gray-400">{filteredLocations.length}개 표시 중 / 전체 {locations.length}개</div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-min">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 auto-rows-min">
                         {filteredLocations.map(loc => (
-                            <div key={loc.id} onClick={() => focusLocation(loc)} className={`bg-white p-6 rounded-[24px] md:rounded-[30px] border shadow-sm hover:shadow-md transition-all group relative cursor-pointer ${locForm.id === loc.id ? 'border-bee-yellow ring-2 ring-bee-yellow/20' : 'border-gray-100'}`}>
+                            <div key={loc.id} onClick={() => focusLocation(loc)} className={`bg-white p-4 md:p-5 rounded-[20px] md:rounded-[24px] border shadow-sm hover:shadow-md transition-all group relative cursor-pointer flex flex-col justify-between ${locForm.id === loc.id ? 'border-bee-yellow ring-2 ring-bee-yellow/20' : 'border-gray-100'}`}>
                                 <div className="flex items-center gap-3 mb-3">
                                     <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-500'}`}>{loc.type}</span>
                                     <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{loc.id}</span>
@@ -280,10 +280,10 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                     </div>
                                 </div>
                                 <div className="mb-1">
-                                    <h4 className="font-black text-lg text-bee-black">{getLocName(loc)}</h4>
-                                    {lang !== 'ko' && <p className="text-[10px] text-gray-300 font-bold">{loc.name}</p>}
+                                    <h4 className="font-black text-sm md:text-base text-bee-black truncate" title={getLocName(loc)}>{getLocName(loc)}</h4>
+                                    {lang !== 'ko' && <p className="text-[9px] text-gray-300 font-bold truncate">{loc.name}</p>}
                                 </div>
-                                <p className="text-xs text-gray-400 font-medium truncate mb-4">{getLocAddress(loc)}</p>
+                                <p className="text-[10px] md:text-xs text-gray-400 font-medium truncate mb-3" title={getLocAddress(loc)}>{getLocAddress(loc)}</p>
                                 {loc.isPartner && loc.commissionRates && (
                                     <div className="mb-4 bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex items-center gap-3">
                                         <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest"><i className="fa-solid fa-coins mr-1"></i>Commission</span>

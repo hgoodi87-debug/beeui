@@ -8,7 +8,7 @@ import { User } from 'firebase/auth';
 // Lazy load components
 const LandingRenewal = lazy(() => import('./components/LandingRenewal'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
-const AdminLoginPage = lazy(() => import('./components/AdminLoginPage'));
+import AdminLoginPage from './components/AdminLoginPage';
 const ManualPage = lazy(() => import('./components/ManualPage'));
 const BookingSuccess = lazy(() => import('./components/BookingSuccess'));
 const PartnershipPage = lazy(() => import('./components/PartnershipPage'));
@@ -108,19 +108,6 @@ const App: React.FC = () => {
     };
     checkBranch();
   }, [location.pathname, customerBranchCode, setCustomerBranchCode, setCustomerBranch]);
-
-  const ensureAuthAndExecute = (action: () => void) => {
-    if (auth.currentUser) {
-      action();
-    } else {
-      const unsubscribe = auth.onAuthStateChanged((user) => {
-        if (user) {
-          unsubscribe();
-          action();
-        }
-      });
-    }
-  };
 
   useEffect(() => {
     localStorage.setItem('beeliber_lang', lang);
@@ -222,9 +209,9 @@ const App: React.FC = () => {
   };
 
   const pageVariants: Variants = {
-    initial: { opacity: 0, x: 20, scale: 0.99 },
-    animate: { opacity: 1, x: 0, scale: 1 },
-    exit: { opacity: 0, x: -20, scale: 1.01 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   };
 
   // 💅 예약 성공 페이지는 플리커 방지를 위해 x 이동 없이 fade-only 전환
@@ -296,11 +283,20 @@ const App: React.FC = () => {
     }
   }, [t]);
 
-  const LoaderOverlay = ({ fadeOut }: { fadeOut: boolean }) => (
-    <div className={`fixed inset-0 z-[9999] bg-black flex items-center justify-center transition-opacity duration-500 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-      <div className="w-16 h-16 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+  const LoaderOverlay = React.memo(({ fadeOut }: { fadeOut: boolean }) => (
+    <div className={`fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center transition-opacity duration-300 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative">
+          <div className="w-14 h-14 border-[3px] border-bee-yellow/20 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-14 h-14 border-[3px] border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-bee-yellow text-[10px] font-black tracking-[0.4em] animate-pulse">BEELIBER</p>
+          <p className="text-white/40 text-[8px] font-bold tracking-widest uppercase">Initializing System</p>
+        </div>
+      </div>
     </div>
-  );
+  ));
 
   const isDarkBg = location.pathname === '/' || location.pathname.startsWith('/branch/');
 
@@ -338,7 +334,7 @@ const App: React.FC = () => {
                   <Route path="/privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
 
                   {/* ADMIN */}
-                  <Route path="/admin" element={<AnimatedRoute fade><AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} /></AnimatedRoute>} />
+                  <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} />} />
                   <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={() => navigate('/')} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={() => navigate('/')} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />

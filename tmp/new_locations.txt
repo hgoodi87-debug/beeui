@@ -1,0 +1,264 @@
+  {
+    id: 'MBX-001', shortCode: 'MBX-001', name: '안국역지점', type: LocationType.PARTNER,
+    description: '연락처: 02-766-8887', address: '서울시 종로구 율곡로 65, 1층',
+    name_en: '안국역지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-002', shortCode: 'MBX-002', name: '동대문DDP점', type: LocationType.PARTNER,
+    description: '연락처: 02-2278-7888', address: '서울시 중구 장충단로13길 13, 1층 103호',
+    name_en: '동대문DDP점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-003', shortCode: 'MBX-003', name: '종로지점', type: LocationType.PARTNER,
+    description: '연락처: 02-766-5888', address: '서울시 종로구 돈화문로 45, 1층 103호',
+    name_en: '종로지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-004', shortCode: 'MBX-004', name: '충무로지점', type: LocationType.PARTNER,
+    description: '연락처: 02-2272-8882', address: '서울시 중구 마른내로 42, 1층',
+    name_en: '충무로지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-005', shortCode: 'MBX-005', name: '성수역점', type: LocationType.PARTNER,
+    description: '연락처: 02-498-8898', address: '서울시 성동구 연무장5가길 16, 1층',
+    name_en: '성수역점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-006', shortCode: 'MBX-006', name: '강남신사점', type: LocationType.PARTNER,
+    description: '연락처: 02-518-8883', address: '서울시 강남구 도산대로 127',
+    name_en: '강남신사점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-007', shortCode: 'MBX-007', name: '머니박스제일환전센터', type: LocationType.PARTNER,
+    description: '연락처: 02-773-0000', address: '서울시 중구 남대문로 68-1',
+    name_en: '머니박스제일환전센터', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-008', shortCode: 'MBX-008', name: '여의도지점', type: LocationType.PARTNER,
+    description: '연락처: 02-761-8889', address: '서울특별시 영등포구 여의나루로 42, 제1층 116호',
+    name_en: '여의도지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-009', shortCode: 'MBX-009', name: '명동2호점', type: LocationType.PARTNER,
+    description: '연락처: 02-318-8801', address: '서울시 중구 명동9길 15(명동1가)',
+    name_en: '명동2호점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-010', shortCode: 'MBX-010', name: '이태원지점', type: LocationType.PARTNER,
+    description: '연락처: 02-749-8883', address: '서울시 용산구 이태원동 127-28',
+    name_en: '이태원지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-011', shortCode: 'MBX-011', name: '서울역지점', type: LocationType.PARTNER,
+    description: '연락처: 02-706-8880', address: '서울시 용산구 한강대로 401-2 1층',
+    name_en: '서울역지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-012', shortCode: 'MBX-012', name: '강남역지점', type: LocationType.PARTNER,
+    description: '연락처: 02-3478-8388', address: '서울시 서초구 서초대로77길 3 아라타워 103호',
+    name_en: '강남역지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-013', shortCode: 'MBX-013', name: '남대문지점', type: LocationType.PARTNER,
+    description: '연락처: 02-3789-8588', address: '서울시 중구 남대문시장길 73, 1층 일부 104호(회현동1가)',
+    name_en: '남대문지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-014', shortCode: 'MBX-014', name: '인사동지점', type: LocationType.PARTNER,
+    description: '연락처: 02-738-0888', address: '서울특별시 종로구 인사동4길 1, 1층(인사동)',
+    name_en: '인사동지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-015', shortCode: 'MBX-015', name: '홍대지점', type: LocationType.PARTNER,
+    description: '연락처: 02-336-7972', address: '서울특별시 마포구 와우산로29길 72, 1층 101호',
+    name_en: '홍대지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-016', shortCode: 'MBX-016', name: '명동직영점', type: LocationType.PARTNER,
+    description: '연락처: 02-3789-0888', address: '서울특별시 중구 남대문로 52-1',
+    name_en: '명동직영점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-017', shortCode: 'MBX-017', name: '평택지점', type: LocationType.PARTNER,
+    description: '연락처: 031-651-8882', address: '경기도 평택시 팽성읍 안정순환로 110, 1층',
+    name_en: '평택지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-018', shortCode: 'MBX-018', name: '송도지점', type: LocationType.PARTNER,
+    description: '연락처: 032-858-8838', address: '인천광역시 연수구 인천타워대로132번길 30, 1층 106호',
+    name_en: '송도지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-019', shortCode: 'MBX-019', name: '수원지점', type: LocationType.PARTNER,
+    description: '연락처: 031-248-7888', address: '경기도 수원시 팔달구 향교로1번길 2',
+    name_en: '수원지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-020', shortCode: 'MBX-020', name: '운서역지점', type: LocationType.PARTNER,
+    description: '연락처: 032-746-1888', address: '인천 중구 운서동 2803-1 메가스타영종 제1동제1층 126호',
+    name_en: '운서역지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-021', shortCode: 'MBX-021', name: '부평지점', type: LocationType.PARTNER,
+    description: '연락처: 032-362-8881', address: '인천광역시 부평구 부평동 546-64(1층코너왼쪽상가)',
+    name_en: '부평지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-022', shortCode: 'MBX-022', name: '김포지점', type: LocationType.PARTNER,
+    description: '연락처: 031-989-4448', address: '경기도 김포시 대곶면 율마로 37, 1층',
+    name_en: '김포지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-023', shortCode: 'MBX-023', name: '창원지점', type: LocationType.PARTNER,
+    description: '연락처: 055-267-8881', address: '경상남도 창원시 성산구 상남로 118, 102호',
+    name_en: '창원지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-024', shortCode: 'MBX-024', name: '울산삼산지점', type: LocationType.PARTNER,
+    description: '연락처: 052-258-8881', address: '울산시 남구 삼산동 1479-5번지 1층 104호',
+    name_en: '울산삼산지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-025', shortCode: 'MBX-025', name: '광안리지점', type: LocationType.PARTNER,
+    description: '연락처: 051-758-8858', address: '부산시 수영구 광안로 20, 119호',
+    name_en: '광안리지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-026', shortCode: 'MBX-026', name: '부산역지점', type: LocationType.PARTNER,
+    description: '연락처: 051-467-8880', address: '부산광역시 동구 중앙대로203번길 10, 1층',
+    name_en: '부산역지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-027', shortCode: 'MBX-027', name: '대구지점', type: LocationType.PARTNER,
+    description: '연락처: 053-423-0888', address: '대구광역시 중구 덕산동 124-40 101호',
+    name_en: '대구지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-028', shortCode: 'MBX-028', name: '김해공항지점', type: LocationType.PARTNER,
+    description: '연락처: 051-973-9996', address: '부산광역시 강서구 공항진입로 165(대저2동)',
+    name_en: '김해공항지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-029', shortCode: 'MBX-029', name: '남포지점', type: LocationType.PARTNER,
+    description: '연락처: 051-245-9998', address: '부산광역시 중구 광복로 38, 1층 A1호',
+    name_en: '남포지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-030', shortCode: 'MBX-030', name: '해운대지점', type: LocationType.PARTNER,
+    description: '연락처: 051-742-9998', address: '부산광역시 해운대구 중동 1392-100 씨클라우드호텔 1층',
+    name_en: '해운대지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-031', shortCode: 'MBX-031', name: '제주동문시장점', type: LocationType.PARTNER,
+    description: '연락처: 064-755-8881', address: '제주특별자치도 제주시 관덕로64, 명가빌딩 1층',
+    name_en: '제주동문시장점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-032', shortCode: 'MBX-032', name: '제주지점', type: LocationType.PARTNER,
+    description: '연락처: 064-743-8887', address: '제주특별자치도 제주시 원노형4길 1, 에코메르 102호',
+    name_en: '제주지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },
+  {
+    id: 'MBX-033', shortCode: 'MBX-033', name: '광주지점', type: LocationType.PARTNER,
+    description: '연락처: 062-226-7972', address: '광주광역시 서구 내방로 367, 118호(화정동, 메리양혼수백화점)',
+    name_en: '광주지점', businessHours: '09:00 - 21:00',
+    supportsDelivery: true, supportsStorage: true, 
+    isOrigin: true, isDestination: true,
+    isPartner: true, isActive: true, lat: 37.5665, lng: 126.978
+  },

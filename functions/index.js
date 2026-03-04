@@ -90,27 +90,24 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
 
     const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
     const inputName = normalize(name);
-    const inputPassword = password.trim();
+    const inputPassword = String(password || '').trim();
 
     try {
         const db = admin.firestore();
 
-        // [스봉이] 전체를 다 가져오지 않고, 일단 쿼리 시도! 💅
-        const quickSnap = await db.collection('admins').where('name', '==', name.trim()).get();
-        let adminDoc = quickSnap.docs[0];
+        console.log(`[AdminVerify] Attempting login for: ${name} (Normalized: ${inputName})`);
 
-        // 만약 단순 쿼리로 못 찾으면 전체 검색 (정규화된 이름 매칭용)
-        if (!adminDoc) {
-            console.log("Quick lookup failed, performing full scan for normalized match...");
-            const allAdminsSnap = await db.collection('admins').get();
-            adminDoc = allAdminsSnap.docs.find(doc => {
-                const data = doc.data();
-                return normalize(data.name) === inputName && (data.password || '').trim() === inputPassword;
-            });
-        }
+        // [스봉이] 전체 검색을 기본으로 하여 정규화 매칭 보장 💅
+        const allAdminsSnap = await db.collection('admins').get();
+        let adminDoc = allAdminsSnap.docs.find(doc => {
+            const data = doc.data();
+            const dbName = normalize(data.name);
+            const dbPass = String(data.password || '').trim();
+            return dbName === inputName && dbPass === inputPassword;
+        });
 
         // [스봉이] 데이터가 아예 없으면 초기 데이터 심기
-        if (!adminDoc && (await db.collection('admins').limit(1).get()).empty) {
+        if (!adminDoc && allAdminsSnap.empty) {
             console.log("No admins found in cloud. Seeding initial data...");
             const initialAdmins = [
                 { id: 'admin-001', name: '천명', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
@@ -124,12 +121,12 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
 
             // Re-check after seeding
             const reSnap = await db.collection('admins').get();
-            adminDoc = reSnap.docs.find(doc => normalize(doc.data().name) === inputName);
+            adminDoc = reSnap.docs.find(doc => normalize(doc.data().name) === inputName && String(doc.data().password || '').trim() === inputPassword);
         }
 
-        if (!adminDoc || (adminDoc.data().password || '').trim() !== inputPassword) {
-            console.warn(`Login failed for name: ${name}`);
-            throw new HttpsError('unauthenticated', 'Invalid credentials');
+        if (!adminDoc) {
+            console.warn(`Login failed: No matching admin found for "${name}" or incorrect password.`);
+            throw new HttpsError('unauthenticated', '이름 또는 비밀번호가 올바르지 않습니다.');
         }
 
         const adminData = adminDoc.data();

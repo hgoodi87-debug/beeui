@@ -8,6 +8,11 @@
         ],
         "rewrites": [
             {
+                "source": "/api/verify-admin",
+                "function": "verifyAdmin",
+                "region": "us-central1"
+            },
+            {
                 "source": "/api/notify-google-chat",
                 "function": "notifyGoogleChat",
                 "region": "us-central1"

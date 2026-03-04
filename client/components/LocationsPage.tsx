@@ -255,6 +255,8 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     } else {
       result = result.filter(l => l.supportsDelivery);
     }
+    // [스봉이] 활성화된 지점만 보여드려야죠? 🙄💅
+    result = result.filter(l => l.isActive !== false);
     return result;
   }, [locations, searchTerm, currentService]);
 

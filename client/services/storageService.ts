@@ -133,13 +133,27 @@ export const StorageService = {
           }
         });
 
-        // Write the request to trigger the backend Cloud Function
-        setDoc(docRef, {
+        // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 깨끗하게 씻겨서 보내야죠 💅
+        const cleanData = (obj: any): any => {
+          const newObj = { ...obj };
+          Object.keys(newObj).forEach(key => {
+            if (newObj[key] === undefined) delete newObj[key];
+            else if (typeof newObj[key] === 'number' && isNaN(newObj[key])) newObj[key] = 0;
+            else if (newObj[key] !== null && typeof newObj[key] === 'object') newObj[key] = cleanData(newObj[key]);
+          });
+          return newObj;
+        };
+
+        const finalizedBooking = cleanData({
           ...safeBooking,
           status: 'SERVER_VALIDATION_PENDING',
-          price: 0,
+          price: isNaN(Number(safeBooking.price)) ? 0 : Number(safeBooking.price),
+          finalPrice: isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice),
           createdAt: new Date().toISOString()
-        }).catch(err => {
+        });
+
+        // Write the request to trigger the backend Cloud Function
+        setDoc(docRef, finalizedBooking).catch(err => {
           if (!isResolved) {
             isResolved = true;
             unsubscribe();
@@ -406,16 +420,25 @@ export const StorageService = {
         const locRef = doc(db, "locations", loc.id);
         const dataToSave = JSON.parse(JSON.stringify(loc)); // Deep copy & sanitization
 
-        // Remove NaNs or undefineds just in case
-        if (Number.isNaN(dataToSave.lat)) delete dataToSave.lat;
-        if (Number.isNaN(dataToSave.lng)) delete dataToSave.lng;
+        // [스봉이] Firestore가 싫어하는 NaN, undefined 사전에 차단! 🛡️
+        if (dataToSave.lat === undefined || dataToSave.lat === null || isNaN(Number(dataToSave.lat))) {
+          delete dataToSave.lat;
+        } else {
+          dataToSave.lat = Number(dataToSave.lat);
+        }
+
+        if (dataToSave.lng === undefined || dataToSave.lng === null || isNaN(Number(dataToSave.lng))) {
+          delete dataToSave.lng;
+        } else {
+          dataToSave.lng = Number(dataToSave.lng);
+        }
 
         // Use setDoc with merge: true to update existing or create new
         batch.set(locRef, dataToSave, { merge: true });
       });
 
       await batch.commit();
-      console.log("[Storage] Full Sync Completed Successfully.");
+      console.log("[Storage] Full Sync Completed Successfully. ✨");
     } catch (e) {
       console.error("[Storage] Full Sync Failed:", e);
       throw e;
@@ -424,9 +447,19 @@ export const StorageService = {
 
   saveLocation: async (location: LocationOption): Promise<void> => {
     const sanitized = { ...location };
-    // Remove NaNs which Firestore hates
-    if (Number.isNaN(sanitized.lat)) delete sanitized.lat;
-    if (Number.isNaN(sanitized.lng)) delete sanitized.lng;
+    // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 걸러내야죠 💅
+    if (sanitized.lat === undefined || sanitized.lat === null || isNaN(Number(sanitized.lat))) {
+      delete sanitized.lat;
+    } else {
+      sanitized.lat = Number(sanitized.lat);
+    }
+
+    if (sanitized.lng === undefined || sanitized.lng === null || isNaN(Number(sanitized.lng))) {
+      delete sanitized.lng;
+    } else {
+      sanitized.lng = Number(sanitized.lng);
+    }
+
     const safeLocation = JSON.parse(JSON.stringify(sanitized));
 
     try {

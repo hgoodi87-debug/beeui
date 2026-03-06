@@ -59,21 +59,8 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       console.log(`[AdminLogin] Form Submission: "${inputName}" / "${inputPass}"`);
       console.log(`[AdminLogin] Normalized Input: "${normInputName}"`);
 
-      // 💅 Stage 1: Robust Local Credential Check (Resilience Fallback)
-      // We check against IDs or normalized names to avoid encoding drama
-      const localAdmin = INITIAL_ADMINS.find(admin => {
-        const normAdminName = normalize(admin.name);
-        return (normAdminName === normInputName || admin.id === inputName) && admin.password === inputPass;
-      });
-
-      if (localAdmin) {
-        console.log("[AdminLogin] ✅ Local match found. Proceeding...");
-        onLogin(localAdmin.name, localAdmin.jobTitle || 'Admin', undefined);
-        return;
-      }
-
-      // 🛡️ Stage 2: Cloud Verification (for dynamic admins)
-      console.log("[AdminLogin] 🛡️ No local match. Verifying via Cloud...");
+      // 🛡️ Cloud Verification (for dynamic admins & UID mapping)
+      console.log("[AdminLogin] Verifying via Cloud...");
       const user = await ensureAuth();
       if (!user) throw new Error("Anonymous Auth Failed");
 

@@ -10,9 +10,14 @@ const processVoucherEmail = async (bookingId, booking, admin) => {
 
     // Fetch Location Data (via admin SDK passed from index.js)
     const getLocationData = async (id) => {
-        if (!id) return null;
-        const snap = await admin.firestore().collection('locations').doc(id).get();
-        return snap.exists ? snap.data() : null;
+        if (!id || id === 'custom') return null;
+        try {
+            const snap = await admin.firestore().collection('locations').doc(id).get();
+            return snap.exists ? snap.data() : null;
+        } catch (err) {
+            console.error(`⚠️ [Voucher] Failed to fetch location ${id}:`, err);
+            return null;
+        }
     };
 
     const destLoc = await getLocationData(booking.dropoffLocation);

@@ -45,6 +45,7 @@ import ChatTab from './admin/ChatTab';
 import DiscountTab from './admin/DiscountTab';
 import ReportsTab from './admin/ReportsTab';
 import RoadmapTab from './admin/RoadmapTab';
+import LocationMap from './locations/LocationMap';
 
 
 const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
@@ -1144,7 +1145,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
 
 
-  // New Geocoding Function using Tmap API
+  // New Geocoding Function using Naver Maps API 💅
   const findCoordinates = async () => {
     if (!locForm.address) {
       alert('주소를 입력해주세요.');
@@ -1153,31 +1154,62 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setIsGeocoding(true);
     try {
-      // Use Tmap Geocoding API
-      const response = await fetch(`https://apis.openapi.sk.com/tmap/geo/fullAddrGeo?version=1&addressFlag=F00&coordType=WGS84GEO&fullAddr=${encodeURIComponent(locForm.address)}&appKey=cpM4cvO0Q07LXnCDEzdrNaiwgjTVephR9lQpi2uL`);
-      const data = await response.json();
-      const info = data.coordinateInfo;
+      const loadNaverMaps = () => {
+        return new Promise<void>((resolve, reject) => {
+          if (window.naver && window.naver.maps && window.naver.maps.Service) {
+            resolve();
+            return;
+          }
+          console.log("[Admin] Naver Maps Service not found, loading script...");
+          const script = document.createElement('script');
+          script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=f3gsmqhjcn&submodules=geocoder`;
+          script.async = true;
+          script.onload = () => {
+            const check = setInterval(() => {
+              if (window.naver?.maps?.Service) {
+                clearInterval(check);
+                resolve();
+              }
+            }, 100);
+          };
+          script.onerror = () => reject(new Error("Naver Maps Load Failed"));
+          document.head.appendChild(script);
+        });
+      };
 
-      if (info && info.coordinate && info.coordinate.length > 0) {
-        const { newLat, newLon } = info.coordinate[0];
-        if (newLat && newLon) {
-          setLocForm(prev => ({
-            ...prev,
-            lat: parseFloat(newLat),
-            lng: parseFloat(newLon)
-          }));
-          alert(`위치를 찾았습니다!\n위도: ${newLat}\n경도: ${newLon}\n\n이제 '저장하기'를 눌러 지점을 업데이트하세요.`);
-        } else {
-          alert('좌표 정보를 찾을 수 없습니다.');
-        }
-      } else {
-        alert('해당 주소의 정확한 위치를 찾을 수 없습니다. 도로명 주소로 다시 시도해보세요.');
-      }
+      await loadNaverMaps();
+
+      // [스봉이] 네이버님이 오셨으니 0.2초만 더 정숙하게 기다렸다가 조회해볼게요 💅
+      setTimeout(() => {
+        if (!locForm.address) { setIsGeocoding(false); return; }
+        window.naver.maps.Service.geocode({
+          query: locForm.address
+        }, (status: any, response: any) => {
+          setIsGeocoding(false);
+          if (status !== window.naver.maps.Service.Status.OK) {
+            console.error("[Geocoding Error] Status:", status);
+            alert('네이버 지도가 응답하지 않습니다. (Status: ' + status + ')\n주소 오타를 확인하거나 잠시 후 다시 시도해주세요. 🙄');
+            return;
+          }
+
+          const result = response.v2.addresses[0];
+          if (result) {
+            const { x, y } = result; // x: lng, y: lat ✨
+            setLocForm(prev => ({
+              ...prev,
+              lat: parseFloat(y),
+              lng: parseFloat(x)
+            }));
+            alert('좌표가 성공적으로 연동되었습니다! 마크 위치를 확인하세요. ✨');
+          } else {
+            alert('정확한 좌표 결과를 찾지 못했습니다. 주소를 더 상세히 적어보세요.');
+          }
+        });
+      }, 100);
     } catch (e) {
       console.error("Geocoding failed", e);
-      alert('좌표 검색 중 오류가 발생했습니다.');
-    } finally {
       setIsGeocoding(false);
+      alert('네이버 지도 API 로드 중 오류가 발생했습니다.');
     }
   };
 
@@ -2019,22 +2051,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           )}
 
           {activeTab === 'LOCATIONS' && (
-            <LocationsTab
-              locForm={locForm}
-              setLocForm={setLocForm}
-              LOCATION_TYPE_OPTIONS={LOCATION_TYPE_OPTIONS}
-              findCoordinates={findCoordinates}
-              isGeocoding={isGeocoding}
-              handlePickupImageUpload={handlePickupImageUpload}
-              handleLocationImageUpload={handleLocationImageUpload}
-              isSaving={isSaving}
-              addLocation={addLocation}
-              locations={locations}
-              focusLocation={focusLocation}
-              deleteLocation={deleteLocation}
-              lang={lang}
-              t={t}
-            />
+            <div className="flex flex-col xl:flex-row gap-6 h-full min-h-[calc(100vh-180px)]">
+              {/* 왼쪽: 슬림 리스트 & 폼 💅 */}
+              <div className="w-full xl:w-2/5 overflow-y-auto no-scrollbar pb-10">
+                <LocationsTab
+                  locForm={locForm}
+                  setLocForm={setLocForm}
+                  LOCATION_TYPE_OPTIONS={LOCATION_TYPE_OPTIONS}
+                  findCoordinates={findCoordinates}
+                  isGeocoding={isGeocoding}
+                  handlePickupImageUpload={handlePickupImageUpload}
+                  handleLocationImageUpload={handleLocationImageUpload}
+                  isSaving={isSaving}
+                  addLocation={addLocation}
+                  locations={locations}
+                  focusLocation={focusLocation}
+                  deleteLocation={deleteLocation}
+                  lang={lang}
+                  t={t}
+                />
+              </div>
+
+              {/* 오른쪽: 네이버 지도 - 드디어 보금자리 복귀! ✨🗺️ */}
+              <div className="w-full xl:w-3/5 h-[400px] xl:h-auto bg-white rounded-[40px] shadow-2xl border-4 border-white overflow-hidden sticky top-0">
+                <React.Suspense fallback={<div className="w-full h-full flex items-center justify-center bg-gray-50"><i className="fa-solid fa-spinner animate-spin text-3xl text-bee-yellow"></i></div>}>
+                  <LocationMap
+                    t={t}
+                    lang={lang}
+                    branches={locations}
+                    selectedBranch={locForm.id ? locations.find(l => l.id === locForm.id) : null}
+                    onLocationSelect={(loc: LocationOption | null) => { if (loc) focusLocation(loc); }}
+                    currentService="STORAGE"
+                    userLocation={null} // 어드민은 지점 위주로
+                  />
+                </React.Suspense>
+              </div>
+            </div>
           )}
 
 

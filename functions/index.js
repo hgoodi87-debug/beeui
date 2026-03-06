@@ -103,45 +103,56 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
             const data = doc.data();
             const dbName = normalize(data.name);
             const dbPass = String(data.password || '').trim();
-            return dbName === inputName && dbPass === inputPassword;
+            return (dbName === inputName || doc.id === inputName) && dbPass === inputPassword;
         });
 
-        // [스봉이] 데이터가 아예 없으면 초기 데이터 심기
-        if (!adminDoc && allAdminsSnap.empty) {
-            console.log("No admins found in cloud. Seeding initial data...");
+        let adminData = null;
+        let adminId = null;
+
+        if (adminDoc) {
+            adminData = adminDoc.data();
+            adminId = adminDoc.id;
+        } else {
+            console.log(`No adminDoc found for "${name}". Checking hardcoded fallback list...`);
             const initialAdmins = [
                 { id: 'admin-001', name: '천명', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
+                { id: 'admin-8684', name: 'admin', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
                 { id: 'admin-002', name: '매니저', jobTitle: 'General Manager', password: '1234', createdAt: new Date().toISOString() },
                 { id: 'admin-003', name: '스태프', jobTitle: 'Staff', password: '0000', createdAt: new Date().toISOString() },
                 { id: 'admin-004', name: '진호', jobTitle: 'Master', password: '4608', createdAt: new Date().toISOString() }
             ];
-            const batch = db.batch();
-            initialAdmins.forEach(adm => batch.set(db.collection('admins').doc(adm.id), adm));
-            await batch.commit();
+            const fallback = initialAdmins.find(adm => (normalize(adm.name) === inputName || adm.id === inputName) && String(adm.password) === inputPassword);
 
-            // Re-check after seeding
-            const reSnap = await db.collection('admins').get();
-            adminDoc = reSnap.docs.find(doc => normalize(doc.data().name) === inputName && String(doc.data().password || '').trim() === inputPassword);
+            if (fallback) {
+                console.log(`Fallback matched for ${fallback.name}. Seeding immediately...`);
+                await db.collection('admins').doc(fallback.id).set(fallback);
+                adminData = fallback;
+                adminId = fallback.id;
+            }
         }
 
-        if (!adminDoc) {
+        if (!adminData) {
             console.warn(`Login failed: No matching admin found for "${name}" or incorrect password.`);
             throw new HttpsError('unauthenticated', '이름 또는 비밀번호가 올바르지 않습니다.');
         }
 
-        const adminData = adminDoc.data();
         const { password: _, ...safeAdminData } = adminData;
 
-        // UID 매핑은 백그라운드에서 처리하면 더 빠르겠지만, 안정성을 위해 유지 (단, 비동기 처리는 시점 조정 가능)
+        // UID 매핑은 반드시 대기(await)해야 프론트엔드에서 대시보드 진입 시 권한 오류가 발생하지 않습니다. 🛡️
         if (request.auth && request.auth.uid) {
-            db.collection('admins').doc(request.auth.uid).set({
-                ...safeAdminData,
-                uid: request.auth.uid,
-                lastLogin: new Date().toISOString()
-            }, { merge: true }).catch(err => console.error("UID mapping failed:", err));
+            try {
+                await db.collection('admins').doc(request.auth.uid).set({
+                    ...safeAdminData,
+                    uid: request.auth.uid,
+                    lastLogin: new Date().toISOString()
+                }, { merge: true });
+                console.log(`[AdminVerify] UID Mapping success for: ${request.auth.uid}`);
+            } catch (err) {
+                console.error("UID mapping failed:", err);
+            }
         }
 
-        return { ...safeAdminData, id: adminDoc.id };
+        return { ...safeAdminData, id: adminId };
     } catch (e) {
         console.error("verifyAdmin ERROR:", e);
         if (e.code && (typeof e.code === 'string')) throw e;

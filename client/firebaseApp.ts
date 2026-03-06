@@ -31,35 +31,32 @@ console.log("[Firebase] Initializing with Bucket:", firebaseConfig.storageBucket
  * Guarantees that the user is authenticated (anonymously) before proceeding.
  * Returns a promise that resolves once auth is ready.
  */
-export const ensureAuth = (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        if (auth.currentUser) {
-            resolve(auth.currentUser);
-            return;
-        }
+export const ensureAuth = async (): Promise<any> => {
+    if (auth.currentUser) return auth.currentUser;
 
-        const timeout = setTimeout(() => {
-            reject(new Error("Firebase Auth Timeout - Please check internet connection or authorized domains (Referrer)."));
-        }, 8000);
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("인증 시간이 초가되었습니다. 보안 연결(HTTPS)이나 승인된 도메인 설정을 확인해주세요.")), 10000)
+    );
 
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                clearTimeout(timeout);
+    try {
+        console.log("[Firebase] Attempting to ensure auth...");
+        const authPromise = new Promise((resolve, reject) => {
+            const unsubscribe = auth.onAuthStateChanged((user) => {
                 unsubscribe();
-                resolve(user);
-            }
-        }, (error) => {
-            clearTimeout(timeout);
-            reject(error);
+                if (user) resolve(user);
+                else {
+                    signInAnonymously(auth)
+                        .then(cred => resolve(cred.user))
+                        .catch(reject);
+                }
+            }, reject);
         });
 
-        // Fallback: trigger sign in if nothing happens
-        signInAnonymously(auth).catch((error) => {
-            clearTimeout(timeout);
-            console.error("[Firebase] signInAnonymously Error:", error);
-            reject(error);
-        });
-    });
+        return await Promise.race([authPromise, timeoutPromise]);
+    } catch (error) {
+        console.error("[Firebase] ensureAuth Failed:", error);
+        throw error;
+    }
 };
 
 // [스봉이] 부팅 시 즉시 인증 시도하는 대신, 필요한 시점에 ensureAuth를 호출하세요! 🛡️

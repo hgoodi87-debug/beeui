@@ -189,12 +189,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
     );
 
     useEffect(() => {
-        if (user && !user.isAnonymous) {
+        if (user) {
+            // [스봉이] 익명이든 구글 로그인이든 '주인님 ID'는 무조건 챙깁니다! 🛡️
             setBooking(prev => ({
                 ...prev,
-                userName: user.displayName || user.email?.split('@')[0] || 'Member',
-                userEmail: user.email || '',
-                snsId: 'Google Login'
+                userId: user.uid,
+                userName: prev.userName || user.displayName || user.email?.split('@')[0] || 'Member',
+                userEmail: prev.userEmail || user.email || '',
+                snsId: prev.snsId || (user.isAnonymous ? 'Guest' : 'Login User')
             }));
         }
     }, [user]);

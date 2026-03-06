@@ -73,11 +73,16 @@ const calculateBookingStoragePrice = (startDate, endDate, bags, lang = 'ko') => 
         explanation = `${size}x${count} (${parts.join(' + ')})`;
         breakdownParts.push(explanation);
 
-        totalPrice += bagPrice;
+        // [스봉이] NaN 방역 완료! 💅
+        if (!isNaN(bagPrice)) {
+            totalPrice += bagPrice;
+        } else {
+            console.error(`❌ [Pricing] NaN detected for size ${size}. Inputs: ${diffHours}h`);
+        }
     });
 
     return {
-        total: totalPrice,
+        total: isNaN(totalPrice) ? 0 : totalPrice,
         breakdown: breakdownParts.join(', '),
         durationText
     };

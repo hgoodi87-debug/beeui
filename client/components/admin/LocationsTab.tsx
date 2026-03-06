@@ -88,8 +88,96 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                 <div className="bg-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] shadow-sm border border-gray-100 space-y-6 lg:col-span-1 h-fit">
                     <div className="flex flex-col gap-4">
                         <h3 className="text-lg md:text-xl font-black flex items-center gap-3"><span className="w-2 h-8 bg-bee-yellow rounded-full"></span>지점 등록/수정</h3>
-                        <button onClick={async () => { if (confirm("경고: 초기 데이터로 강제 동기화합니다.")) { try { const { StorageService } = await import('../../services/storageService'); await StorageService.syncLocationsWithConstants(); alert("동기화 완료."); window.location.reload(); } catch (e) { alert("오류"); } } }} className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border border-gray-200">
-                            <i className="fa-solid fa-rotate"></i> 초기 데이터 강제 동기화 (Sync DB)
+                        <button onClick={async () => {
+                            // [스봉이] 네이버 맵 API가 없으면 제가 직접 모셔오겠습니다. 💅
+                            const loadNaverScript = () => {
+                                return new Promise<void>((resolve, reject) => {
+                                    if (window.naver && window.naver.maps && window.naver.maps.Service) {
+                                        resolve();
+                                        return;
+                                    }
+                                    const script = document.createElement('script');
+                                    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=f3gsmqhjcn&submodules=geocoder`;
+                                    script.async = true;
+                                    script.onload = () => {
+                                        // 서브모듈 로드 대기
+                                        const check = setInterval(() => {
+                                            if (window.naver?.maps?.Service) {
+                                                clearInterval(check);
+                                                resolve();
+                                            }
+                                        }, 100);
+                                    };
+                                    script.onerror = () => reject(new Error("Naver Maps Load Failed"));
+                                    document.head.appendChild(script);
+                                });
+                            };
+
+                            try {
+                                await loadNaverScript();
+                            } catch (e) {
+                                alert("네이버 지도 API 연결에 실패했어요. 사장님, 네트워크 확인 좀 해보세요! 🙄");
+                                return;
+                            }
+
+                            if (!confirm("DB 초기 데이터 동기화와 네이버 지도 AI 좌표 일괄 업데이트를 포함한 [통합 싱크]를 진행할까요? 💅 (약 1분 소요)")) return;
+
+                            setIsSaving(true);
+                            try {
+                                const { StorageService } = await import('../../services/storageService');
+
+                                console.log("[스봉이] 1단계: DB 기본 데이터 동기화 시작... 💅");
+                                await StorageService.syncLocationsWithConstants();
+
+                                console.log("[스봉이] 2단계: 최신 지점 리스트 확보 완료! ✨");
+                                const latestLocations = await StorageService.getLocations();
+
+                                let success = 0; let fail = 0;
+                                const doGeocode = (address: string, name: string): Promise<{ lat: number, lng: number } | null> => {
+                                    return new Promise((resolve) => {
+                                        if (!address) return resolve(null);
+                                        window.naver.maps.Service.geocode({ query: address }, (status: any, response: any) => {
+                                            if (status !== window.naver.maps.Service.Status.OK) {
+                                                console.error(`[스봉이] ${name} 좌표 찾기 실패 (Status: ${status}) 🙄`);
+                                                return resolve(null);
+                                            }
+                                            const res = response.v2.addresses[0];
+                                            if (res && res.y && res.x) {
+                                                console.log(`[스봉이] ${name} 좌표 연동 성공! 📍`);
+                                                resolve({ lat: parseFloat(res.y), lng: parseFloat(res.x) });
+                                            } else {
+                                                console.warn(`[스봉이] ${name} 결과 없음 🐢`);
+                                                resolve(null);
+                                            }
+                                        });
+                                    });
+                                };
+
+                                console.log(`[스봉이] 총 ${latestLocations.length}개 지점 좌표 전수 조사 들어갑니다. ✨`);
+                                for (const loc of latestLocations) {
+                                    if (!loc.address) continue;
+                                    // [스봉이] 네이버님이 과부하 걸리지 않게 아주 부드럽게 접근할게요 💅
+                                    await new Promise(r => setTimeout(r, 350));
+                                    const coords = await doGeocode(loc.address, loc.name);
+
+                                    if (coords && !isNaN(coords.lat) && !isNaN(coords.lng)) {
+                                        await StorageService.saveLocation({ ...loc, lat: coords.lat, lng: coords.lng });
+                                        success++;
+                                    } else {
+                                        fail++;
+                                    }
+                                }
+
+                                setIsSaving(false);
+                                alert(`스봉이 실장의 '전 직원 협업' 결과 보고 💅\n━━━━━━━━━━━━━━\n📍 성공: ${success}건\n❌ 실패: ${fail}건\n━━━━━━━━━━━━━━\n이제 모든 지점이 제자리를 찾았습니다! 확인해 보세요. ✨`);
+                                window.location.reload();
+                            } catch (e) {
+                                console.error(e);
+                                setIsSaving(false);
+                                alert("통합 싱크 중 사고 발생! 제가 다시 수습할 테니 잠시만 기다리세요. 🚨");
+                            }
+                        }} className="w-full py-4 bg-bee-black hover:bg-gray-800 text-bee-yellow rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 shadow-sm animate-pulse">
+                            <i className="fa-solid fa-wand-magic-sparkles"></i> 통합 DB+좌표 풀 싱크 (Full Sync)
                         </button>
                     </div>
 
@@ -260,50 +348,67 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div className="text-[10px] font-black text-gray-400">{filteredLocations.length}개 표시 중 / 전체 {locations.length}개</div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 auto-rows-min">
+                    <div className="grid grid-cols-1 gap-3 auto-rows-min">
                         {filteredLocations.map(loc => (
-                            <div key={loc.id} onClick={() => focusLocation(loc)} className={`bg-white p-4 md:p-5 rounded-[20px] md:rounded-[24px] border shadow-sm hover:shadow-md transition-all group relative cursor-pointer flex flex-col justify-between ${locForm.id === loc.id ? 'border-bee-yellow ring-2 ring-bee-yellow/20' : 'border-gray-100'}`}>
-                                <div className="flex items-center gap-3 mb-3">
-                                    <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-500'}`}>{loc.type}</span>
-                                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{loc.id}</span>
-                                    <div className="ml-auto flex items-center gap-2">
+                            <div key={loc.id} onClick={() => focusLocation(loc)} className={`bg-white p-3 md:px-6 rounded-[24px] border shadow-sm hover:shadow-md transition-all group relative cursor-pointer flex flex-col sm:flex-row items-center gap-4 ${locForm.id === loc.id ? 'border-bee-yellow ring-2 ring-bee-yellow/20' : 'border-gray-100'}`}>
+
+                                {/* 1. 타입 및 ID 🛡️ */}
+                                <div className="flex items-center gap-2 sm:w-24 shrink-0">
+                                    <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-400'}`}>{loc.type}</span>
+                                    <span className="text-[9px] font-black text-gray-300 uppercase shrink-0">{loc.id}</span>
+                                </div>
+
+                                {/* 2. 지점명 및 주소 📍 */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                                        <h4 className="font-black text-sm text-bee-black truncate leading-none">{getLocName(loc)}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium truncate leading-none mt-0.5 sm:mt-0" title={getLocAddress(loc)}>{getLocAddress(loc)}</p>
+                                    </div>
+                                </div>
+
+                                {/* 3. 서비스 뱃지 (큰 화면에서만 노출) 📦 */}
+                                <div className="hidden xl:flex flex-wrap gap-1 shrink-0">
+                                    {loc.supportsDelivery && <span className="text-[8px] font-bold bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded">배송</span>}
+                                    {loc.supportsStorage && <span className="text-[8px] font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">보관</span>}
+                                    {loc.isOrigin && <span className="text-[8px] font-bold bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">출발</span>}
+                                    {loc.isDestination && <span className="text-[8px] font-bold bg-teal-50 text-teal-600 px-1.5 py-0.5 rounded">도착</span>}
+                                </div>
+
+                                {/* 4. 수수료 및 상태 섹션 💅 */}
+                                <div className="flex items-center gap-4 shrink-0">
+                                    {loc.isPartner && loc.commissionRates && (
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-gray-50/80 rounded-full border border-gray-100/50">
+                                            <div className="flex items-center gap-1"><span className="text-[7px] font-black text-gray-400">보</span><span className="text-[9px] font-black text-bee-black">{loc.commissionRates.storage || 0}%</span></div>
+                                            <div className="w-px h-2 bg-gray-200"></div>
+                                            <div className="flex items-center gap-1"><span className="text-[7px] font-black text-gray-400">배</span><span className="text-[9px] font-black text-bee-black">{loc.commissionRates.delivery || 0}%</span></div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-2">
                                         {loc.type !== LocationType.AIRPORT && (
-                                            <button onClick={(e) => { e.stopPropagation(); window.open(`/branch/${loc.id}`, '_blank'); }} className="text-[8px] font-black bg-bee-black text-bee-yellow px-2 py-0.5 rounded-full hover:scale-110 transition-all flex items-center gap-1 shadow-sm" title="지점 대시보드">
-                                                <i className="fa-solid fa-chart-pie"></i> DASHBOARD
-                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); window.open(`/branch/${loc.id}`, '_blank'); }} className="text-[8px] font-black bg-bee-black text-bee-yellow px-2 py-1 rounded-lg hover:scale-105 transition-all shadow-sm" title="지점 대시보드">WEB</button>
                                         )}
                                         {loc.isActive !== false ? (
-                                            <span className="flex items-center gap-1.5 text-[8px] font-black text-green-500 bg-green-50 px-2 py-0.5 rounded-full ring-1 ring-green-100"><div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> Active</span>
+                                            <span className="flex items-center gap-1 text-[8px] font-black text-green-500 bg-green-50 px-2 py-1 rounded-lg ring-1 ring-green-100"><div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div> Active</span>
                                         ) : (
-                                            <span className="flex items-center gap-1.5 text-[8px] font-black text-red-400 bg-red-50 px-2 py-0.5 rounded-full ring-1 ring-red-100"><div className="w-1.5 h-1.5 bg-red-400 rounded-full"></div> Inactive</span>
+                                            <span className="text-[8px] font-black text-red-300 bg-red-50/50 px-2 py-1 rounded-lg">Inactive</span>
+                                        )}
+                                    </div>
+
+                                    <div className="w-20 text-right">
+                                        {loc.lat && loc.lng ? (
+                                            <span className="text-[8px] font-black text-green-600/60 bg-green-50/30 px-2 py-1 rounded-lg flex items-center justify-center gap-1">
+                                                <i className="fa-solid fa-location-dot"></i> 연동됨
+                                            </span>
+                                        ) : (
+                                            <span className="text-[8px] font-black text-red-400/60 bg-red-50/30 px-2 py-1 rounded-lg flex items-center justify-center gap-1">
+                                                <i className="fa-solid fa-location-xmark"></i> 없음
+                                            </span>
                                         )}
                                     </div>
                                 </div>
-                                <div className="mb-1">
-                                    <h4 className="font-black text-sm md:text-base text-bee-black truncate" title={getLocName(loc)}>{getLocName(loc)}</h4>
-                                    {lang !== 'ko' && <p className="text-[9px] text-gray-300 font-bold truncate">{loc.name}</p>}
-                                </div>
-                                <p className="text-[10px] md:text-xs text-gray-400 font-medium truncate mb-3" title={getLocAddress(loc)}>{getLocAddress(loc)}</p>
-                                {loc.isPartner && loc.commissionRates && (
-                                    <div className="mb-4 bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex items-center gap-3">
-                                        <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest"><i className="fa-solid fa-coins mr-1"></i>Commission</span>
-                                        <div className="flex items-center gap-3 ml-auto">
-                                            <div className="flex items-center gap-1.5 text-[10px] font-black"><span className="text-gray-400">보관</span><span className="text-bee-black bg-white px-1.5 py-0.5 rounded-md border border-gray-100">{loc.commissionRates.storage || 0}%</span></div>
-                                            <div className="flex items-center gap-1.5 text-[10px] font-black"><span className="text-gray-400">배송</span><span className="text-bee-black bg-white px-1.5 py-0.5 rounded-md border border-gray-100">{loc.commissionRates.delivery || 0}%</span></div>
-                                        </div>
-                                    </div>
-                                )}
-                                <div className="flex items-center justify-between">
-                                    <div className="flex flex-wrap gap-2">
-                                        {loc.supportsDelivery && <span className="text-[9px] font-bold bg-yellow-50 text-yellow-700 px-2 py-1 rounded">배송</span>}
-                                        {loc.supportsStorage && <span className="text-[9px] font-bold bg-blue-50 text-blue-700 px-2 py-1 rounded">보관</span>}
-                                        {loc.isOrigin && <span className="text-[9px] font-bold bg-purple-50 text-purple-700 px-2 py-1 rounded">출발</span>}
-                                        {loc.isDestination && <span className="text-[9px] font-bold bg-teal-50 text-teal-700 px-2 py-1 rounded">도착</span>}
-                                        {loc.isPartner && <span className="text-[9px] font-bold bg-bee-yellow text-black px-2 py-1 rounded">PARTNER</span>}
-                                    </div>
-                                    {loc.lat && loc.lng ? <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1"><i className="fa-solid fa-location-dot"></i> 좌표 연동됨</span> : <span className="text-[9px] font-bold text-red-400 bg-red-50 px-2 py-1 rounded">좌표 없음</span>}
-                                </div>
-                                <button onClick={(e) => deleteLocation(e, loc.id)} title="Delete Location" aria-label="Delete Location" className="absolute top-4 right-4 text-gray-200 hover:text-red-500 transition-colors p-2"><i className="fa-solid fa-trash-can"></i></button>
+
+                                <button onClick={(e) => deleteLocation(e, loc.id)} title="Delete Location" aria-label="Delete Location" className="absolute top-1/2 -translate-y-1/2 right-2 text-gray-200 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100"><i className="fa-solid fa-trash-can text-[10px]"></i></button>
                             </div>
                         ))}
                         {filteredLocations.length === 0 && (

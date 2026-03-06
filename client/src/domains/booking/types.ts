@@ -22,6 +22,7 @@ export interface ReservationInfo {
 
 export interface BookingState {
     id?: string;
+    userId?: string; // 🛡️ [스봉이] 주인님 ID 자리를 마련했습니다!
     serviceType: ServiceType;
     pickupLoc?: LocationOption;
     returnLoc?: LocationOption;

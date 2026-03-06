@@ -134,6 +134,7 @@ const App: React.FC = () => {
     console.log("[App] handleBookingSuccess triggered with data:", booking);
     const finalBooking = {
       ...booking,
+      userId: booking.userId || currentUser?.uid, // 🛡️ [스봉이] 여기서도 한 번 더 챙겨야 안심이죠!
       id: booking.id || `${(booking.pickupLocation || 'UNK').substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`,
       status: booking.status || '접수완료',
       createdAt: booking.createdAt || new Date().toISOString()

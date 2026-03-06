@@ -116,7 +116,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
             const content = `
                 <div class="marker-container" style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'}; opacity: ${markerOpacity};">
                     <img src="${markerUrl}" 
-                        style="width: ${isSelected ? '100px' : '80px'}; height: ${isSelected ? '100px' : '80px'}; display: block; filter: ${isSelected ? 'drop-shadow(0 0 10px rgba(255, 203, 5, 0.4))' : 'none'}; transition: all 0.3s ease;"
+                        style="width: ${isSelected ? '100px' : '80px'}; height: ${isSelected ? '100px' : '80px'}; display: block; filter: none; transition: all 0.3s ease;"
                         alt="marker"
                     />
                 </div>
@@ -130,8 +130,8 @@ const LocationMap: React.FC<LocationMapProps> = ({
                 map: mapRef.current,
                 icon: {
                     content: content,
-                    // [스봉이 수정] 빨간 핀 마커의 하단 팁 위치에 맞춰 앵커 조정 💅
-                    anchor: new window.naver.maps.Point(isSelected ? 50 : 30, isSelected ? 92 : 95)
+                    // [스봉이 수정] 마커의 하단 끝부분이 좌표에 정확히 꽂히도록 앵커 수정 ✨
+                    anchor: new window.naver.maps.Point(isSelected ? 50 : 40, isSelected ? 100 : 80)
                 },
                 zIndex: isSelected ? 100 : 10
             });
@@ -269,7 +269,7 @@ const LocationMap: React.FC<LocationMapProps> = ({
         console.log(`[스봉이] Naver Map Lang Syncing... Target: ${naverLang} 💅`);
 
         const scriptId = 'naver-map-sdk'; // index.html과 동일한 ID 사용
-        const url = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=f3gsmqhjcn&submodules=geocoder,gl,mapstyle&language=${naverLang}&mapStyleId=372d23ff-f7ac-40b3-a900-e4c4545a31e1&ver=202602181600`;
+        const url = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=f3gsmqhjcn&submodules=geocoder,gl,mapstyle&language=${naverLang}&mapStyleId=372d23ff-f7ac-40b3-a900-e4c4545a31e1`;
 
         const initOrReload = () => {
             // 이미 SDK가 있고 언어도 맞다면 재로드하지 않음 (단, URL에 언어 파라미터가 포함되어 있어야 함)

@@ -21,6 +21,7 @@ const BookingPage = lazy(() => import('./components/BookingPage'));
 const LocationsPage = lazy(() => import('./components/LocationsPage'));
 const MyPage = lazy(() => import('./components/MyPage'));
 const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
+const QnaPage = lazy(() => import('./components/QnaPage'));
 
 const Footer = lazy(() => import('./components/Footer'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
@@ -184,6 +185,7 @@ const App: React.FC = () => {
       case 'PRIVACY': return navigate('/privacy');
       case 'BOOKING_SUCCESS': return navigate('/booking-success');
       case 'TRACKING': return navigate('/tracking');
+      case 'QNA': return navigate('/qna');
       case 'STAFF_SCAN': return navigate('/staff/scan');
       case 'MYPAGE': return navigate('/mypage');
       case 'BOOKING': return navigate('/booking');
@@ -332,6 +334,7 @@ const App: React.FC = () => {
                   <Route path="/manual" element={<AnimatedRoute><ManualPage onBack={() => navigate('/')} t={t.manual} /></AnimatedRoute>} />
                   <Route path="/terms" element={<AnimatedRoute><TermsPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
                   <Route path="/privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+                  <Route path="/qna" element={<AnimatedRoute><QnaPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
 
                   {/* ADMIN */}
                   <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} />} />

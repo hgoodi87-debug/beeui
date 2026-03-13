@@ -2,7 +2,7 @@
 import { db, storage } from '../firebaseApp';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc, or } from "firebase/firestore";
-import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus } from "../types";
+import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
@@ -198,6 +198,16 @@ export const StorageService = {
       return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
     } catch (e) {
       console.error("Error fetching bookings by date", e);
+      return [];
+    }
+  },
+
+  getArchivedBookings: async (): Promise<BookingState[]> => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "archived_bookings"));
+      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+    } catch (e) {
+      console.error("Error fetching archived bookings", e);
       return [];
     }
   },
@@ -629,6 +639,17 @@ export const StorageService = {
 
   saveTermsPolicy: async (data: TermsPolicyData): Promise<void> => {
     await setDoc(doc(db, "settings", "terms_policy"), data);
+  },
+
+  getQnaPolicy: async (): Promise<QnaData | null> => {
+    try {
+      const snap = await getDoc(doc(db, "settings", "qna_policy"));
+      return snap.exists() ? snap.data() as QnaData : null;
+    } catch { return null; }
+  },
+
+  saveQnaPolicy: async (data: QnaData): Promise<void> => {
+    await setDoc(doc(db, "settings", "qna_policy"), data);
   },
 
   // Migration support (One-way from legacy local to cloud)

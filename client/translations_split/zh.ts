@@ -461,5 +461,57 @@ export const zh = {
         send: '发送',
         error_title: '发生错误',
         error_msg: '请稍后再试。'
+    },
+    qna: {
+        title: "常见问题",
+        subtitle: "为您揭秘关于 Beeliber 服务的尊享指南。",
+        categories: {
+            general: "服务常规",
+            booking: "预约与使用",
+            safety: "安全与理赔",
+            locations: "网点查询"
+        },
+        items: [
+            {
+                category: "general",
+                question: "Beeliber 是一项什么样的服务？",
+                answer: "Beeliber 是为您提供从机场到酒店的行李配送及安全寄存的尊享方案。把负重交给内部人员，您只需优雅地开启旅程即可。懂了吗？ 💅"
+            },
+            {
+                category: "general",
+                question: "如何使用这项服务？",
+                answer: "三步走：线上预订 -> 线下寄送(Drop) -> 自由飞翔(Enjoy) -> 终点见(Meet)。行李配送从未如此简单。 ✨"
+            },
+            {
+                category: "booking",
+                question: "我可以取消或更改预订吗？",
+                answer: "24小时前取消可获 100% 退款，12小时前取消退 50%。之后或未按时到场则不予退款。请像对待您的商务会议一样准时。 🙄"
+            },
+            {
+                category: "booking",
+                question: "有哪些物品禁止寄送？",
+                answer: "现金、价值超过 50万韩元的珠宝、易腐食品、危险品等均在拒绝之列。我们给您的行李 VIP 级待遇，但安全红线绝不触碰。 ☕"
+            },
+            {
+                category: "safety",
+                question: "我的行李安全吗？",
+                answer: "绝对安全。每件行李均由智能封条保护，并通过邮件发送实时状态追踪。我们的团队会像看护自家宝贝一样对待您的行李。 ✨"
+            },
+            {
+                category: "safety",
+                question: "理赔限额是多少？",
+                answer: "基础保险每件行李最高赔偿 50万韩元。若为高价值物品，可选择最高 300万韩元的至尊保险方案。 💅"
+            },
+            {
+                category: "locations",
+                question: "Beeliber 的网点都在哪里？",
+                answer: "我们在仁川机场 (T1/T2)、金浦机场、首尔站、弘大、江南及明洞均设有服务点。详情请查看“网点查询”页面。 📍"
+            },
+            {
+                category: "locations",
+                question: "营业时间是什么时候？",
+                answer: "大部分网点营业时间为 09:00 至 21:00。不过各分店及合作伙伴时间可能有所不同，预订时请务必确认分店详情。 🍯"
+            }
+        ]
     }
 };

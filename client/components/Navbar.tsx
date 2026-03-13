@@ -8,6 +8,7 @@ interface NavbarProps {
   onPartnersClick?: () => void;
   onServicesClick?: () => void;
   onTermsClick?: () => void;
+  onQnaClick?: () => void;
   onLoginClick?: () => void;
   onMyPageClick?: () => void;
   user: any;
@@ -25,7 +26,7 @@ const LANGUAGES = [
   { code: 'ja', name: 'JP', flag: 'jp' },
 ];
 
-const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartnersClick, onServicesClick, onTermsClick, onLoginClick, onMyPageClick, user, currentLang, onLangChange, t }) => {
+const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartnersClick, onServicesClick, onTermsClick, onQnaClick, onLoginClick, onMyPageClick, user, currentLang, onLangChange, t }) => {
   const [scrolled, setScrolled] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
@@ -99,6 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
             <button onClick={onServicesClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.services}</button>
             <button onClick={() => window.location.hash = '#tracking'} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.tracking}</button>
             <button onClick={onPartnersClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.partners}</button>
+            <button onClick={onQnaClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">Q&A</button>
             <div className="w-px h-4 bg-gray-200"></div>
             {user && !user.isAnonymous ? (
               <button

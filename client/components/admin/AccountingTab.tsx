@@ -293,7 +293,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                                     <td className="px-6 py-5 font-bold text-gray-400">{s.count} 건</td>
                                                     <td className="px-6 py-5 text-right">
                                                         <span className="font-black text-bee-black text-sm">₩{s.total.toLocaleString()}</span>
-                                                        <p className="text-[9px] font-bold text-bee-blue mt-0.5">累積 ₩{s.cumulative.toLocaleString()}</p>
+                                                        <p className="text-[9px] font-bold text-bee-blue mt-0.5">누적 ₩{s.cumulative.toLocaleString()}</p>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -448,7 +448,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                         <div className="space-y-1">
                                             {total > 0 && (
                                                 <>
-                                                    <p className={`text-[10px] font-black leading-tight ${isSelected ? 'text-white' : 'text-bee-black'}`}>₩{(total / 1000).toFixed(0)}k</p>
+                                                    <p className={`text-[10px] font-black leading-tight ${isSelected ? 'text-white' : 'text-bee-black'}`}>₩{total.toLocaleString()}</p>
                                                     <div className="w-full h-1 bg-bee-yellow/20 rounded-full overflow-hidden">
                                                         <div 
                                                             className="bg-bee-yellow h-full" 

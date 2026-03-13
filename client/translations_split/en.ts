@@ -672,4 +672,56 @@ export const en = {
         storage_note: "📢 Additional daily charges may apply after 8 PM!",
         header: "Bee AI Booking"
     },
+    qna: {
+        title: "Frequently Asked Questions",
+        subtitle: "The premium guide to everything you need to know about Beeliber.",
+        categories: {
+            general: "General",
+            booking: "Booking & Usage",
+            safety: "Safety & Insurance",
+            locations: "Locations"
+        },
+        items: [
+            {
+                category: "general",
+                question: "What is Beeliber?",
+                answer: "Beeliber is a premium luggage solution that delivers your bags from the airport to your hotel and provides secure storage. Leave the weight to us and enjoy your journey with freedom. 💅"
+            },
+            {
+                category: "general",
+                question: "How do I use the service?",
+                answer: "It's simple: Book online, Drop your bags at a designated point, Enjoy your day hands-free, and Meet your luggage at your destination. Magic, isn't it? ✨"
+            },
+            {
+                category: "booking",
+                question: "Can I change or cancel my booking?",
+                answer: "Yes, you get a 100% refund up to 24 hours before service, and 50% up to 12 hours. No refunds for late cancellations or no-shows. Time is precious, just like our service! 🙄"
+            },
+            {
+                category: "booking",
+                question: "Are there any restricted items?",
+                answer: "We do not accept cash, jewelry valued over 500,000 KRW, perishables, or hazardous materials. We treat your bags like VIPs, but safety always comes first. ☕"
+            },
+            {
+                category: "safety",
+                question: "Is my luggage safe?",
+                answer: "Absolutely. Every bag is protected by a smart security seal, and you can track the real-time status via email. Our team handles your belongings with the utmost care. ✨"
+            },
+            {
+                category: "safety",
+                question: "What about insurance coverage?",
+                answer: "Basic insurance covers up to 500,000 KRW per bag. For high-value items, you can opt for premium coverage up to 3,000,000 KRW. Your peace of mind is our priority. 💅"
+            },
+            {
+                category: "locations",
+                question: "Where are the Beeliber locations?",
+                answer: "You can find us at Incheon Airport (T1/T2), Gimpo Airport, Seoul Station, Hongdae, Gangnam, and Myeongdong. Check our 'Locations' page for detailed directions. 📍"
+            },
+            {
+                category: "locations",
+                question: "What are the operating hours?",
+                answer: "Most branches operate from 09:00 to 21:00. However, hours may vary by location and partner, so please check the specific branch info when booking! 🍯"
+            }
+        ]
+    }
 };

@@ -229,6 +229,49 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Monthly Performance Table - NEW 🎉 */}
+            <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-black flex items-center gap-2">
+                        <i className="fa-solid fa-table-list text-purple-500"></i> 월별 실적 상세 요약
+                    </h3>
+                    <span className="text-[10px] font-black text-gray-300 uppercase">최근 실적 기준</span>
+                </div>
+                <div className="overflow-hidden rounded-[32px] border border-gray-50">
+                    <table className="w-full text-left">
+                        <thead className="bg-bee-black text-[10px] font-black uppercase text-bee-yellow">
+                            <tr>
+                                <th className="px-6 py-5">정산월</th>
+                                <th className="px-6 py-5 text-center">주문 건수</th>
+                                <th className="px-6 py-5 text-right">매출액</th>
+                                <th className="px-6 py-5 text-right">누적 매출</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50 text-xs">
+                            {[...(stats.monthly || [])].reverse().map(s => (
+                                <tr key={s.month} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-5 font-black text-gray-800">{s.month}</td>
+                                    <td className="px-6 py-5 text-center font-bold text-gray-400">{s.success.count.toLocaleString()} 건</td>
+                                    <td className="px-6 py-5 text-right font-black text-bee-black">
+                                        ₩{s.sum.toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-5 text-right">
+                                        <span className="text-[9px] font-bold text-blue-500">누적 ₩{s.cumulative.toLocaleString()}</span>
+                                    </td>
+                                </tr>
+                            ))}
+                            {(!stats.monthly || stats.monthly.length === 0) && (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-20 text-center text-gray-300 font-black italic">
+                                        데이터가 없습니다.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };

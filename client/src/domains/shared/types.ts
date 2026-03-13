@@ -91,7 +91,20 @@ export interface TermsPolicyData {
     content: TermsArticle[];
 }
 
-export type AdminTab = 'OVERVIEW' | 'OPERATIONS' | 'DELIVERY_BOOKINGS' | 'STORAGE_BOOKINGS' | 'LOCATIONS' | 'DISCOUNTS' | 'SYSTEM' | 'HR' | 'PARTNERSHIP_INQUIRIES' | 'NOTICE' | 'HERO' | 'CLOUD' | 'PRIVACY_EDITOR' | 'TERMS_EDITOR' | 'ACCOUNTING' | 'TRASH' | 'DAILY_SETTLEMENT' | 'CHATS' | 'REPORTS' | 'ROADMAP';
+export interface QnaItem {
+    question: string;
+    answer: string;
+    category: string;
+}
+
+export interface QnaData {
+    title: string;
+    subtitle: string;
+    categories: { [key: string]: string };
+    items: QnaItem[];
+}
+
+export type AdminTab = 'OVERVIEW' | 'OPERATIONS' | 'DELIVERY_BOOKINGS' | 'STORAGE_BOOKINGS' | 'LOCATIONS' | 'DISCOUNTS' | 'SYSTEM' | 'HR' | 'PARTNERSHIP_INQUIRIES' | 'NOTICE' | 'HERO' | 'CLOUD' | 'PRIVACY_EDITOR' | 'TERMS_EDITOR' | 'QNA_EDITOR' | 'ACCOUNTING' | 'TRASH' | 'DAILY_SETTLEMENT' | 'CHATS' | 'REPORTS' | 'ROADMAP';
 
 export interface TranslatedLocationData {
     name_en: string;

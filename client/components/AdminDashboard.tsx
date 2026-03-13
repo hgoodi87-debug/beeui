@@ -40,6 +40,7 @@ import SystemTab from './admin/SystemTab';
 import CloudTab from './admin/CloudTab';
 import PrivacyEditorTab from './admin/PrivacyEditorTab';
 import TermsEditorTab from './admin/TermsEditorTab';
+import QnaEditorTab from './admin/QnaEditorTab';
 import BookingDetailModal from './admin/BookingDetailModal';
 import ManualBookingModal from './admin/ManualBookingModal';
 import ChatTab from './admin/ChatTab';
@@ -1775,6 +1776,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 { id: 'HR', label: '인사 및 권한 관리', icon: 'fa-user-tie' },
                 { id: 'PARTNERSHIP_INQUIRIES', label: 'B2B 제휴 제안', icon: 'fa-handshake' },
                 { id: 'NOTICE', label: '시스템 공지 창구', icon: 'fa-bullhorn' },
+                { id: 'QNA_EDITOR', label: 'Q&A 콘텐츠 관리', icon: 'fa-circle-question' },
               ].map(item => (
                 <button
                   key={item.id}
@@ -2129,6 +2131,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
           {activeTab === 'TERMS_EDITOR' && (
             <TermsEditorTab />
+          )}
+
+          {activeTab === 'QNA_EDITOR' && (
+            <QnaEditorTab />
           )}
 
           {activeTab === 'CHATS' && (

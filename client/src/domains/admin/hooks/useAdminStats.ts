@@ -23,7 +23,9 @@ export const useAdminStats = ({
         end.setHours(23, 59, 59, 999);
 
         const targetBookings = bookings.filter((b: BookingState) => {
-            const d = new Date(b.pickupDate || '');
+            const dStr = (b.pickupDate || '').trim();
+            if (!dStr) return false;
+            const d = new Date(dStr);
             return d >= start && d <= end &&
                 !b.isDeleted &&
                 b.status !== BookingStatus.CANCELLED &&

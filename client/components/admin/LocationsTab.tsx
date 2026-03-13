@@ -74,7 +74,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         if (lang === 'en' && loc.name_en) return loc.name_en;
         if (lang === 'ja' && loc.name_ja) return loc.name_ja;
         if ((lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK') && loc.name_zh) return loc.name_zh;
-        return loc.name;
+        return loc.name || loc.id; // [스봉이] 이름이 없으면 ID라도 보여줘야죠! 💅
     };
 
     const getLocAddress = (loc: LocationOption) => {
@@ -383,15 +383,15 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 <div className="shrink-0" onClick={e => e.stopPropagation()}>
                                     <input type="checkbox" checked={selectedIds.includes(loc.id)} onChange={(e) => toggleSelect(e as any, loc.id)} title={`${loc.name} 선택`} className="w-4 h-4 rounded-lg accent-bee-black cursor-pointer" />
                                 </div>
-                                <div className="flex items-center gap-2 sm:w-24 shrink-0">
-                                    <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-400'}`}>{loc.type}</span>
-                                    <span className="text-[9px] font-black text-gray-300 uppercase shrink-0">{loc.id}</span>
-                                </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                                        <h4 className="font-black text-sm text-bee-black truncate leading-none">{getLocName(loc)}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium truncate leading-none mt-0.5 sm:mt-0" title={getLocAddress(loc)}>{getLocAddress(loc)}</p>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                        <h4 className="font-black text-base text-bee-black truncate leading-tight">{getLocName(loc)}</h4>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className={`px-1.5 py-0.5 rounded-lg text-[7px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-400'}`}>{loc.type}</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{loc.id}</span>
+                                        </div>
                                     </div>
+                                    <p className="text-[10px] text-gray-400 font-medium truncate leading-none mt-1" title={getLocAddress(loc)}>{getLocAddress(loc)}</p>
                                 </div>
                                 <div className="hidden xl:flex flex-wrap gap-1 shrink-0">
                                     {loc.supportsDelivery && <span className="text-[8px] font-bold bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded">배송</span>}

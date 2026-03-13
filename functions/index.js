@@ -3,6 +3,7 @@ const { defineSecret } = require("firebase-functions/params");
 const googleChatWebhookSecret = defineSecret("GOOGLE_CHAT_WEBHOOK_URL");
 const smtpPassSecret = defineSecret("SMTP_PASS");
 const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const { calculateBookingStoragePrice } = require('./src/shared/pricing');
 const { processVoucherEmail } = require("./src/domains/notification/voucherService");

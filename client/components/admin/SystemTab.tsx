@@ -29,6 +29,7 @@ const SystemTab: React.FC<SystemTabProps> = ({
                                         type="number"
                                         value={deliveryPrices[size]}
                                         onChange={(e) => updateDeliveryPrice(size, Number(e.target.value))}
+                                        title={`${size} 사이즈 배송 요금`}
                                         className="bg-transparent font-black text-xl w-full outline-none"
                                     />
                                 </div>
@@ -50,6 +51,7 @@ const SystemTab: React.FC<SystemTabProps> = ({
                                                 type="number"
                                                 value={tier.prices[size]}
                                                 onChange={(e) => updateStoragePrice(tier.id, size, Number(e.target.value))}
+                                                title={`${tier.label} - ${size} 사이즈 보관 요금`}
                                                 className="w-full bg-transparent text-center font-bold text-xs md:text-sm outline-none"
                                             />
                                         </div>

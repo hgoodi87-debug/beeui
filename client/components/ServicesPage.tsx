@@ -62,15 +62,14 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-[1.1] text-bee-black mb-6">
-                            Travel light, <br className="md:hidden" />
-                            <span className="text-bee-yellow">live more.</span> <br />
-                            Let Beeliber handle your bags!
+                            {t.main_title_1} <br className="md:hidden" />
+                            <span className="text-bee-yellow">{t.main_title_2}</span>
                         </h1>
                         <p className="text-lg md:text-2xl text-gray-500 font-bold max-w-2xl mx-auto leading-relaxed mb-10 tracking-tight break-keep">
-                            {t.services_page?.subtitle || '무거운 짐은 저희에게 맡기고, 오직 여행의 즐거움에만 집중하세요. Beeliber가 완벽한 자유를 선물합니다.'}
+                            {t.subtitle}
                         </p>
                         <button onClick={onBack} className="px-8 py-4 bg-bee-yellow text-bee-black font-black rounded-full text-lg shadow-xl shadow-bee-yellow/30 hover:-translate-y-1 hover:shadow-2xl hover:shadow-bee-yellow/40 transition-all duration-300">
-                            자유로운 여행 시작하기 🐝
+                            {t.btn_book_now}
                         </button>
                     </motion.div>
 
@@ -86,7 +85,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                 <div className="w-3 h-3 rounded-full bg-red-400"></div>
                                 <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
                                 <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                                <span className="ml-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Email Status Check</span>
+                                <span className="ml-4 text-xs font-bold text-gray-400 uppercase tracking-widest">{t.email_status_check}</span>
                             </div>
                             <div className="p-8">
                                 <TrackingWidget t={t} isModal={true} theme="light" />
@@ -102,7 +101,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                     <motion.div {...fadeInUp} className="text-center mb-16">
                         <span className="text-xs font-black tracking-[0.2em] text-gray-400 uppercase mb-4 block">Difference</span>
                         <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-bee-black">
-                            {t.services_page?.pain_title || "혹시, 이런 불편함을 겪고 계신가요?"}
+                            {t.pain_title}
                         </h2>
                     </motion.div>
 
@@ -110,18 +109,18 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                         {/* Column 1: Pain (Desaturated) */}
                         <motion.div {...fadeInUp} className="bg-white p-8 rounded-[2rem] border border-gray-200 shadow-sm opacity-80 grayscale-[50%] hover:grayscale-0 transition-all duration-500">
                             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-6 text-2xl">📦</div>
-                            <h3 className="text-xl font-black mb-3 tracking-tight">이동의 한계</h3>
+                            <h3 className="text-xl font-black mb-3 tracking-tight">{t.service_1_title}</h3>
                             <p className="text-gray-500 font-medium leading-relaxed break-keep">
-                                {t.services_page?.pain_1 || "공항에서 숙소까지, 무거운 캐리어 때문에 택시를 찾고 계단을 피하느라 지치시나요?"}
+                                {t.pain_1}
                             </p>
                         </motion.div>
 
                         {/* Column 2: Pain (Desaturated) */}
                         <motion.div {...fadeInUp} transition={{ delay: 0.1 }} className="bg-white p-8 rounded-[2rem] border border-gray-200 shadow-sm opacity-80 grayscale-[50%] hover:grayscale-0 transition-all duration-500">
                             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-6 text-2xl">⏰</div>
-                            <h3 className="text-xl font-black mb-3 tracking-tight">시간 낭비</h3>
+                            <h3 className="text-xl font-black mb-3 tracking-tight">{t.service_2_title}</h3>
                             <p className="text-gray-500 font-medium leading-relaxed break-keep">
-                                {t.services_page?.pain_3 || "체크인 전후, 어중간한 시간 동안 짐을 맡길 곳을 찾기 위해 소중한 여행 시간을 버리고 계신가요?"}
+                                {t.pain_3}
                             </p>
                         </motion.div>
 
@@ -131,9 +130,9 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                             <div className="w-12 h-12 bg-bee-black rounded-full flex items-center justify-center mb-6 text-bee-yellow relative z-10">
                                 <Zap className="w-6 h-6" />
                             </div>
-                            <h3 className="text-2xl font-black mb-3 tracking-tight text-bee-black relative z-10">Beeliber의 자유</h3>
+                            <h3 className="text-2xl font-black mb-3 tracking-tight text-bee-black relative z-10">{t.freedom_title}</h3>
                             <p className="text-bee-black/90 font-bold leading-relaxed break-keep relative z-10">
-                                {t.services_page?.pain_solution || "이 모든 불편함에서 해방되세요. Beeliber가 여러분을 무거운 짐으로부터 자유롭게 만들어 드립니다."}
+                                {t.pain_solution}
                             </p>
                         </motion.div>
                     </div>
@@ -144,9 +143,9 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
             <section className="py-24 px-6 bg-white">
                 <div className="max-w-5xl mx-auto">
                     <motion.div {...fadeInUp} className="text-center mb-20">
-                        <span className="text-xs font-black tracking-[0.2em] text-gray-400 uppercase mb-4 block">How it works</span>
+                        <span className="text-xs font-black tracking-[0.2em] text-gray-400 uppercase mb-4 block">{t.how_it_works_badge}</span>
                         <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-bee-black">
-                            오직 3단계, 완벽한 해방
+                            {t.how_title}
                         </h2>
                     </motion.div>
 
@@ -155,9 +154,9 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                         <div className="hidden md:block absolute top-[50%] left-[10%] right-[10%] h-0.5 bg-gray-200 -z-10 -translate-y-[45px]"></div>
 
                         {[
-                            { step: "1", title: t.services_page?.how_steps?.[0] || "예약하기", desc: "온라인으로 간편하게\n수거/전달 장소를 예약합니다.", icon: <Smartphone /> },
-                            { step: "2", title: t.services_page?.how_steps?.[1] || "짐 인계", desc: "고객님의 짐을 Beeliber 예약 장소에 안전하게 인계합니다.", icon: <Box /> },
-                            { step: "3", title: t.services_page?.how_steps?.[2] || "자유로운 여행", desc: "짐 없이 가볍게!\n목적지에서 짐을 찾을 때까지 즐기세요.", icon: <Sparkles /> }
+                            { step: "1", title: t.how_steps?.[0] || (lang === 'ko' ? "예약하기" : "Booking"), desc: t.how_step_descs?.[0], icon: <Smartphone /> },
+                            { step: "2", title: t.how_steps?.[1] || (lang === 'ko' ? "짐 인계" : "Drop-off"), desc: t.how_step_descs?.[1], icon: <Box /> },
+                            { step: "3", title: t.how_steps?.[2] || (lang === 'ko' ? "자유로운 여행" : "Free Travel"), desc: t.how_step_descs?.[2], icon: <Sparkles /> }
                         ].map((item, idx) => (
                             <motion.div
                                 key={idx}
@@ -189,12 +188,12 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10">
                     <div className="md:w-1/2 space-y-8">
                         <motion.div {...fadeInUp}>
-                            <span className="text-bee-yellow text-xs font-black tracking-[0.2em] uppercase mb-4 block">Trust & Safety</span>
+                            <span className="text-bee-yellow text-xs font-black tracking-[0.2em] uppercase mb-4 block">{t.trust_badge}</span>
                             <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-tight mb-6">
-                                보이는 신뢰,<br />체감하는 안심.
+                                {t.trust_title}
                             </h2>
                             <p className="text-gray-400 text-lg font-medium leading-relaxed max-w-md break-keep">
-                                {"명확한 상태 변경 업데이트와 실시간 이메일 알림으로, 내 짐의 이동 과정을 언제든 투명하게 확인할 수 있습니다."}
+                                {t.trust_desc}
                             </p>
                         </motion.div>
 
@@ -204,8 +203,8 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                     <MapPin className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <h4 className="font-black text-xl mb-1">Status & Email Alerts</h4>
-                                    <p className="text-sm text-gray-400">단계별 상태 업데이트 및 실시간 이메일 알림 제공</p>
+                                    <h4 className="font-black text-xl mb-1">{t.status_update} & Email Alerts</h4>
+                                    <p className="text-sm text-gray-400">{landingT?.trust?.tracking?.desc || "Status updates & email alerts"}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-5 bg-white/5 p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
@@ -213,8 +212,8 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                     <ShieldCheck className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <h4 className="font-black text-xl mb-1">Safety Insurance</h4>
-                                    <p className="text-sm text-gray-400">파손 및 분실 완벽 보상 체계 운영</p>
+                                    <h4 className="font-black text-xl mb-1">{t.trust?.insurance?.title || "Safety Insurance"}</h4>
+                                    <p className="text-sm text-gray-400">{t.trust?.insurance?.desc || "Safe compensation insurance System"}</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -238,7 +237,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                                     </div>
-                                    <span className="font-bold text-sm uppercase tracking-wider">Status Update</span>
+                                    <span className="font-bold text-sm uppercase tracking-wider">{t.status_update}</span>
                                 </div>
                                 <span className="text-xs font-mono text-gray-400 bg-black/30 px-3 py-1.5 rounded-full text-[10px] tracking-widest">ID: BLB-2401-8X91</span>
                             </div>
@@ -250,8 +249,8 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between mb-2">
-                                            <span className="font-bold text-white">Current Status</span>
-                                            <span className="text-bee-yellow font-black">Moving</span>
+                                            <span className="font-bold text-white">{t.current_status}</span>
+                                            <span className="text-bee-yellow font-black">{t.moving}</span>
                                         </div>
                                         <div className="w-full h-2.5 bg-black/50 rounded-full overflow-hidden">
                                             <div className="w-[75%] h-full bg-bee-yellow rounded-full relative">
@@ -264,13 +263,13 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                 <div className="bg-black/40 rounded-2xl p-5 text-sm font-medium text-gray-300 space-y-4 border border-white/5">
                                     <div className="flex items-center gap-4">
                                         <CheckCircle2 className="text-green-400 w-5 h-5 shrink-0" />
-                                        <span className="text-gray-200">인천국제공항 T1 수거 완료</span>
+                                        <span className="text-gray-200">{t.pickup_complete}</span>
                                         <span className="ml-auto text-xs text-gray-500 font-mono">09:15 AM</span>
                                     </div>
                                     <div className="w-px h-4 bg-white/10 ml-2.5 my-[-8px]"></div>
                                     <div className="flex items-center gap-4">
                                         <CheckCircle2 className="text-green-400 w-5 h-5 shrink-0" />
-                                        <span className="text-gray-200">배송 허브 이송 및 분류</span>
+                                        <span className="text-gray-200">{t.transferring}</span>
                                         <span className="ml-auto text-xs text-gray-500 font-mono">10:30 AM</span>
                                     </div>
                                     <div className="w-px h-4 bg-white/10 ml-2.5 my-[-8px]"></div>
@@ -278,7 +277,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                         <div className="w-5 h-5 shrink-0 flex items-center justify-center">
                                             <div className="w-4 h-4 rounded-full border-2 border-bee-yellow border-t-transparent animate-spin"></div>
                                         </div>
-                                        <span className="font-bold text-bee-yellow">호텔로 이동 중 (Current)</span>
+                                        <span className="font-bold text-bee-yellow">{t.moving_to_hotel} (Current)</span>
                                         <span className="ml-auto text-xs text-bee-yellow/80 font-mono animate-pulse">LIVE</span>
                                     </div>
                                 </div>
@@ -292,17 +291,17 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
             <section className="py-32 px-6 bg-slate-50">
                 <div className="max-w-6xl mx-auto">
                     <motion.div {...fadeInUp} className="text-center mb-16">
-                        <span className="text-xs font-black tracking-[0.2em] text-gray-400 uppercase mb-4 block">For Everyone</span>
+                        <span className="text-xs font-black tracking-[0.2em] text-gray-400 uppercase mb-4 block">{t.everyone_badge}</span>
                         <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-bee-black">
-                            누구에게 필요할까요?
+                            {t.who_needs_title}
                         </h2>
                     </motion.div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                            { title: "여행 첫날", desc: "체크인 시간은 한참 남았는데 짐은 무겁고...\n공항에서 바로 짐을 보내고\n맛집 투어부터 시작하세요.", emoji: "🛬", bg: "bg-[#FFF8E1]" },
-                            { title: "여행 마지막 날", desc: "비행기는 밤 시간, 체크아웃은 오전...\n짐을 먼저 공항으로 보내고\n가벼운 두 손으로 인생샷을 남기세요.", emoji: "🛫", bg: "bg-[#FFF8E1]" },
-                            { title: "뚜벅이 여행자", desc: "렌터카 없이 뚜벅이로 이동하시나요?\n숙소를 옮길 때마다 짐 버스킹 하지 마시고\n몸만 가볍게 순간이동하세요.", emoji: "🚶‍♂️", bg: "bg-white border border-gray-200 shadow-sm" }
+                            { title: t.persona_1_title, desc: t.persona_1_desc, emoji: "🛬", bg: "bg-[#FFF8E1]" },
+                            { title: t.persona_2_title, desc: t.persona_2_desc, emoji: "🛫", bg: "bg-[#FFF8E1]" },
+                            { title: t.persona_3_title, desc: t.persona_3_desc, emoji: "🚶‍♂️", bg: "bg-white border border-gray-200 shadow-sm" }
                         ].map((persona, idx) => (
                             <motion.div
                                 key={idx}
@@ -328,7 +327,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-1 bg-gradient-to-r from-transparent via-bee-yellow/50 to-transparent"></div>
                 <div className="max-w-xl mx-auto px-6">
                     <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter text-bee-black mb-8 flex items-center justify-center gap-3">
-                        Enjoy your light travel!
+                        {t.footer_msg}
                         <span className="not-italic text-4xl inline-block hover:rotate-12 transition-transform cursor-pointer">🐝</span>
                     </h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">

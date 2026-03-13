@@ -14,9 +14,15 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
+    // Helper: File constraint
+    function isSmallFile() {
+      return request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+
     // 📦 Bookings: Baggage photos and receipts (Auth required)
     match /bookings/{bookingId}/{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isSmallFile();
     }
 
     // 👤 User Private Space: Locked to the UID

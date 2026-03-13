@@ -271,24 +271,48 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}",
 
     // 2. Send Initial Voucher
     try {
+        console.log(`[onBookingCreated] Attempting to send voucher email for ${bookingId}`);
         await processVoucherEmail(bookingId, booking, admin);
+        console.log(`[onBookingCreated] Voucher email process triggered for ${bookingId}`);
     } catch (e) {
-        console.error("Voucher failed:", e);
+        console.error(`❌ [onBookingCreated] Voucher sending failed for ${bookingId}:`, e);
+        // [스봉이] 이메일 실패해도 예약은 진행되어야 하니 리턴하지 않습니다. 💅
     }
 
-    // 3. Google Chat Notification
+    // 3. Google Chat Notification (사장님 커스텀 로직 적용 💅✨)
     try {
         const configSnap = await admin.firestore().collection('settings').doc('cloud_config').get();
         const webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : googleChatWebhookSecret.value();
 
-        const text = `*🚨 신규 예약 알림 (${bookingId})*\n` +
-            `━━━━━━━━━━━━━━━━━━━━\n` +
-            `📦 *서비스*: ${booking.serviceType}\n` +
-            `👤 *고객*: ${booking.userName}\n` +
-            `📍 *출발*: ${booking.pickupLocation}\n` +
-            `🏁 *도착*: ${booking.dropoffLocation || '주소지'}\n` +
-            `💰 *금액*: ₩${(booking.finalPrice || 0).toLocaleString()}\n` +
-            `━━━━━━━━━━━━━━━━━━━━`;
+        const displayedCode = booking.reservationCode || bookingId;
+        const bagDetails = Object.entries(booking.bagSizes || {})
+            .filter(([_, count]) => count > 0)
+            .map(([size, count]) => `${size}(${count}개)`)
+            .join(', ');
+
+        let text = '';
+        if (booking.serviceType === 'DELIVERY') {
+            text = `*🚨 신규 배송 예약 알림*\n` +
+                `━━━━━━━━━━━━━━━━━━━━\n` +
+                `🔖 *예약코드*: ${displayedCode}\n` +
+                `👤 *이름*: ${booking.userName}\n` +
+                `🚚 *서비스*: 배송\n` +
+                `📍 *경로*: ${booking.pickupLocation}(${booking.pickupTime}) - ${booking.dropoffLocation || '주소지'}(${booking.deliveryTime || '당일'})\n` +
+                `📦 *가방*: ${bagDetails}\n` +
+                `💰 *결제금액*: ₩${(booking.finalPrice || 0).toLocaleString()}\n` +
+                `━━━━━━━━━━━━━━━━━━━━`;
+        } else {
+            text = `*🚨 신규 보관 예약 알림*\n` +
+                `━━━━━━━━━━━━━━━━━━━━\n` +
+                `🔖 *예약코드*: ${displayedCode}\n` +
+                `👤 *이름*: ${booking.userName}\n` +
+                `🏦 *서비스*: 보관\n` +
+                `📥 *보관*: ${booking.pickupLocation} (${booking.pickupDate} ${booking.pickupTime})\n` +
+                `📤 *찾는날*: ${booking.dropoffDate} ${booking.deliveryTime || booking.pickupTime}\n` +
+                `📦 *가방*: ${bagDetails}\n` +
+                `💰 *결제금액*: ₩${(booking.finalPrice || 0).toLocaleString()}\n` +
+                `━━━━━━━━━━━━━━━━━━━━`;
+        }
 
         await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
     } catch (e) {

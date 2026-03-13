@@ -105,18 +105,18 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                         {b.serviceType === ServiceType.DELIVERY ? (
                                             <div className="flex items-center gap-2">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase">From</span>
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase">출발</span>
                                                     <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                                 </div>
                                                 <i className="fa-solid fa-arrow-right text-bee-yellow text-[10px]"></i>
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase">To</span>
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase">도착</span>
                                                     <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation || '-'}</span>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-gray-400 uppercase">Branch</span>
+                                                <span className="text-[9px] font-black text-gray-400 uppercase">보관 지점</span>
                                                 <span className="text-[11px] font-bold text-bee-black">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                             </div>
                                         )}
@@ -135,7 +135,9 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                         )}
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className={`text-[10px] font-black uppercase mb-1 ${b.paymentStatus === 'paid' ? 'text-green-500' : 'text-red-400'}`}>{b.paymentStatus}</div>
+                                        <div className={`text-[10px] font-black uppercase mb-1 ${b.paymentStatus === 'paid' ? 'text-green-500' : 'text-red-400'}`}>
+                                            {b.paymentStatus === 'paid' ? '결제 완료' : '미결제/취소'}
+                                        </div>
                                         <div className="text-sm font-black text-bee-yellow tracking-tight">₩{(b.finalPrice || 0).toLocaleString()}</div>
                                     </td>
                                     <td className="px-6 py-5">
@@ -217,23 +219,23 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                 {b.serviceType === ServiceType.DELIVERY ? (
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase block mb-1">From</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase block mb-1">출발</span>
                                             <span className="font-bold text-xs text-bee-black block truncate">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                         </div>
                                         <i className="fa-solid fa-arrow-right text-bee-yellow text-xs"></i>
                                         <div className="flex-1 text-right">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase block mb-1">To</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase block mb-1">도착</span>
                                             <span className="font-bold text-xs text-bee-black block truncate">{locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation || '-'}</span>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase">Branch</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase">보관 지점</span>
                                             <span className="font-bold text-xs text-bee-black">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                         </div>
                                         <div className="flex justify-between items-center border-t border-gray-200 pt-2">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase">Period</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase">기간</span>
                                             <span className="font-bold text-[10px] text-bee-black">{b.pickupDate} ~ {b.dropoffDate || b.pickupDate}</span>
                                         </div>
                                     </div>

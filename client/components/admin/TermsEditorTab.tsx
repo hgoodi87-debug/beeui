@@ -1,25 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TermsPolicyData } from '../../types';
+import { StorageService } from '../../services/storageService';
 
-interface TermsEditorTabProps {
-    termsForm: TermsPolicyData;
-    setTermsForm: (p: TermsPolicyData) => void;
-    saveTerms: () => void;
-    addTermsArticle: () => void;
-    updateTermsArticle: (idx: number, field: string, val: string) => void;
-    removeTermsArticle: (idx: number) => void;
-    isSaving: boolean;
-}
+const TermsEditorTab: React.FC = () => {
+    const [termsForm, setTermsForm] = useState<TermsPolicyData>({
+        title: '서비스 이용약관',
+        last_updated: '',
+        intro: '',
+        content: []
+    });
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-const TermsEditorTab: React.FC<TermsEditorTabProps> = ({
-    termsForm,
-    setTermsForm,
-    saveTerms,
-    addTermsArticle,
-    updateTermsArticle,
-    removeTermsArticle,
-    isSaving
-}) => {
+    useEffect(() => {
+        const fetchTerms = async () => {
+            setIsLoading(true);
+            try {
+                const savedTerms = await StorageService.getTermsPolicy();
+                if (savedTerms) setTermsForm(savedTerms);
+            } catch (err) {
+                console.error('Failed to load Terms Policy:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTerms();
+    }, []);
+
+    const saveTerms = async () => {
+        setIsSaving(true);
+        try {
+            await StorageService.saveTermsPolicy(termsForm);
+            alert('이용약관이 저장되었습니다.');
+        } catch (e) {
+            console.error(e);
+            alert('저장 실패!');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const addTermsArticle = () => {
+        setTermsForm(prev => ({
+            ...prev,
+            content: [...prev.content, { title: '', text: '' }]
+        }));
+    };
+
+    const updateTermsArticle = (idx: number, field: 'title' | 'text', val: string) => {
+        setTermsForm(prev => {
+            const newContent = [...prev.content];
+            newContent[idx] = { ...newContent[idx], [field]: val };
+            return { ...prev, content: newContent };
+        });
+    };
+
+    const removeTermsArticle = (idx: number) => {
+        setTermsForm(prev => ({
+            ...prev,
+            content: prev.content.filter((_, i) => i !== idx)
+        }));
+    };
+
+    if (isLoading) {
+        return <div className="p-8 text-center text-gray-500 font-bold"><i className="fa-solid fa-spinner animate-spin mr-2"></i> 데이터를 불러오는 중...</div>;
+    }
+
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
             <div className="flex justify-between items-center">

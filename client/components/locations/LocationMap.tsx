@@ -20,7 +20,8 @@ declare global {
     }
 }
 
-const LocationMap: React.FC<LocationMapProps> = ({
+// [스봉이] 지도 컴포넌트 안정화 (React.memo 적용) 💅
+const LocationMap: React.FC<LocationMapProps> = React.memo(({
     t, lang, branches, selectedBranch, onLocationSelect, currentService, userLocation, searchAddress, panToUserTrigger
 }) => {
     const mapRef = useRef<any>(null);
@@ -114,9 +115,9 @@ const LocationMap: React.FC<LocationMapProps> = ({
             const markerOpacity = isActive ? 1 : 0.5;
 
             const content = `
-                <div class="marker-container" style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'}; opacity: ${markerOpacity};">
+                <div class="marker-container" style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; opacity: ${markerOpacity};">
                     <img src="${markerUrl}" 
-                        style="width: ${isSelected ? '100px' : '80px'}; height: ${isSelected ? '100px' : '80px'}; display: block; filter: none; transition: all 0.3s ease;"
+                        style="width: ${isSelected ? '60px' : '48px'}; height: ${isSelected ? '100px' : '80px'}; display: block; filter: ${isSelected ? 'drop-shadow(0 10px 15px rgba(0,0,0,0.3))' : 'none'}; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
                         alt="marker"
                     />
                 </div>
@@ -130,8 +131,8 @@ const LocationMap: React.FC<LocationMapProps> = ({
                 map: mapRef.current,
                 icon: {
                     content: content,
-                    // [스봉이 수정] 마커의 하단 끝부분이 좌표에 정확히 꽂히도록 앵커 수정 ✨
-                    anchor: new window.naver.maps.Point(isSelected ? 50 : 40, isSelected ? 100 : 80)
+                    // [스봉이 정밀 수정] SVG ViewBox(60x100)의 핀 끝점(30, 95)에 정확히 앵커를 꽂습니다. 60:100 비율 유지! ✨
+                    anchor: new window.naver.maps.Point(isSelected ? 30 : 24, isSelected ? 95 : 76)
                 },
                 zIndex: isSelected ? 100 : 10
             });
@@ -202,38 +203,38 @@ const LocationMap: React.FC<LocationMapProps> = ({
             return;
         }
 
-        setIsMapReady(false); // [스봉이] 초기화 시작 시 상태 리셋 💅
+        if (mapRef.current) {
+            console.log("[스봉이] Map already exists, skipping init. 💅");
+            return;
+        }
 
-        if (mapRef.current) return; // 중복 방지
+        const initialCenter = userLocation
+            ? new window.naver.maps.LatLng(userLocation.lat, userLocation.lng)
+            : new window.naver.maps.LatLng(37.5665, 126.9780);
 
         const mapOptions = {
-            center: userLocation
-                ? new window.naver.maps.LatLng(userLocation.lat, userLocation.lng)
-                : new window.naver.maps.LatLng(37.5665, 126.9780),
+            center: initialCenter,
             zoom: userLocation ? 14 : 12,
             minZoom: 10,
 
             // [UI 정비] 군더더기 없는 프리미엄 레이아웃 💅
             mapTypeControl: false,
             zoomControl: false,
-            logoControl: true, // 법적 필수 노출
+            logoControl: true,
             logoControlOptions: {
                 position: window.naver.maps.Position.BOTTOM_RIGHT
             },
             scaleControl: false,
             mapDataControl: false,
 
-            // [GL 엔진 & 스타일] 사장님이 강조하신 커스텀 스타일 완벽 이식 🔥
-            // gl: true일 때 customStyleId가 효력을 발휘합니다.
-            /* @ts-ignore */
+            background: '#F8F9FA',
+            // [스봉이 정밀 복구] GL 엔진과 스타일 ID가 찰떡같이 붙도록 둘 다 설정해 드릴게요! 💅
             gl: true,
-            /* @ts-ignore */
-            customStyleId: '372d23ff-f7ac-40b3-a900-e4c4545a31e1',
             mapTypeId: window.naver.maps.MapTypeId.NORMAL,
-
-            // [UX] 부드러운 성능 보강
-            tileTransition: true,
-            tileDuration: 500
+            /* @ts-ignore */
+            customStyleId: "372d23ff-f7ac-40b3-a900-e4c4545a31e1",
+            /* @ts-ignore */
+            mapStyleId: "372d23ff-f7ac-40b3-a900-e4c4545a31e1"
         };
 
         console.log("[스봉이] Naver Map SDK Detected. GL Engine & Custom Style Loading... ✨💅");
@@ -245,14 +246,14 @@ const LocationMap: React.FC<LocationMapProps> = ({
                 onLocationSelect(null);
             });
 
-            // 지도가 준비됐을 때 (idle 이벤트) 마커 등 후속 작업 진행
             window.naver.maps.Event.addListener(mapRef.current, 'idle', () => {
                 setIsMapReady(true);
+                console.log("[스봉이] Map is Idle and Ready. 📍");
             });
         } catch (error) {
-            console.error("[스봉이] 지도 초기화 중 사고 발생! 🚨", error);
+            console.error("[스봉이] 지도 초기화 중 대참사 발생! 🚨", error);
         }
-    }, [userLocation, onLocationSelect]); // userLocation 변경 시 초기 위치 반영을 위해 dependency 유지 (최초 1회만 되도록 로직 보강됨)
+    }, [onLocationSelect]); // userLocation 의존성 제거 (init 시에만 사용) 💅
 
     // [스봉이 수정] Naver 지도 다국어 동적 로더 (정교하게 개선 💅)
     useEffect(() => {
@@ -266,50 +267,59 @@ const LocationMap: React.FC<LocationMapProps> = ({
             'zh-HK': 'zh'
         }[lang] || 'ko';
 
-        console.log(`[스봉이] Naver Map Lang Syncing... Target: ${naverLang} 💅`);
+        const scriptId = 'naver-map-sdk';
+        const clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'zbepfoglvy';
+        const callbackName = 'initNaverMapAfterLoad';
+        const targetStyleId = "372d23ff-f7ac-40b3-a900-e4c4545a31e1";
+        // [스봉이 수정] 공식 가이드라인에 따라 ncpKeyId를 사용하고 스타일 ID 파라미터까지 완벽하게 전송! 💅
+        const url = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}&submodules=geocoder,gl&mapStyleId=${targetStyleId}&language=${naverLang}&callback=${callbackName}`;
 
-        const scriptId = 'naver-map-sdk'; // index.html과 동일한 ID 사용
-        const url = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=f3gsmqhjcn&submodules=geocoder,gl,mapstyle&language=${naverLang}&mapStyleId=372d23ff-f7ac-40b3-a900-e4c4545a31e1`;
+        const loadScript = () => {
+            const existingScript = document.getElementById(scriptId) as HTMLScriptElement;
 
-        const initOrReload = () => {
-            // 이미 SDK가 있고 언어도 맞다면 재로드하지 않음 (단, URL에 언어 파라미터가 포함되어 있어야 함)
-            const script = document.getElementById(scriptId) as HTMLScriptElement;
-            if (window.naver && window.naver.maps && script && script.src.includes(`language=${naverLang}`)) {
-                console.log(`[스봉이] SDK already matches language (${naverLang}), directly init. ✨`);
-                initMap();
-                return;
+            // [스봉이 임무 완수] 이미 똑같은 설정으로 로드된 스크립트가 있는지 꼼꼼하게 체크! 💅
+            if (existingScript) {
+                if (existingScript.src.includes(clientId) &&
+                    existingScript.src.includes(`language=${naverLang}`) &&
+                    (existingScript.src.includes(`mapStyleId=${targetStyleId}`) || existingScript.src.includes(`ncpKeyId=${clientId}`))) {
+                    console.log("[스봉이] Naver Map SDK already loaded with correct params. Skipping reload. ☕");
+                    if (window.naver && window.naver.maps) {
+                        initMap();
+                    }
+                    return;
+                }
+                // 설정이 다르면 과감하게 제거하고 새로 깔아야죠!
+                existingScript.remove();
+                if ((window as any)[callbackName]) delete (window as any)[callbackName];
             }
 
-            // 언어가 다르거나 SDK가 없으면 교체
-            console.log(`[스봉이] Updating Map SDK for language: ${naverLang} 🧹`);
-
-            if (script) script.remove();
-
-            // 주의: window.naver를 완전히 delete하면 다른 곳에서 참조 오류가 날 수 있으므로 
-            // 새로운 스크립트 로드 후 자연스럽게 덮어씌워지게 합니다.
+            // 글로벌 콜백 등록 (네이버 인증 후 실행됨 💅)
+            (window as any)[callbackName] = () => {
+                console.log(`[스봉이] Naver Map SDK (${naverLang}) Authenticated & Loaded! ✨`);
+                initMap();
+            };
 
             const newScript = document.createElement('script');
             newScript.id = scriptId;
             newScript.type = 'text/javascript';
             newScript.src = url;
             newScript.async = true;
-
-            newScript.onload = () => {
-                console.log(`[스봉이] Naver Map SDK (${naverLang}) Freshly Loaded! ✨`);
-                setTimeout(() => initMap(), 100);
-            };
-
             document.head.appendChild(newScript);
         };
 
-        initOrReload();
+        loadScript();
     }, [lang, initMap]);
 
-    // Update Markers when Data Changes (Only if map is ready)
+    // [스봉이] 마커 업데이트 - 지도가 정말로 준비되었을 때만! 💅
     useEffect(() => {
-        if (isMapReady && mapRef.current) {
-            updateMarkers();
+        let timer: any;
+        if (isMapReady && mapRef.current && window.naver && window.naver.maps) {
+            // 미세한 타이밍 이슈 방지를 위해 100ms 지연 💅
+            timer = setTimeout(() => {
+                updateMarkers();
+            }, 100);
         }
+        return () => clearTimeout(timer);
     }, [isMapReady, updateMarkers]);
 
     return (
@@ -326,6 +336,6 @@ const LocationMap: React.FC<LocationMapProps> = ({
 
         </div>
     );
-};
+});
 
 export default LocationMap;

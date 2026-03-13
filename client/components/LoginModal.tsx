@@ -31,7 +31,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
       onClose();
     } catch (err: any) {
       console.error("Google Login Error:", err);
-      setError(t.login_modal?.error_google || 'Failed to log in with Google.');
+      // [스봉이] 구글 로그인도 애매모호하게 에러 치환 💅
+      setError(t.login_modal?.error_general || '로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -47,11 +48,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
       onClose();
     } catch (err: any) {
       console.error("Email Login Error:", err);
-      setError(t.login_modal?.error_email || 'Invalid email or password.');
+      // [비키] 브루트포스 방지용 모호한 에러 메시지 처리 🛡️
+      setError(t.login_modal?.error_email || '이메일 또는 비밀번호가 일치하지 않습니다.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // [렌딩이] 이메일 실시간 유효성 검사 💅✨
+  const isValidEmail = email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
 
   return (
     <AnimatePresence>
@@ -104,15 +109,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                 <button
                   onClick={handleGoogleLogin}
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-4 h-14 px-6 border border-zinc-100 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-4 h-14 md:h-16 px-6 border border-zinc-200 dark:border-zinc-800 rounded-[20px] bg-white dark:bg-zinc-900 group relative overflow-hidden transition-all duration-300 hover:border-transparent hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] active:scale-[0.98] disabled:opacity-50"
+                  style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
                 >
-                  <svg className="w-6 h-6" viewBox="0 0 24 24">
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50 to-white dark:from-zinc-800 dark:to-zinc-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  <svg className="w-5 h-5 md:w-6 md:h-6 relative z-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
                   </svg>
-                  <span className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">{t.login_modal?.google_continue || 'Continue with Google'}</span>
+                  <span className="relative z-10 text-sm md:text-base font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{t.login_modal?.google_continue || 'Continue with Google'}</span>
                 </button>
               </div>
 
@@ -127,46 +134,95 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
               </div>
 
               {/* Email Form */}
-              <form onSubmit={handleEmailLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="email-address" className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">{t.login_modal?.email_label || 'Email Address'}</label>
-                  <input
-                    id="email-address"
-                    type="email"
-                    title="Email Address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full h-14 md:h-16 px-6 bg-gray-50 border-2 border-transparent focus:border-bee-yellow rounded-2xl outline-none text-bee-black font-black transition-all placeholder:text-gray-300"
-                    placeholder="example@bee-liber.com"
-                  />
+              <form onSubmit={handleEmailLogin} className="space-y-5">
+                <div className="space-y-2 relative group">
+                  <label htmlFor="email-address" className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-2 transition-colors group-focus-within:text-bee-yellow">{t.login_modal?.email_label || 'Email Address'}</label>
+                  <div className="relative">
+                    <input
+                      id="email-address"
+                      type="email"
+                      title="Email Address"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError(null);
+                      }}
+                      required
+                      className="w-full h-14 md:h-16 px-6 bg-gray-50 border-2 border-transparent focus:border-bee-yellow rounded-2xl outline-none text-bee-black font-black transition-all placeholder:text-gray-300 pr-12 focus:shadow-[0_0_0_4px_rgba(255,203,5,0.2)]"
+                      placeholder="example@bee-liber.com"
+                    />
+                    <AnimatePresence>
+                      {isValidEmail && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.5 }}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 bg-bee-yellow rounded-full flex items-center justify-center text-bee-black"
+                        >
+                          <span className="material-symbols-outlined text-[16px] font-bold">check</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">{t.login_modal?.password_label || 'Password'}</label>
+                <div className="space-y-2 relative group mt-4">
+                  <label htmlFor="password" className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-2 transition-colors group-focus-within:text-bee-yellow">{t.login_modal?.password_label || 'Password'}</label>
                   <input
                     id="password"
                     type="password"
                     title="Password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
                     required
-                    className="w-full h-14 md:h-16 px-6 bg-gray-50 border-2 border-transparent focus:border-bee-yellow rounded-2xl outline-none text-bee-black font-black transition-all placeholder:text-gray-300"
+                    className="w-full h-14 md:h-16 px-6 bg-gray-50 border-2 border-transparent focus:border-bee-yellow rounded-2xl outline-none text-bee-black font-black transition-all placeholder:text-gray-300 focus:shadow-[0_0_0_4px_rgba(255,203,5,0.2)]"
                     placeholder="••••••••"
                   />
                 </div>
 
                 {error && (
-                  <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-xs font-black text-red-500 mt-1 ml-2">
-                    {error}
-                  </motion.p>
+                  <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 mt-2 ml-2 bg-red-50 p-3 rounded-lg border border-red-100">
+                    <span className="material-symbols-outlined text-[16px] text-red-500">error</span>
+                    <p className="text-xs font-bold text-red-600">
+                      {error}
+                    </p>
+                  </motion.div>
                 )}
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-14 md:h-16 bg-primary hover:bg-bee-yellow text-zinc-900 font-black rounded-2xl transition-all shadow-lg active:scale-[0.98] mt-2 disabled:opacity-50 text-lg uppercase tracking-widest"
+                  className="relative w-full h-14 md:h-16 bg-primary hover:bg-bee-yellow text-zinc-900 font-black rounded-2xl transition-all shadow-[0_4px_14px_0_rgba(255,203,5,0.39)] hover:shadow-[0_6px_20px_rgba(255,203,5,0.23)] hover:-translate-y-0.5 active:scale-[0.98] mt-4 overflow-hidden disabled:opacity-50 disabled:hover:translate-y-0 disabled:active:scale-100"
                 >
-                  {isLoading ? <div className="size-6 border-4 border-black/10 border-t-black rounded-full animate-spin mx-auto" /> : (t.login_modal?.login_btn || '로그인')}
+                  <AnimatePresence mode="wait">
+                    {isLoading ? (
+                      <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 flex items-center justify-center bg-bee-yellow/80 backdrop-blur-sm"
+                      >
+                        <div className="flex gap-1.5">
+                          <motion.div className="w-2 h-2 rounded-full bg-black" animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
+                          <motion.div className="w-2 h-2 rounded-full bg-black" animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} />
+                          <motion.div className="w-2 h-2 rounded-full bg-black" animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} />
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.span
+                        key="text"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-base md:text-lg uppercase tracking-widest relative z-10 block"
+                      >
+                        {t.login_modal?.login_btn || '로그인'}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </button>
               </form>
 

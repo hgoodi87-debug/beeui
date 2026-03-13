@@ -41,7 +41,7 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
                         </div>
                     </div>
 
-                    <h2 className="text-5xl md:text-[8rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-16 break-keep whitespace-pre-line">
+                    <h2 className="text-4xl md:text-6xl lg:text-[6.5rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-16 break-keep whitespace-pre-line px-4">
                         {t.final_cta.headline}
                     </h2>
 

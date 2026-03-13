@@ -253,23 +253,46 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
   };
 
   const priceDetails = useMemo(() => {
-    if (serviceType === ServiceType.DELIVERY) {
+    const isDelivery = serviceType === ServiceType.DELIVERY;
+
+    // [스봉이] 보관(STORAGE)일 때는 배송 할증(공항 등)을 절대 더하지 않습니다! 💅
+    const originSurcharge = isDelivery ? (selectedBranch?.originSurcharge || 0) : 0;
+    const destLoc = isDelivery ? locations.find(l => l.id === booking.dropoffLocation) : null;
+    const destSurcharge = isDelivery ? (destLoc?.destinationSurcharge || 0) : 0;
+
+    if (isDelivery) {
       const activePrices = deliveryPrices;
       const base = (booking.bagSizes.S * (activePrices.S || 0)) +
         (booking.bagSizes.M * (activePrices.M || 0)) +
         (booking.bagSizes.L * (activePrices.L || 0)) +
         (booking.bagSizes.XL * (activePrices.XL || 0));
       const discount = appliedCoupon ? appliedCoupon.amountPerBag * booking.bags : 0;
-      return { total: Math.max(0, base - discount), discount, durationText: '', breakdown: '' };
+
+      const subtotal = Math.max(0, base - discount);
+      return {
+        total: subtotal + originSurcharge + destSurcharge,
+        discount,
+        durationText: '',
+        breakdown: '',
+        originSurcharge,
+        destSurcharge
+      };
     } else {
       const start = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
       const end = new Date(`${booking.dropoffDate}T${booking.deliveryTime}`);
       if (isNaN(start.getTime()) || isNaN(end.getTime())) return { total: 0, discount: 0, durationText: '', breakdown: '' };
       const result = calculateStoragePrice(start, end, booking.bagSizes, lang);
       const discount = appliedCoupon ? appliedCoupon.amountPerBag * booking.bags : 0;
-      return { total: Math.max(0, result.total - discount), discount, durationText: result.durationText, breakdown: result.breakdown };
+      return {
+        total: Math.max(0, result.total - discount),
+        discount,
+        durationText: result.durationText,
+        breakdown: result.breakdown,
+        originSurcharge: 0,
+        destSurcharge: 0
+      };
     }
-  }, [booking, serviceType, deliveryPrices, appliedCoupon, lang]);
+  }, [booking, serviceType, deliveryPrices, appliedCoupon, lang, selectedBranch, locations]);
 
   const handleFinalBook = async () => {
     setIsSubmitting(true);

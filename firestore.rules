@@ -1,3 +1,4 @@
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // 🛡️ Beeliber Zero-Trust Security Policy v2 (Verified by Biki)
@@ -7,9 +8,19 @@ service cloud.firestore {
       return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    // Helper: Valid Booking
+    function isValidBooking() {
+      let data = request.resource.data;
+      return data.userName is string && 
+             data.userEmail is string && 
+             data.serviceType in ['DELIVERY', 'STORAGE'] &&
+             data.finalPrice is number &&
+             data.pickupDate is string;
+    }
+
     // Bookings: Public creation, Restricted read/update
     match /bookings/{bookingId} {
-      allow create: if true;
+      allow create: if isValidBooking(); // 🛡️ Zero-Trust Security Applied
       allow read, update, delete: if isAdmin() || (request.auth != null && (resource == null || resource.data.userId == request.auth.uid));
     }
 
@@ -35,9 +46,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Settings: Admin only
+    // Settings: Public read for general config, Admin Write
     match /settings/{settingId} {
-      allow read, write: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Promo Codes: Admin Only for list/write, Public Get (validation only)
@@ -46,9 +58,19 @@ service cloud.firestore {
       allow list, write: if isAdmin();
     }
 
+    // Helper: Valid Inquiry
+    function isValidInquiry() {
+      let data = request.resource.data;
+      return data.companyName is string &&
+             data.contactName is string &&
+             data.email is string &&
+             data.phone is string &&
+             data.message is string;
+    }
+
     // Inquiries: Protected creation, Admin view
     match /inquiries/{inqId} {
-      allow create: if true;
+      allow create: if isValidInquiry(); // 🛡️ Zero-Trust Security Applied
       allow read, write: if isAdmin();
     }
   }

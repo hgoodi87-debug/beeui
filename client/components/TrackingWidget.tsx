@@ -13,7 +13,7 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
 
   const handleSearch = async () => {
     if (!name.trim() || !email.trim()) {
-      alert(t.booking?.alert_fill_info || "이름과 이메일을 모두 입력해주세요.");
+      alert(t.booking?.alert_fill_info || (t.common?.lang === 'ko' ? "이름과 이메일을 모두 입력해주세요." : "Please enter both name and email."));
       return;
     }
 
@@ -59,11 +59,11 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
           </span>
         </div>
         <h2 className={`${isModal ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl'} font-black ${theme === 'light' ? 'text-bee-black' : 'text-white'} mb-6 tracking-tighter leading-tight break-keep`}>
-          {t.tracking_page?.title || "예약 현황 및 배송 상태 조회"}
+          {t.tracking_page?.title || t.services_page?.tracking_page?.title || "예약 현황 및 배송 상태 조회"}
         </h2>
         <div className="max-w-xl mx-auto">
           <p className={`${theme === 'light' ? 'text-gray-500 bg-gray-50' : 'text-gray-400 bg-black/40'} font-bold text-sm md:text-base leading-relaxed break-keep py-4 px-8 rounded-2xl border ${theme === 'light' ? 'border-gray-100' : 'border-white/10'} shadow-sm`}>
-            {t.tracking_page?.subtitle || "이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요."}
+            {t.tracking_page?.subtitle || t.services_page?.tracking_page?.subtitle || "이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요."}
           </p>
         </div>
       </div>
@@ -111,7 +111,7 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
           ) : (
             <i className="fa-solid fa-magnifying-glass text-xl"></i>
           )}
-          <span>{t.tracking?.btn || "조회하기"}</span>
+          <span>{t.tracking?.search_btn || t.tracking_page?.btn || t.services_page?.tracking_page?.btn || t.tracking?.btn || "조회하기"}</span>
         </button>
       </div>
 

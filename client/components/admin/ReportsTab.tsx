@@ -29,8 +29,8 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
         const monthly: Record<string, any> = {};
         const yearly: Record<string, any> = {};
         const serviceDistribution = {
-            storage: { name: 'Storage', value: 0 },
-            delivery: { name: 'Delivery', value: 0 }
+            storage: { name: '보관 서비스', value: 0 },
+            delivery: { name: '배송 서비스', value: 0 }
         };
 
         // Aggregating all data first for lifetime and cumulative
@@ -111,7 +111,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
             lifetimeCount,
             currentMonthRevenue: currentMonthStats.sum,
             currentMonthCount: currentMonthStats.success.count,
-            monthlyAvgRevenue: monthlyList.length > 0 ? lifetimeRevenue / monthlyList.length : 0
+            monthlyAvgRevenue: monthlyList.length > 0 ? Math.floor(lifetimeRevenue / monthlyList.length) : 0
         };
     }, [bookings]);
 
@@ -123,7 +123,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Strategic Insights & Growth Matrix 💹</p>
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-bee-yellow/10 text-bee-yellow rounded-lg text-[9px] font-black uppercase italic">
-                    <i className="fa-solid fa-sparkles"></i> AI Enhanced Analysis
+                    <i className="fa-solid fa-sparkles"></i> AI 인텔리전스 분석 적용됨
                 </div>
             </div>
 
@@ -131,42 +131,42 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between group hover:border-bee-yellow transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">Lifetime Revenue</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">누적 총 매출</p>
                         <h3 className="text-xl font-black italic text-bee-black">₩{(stats.lifetimeRevenue || 0).toLocaleString()}</h3>
                     </div>
                     <div className="mt-3">
-                        <span className="px-2 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow tracking-tighter">{(stats.lifetimeCount || 0)} Total Sales</span>
+                        <span className="px-2 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow tracking-tighter">총 {(stats.lifetimeCount || 0)}건의 판매 실적</span>
                     </div>
                 </div>
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between group hover:border-blue-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">Current Year ({stats.yearly[stats.yearly.length - 1]?.year || '2024'})</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">올해 총 매출 ({stats.yearly[stats.yearly.length - 1]?.year || '2024'}년)</p>
                         <h3 className="text-xl font-black italic text-blue-500">₩{(stats.yearly[stats.yearly.length - 1]?.sum || 0).toLocaleString()}</h3>
                     </div>
-                    <p className="text-[8px] font-black text-gray-300 mt-2 uppercase tracking-tighter italic text-center">Growing Steady</p>
+                    <p className="text-[8px] font-black text-gray-300 mt-2 uppercase tracking-tighter italic text-center">지속적인 성장세 유지 중</p>
                 </div>
 
                 <div className="bg-bee-black p-5 rounded-[28px] shadow-lg flex flex-col justify-between group/card hover:-translate-y-1 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Monthly Avg</p>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">월평균 매출액</p>
                         <h3 className="text-xl font-black italic text-bee-yellow">₩{(stats.monthlyAvgRevenue || 0).toLocaleString()}</h3>
                     </div>
                     <div className="mt-3 flex items-center gap-2">
                         <div className="w-8 h-1 bg-gray-700 rounded-full overflow-hidden">
                             <div className="bg-bee-yellow h-full w-[85%]"></div>
                         </div>
-                        <span className="text-[8px] font-black text-gray-500 italic">High Perform.</span>
+                        <span className="text-[8px] font-black text-gray-500 italic">우수 실적 지표</span>
                     </div>
                 </div>
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between group hover:border-emerald-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">This Month</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">이번 달 실적</p>
                         <h3 className="text-xl font-black italic text-emerald-500">₩{(stats.currentMonthRevenue || 0).toLocaleString()}</h3>
                     </div>
                     <div className="mt-3 pt-2 border-t border-gray-50">
-                        <p className="text-[8px] font-black text-gray-300 uppercase tracking-tighter">Vol: {(stats.currentMonthCount || 0)} Units</p>
+                        <p className="text-[8px] font-black text-gray-300 uppercase tracking-tighter">처리량: {(stats.currentMonthCount || 0)} 건</p>
                     </div>
                 </div>
             </div>
@@ -175,8 +175,8 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
                 {/* Main Revenue Growth Chart */}
                 <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-black flex items-center gap-2"><i className="fa-solid fa-chart-line text-blue-500"></i> Revenue Growth</h3>
-                        <span className="text-[10px] font-black text-gray-300 uppercase">Last 30 Days</span>
+                        <h3 className="text-lg font-black flex items-center gap-2"><i className="fa-solid fa-chart-line text-blue-500"></i> 매출 성장 곡선</h3>
+                        <span className="text-[10px] font-black text-gray-300 uppercase">최근 30일 기준</span>
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -204,7 +204,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
 
                 {/* Service Type distribution */}
                 <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6 text-center">
-                    <h3 className="text-lg font-black flex items-center gap-2 justify-center"><i className="fa-solid fa-chart-pie text-emerald-500"></i> Service Distribution</h3>
+                    <h3 className="text-lg font-black flex items-center gap-2 justify-center"><i className="fa-solid fa-chart-pie text-emerald-500"></i> 서비스 타입별 비중</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>

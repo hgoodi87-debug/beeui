@@ -26,6 +26,8 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                     src="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b"
                     alt="Cinematic Seoul Background"
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-80 brightness-[0.7] contrast-[1.1] scale-105"
+                    loading="eager"
+                    data-priority="high"
                     onError={(e) => {
                         e.currentTarget.src = "/hero_main.jpg";
                     }}
@@ -72,7 +74,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                                 hidden: { y: "100%", opacity: 0 },
                                 visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
                             }}
-                            className="macro-type text-5xl md:text-[5.5rem] lg:text-[7.5rem] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter"
+                            className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
                         >
                             {t.hero.main_title_1} {t.hero.main_title_bags && t.hero.main_title_bags.trim() !== "" && (
                                 <span className="text-bee-yellow">{t.hero.main_title_bags}</span>
@@ -85,7 +87,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                                 hidden: { y: "100%", opacity: 0 },
                                 visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
                             }}
-                            className="macro-type text-5xl md:text-[5.5rem] lg:text-[7.5rem] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter"
+                            className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
                         >
                             {t.hero.main_title_2} {t.hero.main_title_city && t.hero.main_title_city.trim() !== "" && (
                                 <span>{t.hero.main_title_city}</span>

@@ -3,7 +3,7 @@ const fs = require('fs');
 const originalContent = fs.readFileSync('client/App.tsx', 'utf8');
 
 // The new App.tsx content is almost mostly static logic based on React Router.
-const newAppTsx = \`
+const newAppTsx = `
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
@@ -442,7 +442,9 @@ const App: React.FC = () => {
       )}
       {isUserView && (
         <Suspense fallback={null}>
-          <ChatBot t={t.chatbot} lang={lang} />
+          <Suspense fallback={null}>
+              <ChatBot t={t.chatbot} lang={lang} />
+          </Suspense>
         </Suspense>
       )}
       <Suspense fallback={null}>
@@ -473,7 +475,7 @@ const App: React.FC = () => {
 
 export default App;
 // Final push verification commit - Beeliber Smart Multi-language v1.1
-\`
+`;
 
 fs.writeFileSync('client/App.tsx', newAppTsx);
 console.log('App.tsx fully refactored with code splitting and proper React Router implementation!');

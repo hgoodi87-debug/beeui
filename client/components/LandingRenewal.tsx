@@ -113,6 +113,19 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                             </div>
                         </div>
 
+                        <div className="hidden md:flex items-center gap-6 mr-2">
+                            {user && !user.isAnonymous ? (
+                                <button onClick={onMyPageClick} className="text-[11px] font-black text-white/80 hover:text-bee-yellow uppercase tracking-[0.2em] transition-colors flex items-center gap-2">
+                                    <Users className="w-3.5 h-3.5" />
+                                    {user.displayName || t.nav.mypage}
+                                </button>
+                            ) : (
+                                <button onClick={onLoginClick} className="text-[11px] font-black text-white/80 hover:text-bee-yellow uppercase tracking-[0.2em] transition-colors">
+                                    {t.nav.login}
+                                </button>
+                            )}
+                        </div>
+
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="w-10 h-10 rounded-xl bg-bee-yellow text-bee-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl"
@@ -133,16 +146,29 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                         className="fixed inset-0 z-[99] bg-bee-black/95 backdrop-blur-2xl flex items-center justify-center p-12"
                     >
                         <div className="flex flex-col gap-8 text-center">
-                            {['SERVICES', 'LOCATIONS', 'PARTNERSHIP'].map((item, i) => (
+                            {[
+                                { id: 'SERVICES', label: t.nav.services },
+                                { id: 'LOCATIONS', label: t.nav.locations },
+                                { id: 'PARTNERSHIP', label: t.nav.partners },
+                                { id: 'MYPAGE', label: user && !user.isAnonymous ? t.nav.mypage : t.nav.login }
+                            ].map((item, i) => (
                                 <motion.button
-                                    key={item}
+                                    key={item.id}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.1 }}
-                                    onClick={() => { onNavigate(item); setIsMenuOpen(false); }}
-                                    className="text-5xl md:text-8xl font-display font-black text-white hover:text-bee-yellow transition-colors tracking-tighter"
+                                    onClick={() => {
+                                        if (item.id === 'MYPAGE') {
+                                            if (user && !user.isAnonymous) onMyPageClick();
+                                            else onLoginClick();
+                                        } else {
+                                            onNavigate(item.id);
+                                        }
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="text-2xl md:text-5xl font-display font-black text-white hover:text-bee-yellow transition-colors tracking-tighter uppercase"
                                 >
-                                    {item}
+                                    {item.label}
                                 </motion.button>
                             ))}
                         </div>
@@ -187,10 +213,10 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                 <div className="flex justify-between items-center mb-12">
                                     <div className="space-y-4">
                                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-bee-yellow text-bee-black rounded-full shadow-lg shadow-bee-yellow/20">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Tracking Status 💅</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.hero.status_suffix || 'Tracking status'} 💅</span>
                                         </div>
                                         <h3 className="text-4xl md:text-5xl font-display font-black text-bee-black tracking-tighter leading-tight">
-                                            Real-time GPS <br /> Monitoring
+                                            {t.hero.live_label || 'Real-time GPS Monitoring'}
                                         </h3>
                                     </div>
                                     <button

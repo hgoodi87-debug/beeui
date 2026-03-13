@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { app, db, storage } from '../firebaseApp';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
@@ -45,7 +46,9 @@ import ChatTab from './admin/ChatTab';
 import DiscountTab from './admin/DiscountTab';
 import ReportsTab from './admin/ReportsTab';
 import RoadmapTab from './admin/RoadmapTab';
+import OperationsConsole from './admin/OperationsConsole';
 import LocationMap from './locations/LocationMap';
+import { useAdminStats } from '../src/domains/admin/hooks/useAdminStats';
 
 
 const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
@@ -141,6 +144,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // [스봉이] 모바일 메뉴용 상태 추가요! 💅
 
   // QR Scan Handling
   const [scannedBooking, setScannedBooking] = useState<BookingState | null>(null);
@@ -334,235 +338,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     description: ''
   });
 
-  const revenueStats = useMemo(() => {
-    const start = new Date(revenueStartDate);
-    const end = new Date(revenueEndDate);
-    end.setHours(23, 59, 59, 999);
-
-    const targetBookings = bookings.filter((b: BookingState) => {
-      const d = new Date(b.pickupDate || '');
-      return d >= start && d <= end &&
-        !b.isDeleted &&
-        b.status !== BookingStatus.CANCELLED &&
-        b.status !== BookingStatus.REFUNDED;
-    });
-
-    const targetExps = expenditures.filter((e: Expenditure) => {
-      const d = new Date(e.date);
-      return d >= start && d <= end;
-    });
-
-    // MTD (Month to Date) calculations
-    const firstDayOfMonth = new Date(end.getFullYear(), end.getMonth(), 1);
-    const mtdBookings = bookings.filter(b => {
-      const d = new Date(b.pickupDate || '');
-      return d >= firstDayOfMonth && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
-    });
-    const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-
-    // Lifetime calculations
-    const lifetimeBookings = bookings.filter(b => !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED);
-    const lifetimeRevenue = lifetimeBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-
-    const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
-
-    const cash = targetBookings.filter((b: BookingState) => b.paymentMethod === 'cash').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const card = targetBookings.filter((b: BookingState) => b.paymentMethod === 'card').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const apple = targetBookings.filter((b: BookingState) => b.paymentMethod === 'apple').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const samsung = targetBookings.filter((b: BookingState) => b.paymentMethod === 'samsung').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const wechat = targetBookings.filter((b: BookingState) => b.paymentMethod === 'wechat').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const alipay = targetBookings.filter((b: BookingState) => b.paymentMethod === 'alipay').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const naver = targetBookings.filter((b: BookingState) => b.paymentMethod === 'naver').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const kakao = targetBookings.filter((b: BookingState) => b.paymentMethod === 'kakao').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const paypal = targetBookings.filter((b: BookingState) => b.paymentMethod === 'paypal').reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-
-    return {
-      total: totalRevenue,
-      cash,
-      card,
-      apple,
-      samsung,
-      wechat,
-      alipay,
-      naver,
-      kakao,
-      paypal,
-      count: targetBookings.length,
-      expenditure: totalExp,
-      netTotal: totalRevenue - totalExp,
-      vat: Math.round(totalRevenue / 11),
-      mtdRevenue,
-      lifetimeRevenue,
-      lifetimeCount: lifetimeBookings.length
-    };
-  }, [bookings, expenditures, revenueStartDate, revenueEndDate]);
-
-  const accountingDailyStats = useMemo(() => {
-    const statsMap: Record<string, { date: string, count: number, total: number, cumulative: number }> = {};
-    const start = new Date(revenueStartDate);
-    const end = new Date(revenueEndDate);
-    end.setHours(23, 59, 59, 999);
-
-    const targetBookings = bookings.filter(b => {
-      const d = new Date(b.pickupDate || '');
-      return d >= start && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
-    });
-
-    targetBookings.forEach(b => {
-      const dateKey = b.pickupDate || 'Unknown';
-      if (!statsMap[dateKey]) {
-        statsMap[dateKey] = { date: dateKey, count: 0, total: 0, cumulative: 0 };
-      }
-      statsMap[dateKey].count++;
-      statsMap[dateKey].total += (b.finalPrice || 0);
-    });
-
-    const sortedStats = Object.values(statsMap).sort((a, b) => a.date.localeCompare(b.date));
-    let acc = 0;
-    sortedStats.forEach(s => {
-      acc += s.total;
-      s.cumulative = acc;
-    });
-
-    return sortedStats.reverse(); // Latest first
-  }, [bookings, revenueStartDate, revenueEndDate]);
-
-  const accountingMonthlyStats = useMemo(() => {
-    const statsMap: Record<string, { month: string, count: number, total: number, cumulative: number }> = {};
-    const start = new Date(revenueStartDate);
-    const end = new Date(revenueEndDate);
-    end.setHours(23, 59, 59, 999);
-
-    const targetBookings = bookings.filter(b => {
-      const d = new Date(b.pickupDate || '');
-      return d >= start && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
-    });
-
-    targetBookings.forEach(b => {
-      const dateKey = b.pickupDate || 'Unknown';
-      if (dateKey === 'Unknown') return;
-      const monthKey = dateKey.slice(0, 7); // YYYY-MM
-      if (!statsMap[monthKey]) {
-        statsMap[monthKey] = { month: monthKey, count: 0, total: 0, cumulative: 0 };
-      }
-      statsMap[monthKey].count++;
-      statsMap[monthKey].total += (b.finalPrice || 0);
-    });
-
-    const sortedStats = Object.values(statsMap).sort((a, b) => a.month.localeCompare(b.month));
-    let acc = 0;
-    sortedStats.forEach(s => {
-      acc += s.total;
-      s.cumulative = acc;
-    });
-
-    return sortedStats.reverse(); // Latest first
-  }, [bookings, revenueStartDate, revenueEndDate]);
-
-  const dailySettlementStats = useMemo(() => {
-    const start = new Date(revenueStartDate);
-    const end = new Date(revenueEndDate);
-    end.setHours(23, 59, 59, 999);
-
-    const targetBookings = bookings.filter((b: BookingState) => {
-      const d = new Date(b.pickupDate || '');
-      return d >= start && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
-    });
-
-    const targetExps = expenditures.filter((e: Expenditure) => {
-      const d = new Date(e.date);
-      return d >= start && d <= end;
-    });
-
-    // MTD (Month to Date) for Daily Settlement
-    const firstDayOfMonth = new Date(end.getFullYear(), end.getMonth(), 1);
-    const mtdBookings = bookings.filter(b => {
-      const d = new Date(b.pickupDate || '');
-      return d >= firstDayOfMonth && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
-    });
-    const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
-
-    const deliveryBookings = targetBookings.filter(b => b.serviceType === ServiceType.DELIVERY);
-    const storageBookings = targetBookings.filter(b => b.serviceType === ServiceType.STORAGE);
-
-    const cancelledBookings = bookings.filter(b => {
-      const d = new Date(b.pickupDate || '');
-      return d >= start && d <= end && !b.isDeleted && b.status === BookingStatus.CANCELLED;
-    });
-    const refundedBookings = bookings.filter(b => {
-      const d = new Date(b.pickupDate || '');
-      return d >= start && d <= end && !b.isDeleted && b.status === BookingStatus.REFUNDED;
-    });
-
-    const bagSizes = { S: 0, M: 0, L: 0, XL: 0 };
-    targetBookings.forEach(b => {
-      if (b.bagSizes) {
-        bagSizes.S += (b.bagSizes.S || 0);
-        bagSizes.M += (b.bagSizes.M || 0);
-        bagSizes.L += (b.bagSizes.L || 0);
-        bagSizes.XL += (b.bagSizes.XL || 0);
-      }
-    });
-
-    const revenueByMethod = {
-      card: 0,
-      cash: 0,
-      apple: 0,
-      samsung: 0,
-      wechat: 0,
-      alipay: 0,
-      naver: 0,
-      kakao: 0,
-      paypal: 0
-    };
-    targetBookings.forEach(b => {
-      const method = b.paymentMethod || 'cash';
-      if (method in revenueByMethod) {
-        revenueByMethod[method as keyof typeof revenueByMethod] += (b.finalPrice || 0);
-      }
-    });
-
-    const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
-    const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
-
-    const expByCategory: Record<string, number> = {};
-    targetExps.forEach((e: Expenditure) => {
-      const cat = e.category || '기타';
-      expByCategory[cat] = (expByCategory[cat] || 0) + (e.amount || 0);
-    });
-
-    const discountCodeCounts: Record<string, number> = {};
-    targetBookings.filter(b => b.discountCode).forEach(b => {
-      if (b.discountCode) {
-        discountCodeCounts[b.discountCode] = (discountCodeCounts[b.discountCode] || 0) + 1;
-      }
-    });
-
-    // Opening Cash (from previous day's closing)
-    const prevDate = new Date(end);
-    prevDate.setDate(prevDate.getDate() - 1);
-    const prevDateStr = prevDate.toISOString().split('T')[0];
-    const prevClosing = (closings || []).find((c: CashClosing) => c.date === prevDateStr);
-    const openingCash = prevClosing ? prevClosing.actualCashOnHand : 0;
-
-    return {
-      totalRevenue,
-      totalExp,
-      netProfit: totalRevenue - totalExp,
-      vat: Math.round(totalRevenue / 11),
-      deliveryCount: deliveryBookings.length,
-      storageCount: storageBookings.length,
-      cancelledCount: cancelledBookings.length,
-      refundedCount: refundedBookings.length,
-      bagSizes,
-      revenueByMethod,
-      expByCategory,
-      discountCodeCounts,
-      mtdRevenue,
-      openingCash, // Added opening cash for better flow tracking
-    };
-  }, [bookings, expenditures, revenueStartDate, revenueEndDate, closings]);
+  const { revenueStats, dailySettlementStats, accountingDailyStats, accountingMonthlyStats } = useAdminStats({
+    bookings,
+    expenditures,
+    revenueStartDate,
+    revenueEndDate,
+    closings
+  });
 
   const filteredExpenditures = useMemo(() => {
     const start = new Date(revenueStartDate);
@@ -709,21 +491,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     document.body.removeChild(link);
   };
 
-  // Privacy Policy Form
-  const [privacyForm, setPrivacyForm] = useState<PrivacyPolicyData>({
-    title: '개인정보처리방침',
-    last_updated: '',
-    intro: '',
-    content: []
-  });
-
-  // Terms of Service Form
-  const [termsForm, setTermsForm] = useState<TermsPolicyData>({
-    title: '서비스 이용약관',
-    last_updated: '',
-    intro: '',
-    content: []
-  });
+  // Privacy and Terms states have been extracted to their respective components 💅✨
 
   // Function to refresh static data manually
   const refreshData = async () => {
@@ -757,11 +525,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const savedNotice = safeJsonParse('beeliber_notice', null);
       if (savedNotice) setNotice(savedNotice);
 
-      const savedPrivacy = await StorageService.getPrivacyPolicy();
-      if (savedPrivacy) setPrivacyForm(savedPrivacy);
-
-      const savedTerms = await StorageService.getTermsPolicy();
-      if (savedTerms) setTermsForm(savedTerms);
+      // Storage policies fetching has been offloaded to their respective components 💅✨
 
       const savedCloud = StorageService.getCloudConfig();
       if (savedCloud) setCloudConfig(savedCloud);
@@ -938,6 +702,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       return;
     }
 
+    // [스봉이] 기본 좌표(서울시청)인 상태로 저장을 시도하면 사장님께 따끔하게 한마디 할게요 💅
+    const isDefaultCoords = locForm.lat === 37.5665 && locForm.lng === 126.9780;
+    if (isDefaultCoords && locForm.address) {
+      if (!confirm('현재 좌표가 기본값(서울시청)으로 설정되어 있습니다.\n주소에 맞는 정확한 좌표로 연동하시겠습니까?\n\n(취소를 누르면 현재 좌표로 저장됩니다.)')) {
+        // Continue saving with default coords if they really want to (e.g. branch is actually at City Hall)
+      } else {
+        await findCoordinates();
+        // findCoordinates will update locForm, but we need the latest values for newLoc
+        // We'll return early and let the user click save again after verification
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       // 2. Prepare cleaned data
@@ -1078,70 +855,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     e.target.value = '';
   };
 
-  const savePrivacy = async () => {
-    try {
-      await StorageService.savePrivacyPolicy(privacyForm);
-      alert('개인정보 처리방침이 저장되었습니다.');
-    } catch (e) {
-      console.error(e);
-      alert('저장 실패!');
-    }
-  };
-
-  const addPrivacyArticle = () => {
-    setPrivacyForm(prev => ({
-      ...prev,
-      content: [...prev.content, { title: '', text: '' }]
-    }));
-  };
-
-  const updatePrivacyArticle = (idx: number, field: 'title' | 'text', val: string) => {
-    setPrivacyForm(prev => {
-      const newContent = [...prev.content];
-      newContent[idx] = { ...newContent[idx], [field]: val };
-      return { ...prev, content: newContent };
-    });
-  };
-
-  const removePrivacyArticle = (idx: number) => {
-    setPrivacyForm(prev => ({
-      ...prev,
-      content: prev.content.filter((_, i) => i !== idx)
-    }));
-  };
-
-  // Terms Helpers
-  const saveTerms = async () => {
-    try {
-      await StorageService.saveTermsPolicy(termsForm);
-      alert('이용약관이 저장되었습니다.');
-    } catch (e) {
-      console.error(e);
-      alert('저장 실패!');
-    }
-  };
-
-  const addTermsArticle = () => {
-    setTermsForm(prev => ({
-      ...prev,
-      content: [...prev.content, { title: '', text: '' }]
-    }));
-  };
-
-  const updateTermsArticle = (idx: number, field: 'title' | 'text', val: string) => {
-    setTermsForm(prev => {
-      const newContent = [...prev.content];
-      newContent[idx] = { ...newContent[idx], [field]: val };
-      return { ...prev, content: newContent };
-    });
-  };
-
-  const removeTermsArticle = (idx: number) => {
-    setTermsForm(prev => ({
-      ...prev,
-      content: prev.content.filter((_, i) => i !== idx)
-    }));
-  };
+  // Editors save their data independently now. 💅✨
 
 
 
@@ -1161,8 +875,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             return;
           }
           console.log("[Admin] Naver Maps Service not found, loading script...");
+          const clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'zbepfoglvy';
           const script = document.createElement('script');
-          script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=f3gsmqhjcn&submodules=geocoder`;
+          script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}&submodules=geocoder`;
           script.async = true;
           script.onload = () => {
             const check = setInterval(() => {
@@ -1178,38 +893,167 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       };
 
       await loadNaverMaps();
-
-      // [스봉이] 네이버님이 오셨으니 0.2초만 더 정숙하게 기다렸다가 조회해볼게요 💅
-      setTimeout(() => {
-        if (!locForm.address) { setIsGeocoding(false); return; }
-        window.naver.maps.Service.geocode({
-          query: locForm.address
-        }, (status: any, response: any) => {
-          setIsGeocoding(false);
-          if (status !== window.naver.maps.Service.Status.OK) {
-            console.error("[Geocoding Error] Status:", status);
-            alert('네이버 지도가 응답하지 않습니다. (Status: ' + status + ')\n주소 오타를 확인하거나 잠시 후 다시 시도해주세요. 🙄');
-            return;
-          }
-
-          const result = response.v2.addresses[0];
-          if (result) {
-            const { x, y } = result; // x: lng, y: lat ✨
-            setLocForm(prev => ({
-              ...prev,
-              lat: parseFloat(y),
-              lng: parseFloat(x)
-            }));
-            alert('좌표가 성공적으로 연동되었습니다! 마크 위치를 확인하세요. ✨');
+      const result = await new Promise<any>((resolve, reject) => {
+        // [스봉이] 1차 시도: 주소만으로 정밀 검색 💅
+        window.naver.maps.Service.geocode({ query: locForm.address }, (status: any, response: any) => {
+          if (status === window.naver.maps.Service.Status.OK && response.v2.addresses[0]) {
+            resolve(response.v2.addresses[0]);
           } else {
-            alert('정확한 좌표 결과를 찾지 못했습니다. 주소를 더 상세히 적어보세요.');
+            // [스봉이] 2차 시도: 지점명 + 주소로 더 구체적으로 시도해볼까요? 🙄
+            window.naver.maps.Service.geocode({ query: `${locForm.name} ${locForm.address}` }, (s2: any, r2: any) => {
+              if (s2 === window.naver.maps.Service.Status.OK && r2.v2.addresses[0]) {
+                resolve(r2.v2.addresses[0]);
+              } else {
+                reject(new Error("No Result"));
+              }
+            });
           }
         });
-      }, 100);
+      });
+
+      const { x, y } = result;
+      const latNum = parseFloat(y);
+      const lngNum = parseFloat(x);
+
+      // [스봉이] 바다 위(한국 밖)로 나가는 대참사 방지 💅
+      if (latNum < 33 || latNum > 39 || lngNum < 124 || lngNum > 132) {
+        throw new Error("Out of Bounds (Korea)");
+      }
+
+      setLocForm(prev => ({
+        ...prev,
+        lat: latNum,
+        lng: lngNum
+      }));
+      alert(`좌표를 찾았습니다! ✨\n(${result.roadAddress || result.jibunAddress})`);
     } catch (e) {
-      console.error("Geocoding failed", e);
+      console.error(e);
+      alert('좌표를 찾는 데 실패했습니다. 주소를 더 정확하게 입력하시거나, 지점명을 확인해 주세요. 🙄');
+    } finally {
       setIsGeocoding(false);
-      alert('네이버 지도 API 로드 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleBulkGeocode = async () => {
+    if (!confirm('현재 등록된 모든 지점을 순회하며 주소를 기반으로 좌표(위경도)를 자동 업데이트하시겠습니까?\n(네이버 지도 API 호출량에 주의하세요! 💅)')) return;
+
+    setIsGeocoding(true);
+    try {
+      const loadNaverMaps = () => {
+        return new Promise<void>((resolve, reject) => {
+          if (window.naver && window.naver.maps && window.naver.maps.Service) {
+            resolve();
+            return;
+          }
+          console.log("[Admin] Naver Maps Service not found in bulk geocode, loading script...");
+          const clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'zbepfoglvy';
+          const script = document.createElement('script');
+          script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}&submodules=geocoder`;
+          script.async = true;
+          script.onload = () => {
+            const check = setInterval(() => {
+              if (window.naver?.maps?.Service) {
+                clearInterval(check);
+                resolve();
+              }
+            }, 100);
+          };
+          script.onerror = () => reject(new Error("Naver Maps Load Failed"));
+          document.head.appendChild(script);
+        });
+      };
+
+      await loadNaverMaps();
+      // [스봉이] 네이버님이 오셨으니 0.2초만 더 정숙하게 기다릴게요 💅
+      await new Promise(r => setTimeout(r, 200));
+
+      const { StorageService } = await import('../services/storageService');
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const loc of locations) {
+        if (!loc.address) {
+          failCount++;
+          continue;
+        }
+
+        // [스봉이] 비동기 함수 안이라 Promise로 감싸서 하나씩 차분하게 처리할게요 💅
+        try {
+          const result = await new Promise<any>((resolve, reject) => {
+            // [스봉이] 지점명을 섞어서 더 정밀하게 좌표를 따볼게요. 바다 위로 가시면 안되니까요! 💅
+            window.naver.maps.Service.geocode({ query: `${loc.name} ${loc.address}` }, (status: any, response: any) => {
+              if (status === window.naver.maps.Service.Status.OK && response.v2.addresses[0]) {
+                resolve(response.v2.addresses[0]);
+              } else {
+                // 지점명 섞어서 안나오면 주소만으로 재시도!
+                window.naver.maps.Service.geocode({ query: loc.address }, (s2: any, r2: any) => {
+                  if (s2 === window.naver.maps.Service.Status.OK && r2.v2.addresses[0]) {
+                    resolve(r2.v2.addresses[0]);
+                  } else {
+                    reject(new Error("Fail"));
+                  }
+                });
+              }
+            });
+          });
+
+          const latNum = parseFloat(result.y);
+          const lngNum = parseFloat(result.x);
+
+          // 한국 영역 검증 (바다 위 방지) ✨
+          if (latNum < 33 || latNum > 39 || lngNum < 124 || lngNum > 132) {
+            throw new Error("Invalid Bounds");
+          }
+
+          await StorageService.saveLocation({
+            ...loc,
+            lat: latNum,
+            lng: lngNum
+          });
+          successCount++;
+        } catch (e) {
+          console.warn(`[Bulk Geocode] Failed for ${loc.name}`, e);
+          failCount++;
+        }
+        // [스봉이] API 과부하 방지를 위해 0.2초씩 쉬어갈게요 💅
+        await new Promise(r => setTimeout(r, 200));
+      }
+
+      alert(`일괄 좌표 연동 완료!\n성공: ${successCount}건, 실패: ${failCount}건\n실패한 지점은 주소를 다시 확인해 주세요. 🙄`);
+      refreshData();
+    } catch (e) {
+      console.error(e);
+      alert("일괄 연동 중 치명적인 사고가 발생했습니다. 로그를 확인하세요.");
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  const handleBulkUpdateLocations = async (ids: string[], updates: Partial<LocationOption>) => {
+    if (!ids.length) return;
+    if (!confirm(`${ids.length}개 지점의 설정을 일괄 변경하시겠습니까?`)) return;
+
+    setIsSaving(true);
+    try {
+      const { StorageService } = await import('../services/storageService');
+
+      const updatePromises = ids.map(id => {
+        const target = locations.find(l => l.id === id);
+        if (!target) return Promise.resolve();
+        return StorageService.saveLocation({
+          ...target,
+          ...updates
+        });
+      });
+
+      await Promise.all(updatePromises);
+      alert(`${ids.length}개 지점의 설정이 일괄 변경되었습니다. 💅`);
+      refreshData();
+    } catch (e) {
+      console.error("Bulk update failed", e);
+      alert("일괄 변경 중 오류가 발생했습니다.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1857,12 +1701,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         </div>
 
         <div className="px-6 flex-1 overflow-y-auto no-scrollbar space-y-8 py-4">
-          {/* Main Dashboard Group */}
+          {/* 메인 관제 그룹 */}
           <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">Logistics Control</div>
+            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">실시간 물류 관제</div>
             <nav className="space-y-1">
               {[
-                { id: 'OVERVIEW', label: 'CEMS Dashboard', icon: 'fa-chart-pie' },
+                { id: 'OPERATIONS', label: '실시간 통합 관제(Ops)', icon: 'fa-tower-observation' },
+                { id: 'OVERVIEW', label: '통합 현황판', icon: 'fa-chart-pie' },
                 { id: 'DELIVERY_BOOKINGS', label: '배송 예약 관리', icon: 'fa-truck-fast' },
                 { id: 'STORAGE_BOOKINGS', label: '보관 예약 관리', icon: 'fa-warehouse' },
               ].map(item => (
@@ -1878,14 +1723,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             </nav>
           </div>
 
-          {/* Finance Group */}
+          {/* 경영 관리 그룹 */}
           <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">Finance & Settlement</div>
+            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">재무 및 정산 관리</div>
             <nav className="space-y-1">
               {[
-                { id: 'DAILY_SETTLEMENT', label: '일일 정산', icon: 'fa-calendar-check' },
+                { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
                 { id: 'ACCOUNTING', label: '매출 결산 보고', icon: 'fa-receipt' },
-                { id: 'REPORTS', label: '실적 리포트', icon: 'fa-chart-pie' },
+                { id: 'REPORTS', label: '데이터 실적 분석', icon: 'fa-chart-pie' },
               ].map(item => (
                 <button
                   key={item.id}
@@ -1899,9 +1744,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             </nav>
           </div>
 
-          {/* Customer Support Group */}
+          {/* 고객 지원 그룹 */}
           <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">Customer Support</div>
+            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">고객 응대 센터</div>
             <nav className="space-y-1">
               {[
                 { id: 'CHATS', label: '실시간 채팅 관리', icon: 'fa-comments' },
@@ -1918,18 +1763,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             </nav>
           </div>
 
-          {/* Configuration Group */}
+          {/* 시스템 관리 그룹 */}
           <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">System Admin</div>
+            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">시스템 설정 및 보안</div>
             <nav className="space-y-1">
               {[
-                { id: 'ROADMAP', label: '전체 페이지 로드맵', icon: 'fa-map-location-dot' },
-                { id: 'LOCATIONS', label: '지점 통합 관리', icon: 'fa-location-dot' },
-                { id: 'DISCOUNTS', label: '할인 코드 관리', icon: 'fa-tags' },
-                { id: 'SYSTEM', label: '가격 정책 설정', icon: 'fa-sliders' },
-                { id: 'HR', label: '직원 권한 관리', icon: 'fa-user-tie' },
-                { id: 'PARTNERSHIP_INQUIRIES', label: '제휴 문의', icon: 'fa-handshake' },
-                { id: 'NOTICE', label: '공지사항 관리', icon: 'fa-bullhorn' },
+                { id: 'ROADMAP', label: '서비스 로드맵', icon: 'fa-map-location-dot' },
+                { id: 'LOCATIONS', label: '전 지점 마스터 관리', icon: 'fa-location-dot' },
+                { id: 'DISCOUNTS', label: '프로모션 코드 관리', icon: 'fa-tags' },
+                { id: 'SYSTEM', label: '운임 정책 설정', icon: 'fa-sliders' },
+                { id: 'HR', label: '인사 및 권한 관리', icon: 'fa-user-tie' },
+                { id: 'PARTNERSHIP_INQUIRIES', label: 'B2B 제휴 제안', icon: 'fa-handshake' },
+                { id: 'NOTICE', label: '시스템 공지 창구', icon: 'fa-bullhorn' },
               ].map(item => (
                 <button
                   key={item.id}
@@ -1967,7 +1812,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       </aside>
 
       <div className="flex-1 flex flex-col min-h-screen relative z-10">
-        <header className="bg-white/80 backdrop-blur-3xl border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-40 lg:hidden shadow-lg">
+        <header className="bg-white/80 backdrop-blur-3xl border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50 lg:hidden shadow-lg">
+          <button
+            title="Open Menu"
+            aria-label="Open Menu"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="w-10 h-10 bg-gray-100 hover:bg-bee-yellow transition-all rounded-xl flex items-center justify-center text-bee-black"
+          >
+            <i className="fa-solid fa-bars-staggered"></i>
+          </button>
           <div className="flex items-center gap-2">
             <span className="text-xl font-black italic text-bee-yellow">bee</span>
             <span className="text-xl font-black text-bee-black">liber</span>
@@ -1975,12 +1828,88 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           <button title="Logout" aria-label="Logout" onClick={onBack} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 transition-colors rounded-xl flex items-center justify-center text-gray-500"><i className="fa-solid fa-power-off"></i></button>
         </header>
 
+        {/* [스봉이] 모바일 전용 슬라이딩 메뉴 등장! 💅 */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
+              />
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 left-0 w-[280px] bg-white z-[101] lg:hidden flex flex-col shadow-2xl"
+              >
+                <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black italic text-bee-yellow">bee</span>
+                    <span className="text-2xl font-black text-bee-black">liber</span>
+                  </div>
+                  <button
+                    title="Close Menu"
+                    aria-label="Close Menu"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-gray-400 hover:text-bee-black transition-colors"
+                  >
+                    <i className="fa-solid fa-xmark text-xl"></i>
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                  {/* [스봉이] 메뉴 항목들은 Sidebar랑 똑같이 넣어드렸어요 💅 */}
+                  <div>
+                    <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">시스템 메뉴</div>
+                    <nav className="space-y-1">
+                      {[
+                        { id: 'OPERATIONS', label: '실시간 통합 관제(Ops)', icon: 'fa-tower-observation' },
+                        { id: 'OVERVIEW', label: '통합 현황판', icon: 'fa-chart-pie' },
+                        { id: 'DELIVERY_BOOKINGS', label: '배송 예약 관리', icon: 'fa-truck-fast' },
+                        { id: 'STORAGE_BOOKINGS', label: '보관 예약 관리', icon: 'fa-warehouse' },
+                        { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
+                        { id: 'ACCOUNTING', label: '매출 결산 보고', icon: 'fa-receipt' },
+                        { id: 'LOCATIONS', label: '전 지점 마스터 관리', icon: 'fa-location-dot' },
+                        { id: 'ROADMAP', label: '서비스 로드맵', icon: 'fa-map-location-dot' },
+                        { id: 'CHATS', label: '실시간 채팅', icon: 'fa-comments' },
+                      ].map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => { setActiveTab(item.id as AdminTab); setIsMobileMenuOpen(false); }}
+                          className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'text-gray-500 active:bg-gray-50'}`}
+                        >
+                          <i className={`fa-solid ${item.icon} w-5`}></i>
+                          {item.label}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-gray-100 space-y-3 bg-gray-50">
+                  <div className="text-center pb-2">
+                    <p className="text-xs font-black text-bee-yellow uppercase">{jobTitle}</p>
+                    <p className="text-sm font-bold text-bee-black">{adminName} 님</p>
+                  </div>
+                  <button onClick={onBack} className="w-full flex items-center justify-center gap-2 p-3.5 bg-white border border-gray-200 rounded-xl text-xs font-black text-red-500">
+                    <i className="fa-solid fa-power-off"></i> 시스템 종료
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         {/* Global Toolbar */}
         <div className="bg-white/80 backdrop-blur-3xl border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 lg:top-0 z-40 shadow-lg hidden lg:flex">
           <div className="flex items-center gap-4">
             <div className="px-4 py-2 bg-gray-100 flex items-center gap-3 rounded-full border border-gray-200">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Server Live</span>
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">서버 정상 작동중</span>
             </div>
             <div className="text-xs font-bold text-gray-400">
               <i className="fa-regular fa-calendar mr-1"></i> {todayKST} (KST)
@@ -2006,12 +1935,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent rounded-xl text-xs font-black transition-all flex items-center gap-2"
             >
               <i className={`fa-solid fa-rotate-right ${isRefreshing ? 'animate-spin' : ''}`}></i>
-              Refresh
+              새로고침
             </button>
           </div>
         </div>
 
         <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
+          { activeTab === 'OPERATIONS' && (
+            <OperationsConsole
+              bookings={bookings}
+              locations={locations}
+              admins={admins}
+              todayKST={todayKST}
+              lang={lang}
+              t={t}
+            />
+          )}
+
           {activeTab === 'ROADMAP' && (
             <RoadmapTab t={t} lang={lang} locations={locations} />
           )}
@@ -2051,9 +1991,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           )}
 
           {activeTab === 'LOCATIONS' && (
-            <div className="flex flex-col xl:flex-row gap-6 h-full min-h-[calc(100vh-180px)]">
-              {/* 왼쪽: 슬림 리스트 & 폼 💅 */}
-              <div className="w-full xl:w-2/5 overflow-y-auto no-scrollbar pb-10">
+            <div className="flex flex-col gap-6 h-full min-h-[calc(100vh-180px)]">
+              {/* [스봉이] 사장님 요청대로 지도는 치우고 목록만 기품 있게 남겨뒀어요 💅 */}
+              <div className="w-full pb-10">
                 <LocationsTab
                   locForm={locForm}
                   setLocForm={setLocForm}
@@ -2063,28 +2003,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                   handlePickupImageUpload={handlePickupImageUpload}
                   handleLocationImageUpload={handleLocationImageUpload}
                   isSaving={isSaving}
+                  setIsSaving={setIsSaving}
                   addLocation={addLocation}
                   locations={locations}
                   focusLocation={focusLocation}
                   deleteLocation={deleteLocation}
+                  handleBulkGeocode={handleBulkGeocode}
+                  handleBulkUpdateLocations={handleBulkUpdateLocations}
                   lang={lang}
                   t={t}
                 />
-              </div>
-
-              {/* 오른쪽: 네이버 지도 - 드디어 보금자리 복귀! ✨🗺️ */}
-              <div className="w-full xl:w-3/5 h-[400px] xl:h-auto bg-white rounded-[40px] shadow-2xl border-4 border-white overflow-hidden sticky top-0">
-                <React.Suspense fallback={<div className="w-full h-full flex items-center justify-center bg-gray-50"><i className="fa-solid fa-spinner animate-spin text-3xl text-bee-yellow"></i></div>}>
-                  <LocationMap
-                    t={t}
-                    lang={lang}
-                    branches={locations}
-                    selectedBranch={locForm.id ? locations.find(l => l.id === locForm.id) : null}
-                    onLocationSelect={(loc: LocationOption | null) => { if (loc) focusLocation(loc); }}
-                    currentService="STORAGE"
-                    userLocation={null} // 어드민은 지점 위주로
-                  />
-                </React.Suspense>
               </div>
             </div>
           )}
@@ -2189,27 +2117,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           )}
 
           {activeTab === 'PRIVACY_EDITOR' && (
-            <PrivacyEditorTab
-              privacyForm={privacyForm}
-              setPrivacyForm={setPrivacyForm}
-              savePrivacy={savePrivacy}
-              addPrivacyArticle={addPrivacyArticle}
-              updatePrivacyArticle={updatePrivacyArticle as any}
-              removePrivacyArticle={removePrivacyArticle}
-              isSaving={isSaving}
-            />
+            <PrivacyEditorTab />
           )}
 
           {activeTab === 'TERMS_EDITOR' && (
-            <TermsEditorTab
-              termsForm={termsForm}
-              setTermsForm={setTermsForm}
-              saveTerms={saveTerms}
-              addTermsArticle={addTermsArticle}
-              updateTermsArticle={updateTermsArticle as any}
-              removeTermsArticle={removeTermsArticle}
-              isSaving={isSaving}
-            />
+            <TermsEditorTab />
           )}
 
           {activeTab === 'CHATS' && (

@@ -48,11 +48,11 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                     <h1 className="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2">
                         일일 정산 <span className="text-bee-yellow italic">Settlement</span>
                     </h1>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Daily Financial Cross-Verification & Closing 🛡️</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">일일 금융 대조 및 시재 마감 🛡️</p>
                 </div>
                 <div className="flex items-center gap-3 bg-gray-50/80 p-1.5 pl-4 rounded-[20px] border border-gray-100 hover:bg-white hover:border-bee-yellow transition-all duration-300">
                     <div className="flex flex-col items-start pr-2">
-                        <span className="text-[8px] font-black text-gray-400 uppercase leading-none mb-1">Settlement Date</span>
+                        <span className="text-[8px] font-black text-gray-400 uppercase leading-none mb-1">정산 기준일</span>
                         <input
                             type="date"
                             title="정산 날짜 선택"
@@ -72,21 +72,21 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-bee-yellow hover:shadow-md transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">Total Revenue</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">총 매출액</p>
                         <h3 className="text-xl font-black italic text-bee-black">₩{dailySettlementStats.totalRevenue.toLocaleString()}</h3>
                     </div>
                     <div className="mt-3 flex gap-1.5 items-center">
-                        <span className="px-1.5 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow">D {dailySettlementStats.deliveryCount}</span>
-                        <span className="px-1.5 py-0.5 bg-bee-blue/10 rounded-md text-[8px] font-black text-bee-blue">S {dailySettlementStats.storageCount}</span>
+                        <span className="px-1.5 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow">배송 {dailySettlementStats.deliveryCount}</span>
+                        <span className="px-1.5 py-0.5 bg-bee-blue/10 rounded-md text-[8px] font-black text-bee-blue">보관 {dailySettlementStats.storageCount}</span>
                     </div>
                 </div>
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-red-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">Expenditure</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">당일 지출액</p>
                         <h3 className="text-xl font-black italic text-red-500">₩{dailySettlementStats.totalExp.toLocaleString()}</h3>
                     </div>
-                    <p className="text-[8px] font-black text-red-300 mt-2 uppercase">{Object.keys(dailySettlementStats.expByCategory).length} Categories used</p>
+                    <p className="text-[8px] font-black text-red-300 mt-2 uppercase">{Object.keys(dailySettlementStats.expByCategory).length}개 카테고리 기록됨</p>
                 </div>
 
                 <div className="bg-emerald-500 p-5 rounded-[28px] shadow-lg flex flex-col justify-between relative overflow-hidden group/card hover:-translate-y-1 transition-all">
@@ -94,10 +94,10 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         <i className="fa-solid fa-sack-dollar text-2xl"></i>
                     </div>
                     <div>
-                        <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-2">Ledger Cash</p>
+                        <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-2">현금 장부 금액</p>
                         <h3 className="text-xl font-black italic text-white">₩{dailySettlementStats.revenueByMethod.cash.toLocaleString()}</h3>
                     </div>
-                    <p className="text-[8px] font-black text-white/50 mt-2 uppercase">Cash handled today</p>
+                    <p className="text-[8px] font-black text-white/50 mt-2 uppercase">당일 수령한 현금 총액</p>
                 </div>
 
                 <div className="bg-bee-black p-5 rounded-[28px] shadow-lg flex flex-col justify-between relative overflow-hidden group/card hover:-translate-y-1 transition-all">
@@ -105,16 +105,16 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         <i className="fa-solid fa-chart-pie text-2xl"></i>
                     </div>
                     <div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Net Profit</p>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">당일 순수익</p>
                         <h3 className="text-xl font-black italic text-bee-yellow">₩{dailySettlementStats.netProfit.toLocaleString()}</h3>
                     </div>
                     <div className="mt-3">
-                        <p className="text-[8px] font-black text-gray-500 uppercase">VAT Estimate: ₩{dailySettlementStats.vat.toLocaleString()}</p>
+                        <p className="text-[8px] font-black text-gray-500 uppercase">예상 부가세: ₩{dailySettlementStats.vat.toLocaleString()}</p>
                     </div>
                 </div>
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-purple-400 transition-all col-span-2 md:col-span-1 lg:col-span-1">
-                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">Bag Sizes (S/M/L/XL)</p>
+                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">짐 크기별 수량 (S/M/L/XL)</p>
                     <div className="flex justify-between items-center bg-gray-50 p-2 rounded-xl">
                         <div className="text-center">
                             <p className="text-[7px] font-black text-gray-400">S</p>
@@ -134,8 +134,8 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         </div>
                     </div>
                     <div className="mt-2 flex gap-2">
-                        <span className="text-[7px] font-black text-orange-400">Refund: {dailySettlementStats.refundedCount}</span>
-                        <span className="text-[7px] font-black text-gray-400">Cancel: {dailySettlementStats.cancelledCount}</span>
+                        <span className="text-[7px] font-black text-orange-400">환불: {dailySettlementStats.refundedCount}</span>
+                        <span className="text-[7px] font-black text-gray-400">취소: {dailySettlementStats.cancelledCount}</span>
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                     </div>
                                     <div className="flex flex-col text-left">
                                         <span className="font-black text-sm text-bee-black">배송 예약 목록</span>
-                                        <span className="text-[10px] font-bold text-gray-400">Total {dailySettlementStats.deliveryCount} Booking(s)</span>
+                                        <span className="text-[10px] font-bold text-gray-400">총 {dailySettlementStats.deliveryCount} 건 접수됨</span>
                                     </div>
                                 </div>
                                 <i className="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition-transform text-gray-300"></i>
@@ -209,7 +209,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                     </div>
                                     <div className="flex flex-col text-left">
                                         <span className="font-black text-sm text-bee-black">보관 예약 목록</span>
-                                        <span className="text-[10px] font-bold text-gray-400">Total {dailySettlementStats.storageCount} Booking(s)</span>
+                                        <span className="text-[10px] font-bold text-gray-400">총 {dailySettlementStats.storageCount} 건 접수됨</span>
                                     </div>
                                 </div>
                                 <i className="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition-transform text-gray-300"></i>
@@ -270,7 +270,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                     {/* Advanced Settlement Matrix */}
                     <div className="bg-gray-50/50 rounded-[32px] p-6 border border-gray-100 space-y-6">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Payment Method Analysis</h4>
+                            <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">결제 수단별 상세 분석</h4>
                             <div className="flex gap-1">
                                 <div className="w-1 h-1 rounded-full bg-blue-400"></div>
                                 <div className="w-1 h-1 rounded-full bg-emerald-400"></div>
@@ -279,7 +279,15 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         <div className="grid grid-cols-3 gap-2">
                             {Object.entries(dailySettlementStats.revenueByMethod).map(([method, amount]: [string, any]) => (
                                 <div key={method} className="bg-white p-3 rounded-2xl border border-gray-100/50 flex flex-col items-center group/method hover:border-bee-yellow transition-all">
-                                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">{method}</span>
+                                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">{
+                                        method === 'card' ? '카드' :
+                                            method === 'cash' ? '현금' :
+                                                method === 'apple' ? '애플' :
+                                                    method === 'samsung' ? '삼성' :
+                                                        method === 'naver' ? '네이버' :
+                                                            method === 'kakao' ? '카카오' :
+                                                                method === 'paypal' ? '페이팔' : method
+                                    }</span>
                                     <span className={`text-[11px] font-black ${amount > 0 ? 'text-bee-black' : 'text-gray-200'}`}>₩{amount.toLocaleString()}</span>
                                 </div>
                             ))}
@@ -292,7 +300,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                 <i className="fa-solid fa-cash-register text-emerald-500"></i> 현금 시재 마감 (Cash Flow)
                             </h3>
                             <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-500 rounded-lg text-[9px] font-black uppercase italic">
-                                <i className="fa-solid fa-shield-halved"></i> Audit Verified
+                                <i className="fa-solid fa-shield-halved"></i> 장부 대조 완료
                             </div>
                         </div>
 
@@ -308,11 +316,11 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
 
                             <div className="p-5 grid grid-cols-2 gap-8 relative">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase block italic">Expected Ledger</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase block italic">장부상 현금 매출액</label>
                                     <div className="font-black text-xl text-emerald-600 flex items-baseline gap-1">
                                         <span className="text-xs">₩</span>{dailySettlementStats.revenueByMethod.cash.toLocaleString()}
                                     </div>
-                                    <p className="text-[8px] font-bold text-gray-300 italic">Total Cash Revenue Today</p>
+                                    <p className="text-[8px] font-bold text-gray-300 italic">시스템에 기록된 당일 현금 총액</p>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-bee-black uppercase block italic">Actual Hand (실물 시재)</label>
@@ -336,7 +344,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                 : 'bg-red-50/50 animate-pulse-subtle'
                                 }`}>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Financial Difference</span>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">최종 장부 차액</span>
                                     <span className={`text-2xl font-black italic ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash !== 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                                         ₩{(dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash).toLocaleString()}
                                     </span>
@@ -349,7 +357,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         </div>
 
                         <div className="space-y-2 group">
-                            <label className="text-[10px] font-black text-gray-400 uppercase block ml-1 italic group-hover:text-bee-yellow transition-colors">Audit Closing Notes</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase block ml-1 italic group-hover:text-bee-yellow transition-colors">마감 특이사항 및 메모</label>
                             <textarea
                                 value={cashClosing.notes}
                                 onChange={e => setCashClosing({ ...cashClosing, notes: e.target.value })}

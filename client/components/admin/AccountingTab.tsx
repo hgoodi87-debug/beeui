@@ -71,19 +71,19 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             onClick={() => setActiveSubTab('revenue')}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'revenue' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                         >
-                            매출(Revenue)
+                            매출 요약
                         </button>
                         <button
                             onClick={() => setActiveSubTab('expenditure')}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'expenditure' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                         >
-                            지출(Expense)
+                            지출 내역
                         </button>
                         <button
                             onClick={() => setActiveSubTab('calendar')}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'calendar' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                         >
-                            캘린더(Matrix)
+                            매출 캘린더
                         </button>
                     </div>
                 </div>
@@ -93,21 +93,21 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-bee-yellow transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">Period Total</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">총 매출 (선택 기간)</p>
                         <h3 className="text-xl font-black italic text-bee-black">₩{(revenueStats?.total || 0).toLocaleString()}</h3>
                     </div>
                     <div className="mt-3">
-                        <span className="px-2 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow tracking-tighter">{(revenueStats?.count || 0)} Bookings</span>
+                        <span className="px-2 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow tracking-tighter">{(revenueStats?.count || 0)}건의 주문</span>
                     </div>
                 </div>
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-red-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">Total Exp</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">총 지출</p>
                         <h3 className="text-xl font-black italic text-red-500">₩{(revenueStats?.expenditure || 0).toLocaleString()}</h3>
                     </div>
                     <div className="mt-4">
-                        <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden" title="Expenditure percentage of revenue">
+                        <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden" title="매출 대비 지출 비중">
                             <div className="bg-red-400 h-full transition-all duration-1000" style={{ width: `${Math.min(((revenueStats?.expenditure || 0) / (revenueStats?.total || 1)) * 100, 100)}%` }}></div>
                         </div>
                     </div>
@@ -118,27 +118,27 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         <i className="fa-solid fa-chart-line text-2xl"></i>
                     </div>
                     <div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Net Profit</p>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">선택 기간 순수익</p>
                         <h3 className="text-xl font-black italic text-bee-yellow">₩{(revenueStats?.netTotal || 0).toLocaleString()}</h3>
                     </div>
-                    <p className="text-[8px] font-black text-emerald-400 mt-2 uppercase">Margin: {Math.round(((revenueStats?.netTotal || 0) / (revenueStats?.total || 1)) * 100)}%</p>
+                    <p className="text-[8px] font-black text-emerald-400 mt-2 uppercase">마진율: {Math.round(((revenueStats?.netTotal || 0) / (revenueStats?.total || 1)) * 100)}%</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-blue-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">VAT Estimate</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">부가세 별도 (예상)</p>
                         <h3 className="text-xl font-black italic text-blue-500">₩{(revenueStats?.vat || 0).toLocaleString()}</h3>
                     </div>
-                    <p className="text-[8px] font-black text-gray-300 mt-2 uppercase tracking-tighter">Approx. 1/11 Breakdown</p>
+                    <p className="text-[8px] font-black text-gray-300 mt-2 uppercase tracking-tighter">약 1/11 산출 기준</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-purple-400 transition-all col-span-2 md:col-span-1 lg:col-span-1">
                     <div>
-                        <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1.5 line-clamp-1">Lifetime Growth</p>
+                        <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1.5 line-clamp-1">누적 총 매출</p>
                         <h3 className="text-xl font-black italic text-bee-black">₩{(revenueStats?.lifetimeRevenue || 0).toLocaleString()}</h3>
                     </div>
                     <div className="mt-3 pt-2 border-t border-gray-50">
-                        <p className="text-[8px] font-black text-gray-300 uppercase">Total: {(revenueStats?.lifetimeCount || 0).toLocaleString()} Bookings</p>
+                        <p className="text-[8px] font-black text-gray-300 uppercase">누적: {(revenueStats?.lifetimeCount || 0).toLocaleString()}건의 주문</p>
                     </div>
                 </div>
             </div>
@@ -147,7 +147,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-wrap items-center gap-6 group hover:border-bee-yellow transition-all duration-500">
                 <div className="flex items-center gap-4">
                     <div className="space-y-1 text-left">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">Period Start</label>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">조회 시작일</label>
                         <div className="relative">
                             <i className="fa-solid fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-[10px]"></i>
                             <input
@@ -161,7 +161,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     </div>
                     <div className="pt-4 text-gray-200 font-black">~</div>
                     <div className="space-y-1 text-left">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">Period End</label>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">조회 종료일</label>
                         <div className="relative">
                             <i className="fa-solid fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-[10px]"></i>
                             <input
@@ -180,7 +180,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         onClick={handleExportCSV}
                         className="px-5 py-2.5 bg-bee-yellow text-bee-black rounded-[20px] text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-bee-yellow/10 flex items-center gap-2"
                     >
-                        <i className="fa-solid fa-file-excel"></i> CSV EXPORT
+                        <i className="fa-solid fa-file-excel"></i> CSV 엑셀 내보내기
                     </button>
                 </div>
             </div>
@@ -188,35 +188,35 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
             {/* Payment Method Matrix */}
             <div className="bg-gray-50/50 p-6 rounded-[32px] border border-gray-50 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Card</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">카드결제</span>
                     <span className="text-[11px] font-black">₩{(revenueStats?.card || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Cash</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">현금 결제</span>
                     <span className="text-[11px] font-black text-emerald-500">₩{(revenueStats?.cash || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Naver</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">네이버페이</span>
                     <span className="text-[11px] font-black text-green-500">₩{(revenueStats?.naver || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Kakao</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">카카오페이</span>
                     <span className="text-[11px] font-black text-yellow-500">₩{(revenueStats?.kakao || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Apple</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">애플페이</span>
                     <span className="text-[11px] font-black">₩{(revenueStats?.apple || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Samsung</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">삼성페이</span>
                     <span className="text-[11px] font-black text-blue-400">₩{(revenueStats?.samsung || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">PayPal</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">페이팔</span>
                     <span className="text-[11px] font-black text-blue-600">₩{(revenueStats?.paypal || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">Mobile</span>
+                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">해외결제</span>
                     <span className="text-[11px] font-black text-gray-400">₩{(revenueStats?.alipay + revenueStats?.wechat || 0).toLocaleString()}</span>
                 </div>
             </div>
@@ -228,7 +228,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
                             <div className="flex justify-between items-center">
                                 <h3 className="text-lg font-black flex items-center gap-2"><i className="fa-solid fa-chart-line text-blue-500"></i> 일별 상세 매출</h3>
-                                <span className="text-[10px] font-black text-gray-300 uppercase">{accountingDailyStats.length} Days Tracked</span>
+                                <span className="text-[10px] font-black text-gray-300 uppercase">{accountingDailyStats.length} 건 기록됨</span>
                             </div>
                             <div className="overflow-hidden rounded-[32px] border border-gray-50">
                                 <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
@@ -278,9 +278,9 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     <table className="w-full text-left">
                                         <thead className="bg-bee-black text-[10px] font-black uppercase text-bee-yellow">
                                             <tr>
-                                                <th className="px-6 py-5">Month</th>
-                                                <th className="px-6 py-5">Volume</th>
-                                                <th className="px-6 py-5 text-right">Revenue</th>
+                                                <th className="px-6 py-5">정산월</th>
+                                                <th className="px-6 py-5">주문량</th>
+                                                <th className="px-6 py-5 text-right">매출액</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50 text-xs">
@@ -311,13 +311,13 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             <h3 className="text-lg font-black flex items-center gap-2">
                                 <i className="fa-solid fa-receipt text-red-400"></i> 지출 항목 관리
                             </h3>
-                            <span className="text-[10px] font-black text-gray-300 uppercase">Total Items: {expenditures.length}</span>
+                            <span className="text-[10px] font-black text-gray-300 uppercase">총 지출 항목: {expenditures.length} 건</span>
                         </div>
 
                         <div className="bg-gray-50/50 p-6 rounded-[32px] border border-gray-50 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2 text-left">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Expense Date</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">지출 발생일</label>
                                     <input
                                         type="date"
                                         title="지출 발생일"
@@ -327,17 +327,17 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     />
                                 </div>
                                 <div className="space-y-2 text-left">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Category</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">카테고리</label>
                                     <input
                                         type="text"
                                         value={expForm.category}
                                         onChange={e => setExpForm({ ...expForm, category: e.target.value })}
-                                        placeholder="e.g. Fuel, Supplies"
+                                        placeholder="예: 유류비, 소모품 등"
                                         className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm"
                                     />
                                 </div>
                                 <div className="space-y-2 text-left">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Amount</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">금액 (₩)</label>
                                     <input
                                         type="number"
                                         value={expForm.amount}
@@ -369,9 +369,9 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             <table className="w-full text-left">
                                 <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-400">
                                     <tr>
-                                        <th className="px-6 py-4">Date</th>
-                                        <th className="px-6 py-4">Category</th>
-                                        <th className="px-6 py-4 text-right">Amount</th>
+                                        <th className="px-6 py-4">일자</th>
+                                        <th className="px-6 py-4">항목</th>
+                                        <th className="px-6 py-4 text-right">금액</th>
                                         <th className="px-6 py-4 w-10"></th>
                                     </tr>
                                 </thead>
@@ -413,11 +413,11 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-bee-yellow"></div>
-                                    <span className="text-[10px] font-black text-gray-400">High Revenue</span>
+                                    <span className="text-[10px] font-black text-gray-400">고매출 구간</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-gray-100"></div>
-                                    <span className="text-[10px] font-black text-gray-400">Regular</span>
+                                    <span className="text-[10px] font-black text-gray-400">일반 구간</span>
                                 </div>
                             </div>
                         </div>

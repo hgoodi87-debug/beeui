@@ -331,12 +331,12 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
             returnTime={returnTime}
             onReturnTimeChange={setReturnTime}
             baggageCounts={baggageCounts}
-            onBaggageChange={(size, delta) => {
+            onBaggageChange={useCallback((size, delta) => {
               setBaggageCounts(prev => ({
                 ...prev,
                 [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
               }));
-            }}
+            }, [])}
             deliveryPrices={deliveryPrices}
             onBack={onBack}
           />
@@ -363,12 +363,12 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
                   bookingDate={bookingDate}
                   onDateChange={setBookingDate}
                   baggageCounts={baggageCounts as any}
-                  onBaggageChange={(size, delta) => {
+                  onBaggageChange={useCallback((size, delta) => {
                     setBaggageCounts((prev: any) => ({
                       ...prev,
                       [size]: Math.max(0, (prev[size] || 0) + delta)
                     }));
-                  }}
+                  }, [])}
                   t={t}
                   lang={lang}
                 />

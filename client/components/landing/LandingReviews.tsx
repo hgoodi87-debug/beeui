@@ -32,7 +32,7 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                         <Instagram className="w-5 h-5 text-pink-500" />
                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-bee-black/40 font-outfit">#beeliber_seoul</span>
                     </motion.div>
-                    <h2 className="text-4xl md:text-7xl font-display font-black text-bee-black leading-tight tracking-tighter break-keep">
+                    <h2 className="text-3xl md:text-6xl font-display font-black text-bee-black leading-tight tracking-tighter break-keep px-4">
                         {t.reviews_section.headline}
                     </h2>
                 </div>

@@ -4,7 +4,7 @@ export const en = {
         description: 'Luggage storage & delivery at Hongdae, Luggage Storage, Incheon/Gimpo Airport. Same-day luggage delivery between hotel and airport. Travel light with Beeliber.',
         keywords: 'Hongdae luggage storage, Hongdae luggage delivery, Luggage Storage, luggage delivery service, suitcase delivery, Incheon Airport luggage delivery, same-day luggage delivery, hotel luggage delivery'
     },
-    nav: { services: 'Services', locations: 'Locations', tracking: 'Tracking', partners: 'Partners', book: 'Book Now', terms_label: 'Terms of Service', admin_portal: 'Portal' },
+    nav: { services: 'Services', locations: 'Locations', tracking: 'Tracking', partners: 'Partners', book: 'Book Now', terms_label: 'Terms of Service', admin_portal: 'Portal', login: 'Login', mypage: 'My Page' },
     terms_page: {
         title: 'Terms of Service',
         last_updated: 'Last Updated: 2025.01.01',
@@ -33,14 +33,28 @@ export const en = {
         badge: 'Global Travel Partner',
         title1: 'Liberate yourself',
         title2: 'from your luggage.',
-        subtitle: 'From hotel to airport, leave your heavy bags to Beeliber\nand enjoy every moment of your trip with a light heart.',
-        btn_now: 'Unburden yourself now ➔',
+        subtitle: 'From hotel to airport, leave your heavy bags to Beeliber and enjoy every moment of your trip with a light heart.',
+        btn_now: 'Book Now',
         track_booking: 'Track Booking',
         book_branch: 'Book Now',
         main_title_1: 'Liberate yourself',
         main_title_2: 'from your luggage.',
         main_title_bags: 'BAGS.',
-        main_title_city: 'CITY.'
+        main_title_city: 'CITY.',
+        live_label: 'Live Status Feed',
+        search_btn: 'Track Now',
+        status_suffix: 'Status',
+        label_route: 'Route',
+        label_schedule: 'Schedule',
+        label_payment: 'Payment',
+        go_back: 'Go Back',
+        status_1: 'Confirmed',
+        status_2: 'Pending',
+        status_3: 'Moving',
+        status_4: 'Arrived',
+        status_5: 'Completed',
+        noResult: 'No booking record found.',
+        check_info: 'Please check your information again.'
     },
     pain: {
         headline: "Leave the weight of 28 inches to Beeliber,\nand keep only excitement in your hands.",
@@ -54,16 +68,21 @@ export const en = {
         quote_good: "\"WALKING ON CLOUDS\""
     },
     howitworks: {
-        headline: "Just 3 touches, luggage disappears like magic",
-        step1: { title: "Drop", desc: "Hand over your luggage to the beeliber desk/partner\nat the airport or hotel." },
-        step2: { title: "Enjoy", desc: "Enjoy sightseeing, restaurants, and shopping\nimmediately with both hands free." },
-        step3: { title: "Meet", desc: "When you arrive at the airport after your schedule,\nyour luggage is waiting for you." }
+        headline: "3 Clicks, Your Bags Vanish",
+        badge_label: "MAGIC PROCESS ✨",
+        step1: { title: "Drop", desc: "Hand off your heavy bags to Beeliber desks or partners at airports or hotels.", badge: "STEP 1. Drop" },
+        step2: { title: "Enjoy", desc: "Immediately start your sightseeing, dining, and shopping with both hands free.", badge: "STEP 2. Enjoy" },
+        step3: { title: "Meet", desc: "When you arrive at your hotel room after your day, your bags are already waiting for you.", badge: "STEP 3. Meet" }
     },
     trust: {
-        headline: "Your luggage receives VIP treatment.",
-        tracking: { title: "Real-time Email Status", desc: "Receive real-time email updates on your baggage status." },
-        insurance: { title: "Premium Damage Insurance", desc: "Global-level insurance that takes responsibility for even a single scratch." },
-        seal: { title: "Security Seal System", desc: "Smart security seal ensures it never opens until arrival." }
+        headline: "Your Bags, VIP Treatment.",
+        badge_label: "VIP Bee-Keeper Trust",
+        tracking: { title: "Real-time Email Alerts", desc: "Receive real-time updates on your luggage status via email.", accent: "EMAIL STATUS" },
+        insurance: { title: "Premium Damage Insurance", desc: "Basic coverage included with global-level insurance for even minor scratches.", accent: "GLOBAL INSURED" },
+        seal: { title: "Security Seal System", desc: "Smart security seals guarantee that bags are never opened before arrival.", accent: "SMART SEAL" },
+        footer_label1: "24/7 Monitoring",
+        footer_label2: "Certified Partners",
+        footer_label3: "Secure Cloud Encryption"
     },
     pricing: {
         headline: "Cheaper than a taxi,\ncomplete freedom for a day",
@@ -73,7 +92,11 @@ export const en = {
         price_standard: "₩20,000",
         price_extra: "₩29,000",
         features_standard: ["All sizes up to 23\"", "Airport ↔ Hotel Delivery", "Real-time Email Status", "Basic Insurance Included"],
-        features_extra: ["Over 27\"", "Heavy Duty Handling", "Safe Same-day Delivery", "Premium Insurance Applied"]
+        features_extra: ["Over 27\"", "Heavy Duty Handling", "Safe Same-day Delivery", "Premium Insurance Applied"],
+        flat_rate_label: "FLAT RATE 💰",
+        most_popular_label: "MOST POPULAR",
+        per_bag_label: "/ Bag",
+        choose_service_btn: "CHOOSE SERVICE"
     },
     reviews_section: {
         headline: "They prove how beautiful your journey is when walking without luggage with Beeliber.",
@@ -223,36 +246,34 @@ export const en = {
         airport_late_notice: "Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual! 🍯"
     },
     status_mapping: {
-        '접수완료': 'Pending', '보관중': 'Storing', '이동중': 'In Transit',
-        '목적지도착': 'Arrived', '완료': 'Completed', '취소됨': 'Cancelled'
+        '접수완료': 'Pending', '예약완료': 'Confirmed', '보관중': 'Storing', '이동중': 'In Transit',
+        '목적지도착': 'Arrived', '완료': 'Completed', '취소됨': 'Cancelled', '환불완료': 'Refunded'
     },
     tracking_page: {
         title: 'Track Reservation & Delivery',
-        subtitle: 'Enter your name and email to easily check your luggage status without a password. Input your email address to check the current location of your luggage at a glance.',
+        subtitle: 'Enter your name and email to easily check your luggage status without a password.',
         search_btn: 'Track Booking',
-        search_placeholder: 'Enter the email used for booking',
+        search_placeholder: 'Enter your name',
         status_1: 'Confirmed',
         status_2: 'Pick-up',
         status_3: 'In Transit',
         status_4: 'Arrived',
         status_5: 'Completed',
+        noResult: 'No booking record found.',
         label_route: 'Route',
         label_schedule: 'Schedule',
         label_payment: 'Payment',
-        label_booking_id: 'Booking ID',
-        label_customer: 'Customer Name',
-        label_status: 'Current Status',
-        label_bags: 'Bags',
         cancel_btn: 'Cancel Booking',
-        cancel_confirm_title: 'Are you sure you want to cancel?',
-        cancel_confirm_desc: 'Refund will be processed according to the cancellation policy.',
-        pickup_time_prefix: 'Drop-off Time: ',
-        return_time_prefix: 'Pick-up Time: ',
-        status_history_title: 'Timeline',
-        no_bookings: 'No bookings found for this email.',
-        error_search: 'Error occurred while searching for booking.',
-        alert_modification_locked: 'Modifications are not allowed on or after the service date.',
-        alert_cancellation_locked: 'Cancellations are not allowed on or after the service date.'
+        alert_modification_locked: 'Bookings cannot be modified on the day of service or later.',
+        alert_cancellation_locked: 'Bookings cannot be cancelled on the day of service or later.'
+    },
+    refund: {
+        title: 'Cancellation & Refund Policy',
+        content: '• 24h before service: 100% Refund\n• 12h before service: 50% Refund\n• Less than 12h or No-Show: No Refund\n\n* Refunds may take 3-7 business days depending on the payment method.',
+        confirm_btn: 'Confirm Cancellation',
+        close_btn: 'Close',
+        alert_cancel_success: 'Booking cancelled successfully.',
+        alert_cancel_error: 'Error during cancellation. Please contact support.'
     },
     storage_tiers: {
         'st-4h': '4 Hours', 'st-1d': '1 Day (24h)', 'st-week': '7 Days (Long Term)'
@@ -395,6 +416,11 @@ export const en = {
         badge: "Smart Luggage Solution",
         main_title_1: "Start Your Seoul Trip,",
         main_title_2: "Light Without Luggage",
+        email_status_check: "Email Status Check",
+        trust_badge: "TRUST & SAFETY",
+        freedom_title: "Freedom with Beeliber",
+        how_it_works_badge: "HOW IT WORKS",
+        everyone_badge: "FOR EVERYONE",
         title: "Start a Light Trip Without Luggage, with Beeliber!",
         subtitle: "Free yourself from luggage and focus only on the joy of travel.",
         subtitle_badge: "Beeliber Service",
@@ -441,8 +467,28 @@ export const en = {
         },
         cta: "Experience a luggage-free trip with Beeliber now!",
         cta_main_title: "Ready to enjoy your travel freedom?",
-        btn_book_now: "Book Now",
-        back: "Back to Main"
+        btn_book_now: "Start your light travel 🐝",
+        tracking_page: {
+            title: "Booking Status & Delivery Tracking",
+            subtitle: "Enter your name and email to easily check the current transport status of your luggage without a password.",
+            btn: "Search"
+        },
+        back: "Back to Main",
+        trust_title: "Visible Trust, Tangible Peace of Mind.",
+        trust_desc: "With clear status updates and real-time email notifications, you can transparently check the movement of your luggage at any time.",
+        status_update: "Status Update",
+        current_status: "Current Status",
+        moving: "Moving",
+        pickup_complete: "Pick-up Complete (T1)",
+        transferring: "Transporting to Hub",
+        moving_to_hotel: "Moving to Hotel",
+        who_needs_title: "Who needs Beeliber?",
+        persona_1_title: "First Day of Trip",
+        persona_1_desc: "Check-in is hours away but bags are heavy...\nSend your bags straight from the airport\nand start your foodie tour immediately.",
+        persona_2_title: "Last Day of Trip",
+        persona_2_desc: "Flight is late, check-out is early...\nSend your bags to the airport first\nand capture life shots with light hands.",
+        persona_3_title: "Walking Travelers",
+        persona_3_desc: "Moving without a rental car?\nDon't struggle with bags every time you change hotels.\nJust teleport your luggage and move light."
     },
     location_names: {
         'IN1T': 'Incheon Airport T1', 'IN2T': 'Incheon Airport T2', 'GMP': 'Gimpo Airport',
@@ -522,18 +568,6 @@ export const en = {
         hook_text: "\"{size} size is perfect for your height!\"",
         hook_sub: "Shall I help you with the reservation? Vroom~ ✨",
         info_note: "This simulation is a guide based on actual photos and may vary slightly depending on the brand and design. Vroom~!"
-    },
-    refund: {
-        title: 'Cancellation & Refund Policy',
-        content: `• Cancellation 24 hours before: 100% refund
-• Cancellation 12 hours before: 50% refund
-• Cancellation within 12 hours or No-show: No refund
-
-※ Refunds may take 3-5 business days.`,
-        confirm_btn: 'Confirm Cancellation',
-        close_btn: 'Close',
-        alert_cancel_success: 'Booking successfully cancelled.',
-        alert_cancel_error: 'Error occurred during cancellation. Please contact support.'
     },
     terms: {
         usage_title: 'I agree to the Terms of Service',

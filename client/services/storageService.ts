@@ -52,6 +52,16 @@ export const StorageService = {
       const { ensureAuth } = await import('../firebaseApp');
       await ensureAuth();
 
+      const { auth } = await import('../firebaseApp');
+      console.log("[Storage] Current User before upload:", auth.currentUser?.uid || "NULL");
+
+      // [스봉이] 가끔 서버가 느리면 인증 정보가 바로 안 넘어갈 때가 있더라고요. 0.5초만 기다려 볼까요? 💅
+      if (!auth.currentUser) {
+        console.warn("[Storage] User is still NULL after ensureAuth! Retrying sign-in... 🙄");
+        const { signInAnonymously } = await import('firebase/auth');
+        await signInAnonymously(auth);
+      }
+
       const storageRef = ref(storage, path);
       console.log("[Storage] Uploading bytes (Size:", file.size, ")...");
       const metadata = {

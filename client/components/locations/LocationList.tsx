@@ -179,19 +179,19 @@ const LocationList: React.FC<LocationListProps> = ({
     };
 
     return (
-        <div className="flex flex-col justify-between md:justify-start h-full bg-transparent relative z-20 overflow-hidden md:pointer-events-auto select-none pointer-events-none md:bg-white/90 md:backdrop-blur-xl md:shadow-2xl">
+        <div className="flex flex-col h-full overflow-hidden md:pointer-events-auto select-none pointer-events-none md:border-r md:weightless-glass relative z-20">
             {/* Header / Search Area - Floating Card Design on Mobile, Sticky Header on PC 💅 */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex-none overflow-hidden pointer-events-auto p-2 md:p-5 bg-white/95 backdrop-blur-xl shadow-2xl md:shadow-none border-b border-gray-100 rounded-b-[1.5rem] md:rounded-b-none relative z-30"
+                className="flex-none overflow-hidden pointer-events-auto p-4 md:p-6 bg-white/80 md:backdrop-blur-3xl shadow-2xl md:shadow-none border-b border-white/20 rounded-b-[2.5rem] md:rounded-b-none relative z-30"
             >
                 <div onClick={onBack} className="inline-flex items-center gap-2 md:gap-3 mb-3 md:mb-5 cursor-pointer group px-1">
                     <div className="flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-100 group-hover:bg-bee-yellow transition-all shadow-sm">
                         <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-900" />
                     </div>
                     <div className="flex flex-col">
-                        <h1 className="text-lg md:text-2xl font-[1000] tracking-tighter text-gray-900 leading-tight">
+                        <h1 className="text-xl md:text-3xl font-black italic tracking-[-0.08em] uppercase text-gray-900 leading-none font-montserrat">
                             {t.locations_page?.sidebar_subtitle || 'Service Points'}
                         </h1>
                     </div>
@@ -201,17 +201,17 @@ const LocationList: React.FC<LocationListProps> = ({
                     {/* [스봉이] 본부장님 안목에 맞춘 '슬림 & 스마트 & 와이드' 필터바 💅 */}
                     <div className="flex flex-wrap items-stretch gap-2 md:gap-4 overflow-x-visible no-scrollbar pb-1 md:pb-0 w-full">
                         {/* 서비스 선택 (배송/보관) - 슬림하게 다이어트! */}
-                        <div className="flex-1 flex bg-gray-100/60 p-1 md:p-1 rounded-full border border-gray-100 shadow-inner min-w-[110px] md:min-w-[140px]">
+                        <div className="flex-1 flex bg-gray-100/60 p-1 md:p-1 rounded-full border border-gray-100 shadow-inner min-w-[110px] md:min-w-[120px]">
                             {(['DELIVERY', 'STORAGE'] as const).map((type) => {
                                 const isCurrent = type === 'DELIVERY' ? (currentService === 'SAME_DAY' || currentService === 'SCHEDULED') : currentService === 'STORAGE';
                                 return (
                                     <button
                                         key={type}
                                         onClick={(e) => { e.stopPropagation(); onServiceChange(type === 'DELIVERY' ? 'SAME_DAY' : 'STORAGE'); }}
-                                        className={`flex-1 px-1.5 md:px-4 py-1.5 md:py-2.5 rounded-full text-[10px] md:text-[13px] font-[1000] tracking-tighter uppercase transition-all relative z-10 ${isCurrent ? 'text-bee-black' : 'text-gray-400'}`}
+                                        className={`flex-1 px-1.5 md:px-3 py-2 md:py-2.5 rounded-full text-[10px] md:text-[13px] font-black italic tracking-tighter uppercase transition-all relative z-10 font-montserrat ${isCurrent ? 'text-bee-black' : 'text-gray-400'}`}
                                     >
                                         <span className="relative z-10">{type === 'DELIVERY' ? (t.locations_page?.badge_delivery || 'DEL') : (t.locations_page?.badge_storage || 'STO')}</span>
-                                        {isCurrent && <motion.div layoutId="service-bg-compact-v4" className="absolute inset-0 bg-bee-yellow rounded-full shadow-md" />}
+                                        {isCurrent && <motion.div layoutId="service-bg-premium-v1" className="absolute inset-0 bg-bee-yellow rounded-full shadow-lg" />}
                                     </button>
                                 );
                             })}
@@ -224,39 +224,39 @@ const LocationList: React.FC<LocationListProps> = ({
                                 const next = activeStep === 'BAGGAGE' ? null : 'BAGGAGE';
                                 setActiveStep(next);
                             }}
-                            className={`flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 px-2.5 md:px-4 py-1.5 md:py-2 rounded-full border transition-all duration-300 shadow-md min-w-[45px] md:min-w-[70px] ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900 hover:border-bee-yellow'}`}
+                            className={`flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border transition-all duration-300 shadow-md min-w-[45px] md:min-w-[60px] ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900 hover:border-bee-yellow'}`}
                         >
-                            <Luggage className={`w-3.5 h-3.5 md:w-5 md:h-5 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
-                            <span className="text-[11px] md:text-[16px] font-[1000] italic tracking-tighter leading-none">{Object.values(baggageCounts as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
+                            <Luggage className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
+                            <span className="text-[11px] md:text-[14px] font-[1000] italic tracking-tighter leading-none">{Object.values(baggageCounts as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
                         </button>
 
                         {/* 날짜 & 시간 선택 (맡기기/찾기) - 슬림 와이드 & 스마트 정보 노출 💅 */}
-                        <div className="flex-[3.5] flex items-center gap-1.5 md:gap-2 bg-white rounded-full border border-gray-100 shadow-lg px-2 md:px-4 py-1 md:py-1.5 shrink-0 transition-all justify-between min-w-[200px] flex-wrap md:flex-nowrap">
+                        <div className="flex-[4] flex items-center gap-1.5 md:gap-2 bg-white/80 backdrop-blur-md rounded-full border border-white/50 shadow-xl px-3 md:px-4 py-2 md:py-2 shrink-0 transition-all justify-between min-w-[220px] flex-wrap md:flex-nowrap">
                             <button onClick={(e) => {
                                 e.stopPropagation();
                                 const next = activeStep === 'PICKUP_DATE' ? null : 'PICKUP_DATE';
                                 setActiveStep(next);
-                            }} className="flex-1 flex items-center gap-1 md:gap-2.5 shrink-0 py-1 md:py-1.5 hover:bg-gray-50 rounded-2xl transition-all justify-center">
-                                <div className="bg-bee-yellow text-bee-black text-[8px] md:text-[11px] font-[1000] px-1.5 md:px-3 h-5 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-sm border border-bee-black/5 whitespace-nowrap">
+                            }} className="flex-1 flex items-center gap-2 md:gap-2 shrink-0 py-1.5 md:py-1.5 hover:bg-black/5 rounded-2xl transition-all justify-center">
+                                <div className="bg-bee-yellow text-bee-black text-[9px] md:text-[10px] font-black px-2 md:px-3 h-6 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-md border border-bee-black/5 whitespace-nowrap font-montserrat">
                                     {lang === 'ko' ? (isDelivery ? '보내는날' : '맡기는 날') : (t.locations_page?.badge_pick?.slice(0, 1) || 'P')}
                                 </div>
-                                <div className="flex items-baseline gap-1 md:gap-2">
-                                    <span className="text-[12px] md:text-[16px] font-[1000] text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(bookingDate)}</span>
-                                    <span className="text-[8px] md:text-[11px] font-[1000] text-bee-black/40 italic tracking-tighter">{bookingTime || '--:--'}</span>
+                                <div className="flex items-baseline gap-1.5 md:gap-2">
+                                    <span className="text-[14px] md:text-[17px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap font-montserrat">{formatToMMDD(bookingDate)}</span>
+                                    <span className="text-[9px] md:text-[11px] font-black text-bee-black/40 italic tracking-tighter font-montserrat">{bookingTime || '--:--'}</span>
                                 </div>
                             </button>
-                            <div className="w-[1.5px] md:w-[2px] h-6 md:h-10 bg-gray-100 shrink-0" />
+                            <div className="w-[1.5px] md:w-[1.5px] h-8 md:h-10 bg-gray-100 shrink-0" />
                             <button onClick={(e) => {
                                 e.stopPropagation();
                                 const next = activeStep === 'RETURN_DATE' ? null : 'RETURN_DATE';
                                 setActiveStep(next);
-                            }} className="flex-1 flex items-center gap-1 md:gap-2.5 shrink-0 py-1 md:py-1.5 hover:bg-gray-50 rounded-2xl transition-all justify-center">
-                                <div className="bg-gray-100 text-gray-400 text-[8px] md:text-[11px] font-[1000] px-1.5 md:px-3 h-5 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-sm border border-gray-200 whitespace-nowrap">
+                            }} className="flex-1 flex items-center gap-2 md:gap-2 shrink-0 py-1.5 md:py-1.5 hover:bg-black/5 rounded-2xl transition-all justify-center">
+                                <div className="bg-gray-100 text-gray-400 text-[9px] md:text-[10px] font-black px-2 md:px-3 h-6 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-md border border-gray-200 whitespace-nowrap font-montserrat">
                                     {lang === 'ko' ? (isDelivery ? '받는날' : '찾는 날') : (t.locations_page?.badge_ret?.slice(0, 1) || 'R')}
                                 </div>
-                                <div className="flex items-baseline gap-1 md:gap-2">
-                                    <span className="text-[12px] md:text-[16px] font-[1000] text-gray-900 italic tracking-tighter whitespace-nowrap">{formatToMMDD(returnDate)}</span>
-                                    <span className="text-[8px] md:text-[11px] font-[1000] text-gray-400/60 italic tracking-tighter">{returnTime || '--:--'}</span>
+                                <div className="flex items-baseline gap-1.5 md:gap-2">
+                                    <span className="text-[14px] md:text-[17px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap font-montserrat">{formatToMMDD(returnDate)}</span>
+                                    <span className="text-[9px] md:text-[11px] font-black text-gray-400/60 italic tracking-tighter font-montserrat">{returnTime || '--:--'}</span>
                                 </div>
                             </button>
                         </div>
@@ -276,12 +276,12 @@ const LocationList: React.FC<LocationListProps> = ({
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); onFindMyLocation?.(); }}
-                            className="flex items-center gap-1.5 px-3 py-2.5 md:py-2.5 bg-white border border-gray-100 rounded-full shadow-sm hover:bg-gray-50 transition-all shrink-0 active:scale-95 pointer-events-auto"
+                            className="flex items-center gap-1.5 md:gap-2 px-4 py-3 md:py-2.5 bg-white border border-gray-100 rounded-full shadow-lg hover:shadow-xl transition-all shrink-0 active:scale-95 pointer-events-auto"
                         >
-                            <div className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-50 text-blue-500">
-                                <LocateFixed className="w-3 h-3 fill-current" />
+                            <div className="w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 shadow-sm">
+                                <LocateFixed className="w-3 md:w-3.5 h-3 md:h-3.5 fill-current" />
                             </div>
-                            <span className="text-[11px] md:text-[12px] font-[1000] text-gray-900 tracking-tighter whitespace-nowrap">
+                            <span className="text-[11px] md:text-[13px] font-black text-gray-900 tracking-[-0.05em] whitespace-nowrap font-montserrat italic uppercase">
                                 {t.locations_page?.find_my_location_short || '내 위치'}
                             </span>
                         </button>
@@ -401,51 +401,51 @@ const LocationList: React.FC<LocationListProps> = ({
                             <motion.button
                                 key={branch.id}
                                 layout
-                                whileHover={{ y: -4, scale: 1.01 }}
+                                whileHover={{ x: 6, scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => onBranchClick(branch)}
-                                className={`group flex flex-row items-center gap-1.5 md:gap-3 p-1.5 md:p-3 rounded-[1.2rem] md:rounded-[1.4rem] text-left transition-all relative shrink-0 snap-center md:snap-start w-[115px] md:w-full md:max-w-[340px] md:mx-auto shadow-lg ${isSelected ? 'bg-white ring-4 ring-bee-yellow/50 shadow-xl' : 'bg-[#F2F2F6] hover:bg-white hover:shadow-xl'}`}
+                                className={`group flex flex-row items-center gap-3 md:gap-5 p-2 md:p-5 rounded-[1.8rem] md:rounded-[2.5rem] text-left transition-all relative shrink-0 snap-center md:snap-start w-[140px] md:w-full md:mx-auto shadow-xl border border-white/20 ${isSelected ? 'bg-white ring-4 ring-bee-yellow/50 shadow-2xl scale-[1.02]' : 'bg-white/40 backdrop-blur-md hover:bg-white hover:shadow-2xl'}`}
                             >
-                                <div className="flex-1 flex flex-col items-start gap-0.5 md:gap-1.5 min-w-0">
-                                    {/* 지점명 - 초소형 3열 최적화 */}
-                                    <div className="text-[11px] md:text-[16px] font-[950] tracking-tighter md:tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full text-gray-900 group-hover:text-bee-black transition-colors">
+                                <div className="flex-1 flex flex-col items-start gap-1 md:gap-2.5 min-w-0">
+                                    {/* 지점명 - 폰트 강화 💅 */}
+                                    <div className="text-[12px] md:text-[20px] font-black tracking-[-0.05em] whitespace-nowrap overflow-hidden text-ellipsis w-full text-gray-900 group-hover:text-bee-black transition-colors">
                                         {lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}
                                     </div>
 
-                                    {/* 상태 뱃지 - 더 작고 타이트하게 */}
-                                    <div className={`px-1 py-0.5 rounded-full text-[6px] md:text-[9px] font-[800] uppercase tracking-wider w-fit ${isActive ? 'bg-[#E3F6ED] text-[#13A35E]' : 'bg-red-100 text-red-600'}`}>
+                                    {/* 상태 뱃지 - 정밀하게 💅 */}
+                                    <div className={`px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-wider w-fit border shadow-sm ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
                                         {isActive ? 'ACTIVE' : 'CLOSE'}
                                     </div>
 
-                                    {/* 서비스 태그들 - 초미니 레이아웃 */}
-                                    <div className="flex flex-wrap gap-0.5 mt-0.5">
+                                    {/* 서비스 태그들 - 몬세라트 💅 */}
+                                    <div className="flex flex-wrap gap-1 mt-1">
                                         {branch.supportsDelivery && (
-                                            <span className="px-1 py-0.5 rounded-full text-[6px] md:text-[9px] font-black uppercase tracking-tighter md:tracking-wider bg-white/90 text-gray-500 shadow-sm border border-black/5 whitespace-nowrap">
-                                                {t.locations_page?.service_delivery || '배송'}
+                                            <span className="px-1.5 py-0.5 rounded-full text-[7px] md:text-[11px] font-black uppercase tracking-tighter bg-bee-black text-bee-yellow shadow-md whitespace-nowrap font-montserrat italic">
+                                                {t.locations_page?.service_delivery || 'DEL'}
                                             </span>
                                         )}
                                         {branch.supportsStorage && (
-                                            <span className="px-1 py-0.5 rounded-full text-[6px] md:text-[9px] font-black uppercase tracking-tighter md:tracking-wider bg-white/90 text-gray-500 shadow-sm border border-black/5 whitespace-nowrap">
-                                                {t.locations_page?.service_storage || '보관'}
+                                            <span className="px-1.5 py-0.5 rounded-full text-[7px] md:text-[11px] font-black uppercase tracking-tighter bg-bee-yellow text-bee-black shadow-md whitespace-nowrap font-montserrat italic">
+                                                {t.locations_page?.service_storage || 'STO'}
                                             </span>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* 우측 이미지 - 초밀착 사이즈 💅 */}
-                                <div className="relative w-10 h-10 md:w-16 md:h-16 shrink-0 rounded-[0.5rem] md:rounded-[0.9rem] overflow-hidden shadow-inner border-[1px] md:border-[1.5px] border-white/80 bg-gray-200">
+                                {/* 우측 이미지 - 라운딩 강화 및 쉐도우 💅 */}
+                                <div className="relative w-12 h-12 md:w-24 md:h-24 shrink-0 rounded-[1.2rem] md:rounded-[2rem] overflow-hidden shadow-2xl border-2 border-white/50 bg-gray-100">
                                     {branch.imageUrl ? (
                                         <img
                                             src={branch.imageUrl}
                                             alt={branch.name}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-115"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
                                             onError={(e) => {
                                                 (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1580978640103-ba69fa7a9003?q=80&w=2670&auto=format&fit=crop';
                                             }}
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
-                                            <i className="fa-solid fa-store text-sm md:text-xl"></i>
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-200">
+                                            <Store className="w-6 h-6 md:w-10 md:h-10" />
                                         </div>
                                     )}
                                 </div>
@@ -464,4 +464,4 @@ const LocationList: React.FC<LocationListProps> = ({
     );
 };
 
-export default LocationList;
+export default React.memo(LocationList);

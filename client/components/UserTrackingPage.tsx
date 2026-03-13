@@ -107,7 +107,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
         <div className="min-h-screen bg-white font-sans pb-20">
             {/* Header */}
             <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                <button onClick={onBack} title="Go Back" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <button onClick={onBack} title={t.tracking?.go_back || "Go Back"} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                     <ChevronLeft className="w-6 h-6" />
                 </button>
                 <h1 className="text-lg font-black tracking-tight">{t.tracking_page.title}</h1>
@@ -201,11 +201,11 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                             <div className="mb-12">
                                                 <div className="flex justify-between mb-4">
                                                     {[
-                                                        { label: t.tracking_page.status_1, step: 1 },
-                                                        { label: t.tracking_page.status_2, step: 2 },
-                                                        { label: t.tracking_page.status_3, step: 3 },
-                                                        { label: t.tracking_page.status_4, step: 4 },
-                                                        { label: t.tracking_page.status_5, step: 5 }
+                                                        { label: t.tracking?.status_1 || t.tracking_page?.status_1, step: 1 },
+                                                        { label: t.tracking?.status_2 || t.tracking_page?.status_2, step: 2 },
+                                                        { label: t.tracking?.status_3 || t.tracking_page?.status_3, step: 3 },
+                                                        { label: t.tracking?.status_4 || t.tracking_page?.status_4, step: 4 },
+                                                        { label: t.tracking?.status_5 || t.tracking_page?.status_5, step: 5 }
                                                     ].map((s) => (
                                                         <div key={s.step} className="flex flex-col items-center gap-2">
                                                             <div className={`w-3 h-3 rounded-full transition-colors duration-500 ${getStatusStep(booking.status) >= s.step ? 'bg-bee-yellow' : 'bg-gray-200'
@@ -232,7 +232,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                             <div className="flex items-start gap-4">
                                                 <div className="p-3 bg-gray-50 rounded-2xl"><MapPin className="w-5 h-5 text-bee-yellow" /></div>
                                                 <div>
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.tracking_page.label_route}</span>
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.tracking?.label_route || t.tracking_page?.label_route || "Route"}</span>
                                                     <p className="text-sm font-bold leading-tight">
                                                         {t.location_names[booking.pickupLocation] || booking.pickupLocation}
                                                         {booking.serviceType === ServiceType.DELIVERY && ` → ${t.location_names[booking.dropoffLocation] || booking.dropoffLocation}`}
@@ -242,14 +242,14 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                             <div className="flex items-start gap-4">
                                                 <div className="p-3 bg-gray-50 rounded-2xl"><Clock className="w-5 h-5 text-bee-yellow" /></div>
                                                 <div>
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.tracking_page.label_schedule}</span>
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.tracking?.label_schedule || t.tracking_page?.label_schedule || "Schedule"}</span>
                                                     <p className="text-sm font-bold leading-tight">{booking.pickupDate} {booking.pickupTime}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-4">
                                                 <div className="p-3 bg-gray-50 rounded-2xl"><CreditCard className="w-5 h-5 text-bee-yellow" /></div>
                                                 <div>
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.tracking_page.label_payment}</span>
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">{t.tracking?.label_payment || t.tracking_page?.label_payment || "Payment"}</span>
                                                     <p className="text-sm font-bold leading-tight">₩{booking.finalPrice?.toLocaleString()}</p>
                                                 </div>
                                             </div>
@@ -271,7 +271,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                                     className={`flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-colors ${isModificationLocked(booking) ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-500'}`}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
-                                                    {t.tracking_page.cancel_btn}
+                                                    {t.tracking?.cancel_btn || t.tracking_page?.cancel_btn || "Cancel"}
                                                 </button>
                                             </div>
                                         )}
@@ -301,7 +301,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                             <div className="p-8 md:p-12">
                                 <div className="flex justify-between items-center mb-8">
                                     <h3 className="text-2xl font-black tracking-tight">{t.refund.title}</h3>
-                                    <button onClick={() => setShowRefundModal(false)} title="Close Modal" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                    <button onClick={() => setShowRefundModal(false)} title={t.common?.close || "Close"} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <X className="w-6 h-6" />
                                     </button>
                                 </div>

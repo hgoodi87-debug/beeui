@@ -13,21 +13,21 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
             icon: <QrCode className="w-10 h-10" />,
             title: t.howitworks.step1.title,
             desc: t.howitworks.step1.desc,
-            badge: "STEP 1. Drop",
+            badge: t.howitworks.step1.badge || "STEP 1. Drop",
             img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EB%A7%A1%EA%B8%B0.png?alt=media&token=6ed1959e-b28e-48f5-a07f-3ccf611bfdc9"
         },
         {
             icon: <Coffee className="w-10 h-10" />,
             title: t.howitworks.step2.title,
             desc: t.howitworks.step2.desc,
-            badge: "STEP 2. Enjoy",
+            badge: t.howitworks.step2.badge || "STEP 2. Enjoy",
             img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EB%B0%98%ED%8F%AC%20%ED%95%9C%EA%B0%95%EA%B3%B5%EC%9B%90.jpeg?alt=media&token=96d6f70c-dde8-4a6e-ae90-7be885db1b91"
         },
         {
             icon: <Plane className="w-10 h-10" />,
             title: t.howitworks.step3.title,
             desc: t.howitworks.step3.desc,
-            badge: "STEP 3. Meet",
+            badge: t.howitworks.step3.badge || "STEP 3. Meet",
             img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EA%B3%B5%ED%95%AD.png?alt=media&token=a3024250-0f39-44fe-a755-99777d5a55b7"
         }
     ];
@@ -47,9 +47,9 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                         viewport={{ once: true }}
                         className="inline-block px-5 py-2 rounded-full bg-bee-yellow/10 text-[11px] font-black tracking-[0.3em] text-bee-yellow uppercase mb-8 font-outfit"
                     >
-                        MAGIC PROCESS ✨
+                        {t.howitworks?.badge_label || "MAGIC PROCESS ✨"}
                     </motion.span>
-                    <h2 className="text-5xl md:text-8xl font-display font-black tracking-tighter text-bee-black leading-[1.1] mb-10 break-keep">
+                    <h2 className="text-4xl md:text-7xl font-display font-black tracking-tighter text-bee-black leading-[1.1] mb-10 break-keep px-4">
                         {t.howitworks.headline}
                     </h2>
                 </div>

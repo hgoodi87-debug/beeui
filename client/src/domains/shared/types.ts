@@ -91,7 +91,7 @@ export interface TermsPolicyData {
     content: TermsArticle[];
 }
 
-export type AdminTab = 'OVERVIEW' | 'DELIVERY_BOOKINGS' | 'STORAGE_BOOKINGS' | 'LOCATIONS' | 'DISCOUNTS' | 'SYSTEM' | 'HR' | 'PARTNERSHIP_INQUIRIES' | 'NOTICE' | 'HERO' | 'CLOUD' | 'PRIVACY_EDITOR' | 'TERMS_EDITOR' | 'ACCOUNTING' | 'TRASH' | 'DAILY_SETTLEMENT' | 'CHATS' | 'REPORTS' | 'ROADMAP';
+export type AdminTab = 'OVERVIEW' | 'OPERATIONS' | 'DELIVERY_BOOKINGS' | 'STORAGE_BOOKINGS' | 'LOCATIONS' | 'DISCOUNTS' | 'SYSTEM' | 'HR' | 'PARTNERSHIP_INQUIRIES' | 'NOTICE' | 'HERO' | 'CLOUD' | 'PRIVACY_EDITOR' | 'TERMS_EDITOR' | 'ACCOUNTING' | 'TRASH' | 'DAILY_SETTLEMENT' | 'CHATS' | 'REPORTS' | 'ROADMAP';
 
 export interface TranslatedLocationData {
     name_en: string;

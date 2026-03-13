@@ -1,25 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PrivacyPolicyData } from '../../types';
+import { StorageService } from '../../services/storageService';
 
-interface PrivacyEditorTabProps {
-    privacyForm: PrivacyPolicyData;
-    setPrivacyForm: (p: PrivacyPolicyData) => void;
-    savePrivacy: () => void;
-    addPrivacyArticle: () => void;
-    updatePrivacyArticle: (idx: number, field: string, val: string) => void;
-    removePrivacyArticle: (idx: number) => void;
-    isSaving: boolean;
-}
+const PrivacyEditorTab: React.FC = () => {
+    const [privacyForm, setPrivacyForm] = useState<PrivacyPolicyData>({
+        title: '개인정보처리방침',
+        last_updated: '',
+        intro: '',
+        content: []
+    });
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-const PrivacyEditorTab: React.FC<PrivacyEditorTabProps> = ({
-    privacyForm,
-    setPrivacyForm,
-    savePrivacy,
-    addPrivacyArticle,
-    updatePrivacyArticle,
-    removePrivacyArticle,
-    isSaving
-}) => {
+    useEffect(() => {
+        const fetchPrivacy = async () => {
+            setIsLoading(true);
+            try {
+                const savedPrivacy = await StorageService.getPrivacyPolicy();
+                if (savedPrivacy) setPrivacyForm(savedPrivacy);
+            } catch (err) {
+                console.error('Failed to load Privacy Policy:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPrivacy();
+    }, []);
+
+    const savePrivacy = async () => {
+        setIsSaving(true);
+        try {
+            await StorageService.savePrivacyPolicy(privacyForm);
+            alert('개인정보 처리방침이 저장되었습니다.');
+        } catch (e) {
+            console.error(e);
+            alert('저장 실패!');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const addPrivacyArticle = () => {
+        setPrivacyForm(prev => ({
+            ...prev,
+            content: [...prev.content, { title: '', text: '' }]
+        }));
+    };
+
+    const updatePrivacyArticle = (idx: number, field: 'title' | 'text', val: string) => {
+        setPrivacyForm(prev => {
+            const newContent = [...prev.content];
+            newContent[idx] = { ...newContent[idx], [field]: val };
+            return { ...prev, content: newContent };
+        });
+    };
+
+    const removePrivacyArticle = (idx: number) => {
+        setPrivacyForm(prev => ({
+            ...prev,
+            content: prev.content.filter((_, i) => i !== idx)
+        }));
+    };
+
+    if (isLoading) {
+        return <div className="p-8 text-center text-gray-500 font-bold"><i className="fa-solid fa-spinner animate-spin mr-2"></i> 데이터를 불러오는 중...</div>;
+    }
+
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
             <div className="flex justify-between items-center">

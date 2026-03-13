@@ -161,7 +161,7 @@ const Hero: React.FC<HeroProps> = ({ onStorageClick, t, lang }) => {
 
         {/* Main Headline */}
         <div className="space-y-6 md:space-y-8">
-          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-bee-black leading-[1.1] tracking-tighter">
+          <h1 className="text-[clamp(1.75rem,8vw,4.5rem)] font-black text-bee-black leading-[1.1] tracking-tighter break-keep whitespace-normal">
             <span className="block opacity-0 animate-fade-in-up hero-animation-delay-1">
               {t.hero.title1}
             </span>

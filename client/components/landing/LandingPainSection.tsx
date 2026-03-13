@@ -30,7 +30,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-4xl md:text-7xl font-display font-black text-bee-black leading-[1.2] tracking-tight break-keep"
+                        className="text-3xl md:text-6xl font-display font-black text-bee-black leading-[1.2] tracking-tight break-keep px-4"
                     >
                         {t.pain.headline}
                     </motion.h2>

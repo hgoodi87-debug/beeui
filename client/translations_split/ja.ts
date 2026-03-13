@@ -4,7 +4,7 @@ export const ja = {
         description: '弘大入口駅、ソウル駅、仁川空港、金浦空港での荷物保管および配送サービス。ホテルから空港までスーツケースを当日配送。重い荷物は預けて身軽に旅行しましょう。',
         keywords: '弘大 荷物保管, 弘大 荷物配送, ソウル駅 荷物保管, 荷物配送サービス, スーツケース配送, 仁川空港 荷物配送, 当日荷物配送, ホテル 荷物配送'
     },
-    nav: { services: 'サービス紹介', locations: '拠点案内', tracking: '配送追跡', partners: '提携お問い合わせ', book: '今すぐ予約', terms_label: '利用規約', admin_portal: 'ポータル' },
+    nav: { services: 'サービス紹介', locations: '拠点案内', tracking: '配送追跡', partners: '提携お問い合わせ', book: '今すぐ予約', terms_label: '利用規約', admin_portal: 'ポータル', login: 'ログイン', mypage: 'マイページ' },
     terms_page: {
         title: 'サービス利用規約',
         last_updated: '最終更新: 2025年 1月 1日',
@@ -38,7 +38,23 @@ export const ja = {
         track_booking: '予約と配送を確認',
         book_branch: '今すぐ予約',
         main_title_1: '荷物から、',
-        main_title_2: '自由になろう。'
+        main_title_2: '自由になろう。',
+        main_title_bags: 'BAGS.',
+        main_title_city: 'CITY.',
+        live_label: 'リアルタイム状態フィード',
+        search_btn: '照会する',
+        status_suffix: '現況',
+        label_route: '経路',
+        label_schedule: '日程',
+        label_payment: '決済',
+        go_back: '戻る',
+        status_1: '予約確定',
+        status_2: '受付待機',
+        status_3: '移動中',
+        status_4: '到着完了',
+        status_5: '利用完了',
+        noResult: '予約履歴がありません。',
+        check_info: '情報をもう一度確認してください。'
     },
     pain: {
         headline: "28インチの重さはBeeliberに任せて、\n両手にはときめきだけを。",
@@ -53,15 +69,20 @@ export const ja = {
     },
     howitworks: {
         headline: "たった3回のタッチ、魔法のように消える荷物",
-        step1: { title: "Drop (預ける)", desc: "空港（またはホテル）の Beeliber デスク/パートナーに\nあなたの重い荷物を渡します。" },
-        step2: { title: "Enjoy (楽しむ)", desc: "両手が自由な状態で、すぐに\n観光地、レストラン、ショッピングを楽しみます。" },
-        step3: { title: "Meet (出会う)", desc: "日程を終えてホテルの部屋に到着すると、\n荷物が先にあなた를待っています。" }
+        badge_label: "MAGIC PROCESS ✨",
+        step1: { title: "Drop (預ける)", desc: "空港（またはホテル）の Beeliber デスク/パートナーに\nあなたの重い荷物を渡します。", badge: "STEP 1. Drop" },
+        step2: { title: "Enjoy (楽しむ)", desc: "両手が自由な状態で、すぐに\n観光地、レストラン、ショッピングを楽しみます。", badge: "STEP 2. Enjoy" },
+        step3: { title: "Meet (出会う)", desc: "日程を終えてホテルの部屋に到着すると,\n荷物が先にあなたを待っています。", badge: "STEP 3. Meet" }
     },
     trust: {
         headline: "あなたの荷物は、VIP 待遇を受けます。",
-        tracking: { title: "リアルタイムメール通知", desc: "荷物の状態をリアルタイムでメールにてお知らせします。" },
-        insurance: { title: "プレミアム破損保険", desc: "スクラッチ一つまで責任を持つグローバルレベルの保険に基本加入。" },
-        seal: { title: "セキュリティシールシステム", desc: "到着まで絶対に開かないことを保証するスマートセキュリティシール。" }
+        badge_label: "VIP Bee-Keeper Trust",
+        tracking: { title: "リアルタイムメール通知", desc: "荷物の状態をリアルタイムでメールにてお知らせします。", accent: "EMAIL STATUS" },
+        insurance: { title: "プレミアム破損保険", desc: "スクラッチ一つまで責任を持つグローバルレベルの保険に基本加入。", accent: "GLOBAL INSURED" },
+        seal: { title: "セキュリティシールシステム", desc: "到着まで絶対に開かないことを保証するスマートセキュリティシール。", accent: "SMART SEAL" },
+        footer_label1: "24/7 リアルタイム監視",
+        footer_label2: "認証パートナー",
+        footer_label3: "安全なクラウド暗号化"
     },
     pricing: {
         headline: "タクシー代より安い、\n一日の完璧な自由",
@@ -71,7 +92,11 @@ export const ja = {
         price_standard: "₩20,000",
         price_extra: "₩29,000",
         features_standard: ["23インチ以下のすべてのサイズ", "空港 ↔ ホテル当日配送", "リアルタイムメール状況通知", "基本破損保険込み"],
-        features_extra: ["27インチ超", "重量物特化管理", "当日安全配送保証", "プレミアム保険適用"]
+        features_extra: ["27インチ超", "重量物特化管理", "当日安全配送保証", "プレミアム保険適用"],
+        flat_rate_label: "一律料金 💰",
+        most_popular_label: "一番人気",
+        per_bag_label: "/ 個",
+        choose_service_btn: "サービスを選択"
     },
     reviews_section: {
         headline: "荷物なしで歩くソウルがいかに美しいか、彼らが証明します。",
@@ -218,8 +243,34 @@ export const ja = {
         airport_late_notice: "空港の店舗は、決められた受取時間に合わせてお越しいただく必要があります。到着が遅れると別途保管料が発生することがありますので、時間を必ず守ってください! 🍯"
     },
     status_mapping: {
-        '접수완료': '受付完了', '보관중': '保管中', '이동중': '移動中',
-        '목적지도착': '到着済み', '완료': '完了', '취소됨': '取消済み'
+        '접수완료': '受付完了', '예약완료': '予約確定', '보관중': '保管中', '이동중': '移動中',
+        '목적지도착': '到着済み', '완료': '完了', '취소됨': '取消済み', '환불완료': '払戻完了'
+    },
+    tracking_page: {
+        title: '予約・配送状況の確認',
+        subtitle: 'お名前とメールアドレスを入力すると、パスワードなしで現在の荷物の移動状況を簡単に確認できます。',
+        search_btn: '予約を照会する',
+        search_placeholder: 'お名前を入力してください',
+        status_1: '予約確定',
+        status_2: '集荷中',
+        status_3: '移動中',
+        status_4: '到着完了',
+        status_5: '受け取り完了',
+        noResult: '検索結果が見つかりません。',
+        label_route: '経路',
+        label_schedule: '日程',
+        label_payment: '決済金額',
+        cancel_btn: '予約をキャンセル',
+        alert_modification_locked: '当日以降の予約は変更できません。',
+        alert_cancellation_locked: '当日以降の予約はキャンセルできません。'
+    },
+    refund: {
+        title: 'キャンセル・払い戻し規定',
+        content: '• ご利用の24時間前: 100% 払い戻し\n• ご利用の12時間前: 50% 払い戻し\n• 当日および無단キャンセル(No-Show): 払い戻し不可\n\n* 払い戻しは決済手段により、営業日基準で3〜7日かかる場合があります。',
+        confirm_btn: 'キャンセルを確定する',
+        close_btn: '閉じる',
+        alert_cancel_success: '予約が正常にキャンセルされました。',
+        alert_cancel_error: 'キャンセル中にエラーが発生しました。カスタマーセンターまでお問い合わせください。'
     },
     storage_tiers: {
         'st-4h': '4時間以下', 'st-1d': '1日 (24時間)', 'st-week': '7日 (長期)'
@@ -332,40 +383,6 @@ export const ja = {
         reservation_title: '予約する',
         label_map_error: '地図の読み込み失敗'
     },
-    tracking_page: {
-        title: '配送追跡',
-        subtitle: '予約番号またはメールアドレスで荷物の状態を確認してください。',
-        label_route: '配送経路',
-        label_schedule: 'スケジュール',
-        label_payment: '決済金額',
-        search_btn: '照会する',
-        cancel_btn: '予約キャンセル',
-        status_1: '予約確定',
-        status_2: '収荷待機',
-        status_3: '移動/保管中',
-        status_4: '到着完了',
-        status_5: '引取完了',
-        search_placeholder: '予約時のメールアドレスを入力してください',
-        label_booking_id: '予約番号',
-        label_customer: '予約者名',
-        label_status: '現在の状態',
-        label_bags: '手荷物',
-        cancel_confirm_title: '予約をキャンセルしますか？',
-        cancel_confirm_desc: 'キャンセルポリシーに従って払い戻しが行われます。',
-        pickup_time_prefix: '預け入れ時間: ',
-        return_time_prefix: '受け取り時間: ',
-        status_history_title: 'タイムライン',
-        no_bookings: '該当するメールアドレスの予約履歴が見つかりません。',
-        error_search: '予約情報の照会中にエラーが発生しました。'
-    },
-    refund: {
-        title: 'キャンセルおよび払い戻し規定',
-        content: `• 予約時間の24時間前までのキャンセル: 100%払い戻し\n• 予約時間の12時間前までのキャンセル: 50%払い戻し\n• 予約時間の12時間以内または無断キャンセル(No-show): 払い戻し不可\n\n※ 払い戻しの処理には3〜5営業日ほどかかる場合があります。`,
-        confirm_btn: 'キャンセル確定',
-        close_btn: '閉じる',
-        alert_cancel_success: '予約が正常にキャンセルされました。',
-        alert_cancel_error: 'キャンセル処理中にエラーが発生しました。カスタ머センターにお問い合わせください。'
-    },
     manual: {
         title: 'ご利用ガイド', subtitle: 'How to use', desc: 'Beeliberで重い荷物のストレスから解放されましょう。',
         step_prefix: 'STEP', copyright: 'Beeliber Global Logistics Manual © 2025',
@@ -404,7 +421,12 @@ export const ja = {
     services_page: {
         badge: "Smart Luggage Solution",
         main_title_1: "ソウル旅行の始まり、",
-        main_title_2: "荷物なしで身軽に",
+        main_title_2: "荷物のない軽い足取り",
+        email_status_check: "メール状態照会",
+        trust_badge: "TRUST & SAFETY",
+        freedom_title: "Beeliberの自由",
+        how_it_works_badge: "HOW IT WORKS",
+        everyone_badge: "FOR EVERYONE",
         title: "Beeliberと共に、手荷物のない軽やかな旅行を始めましょう！",
         subtitle: "重い荷物から解放され、旅行の楽しさにだけに集中してください。",
         subtitle_badge: "Beeliber サービス",
@@ -451,8 +473,28 @@ export const ja = {
         },
         cta: "今すぐBeeliberで手荷物のない軽やかな旅行を体験してください！",
         cta_main_title: "旅行の自由を楽しむ準備はできましたか？",
-        btn_book_now: "今すぐ予約",
-        back: "ホームに戻る"
+        btn_book_now: "自由な旅を始める 🐝",
+        tracking_page: {
+            title: "予約状況および配送状況照会",
+            subtitle: "名前とメールアドレスを入力して、現在の荷物の移動状況をパスワードなしで簡単に確認してください。",
+            btn: "照会する"
+        },
+        footer_msg: "Travel light, live more",
+        trust_title: "見える信頼、体感する安心。",
+        trust_desc: "明確なステータス更新とリアルタイムのメール通知により、手荷物の移動過程をいつでも透明に確認できます。",
+        status_update: "ステータス更新",
+        current_status: "現在の状態",
+        moving: "移動中",
+        pickup_complete: "集荷完了 (T1)",
+        transferring: "配送ハブへ移送・仕分け中",
+        moving_to_hotel: "ホテルへ移動中",
+        who_needs_title: "どんな方におすすめですか？",
+        persona_1_title: "旅行初日",
+        persona_1_desc: "チェックインまで時間があるのに荷物が重い...\n空港から直接荷物を送って、\nすぐにグルメ巡りを始めましょう。",
+        persona_2_title: "旅行最終日",
+        persona_2_desc: "フライトは夜、チェックアウトは午前...\n荷物を先に空港へ送って、\n身軽な状態で思い出の写真を残しましょう。",
+        persona_3_title: "徒歩旅行者",
+        persona_3_desc: "レンタカーなしで移動していますか？\nホテルを変えるたびに重い荷物と格闘せず,\n荷物だけ「瞬間移動」させて身軽に移動しましょう。"
     },
     bee_ai: {
         header_title: "Beeスタッフ ブンブンイ",

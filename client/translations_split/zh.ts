@@ -4,7 +4,7 @@ export const zh = {
         description: '弘大入口站、首尔站、仁川机场、金浦机场行李寄存及配送服务。酒店到机场当日行李箱配送。放下重担，轻松旅行。',
         keywords: '弘大行李寄存, 弘大行李配送, 首尔站行李寄存, 行李配送服务, 行李箱配送, 仁川机场行李配送, 当日行李配送, 酒店行李配送'
     },
-    nav: { services: '服务介绍', locations: '分店指南', tracking: '配送查询', partners: '加盟咨询', book: '立即预订', terms_label: '配送业务委托及第三方(运输公司)信息提供同意书', admin_portal: '管理员门户' },
+    nav: { services: '服务介绍', locations: '分店指南', tracking: '配送查询', partners: '加盟咨询', book: '立即预订', terms_label: '配送业务委托及第三方(运输公司)信息提供同意书', admin_portal: '管理员门户', login: '登录', mypage: '个人中心' },
     terms_page: {
         title: '服务使用条款',
         last_updated: '最后更新: 2025年 1月 1日',
@@ -38,7 +38,23 @@ export const zh = {
         track_booking: '查询配送详情',
         book_branch: '立即预订',
         main_title_1: '放下行李，',
-        main_title_2: '换取自由。'
+        main_title_2: '换取自由。',
+        main_title_bags: 'BAGS.',
+        main_title_city: 'CITY.',
+        live_label: '实时状态反馈',
+        search_btn: '立即查询',
+        status_suffix: '状态',
+        label_route: '路径',
+        label_schedule: '日程',
+        label_payment: '结算',
+        go_back: '返回',
+        status_1: '确认预订',
+        status_2: '等待受理',
+        status_3: '正在移动',
+        status_4: '到达目的地',
+        status_5: '已完成使用',
+        noResult: '没有相关预订记录。',
+        check_info: '请再次检查您的信息。'
     },
     pain: {
         headline: "把28寸的重量交给Beeliber，\n让您的双手只留下心动。",
@@ -53,15 +69,20 @@ export const zh = {
     },
     howitworks: {
         headline: "只需点击3次，行李宛如隐形",
-        step1: { title: "Drop (寄放)", desc: "在机场（或酒店）的 Beeliber 柜台或合作伙伴处寄放行李。" },
-        step2: { title: "Enjoy (享受)", desc: "两手空空，立即开启您的观光、探店和购物之旅。" },
-        step3: { title: "Meet (提取)", desc: "结束行程回到机场，您的行李已在那里静候您的光临。" }
+        badge_label: "MAGIC PROCESS ✨",
+        step1: { title: "Drop (寄放)", desc: "在机场（或酒店）的 Beeliber 柜台或合作伙伴处寄放行李。", badge: "STEP 1. Drop" },
+        step2: { title: "Enjoy (享受)", desc: "两手空空，立即开启您的观光、探店和购物之旅。", badge: "STEP 2. Enjoy" },
+        step3: { title: "Meet (提取)", desc: "结束行程回到机场，您的行李已在那里静候您的光临。", badge: "STEP 3. Meet" }
     },
     trust: {
         headline: "您的行李，将享受 VIP 待遇。",
-        tracking: { title: "实时邮件通知", desc: "通过电子邮件实时接收您的行李状态更新。" },
-        insurance: { title: "高级损坏保险", desc: "默认涵盖国际级保险，甚至对细微划痕也负责到底。" },
-        seal: { title: "安全封条系统", desc: "配备智能安全封条，保证在送达前绝对无人开启。" }
+        badge_label: "VIP Bee-Keeper Trust",
+        tracking: { title: "实时邮件通知", desc: "通过电子邮件实时接收您的行李状态更新。", accent: "EMAIL STATUS" },
+        insurance: { title: "高级损坏保险", desc: "默认涵盖国际级保险，甚至对细微划痕也负责到底。", accent: "GLOBAL INSURED" },
+        seal: { title: "安全封条系统", desc: "配备智能安全封条，保证在送达前绝对无人开启。", accent: "SMART SEAL" },
+        footer_label1: "24/7 实时监控",
+        footer_label2: "认证合作伙伴",
+        footer_label3: "安全云加密"
     },
     pricing: {
         headline: "比打车更实惠，换取一整天的完美自由",
@@ -71,7 +92,11 @@ export const zh = {
         price_standard: "₩20,000",
         price_extra: "₩29,000",
         features_standard: ["23英寸以下所有尺寸", "机场 ↔ 酒店当日配送", "实时邮件状态提醒", "包含基础损坏保险"],
-        features_extra: ["超过27英寸、大件行李等", "重型行李特化管理", "当日安全配送保证", "适用高级保险"]
+        features_extra: ["超过27英寸、大件行李等", "重型行李特化管理", "当日安全配送保证", "适用高级保险"],
+        flat_rate_label: "统一费用 💰",
+        most_popular_label: "人气服务",
+        per_bag_label: "/ 件",
+        choose_service_btn: "选择服务"
     },
     reviews_section: {
         headline: "Beeliber将证明，没有行李的旅程有多美。",
@@ -201,8 +226,34 @@ export const zh = {
         airport_late_notice: "机场分店需要根据预约的时间准时到达。迟到可能会产生额外的保管费用，请务必准时！ 🍯"
     },
     status_mapping: {
-        '접수완료': '已受理', '보관중': '寄存中', '이동중': '运输中',
-        '목적지도착': '已到达', '완료': '已完成', '취소됨': '已取消'
+        '접수완료': '已受理', '예약완료': '预订确认', '보관중': '寄存中', '이동중': '运输中',
+        '목적지도착': '已到达', '완료': '已完成', '취소됨': '已取消', '환불완료': '退款完成'
+    },
+    tracking_page: {
+        title: '我的预订 & 配送查询',
+        subtitle: '输入姓名和电子邮箱，无需密码即可轻松查看当前的搬运状态。',
+        search_btn: '查询预订',
+        search_placeholder: '请输入您的姓名',
+        status_1: '预订确认',
+        status_2: '取件中',
+        status_3: '运输中',
+        status_4: '到达目的地',
+        status_5: '提取完成',
+        noResult: '未找到相关预订记录。',
+        label_route: '路径',
+        label_schedule: '日程',
+        label_payment: '结算金额',
+        cancel_btn: '取消预订',
+        alert_modification_locked: '服务当天（或以后）无法修改预订。',
+        alert_cancellation_locked: '服务当天（或以后）无法取消预订。'
+    },
+    refund: {
+        title: '取消及退款规定',
+        content: '• 利用 24小时前: 100% 退款\n• 利用 12小时前: 50% 退款\n• 当日及未出现 (No-Show): 不予退款\n\n* 退款处理可能需要 3-7个工作日。',
+        confirm_btn: '确认取消',
+        close_btn: '关闭',
+        alert_cancel_success: '您的预订已成功取消。',
+        alert_cancel_error: '取消过程中发生错误。请联系客服。'
     },
     storage_tiers: {
         'st-4h': '4小时以内', 'st-1d': '1天 (24小时)', 'st-week': '7天 (长期)'
@@ -236,6 +287,11 @@ export const zh = {
         badge: "Smart Luggage Solution",
         main_title_1: "首尔旅行的开始，",
         main_title_2: "无行李轻便行",
+        email_status_check: "邮件状态查询",
+        trust_badge: "TRUST & SAFETY",
+        freedom_title: "Beeliber 的自由",
+        how_it_works_badge: "HOW IT WORKS",
+        everyone_badge: "FOR EVERYONE",
         title: "与 Beeliber 一起，开启无行李轻便旅行！",
         subtitle: "从沉重的行李中解放出来，只专注于旅行的乐趣。",
         subtitle_badge: "Beeliber 服务",
@@ -282,8 +338,29 @@ export const zh = {
         },
         cta: "现在就在 Beeliber 体验无行李的轻便旅行吧！",
         cta_main_title: "准备好享受旅行的自由了吗？",
-        btn_book_now: "现在预订",
-        back: "返回主页"
+        btn_book_now: "开启自由旅行 🐝",
+        tracking_page: {
+            title: "预约状态及配送状态查询",
+            subtitle: "输入姓名和电子邮件，无需密码即可轻松查看行李的当前移动状态。",
+            btn: "查询"
+        },
+        back: "返回主页",
+        trust_title: "看得见的信任，感受得到的安心。",
+        trust_desc: "通过明确的状态更新和实时邮件通知，您可以随时透明地查看行李的移动过程。",
+        status_update: "状态更新",
+        current_status: "当前状态",
+        moving: "运送中",
+        pickup_complete: "提取完成 (T1)",
+        transferring: "运送至分拨中心并分类",
+        moving_to_hotel: "正在前往酒店",
+        who_needs_title: "谁需要这项服务？",
+        persona_1_title: "旅行首日",
+        persona_1_desc: "距离入住还有好几个小时，但行李很重...\n直接从机场寄送行李，\n立即开启您的美食之旅。",
+        persona_2_title: "旅行最后一天",
+        persona_2_desc: "航班在晚上，退房在上午...\n先将行李寄往机场，\n两手空空，尽情留下旅行美照。",
+        persona_3_title: "徒步旅行者",
+        persona_3_desc: "不租车转为徒步旅行？\n不要每次更换酒店都与重物搏斗，\n让行李“瞬间移动”，您只需轻装上阵。",
+        footer_msg: "Enjoy your light travel!"
     },
     tracking: { title: '实时查询', desc: '输入邮箱查看位置。', placeholder: '输入邮箱', btn: '查询', noResult: '无查询结果。', status_suffix: '状态' },
     footer: {
@@ -371,40 +448,6 @@ export const zh = {
         label_facilities: '可用服务',
         reservation_title: '预约',
         label_map_error: '地图加载失败'
-    },
-    tracking_page: {
-        title: '预约查询及配送追踪',
-        subtitle: '只需输入邮箱地址，即可一目了然地查看行李的当前位置。',
-        label_route: '路线',
-        label_schedule: '日程',
-        label_payment: '结算金额',
-        search_btn: '查询',
-        cancel_btn: '取消预订',
-        status_1: '确认预订',
-        status_2: '等待揽收',
-        status_3: '运送/存放中',
-        status_4: '到达目的地',
-        status_5: '提取完成',
-        search_placeholder: '请输入预约时的邮箱地址',
-        label_booking_id: '预约编号',
-        label_customer: '预约人姓名',
-        label_status: '当前状态',
-        label_bags: '行李',
-        cancel_confirm_title: '确定要取消预约吗？',
-        cancel_confirm_desc: '将根据取消政策进行退款。',
-        pickup_time_prefix: '寄存时间: ',
-        return_time_prefix: '领取时间: ',
-        status_history_title: '时间轴',
-        no_bookings: '未找到该邮箱地址的预约记录。',
-        error_search: '查询预约信息时发生错误。'
-    },
-    refund: {
-        title: '取消及退款规定',
-        content: `• 预约时间前 24小时取消: 100% 退款\n• 预约时间前 12小时取消: 50% 退款\n• 预约时间 12小时内或未出现 (No-show): 不予退款\n\n※ 退款处理可能需要 3-5个工作日。`,
-        confirm_btn: '是的，我要取消',
-        close_btn: '关闭',
-        alert_cancel_success: '您的预订已成功取消。',
-        alert_cancel_error: '取消过程中发生错误。请联系客服。'
     },
     common: {
         confirm: '确认',

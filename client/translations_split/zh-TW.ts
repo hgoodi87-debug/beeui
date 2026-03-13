@@ -4,7 +4,7 @@ export const zhTW = {
         description: '弘大入口站、首爾站、仁川機場、金浦機場行李寄存及配送服務。飯店到機場當日行李箱配送。放下重擔，輕鬆旅行。',
         keywords: '弘大行李寄存, 弘大行李配送, 首爾站行李寄存, 行李配送服務, 行李箱配送, 仁川機場行李配送, 當日行李配送, 飯店行李配送'
     },
-    nav: { services: '服務介紹', locations: '分店指南', tracking: '配送查詢', partners: '加盟諮詢', book: '立即預訂', terms_label: '配送業務委託及第三方(運輸公司)信息提供同意書', admin_portal: '管理員門戶' },
+    nav: { services: '服務介紹', locations: '分店指南', tracking: '配送查詢', partners: '加盟諮詢', book: '立即預訂', terms_label: '配送業務委託及第三方(運輸公司)信息提供同意書', admin_portal: '管理員門戶', login: '登錄', mypage: '個人中心' },
     terms_page: {
         title: '服務使用條款',
         last_updated: '最後更新: 2025年 1月 1日',
@@ -43,10 +43,24 @@ export const zhTW = {
         book_branch: '據點預約 (地圖)',
         main_title_1: '從行李中，',
         main_title_2: '獲得自由。',
-        main_title_bags: '行李',
-        main_title_city: '自由',
+        main_title_bags: 'BAGS.',
+        main_title_city: 'CITY.',
         insurance_badge_text: '每件行李最高賠償50萬韓元',
         track_booking: '查詢預約',
+        live_label: '實時狀態追蹤',
+        search_btn: '立即查詢',
+        status_suffix: '狀態',
+        label_route: '路線',
+        label_schedule: '日程',
+        label_payment: '付款',
+        go_back: '返回',
+        status_1: '確認預訂',
+        status_2: '等待受理',
+        status_3: '正在移動',
+        status_4: '抵達目的地',
+        status_5: '已完成使用',
+        noResult: '沒有相關預訂記錄。',
+        check_info: '請再次檢查您的資料。',
         reviews: [
             { name: "金某", text: "去機場前寄放了行李，輕鬆開啟旅程！" },
             { name: "Lee J.", text: "實時追蹤功能太棒了。強烈推薦！" },
@@ -175,8 +189,34 @@ export const zhTW = {
         restricted_items_note: '* 如果包含上述物品，可能會被拒絕賠償。'
     },
     status_mapping: {
-        '접수완료': '已受理', '예약완료': '預訂完成', '보관중': '寄存中', '이동중': '運輸中',
+        '접수완료': '已受理', '예약완료': '預訂確認', '보관중': '寄存中', '이동중': '運輸中',
         '목적지도착': '已到達', '완료': '已完成', '취소됨': '已取消', '환불완료': '退款完成'
+    },
+    tracking_page: {
+        title: '我的預訂 & 配送查詢',
+        subtitle: '輸入姓名和電子郵件，無需密碼即可輕鬆查看目前的搬運狀態。',
+        search_btn: '查詢預訂',
+        search_placeholder: '請輸入您的姓名',
+        status_1: '預訂確認',
+        status_2: '取件中',
+        status_3: '運輸中',
+        status_4: '抵達目的地',
+        status_5: '提取完成',
+        noResult: '找不到相關預訂記錄。',
+        label_route: '路徑',
+        label_schedule: '日程',
+        label_payment: '結算金額',
+        cancel_btn: '取消預訂',
+        alert_modification_locked: '服務當天（或以後）無法修改預訂。',
+        alert_cancellation_locked: '服務當天（或以後）無法取消預訂。'
+    },
+    refund: {
+        title: '取消及退款規定',
+        content: '• 利用 24小時前: 100% 退款\n• 利用 12小時前: 50% 退款\n• 當日及未出現 (No-Show): 不予退款\n\n* 退款處理可能需要 3-7個工作日。',
+        confirm_btn: '確認取消',
+        close_btn: '關閉',
+        alert_cancel_success: '您的預訂已成功取消。',
+        alert_cancel_error: '取消過程中發生錯誤。請聯繫客服。'
     },
     storage_tiers: {
         'st-4h': '4小時以內', 'st-1d': '1天 (24小時)', 'st-week': '7天 (長期)'
@@ -209,7 +249,12 @@ export const zhTW = {
     services_page: {
         badge: "Smart Luggage Solution",
         main_title_1: "首爾旅行的開始，",
-        main_title_2: "無行李輕裝上陣",
+        main_title_2: "無行李輕便行",
+        email_status_check: "郵件狀態查詢",
+        trust_badge: "TRUST & SAFETY",
+        freedom_title: "Beeliber 的自由",
+        how_it_works_badge: "HOW IT WORKS",
+        everyone_badge: "FOR EVERYONE",
         subtitle: "從弘大到仁川機場。我們為您處理沉重的行李，讓您享受旅行的每一刻。",
         subtitle_badge: "Beeliber 服務",
         title: "與 Beeliber 一起，開啟無行李輕便旅行！",
@@ -232,7 +277,7 @@ export const zhTW = {
             { t: "靈活的選項", d: "提供適合您行程的各種運輸和寄存選項。" }
         ],
         cta_main_title: "準備好開啟自由之旅了嗎？",
-        btn_book_now: "現在開始",
+        btn_book_now: "開啟自由旅行 🐝",
         how_title: "使用說明",
         how_desc_simple: "只需 3 個簡單的步驟，即可開啟無行李旅行。",
         how_step_descs: ["輕鬆選擇日期和地點。", "在預約地點寄存或領取行李。", "開啟無行李輕便旅行。"],
@@ -240,7 +285,7 @@ export const zhTW = {
         delivery_section: {
             title: "機場-飯店配送",
             subtitle: "機場 ↔ 飯店之間",
-            desc: "在旅行的開始和結束，不要因為沉重的行李而辛苦. 提供從仁川/金浦機場到住宿地點（或反之）的安全當日配送服務。",
+            desc: "在旅行的開始和結束，不要因為沈重的行李而辛苦. 提供從仁川/金浦機場到住宿地點（或反之）的安全當日配送服務。",
             features: ["當日送達保證", "照片認證發送", "含損壞/遺失保險"],
             btn: "預訂配送"
         },
@@ -251,6 +296,27 @@ export const zhTW = {
             features: ["鄰近捷運站", "支援即時預約", "CCTV 安全監控"],
             btn: "預訂寄存"
         },
+        tracking_page: {
+            title: "預約狀態及配送狀態查詢",
+            subtitle: "輸入姓名和電子郵件，無需密碼即可輕鬆查看行李的當前移動狀態。",
+            btn: "查詢"
+        },
+        footer_msg: "Travel light, live more",
+        trust_title: "看得見的信任，感受得到的安心。",
+        trust_desc: "透過明確的狀態更新和實時郵件通知，您可以隨時透明地查看行李的移動過程。",
+        status_update: "狀態更新",
+        current_status: "當前狀態",
+        moving: "運送中",
+        pickup_complete: "提取完成 (T1)",
+        transferring: "運送至分撥中心並分類",
+        moving_to_hotel: "正在前往飯店",
+        who_needs_title: "誰需要這項服務？",
+        persona_1_title: "旅行首日",
+        persona_1_desc: "距離入住還有好幾個小時，但行李很重...\n直接從機場寄送行李，\n立即開啟您的美食之旅。",
+        persona_2_title: "旅行最後一天",
+        persona_2_desc: "航班在晚上，退房在上午...\n先將行李寄往機場，\n兩手空空，盡情留下旅行美照。",
+        persona_3_title: "多點移動",
+        persona_3_desc: "不租車轉為徒步旅行？\n不要每次更환飯店都與重物搏鬥,\n讓行李“瞬間移動”，您只需輕裝上陣。"
     },
     pricing: {
         headline: "比計程車更便宜，\n一天的完美自由",
@@ -260,7 +326,11 @@ export const zhTW = {
         price_standard: "₩20,000",
         price_extra: "₩29,000",
         features_standard: ["23吋以下所有尺寸", "機場 ↔ 飯店當日配送", "實時郵件狀態提醒", "包含基礎損壞保險"],
-        features_extra: ["超過27吋、大件行李等", "重型行李特化管理", "當日安全配送保證", "適用高級保險"]
+        features_extra: ["超過27吋、大件行李等", "重型行李特化管理", "當日安全配送保證", "適用高級保險"],
+        flat_rate_label: "定額費用 💰",
+        most_popular_label: "人氣首選",
+        per_bag_label: "/ 件",
+        choose_service_btn: "選擇服務"
     },
     footer: {
         desc: 'Beeliber 致力於讓旅遊更輕便。',
@@ -338,28 +408,6 @@ export const zhTW = {
         label_facilities: '可用服務',
         reservation_title: '預訂',
         label_map_error: '地圖載入失敗'
-    },
-    tracking_page: {
-        title: '配送查詢',
-        subtitle: '請通過訂單號或電子郵件查詢您的行李狀態。',
-        label_route: '配送路線',
-        label_schedule: '日程安排',
-        label_payment: '支付金額',
-        search_btn: '立即查詢',
-        cancel_btn: '取消預訂',
-        status_1: '確認預訂',
-        status_2: '等待攬收',
-        status_3: '運送/存放中',
-        status_4: '到達目的地',
-        status_5: '提取完成'
-    },
-    refund: {
-        title: '取消及退款規定',
-        content: `• 預訂使用24小時前取消：100% 退款\n• 預訂使用12小時前取消：50% 退款\n• 預訂使用12小時內取消或未出現：無法退款\n\n※ 根據支付方式的不同，退款處理可能需要3-5個工作日。`,
-        confirm_btn: '是的，我要取消',
-        close_btn: '關閉',
-        alert_cancel_success: '您的預訂已成功取消。',
-        alert_cancel_error: '取消過程中發生錯誤。請聯繫客服。'
     },
     manual: {
         title: '服務使用指南', subtitle: 'How to use Beeliber', desc: '有了 Beeliber，您無需擔心沉重的行李。',

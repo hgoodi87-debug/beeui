@@ -13,19 +13,19 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
             icon: <MapPin className="w-8 h-8" />,
             title: t.trust?.tracking?.title || '실시간 이메일 알림',
             desc: t.trust?.tracking?.desc || '내 짐의 상태를 실시간으로 이메일로 전송 받으세요.',
-            accent: "EMAIL STATUS"
+            accent: t.trust?.tracking?.accent || "EMAIL STATUS"
         },
         {
             icon: <ShieldCheck className="w-8 h-8" />,
             title: t.trust?.insurance?.title || '프리미엄 파손 보험',
             desc: t.trust?.insurance?.desc || '스크래치 하나까지 책임지는 글로벌 수준의 보험 기본 가입.',
-            accent: "GLOBAL INSURED"
+            accent: t.trust?.insurance?.accent || "GLOBAL INSURED"
         },
         {
             icon: <Lock className="w-8 h-8" />,
             title: t.trust?.seal?.title || '보안 씰(Seal) 시스템',
             desc: t.trust?.seal?.desc || '도착 전까지 절대 열리지 않음을 보장하는 스마트 보안 씰.',
-            accent: "SMART SEAL"
+            accent: t.trust?.seal?.accent || "SMART SEAL"
         }
     ];
 
@@ -53,9 +53,11 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                         className="inline-flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full mb-10 backdrop-blur-xl"
                     >
                         <ShieldCheck className="w-5 h-5 text-bee-yellow" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 font-outfit text-bee-yellow">VIP Bee-Keeper Trust</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 font-outfit text-bee-yellow">
+                            {t.trust?.badge_label || "VIP Bee-Keeper Trust"}
+                        </span>
                     </motion.div>
-                    <h2 className="text-4xl md:text-7xl font-display font-black text-white leading-tight tracking-tighter break-keep">
+                    <h2 className="text-3xl md:text-6xl font-display font-black text-white leading-tight tracking-tighter break-keep px-4">
                         {t.trust.headline}
                     </h2>
                 </div>
@@ -84,15 +86,15 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                 <div className="mt-32 pt-20 border-t border-white/10 flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-1000">
                     <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-6 h-6 text-bee-yellow" />
-                        <span className="text-white font-black tracking-widest text-sm uppercase">24/7 Monitoring</span>
+                        <span className="text-white font-black tracking-widest text-sm uppercase">{t.trust?.footer_label1 || "24/7 Monitoring"}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-6 h-6 text-bee-yellow" />
-                        <span className="text-white font-black tracking-widest text-sm uppercase">Certified Partners</span>
+                        <span className="text-white font-black tracking-widest text-sm uppercase">{t.trust?.footer_label2 || "Certified Partners"}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-6 h-6 text-bee-yellow" />
-                        <span className="text-white font-black tracking-widest text-sm uppercase">Secure Cloud Encryption</span>
+                        <span className="text-white font-black tracking-widest text-sm uppercase">{t.trust?.footer_label3 || "Secure Cloud Encryption"}</span>
                     </div>
                 </div>
             </div>

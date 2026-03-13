@@ -32,29 +32,25 @@ console.log("[Firebase] Initializing with Bucket:", firebaseConfig.storageBucket
  * Returns a promise that resolves once auth is ready.
  */
 export const ensureAuth = async (): Promise<any> => {
-    if (auth.currentUser) return auth.currentUser;
-
-    const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("인증 시간이 초가되었습니다. 보안 연결(HTTPS)이나 승인된 도메인 설정을 확인해주세요.")), 10000)
-    );
+    // [스봉이] 이미 번듯하게 로그인되어 있다면 바로 보내주고요 💅
+    if (auth.currentUser) {
+        console.log("[Firebase] Existing user found:", auth.currentUser.uid);
+        return auth.currentUser;
+    }
 
     try {
-        console.log("[Firebase] Attempting to ensure auth...");
-        const authPromise = new Promise((resolve, reject) => {
-            const unsubscribe = auth.onAuthStateChanged((user) => {
-                unsubscribe();
-                if (user) resolve(user);
-                else {
-                    signInAnonymously(auth)
-                        .then(cred => resolve(cred.user))
-                        .catch(reject);
-                }
-            }, reject);
-        });
+        console.log("[Firebase] No user found. Attempting Anonymous Sign-in... ☕");
+        const cred = await signInAnonymously(auth);
+        console.log("[Firebase] Anonymous Auth Success! Welcome, UID:", cred.user.uid);
 
-        return await Promise.race([authPromise, timeoutPromise]);
-    } catch (error) {
-        console.error("[Firebase] ensureAuth Failed:", error);
+        // [스봉이] 토큰이 준비될 때까지 아주 잠깐만 기다려 주는 센스! ✨
+        await new Promise(r => setTimeout(r, 500));
+        return cred.user;
+    } catch (error: any) {
+        console.error("[Firebase] Anonymous Authentication Failed! 🚨", error);
+        if (error.code === 'auth/operation-not-allowed') {
+            throw new Error("파이버베이스 콘솔에서 '익명 로그인(Anonymous Auth)'을 활성화해야 합니다! 💅");
+        }
         throw error;
     }
 };

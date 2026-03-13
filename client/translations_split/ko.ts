@@ -4,7 +4,7 @@ export const ko = {
         description: '머니박스 파트너십 빌리버 연남점: 홍대입구역 3번 출구 도보 2분. 운영시간: 09:00 ~ 21:00. 홍대/서울 캐리어 짐 보관 및 공항 당일 짐 배송 서비스. 빌리버 배송 예약 시 2천원 할인 쿠폰 코드(BEE2) + 최고 우대 환율. 무거운 짐은 맡기고 가볍게 여행하세요.',
         keywords: '홍대 짐보관, 홍대 짐배송, 서울 짐보관, 짐캐리, 물품보관함, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 수하물 배송'
     },
-    nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털' },
+    nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털', login: '로그인', mypage: '마이페이지' },
     terms_page: {
         title: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서',
         last_updated: '최종 수정일: 2026년 2월 1일',
@@ -48,7 +48,21 @@ export const ko = {
         main_title_1: '짐으로부터',
         main_title_2: '자유롭게',
         main_title_bags: '',
-        main_title_city: ''
+        main_title_city: '',
+        live_label: '실시간 상태 피드',
+        search_btn: '조회하기',
+        status_suffix: '현황',
+        label_route: '경로',
+        label_schedule: '일정',
+        label_payment: '결제',
+        go_back: '뒤로 가기',
+        status_1: '예약 확정',
+        status_2: '접수 대기',
+        status_3: '이동 중',
+        status_4: '도착 완료',
+        status_5: '이용 완료',
+        noResult: '예약 내역이 없습니다.',
+        check_info: '정보를 다시 확인해주세요.'
     },
     pain: {
         headline: "28인치의 무게는 Beeliber에 맡기고,\n당신의 두 손에는 설렘만 담으세요.",
@@ -63,15 +77,20 @@ export const ko = {
     },
     howitworks: {
         headline: "단 3번의 터치, 마법처럼 사라지는 짐",
-        step1: { title: "Drop (맡기기)", desc: "공항 또는 호텔의 beeliber 데스크/파트너에게\n당신의 무거운 짐을 넘깁니다." },
-        step2: { title: "Enjoy (누리기)", desc: "두 손이 자유로운 상태로 곧바로\n관광지, 맛집, 쇼핑을 즐깁니다." },
-        step3: { title: "Meet (만나기)", desc: "일정을 마치고 공항에 도착하면\n짐이 먼저 당신을 기다리고 있습니다." }
+        badge_label: "MAGIC PROCESS ✨",
+        step1: { title: "Drop (맡기기)", desc: "공항(혹은 호텔)의 Beeliber 데스크/파트너에게\n당신의 무거운 짐을 넘깁니다.", badge: "STEP 1. Drop" },
+        step2: { title: "Enjoy (즐기기)", desc: "두 손이 자유로운 상태로 곧바로\n관광지, 맛집, 쇼핑을 즐깁니다.", badge: "STEP 2. Enjoy" },
+        step3: { title: "Meet (만나기)", desc: "일정을 마치고 호텔 방에 도착하면,\n짐이 먼저 당신을 기다리고 있습니다.", badge: "STEP 3. Meet" }
     },
     trust: {
-        headline: "당신의 짐은 VIP 대우를 받습니다.",
-        tracking: { title: "실시간 이메일 알림", desc: "내 짐의 상태를 실시간으로 이메일로 전송 받으세요." },
-        insurance: { title: "프리미엄 파손 보험", desc: "스크래치 하나까지 책임지는 글로벌 수준의 보험 기본 가입." },
-        seal: { title: "보안 씰(Seal) 시스템", desc: "도착 전까지 절대 열리지 않음을 보장하는 스마트 보안 씰." }
+        headline: "당신의 짐은, VIP 대접을 받습니다.",
+        badge_label: "VIP Bee-Keeper Trust",
+        tracking: { title: "실시간 이메일 알림", desc: "내 짐의 상태를 실시간으로 이메일로 전송 받으세요.", accent: "EMAIL STATUS" },
+        insurance: { title: "프리미엄 파손 보험", desc: "스크래치 하나까지 책임지는 글로벌 수준의 보험 기본 가입.", accent: "GLOBAL INSURED" },
+        seal: { title: "보안 씰(Seal) 시스템", desc: "도착 전까지 절대 열리지 않음을 보장하는 스마트 보안 씰.", accent: "SMART SEAL" },
+        footer_label1: "24/7 실시간 모니터링",
+        footer_label2: "인증된 파트너사",
+        footer_label3: "안전한 클라우드 암호화"
     },
     pricing: {
         headline: "택시비보다 저렴한,\n하루의 완벽한 자유",
@@ -81,7 +100,11 @@ export const ko = {
         price_standard: "₩20,000",
         price_extra: "₩29,000",
         features_standard: ["23인치 이하 모든 사이즈", "공항 ↔ 호텔 당일 배송", "배송 상태 실시간 이메일 전송", "기본 파손 보험 포함"],
-        features_extra: ["27인치 초과", "무거운 수하물 특화 관리", "당일 안전 배송 보장", "프리미엄 보험 적용"]
+        features_extra: ["27인치 초과", "무거운 수하물 특화 관리", "당일 안전 배송 보장", "프리미엄 보험 적용"],
+        flat_rate_label: "단일 요금 💰",
+        most_popular_label: "인기 서비스",
+        per_bag_label: "/ 수하물",
+        choose_service_btn: "서비스 선택하기"
     },
     reviews_section: {
         headline: "짐 없이 걷는 여행이 얼마나 아름다운지, Beeliber가 증명합니다.",
@@ -239,6 +262,32 @@ export const ko = {
         '접수완료': '접수완료', '예약완료': '예약완료', '보관중': '보관중', '이동중': '이동중',
         '목적지도착': '목적지도착', '완료': '완료', '취소됨': '취소됨', '환불완료': '환불완료'
     },
+    tracking_page: {
+        title: '나의 예약 & 배송 조회',
+        subtitle: '이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요.',
+        search_btn: '예약 조회하기',
+        search_placeholder: '이름을 입력하세요',
+        status_1: '접수완료',
+        status_2: '수거중',
+        status_3: '이동중',
+        status_4: '도착완료',
+        status_5: '수령완료',
+        noResult: '검색 결과가 없습니다.',
+        label_route: '경로',
+        label_schedule: '일정',
+        label_payment: '결제 금액',
+        cancel_btn: '예약 취소',
+        alert_modification_locked: '당일 이후의 예약은 수정할 수 없습니다.',
+        alert_cancellation_locked: '당일 이후의 예약은 취소할 수 없습니다.'
+    },
+    refund: {
+        title: '취소 및 환불 규정',
+        content: '• 이용 24시간 전: 100% 환불\n• 이용 12시간 전: 50% 환불\n• 당일 및 미사용(No-Show): 환불 불가\n\n* 환불은 결제 수단에 따라 영업일 기준 3~7일이 소요될 수 있습니다.',
+        confirm_btn: '취소 확정하기',
+        close_btn: '닫기',
+        alert_cancel_success: '예약이 성공적으로 취소되었습니다.',
+        alert_cancel_error: '취소 중 오류가 발생했습니다. 고객센터로 문의해주세요.'
+    },
     storage_tiers: {
         'st-4h': '4시간 이하', 'st-1d': '1일 (24시간)', 'st-week': '7일 (장기)'
     },
@@ -276,37 +325,6 @@ export const ko = {
         step3_desc: '제안받은 내용이 마음에 드신다면 클릭 한 번으로 예약을 확정하고 가볍게 여행을 시작하세요.'
     },
     tracking: { title: '실시간 조회', desc: '이름과 이메일 주소를 입력하여 예약 내역을 확인하세요.', placeholder: '이메일 입력', name_placeholder: '예약자 성함 입력', btn: '조회하기', noResult: '결과가 없습니다.', status_suffix: '상태' },
-    tracking_page: {
-        title: '예약 현황 및 배송 상태 조회',
-        subtitle: '이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요.',
-        search_btn: '예약 조회',
-        cancel_btn: '예약 취소 / 환불',
-        progress: '진행 상태',
-        details: '상세 내역',
-        label_route: '경로',
-        label_schedule: '일정',
-        label_payment: '결제 금액',
-        status_1: '예약완료',
-        status_2: '접수완료',
-        status_3: '이동/보관',
-        status_4: '도착',
-        status_5: '완료',
-        back: '메인으로',
-        alert_modification_locked: '서비스 당일(또는 이후)에는 예약을 수정할 수 없습니다.',
-        alert_cancellation_locked: '서비스 당일(또는 이후)에는 예약을 취소할 수 없습니다.'
-    },
-    refund: {
-        title: '취소 및 환불 규정',
-        content: `• 이용 시간 24시간 전 취소 : 100% 환불
-• 이용 시간 12시간 전 취소 : 50% 환불
-• 이용 시간 12시간 이내 및 노쇼(No-show) : 환불 불가
-
-※ 환불은 영업일 기준 3~5일 소요될 수 있습니다.`,
-        confirm_btn: '예약 취소 확정',
-        close_btn: '닫기',
-        alert_cancel_success: '예약이 성공적으로 취소되었습니다.',
-        alert_cancel_error: '취소 중 오류가 발생했습니다. 고객센터로 문의해주세요.'
-    },
     footer: {
         desc: '빌리버는 여행의 가치인 "가벼움"을 제안합니다.',
         service: "서비스",
@@ -425,8 +443,16 @@ export const ko = {
     services_page: {
         badge: "Smart Luggage Solution",
         main_title_1: "서울 여행의 시작,",
-        main_title_2: "짐 없이 가볍게",
-        title: "짐 없는 가벼운 여행의 시작, Beeliber와 함께!",
+        main_title_2: "짐 없는 가벼운 발걸음",
+        email_status_check: "이메일 상태 조회",
+        trust_badge: "TRUST & SAFETY",
+        freedom_title: "Beeliber의 자유",
+        how_it_works_badge: "HOW IT WORKS",
+        status_update_label: '상태 업데이트',
+        safety_insurance_title: '안전 보상 보험',
+        safety_insurance_desc: '분실/파손 시 최대 50만 원 보상',
+        everyone_badge: "FOR EVERYONE",
+        title: "Beeliber와 함께 짐 없는 가벼운 여행을 시작하세요!",
         subtitle: "짐으로부터 해방되어 오직 여행의 즐거움에만 집중하세요.",
         intro: "Beeliber는 여행객의 소중한 수화물을 안전하게 운송하고 보관하는 전문 서비스입니다. 무거운 짐 걱정 없이 두 손 가볍게 여행을 만끽할 수 있도록, Beeliber가 여러분의 여행을 더욱 자유롭고 편리하게 만들어 드립니다.",
         pain_title: "혹시, 이런 불편함을 겪고 계신가요?",
@@ -472,8 +498,29 @@ export const ko = {
         cta_main_title: "여행의 자유를 만끽할 준비 되셨나요?",
         back: "메인으로 돌아가기",
         service_prefix: "서비스",
-        btn_book_now: "지금 예약하기",
-        subtitle_badge: "빌리버 서비스"
+        btn_book_now: "자유로운 여행 시작하기 🐝",
+        tracking_page: {
+            title: "예약 현황 및 배송 상태 조회",
+            subtitle: "이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요.",
+            btn: "조회하기"
+        },
+        subtitle_badge: "빌리버 서비스",
+        trust_title: "보이는 신뢰, 체감하는 안심.",
+        trust_desc: "명확한 상태 변경 업데이트와 실시간 이메일 알림으로, 내 짐의 이동 과정을 언제든 투명하게 확인할 수 있습니다.",
+        status_update: "상태 업데이트",
+        current_status: "현재 상태",
+        moving: "이동 중",
+        pickup_complete: "수거 완료",
+        transferring: "배송 허브 이송 및 분류",
+        moving_to_hotel: "호텔로 이동 중",
+        who_needs_title: "누구에게 필요할까요?",
+        persona_1_title: "여행 첫날",
+        persona_1_desc: "체크인 시간은 한참 남았는데 짐은 무겁고...\n공항에서 바로 짐을 보내고\n맛집 투어부터 시작하세요.",
+        persona_2_title: "여행 마지막 날",
+        persona_2_desc: "비행기는 밤 시간, 체크아웃은 오전...\n짐을 먼저 공항으로 보내고\n가벼운 두 손으로 인생샷을 남기세요.",
+        persona_3_title: "뚜벅이 여행자",
+        persona_3_desc: "렌터카 없이 뚜벅이로 이동하시나요?\n숙소를 옮길 때마다 짐 버스킹 하지 마시고\n몸만 가볍게 순간이동하세요.",
+        footer_msg: "Enjoy your light travel!"
     },
     location_names: {
         'IN1T': '인천공항 T1', 'IN2T': '인천공항 T2', 'GMP': '김포공항', 'SST': '서울역', 'MYN': '연남점', 'MYD': '명동점', 'INS': '인사동점', 'YS': '용산점', 'GN': '강남역점',

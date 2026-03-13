@@ -26,7 +26,6 @@ const Footer = lazy(() => import('./components/Footer'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
 import ErrorBoundary from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
-import LanguagePopup from './components/LanguagePopup';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import SEO from './components/SEO';
@@ -377,7 +376,6 @@ const App: React.FC = () => {
           )}
 
           <NoticePopup t={t} />
-          <LanguagePopup t={t} />
           <LoginModal
             isOpen={showLoginModal}
             t={t}

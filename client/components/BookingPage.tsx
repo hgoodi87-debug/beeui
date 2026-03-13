@@ -61,6 +61,29 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
     const [storageTiers, setStorageTiers] = useState<StorageTier[]>([]);
 
+    // 💅 Coupon State
+    const [couponInput, setCouponInput] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; amount: number; type: 'fixed' | 'percent' } | null>(null);
+    const [couponMessage, setCouponMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+
+    const handleApplyCoupon = () => {
+        if (!couponInput) return;
+        const code = couponInput.toUpperCase().trim();
+        if (code === 'PROMO2026') {
+            setAppliedCoupon({ code, amount: 2026, type: 'fixed' });
+            setCouponMessage({ type: 'success', text: '프로모션 코드가 적용되었습니다. 💅✨' });
+        } else if (code === 'WELCOME5000') {
+            setAppliedCoupon({ code, amount: 5000, type: 'fixed' });
+            setCouponMessage({ type: 'success', text: '웰컴 할인이 적용되었습니다. 🎉' });
+        } else if (code === 'BEE10') {
+            setAppliedCoupon({ code, amount: 10, type: 'percent' });
+            setCouponMessage({ type: 'success', text: '10% 할인이 적용되었습니다. 🐝' });
+        } else {
+            setAppliedCoupon(null);
+            setCouponMessage({ type: 'error', text: '유효하지 않거나 만료된 코드입니다. 🙄' });
+        }
+    };
+
     // Fetch prices from Firestore on mount
     useEffect(() => {
         const fetchPrices = async () => {
@@ -285,14 +308,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
     const priceDetails = useMemo(() => {
         const { S = 0, M = 0, L = 0, XL = 0 } = booking.bagSizes || {};
-        const originSurcharge = pickupLoc?.originSurcharge || 0;
-        const destSurcharge = dropoffLoc?.destinationSurcharge || 0;
+        const isDelivery = booking.serviceType === ServiceType.DELIVERY;
+        const originSurcharge = isDelivery ? (pickupLoc?.originSurcharge || 0) : 0;
+        const destSurcharge = isDelivery ? (dropoffLoc?.destinationSurcharge || 0) : 0;
 
         let base = 0;
         let breakdown = '';
         let durationText = '';
 
-        if (booking.serviceType === ServiceType.DELIVERY) {
+        if (isDelivery) {
             const deliveryBase = (S * (deliveryPrices.S || 15000)) + (M * deliveryPrices.M) + (L * deliveryPrices.L) + (XL * deliveryPrices.XL);
 
             // Overnight Storage Fee calculation
@@ -335,16 +359,31 @@ const BookingPage: React.FC<BookingPageProps> = ({
             insuranceFee = 5000 * (booking.insuranceLevel || 1) * Math.max(1, totalBags);
         }
 
+        let subtotal = base + originSurcharge + destSurcharge + insuranceFee;
+        let discount = 0;
+
+        if (appliedCoupon) {
+            if (appliedCoupon.type === 'fixed') {
+                discount = appliedCoupon.amount;
+            } else if (appliedCoupon.type === 'percent') {
+                discount = Math.floor(subtotal * (appliedCoupon.amount / 100));
+            }
+        }
+
+        // Guard against negative total
+        if (discount > subtotal) discount = subtotal;
+
         return {
             base,
             originSurcharge,
             destSurcharge,
             insuranceFee,
-            total: base + originSurcharge + destSurcharge + insuranceFee,
+            discount,
+            total: subtotal - discount,
             breakdown,
             durationText
         };
-    }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, booking.serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime]);
+    }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, booking.serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime, lang, appliedCoupon]);
 
     const tBooking = t.booking || {};
     const handleBook = async () => {
@@ -395,7 +434,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
             reservationCode: generatedCode,
             pickupLoc: pickupLoc, // Ensure full object is passed for voucher 💅
             returnLoc: booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined,
-            price: priceDetails.total,
+            price: priceDetails.base + priceDetails.originSurcharge + priceDetails.destSurcharge + priceDetails.insuranceFee,
+            discountCode: appliedCoupon?.code,
+            discountAmount: priceDetails.discount,
             finalPrice: priceDetails.total,
             status: BookingStatus.PENDING,
             createdAt: new Date().toISOString(),
@@ -880,7 +921,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </div>
 
                                     {/* Surcharges & Insurance */}
-                                    {(priceDetails.originSurcharge > 0 || priceDetails.destSurcharge > 0 || priceDetails.insuranceFee > 0) && (
+                                    {(priceDetails.originSurcharge > 0 || priceDetails.destSurcharge > 0 || priceDetails.insuranceFee > 0 || priceDetails.discount > 0) && (
                                         <div className="py-2 border-b border-white/10 space-y-2 text-[11px]">
                                             {priceDetails.originSurcharge > 0 && (
                                                 <div className="flex justify-between items-center">
@@ -900,8 +941,50 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                     <span className="font-bold text-bee-yellow">+₩{priceDetails.insuranceFee.toLocaleString()}</span>
                                                 </div>
                                             )}
+                                            {priceDetails.discount > 0 && (
+                                                <div className="flex justify-between items-center text-bee-yellow">
+                                                    <span>{tBooking.discount || 'Discount'} ({appliedCoupon?.code})</span>
+                                                    <span className="font-bold">-₩{priceDetails.discount.toLocaleString()}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
+
+                                    {/* 💅 Coupon Input */}
+                                    <div className="pt-2 pb-4 border-b border-white/10 space-y-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                title="Promo Code"
+                                                aria-label="Promo Code"
+                                                value={couponInput}
+                                                onChange={e => {
+                                                    setCouponInput(e.target.value.toUpperCase());
+                                                    if (couponMessage) setCouponMessage(null);
+                                                }}
+                                                placeholder={tBooking.enter_coupon || "Enter promo code"}
+                                                className="flex-1 bg-white/10 text-white placeholder-white/40 px-3 py-2 rounded-xl text-xs font-bold outline-none focus:ring-1 focus:ring-bee-yellow transition-all uppercase"
+                                            />
+                                            <button
+                                                title="Apply Promo Code"
+                                                onClick={handleApplyCoupon}
+                                                className="px-4 py-2 bg-white/20 hover:bg-bee-yellow hover:text-bee-black rounded-xl text-xs font-black transition-all whitespace-nowrap"
+                                            >
+                                                {tBooking.apply || 'Apply'}
+                                            </button>
+                                        </div>
+                                        <AnimatePresence>
+                                            {couponMessage && (
+                                                <motion.p
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    className={`text-[10px] font-bold px-1 ${couponMessage.type === 'error' ? 'text-red-400' : 'text-bee-yellow'}`}
+                                                >
+                                                    {couponMessage.text}
+                                                </motion.p>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
 
                                     <div className="flex justify-between items-center py-4">
                                         <span className="text-gray-400 font-black text-sm uppercase">{tBooking.total_label || 'TOTAL'}</span>

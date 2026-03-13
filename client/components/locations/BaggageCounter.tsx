@@ -104,4 +104,4 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
     );
 };
 
-export default BaggageCounter;
+export default React.memo(BaggageCounter);

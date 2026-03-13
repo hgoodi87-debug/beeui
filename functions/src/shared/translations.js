@@ -8,9 +8,9 @@ const getTranslations = (lang) => {
     return {
         voucherSubject: isKo ? '예약 확정 바우처' : (isJa ? '予約確定バウチャー' : (isZh ? '预订确认凭证' : 'Booking Confirmation Voucher')),
         arrivalSubject: isKo ? '목적지 도착 완료' : (isJa ? '目的地到着完了' : (isZh ? '行李已到达目的地' : 'Arrival at Destination')),
-        arrivalTitle: isKo ? '짐이 도착했습니다!' : (isJa ? '荷물이到着しました！' : (isZh ? '行李已送达！' : 'Your bags have arrived!')),
+        arrivalTitle: isKo ? '짐이 도착했습니다!' : (isJa ? '荷物が到着しました！' : (isZh ? '行李已送达！' : 'Your bags have arrived!')),
         arrivalDesc: isKo ? '고객님의 소중한 짐이 목적지에 안전하게 도착하였습니다.<br/>짐을 찾으실 때 직원에게 바우처(QR)를 제시해주세요.' :
-            (isJa ? 'お客様の大切な荷물이目的地に無事到着しました。<br/>荷物を受け取られる際、スタッフ에バ우처(QR)をご提示ください。' :
+            (isJa ? 'お客様の大切な荷物が目的地に無事到着しました。<br/>荷物を受け取られる際、スタッフにバウチャー(QR)をご提示ください。' :
                 (isZh ? '您的贵重行李已安全送达目的地。<br/>领取行李时，请向工作人员出示凭证(QR码)。' :
                     'Your luggage has arrived safely at the destination.<br/>Please present your voucher (QR) to the staff when picking up.')),
         detailsTitle: isKo ? '상세 정보' : (isJa ? '詳細情報' : (isZh ? '详细信息' : 'Details')),
@@ -21,7 +21,7 @@ const getTranslations = (lang) => {
         refundTitle: isKo ? '반품(환불) 완료 안내' : (isJa ? '返品（返金）完了の案内' : (isZh ? '退货（退款）完成通知' : 'Return/Refund Confirmation')),
         greeting: isKo ? '안녕하세요' : (isJa ? 'こんにちは' : (isZh ? '你好' : 'Hello')),
         refundDesc: isKo ? '고객님의 요청에 따라 반품 및 환불 처리가 완료되었습니다.' : (isJa ? 'お客様の要請に従い、返品および返金処理が完了しました。' : (isZh ? '根据您的请求，退货及退款处理已完成。' : 'Your return/refund request has been processed successfully.')),
-        refundNote: isKo ? '카드사 사정에 따라 실제 환불까지 영업일 기준 3~5일이 소요될 수 있습니다.' : (isJa ? 'カード会社の事情により、実際の返金まで営業日基準で3〜5日かかる場合があります。' : (isZh ? '视卡片公司情况而정，实际退款可能需要 3-5 个工作日。' : 'Please allow 3-5 business days for the refund to appear on your statement.')),
+        refundNote: isKo ? '카드사 사정에 따라 실제 환불까지 영업일 기준 3~5일이 소요될 수 있습니다.' : (isJa ? '카드会社の事情により、実際の返金まで営業日基準で3〜5日かかる場合があります。' : (isZh ? '视卡片公司情况而정，实际退款可能需要 3-5 个工作日。' : 'Please allow 3-5 business days for the refund to appear on your statement.')),
         statusLabel: isKo ? '처리 상태' : (isJa ? '処理状態' : (isZh ? '处理状态' : 'Status')),
         refundAmountLabel: isKo ? '환불 금액' : (isJa ? '返金金額' : (isZh ? '退款金额' : 'Refund Amount')),
         routeLabel: isKo ? '배송 경로' : (isJa ? '配送ルート' : (isZh ? '配送路线' : 'Route')),
@@ -38,7 +38,7 @@ const getTranslations = (lang) => {
         mapArrival: isKo ? '도착지 지도' : (isJa ? '目的地地図' : (isZh ? '目的地地图' : 'Arrival Map')),
         branchStore: isKo ? '지점 수령' : (isJa ? '支店受け取り' : (isZh ? '分店领取' : 'Branch Pickup')),
         storageLabel: isKo ? '보관' : (isJa ? '保管' : (isZh ? '保管' : 'Storage')),
-        voucherLabel: isKo ? '바우처' : (isJa ? 'バ우처' : (isZh ? '凭证' : 'Voucher')),
+        voucherLabel: isKo ? '바우처' : (isJa ? 'バウチャー' : (isZh ? '凭证' : 'Voucher')),
         snsIdLabel: isKo ? 'SNS ID' : (isJa ? 'SNS ID' : (isZh ? 'SNS ID' : 'SNS ID')),
         infoLabel: isKo ? '정보' : (isJa ? '情報' : (isZh ? '信息' : 'Info')),
         timeLabel: isKo ? '시간' : (isJa ? '時間' : (isZh ? '时间' : 'Time')),

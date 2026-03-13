@@ -242,15 +242,20 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}",
                 finalPrice = serverPrice.total;
             }
 
-            // Generate reservationCode (origin-dest-random)
-            const getShort = async (id) => {
-                if (!id || id === 'custom') return 'UNK';
-                const s = await db.collection('locations').doc(id).get();
-                return s.exists ? (s.data().shortCode || id.substring(0, 3).toUpperCase()) : id.substring(0, 3).toUpperCase();
+            // Generate reservationCode (origin-dest-random) - 💅 안정성 강화
+            const getShort = async (locId) => {
+                if (!locId || locId === 'custom') return 'ADDR';
+                try {
+                    const s = await db.collection('locations').doc(locId).get();
+                    return s.exists ? (s.data().shortCode || locId.substring(0, 3).toUpperCase()) : locId.substring(0, 3).toUpperCase();
+                } catch (err) {
+                    console.warn(`[onBookingCreated] Location fetch failed for ${locId}, fallback to substring.`);
+                    return locId.substring(0, 3).toUpperCase();
+                }
             };
             const originCode = await getShort(booking.pickupLocation);
-            const destCode = await getShort(booking.dropoffLocation || booking.destinationLocation);
-            const reservationCode = `${originCode}-${destCode}-${Math.floor(1000 + Math.random() * 9000)}`;
+            const destCode = booking.serviceType === 'DELIVERY' ? 'ADDR' : await getShort(booking.dropoffLocation || booking.destinationLocation);
+            const reservationCode = booking.reservationCode || `${originCode}-${destCode}-${Math.floor(1000 + Math.random() * 9000)}`;
 
             await event.data.ref.update({
                 finalPrice,

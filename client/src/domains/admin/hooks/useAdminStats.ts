@@ -127,6 +127,16 @@ export const useAdminStats = ({
         const prevClosing = (closings || []).find((c: CashClosing) => c.date === prevDateStr);
         const openingCash = prevClosing ? prevClosing.actualCashOnHand : 0;
 
+        const cancelledCount = targetBookings.filter(b => b.status === BookingStatus.CANCELLED).length;
+        const refundedCount = targetBookings.filter(b => b.status === BookingStatus.REFUNDED).length;
+
+        const discountCodeCounts: Record<string, number> = {};
+        targetBookings.forEach(b => {
+            if (b.discountCode) {
+                discountCodeCounts[b.discountCode] = (discountCodeCounts[b.discountCode] || 0) + 1;
+            }
+        });
+
         return {
             totalRevenue,
             totalExp,
@@ -139,6 +149,9 @@ export const useAdminStats = ({
             expByCategory,
             mtdRevenue,
             openingCash,
+            discountCodeCounts,
+            cancelledCount,
+            refundedCount,
         };
     }, [bookings, expenditures, revenueStartDate, revenueEndDate, closings]);
 

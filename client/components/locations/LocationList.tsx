@@ -395,7 +395,7 @@ const LocationList: React.FC<LocationListProps> = ({
                 <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto no-scrollbar snap-x snap-mandatory gap-3 md:gap-4 px-4 md:px-6 pt-2 md:pt-4 pb-4 md:h-full">
                     {filteredBranches.map((branch) => {
                         const isSelected = selectedBranch?.id === branch.id;
-                        const isActive = branch.services?.[currentService]?.isActive ?? true;
+                        const isActive = branch.isActive !== false;
 
                         return (
                             <motion.button

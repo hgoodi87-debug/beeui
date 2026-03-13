@@ -1949,6 +1949,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               todayKST={todayKST}
               lang={lang}
               t={t}
+              adminForm={adminForm}
+              setAdminForm={setAdminForm}
+              showAdminPassword={showAdminPassword}
+              setShowAdminPassword={setShowAdminPassword}
+              saveAdmin={saveAdmin}
+              deleteAdmin={deleteAdmin}
+              isSaving={isSaving}
             />
           )}
 

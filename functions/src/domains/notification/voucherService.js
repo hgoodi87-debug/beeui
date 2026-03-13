@@ -32,8 +32,8 @@ const processVoucherEmail = async (bookingId, booking, admin) => {
         return n || fallbackId || "";
     };
 
-    const pickupBranchName = getLocName(pickupLoc, booking.pickupLocation);
-    const destBranchName = getLocName(destLoc, booking.dropoffLocation || booking.destinationLocation);
+    const pickupBranchName = getLocName(pickupLoc) || booking.pickupLocation || "Beeliber Station";
+    const destBranchName = getLocName(destLoc) || booking.dropoffLocation || booking.destinationLocation || (booking.serviceType === 'STORAGE' ? t.storageLabel : "Specified Address");
     const displayedCode = booking.reservationCode || bookingId;
 
     // [스봉이] 공항 지점 여부 체크 💅

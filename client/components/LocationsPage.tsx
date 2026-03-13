@@ -45,6 +45,14 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   const [baggageCounts, setBaggageCounts] = useState({ S: 0, M: 0, L: 0, XL: 0 });
   const [deliveryPrices, setDeliveryPrices] = useState<any>({ S: 20000, M: 20000, L: 25000, XL: 29000 });
 
+  // [스봉이 수정] 훅은 항상 최상단에! 조건부 렌더링 내부에서 훅을 쓰면 리액트가 화낸답니다. 💅
+  const handleBaggageChange = useCallback((size: string, delta: number) => {
+    setBaggageCounts(prev => ({
+      ...prev,
+      [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
+    }));
+  }, []);
+
   // [스봉이 추가] 지점 및 서비스 타입에 따른 지능적 시간 설정 💅
   const DELIVERY_PICKUP_HOURS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
   const STORAGE_START_HOURS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
@@ -331,12 +339,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
             returnTime={returnTime}
             onReturnTimeChange={setReturnTime}
             baggageCounts={baggageCounts}
-            onBaggageChange={useCallback((size, delta) => {
-              setBaggageCounts(prev => ({
-                ...prev,
-                [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
-              }));
-            }, [])}
+            onBaggageChange={handleBaggageChange}
             deliveryPrices={deliveryPrices}
             onBack={onBack}
           />
@@ -363,12 +366,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
                   bookingDate={bookingDate}
                   onDateChange={setBookingDate}
                   baggageCounts={baggageCounts as any}
-                  onBaggageChange={useCallback((size, delta) => {
-                    setBaggageCounts((prev: any) => ({
-                      ...prev,
-                      [size]: Math.max(0, (prev[size] || 0) + delta)
-                    }));
-                  }, [])}
+                  onBaggageChange={handleBaggageChange}
                   t={t}
                   lang={lang}
                 />

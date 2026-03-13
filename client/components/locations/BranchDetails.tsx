@@ -24,7 +24,8 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
 
     // Check service support directly from boolean flags
     const serviceKey = currentService === 'STORAGE' ? 'STORAGE' : 'DELIVERY';
-    const isActive = serviceKey === 'DELIVERY' ? selectedBranch.supportsDelivery : selectedBranch.supportsStorage;
+    // [스봉이 수정] 지점 활성화 여부는 branch.isActive를 우선적으로 봐야죠! 💅
+    const isActive = selectedBranch.isActive !== false;
 
     // Multilingual data access helper
     const getName = () => {
@@ -132,8 +133,11 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                                 alt={getName()}
                                 className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-125"
                                 onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    if (target && target.parentElement) {
+                                        target.style.display = 'none';
+                                        target.parentElement.style.display = 'none';
+                                    }
                                 }}
                             />
                         </div>

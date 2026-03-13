@@ -93,7 +93,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
             if (!loc.name.toLowerCase().includes(q) && !loc.id.toLowerCase().includes(q) && !(loc.name_en || '').toLowerCase().includes(q)) return false;
         }
         return true;
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
     const toggleSelectAll = () => {
         if (selectedIds.length === filteredLocations.length) {
@@ -377,9 +377,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div className="text-[10px] font-black text-gray-400">{filteredLocations.length}개 표시 중 / 전체 {locations.length}개</div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 auto-rows-min">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 auto-rows-min">
                         {filteredLocations.map(loc => (
-                            <div key={loc.id} onClick={() => focusLocation(loc)} className={`bg-white p-3 md:px-6 rounded-[24px] border shadow-sm hover:shadow-md transition-all group relative cursor-pointer flex flex-col sm:flex-row items-center gap-4 ${locForm.id === loc.id ? 'border-bee-yellow ring-2 ring-bee-yellow/20' : 'border-gray-100'}`}>
+                            <div key={loc.id} onClick={() => focusLocation(loc)} className={`bg-white p-3 md:px-4 rounded-[24px] border shadow-sm hover:shadow-md transition-all group relative cursor-pointer flex flex-col sm:flex-row items-center gap-3 ${locForm.id === loc.id ? 'border-bee-yellow ring-2 ring-bee-yellow/20' : 'border-gray-100'}`}>
                                 <div className="shrink-0" onClick={e => e.stopPropagation()}>
                                     <input type="checkbox" checked={selectedIds.includes(loc.id)} onChange={(e) => toggleSelect(e as any, loc.id)} title={`${loc.name} 선택`} className="w-4 h-4 rounded-lg accent-bee-black cursor-pointer" />
                                 </div>

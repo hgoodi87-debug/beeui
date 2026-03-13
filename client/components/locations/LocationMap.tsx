@@ -105,7 +105,7 @@ const LocationMap: React.FC<LocationMapProps> = React.memo(({
         branches.forEach(branch => {
             const isSelected = selectedBranch?.id === branch.id;
             const serviceKey = currentService === 'STORAGE' ? 'STORAGE' : 'DELIVERY';
-            const isActive = branch.services?.[serviceKey]?.isActive ?? true;
+            const isActive = branch.isActive !== false;
 
             const isAirport = branch.type === 'AIRPORT';
             // [스봉이 수정] 일반 지점은 빨간 핀(Absolute_Bee_v21.svg)으로 교체 💅

@@ -1,8 +1,8 @@
 export const zhTW = {
     seo: {
-        title: 'Beeliber - 弘大/首爾站 行李寄存 & 機場當日配送',
-        description: '弘大入口站、首爾站、仁川機場、金浦機場行李寄存及配送服務。飯店到機場當日行李箱配送。放下重擔，輕鬆旅行。',
-        keywords: '弘大行李寄存, 弘大行李配送, 首爾站行李寄存, 行李配送服務, 行李箱配送, 仁川機場行李配送, 當日行李配送, 飯店行李配送'
+        title: 'Beeliber - 首爾旅行最後一天 行李無憂 | 弘大/首爾站 行李寄存 & 機場當日配送 💅',
+        description: '首爾退房後行李寄存及配送至仁川機場。飯店、弘大入口站、首爾站、機場當日行李箱配送服務。放下重擔，盡情享受首爾行程。',
+        keywords: '首爾行李寄存, 弘大行李寄存, 首爾站行李寄存, 仁川機場行李配送, 金浦機場行李配送, 飯店行李配送, 首爾旅行最後一天, 首爾退房後行程, 搭機前行李寄存'
     },
     nav: { services: '服務介紹', locations: '分店指南', tracking: '配送查詢', partners: '加盟諮詢', book: '立即預訂', terms_label: '配送業務委託及第三方(運輸公司)信息提供同意書', admin_portal: '管理員門戶', login: '登錄', mypage: '個人中心' },
     terms_page: {
@@ -296,6 +296,18 @@ export const zhTW = {
             features: ["鄰近捷運站", "支援即時預約", "CCTV 安全監控"],
             btn: "預訂寄存"
         },
+        faq: [
+            {
+                category: "locations",
+                question: "營運時間是幾點？",
+                answer: "大部分據點營運時間為 09:00 至 21:00。不過各分店及合作夥伴時間可能有所不同，預訂時請務必確認分店詳情。 🍯"
+            },
+            {
+                category: "booking",
+                question: "如果我比預定的取件時間遲到會怎樣？",
+                answer: "如果您在預定的取件時間之後到達，為了保證服務的順暢運行，可能會按每30分鐘收取額外的超時費用。為了您和其他旅客的便利，請務必準時到達據點！✨"
+            }
+        ],
         tracking_page: {
             title: "預約狀態及配送狀態查詢",
             subtitle: "輸入姓名和電子郵件，無需密碼即可輕鬆查看行李的當前移動狀態。",
@@ -344,6 +356,9 @@ export const zhTW = {
         terms: "使用條款",
         cookie: "Cookie 政策",
         contact: "客服中心",
+        address: '서울시 마포구 월드컵북로2길 93, 1층',
+        email: 'ceo@bee-liber.com',
+        phone: '+82 010-2922-7731',
         back_to_top: "回到頂部"
     },
     locations_page: {

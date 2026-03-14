@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BookingState, Expenditure, CashClosing, AdminTab } from '../../types';
+import { motion, AnimatePresence } from 'framer-motion';
+
 
 interface AccountingTabProps {
     revenueStartDate: string;
@@ -108,11 +110,15 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     </div>
                     <div className="mt-4">
                         <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden" title="매출 대비 지출 비중">
-                            <div 
-                                className="bg-red-400 h-full transition-all duration-1000" 
-                                style={{ width: `${Math.min(((revenueStats?.expenditure || 0) / (revenueStats?.total || 1)) * 100, 100)}%` } as React.CSSProperties}
-                            ></div>
+                            <motion.div 
+                                className="bg-red-400 h-full" 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(((revenueStats?.expenditure || 0) / (revenueStats?.total || 1)) * 100, 100)}%` }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                            />
                         </div>
+
+
                     </div>
                 </div>
 
@@ -450,11 +456,15 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                                 <>
                                                     <p className={`text-[10px] font-black leading-tight ${isSelected ? 'text-white' : 'text-bee-black'}`}>₩{total.toLocaleString()}</p>
                                                     <div className="w-full h-1 bg-bee-yellow/20 rounded-full overflow-hidden">
-                                                        <div 
+                                                        <motion.div 
                                                             className="bg-bee-yellow h-full" 
-                                                            style={{ width: `${Math.min((total / 2000000) * 100, 100)}%` } as React.CSSProperties}
-                                                        ></div>
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${Math.min((total / 2000000) * 100, 100)}%` }}
+                                                            transition={{ duration: 0.8, ease: "easeOut" }}
+                                                        />
                                                     </div>
+
+
                                                 </>
                                             )}
                                         </div>

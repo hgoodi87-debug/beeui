@@ -1,7 +1,9 @@
 
 import React, { useMemo } from 'react';
 import { BookingState, BookingStatus, ServiceType } from '../../types';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
+
     LineChart,
     Line,
     AreaChart,
@@ -21,7 +23,26 @@ interface ReportsTabProps {
     bookings: BookingState[];
 }
 
-const COLORS = ['#FACC15', '#3B82F6', '#10B981', '#F87171'];
+const COLORS = ['#FACC15', '#3B82F6', '#10B981', '#F87171', '#A78BFA', '#FB923C', '#2DD4BF'];
+
+const COUNTRY_NAMES: Record<string, string> = {
+    'KR': 'Korea 🇰🇷',
+    'US': 'USA 🇺🇸',
+    'JP': 'Japan 🇯🇵',
+    'CN': 'China 🇨🇳',
+    'TW': 'Taiwan 🇹🇼',
+    'HK': 'Hong Kong 🇭🇰',
+    'SG': 'Singapore 🇸🇬',
+    'TH': 'Thailand 🇹🇭',
+    'VN': 'Vietnam 🇻🇳',
+    'MY': 'Malaysia 🇲🇾',
+    'PH': 'Philippines 🇵🇭',
+    'ID': 'Indonesia 🇮🇩',
+    'FR': 'France 🇫🇷',
+    'DE': 'Germany 🇩🇪',
+    'GB': 'UK 🇬🇧',
+    'OTHER': 'Other 🌎'
+};
 
 const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
     const stats = useMemo(() => {
@@ -32,6 +53,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
             storage: { name: '보관 서비스', value: 0 },
             delivery: { name: '배송 서비스', value: 0 }
         };
+        const countryStats: Record<string, number> = {};
 
         // Aggregating all data first for lifetime and cumulative
         const sortedBookings = [...bookings]
@@ -89,6 +111,9 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
 
             if (b.serviceType === ServiceType.STORAGE) serviceDistribution.storage.value += price;
             else serviceDistribution.delivery.value += price;
+
+            const cCode = b.country || 'OTHER';
+            countryStats[cCode] = (countryStats[cCode] || 0) + 1;
         });
 
         const dailyList = Object.values(daily).sort((a: any, b: any) => a.date.localeCompare(b.date));
@@ -101,18 +126,29 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
         const currentMonth = new Date().toISOString().slice(0, 7);
         const currentMonthStats = monthly[currentMonth] || { sum: 0, success: { count: 0 } };
 
+        const totalCountryCount = Object.values(countryStats).reduce((a, b) => a + b, 0);
+
         return {
             daily: dailyList.slice(-14),
             cumulativeDays,
             monthly: monthlyList,
             yearly: yearlyList,
             serviceDistribution: Object.values(serviceDistribution),
+            countryDistribution: Object.entries(countryStats)
+                .map(([code, value]) => ({ 
+                    name: COUNTRY_NAMES[code] || code, 
+                    value,
+                    percent: totalCountryCount > 0 ? Math.round((value / totalCountryCount) * 100) : 0
+                }))
+                .sort((a, b) => b.value - a.value),
             lifetimeRevenue,
             lifetimeCount,
             currentMonthRevenue: currentMonthStats.sum,
             currentMonthCount: currentMonthStats.success.count,
-            monthlyAvgRevenue: monthlyList.length > 0 ? Math.floor(lifetimeRevenue / monthlyList.length) : 0
+            monthlyAvgRevenue: monthlyList.length > 0 ? Math.floor(lifetimeRevenue / monthlyList.length) : 0,
+            totalCountryCount
         };
+
     }, [bookings]);
 
     return (
@@ -204,7 +240,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
 
                 {/* Service Type distribution */}
                 <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6 text-center">
-                    <h3 className="text-lg font-black flex items-center gap-2 justify-center"><i className="fa-solid fa-chart-pie text-emerald-500"></i> 서비스 타입별 비중</h3>
+                    <h3 className="text-lg font-black flex items-center gap-2 justify-center"><i className="fa-solid fa-chart-pie text-emerald-500"></i> 서비스 타입별 비중 (매출액)</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -222,12 +258,79 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip formatter={(value: any) => typeof value === 'number' ? `₩${value.toLocaleString()}` : value} />
                                 <Legend verticalAlign="bottom" height={36} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
+
+                {/* Country distribution - Intuitive Upgrade 🎉 */}
+                <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-black flex items-center gap-3">
+                            <i className="fa-solid fa-globe text-blue-400"></i> 국가별 방문 비중
+                        </h3>
+                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">실시간 예약 분포</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                        <div className="h-[280px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={stats.countryDistribution}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={70}
+                                        outerRadius={100}
+                                        paddingAngle={8}
+                                        dataKey="value"
+                                        cornerRadius={12}
+                                    >
+                                        {stats.countryDistribution.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip 
+                                        contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                        formatter={(value: any) => [`${value} 건`, '예약수']} 
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        
+                        <div className="space-y-5">
+                            {stats.countryDistribution.slice(0, 6).map((item, idx) => (
+                                <div key={item.name} className="space-y-1.5">
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-xs font-black text-bee-black flex items-center gap-2">
+                                            <div 
+                                                className="w-2 h-2 rounded-full" 
+                                                style={{ background: COLORS[(idx + 2) % COLORS.length] }}
+                                            ></div>
+                                            {item.name}
+                                        </span>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-black text-bee-black mr-2">{item.percent}%</span>
+                                            <span className="text-[9px] font-bold text-gray-300 uppercase">{item.value}건</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${item.percent}%` }}
+                                            transition={{ duration: 1, delay: idx * 0.1, ease: "circOut" }}
+                                            className="h-full rounded-full"
+                                            style={{ background: COLORS[(idx + 2) % COLORS.length] }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             {/* Monthly Performance Table - NEW 🎉 */}

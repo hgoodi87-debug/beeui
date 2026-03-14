@@ -18,7 +18,7 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
     // [BEE-DATA] 정밀 사이즈 데이터
     const s = t?.size_simulator || {
         header_title: "BEE 사이즈 체크",
-        header_subtitle: "내 키와 직접 비교해보세요! 윙윙~",
+        header_subtitle: "내 키와 직접 비교해보세요!",
         height_label: "내 키 설정하기",
         size_m_range: "20~23인치",
         size_m_desc: "기내용/단기여행",
@@ -27,8 +27,8 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
         size_xl_range: "27~30인치",
         size_xl_desc: "장기/이민 가방",
         hook_text: "\"고객님 키에는 {size} 사이즈가 딱이네요!\"",
-        hook_sub: "이대로 예약을 도와드릴까요? 윙윙~ ✨",
-        info_note: "본 시물레이션은 실제 촬영된 이미지를 기반으로 한 안내 가이드이며, 여행 가방의 브랜드 및 디자인에 따라 약간의 차이가 있을 수 있습니다. 윙윙~!"
+        hook_sub: "이대로 예약을 도와드릴까요?",
+        info_note: "본 시뮬레이션은 실제 촬영된 이미지를 기반으로 한 안내 가이드이며, 여행 가방의 브랜드 및 디자인에 따라 약간의 차이가 있을 수 있습니다."
     };
 
     const LUGGAGE_DATA = [
@@ -175,7 +175,7 @@ export default function BeeSizeSimulator({ t, lang = "ko", isOpen, onClose }: Be
                                 className="w-full bg-bee-black p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-black/80 transition-all shadow-xl active:scale-95"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="text-2xl animate-bounce">🐝</div>
+                                    <div className="w-8 h-8 bg-bee-yellow rounded-full flex items-center justify-center text-lg font-bold">B</div>
                                     <div className="space-y-0.5 text-left">
                                         <p className="text-white group-hover:text-bee-yellow text-[11px] font-bold leading-tight">
                                             {s.hook_text.replace("{size}", LUGGAGE_DATA[selectedSize].label)}

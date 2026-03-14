@@ -37,6 +37,23 @@ interface BookingDetailedProps {
 
 const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
 
+const COUNTRY_NAMES: Record<string, string> = {
+    'KR': 'Korea 🇰🇷',
+    'US': 'USA 🇺🇸',
+    'JP': 'Japan 🇯🇵',
+    'CN': 'China 🇨🇳',
+    'HK': 'Hong Kong 🇭🇰',
+    'TW': 'Taiwan 🇹🇼',
+    'SG': 'Singapore 🇸🇬',
+    'MY': 'Malaysia 🇲🇲',
+    'VN': 'Vietnam 🇻🇳',
+    'TH': 'Thailand 🇹🇭',
+    'PH': 'Philippines 🇵🇭',
+    'ID': 'Indonesia 🇮🇩',
+    'ETC': 'Other 🌏'
+};
+
+
 const BookingDetailed: React.FC<BookingDetailedProps> = ({
     t,
     lang,
@@ -90,8 +107,26 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         agreedToHighValue: false,
         agreedToPremium: false,
         insuranceLevel: 1,
-        insuranceBagCount: (initialBags.S || 0) + (initialBags.M || 0) + (initialBags.L || 0) + (initialBags.XL || 0)
+        insuranceBagCount: (initialBags.S || 0) + (initialBags.M || 0) + (initialBags.L || 0) + (initialBags.XL || 0),
+        country: 'KR'
     });
+
+    const [isCountryManuallySet, setIsCountryManuallySet] = useState(false);
+
+    // 🕵️‍♀️ [스봉이] 언어에 따라 국가를 자동으로 세팅해드리는 센스! 💅✨
+    useEffect(() => {
+        if (isCountryManuallySet) return;
+
+        let autoCountry = 'US';
+        if (lang === 'ko') autoCountry = 'KR';
+        else if (lang === 'ja') autoCountry = 'JP';
+        else if (lang === 'zh' || lang === 'zh-CN') autoCountry = 'CN';
+        else if (lang === 'zh-HK') autoCountry = 'HK';
+        else if (lang === 'zh-TW') autoCountry = 'TW';
+
+        setBooking(prev => ({ ...prev, country: autoCountry }));
+    }, [lang, isCountryManuallySet]);
+
 
     const [couponInput, setCouponInput] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<DiscountCode | null>(null);
@@ -543,6 +578,27 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
                                             />
                                         </div>
                                     </div>
+
+                                    {/* [스봉리포트 전용] 국가 선택 필드 추가 🌏💅 */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                            {lang === 'ko' ? '거주 국가 (리포트용)' : 'Country of Residence'}
+                                        </label>
+                                        <select
+                                            title={t.booking.country || "Country"}
+                                            value={booking.country || ''}
+                                            onChange={e => {
+                                                setBooking(prev => ({ ...prev, country: e.target.value }));
+                                                setIsCountryManuallySet(true); // 💅 수동 선택은 하늘이 두 쪽 나도 존중합니다!
+                                            }}
+                                            className="w-full p-4 rounded-2xl border-2 border-slate-100 font-bold bg-white outline-none focus:border-bee-yellow transition-all appearance-none"
+                                        >
+                                            {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
+                                                <option key={code} value={code}>{name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
                                 </div>
                             </section>
                         )}

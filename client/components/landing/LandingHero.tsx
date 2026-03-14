@@ -20,7 +20,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
     return (
         <section className="relative h-[100dvh] flex items-center justify-center overflow-hidden bg-black">
 
-            {/* 1. LAYER: Cinematic Background (High-Performance Image) 💅 */}
+            {/* 1. LAYER: Cinematic Background (High-Performance Image) */}
             <div className="absolute inset-0 z-0 overflow-hidden bg-black">
                 <img
                     src="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b"
@@ -33,13 +33,13 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                     }}
                 />
 
-                {/* Cinematic Overlays: To maintain premium aesthetic ✨ */}
+                {/* Cinematic Overlays: To maintain premium aesthetic */}
                 <div className="absolute inset-0 cinematic-overlay z-[2] bg-black/40" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 z-[3]" />
                 <div className="luxury-grain-overlay opacity-20" />
             </div>
 
-            {/* 2. LAYER: Macro-Typography (Advanced Reveal Animations) ✨ */}
+            {/* 2. LAYER: Macro-Typography (Advanced Reveal Animations) */}
             <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 pointer-events-none -mt-16 md:-mt-24">
                 <motion.div
                     style={{ y: y1, opacity }}
@@ -107,9 +107,9 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                 </motion.div>
             </div>
 
-            {/* 3. LAYER: Bento Grid Widgets (The Micro-Trust) - REMOVED per user request 🗑️ */}
+            {/* 3. LAYER: Bento Grid Widgets (The Micro-Trust) - REMOVED per user request */}
 
-            {/* 4. CTA: Apple-style 심플 버튼 & Micro-interaction 🚀 */}
+            {/* 4. CTA: Apple-style 심플 버튼 & Micro-interaction */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}

@@ -8,6 +8,8 @@ import SEO from './SEO';
 import { LocationOption, ServiceType } from '../types';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 import { formatKSTDate, isAllSlotsPast, addDaysToDateStr, getFirstAvailableSlot, isPastKSTTime } from '../utils/dateUtils';
+import { calculateDistance } from '../utils/locationUtils';
+
 
 interface LocationsPageProps {
   onBack: () => void;
@@ -145,54 +147,32 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Helper: Calculate distance between two coordinates (Haversine formula)
-  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    const R = 6371; // Radius of the earth in km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lng2 - lng1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
-  };
-
-  const locations = useMemo(() => {
-    let sortedData = [...rawLocations];
-    if (userLocation) {
-      sortedData.sort((a, b) => {
-        if (!a.lat || !a.lng) return 1;
-        if (!b.lat || !b.lng) return -1;
-        const distA = calculateDistance(userLocation.lat, userLocation.lng, a.lat, a.lng);
-        const distB = calculateDistance(userLocation.lat, userLocation.lng, b.lat, b.lng);
-        return distA - distB;
-      });
-    }
-    return sortedData;
-  }, [rawLocations, userLocation]);
-
   // 1. Get User Location & Prices on Mount
-  // [스봉이 수정] 진입 시 무조건 내 위치부터 센터링 💅
+  // [스봉이 수정] 진입 시 무조건 내 위치 수집 시작! 💅
   useEffect(() => {
     let mounted = true;
-    if (navigator.geolocation && !initialLocationId) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (mounted) {
-            console.log("[스봉이] Got user location on mount 🐝✨", position.coords);
-            setUserLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            });
-          }
-        },
-        (error) => {
-          console.warn("Geolocation Error:", error);
-        },
-        { timeout: 5000, maximumAge: 60000, enableHighAccuracy: true } // Add proper options here
-      );
-    }
+    
+    const fetchUserLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (mounted) {
+              console.log("[스봉이] 사용자 위치 수집 성공! 🐝✨", position.coords);
+              setUserLocation({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              });
+            }
+          },
+          (error) => {
+            console.warn("[스봉이] 위치 수집 실패.. 🙄", error);
+          },
+          { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
+        );
+      }
+    };
+
+    fetchUserLocation();
 
     // Fetch prices for BaggageCounter
     StorageService.getDeliveryPrices().then(prices => {
@@ -200,7 +180,23 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     }).catch(console.error);
 
     return () => { mounted = false; };
-  }, [initialLocationId]);
+  }, []);
+
+  const locations = useMemo(() => {
+    let sortedData = [...rawLocations];
+    if (userLocation) {
+      console.log("[스봉이] 사용자 위치 기반 영롱한 정렬 시작 💅✨");
+      sortedData = sortedData.map(loc => {
+        if (!loc.lat || !loc.lng) return { ...loc, distance: 9999 };
+        const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng);
+        return { ...loc, distance: dist };
+      });
+
+      sortedData.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    }
+    return sortedData;
+  }, [rawLocations, userLocation]);
+
 
   // Handle Browser Back Button for Step-by-Step Navigation
   useEffect(() => {

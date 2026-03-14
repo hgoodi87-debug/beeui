@@ -22,6 +22,8 @@ const LocationsPage = lazy(() => import('./components/LocationsPage'));
 const MyPage = lazy(() => import('./components/MyPage'));
 const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
 const QnaPage = lazy(() => import('./components/QnaPage'));
+const LocationLander = lazy(() => import('./components/LocationLander'));
+const TravelTips = lazy(() => import('./components/TravelTips'));
 
 const Footer = lazy(() => import('./components/Footer'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
@@ -193,6 +195,7 @@ const App: React.FC = () => {
       case 'BRANCH_ADMIN':
         if (adminInfo.branchId) return navigate(`/admin/branch/${adminInfo.branchId}`);
         return navigate('/admin');
+      case 'TIPS': return navigate('/tips');
       case 'USER': default: return navigate('/');
     }
   };
@@ -285,26 +288,35 @@ const App: React.FC = () => {
     }
   }, [t]);
 
-  const LoaderOverlay = React.memo(({ fadeOut }: { fadeOut: boolean }) => (
-    <div className={`fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center transition-opacity duration-300 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-      <div className="flex flex-col items-center gap-6">
-        <div className="relative">
-          <div className="w-14 h-14 border-[3px] border-bee-yellow/20 rounded-full"></div>
-          <div className="absolute top-0 left-0 w-14 h-14 border-[3px] border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
-        </div>
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-bee-yellow text-[10px] font-black tracking-[0.4em] animate-pulse">BEELIBER</p>
-          <p className="text-white/40 text-[8px] font-bold tracking-widest uppercase">Initializing System</p>
-        </div>
-      </div>
-    </div>
+  const LoaderOverlay = React.memo(({ show }: { show: boolean }) => (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center"
+        >
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative">
+              <div className="w-14 h-14 border-[3px] border-bee-yellow/20 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-14 h-14 border-[3px] border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-bee-yellow text-[10px] font-black tracking-[0.4em] animate-pulse">BEELIBER</p>
+              <p className="text-white/40 text-[8px] font-bold tracking-widest uppercase">Initializing System</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   ));
 
   const isDarkBg = location.pathname === '/' || location.pathname.startsWith('/branch/');
 
   return (
     <div className={`w-full font-sans selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden ${isDarkBg ? 'bg-black' : 'bg-slate-50'}`}>
-      {isInitialLoad && <LoaderOverlay fadeOut={!!t} />}
+      <LoaderOverlay show={isInitialLoad || !t} />
 
       {t && (
         <>
@@ -317,7 +329,7 @@ const App: React.FC = () => {
             schema={branchSchema}
           />
           <ErrorBoundary>
-            <Suspense fallback={<LoaderOverlay fadeOut={false} />}>
+            <Suspense fallback={<LoaderOverlay show={true} />}>
               <AnimatePresence mode="wait" initial={false}>
                 <Routes location={location} key={location.pathname}>
                   {/* USER */}
@@ -335,6 +347,11 @@ const App: React.FC = () => {
                   <Route path="/terms" element={<AnimatedRoute><TermsPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
                   <Route path="/privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
                   <Route path="/qna" element={<AnimatedRoute><QnaPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
+                  
+                  {/* PROGRAMMATIC SEO */}
+                  <Route path="/storage/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/delivery/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tips" element={<AnimatedRoute><TravelTips lang={lang} /></AnimatedRoute>} />
 
                   {/* ADMIN */}
                   <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} />} />
@@ -342,6 +359,7 @@ const App: React.FC = () => {
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={() => navigate('/')} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/mypage" element={<AnimatedRoute><div className="fixed inset-0 z-0 pointer-events-none"><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} /><div className="absolute inset-0 bg-black/50 pointer-events-auto" /></div><MyPage t={t} onClose={() => { navigate(-1); }} /></AnimatedRoute>} />
 
                   {/* FALLBACK */}
                   <Route path="*" element={<Navigate to="/" replace />} />
@@ -368,15 +386,7 @@ const App: React.FC = () => {
             </Routes>
           </Suspense>
 
-          {location.pathname === '/mypage' && (
-            <>
-              <div className="fixed inset-0 z-0 pointer-events-none">
-                <LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} />
-                <div className="absolute inset-0 bg-black/50 pointer-events-auto" />
-              </div>
-              <MyPage t={t} onClose={() => { navigate(-1); }} />
-            </>
-          )}
+          {/* Legacy MyPage Handler - Now integrated into Router but keeping this as safe check if needed */}
 
           <NoticePopup t={t} />
           <LoginModal

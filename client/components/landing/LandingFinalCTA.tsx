@@ -64,7 +64,7 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
 
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full text-center z-20">
                 <div className="text-[10px] font-black uppercase tracking-[0.5em] text-bee-black opacity-30">
-                    © 2026 BEELIBER GLOBAL LOGISTICS ✨ TRUSTED BY THOUSANDS
+                    © 2026 BEELIBER GLOBAL LOGISTICS | TRUSTED BY THOUSANDS
                 </div>
             </div>
 

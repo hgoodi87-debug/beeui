@@ -40,6 +40,23 @@ interface BookingPageProps {
 
 const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
 
+const COUNTRY_NAMES: Record<string, string> = {
+    'KR': 'Korea 🇰🇷',
+    'US': 'USA 🇺🇸',
+    'JP': 'Japan 🇯🇵',
+    'CN': 'China 🇨🇳',
+    'HK': 'Hong Kong 🇭🇰',
+    'TW': 'Taiwan 🇹🇼',
+    'SG': 'Singapore 🇸🇬',
+    'MY': 'Malaysia 🇲🇲',
+    'VN': 'Vietnam 🇻🇳',
+    'TH': 'Thailand 🇹🇭',
+    'PH': 'Philippines 🇵🇭',
+    'ID': 'Indonesia 🇮🇩',
+    'ETC': 'Other 🌏'
+};
+
+
 const BookingPage: React.FC<BookingPageProps> = ({
     t,
     lang,
@@ -124,8 +141,26 @@ const BookingPage: React.FC<BookingPageProps> = ({
         agreedToHighValue: false,
         agreedToPremium: false,
         insuranceLevel: 1,
-        insuranceBagCount: 0
+        insuranceBagCount: 0,
+        country: 'KR'
     });
+
+    const [isCountryManuallySet, setIsCountryManuallySet] = useState(false);
+
+    // 🕵️‍♀️ [스봉이] 언어에 따라 국가를 자동으로 매칭해주는 천재적인 로직입니다! 💅✨
+    useEffect(() => {
+        if (isCountryManuallySet) return; // 사용자 선택이 우선이죠! 🙄
+
+        let autoCountry = 'US';
+        if (lang === 'ko') autoCountry = 'KR';
+        else if (lang === 'ja') autoCountry = 'JP';
+        else if (lang === 'zh' || lang === 'zh-CN') autoCountry = 'CN';
+        else if (lang === 'zh-HK') autoCountry = 'HK';
+        else if (lang === 'zh-TW') autoCountry = 'TW';
+
+        setBooking(prev => ({ ...prev, country: autoCountry }));
+    }, [lang, isCountryManuallySet]);
+
 
     const parseBusinessHours = (hoursStr: string) => {
         if (!hoursStr || hoursStr === '24시간' || hoursStr === '24 Hours') return { start: 0, end: 24 };
@@ -862,6 +897,29 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         />
                                     </div>
                                 </div>
+
+                                {/* [스봉리포트 전용] 국가 선택 필드 추가 🌏💅 */}
+                                <div className="space-y-2 pt-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                        {lang === 'ko' ? '거주 국가 (리포트용)' : 'Country of Residence'}
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            title="Country Selection"
+                                            value={booking.country}
+                                            onChange={e => setBooking(prev => ({ ...prev, country: e.target.value }))}
+                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-bee-yellow/50 transition-all appearance-none cursor-pointer"
+                                        >
+                                            {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
+                                                <option key={code} value={code}>{name}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                            <i className="fa-solid fa-chevron-down text-xs"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </section>
                     </div>

@@ -1,8 +1,8 @@
 export const en = {
     seo: {
-        title: 'Beeliber - Hongdae Luggage Storage & Airport Delivery',
-        description: 'Luggage storage & delivery at Hongdae, Luggage Storage, Incheon/Gimpo Airport. Same-day luggage delivery between hotel and airport. Travel light with Beeliber.',
-        keywords: 'Hongdae luggage storage, Hongdae luggage delivery, Luggage Storage, luggage delivery service, suitcase delivery, Incheon Airport luggage delivery, same-day luggage delivery, hotel luggage delivery'
+        title: 'Beeliber - Last Day in Seoul, Luggage-Free | Hongdae Storage & Airport Delivery 💅',
+        description: 'Luggage storage & delivery at Hongdae, Seoul Station, Incheon/Gimpo Airport. Same-day luggage delivery between hotel and airport. Travel light with Beeliber.',
+        keywords: 'Seoul luggage storage, Hongdae luggage storage, Incheon Airport luggage delivery, same-day luggage delivery, hotel luggage delivery, last day in Seoul, after checkout luggage, airport bag delivery'
     },
     nav: { services: 'Services', locations: 'Locations', tracking: 'Tracking', partners: 'Partners', book: 'Book Now', terms_label: 'Terms of Service', admin_portal: 'Portal', login: 'Login', mypage: 'My Page' },
     terms_page: {
@@ -63,13 +63,13 @@ export const en = {
         point2: "Don't waste your last 4 hours",
         point3: "Agony of crowded trains with 30kg bags",
         badge_without: "Without Beeliber",
-        badge_with: "With Beeliber 💅",
+        badge_with: "With Beeliber",
         quote_bad: "\"STAIRS ARE HELL\"",
         quote_good: "\"WALKING ON CLOUDS\""
     },
     howitworks: {
         headline: "3 Clicks, Your Bags Vanish",
-        badge_label: "MAGIC PROCESS ✨",
+        badge_label: "SERVICE PROCESS",
         step1: { title: "Drop", desc: "Hand off your heavy bags to Beeliber desks or partners at airports or hotels.", badge: "STEP 1. Drop" },
         step2: { title: "Enjoy", desc: "Immediately start your sightseeing, dining, and shopping with both hands free.", badge: "STEP 2. Enjoy" },
         step3: { title: "Meet", desc: "When you arrive at your hotel room after your day, your bags are already waiting for you.", badge: "STEP 3. Meet" }
@@ -93,7 +93,7 @@ export const en = {
         price_extra: "₩29,000",
         features_standard: ["All sizes up to 23\"", "Airport ↔ Hotel Delivery", "Real-time Email Status", "Basic Insurance Included"],
         features_extra: ["Over 27\"", "Heavy Duty Handling", "Safe Same-day Delivery", "Premium Insurance Applied"],
-        flat_rate_label: "FLAT RATE 💰",
+        flat_rate_label: "FLAT RATE",
         most_popular_label: "MOST POPULAR",
         per_bag_label: "/ Bag",
         choose_service_btn: "CHOOSE SERVICE"
@@ -167,9 +167,11 @@ export const en = {
         email: "Email Address",
         sns: "SNS Channel",
         snsId: "SNS ID / Account",
+        country: "Country",
+        country_placeholder: "Select Country",
         submit: "Confirm Booking",
         success: "Booking Received!",
-        successSub: "Our messenger will find you soon! 🐝",
+        successSub: "Your booking has been received.",
         address_placeholder: "Address (e.g. Hotel, Street)",
         address_detail_placeholder: "Details (e.g. Room #, Floor)",
         alert_fill_info: "Please fill in all information.",
@@ -243,7 +245,7 @@ export const en = {
         agree_premium_checklist: "Confirm restricted items & compensation policy",
         restricted_items_note: "* Compensation may be denied for these items.",
         slot_past: "Sold out",
-        airport_late_notice: "Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual! 🍯"
+        airport_late_notice: "Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual!"
     },
     status_mapping: {
         '접수완료': 'Pending', '예약완료': 'Confirmed', '보관중': 'Storing', '이동중': 'In Transit',
@@ -287,15 +289,15 @@ export const en = {
         f2_t: 'Smart Storage', f2_d: 'Safe city storage at Money Box.',
         f3_t: 'Global System', f3_d: 'Travel anywhere light.',
         delivery_title: 'Bee AI Smart Delivery',
-        delivery_desc: 'Just talk to Bungbung-i. AI immediately calculates\nthe optimal route and time for you.',
+        delivery_desc: 'Just talk to Bee AI. AI immediately calculates\nthe optimal route and time for you.',
         storage_title: 'Bee AI Simple Storage',
-        storage_desc: 'No need to worry about where and when.\nAI Bungbung-i recommends the perfect hub.',
+        storage_desc: 'No need to worry about where and when.\nAI recommends the perfect hub.',
         tracking_title: 'Real-time Delivery Status',
         tracking_desc: 'Wondering where your luggage is right now?\nCheck the real-time status at every stage.'
     },
     ai_manual: {
         title: 'Bee AI User Manual',
-        subtitle: '3-Step Easy Booking Guide with Smart Bungbung-i',
+        subtitle: '3-Step Easy Booking Guide with Bee AI',
         step1_title: 'Talk to AI Bungbung-i',
         step1_desc: 'Enter your desired schedule and destination freely. Just say "Send my bags from Seoul Station to my hotel!"',
         step2_title: 'Custom Route Analysis',
@@ -336,7 +338,7 @@ export const en = {
         badge_delivery: 'DELIVERY', badge_same_day: 'SAME-DAY DELIVERY', badge_scheduled: 'SCHEDULED', badge_storage: 'STORAGE',
         badge_pick: 'PICK', badge_ret: 'RET',
         tag_airport_delivery: 'Airport Delivery', tag_both_services: 'Delivery | Storage', tag_storage_only: 'Storage Only', tag_delivery_only: 'Delivery Only',
-        my_location: "My Location 💅✨",
+        my_location: "My Location",
         user_marker: "Customer's Location",
         service_delivery: 'Delivery',
         service_storage: 'Storage',
@@ -380,7 +382,7 @@ export const en = {
         tag_same_day_delivery: 'Same-day Delivery',
         tag_global_shipping: 'Global Shipping',
         tag_baggage_storage: 'Storage',
-        msg_booking_confirmed: 'Booking Confirmed! ✨',
+        msg_booking_confirmed: 'Booking Confirmed',
         msg_live_preview: 'Live Preview',
         msg_map_load_error: 'Map failed to load. Please check connection.',
         msg_error_reason: 'Error Reason',
@@ -467,7 +469,7 @@ export const en = {
         },
         cta: "Experience a luggage-free trip with Beeliber now!",
         cta_main_title: "Ready to enjoy your travel freedom?",
-        btn_book_now: "Start your light travel 🐝",
+        btn_book_now: "Start your light travel",
         tracking_page: {
             title: "Booking Status & Delivery Tracking",
             subtitle: "Enter your name and email to easily check the current transport status of your luggage without a password.",
@@ -557,7 +559,7 @@ export const en = {
     },
     size_simulator: {
         header_title: "BEE Size Check",
-        header_subtitle: "Compare directly with your height! Vroom~",
+        header_subtitle: "Compare directly with your height!",
         height_label: "Set your height",
         size_m_range: "20~23 inches",
         size_m_desc: "Carry-on / Short Trip",
@@ -566,8 +568,8 @@ export const en = {
         size_xl_range: "27~30 inches",
         size_xl_desc: "Long-term / Immigrant",
         hook_text: "\"{size} size is perfect for your height!\"",
-        hook_sub: "Shall I help you with the reservation? Vroom~ ✨",
-        info_note: "This simulation is a guide based on actual photos and may vary slightly depending on the brand and design. Vroom~!"
+        hook_sub: "Shall I help you with the reservation?",
+        info_note: "This simulation is a guide based on actual photos and may vary slightly depending on the brand and design."
     },
     terms: {
         usage_title: 'I agree to the Terms of Service',
@@ -641,18 +643,18 @@ export const en = {
     },
     bee_ai: {
         header_title: "Bee Staff Boong-Boong",
-        welcome: "Hello! I'm Bee AI. How can I help you today? 🐝",
+        welcome: "Hello! I'm Bee AI. How can I help you today?",
         sync_status: "Syncing {count} branches in real-time!",
-        placeholder: "e.g. Send 2 L-size bags from Seoul Station to T2! 윙윙~",
-        btn_analyze: "Start Analysis! 슝~",
-        result_intro: "\"I found the branch info! 윙윙~ ✨ Here's the result compared with Beeliber branch data!\"",
+        placeholder: "e.g. Send 2 L-size bags from Seoul Station to T2!",
+        btn_analyze: "Start Analysis!",
+        result_intro: "\"I found the branch info! Here's the result compared with Beeliber branch data!\"",
         label_delivery: "Delivery",
         label_storage: "Storage",
         label_bags: "{count} Bags",
         label_origin: "Origin",
         label_branch: "Using Branch",
         label_quote: "Honey Price Quote 🍯",
-        btn_book: "Shall we book for this branch? 윙윙~! 🐝",
+        btn_book: "Shall we book for this branch?",
         btn_retry: "Recalculate",
         nearby_branch: "Nearby Branch",
         destination: "Destination",
@@ -668,8 +670,8 @@ export const en = {
         delivery_to_template: "Deliver to {branch}",
         total_bags_template: "(Total {count})",
         btn_yes: "Yes, I'll book!",
-        branch_hours_template: "The business hours for {branch} branch are [{hours}]. ✨",
-        storage_note: "📢 Additional daily charges may apply after 8 PM!",
+        branch_hours_template: "The business hours for {branch} branch are [{hours}].",
+        storage_note: "Additional daily charges may apply after 8 PM!",
         header: "Bee AI Booking"
     },
     qna: {
@@ -685,42 +687,53 @@ export const en = {
             {
                 category: "general",
                 question: "What is Beeliber?",
-                answer: "Beeliber is a premium luggage solution that delivers your bags from the airport to your hotel and provides secure storage. Leave the weight to us and enjoy your journey with freedom. 💅"
+                answer: "Beeliber is a premium luggage solution that delivers your bags from the airport to your hotel and provides secure storage. Leave the weight to us and enjoy your journey with freedom."
             },
             {
                 category: "general",
                 question: "How do I use the service?",
-                answer: "It's simple: Book online, Drop your bags at a designated point, Enjoy your day hands-free, and Meet your luggage at your destination. Magic, isn't it? ✨"
+                answer: "It's simple: Book online, Drop your bags at a designated point, Enjoy your day hands-free, and Meet your luggage at your destination. Magic, isn't it?"
             },
             {
                 category: "booking",
                 question: "Can I change or cancel my booking?",
-                answer: "Yes, you get a 100% refund up to 24 hours before service, and 50% up to 12 hours. No refunds for late cancellations or no-shows. Time is precious, just like our service! 🙄"
+                answer: "Yes, you get a 100% refund up to 24 hours before service, and 50% up to 12 hours. No refunds for late cancellations or no-shows. Time is precious, just like our service!"
             },
+
+
+
+
+
+
             {
                 category: "booking",
                 question: "Are there any restricted items?",
-                answer: "We do not accept cash, jewelry valued over 500,000 KRW, perishables, or hazardous materials. We treat your bags like VIPs, but safety always comes first. ☕"
+                answer: "We do not accept cash, jewelry valued over 500,000 KRW, perishables, or hazardous materials. We treat your bags like VIPs, but safety always comes first."
             },
             {
                 category: "safety",
                 question: "Is my luggage safe?",
-                answer: "Absolutely. Every bag is protected by a smart security seal, and you can track the real-time status via email. Our team handles your belongings with the utmost care. ✨"
+                answer: "Absolutely. Every bag is protected by a smart security seal, and you can track the real-time status via email. Our team handles your belongings with the utmost care."
             },
             {
                 category: "safety",
                 question: "What about insurance coverage?",
-                answer: "Basic insurance covers up to 500,000 KRW per bag. For high-value items, you can opt for premium coverage up to 3,000,000 KRW. Your peace of mind is our priority. 💅"
+                answer: "Basic insurance covers up to 500,000 KRW per bag. For high-value items, you can opt for premium coverage up to 3,000,000 KRW. Your peace of mind is our priority."
             },
             {
                 category: "locations",
                 question: "Where are the Beeliber locations?",
-                answer: "You can find us at Incheon Airport (T1/T2), Gimpo Airport, Seoul Station, Hongdae, Gangnam, and Myeongdong. Check our 'Locations' page for detailed directions. 📍"
+                answer: "You can find us at Incheon Airport (T1/T2), Gimpo Airport, Seoul Station, Hongdae, Gangnam, and Myeongdong. Check our 'Locations' page for detailed directions."
             },
             {
                 category: "locations",
                 question: "What are the operating hours?",
-                answer: "Most branches operate from 09:00 to 21:00. However, hours may vary by location and partner, so please check the specific branch info when booking! 🍯"
+                answer: "Most branches operate from 09:00 to 21:00. However, hours may vary by location and partner, so please check the specific branch info when booking!"
+            },
+            {
+                category: "booking",
+                question: "What happens if I arrive later than the scheduled pickup time?",
+                answer: "If you arrive after the scheduled pickup time, an additional late fee may be charged in 30-minute increments to ensure smooth operations. We kindly ask you to stay on schedule for the comfort of yourself and other travelers! ✨"
             }
         ]
     }

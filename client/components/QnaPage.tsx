@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, ShieldCheck, Ticket, MapPin, Search, Loader2 } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 import { QnaData } from '../types';
+import SEO from './SEO';
 
 interface QnaPageProps {
   onBack: () => void;
@@ -63,8 +64,29 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
+  // 💅 FAQ 구조화된 데이터 생성 (Google AI가 아주 좋아하겠죠?)
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": qnaData.items.map((item: any) => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answer
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-bee-black select-none">
+      <SEO 
+        title={`${qnaData.title} | Beeliber Premium Support`}
+        description={qnaData.subtitle}
+        lang={lang}
+        path="/qna"
+        schema={faqSchema}
+      />
       {/* Premium Header/Navbar */}
       <nav className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md shadow-sm py-4 px-6 md:px-12 flex justify-between items-center border-b border-gray-100">
         <div className="flex items-center gap-1 cursor-pointer" onClick={onBack}>
@@ -154,11 +176,11 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
         {isLoading ? (
           <div className="py-20 text-center text-bee-black font-black uppercase tracking-widest animate-pulse">
             <Loader2 className="animate-spin mx-auto mb-4" />
-            최신 정보를 동기화 중입니다... 💅
+            최신 정보를 동기화 중입니다...
           </div>
         ) : (
           /* Accordion List */
-          <div className="space-y-4">
+          <section className="space-y-4" aria-label="FAQ List">
           <AnimatePresence mode="popLayout">
             {filteredItems.length > 0 ? (
               filteredItems.map((item: any, idx: number) => {
@@ -166,7 +188,7 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
                 const isOpen = openIndex === globalIdx;
 
                 return (
-                  <motion.div
+                  <motion.article
                     key={globalIdx}
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -176,6 +198,8 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
                   >
                     <button
                       onClick={() => toggleAccordion(globalIdx)}
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${globalIdx}`}
                       className={`w-full text-left p-6 md:p-8 bg-white border border-gray-100 rounded-[32px] transition-all hover:shadow-xl hover:border-bee-yellow/20 flex items-start gap-6 ${
                         isOpen ? 'ring-2 ring-bee-yellow shadow-2xl' : ''
                       }`}
@@ -186,12 +210,18 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
                         Q
                       </div>
                       <div className="flex-1 pt-2">
-                        <h3 className={`text-lg md:text-xl font-black transition-colors ${isOpen ? 'text-bee-black' : 'text-gray-800'}`}>
+                        <h3 
+                          id={`faq-question-${globalIdx}`}
+                          className={`text-lg md:text-xl font-black transition-colors ${isOpen ? 'text-bee-black' : 'text-gray-800'}`}
+                        >
                           {item.question}
                         </h3>
                         <AnimatePresence>
                           {isOpen && (
                             <motion.div
+                              id={`faq-answer-${globalIdx}`}
+                              role="region"
+                              aria-labelledby={`faq-question-${globalIdx}`}
                               initial={{ height: 0, opacity: 0, marginTop: 0 }}
                               animate={{ height: 'auto', opacity: 1, marginTop: 24 }}
                               exit={{ height: 0, opacity: 0, marginTop: 0 }}
@@ -209,7 +239,7 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
                         <ChevronDown size={20} />
                       </div>
                     </button>
-                  </motion.div>
+                  </motion.article>
                 );
               })
             ) : (
@@ -227,7 +257,7 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
                 </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </section>
         )}
 
         {/* Footer Contact */}
@@ -236,7 +266,7 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
             
             <p className="text-bee-yellow text-[10px] font-black uppercase tracking-[0.4em] mb-6">Still have questions?</p>
             <h2 className="text-3xl md:text-4xl font-black text-white mb-10 tracking-tight">
-                {lang === 'ko' ? "Bungbung-i가 실시간으로\n도와드릴까요?" : "Need live assistance\nfrom Bungbung-i?"}
+                {lang === 'ko' ? "실시간 지원이\n필요하신가요?" : "Need live assistance?"}
             </h2>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
                 <button 

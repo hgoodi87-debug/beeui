@@ -13,7 +13,8 @@ import {
     Users,
     Package,
     ThumbsUp,
-    Globe
+    Globe,
+    Sparkles
 } from "lucide-react";
 
 import TrackingWidget from "./TrackingWidget";
@@ -58,7 +59,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
     return (
         <div className="w-full bg-white selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden">
 
-            {/* Global Navigation 💅 */}
+            {/* Global Navigation */}
             <nav className="fixed top-0 inset-x-0 z-[100] px-4 py-4 transition-all duration-300">
                 <div className="max-w-[1200px] mx-auto flex justify-between items-center backdrop-blur-xl bg-black/40 border border-white/10 rounded-full px-6 py-2 shadow-2xl">
                     <motion.div
@@ -149,6 +150,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                             {[
                                 { id: 'SERVICES', label: t.nav.services },
                                 { id: 'LOCATIONS', label: t.nav.locations },
+                                { id: 'TIPS', label: 'Travel Tips' },
                                 { id: 'PARTNERSHIP', label: t.nav.partners },
                                 { id: 'QNA', label: 'Q&A' },
                                 { id: 'MYPAGE', label: user && !user.isAnonymous ? t.nav.mypage : t.nav.login }
@@ -177,7 +179,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                 )}
             </AnimatePresence>
 
-            {/* 7-Step Main Sections ✨ */}
+            {/* 7-Step Main Sections */}
             <main>
                 <LandingHero
                     t={t}
@@ -190,6 +192,49 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                 <LandingTrustBadge t={t} />
                 <LandingPricing t={t} onNavigate={onNavigate} />
                 <LandingReviews t={t} />
+
+                {/* 💅 Beeliber Content Hub / Travel Tips Section */}
+                <section className="py-24 bg-white border-y border-gray-100">
+                    <div className="max-w-[1200px] mx-auto px-6">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+                            <div className="max-w-xl text-center md:text-left">
+                                <motion.div 
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true }}
+                                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-bee-yellow/10 text-bee-black border border-bee-yellow rounded-full mb-6"
+                                >
+                                    <Sparkles size={12} className="text-bee-black" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Travel Smarter</span>
+                                </motion.div>
+                                <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight italic uppercase leading-none">
+                                    The <span className="text-gray-300">Content</span> Hub 💅
+                                </h2>
+                                <p className="text-gray-400 font-bold text-lg mb-10">
+                                    {lang === 'ko' ? '서울을 200% 더 가볍고 완벽하게 즐기는 법. 비리버가 큐레이션한 프리미엄 여행 팁을 만나보세요.' : 'Discover how to enjoy Seoul light and perfectly. Explore premium travel tips curated by Beeliber.'}
+                                </p>
+                                <button 
+                                    onClick={() => onNavigate('TIPS')}
+                                    className="group inline-flex items-center gap-3 px-8 py-4 bg-bee-black text-bee-yellow font-black rounded-full hover:scale-105 transition-all shadow-xl"
+                                >
+                                    Explore All Tips
+                                    <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
+                                    <div className="w-40 h-40 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Tip 01</div>
+                                    <div className="w-40 h-56 rounded-[2.5rem] bg-bee-yellow/5 flex items-center justify-center border border-bee-yellow/20 italic font-black text-bee-yellow/30">Tip 02</div>
+                                </div>
+                                <div className="space-y-4 pt-8">
+                                    <div className="w-40 h-56 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Tip 03</div>
+                                    <div className="w-40 h-40 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Tip 04</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <LandingFinalCTA t={t} onNavigate={onNavigate} />
             </main>
 
@@ -214,7 +259,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                 <div className="flex justify-between items-center mb-12">
                                     <div className="space-y-4">
                                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-bee-yellow text-bee-black rounded-full shadow-lg shadow-bee-yellow/20">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.hero.status_suffix || 'Tracking status'} 💅</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.hero.status_suffix || 'Tracking status'}</span>
                                         </div>
                                         <h3 className="text-4xl md:text-5xl font-display font-black text-bee-black tracking-tighter leading-tight">
                                             {t.hero.live_label || 'Real-time GPS Monitoring'}

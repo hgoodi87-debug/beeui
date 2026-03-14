@@ -13,7 +13,7 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
         { name: "Sarah", location: "USA", text: t.reviews_section.review1, img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=400" },
         { name: "Min-tae", location: "Korea", text: t.reviews_section.review2, img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=400" },
         { name: "Lee J.", location: "Singapore", text: t.reviews_section.review3, img: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&q=80&w=400" },
-        { name: "Yuki", location: "Japan", text: "Shopping in Myeongdong without bags was like a dream! ❤️", img: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=400" },
+        { name: "Yuki", location: "Japan", text: "Shopping in Myeongdong without bags was like a dream!", img: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=400" },
         { name: "Chen", location: "China", text: "Same-day delivery service is super fast. Highly recommend Beeliber!", img: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=400" },
         { name: "Emma", location: "UK", text: "My first time in Seoul and didn't have to carry my suitcase. Perfect!", img: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=400" },
         { name: "Hans", location: "Germany", text: "The security seal made me feel so safe about my bags. 10/10.", img: "https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&q=80&w=400" },

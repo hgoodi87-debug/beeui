@@ -189,7 +189,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         <div className="flex flex-col items-center pb-6 border-b border-gray-100 text-center">
                             <div className="w-32 h-32 bg-white rounded-3xl p-3 mb-4 border-2 border-bee-yellow/20 flex items-center justify-center relative group shadow-sm">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${booking.reservationCode || booking.id}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/staff/scan?id=${booking.id || booking.reservationCode}`)}`}
                                     alt="QR Code"
                                     className="w-full h-full object-contain"
                                 />
@@ -509,11 +509,11 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         <span className="text-2xl font-black text-bee-black">liber</span>
                     </div>
                     <div className="w-64 h-64 bg-white rounded-[40px] p-6 mb-6 border-4 border-bee-yellow/10 flex items-center justify-center shadow-sm">
-                        <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${booking.reservationCode || booking.id}`}
-                            alt="QR Code"
-                            className="w-full h-full object-contain"
-                        />
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${window.location.origin}/staff/scan?id=${booking.id || booking.reservationCode}`)}`}
+                                alt="QR Code"
+                                className="w-full h-full object-contain"
+                            />
                     </div>
                     <div>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">Reservation Code</p>

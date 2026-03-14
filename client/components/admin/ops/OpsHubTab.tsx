@@ -1,5 +1,7 @@
 import React from 'react';
 import { LocationOption, LocationType, BookingState, BookingStatus } from '../../../types';
+import { motion } from 'framer-motion';
+
 
 interface OpsHubTabProps {
     locations: LocationOption[];
@@ -74,15 +76,18 @@ const OpsHubTab: React.FC<OpsHubTabProps> = ({
                                     <span className={`text-xs font-black ${loadPercentage > 80 ? 'text-red-500' : 'text-bee-black'}`}>{loadPercentage}%</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden border border-gray-100">
-                                    <div 
-                                        className={`h-full transition-all duration-1000 ${
+                                    <motion.div 
+                                        className={`h-full ${
                                             loadPercentage > 80 ? 'bg-red-500' : 
                                             loadPercentage > 50 ? 'bg-orange-400' : 
                                             'bg-bee-yellow'
                                         }`} 
-                                        style={{ width: `${loadPercentage}%` } as React.CSSProperties}
-                                    ></div>
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${loadPercentage}%` }}
+                                        transition={{ duration: 1, ease: "easeOut" }}
+                                    />
                                 </div>
+
                                 <div className="flex gap-2 pt-2">
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); focusLocation(loc); }}

@@ -27,7 +27,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Pre-warm Auth and Functions 💅
+  // Pre-warm Auth and Functions
   useEffect(() => {
     ensureAuth().catch(console.error);
   }, []);
@@ -91,7 +91,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       } else if (errCode === 'permission-denied' || errCode === 'functions/permission-denied') {
         setError('해당 관리자 계정의 접근 권한이 거부되었습니다.');
       } else if (errCode === 'auth/unauthorized-domain' || errMsg.includes('referer') || errMsg.includes('requests-from-referer')) {
-        setError(`인증 실패. [${window.location.origin}] 도메인이 파이어베이스 승인 목록에 등록되어 있는지 확인해주세요. 🛡️`);
+        setError(`인증 실패. [${window.location.origin}] 도메인이 파이어베이스 승인 목록에 등록되어 있는지 확인해주세요.`);
       } else {
         setError(`연결 오류 (Code: ${errCode}). 인터넷 연결이나 파이어베이스 설정을 확인해주세요.`);
       }

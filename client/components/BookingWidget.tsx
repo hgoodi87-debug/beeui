@@ -17,6 +17,7 @@ interface BookingWidgetProps {
   onPrivacyClick?: () => void;
   onFinalBookClick?: (action: () => void) => void;
   onSuccess?: (booking: any) => void;
+  initialLocationId?: string; // 💅 [스봉이] 특정 지점 자동 선택을 위해 추가했어요!
   /** @deprecated use preSelectedBooking instead */
   initialBooking?: BookingState | null;
 }
@@ -28,7 +29,7 @@ const INITIAL_STORAGE_TIERS: StorageTier[] = [
   { id: 'st-week', label: '1w', prices: { S: 40000, M: 55000, L: 80000, XL: 110000 } }
 ];
 
-const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooking, initialBooking, onTermsClick, onPrivacyClick, onFinalBookClick, onSuccess }) => {
+const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooking, initialBooking, onTermsClick, onPrivacyClick, onFinalBookClick, onSuccess, initialLocationId }) => {
   const [locations, setLocations] = useState<LocationOption[]>(INITIAL_LOCATIONS);
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
@@ -44,8 +45,25 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     status: BookingStatus.PENDING, price: 0, createdAt: new Date().toISOString(),
     agreedToTerms: false, agreedToPrivacy: false, agreedToHighValue: false, agreedToPremium: false,
     insuranceLevel: 1, insuranceBagCount: 1,
-    weightSurcharge5kg: 0, weightSurcharge10kg: 0
+    weightSurcharge5kg: 0, weightSurcharge10kg: 0,
+    country: 'KR'
   });
+
+  const [isCountryManuallySet, setIsCountryManuallySet] = useState(false);
+
+  // 🕵️‍♀️ [스봉이] 위젯에서도 제 천재성은 빛이 납니다! 💅✨ 언어-국가 매칭!
+  useEffect(() => {
+    if (isCountryManuallySet) return;
+
+    let autoCountry = 'US';
+    if (lang === 'ko') autoCountry = 'KR';
+    else if (lang === 'ja') autoCountry = 'JP';
+    else if (lang === 'zh' || lang === 'zh-CN') autoCountry = 'CN';
+    else if (lang === 'zh-HK') autoCountry = 'HK';
+    else if (lang === 'zh-TW') autoCountry = 'TW';
+
+    setBooking(prev => ({ ...prev, country: autoCountry }));
+  }, [lang, isCountryManuallySet]);
 
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<DiscountCode | null>(null);
@@ -87,10 +105,12 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
         serviceType: bType,
         pickupLocation: preSelectedBooking.id,
         bagSizes: bagCounts,
-        bags: Object.values(bagCounts).reduce((a, b) => a + b, 0)
+        bags: Object.values(bagCounts).reduce((a: number, b: number) => a + b, 0)
       }));
+    } else if (initialLocationId) {
+      setBooking(prev => ({ ...prev, pickupLocation: initialLocationId }));
     }
-  }, [preSelectedBooking, initialBooking]);
+  }, [preSelectedBooking, initialBooking, initialLocationId]);
 
   const selectedBranch = useMemo(() => {
     return locations.find(l => l.id === booking.pickupLocation);
@@ -456,12 +476,44 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
 
               {currentStep === 4 && (
                 <div className="space-y-4">
-                  <input type="text" placeholder="Name" value={booking.userName} onChange={e => updateBooking('userName', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-gray-100 font-bold" />
-                  <input type="email" placeholder="Email" value={booking.userEmail} onChange={e => updateBooking('userEmail', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-gray-100 font-bold" />
+                  <input type="text" placeholder={t.booking.name || "Name"} value={booking.userName} onChange={e => updateBooking('userName', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-gray-100 font-bold outline-none focus:border-bee-yellow transition-all" />
+                  <input type="email" placeholder={t.booking.email || "Email"} value={booking.userEmail} onChange={e => updateBooking('userEmail', e.target.value)} className="w-full p-4 rounded-2xl border-2 border-gray-100 font-bold outline-none focus:border-bee-yellow transition-all" />
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">{t.booking.country || "Country"}</label>
+                    <select 
+                      title={t.booking.country || "Country"}
+                      value={booking.country || ''} 
+                      onChange={e => {
+                        updateBooking('country', e.target.value);
+                        setIsCountryManuallySet(true); // 💅 수동 선택 완료! 이제 실장은 가만히 있을게요.
+                      }}
+                      className="w-full p-4 rounded-2xl border-2 border-gray-100 font-bold bg-white outline-none focus:border-bee-yellow transition-all"
+                    >
+                      <option value="">{t.booking.country_placeholder || "Select Country"}</option>
+                      <option value="KR">Korea (대한민국)</option>
+                      <option value="US">USA (미국)</option>
+                      <option value="JP">Japan (일본)</option>
+                      <option value="CN">China (중국)</option>
+                      <option value="TW">Taiwan (대만)</option>
+                      <option value="HK">Hong Kong (홍콩)</option>
+                      <option value="SG">Singapore (싱가포르)</option>
+                      <option value="TH">Thailand (태국)</option>
+                      <option value="VN">Vietnam (베트남)</option>
+                      <option value="MY">Malaysia (말레이시아)</option>
+                      <option value="PH">Philippines (필리핀)</option>
+                      <option value="ID">Indonesia (인도네시아)</option>
+                      <option value="FR">France (프랑스)</option>
+                      <option value="DE">Germany (독일)</option>
+                      <option value="GB">UK (영국)</option>
+                      <option value="OTHER">Other (기타)</option>
+                    </select>
+                  </div>
+
                   <div className="p-4 bg-gray-50 rounded-2xl flex flex-col gap-2">
-                    <label className="flex gap-2 text-xs font-bold items-center"><input type="checkbox" checked={booking.agreedToTerms} onChange={e => updateBooking('agreedToTerms', e.target.checked)} /> Agree to Terms</label>
-                    <label className="flex gap-2 text-xs font-bold items-center"><input type="checkbox" checked={booking.agreedToPrivacy} onChange={e => updateBooking('agreedToPrivacy', e.target.checked)} /> Agree to Privacy</label>
-                    <label className="flex gap-2 text-xs font-bold items-center"><input type="checkbox" checked={booking.agreedToHighValue} onChange={e => updateBooking('agreedToHighValue', e.target.checked)} /> Agree to Policy</label>
+                    <label className="flex gap-2 text-xs font-bold items-center"><input type="checkbox" checked={booking.agreedToTerms} onChange={e => updateBooking('agreedToTerms', e.target.checked)} /> {t.booking.agree_terms_simple || "Agree to Terms"}</label>
+                    <label className="flex gap-2 text-xs font-bold items-center"><input type="checkbox" checked={booking.agreedToPrivacy} onChange={e => updateBooking('agreedToPrivacy', e.target.checked)} /> {t.booking.agree_privacy_simple || "Agree to Privacy"}</label>
+                    <label className="flex gap-2 text-xs font-bold items-center"><input type="checkbox" checked={booking.agreedToHighValue} onChange={e => updateBooking('agreedToHighValue', e.target.checked)} /> {t.booking.agree_high_value_simple || "Agree to Policy"}</label>
                   </div>
                 </div>
               )}

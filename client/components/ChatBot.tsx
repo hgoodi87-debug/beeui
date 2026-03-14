@@ -44,7 +44,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
 
     const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
 
-    // [스봉이 수정] 관리자 메시지 실시간 번역 로직 💅
+    // 관리자 메시지 실시간 번역 로직
     useEffect(() => {
         if (lang === 'ko') return;
 
@@ -53,7 +53,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
 
             if (adminMsgs.length === 0) return;
 
-            console.log(`[스봉이] ${adminMsgs.length}개의 새로운 관리자 메시지 번역 중... 아시겠어요? 💅`);
+            console.log(`${adminMsgs.length}개의 새로운 관리자 메시지 번역 중...`);
 
             for (const msg of adminMsgs) {
                 try {
@@ -63,7 +63,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                         [msg.timestamp]: translated
                     }));
                 } catch (e) {
-                    console.error("[스봉이] 번역 사고 발생! 🙄", e);
+                    console.error("번역 오류 발생:", e);
                 }
             }
         };
@@ -143,7 +143,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
         const directWebhook = import.meta.env.VITE_GOOGLE_CHAT_WEBHOOK_URL;
         const functionUrl = `${window.location.origin}/api/notify-google-chat`;
 
-        const displayRole = role === 'user' ? `👤 ${userInfo.name || t?.user_label || '고객'} (${userInfo.email || 'N/A'})` : `🤖 ${t?.header || 'BeeBot'}`;
+        const displayRole = role === 'user' ? `${userInfo.name || t?.user_label || '고객'} (${userInfo.email || 'N/A'})` : `${t?.header || 'Bee AI'}`;
         const payload = {
             text: `*${displayRole}*: ${text}`,
             thread: { threadKey: sessionId }
@@ -202,7 +202,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
 
         await StorageService.saveChatMessage(userMsg);
 
-        const chatText = hiddenPrompt ? (t?.notify_template?.replace('{userText}', userText) || `[🚨 챗봇 알림] 고객이 '${userText}' 버튼을 클릭했습니다.`) : userText;
+        const chatText = hiddenPrompt ? (t?.notify_template?.replace('{userText}', userText) || `[챗봇 알림] 고객이 '${userText}' 버튼을 클릭했습니다.`) : userText;
         await sendToGoogleChat('user', chatText);
 
         await StorageService.saveChatSession({
@@ -229,7 +229,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                     text: responseText,
                     timestamp: new Date().toISOString(),
                     sessionId,
-                    userName: 'BeeBot',
+                    userName: 'Bee AI',
                     userEmail: 'ai@beeliber.com'
                 };
                 await StorageService.saveChatMessage(aiMsg);
@@ -305,7 +305,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                         <div className="flex items-center gap-4 relative z-10">
                             <div className="w-12 h-12 rounded-2xl bg-bee-black flex items-center justify-center text-bee-yellow font-black text-lg shadow-lg">B</div>
                             <div>
-                                <h4 className="text-bee-black font-black text-base leading-none tracking-tight">{t?.header || 'BeeBot'}</h4>
+                                <h4 className="text-bee-black font-black text-base leading-none tracking-tight">{t?.header || 'Bee AI'}</h4>
                                 <div className="flex items-center gap-2 mt-1.5">
                                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                                     <span className="text-bee-black/60 text-[10px] font-black uppercase tracking-widest">

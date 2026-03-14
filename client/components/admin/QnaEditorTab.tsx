@@ -38,10 +38,10 @@ const QnaEditorTab: React.FC = () => {
         setIsSaving(true);
         try {
             await StorageService.saveQnaPolicy(qnaForm);
-            alert('Q&A 정보가 데이터베이스에 저장되었습니다. ✨');
+            alert('Q&A 정보가 정상적으로 저장되었습니다.');
         } catch (e) {
             console.error(e);
-            alert('저장 도중 사고가 발생했습니다! 🚨');
+            alert('저장 중 오류가 발생했습니다.');
         } finally {
             setIsSaving(false);
         }
@@ -63,7 +63,7 @@ const QnaEditorTab: React.FC = () => {
     };
 
     const removeQnaItem = (idx: number) => {
-        if (!confirm('이 항목을 정말 삭제할까요? 💅')) return;
+        if (!confirm('이 항목을 정말 삭제하시겠습니까?')) return;
         setQnaForm(prev => ({
             ...prev,
             items: prev.items.filter((_, i) => i !== idx)
@@ -81,7 +81,7 @@ const QnaEditorTab: React.FC = () => {
         return (
             <div className="p-20 text-center text-bee-black font-black uppercase tracking-widest animate-pulse">
                 <Loader2 className="animate-spin mx-auto mb-4" />
-                데이터를 분석하는 중... 잠시만요 💅
+                데이터를 불러오고 있습니다... 잠시만 기다려 주세요.
             </div>
         );
     }
@@ -93,7 +93,7 @@ const QnaEditorTab: React.FC = () => {
                 <div>
                     <h1 className="text-3xl md:text-4xl font-black tracking-tighter mb-2">Q&A Management</h1>
                     <p className="text-gray-400 font-bold text-xs uppercase tracking-[0.2em] ml-1">
-                        고객들의 궁금증을 실시간으로 해결해 줄 깍쟁이 가이드를 편집하세요. 💅
+                        고객들의 문의 사항에 대한 답변 및 안내 가이드를 편집할 수 있습니다.
                     </p>
                 </div>
                 <button 
@@ -230,7 +230,7 @@ const QnaEditorTab: React.FC = () => {
                         {qnaForm.items.length === 0 && (
                             <div className="py-20 bg-white rounded-[48px] border-2 border-dashed border-gray-100 text-center">
                                 <HelpCircle size={48} className="mx-auto text-gray-200 mb-4" />
-                                <p className="text-gray-400 font-bold">아직 질문이 없습니다. 첫 번째 질문을 등록해 보세요! ✨</p>
+                                <p className="text-gray-400 font-bold">등록된 질문이 없습니다. 새로운 질문을 추가해 보세요.</p>
                             </div>
                         )}
                     </div>

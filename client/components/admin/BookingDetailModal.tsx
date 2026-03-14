@@ -16,6 +16,25 @@ interface BookingDetailModalProps {
     handleRefund?: (booking: BookingState) => void;
 }
 
+const COUNTRY_NAMES: Record<string, string> = {
+    'KR': 'Korea 🇰🇷',
+    'US': 'USA 🇺🇸',
+    'JP': 'Japan 🇯🇵',
+    'CN': 'China 🇨🇳',
+    'TW': 'Taiwan 🇹🇼',
+    'HK': 'Hong Kong 🇭🇰',
+    'SG': 'Singapore 🇸🇬',
+    'TH': 'Thailand 🇹🇭',
+    'VN': 'Vietnam 🇻🇳',
+    'MY': 'Malaysia 🇲🇾',
+    'PH': 'Philippines 🇵🇭',
+    'ID': 'Indonesia 🇮🇩',
+    'FR': 'France 🇫🇷',
+    'DE': 'Germany 🇩🇪',
+    'GB': 'UK 🇬🇧',
+    'OTHER': 'Other 🌎'
+};
+
 const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
     selectedBooking,
     setSelectedBooking,
@@ -111,6 +130,19 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                         </select>
                                         <input title="SNS ID" placeholder="SNS ID 입력" value={selectedBooking.snsId || ''} onChange={e => setSelectedBooking({ ...selectedBooking, snsId: e.target.value })} className="flex-1 bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm" />
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">국가 (Country)</label>
+                                    <select 
+                                        title="국가 선택" 
+                                        value={selectedBooking.country || 'KR'} 
+                                        onChange={e => setSelectedBooking({ ...selectedBooking, country: e.target.value })} 
+                                        className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm"
+                                    >
+                                        {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
+                                            <option key={code} value={code}>{name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                         </div>

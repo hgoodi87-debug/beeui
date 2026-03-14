@@ -47,7 +47,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                         viewport={{ once: true }}
                         className="inline-block px-5 py-2 rounded-full bg-bee-yellow/10 text-[11px] font-black tracking-[0.3em] text-bee-yellow uppercase mb-8 font-outfit"
                     >
-                        {t.howitworks?.badge_label || "MAGIC PROCESS ✨"}
+                        {t.howitworks?.badge_label || "MAGIC PROCESS"}
                     </motion.span>
                     <h2 className="text-4xl md:text-7xl font-display font-black tracking-tighter text-bee-black leading-[1.1] mb-10 break-keep px-4">
                         {t.howitworks.headline}

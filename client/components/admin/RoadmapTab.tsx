@@ -24,6 +24,7 @@ const RoadmapTab: React.FC<RoadmapTabProps> = ({ t, lang, locations = [] }) => {
                 { path: '/partnership', name: '제휴 안내', desc: '파트너 도입 및 프랜차이즈 문의', status: 'completed' },
                 { path: '/terms', name: '이용약관', desc: '글로벌 이용약관 표시', status: 'completed' },
                 { path: '/privacy', name: '개인정보처리방침', desc: '개인정보 보호 규정 표시', status: 'completed' },
+                { path: '/qna', name: '자주 묻는 질문 (FAQ)', desc: '서비스 이용 관련 Q&A 및 지연 요금 안내', status: 'completed' },
                 { path: '/mypage', name: '마이페이지', desc: '고객 정보 및 이전 예약 내역 확인', status: 'in-progress' },
             ]
         },

@@ -90,7 +90,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
 
         setIsBulkMapping(true);
         try {
-            const { StorageService } = await import('../../services/storageService');
             const bucket = "beeliber-main.firebasestorage.app";
 
             for (const loc of locations) {
@@ -114,7 +113,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         if (!locForm.name || !locForm.address) { alert("지점명과 주소를 먼저 입력해 주세요."); return; }
         setIsTranslating(true);
         try {
-            const { StorageService } = await import('../../services/storageService');
             const result = await StorageService.translateLocationData({ name: locForm.name, address: locForm.address, pickupGuide: locForm.pickupGuide || '', description: locForm.description || '' });
             setLocForm({ ...locForm, ...result });
             alert("AI 자동 번역이 완료되었습니다! ✨");
@@ -126,7 +124,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         if (lang === 'en' && loc.name_en) return loc.name_en;
         if (lang === 'ja' && loc.name_ja) return loc.name_ja;
         if ((lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK') && loc.name_zh) return loc.name_zh;
-        return loc.name || loc.id; // [스봉이] 이름이 없으면 ID라도 보여줘야죠! 💅
+        return loc.name || loc.id;
     };
 
     const getLocAddress = (loc: LocationOption) => {
@@ -202,7 +200,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 if (!confirm("MBX- 형식의 지점 ID를 3자리 약칭(AGS, DDP 등)으로 일괄 변경하시겠습니까?\n이 작업은 Firestore 데이터를 직접 수정하며 되돌릴 수 없습니다. 💅")) return;
                                 setIsBulkMapping(true);
                                 try {
-                                    const { StorageService } = await import('../../services/storageService');
                                     const mapping: Record<string, string> = {
                                         'MBX-001': 'AGS', 'MBX-002': 'DDP', 'MBX-003': 'JNO', 'MBX-004': 'CMR',
                                         'MBX-005': 'SSU', 'MBX-006': 'GNS', 'MBX-007': 'MEC', 'MBX-008': 'YDO',
@@ -221,8 +218,8 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                         if (newId) {
                                             await StorageService.deleteLocation(loc.id);
                                             await StorageService.saveLocation({ ...loc, id: newId, shortCode: newId });
+                                        }
                                     }
-                                }
                                     alert(`총 ${mbxLocations.length}개의 지점 ID가 성공적으로 변경되었습니다! ✨`);
                                     window.location.reload();
                                 } catch (e) { alert("ID 변경 중 오류가 발생했습니다. 🚨"); console.error(e); }
@@ -239,7 +236,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
 
 
                 <div className="flex items-center gap-2">
-                    {/* View Mode Toggle 💅 */}
                     <div className="bg-gray-100 p-1 rounded-2xl flex items-center shadow-inner border border-gray-200">
                         <button 
                             onClick={() => setViewMode('LIST')}
@@ -509,10 +505,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 branches={filteredLocations}
                                 selectedBranch={locations.find(l => l.id === locForm.id)}
                                 onLocationSelect={(loc) => loc ? focusLocation(loc) : null}
-                                currentService="SAME_DAY" // 어드민 오버뷰용 기본값 💅
-                                userLocation={{ lat: 37.5665, lng: 126.9780 }} // 서울 중심점 💅
+                                currentService="SAME_DAY"
+                                userLocation={{ lat: 37.5665, lng: 126.9780 }}
                             />
-                            {/* 지도 위에 띄울 간단한 통계 오버레이 💅 */}
                             <div className="absolute bottom-6 left-6 z-10">
                                 <div className="px-6 py-4 bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[30px] flex items-center gap-6">
                                     <div className="flex flex-col">

@@ -1,4 +1,6 @@
 import { BookingState, BookingStatus, LocationOption, AdminUser } from '../../../types';
+import { motion } from 'framer-motion';
+
 
 interface OpsDashboardTabProps {
     todayKST: string;
@@ -153,13 +155,17 @@ const OpsDashboardTab: React.FC<OpsDashboardTabProps> = ({
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                                                <div 
-                                                    className={`h-full transition-all duration-1000 ${loadPercentage > 80 ? 'bg-red-500' : loadPercentage > 50 ? 'bg-orange-400' : 'bg-bee-yellow'}`}
-                                                    style={{ width: `${loadPercentage}%` } as React.CSSProperties}
-                                                ></div>
+                                                <motion.div 
+                                                    className={`h-full ${loadPercentage > 80 ? 'bg-red-500' : loadPercentage > 50 ? 'bg-orange-400' : 'bg-bee-yellow'}`}
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${loadPercentage}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                />
                                             </div>
                                             <span className="text-[8px] font-black text-gray-500 uppercase">부하율 {Math.round(loadPercentage)}%</span>
                                         </div>
+
+
                                     </div>
                                 );
                             })}

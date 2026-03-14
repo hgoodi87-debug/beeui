@@ -126,7 +126,7 @@ const ChatTab: React.FC = () => {
                                         onClick={toggleBot}
                                         className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all ${sessions.find(s => s.sessionId === selectedSessionId)?.isBotDisabled ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}
                                     >
-                                        {sessions.find(s => s.sessionId === selectedSessionId)?.isBotDisabled ? '🤖 챗봇 중지됨' : '🤖 챗봇 활성'}
+                                        {sessions.find(s => s.sessionId === selectedSessionId)?.isBotDisabled ? '챗봇 중지됨' : '챗봇 활성'}
                                     </button>
                                     <button
                                         onClick={async () => {
@@ -154,7 +154,7 @@ const ChatTab: React.FC = () => {
                                     <div className={`max-w-[70%] p-4 rounded-3xl text-sm font-bold shadow-sm ${m.role === 'admin' ? 'bg-bee-black text-bee-yellow rounded-tr-none' : (m.role === 'model' ? 'bg-blue-50 text-blue-700 border border-blue-100 rounded-tl-none' : 'bg-white text-bee-black border border-gray-100 rounded-tl-none')}`}>
                                         <div className="flex items-center justify-between mb-1 gap-4">
                                             <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                                                {m.role === 'admin' ? '나 (Admin)' : (m.role === 'model' ? 'BeeBot' : 'Customer')}
+                                                {m.role === 'admin' ? '나 (Admin)' : (m.role === 'model' ? 'Bee AI' : 'Customer')}
                                             </span>
                                             <span className="text-[8px] font-bold opacity-30">{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>

@@ -40,7 +40,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate }) => {
                         whileInView={{ opacity: 1, y: 0 }}
                         className="inline-block px-5 py-2 rounded-full bg-bee-light text-[11px] font-black tracking-[0.3em] text-bee-black/40 uppercase mb-8 font-outfit"
                     >
-                        {t.pricing?.flat_rate_label || "UNIT PRICE 💰"}
+                        {t.pricing?.flat_rate_label || "UNIT PRICE"}
                     </motion.span>
                     <h2 className="text-4xl md:text-7xl font-display font-black tracking-tighter text-bee-black leading-[1.1] mb-8 break-keep">
                         {t.pricing.headline}

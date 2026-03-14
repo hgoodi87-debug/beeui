@@ -17,6 +17,7 @@ export interface ReservationInfo {
     userEmail: string;
     snsChannel: string;
     snsId: string;
+    country?: string; 
     agreedToHighValue?: boolean;
 }
 
@@ -47,6 +48,7 @@ export interface BookingState {
     snsChannel: string;
     snsId: string;
     status: BookingStatus;
+    country?: string;
     createdAt: string;
     promoCode?: string;
     discountCode?: string;

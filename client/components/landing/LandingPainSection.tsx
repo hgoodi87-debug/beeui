@@ -77,7 +77,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         {/* 텍스트 블록 - 카드 하단 밖으로 살짝 띄움 */}
                         <div className="absolute bottom-6 left-8 right-8 z-20">
                             <div className="px-2 py-2">
-                                <div className="inline-block px-4 py-1.5 bg-bee-black/80 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest text-bee-yellow uppercase mb-3 border border-bee-yellow/30">{t.pain.badge_with || 'With Beeliber 💅'}</div>
+                                <div className="inline-block px-4 py-1.5 bg-bee-black/80 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest text-bee-yellow uppercase mb-3 border border-bee-yellow/30">{t.pain.badge_with || 'With Beeliber'}</div>
                                 <h3 className="text-2xl md:text-3xl font-display font-black text-bee-yellow tracking-tight leading-snug drop-shadow-md">{t.pain.quote_good || '"WALKING ON CLOUDS"'}</h3>
                             </div>
                         </div>

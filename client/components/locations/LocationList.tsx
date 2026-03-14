@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, LocateFixed, Plane, Store, Calendar, Clock, Wallet, Luggage, Handshake, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import BaggageCounter from './BaggageCounter';
 import { generateTimeSlots, isPastKSTTime, getFirstAvailableSlot, formatKSTDate } from '../../utils/dateUtils';
+import { formatDistance } from '../../utils/locationUtils';
+
 
 interface LocationListProps {
     t: any;
@@ -418,7 +420,13 @@ const LocationList: React.FC<LocationListProps> = ({
                                     </div>
 
                                     {/* 서비스 태그들 - 몬세라트 💅 */}
-                                    <div className="flex flex-wrap gap-1 mt-1">
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                        {branch.distance !== undefined && branch.distance < 1000 && (
+                                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[7px] md:text-[11px] font-[1000] bg-blue-50 text-blue-600 border border-blue-100 shadow-sm whitespace-nowrap italic font-montserrat tracking-tighter">
+                                                <LocateFixed size={8} className="md:w-2.5 md:h-2.5" />
+                                                {formatDistance(branch.distance, lang)}
+                                            </span>
+                                        )}
                                         {branch.supportsDelivery && (
                                             <span className="px-1.5 py-0.5 rounded-full text-[7px] md:text-[11px] font-black uppercase tracking-tighter bg-bee-black text-bee-yellow shadow-md whitespace-nowrap font-montserrat italic">
                                                 {t.locations_page?.service_delivery || 'DEL'}
@@ -430,6 +438,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                             </span>
                                         )}
                                     </div>
+
                                 </div>
 
                                 {/* 우측 이미지 - 라운딩 강화 및 쉐도우 💅 */}

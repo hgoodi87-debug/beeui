@@ -53,8 +53,8 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
     const t_success = {
         ko: {
             title: "예약이 완료되었습니다!",
-            subtitle: "비어리버를 믿고 맡겨주셔서 감사합니다.",
-            thanks: "사장님, 아니 고객님! 고객님의 소중한 짐은 저희 벌 대원들이 세상에서 가장 안전하게 책임질게요. 깍쟁이처럼 꼼꼼하게 챙길 테니까 걱정 붙들어 매세요. 아시겠어요? 💅",
+            subtitle: "비리버를 이용해 주셔서 진심으로 감사합니다.",
+            thanks: "고객님의 소중한 물품은 비리버의 전문 팀이 가장 안전하고 정성스럽게 관리하겠습니다. 예약하신 시간에 맞춰 차질 없이 이용하실 수 있도록 최선을 다하겠습니다.",
             info_title: "예약 정보 확인",
             guide_title: "이용 안내 및 규정",
             business_hours: "지점 영업시간",

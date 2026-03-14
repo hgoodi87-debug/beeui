@@ -84,13 +84,13 @@ export default function BeeAIReservation({ lang, t, onSuccess, initialLocation, 
     useEffect(() => {
         if (step === 'INIT') {
             setTimeout(() => {
-                const greeting = t.bee_ai?.welcome || "안녕하세요! Bee AI입니다. 무엇을 도와드릴까요? 🐝";
+                const greeting = t.bee_ai?.welcome || "안녕하세요. Beeliber AI입니다. 무엇을 도와드릴까요?";
                 addBotMessage(greeting);
 
                 if (initialLocation) {
                     const hours = getLocalizedHours(initialLocation);
                     addBotMessage(t.bee_ai?.branch_hours_template?.replace('{branch}', getBranchName(initialLocation.id)).replace('{hours}', hours) ||
-                        (lang === 'ko' ? `${getBranchName(initialLocation.id)} 지점의 운영 시간은 [${hours}] 입니다. ✨` : `Business hours for ${getBranchName(initialLocation.id)} are [${hours}]. ✨`), (
+                        (lang === 'ko' ? `${getBranchName(initialLocation.id)} 지점의 운영 시간은 [${hours}] 입니다.` : `Business hours for ${getBranchName(initialLocation.id)} are [${hours}].`), (
                         <div className="mt-2 p-2 bg-yellow-50 rounded-lg border border-bee-yellow/20 text-[10px] font-bold text-bee-black">
                             <Clock className="w-3 h-3 inline mr-1" /> {t.booking?.total_price_sub_storage || t.bee_ai?.operating_policy || "21시 이후는 물건을 맡기거나 찾을 수 없습니다."}
                         </div>
@@ -126,9 +126,9 @@ export default function BeeAIReservation({ lang, t, onSuccess, initialLocation, 
     useEffect(() => {
         const timer = setTimeout(() => {
             if (step === 'INFO') {
-                addBotMessage(t.bee_ai?.contact_info_title || "예약자 정보를 입력해주세요. 윙윙~");
+                addBotMessage(t.bee_ai?.contact_info_title || "예약자 정보를 입력해주세요.");
             } else if (step === 'SERVICE_SELECT') {
-                addBotMessage(t.bee_ai?.question_service || "먼저 원하시는 서비스를 선택해 주세요! 윙윙~");
+                addBotMessage(t.bee_ai?.question_service || "먼저 원하시는 서비스를 선택해 주세요.");
             } else if (step === 'DEST_SELECT') {
                 addBotMessage(t.bee_ai?.question_dest || "짐을 보내실 도착 지점을 선택해주세요.");
             } else if (step === 'TIME') {
@@ -386,7 +386,7 @@ export default function BeeAIReservation({ lang, t, onSuccess, initialLocation, 
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-xl w-full max-w-[90%] self-end">
                     {!isDelivery && (
                         <div className="text-[10px] text-center text-bee-black font-bold bg-yellow-50 p-2 rounded-lg border border-bee-yellow/20">
-                            {t.bee_ai?.storage_note || "📢 20시 이후는 1일 단위 추가 요금이 발생할 수 있어요! 윙윙~"}
+                            {t.bee_ai?.storage_note || "20시 이후는 1일 단위 추가 요금이 발생할 수 있습니다."}
                         </div>
                     )}
                     <div className="grid grid-cols-2 gap-3">
@@ -591,7 +591,7 @@ export default function BeeAIReservation({ lang, t, onSuccess, initialLocation, 
             {/* Header */}
             <div className="p-4 bg-white/80 border-b border-gray-100 flex items-center justify-between backdrop-blur-md sticky top-0 z-20">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-bee-yellow rounded-full flex items-center justify-center shadow-lg text-lg animate-bee-float border-2 border-white">🐝</div>
+                    <div className="w-9 h-9 bg-bee-yellow rounded-full flex items-center justify-center shadow-lg text-lg font-bold border-2 border-white">B</div>
                     <div>
                         <h4 className="font-black text-sm text-bee-black tracking-tight">{t.chatbot?.header || "Bee AI"}</h4>
                         <div className="flex items-center gap-1.5">
@@ -645,7 +645,7 @@ export default function BeeAIReservation({ lang, t, onSuccess, initialLocation, 
                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                         {msg.role === 'bot' && (
-                            <div className="w-7 h-7 rounded-full bg-bee-yellow flex items-center justify-center text-xs mr-2 shadow-sm border border-white shrink-0 self-end mb-1">🐝</div>
+                            <div className="w-7 h-7 rounded-full bg-bee-yellow flex items-center justify-center text-[10px] font-bold mr-2 shadow-sm border border-white shrink-0 self-end mb-1">B</div>
                         )}
                         <div
                             className={`max-w-[85%] px-4 py-3 text-xs font-medium leading-relaxed shadow-sm

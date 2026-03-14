@@ -145,7 +145,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // [스봉이] 모바일 메뉴용 상태 추가요! 💅
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // QR Scan Handling
   const [scannedBooking, setScannedBooking] = useState<BookingState | null>(null);
@@ -492,7 +492,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     document.body.removeChild(link);
   };
 
-  // Privacy and Terms states have been extracted to their respective components 💅✨
+  // Privacy and Terms states have been extracted to their respective components
 
   // Function to refresh static data manually
   const refreshData = async () => {
@@ -526,7 +526,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const savedNotice = safeJsonParse('beeliber_notice', null);
       if (savedNotice) setNotice(savedNotice);
 
-      // Storage policies fetching has been offloaded to their respective components 💅✨
+      // Storage policies fetching has been offloaded to their respective components
 
       const savedCloud = StorageService.getCloudConfig();
       if (savedCloud) setCloudConfig(savedCloud);
@@ -703,7 +703,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       return;
     }
 
-    // [스봉이] 기본 좌표(서울시청)인 상태로 저장을 시도하면 사장님께 따끔하게 한마디 할게요 💅
+    // 좌표 기반 저장 시도 시 주소 검증 로직
     const isDefaultCoords = locForm.lat === 37.5665 && locForm.lng === 126.9780;
     if (isDefaultCoords && locForm.address) {
       if (!confirm('현재 좌표가 기본값(서울시청)으로 설정되어 있습니다.\n주소에 맞는 정확한 좌표로 연동하시겠습니까?\n\n(취소를 누르면 현재 좌표로 저장됩니다.)')) {
@@ -856,11 +856,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     e.target.value = '';
   };
 
-  // Editors save their data independently now. 💅✨
+  // Editors save their data independently now.
 
 
 
-  // New Geocoding Function using Naver Maps API 💅
+  // New Geocoding Function using Naver Maps API
   const findCoordinates = async () => {
     if (!locForm.address) {
       alert('주소를 입력해주세요.');
@@ -895,12 +895,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
       await loadNaverMaps();
       const result = await new Promise<any>((resolve, reject) => {
-        // [스봉이] 1차 시도: 주소만으로 정밀 검색 💅
+        // 1차 시도: 주소만으로 검색
         window.naver.maps.Service.geocode({ query: locForm.address }, (status: any, response: any) => {
           if (status === window.naver.maps.Service.Status.OK && response.v2.addresses[0]) {
             resolve(response.v2.addresses[0]);
           } else {
-            // [스봉이] 2차 시도: 지점명 + 주소로 더 구체적으로 시도해볼까요? 🙄
+            // 2차 시도: 지점명 + 주소로 시도
             window.naver.maps.Service.geocode({ query: `${locForm.name} ${locForm.address}` }, (s2: any, r2: any) => {
               if (s2 === window.naver.maps.Service.Status.OK && r2.v2.addresses[0]) {
                 resolve(r2.v2.addresses[0]);
@@ -916,7 +916,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const latNum = parseFloat(y);
       const lngNum = parseFloat(x);
 
-      // [스봉이] 바다 위(한국 밖)로 나가는 대참사 방지 💅
+      // 좌표 유효성 검사 (한국 내 영역 여부 확인)
       if (latNum < 33 || latNum > 39 || lngNum < 124 || lngNum > 132) {
         throw new Error("Out of Bounds (Korea)");
       }
@@ -926,17 +926,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         lat: latNum,
         lng: lngNum
       }));
-      alert(`좌표를 찾았습니다! ✨\n(${result.roadAddress || result.jibunAddress})`);
+      alert(`좌표를 찾았습니다.\n(${result.roadAddress || result.jibunAddress})`);
     } catch (e) {
       console.error(e);
-      alert('좌표를 찾는 데 실패했습니다. 주소를 더 정확하게 입력하시거나, 지점명을 확인해 주세요. 🙄');
+      alert('좌표를 찾는 데 실패했습니다. 주소 또는 지점명을 다시 확인해 주세요.');
     } finally {
       setIsGeocoding(false);
     }
   };
 
   const handleBulkGeocode = async () => {
-    if (!confirm('현재 등록된 모든 지점을 순회하며 주소를 기반으로 좌표(위경도)를 자동 업데이트하시겠습니까?\n(네이버 지도 API 호출량에 주의하세요! 💅)')) return;
+    if (!confirm('현재 등록된 모든 지점을 순회하며 주소를 기반으로 좌표(위경도)를 자동 업데이트하시겠습니까?')) return;
 
     setIsGeocoding(true);
     try {
@@ -965,7 +965,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       };
 
       await loadNaverMaps();
-      // [스봉이] 네이버님이 오셨으니 0.2초만 더 정숙하게 기다릴게요 💅
+      // 대기 시간 처리
       await new Promise(r => setTimeout(r, 200));
 
       const { StorageService } = await import('../services/storageService');
@@ -978,10 +978,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           continue;
         }
 
-        // [스봉이] 비동기 함수 안이라 Promise로 감싸서 하나씩 차분하게 처리할게요 💅
+        // 비동기 처리 간격 조정
         try {
           const result = await new Promise<any>((resolve, reject) => {
-            // [스봉이] 지점명을 섞어서 더 정밀하게 좌표를 따볼게요. 바다 위로 가시면 안되니까요! 💅
+            // 지점명 포함 정밀 검색
             window.naver.maps.Service.geocode({ query: `${loc.name} ${loc.address}` }, (status: any, response: any) => {
               if (status === window.naver.maps.Service.Status.OK && response.v2.addresses[0]) {
                 resolve(response.v2.addresses[0]);
@@ -1001,7 +1001,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           const latNum = parseFloat(result.y);
           const lngNum = parseFloat(result.x);
 
-          // 한국 영역 검증 (바다 위 방지) ✨
+          // 한국 영역 검증
           if (latNum < 33 || latNum > 39 || lngNum < 124 || lngNum > 132) {
             throw new Error("Invalid Bounds");
           }
@@ -1016,11 +1016,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           console.warn(`[Bulk Geocode] Failed for ${loc.name}`, e);
           failCount++;
         }
-        // [스봉이] API 과부하 방지를 위해 0.2초씩 쉬어갈게요 💅
+        // 지연 시간 적용
         await new Promise(r => setTimeout(r, 200));
       }
 
-      alert(`일괄 좌표 연동 완료!\n성공: ${successCount}건, 실패: ${failCount}건\n실패한 지점은 주소를 다시 확인해 주세요. 🙄`);
+      alert(`일괄 좌표 연동 완료!\n성공: ${successCount}건, 실패: ${failCount}건\n실패한 지점은 주소를 다시 확인해 주세요.`);
       refreshData();
     } catch (e) {
       console.error(e);
@@ -1048,7 +1048,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       });
 
       await Promise.all(updatePromises);
-      alert(`${ids.length}개 지점의 설정이 일괄 변경되었습니다. 💅`);
+      alert(`${ids.length}개 지점의 설정이 일괄 변경되었습니다.`);
       refreshData();
     } catch (e) {
       console.error("Bulk update failed", e);
@@ -1293,7 +1293,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               background-color: #fff;
               color: #000;
               overflow: hidden;
-              /* [스봉이] 사장님 요청대로 배율 10%로 압축! 💅 */
+              /* 인쇄물 배율 설정 */
               zoom: 0.1;
               -moz-transform: scale(0.1);
               -moz-transform-origin: 0 0;
@@ -1637,7 +1637,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       try {
         const url = await StorageService.uploadFile(file, `hero/videos/${Date.now()}_${file.name}`);
         setHeroConfig({ ...heroConfig, videoUrl: url });
-        alert("영상 업로드가 완료되었습니다. 반드시 아래 '히어로 설정 저장하기' 버튼을 눌러야 확정됩니다. 🐝");
+        alert("영상 업로드가 완료되었습니다. 반드시 아래 '히어로 설정 저장하기' 버튼을 눌러야 확정됩니다.");
       } catch (e: any) {
         console.error("Hero video upload error:", e);
         alert(`히어로 영상 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: 파일 용량 초과(50MB) 또는 Firebase Storage 권한 부족일 수 있습니다.`);
@@ -1830,7 +1830,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           <button title="Logout" aria-label="Logout" onClick={onBack} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 transition-colors rounded-xl flex items-center justify-center text-gray-500"><i className="fa-solid fa-power-off"></i></button>
         </header>
 
-        {/* [스봉이] 모바일 전용 슬라이딩 메뉴 등장! 💅 */}
+        {/* 모바일 슬라이딩 메뉴 */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <>
@@ -1864,7 +1864,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
-                  {/* [스봉이] 메뉴 항목들은 Sidebar랑 똑같이 넣어드렸어요 💅 */}
+                  {/* 메뉴 항목 */}
                   <div>
                     <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">시스템 메뉴</div>
                     <nav className="space-y-1">
@@ -2001,7 +2001,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
           {activeTab === 'LOCATIONS' && (
             <div className="flex flex-col gap-6 h-full min-h-[calc(100vh-180px)]">
-              {/* [스봉이] 사장님 요청대로 지도는 치우고 목록만 기품 있게 남겨뒀어요 💅 */}
+              {/* 지점 목록 */}
               <div className="w-full pb-10">
                 <LocationsTab
                   locForm={locForm}

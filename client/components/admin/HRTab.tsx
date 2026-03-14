@@ -19,12 +19,11 @@ const HRTab: React.FC<HRTabProps> = ({
 }) => {
     const [filterBranch, setFilterBranch] = React.useState<string>('ALL');
     const [searchQ, setSearchQ] = React.useState('');
-    const [activeCategory, setActiveCategory] = React.useState<string>('SUPER'); // 기본값: 슈퍼관리자 먼저 보여주기 💅
+    const [activeCategory, setActiveCategory] = React.useState<string>('SUPER'); // 기본값: 슈퍼관리자 우선 표시
 
     const branchLocations = locations.filter(loc => loc.type !== LocationType.AIRPORT && loc.isActive);
 
-    // 데이터 중복 완전 박멸: 이름 + 직책 + 지점ID를 조합한 복합 키로 유니크 처리 🛡️
-    // 단순 ID 중복뿐만 아니라 동일인이 여러 번 등록된 경우까지 싹 잡아냅니다. 💅
+    // 데이터 중복 방지: 이름 + 직책 + 지점ID 조합으로 유니크 처리
     const uniqueAdmins = Array.from(
         new Map(
             admins.map(admin => {
@@ -129,11 +128,11 @@ const HRTab: React.FC<HRTabProps> = ({
                         </div>
                     </div>
                     <button onClick={saveAdmin} disabled={isSaving} className={`w-full py-4 rounded-2xl font-black text-sm transition-all shadow-lg ${isSaving ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-bee-yellow text-bee-black shadow-yellow-100 hover:scale-[1.02] active:scale-95'}`}>
-                        {isSaving ? '저장 중...' : adminForm.id ? '수정 완료 💅' : '관리자 추가 ✨'}
+                        {isSaving ? '저장 중...' : adminForm.id ? '수정 완료' : '관리자 추가'}
                     </button>
                     {(adminForm.id || adminForm.name || adminForm.jobTitle || adminForm.password) && (
                         <button onClick={() => { setAdminForm({ name: '', jobTitle: '', password: '' }); setShowAdminPassword(false); }} className="w-full py-4 text-xs font-bold text-gray-400 hover:text-bee-black transition-colors">
-                            {adminForm.id ? '취소하고 새로 등록하기' : '입력 내용 초기화 폼 🧹'}
+                            {adminForm.id ? '취소하고 새로 등록하기' : '입력 내용 초기화'}
                         </button>
                     )}
                 </div>
@@ -147,7 +146,7 @@ const HRTab: React.FC<HRTabProps> = ({
                             <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
                             <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="이름 또는 직책 검색..." className="w-full bg-gray-50 pl-8 pr-4 py-2.5 rounded-xl text-xs font-bold border border-gray-100 focus:border-bee-yellow outline-none" />
                         </div>
-                        {/* 카테고리 탭 💅 */}
+                        {/* 카테고리 탭 */}
                         <div className="flex flex-wrap gap-2 items-center mb-2 pb-2 border-b border-gray-100">
                             <button onClick={() => setActiveCategory('ALL')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${activeCategory === 'ALL' ? 'bg-bee-black text-bee-yellow shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                                 전체 역할 ({totalCount})
@@ -162,8 +161,7 @@ const HRTab: React.FC<HRTabProps> = ({
                             })}
                         </div>
                         {/* 지점 필터 */}
-                        {/* 지점 필터 버튼들 제거 💅 사장님 요청사항 수행 완료 */}
-                        <div className="text-[10px] font-black text-gray-400">{displayCategories.reduce((acc, cat) => acc + cat.list.length, 0)}명 목록에 표시됨</div>
+                        <div className="text-[10px] font-black text-gray-400">{displayCategories.reduce((acc, cat) => acc + cat.list.length, 0)}명이 목록에 표시됨</div>
                     </div>
 
                     {/* 직원 목록 */}

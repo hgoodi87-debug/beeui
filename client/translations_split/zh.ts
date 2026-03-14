@@ -1,8 +1,8 @@
 export const zh = {
     seo: {
-        title: 'Beeliber - 弘大/首尔站 行李寄存 & 机场当日配送',
-        description: '弘大入口站、首尔站、仁川机场、金浦机场行李寄存及配送服务。酒店到机场当日行李箱配送。放下重担，轻松旅行。',
-        keywords: '弘大行李寄存, 弘大行李配送, 首尔站行李寄存, 行李配送服务, 行李箱配送, 仁川机场行李配送, 当日行李配送, 酒店行李配送'
+        title: 'Beeliber - 首尔旅行最后一天 行李无忧 | 弘大/首尔站 行李寄存 & 机场当日配送 💅',
+        description: '首尔退房后行李寄存及配送至仁川机场。酒店、弘大入口站、首尔站、机场当日行李箱配送服务。放下重担，尽情享受首尔行程。',
+        keywords: '首尔行李寄存, 弘大行李寄存, 首尔站行李寄存, 仁川机场行李配送, 金浦机场行李配送, 酒店行李配送, 首尔旅行最后一天, 首尔退房后行程, 登机前行李寄存'
     },
     nav: { services: '服务介绍', locations: '分店指南', tracking: '配送查询', partners: '加盟咨询', book: '立即预订', terms_label: '配送业务委托及第三方(运输公司)信息提供同意书', admin_portal: '管理员门户', login: '登录', mypage: '个人中心' },
     terms_page: {
@@ -151,6 +151,8 @@ export const zh = {
         total_price_sub_delivery: '该金额已包含距离及网点附加费。',
         total_price_sub_storage: '21:00 以后无法寄存或领取物品。',
         total: '预计金额', confirm: '确认选择', name: '预订人姓名', email: '电子邮箱', sns: '社交软件', snsId: '账号ID',
+        country: "国家",
+        country_placeholder: "选择国家",
         submit: '确认预订', success: '预订已受理！', successSub: '我们的配送员即将出发！ 🐝',
         address_placeholder: '地址 (如: 酒店名, 道路名称)',
         address_detail_placeholder: '详细地址 (如: 房号, 楼层等)',
@@ -379,6 +381,9 @@ export const zh = {
         legal: "法律条款",
         cookie: "Cookie 政策",
         contact: "客服中心",
+        address: '서울시 마포구 월드컵북로2길 93, 1층',
+        email: 'ceo@bee-liber.com',
+        phone: '+82 010-2922-7731',
         back_to_top: "回到顶部"
     },
     locations_page: {

@@ -1,8 +1,8 @@
 export const ko = {
     seo: {
-        title: '서울/홍대 캐리어 짐 보관 & 당일 짐 배송',
-        description: '머니박스 파트너십 빌리버 연남점: 홍대입구역 3번 출구 도보 2분. 운영시간: 09:00 ~ 21:00. 홍대/서울 캐리어 짐 보관 및 공항 당일 짐 배송 서비스. 빌리버 배송 예약 시 2천원 할인 쿠폰 코드(BEE2) + 최고 우대 환율. 무거운 짐은 맡기고 가볍게 여행하세요.',
-        keywords: '홍대 짐보관, 홍대 짐배송, 서울 짐보관, 짐캐리, 물품보관함, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 수하물 배송'
+        title: '빌리버(Beeliber) - 서울 여행 마지막 날 짐 걱정 끝 | 홍대/서울역 짐 보관 & 공항 당일 배송 💅',
+        description: '체크아웃 후 짐 보관부터 인천공항까지 당일 배송까지. 홍대입구역 3번 출구 빌리버 연남점. 무거운 캐리어는 맡기고 서울 여행 마지막 순간까지 가볍게 즐기세요. (BEE2 할인코드 증정)',
+        keywords: '홍대 짐보관, 홍대 짐배송, 서울 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 서울 여행 마지막 날, 체크아웃 후 짐보관'
     },
     nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털', login: '로그인', mypage: '마이페이지' },
     terms_page: {
@@ -71,13 +71,13 @@ export const ko = {
         point2: "마지막 4시간을 낭비하지 마세요",
         point3: "30kg 가방을 들고 만원 전철을 타는 고통",
         badge_without: "Beeliber 없이",
-        badge_with: "Beeliber 와 함께 💅",
+        badge_with: "Beeliber와 함께",
         quote_bad: "\"계단이 지옥이다\"",
         quote_good: "\"구름 위를 걷는 기분\""
     },
     howitworks: {
         headline: "단 3번의 터치, 마법처럼 사라지는 짐",
-        badge_label: "MAGIC PROCESS ✨",
+        badge_label: "SERVICE PROCESS",
         step1: { title: "Drop (맡기기)", desc: "공항(혹은 호텔)의 Beeliber 데스크/파트너에게\n당신의 무거운 짐을 넘깁니다.", badge: "STEP 1. Drop" },
         step2: { title: "Enjoy (즐기기)", desc: "두 손이 자유로운 상태로 곧바로\n관광지, 맛집, 쇼핑을 즐깁니다.", badge: "STEP 2. Enjoy" },
         step3: { title: "Meet (만나기)", desc: "일정을 마치고 호텔 방에 도착하면,\n짐이 먼저 당신을 기다리고 있습니다.", badge: "STEP 3. Meet" }
@@ -181,9 +181,11 @@ export const ko = {
         email: "이메일 주소",
         sns: "SNS 채널",
         snsId: "SNS ID / 계정",
+        country: "국가",
+        country_placeholder: "국가 선택",
         submit: "예약 확정하기",
         success: "예약이 접수되었습니다!",
-        successSub: "붕붕 대원이 곧 찾아갑니다! 🐝",
+        successSub: "예약하신 정보로 담당자가 확인 후 안내드리겠습니다.",
         address_placeholder: "주소 (예: 호텔명, 도로명 주소)",
         address_detail_placeholder: "상세 주소 (예: 호수, 층수 등)",
         alert_fill_info: "모든 정보를 입력해주세요.",
@@ -256,7 +258,7 @@ export const ko = {
         agree_premium_checklist: "취급 제한 물품 확인 및 보상 정책 동의",
         restricted_items_note: "* 상기 물품이 포함된 경우 보상이 거절될 수 있습니다.",
         slot_past: "마감",
-        airport_late_notice: "공항 지점은 정해진 수령 시간에 맞춰 방문해주셔야 합니다. 지연 도착 시 별도의 추가 보관료가 발생할 수 있으니 시간을 꼭 준수해 주세요! 🍯"
+        airport_late_notice: "공항 지점은 정해진 수령 시간에 맞춰 방문해 주셔야 합니다. 지관 미준수 시 별도의 추가 비용이 발생할 수 있습니다."
     },
     status_mapping: {
         '접수완료': '접수완료', '예약완료': '예약완료', '보관중': '보관중', '이동중': '이동중',
@@ -300,9 +302,9 @@ export const ko = {
         f2_t: '스마트 짐 보관', f2_d: '파트너 지점에서 편리하게 보관하세요.',
         f3_t: '광역 배송 시스템', f3_d: '전국 어디든 짐 없이 여행하세요.',
         delivery_title: 'Bee AI 스마트 배송',
-        delivery_desc: '붕붕이에게 말만 하세요. AI가 최적의 배송\n경로와 시간을 즉시 알려드립니다.',
+        delivery_desc: 'AI가 최적의 배송\n경로와 시간을 즉시 알려드립니다.',
         storage_title: 'Bee AI 간편 보관',
-        storage_desc: '보관 위치와 시간을 고민할 필요 없어요.\nAI 붕붕이가 맞춤형 보관소를 추천합니다.',
+        storage_desc: '보관 위치와 시간을 고민할 필요 없어요.\nAI가 맞춤형 보관소를 추천합니다.',
         tracking_title: '실시간 배송 상태 확인',
         tracking_desc: '내 짐이 어디쯤 가고 있는지 궁금하시죠?\n배송 단계별 실시간 상태를 확인하세요.'
     },
@@ -316,8 +318,8 @@ export const ko = {
     },
     ai_manual: {
         title: 'Bee AI 사용 매뉴얼',
-        subtitle: '똑똑한 붕붕이와 함께하는 3단계 간편 예약 가이드',
-        step1_title: 'AI 붕붕에게 말걸기',
+        subtitle: 'Bee AI와 함께하는 3단계 간편 예약 가이드',
+        step1_title: 'Bee AI에게 말걸기',
         step1_desc: '원하는 일정과 목적지를 자유롭게 입력하세요. "서울에서 호텔로 짐 보내줘!" 라고 말만 하면 끝!',
         step2_title: '맞춤형 경로 분석',
         step2_desc: 'AI가 실시간 데이터를 분석하여 가장 효율적인 지점과 꿀가격 견적을 즉시 제안합니다.',
@@ -337,6 +339,9 @@ export const ko = {
         terms: "이용약관",
         cookie: "쿠키 정책",
         contact: "문의하기",
+        address: '서울시 마포구 월드컵북로2길 93, 1층',
+        email: 'ceo@bee-liber.com',
+        phone: '+82 010-2922-7731',
         back_to_top: "맨 위로"
     },
     locations_page: {
@@ -349,7 +354,7 @@ export const ko = {
         badge_delivery: '배송', badge_same_day: '당일 배송', badge_scheduled: '예약 배송', badge_storage: '짐 보관',
         badge_pick: '맡기기', badge_ret: '찾기',
         tag_airport_delivery: '공항 배송', tag_both_services: '배송 | 보관', tag_storage_only: '보관 전용', tag_delivery_only: '배송 전용',
-        my_location: '본부장님 위치 💅✨',
+        my_location: "현재 위치",
         user_marker: '고객 위치',
         service_delivery: '배송',
         service_storage: '보관',
@@ -391,7 +396,7 @@ export const ko = {
         tag_same_day_delivery: '당일 배송',
         tag_global_shipping: '해외 배송',
         tag_baggage_storage: '짐 보관',
-        msg_booking_confirmed: '예약이 확정되었습니다! ✨',
+        msg_booking_confirmed: "예약이 확정되었습니다.",
         msg_live_preview: '로드뷰 미리보기',
         msg_map_load_error: '지도를 불러올 수 없습니다. 연결을 확인해주세요.',
         msg_error_reason: '오류 원인',
@@ -424,8 +429,8 @@ export const ko = {
         cta_title: '여행을 시작할까요?', cta_desc: '짐 없는 자유로운 여행을 경험하세요.', cta_btn: '예약하러 가기'
     },
     chatbot: {
-        header: 'Beeliber Bot', online: '온라인', welcome: '안녕하세요! 무엇을 도와드릴까요? 🐝',
-        placeholder: '메시지를 입력하세요...', tooltip: '도움말 🐝',
+        header: 'Beeliber Bot', online: '온라인', welcome: '안녕하세요. 비리버 고객센터입니다. 무엇을 도와드릴까요?',
+        placeholder: '문의 사항을 입력하세요.', tooltip: '도움말',
         quick_book: '지금 예약하기', quick_price: '요금 안내',
         start_chat: '상담 시작하기', name: '이름', email: '이메일',
         form_title: '상담 시작하기', form_desc: '더 나은 도움을 드리기 위해\n이름과 이메일을 입력해 주세요.',
@@ -433,7 +438,7 @@ export const ko = {
         topic_delivery: '배송 안내', topic_storage: '보관 안내', topic_other: '기타 문의', topic_refund: '환불 문의',
         topic_delivery_sub: '가격 및 이용 방법', topic_storage_sub: '위치 및 보관료', topic_other_sub: '일반 상담', topic_refund_sub: '환불 규정 및 절차',
         user_label: '고객',
-        notify_template: '[🚨 챗봇 알림] 고객이 \'{userText}\' 버튼을 클릭했습니다.',
+        notify_template: '[챗봇 알림] 고객이 \'{userText}\' 버튼을 클릭했습니다.',
         request_consult: '상담 요청',
         ai_delivery_prompt: "짐 배송 서비스의 이용 방법, 가격(2만원~), 공항-호텔 간 이동 절차에 대해 자세히 설명해줘.",
         ai_storage_prompt: '짐 보관 서비스의 이용 방법, 파트너 지점 위치, 보관료(4시간, 1일 등)에 대해 설명해줘.',
@@ -498,7 +503,7 @@ export const ko = {
         cta_main_title: "여행의 자유를 만끽할 준비 되셨나요?",
         back: "메인으로 돌아가기",
         service_prefix: "서비스",
-        btn_book_now: "자유로운 여행 시작하기 🐝",
+        btn_book_now: "예약하기",
         tracking_page: {
             title: "예약 현황 및 배송 상태 조회",
             subtitle: "이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요.",
@@ -556,53 +561,53 @@ export const ko = {
         'GN': '강남역 11번 출구 도보 3분 거리 머니박스 지점을 이용하세요.'
     },
     bee_ai: {
-        header_title: "Bee 스태프 붕붕이",
-        welcome: "안녕하세요! Bee AI입니다. 무엇을 도와드릴까요? 🐝",
-        sync_status: "{count}개 지점 실시간 연동 중!",
-        placeholder: "예: 서울에서 T2로 L사이즈 2개 보내줘! 윙윙~",
-        btn_analyze: "분석 시작! 슝~",
-        result_intro: "\"지점 정보를 쏙쏙~ 찾았어요! 윙윙~ ✨ 빌리버 지점 데이터와 비교한 결과예요!\"",
+        header_title: "Beeliber AI 스태프",
+        welcome: "안녕하세요. Beeliber AI입니다. 무엇을 도와드릴까요?",
+        sync_status: "{count}개 지점 연동 중",
+        placeholder: "예: 서울역에서 인천공항으로 L사이즈 1개",
+        btn_analyze: "분석 시작",
+        result_intro: "\"입력하신 정보에 기반한 지점 안내입니다.\"",
         label_delivery: "배송",
         label_storage: "보관",
         label_bags: "가방 {count}개",
         label_origin: "출발지",
         label_branch: "이용 지점",
-        label_quote: "꿀가격 견적서 🍯",
-        btn_book: "이 지점으로 예약할까요? 윙윙~! 🐝",
+        label_quote: "예상 견적",
+        btn_book: "이 지점으로 예약하기",
         btn_retry: "다시 계산하기",
         nearby_branch: "주변 가까운 지점",
         destination: "목적지",
         unit_currency: "원",
-        contact_info_title: "예약자 정보를 입력해주세요. 윙윙~",
-        question_service: "먼저 원하시는 서비스를 선택해 주세요! 윙윙~",
-        question_dest: "짐을 보내실 도착 지점을 선택해주세요.",
-        question_time_only: "언제 맡기고, 언제 찾으실 예정인가요?",
-        question_size: "맡기실 가방의 사이즈와 수량을 선택해주세요.",
-        question_confirm: "마지막으로 예약 내용을 확인해주세요. 이대로 진행할까요?",
+        contact_info_title: "예약자 정보를 입력해 주세요.",
+        question_service: "원하시는 서비스를 선택해 주세요.",
+        question_dest: "짐을 보내실 도착 지점을 선택해 주세요.",
+        question_time_only: "이용 일정을 선택해 주세요.",
+        question_size: "가방의 사이즈와 수량을 선택해 주세요.",
+        question_confirm: "예약 내용을 확인해 주세요. 이대로 진행하시겠습니까?",
         btn_delivery: "배송",
         btn_storage: "보관",
-        delivery_to_template: "{branch} (으)로 배송",
+        delivery_to_template: "{branch} 배송",
         total_bags_template: "(총 {count}개)",
-        btn_yes: "네, 예약할게요!",
-        branch_hours_template: "{branch} 지점의 운영 시간은 [{hours}] 입니다. ✨",
-        storage_note: "📢 20시 이후는 1일 단위 추가 요금이 발생할 수 있어요! 윙윙~",
+        btn_yes: "예약하기",
+        branch_hours_template: "{branch} 지점 운영 시간: {hours}",
+        storage_note: "21시 이후에는 지점 상황에 따라 수령이 제한될 수 있습니다.",
         header: "예약"
     },
     size_simulator: {
         header_title: "BEE 사이즈 체크",
-        header_subtitle: "내 키와 직접 비교해보세요! 윙윙~",
-        height_label: "내 키 설정하기",
+        header_subtitle: "신장과 수하물 크기를 비교해 보세요.",
+        height_label: "신장 설정",
         size_s_range: "12인치 이하",
-        size_s_desc: "작은 가방/백팩",
+        size_s_desc: "소형 가방 / 백팩",
         size_m_range: "20~23인치",
-        size_m_desc: "기내용/단기여행",
+        size_m_desc: "기내용 수하물",
         size_l_range: "24~26인치",
-        size_l_desc: "일주일 여행용",
+        size_l_desc: "일반 수하물",
         size_xl_range: "27~30인치",
-        size_xl_desc: "장기/이민 가방",
-        hook_text: "\"고객님 키에는 {size} 사이즈가 딱이네요!\"",
-        hook_sub: "이대로 예약을 도와드릴까요? 윙윙~ ✨",
-        info_note: "본 시물레이션은 실제 촬영된 이미지를 기반으로 한 안내 가이드이며, 여행 가방의 브랜드 및 디자인에 따라 약간의 차이가 있을 수 있습니다. 윙윙~!"
+        size_xl_desc: "대형 수하물",
+        hook_text: "선택하신 수하물의 크기를 확인해 보세요.",
+        hook_sub: "이대로 예약을 진행하시겠습니까?",
+        info_note: "본 시뮬레이션은 표준 규격을 바탕으로 제작되었으며, 실제 가방의 크기는 브랜드와 디자인에 따라 다를 수 있습니다."
     },
     branch_admin: {
         title: '지점 관리 시스템',
@@ -652,7 +657,7 @@ export const ko = {
         error_email: '이메일 또는 비밀번호가 올바르지 않습니다.'
     },
     signup_modal: {
-        promo: '지금 가입하고 2,000원 할인 쿠폰 받으세요! 🎁',
+        promo: '지금 가입하고 2,000원 할인 쿠폰 받으세요!',
         welcome: 'Beeliber에 오신 것을 환영합니다!',
         subtitle: '여행의 시작을 더욱 가볍게 만들어보세요.',
         signup_btn: '가입 완료하기',
@@ -678,53 +683,58 @@ export const ko = {
     },
     qna: {
         title: "자주 묻는 질문",
-        subtitle: "전 세계 여행자들이 빌리버에 대해 가장 많이 묻는 프리미엄 가이드입니다.",
+        subtitle: "비리버 서비스 이용에 대해 자주 묻는 질문들을 모았습니다.",
         categories: {
-            general: "서비스 일반",
-            booking: "예약 및 이용",
-            safety: "보안 및 보상",
-            locations: "지점 안내"
+            general: "일반",
+            booking: "예약/결제",
+            safety: "안전/보상",
+            locations: "지점안내"
         },
         items: [
             {
                 category: "general",
-                question: "빌리버(Beeliber)는 어떤 서비스인가요?",
-                answer: "빌리버는 여행객의 수하물을 공항에서 호텔로, 또는 지점 간 배송하고 안전하게 보관해주는 '여행 짐 해방 솔루션'입니다. 무거운 짐은 저희에게 맡기고, 사장님은 깍쟁이처럼 가볍게 여행만 즐기시면 됩니다. 아시겠어요? 💅"
+                question: "비리버(Beeliber)는 어떤 서비스인가요?",
+                answer: "비리버는 여행객의 수하물을 공항에서 호텔로, 또는 지점 간 배송하고 안전하게 보관해주는 '수하물 관리 솔루션'입니다. 지인에게 짐을 맡기는 것처럼 편리하게 이용하실 수 있습니다."
             },
             {
                 category: "general",
                 question: "서비스 이용 방법은 어떻게 되나요?",
-                answer: "간단합니다. 웹에서 예약을 완료한 후, 지정된 지점에 짐을 맡기기면(Drop) 끝! 그 사이 자유롭게 여행을 즐기시고(Enjoy), 나중에 호텔이나 목적지에서 짐을 다시 만나시면(Meet) 됩니다. 참 쉽죠? ✨"
+                answer: "온라인 예약을 완료한 후, 지정된 지점에 짐을 전달해 주시면 됩니다. 이후 자유롭게 일정을 보내신 뒤, 목적지 지점이나 호텔에서 짐을 수령하실 수 있습니다."
             },
             {
                 category: "booking",
                 question: "예약을 취소하거나 변경할 수 있나요?",
-                answer: "이용 24시간 전까지는 100% 환불이 가능합니다. 12시간 전에는 50%가 환불되며, 그 이후나 노쇼(No-show)는 환불이 불가해요. 일정이 바뀌면 미리미리 연락 주시는 게 매너라는 거, 아시죠? 🙄"
+                answer: "이용 24시간 전까지는 100% 환불이 가능하며, 12시간 전에는 50%가 환불됩니다. 그 이후 또는 예약 당일 미사용 시에는 규정에 따라 환불이 제한될 수 있습니다."
             },
             {
                 category: "booking",
-                question: "맡길 수 없는 물품이 있나요?",
-                answer: "현금, 50만원 이상의 귀금속, 부패하기 쉬운 음식, 위험물 등은 정중히 거절합니다. 빌리버는 사장님의 소중한 짐을 VIP처럼 모시지만, 법과 안전은 타협하지 않거든요. ☕"
+                question: "보관이 금지된 물품이 있나요?",
+                answer: "현금, 귀금속, 부패하기 쉬운 음식물, 위험물 및 법령으로 금지된 물품은 보관 및 배송이 불가능합니다. 자세한 사항은 이용약관을 참조해 주시기 바랍니다."
             },
             {
                 category: "safety",
-                question: "제 짐은 안전하게 관리되나요?",
-                answer: "당연하죠! 모든 짐은 스마트 보안 씰(Seal)로 보호되며, 실시간 트레킹 상태를 이메일로 받아보실 수 있습니다. 저희 대원들이 내 짐처럼 꼼꼼하게 관리하니까 걱정은 붙들어 매세요. ✨"
+                question: "짐이 안전하게 관리되나요?",
+                answer: "모든 수하물은 고유의 보안 라벨로 관리되며, 주요 거점의 보안 시스템과 실시간 모니터링을 통해 안전하게 관리됩니다. 배송 상태는 알림을 통해 직접 확인하실 수 있습니다."
             },
             {
                 category: "safety",
-                question: "보험 보상은 어떻게 되나요?",
-                answer: "기본적으로 수하물 1개당 최대 50만원까지 보상되는 보험에 가입되어 있습니다. 고가 물품의 경우 프리미엄 보험 옵션을 선택하시면 최대 300만원까지 보장 범위를 넓힐 수 있으니 참고하세요. 💅"
+                question: "파손이나 분실 시 보상은 어떻게 이루어지나요?",
+                answer: "비리버의 모든 예약은 기본적으로 수하물당 최대 50만 원의 보상 보험이 포함됩니다. 고가 물품의 경우 추가 옵션을 통해 보장 한도를 최대 300만 원까지 상향할 수 있습니다."
             },
             {
                 category: "locations",
-                question: "빌리버 지점은 어디에 있나요?",
-                answer: "인천공항(T1/T2), 김포공항은 물론 서울역, 홍대, 강남, 명동 등 서울의 주요 거점에서 만나보실 수 있습니다. '지점 안내' 페이지에서 상세한 위치를 확인해보세요. 📍"
+                question: "비리버 지점은 어디에서 이용할 수 있나요?",
+                answer: "인천공항, 김포공항 및 서울의 주요 거점(홍대, 강남, 명동 등)에 위치한 지점 파트너사를 통해 서비스를 이용하실 수 있습니다. 이용 가능한 지점은 '지점 안내' 페이지에서 확인 가능합니다."
             },
             {
                 category: "locations",
                 question: "지점 운영 시간은 어떻게 되나요?",
-                answer: "대부분의 지점은 오전 9시부터 오후 9시까지 운영됩니다. 다만 공항 지점이나 파트너 지점별로 차이가 있을 수 있으니, 예약 시 지점 정보를 꼭 확인하시는 센스를 보여주세요! 🍯"
+                answer: "통상적으로 오전 9시부터 오후 9시까지 운영되나, 지점별 상황에 따라 차이가 있을 수 있습니다. 예약 시 해당 지점의 상세 운영 정보를 반드시 확인해 주시기 바랍니다."
+            },
+            {
+                category: "booking",
+                question: "예약한 픽업 시간보다 늦게 도착하면 어떻게 되나요?",
+                answer: "예약하신 픽업 시간 이후에 도착하실 경우, 원활한 서비스 운영을 위해 30분 단위로 추가 지연 요금이 발생할 수 있습니다. 다음 고객님들의 예약과 원활한 서비스 진행을 위해 가급적 예약 시간을 준수해 주시길 부탁드립니다. 💅"
             }
         ]
     }

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, ShieldCheck, ArrowRight, Star, ChevronLeft } from 'lucide-react';
+import { MapPin, Clock, ShieldCheck, ArrowRight, Star, ChevronLeft, Sparkles, Compass } from 'lucide-react';
 import { SEO_LOCATIONS, SeoLocation } from '../src/constants/seoLocations';
 import { LOCATIONS } from '../constants';
 import SEO from './SEO';
@@ -178,6 +178,59 @@ const LocationLander: React.FC<LocationLanderProps> = ({ t, lang }) => {
                 </motion.div>
             ))}
          </div>
+
+         {/* 💅 Around the Area: Must-Visit Spots (New Section) */}
+         {seoData.touristSpots && seoData.touristSpots.length > 0 && (
+            <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="mt-32"
+            >
+                <div className="flex flex-col items-center mb-16 px-6">
+                    <div className="flex items-center gap-2 mb-4 px-3 py-1 bg-bee-yellow/10 border border-bee-yellow/20 rounded-full">
+                        <Sparkles size={14} className="text-bee-yellow fill-bee-yellow" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-bee-yellow">Local Curation</span>
+                    </div>
+                    <h3 className="text-3xl md:text-5xl font-black mb-6 tracking-tight italic uppercase text-center">
+                        Must-Visit <span className="text-bee-yellow">Hotspots</span> 💅
+                    </h3>
+                    <p className="text-white/40 font-bold text-center max-w-xl">
+                        {lang === 'ko' ? '지점 주변의 가장 힙하고 매력적인 명소들을 엄선했습니다.' : 'We\'ve curated the hippest and most charming spots around this branch.'}
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                    {seoData.touristSpots.map((spot, idx) => (
+                        <motion.div
+                            key={spot.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="group relative flex flex-col md:flex-row items-center gap-6 p-8 md:p-10 bg-white/5 border border-white/10 rounded-[3rem] hover:bg-white/10 hover:border-bee-yellow/30 transition-all overflow-hidden"
+                        >
+                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/10 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
+                                {spot.category === 'landmark' ? <Star className="text-orange-400 fill-orange-400" size={32} /> : <Compass className="text-blue-400" size={32} />}
+                            </div>
+                            <div className="flex-1 text-center md:text-left">
+                                <h4 className="text-2xl md:text-3xl font-black mb-3 text-white">
+                                    {(spot.name as any)[lang] || spot.name.ko}
+                                </h4>
+                                <p className="text-white/40 font-bold text-lg leading-relaxed">
+                                    {(spot.description as any)[lang] || spot.description.ko}
+                                </p>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-bee-yellow group-hover:text-bee-black transition-all">
+                                    <ArrowRight size={20} />
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </motion.div>
+         )}
 
          {/* Local FAQ Section (Phase 2 보강 💅) */}
          {faqs.length > 0 && (

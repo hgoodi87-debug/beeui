@@ -403,11 +403,11 @@ export const LOCATIONS: LocationOption[] = [
     isPartner: true, isActive: false, lat: 37.5563746, lng: 126.9265116
   },
   {
-    id: 'MBX-016', shortCode: 'MBX-016', name: '명동직영점', type: LocationType.PARTNER,
+    id: 'MBX-016', shortCode: 'MBX-016', name: '명동점', type: LocationType.PARTNER,
     description: '연락처: 02-3789-0888', address: '서울특별시 중구 남대문로 52-1',
-    name_en: 'Myeongdong Direct Branch', address_en: '서울특별시 Jung-gu 남대문로 52-1',
-    name_ja: '明洞直営店', address_ja: '서울특별시 중구 남대문로 52-1',
-    name_zh: '明洞直营店', address_zh: '서울특별시 중구 남대문로 52-1',
+    name_en: 'Myeongdong Branch', address_en: '서울특별시 Jung-gu 남대문로 52-1',
+    name_ja: '明洞店', address_ja: '서울특별시 중구 남대문로 52-1',
+    name_zh: '明洞店', address_zh: '서울특별시 중구 남대문로 52-1',
     businessHours: '09:00 - 21:00',
     supportsDelivery: true, supportsStorage: true,
     isOrigin: true, isDestination: true,

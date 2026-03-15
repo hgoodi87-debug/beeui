@@ -47,6 +47,7 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</button></li>
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</button></li>
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('TIPS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</button></li>
+                <li><button onClick={() => { scrollToTop(); onNavigate?.('VISION'); }} className="hover:text-bee-yellow transition-colors">Brand Vision</button></li>
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">Q&A</button></li>
               </ul>
             </div>

@@ -40,8 +40,21 @@ const processVoucherEmail = async (bookingId, booking, admin) => {
     const retrievalLoc = booking.serviceType === 'DELIVERY' ? destLoc : pickupLoc;
     const isAirport = retrievalLoc && (retrievalLoc.type === 'AIRPORT' || retrievalLoc.name?.includes('공항') || retrievalLoc.name_en?.toLowerCase().includes('airport'));
 
-    const qrText = `https://bee-liber.com/admin?scan=${bookingId}`;
+    const qrText = `https://bee-liber.com/staff/scan?id=${bookingId}`;
     const qrBuffer = await QRCode.toBuffer(qrText, { margin: 1, width: 400 });
+
+    // 💅 [스봉이] 지점별 Tips 슬러그 매핑 로직 추가
+    const branchToSlug = {
+        'HBO': 'hongdae',
+        'MYN': 'hongdae',
+        'MBX-011': 'seoul-station',
+        'MBX-005': 'seongsu',
+        'MBX-001': 'bukchon',
+        'MBX-016': 'myeongdong',
+        'MBX-009': 'myeongdong'
+    };
+    const branchSlug = retrievalLoc ? (branchToSlug[retrievalLoc.shortCode] || branchToSlug[retrievalLoc.id]) : null;
+    const tipsUrl = branchSlug ? `https://bee-liber.com/tips/${branchSlug}` : `https://bee-liber.com/tips`;
 
     const mailOptions = {
         to: userEmail,
@@ -142,6 +155,12 @@ const processVoucherEmail = async (bookingId, booking, admin) => {
                                style="display: inline-block; padding: 12px 20px; background-color: #ffcb05; color: #1a1a1a; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 13px; margin: 5px;">
                                 📄 Save Voucher
                             </a>
+                        </div>
+
+                        <!-- 💅 [스봉이] 지점별 맞춤 Tips 버튼 추가 -->
+                        <div style="margin-top: 35px; padding-top: 30px; border-top: 1px dashed #e2e8f0;">
+                            <p style="font-size: 14px; color: #64748b; font-weight: 700; margin-bottom: 20px;">${lang === 'ko' ? '지점 근처의 핫플이 궁금하신가요? 💅' : 'Want to explore hotspots near the branch? 💅'}</p>
+                            <a href="${tipsUrl}" style="display: inline-block; background: #1a1a1a; color: #ffcb05; padding: 16px 30px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 900; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">Explore Nearby Hotspots 💅</a>
                         </div>
                     </div>
 

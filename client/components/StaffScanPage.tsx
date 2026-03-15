@@ -19,9 +19,9 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const [isUpdating, setIsUpdating] = useState(false);
 
     useEffect(() => {
-        // 1. URL에서 ID 파싱
+        // 1. URL에서 ID 파싱 (id와 scan 모두 지원 💅)
         const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
+        const id = params.get('id') || params.get('scan');
         setBookingId(id);
 
         // 2. 지점 정보 로드
@@ -113,10 +113,20 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     if (error || !booking) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-                <i className="fa-solid fa-circle-exclamation text-4xl text-gray-300 mb-4"></i>
-                <p className="text-gray-600 font-bold mb-6">{error || "잘못된 접근입니다."}</p>
-                <button onClick={onBack} className="px-6 py-3 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm">
-                    관리자 홈으로
+                <i className="fa-solid fa-circle-exclamation text-4xl text-bee-yellow mb-4"></i>
+                <p className="text-gray-800 font-black text-lg mb-2">{error || "잘못된 접근입니다."}</p>
+                {!adminName && (
+                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                        스태프 권한이 필요합니다.<br/>
+                        먼저 관리자 로그인을 완료해주세요. 💅
+                    </p>
+                )}
+                <button 
+                    onClick={onBack} 
+                    title="Go back to Admin"
+                    className="px-8 py-3 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all"
+                >
+                    {adminName ? "관리자 홈으로" : "로그인하러 가기"}
                 </button>
             </div>
         );

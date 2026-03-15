@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookingState, BookingStatus, ServiceType } from '../types';
 import { StorageService } from '../services/storageService';
-import { ChevronLeft, Search, Package, MapPin, Clock, CreditCard, X, AlertCircle, Trash2 } from 'lucide-react';
+import { ChevronLeft, Search, Package, MapPin, Clock, CreditCard, X, AlertCircle, Trash2, Sparkles, ArrowRight } from 'lucide-react';
 
 interface UserTrackingPageProps {
     onBack: () => void;
@@ -14,6 +15,7 @@ interface UserTrackingPageProps {
 import BookingModal from './BookingModal';
 
 const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) => {
+    const navigate = useNavigate();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [bookings, setBookings] = useState<BookingState[]>([]);
@@ -256,25 +258,52 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
                                         </div>
 
                                         {/* Footer Actions */}
-                                        {booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.REFUNDED && booking.status !== BookingStatus.COMPLETED && (
-                                            <div className="mt-8 pt-8 border-t border-gray-100 flex justify-end gap-3">
-                                                <button
-                                                    onClick={() => handleEditClick(booking)}
-                                                    className={`flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-colors ${isModificationLocked(booking) ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-bee-black'}`}
-                                                >
-                                                    <i className="fa-solid fa-pen"></i>
-                                                    {t.booking?.edit_btn || 'Edit'}
-                                                </button>
-                                                <div className="w-px h-4 bg-gray-200 self-center"></div>
-                                                <button
-                                                    onClick={() => handleCancelClick(booking)}
-                                                    className={`flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-colors ${isModificationLocked(booking) ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-500'}`}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                    {t.tracking?.cancel_btn || t.tracking_page?.cancel_btn || "Cancel"}
-                                                </button>
+                                        <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6">
+                                            {/* Nearby Tips Button 💅 */}
+                                            <button
+                                                onClick={() => {
+                                                    const branchToSlug: Record<string, string> = {
+                                                        'HBO': 'hongdae',
+                                                        'MYN': 'hongdae',
+                                                        'MBX-011': 'seoul-station',
+                                                        'MBX-005': 'seongsu',
+                                                        'MBX-001': 'bukchon',
+                                                        'MBX-016': 'myeongdong',
+                                                        'MBX-009': 'myeongdong'
+                                                    };
+                                                    const retrievalLocId = booking.serviceType === ServiceType.DELIVERY ? booking.dropoffLocation : booking.pickupLocation;
+                                                    const slug = branchToSlug[retrievalLocId];
+                                                    navigate(slug ? `/tips/${slug}` : '/tips');
+                                                }}
+                                                className="flex items-center gap-3 px-6 py-3 bg-bee-yellow/10 text-bee-black border border-bee-yellow/20 rounded-2xl hover:bg-bee-yellow/20 transition-all font-black text-[10px] uppercase tracking-widest"
+                                            >
+                                                <Sparkles size={14} className="text-bee-yellow fill-bee-yellow" />
+                                                Nearby Tips 💅
+                                                <ArrowRight size={14} />
+                                            </button>
+
+                                            <div className="flex items-center gap-3">
+                                                {booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.REFUNDED && booking.status !== BookingStatus.COMPLETED && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleEditClick(booking)}
+                                                            className={`flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-colors ${isModificationLocked(booking) ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-bee-black'}`}
+                                                        >
+                                                            <i className="fa-solid fa-pen"></i>
+                                                            {t.booking?.edit_btn || 'Edit'}
+                                                        </button>
+                                                        <div className="w-px h-4 bg-gray-200 self-center"></div>
+                                                        <button
+                                                            onClick={() => handleCancelClick(booking)}
+                                                            className={`flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-colors ${isModificationLocked(booking) ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-500'}`}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                            {t.tracking?.cancel_btn || t.tracking_page?.cancel_btn || "Cancel"}
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 </div>
                             ))

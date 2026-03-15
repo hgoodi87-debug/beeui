@@ -1,8 +1,25 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Clock, Phone, ChevronRight, MapPin, Navigation, ArrowRight } from 'lucide-react';
+import {
+    X,
+    Smartphone,
+    Truck,
+    Hotel,
+    ShieldCheck,
+    Clock,
+    MapPin,
+    Navigation,
+    Sparkles,
+    Compass,
+    Star,
+    BookOpen,
+    ArrowRight,
+    ChevronRight,
+    Phone
+} from "lucide-react";
 import { LocationOption, ServiceType } from "../../types";
 import BaggageCounter from './BaggageCounter';
+import { SEO_LOCATIONS } from '../../src/constants/seoLocations';
 
 interface BranchDetailsProps {
     t: any;
@@ -55,6 +72,9 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
             window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
         }
     };
+
+    // 💅 [스봉이] 주변 관광지 가져오기 (지점 ID 기반 매칭)
+    const nearbySpots = SEO_LOCATIONS.find(loc => loc.relatedBranchIds.includes(selectedBranch.id))?.touristSpots || [];
 
     return (
         <motion.div
@@ -144,6 +164,43 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                     )}
                 </div>
 
+                {/* Nearby Hotspots Section - 💅 [스봉이] 사장님, 여기 분위기 좀 보실래요? ✨ */}
+                {nearbySpots.length > 0 && (
+                    <div className="mb-6 md:mb-10 px-1">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Sparkles className="w-3.5 h-3.5 md:w-5 md:h-5 text-bee-yellow fill-bee-yellow" />
+                            <span className="text-[10px] md:text-[14px] font-black italic uppercase tracking-[0.1em] text-bee-black font-montserrat">
+                                {lang === 'ko' ? '주변 추천 명소' : 'Nearby Hotspots'}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 md:gap-3">
+                            {nearbySpots.map((spot, idx) => (
+                                <motion.div
+                                    key={spot.id}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 0.1 * idx }}
+                                    className="group/spot p-3 md:p-5 rounded-2xl md:rounded-[2rem] bg-gray-50/50 border border-gray-100 hover:border-bee-yellow transition-all flex items-start gap-3 md:gap-5"
+                                >
+                                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 group-hover/spot:rotate-12 transition-transform">
+                                        {spot.category === 'landmark' ? <Star className="w-4 h-4 md:w-5 md:h-5 text-orange-400" /> : <Compass className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />}
+                                    </div>
+                                    <div className="flex-1 min-w-0 text-left">
+                                        <h4 className="text-[12px] md:text-[18px] font-black text-gray-900 mb-0.5 md:mb-1">
+                                            {(spot.name as any)[lang] || spot.name.ko}
+                                        </h4>
+                                        <p className="text-[10px] md:text-[14px] text-gray-500 leading-snug line-clamp-2">
+                                            {(spot.description as any)[lang] || spot.description.ko}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 md:w-6 md:h-6 text-gray-200 group-hover/spot:text-bee-yellow transition-colors self-center" />
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Actions Section - [스봉이] 스포츠카 시트처럼 쫀쫀하게! 💅 */}
                 <div className="flex flex-row gap-2 pt-3 md:pt-8 border-t border-gray-100">
                     <motion.button
@@ -171,6 +228,25 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                         <span className="hidden xs:inline">GO</span>
                     </motion.button>
                 </div>
+
+                {/* 💅 [스봉이] 사장님이 지점 상세 가이드를 못 찾으실까 봐 링크를 딱! 심어드렸어요. ✨ */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    className="mt-10 pt-8 border-t border-white/10"
+                >
+                    <button
+                        onClick={() => {
+                            const slug = selectedBranch.name.toLowerCase().replace(/\s+/g, '-');
+                            window.location.href = `/storage/${slug}`;
+                        }}
+                        className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 group hover:bg-bee-yellow hover:text-bee-black hover:border-bee-yellow transition-all"
+                    >
+                        <BookOpen className="w-4 h-4" />
+                        <span className="text-xs font-black uppercase tracking-widest">{lang === 'ko' ? '이 지점의 전체 가이드 보기' : 'View Full Guide for this Branch'}</span>
+                        <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                </motion.div>
 
                 {!isActive && (
                     <p className="text-center text-[10px] font-bold text-red-500 mt-2">

@@ -151,6 +151,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                 { id: 'SERVICES', label: t.nav.services },
                                 { id: 'LOCATIONS', label: t.nav.locations },
                                 { id: 'TIPS', label: 'Travel Tips' },
+                                { id: 'VISION', label: 'Brand Vision' },
                                 { id: 'PARTNERSHIP', label: t.nav.partners },
                                 { id: 'QNA', label: 'Q&A' },
                                 { id: 'MYPAGE', label: user && !user.isAnonymous ? t.nav.mypage : t.nav.login }

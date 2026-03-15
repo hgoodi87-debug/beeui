@@ -24,6 +24,8 @@ const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
 const QnaPage = lazy(() => import('./components/QnaPage'));
 const LocationLander = lazy(() => import('./components/LocationLander'));
 const TravelTips = lazy(() => import('./components/TravelTips'));
+const VisionPage = lazy(() => import('./components/VisionPage'));
+const BranchTipsPage = lazy(() => import('./components/BranchTipsPage'));
 
 const Footer = lazy(() => import('./components/Footer'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
@@ -196,6 +198,7 @@ const App: React.FC = () => {
         if (adminInfo.branchId) return navigate(`/admin/branch/${adminInfo.branchId}`);
         return navigate('/admin');
       case 'TIPS': return navigate('/tips');
+      case 'VISION': return navigate('/vision');
       case 'USER': default: return navigate('/');
     }
   };
@@ -352,6 +355,8 @@ const App: React.FC = () => {
                   <Route path="/storage/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/delivery/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/tips" element={<AnimatedRoute><TravelTips lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tips/:slug" element={<AnimatedRoute><BranchTipsPage t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
 
                   {/* ADMIN */}
                   <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} />} />

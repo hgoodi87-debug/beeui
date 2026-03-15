@@ -29,8 +29,8 @@ const SEO: React.FC<SEOProps> = ({
     const currentUrl = `${siteUrl}${path}`;
 
     // Default values
-    const defaultTitle = '빌리버(Beeliber) - 짐 없이 떠나는 무중력 여행 | 프리미엄 짐배송·짐보관';
-    const defaultDescription = '캐리어 걱정 없는 서울 여행의 시작. 호텔-공항 당일 짐 배송 및 스마트 짐 보관 서비스를 무중력 상태처럼 가볍게 경험하세요. (Beeliber: Premium Luggage Freedom)';
+    const defaultTitle = '빌리버(Beeliber) - 짐 없이 떠나는 핸즈프리 여행 | 프리미엄 짐배송·짐보관';
+    const defaultDescription = '캐리어 걱정 없는 서울 여행의 시작. 호텔-공항 당일 짐 배송 및 스마트 짐 보관 서비스를 양손 가볍게 핸즈프리 브랜드 "비리버(Beeliber)"와 함께 경험하세요. (Beeliber: Premium Luggage Freedom)';
     const defaultKeywords = '짐배송, 캐리어 보관, 캐리어 배송, 인천공항 짐배송, 홍대 캐리어 보관, 가방 없는 여행, 여행, 캐리어, 짐보관소';
 
     const metaTitle = title || defaultTitle;

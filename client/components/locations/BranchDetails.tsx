@@ -74,7 +74,8 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
     };
 
     // 💅 [스봉이] 주변 관광지 가져오기 (지점 ID 기반 매칭)
-    const nearbySpots = SEO_LOCATIONS.find(loc => loc.relatedBranchIds.includes(selectedBranch.id))?.touristSpots || [];
+    const seoLocation = SEO_LOCATIONS.find(loc => loc.relatedBranchIds.includes(selectedBranch.id));
+    const nearbySpots = seoLocation?.touristSpots || [];
 
     return (
         <motion.div
@@ -230,23 +231,34 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                 </div>
 
                 {/* 💅 [스봉이] 사장님이 지점 상세 가이드를 못 찾으실까 봐 링크를 딱! 심어드렸어요. ✨ */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    className="mt-10 pt-8 border-t border-white/10"
-                >
+                <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col gap-4">
+                    {seoLocation && (
+                        <motion.button
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            onClick={() => {
+                                window.location.href = `/tips/${seoLocation.slug}`;
+                            }}
+                            className="w-full py-5 bg-bee-yellow text-bee-black border border-bee-yellow rounded-[2rem] flex items-center justify-center gap-3 group hover:bg-bee-black hover:text-bee-yellow hover:border-bee-black transition-all shadow-xl shadow-bee-yellow/20"
+                        >
+                            <Navigation className="w-5 h-5 fill-current" />
+                            <span className="text-sm font-black uppercase tracking-[0.1em]">{lang === 'ko' ? '인터랙티브 팁스 지도 탐색 💅' : 'Explore with Smart Tips Map 💅'}</span>
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </motion.button>
+                    )}
+
                     <button
                         onClick={() => {
                             const slug = selectedBranch.name.toLowerCase().replace(/\s+/g, '-');
                             window.location.href = `/storage/${slug}`;
                         }}
-                        className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 group hover:bg-bee-yellow hover:text-bee-black hover:border-bee-yellow transition-all"
+                        className="w-full py-4 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-center gap-3 group hover:bg-bee-black hover:text-white hover:border-bee-black transition-all"
                     >
                         <BookOpen className="w-4 h-4" />
-                        <span className="text-xs font-black uppercase tracking-widest">{lang === 'ko' ? '이 지점의 전체 가이드 보기' : 'View Full Guide for this Branch'}</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-gray-400 group-hover:text-white">{lang === 'ko' ? '이 지점의 전체 가이드 보기' : 'View Full Guide for this Branch'}</span>
                         <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                     </button>
-                </motion.div>
+                </div>
 
                 {!isActive && (
                     <p className="text-center text-[10px] font-bold text-red-500 mt-2">

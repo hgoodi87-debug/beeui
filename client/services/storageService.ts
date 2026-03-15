@@ -11,12 +11,12 @@ const KEYS = {
 };
 
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
+  authDomain: "beeliber-main.firebaseapp.com",
+  projectId: "beeliber-main",
+  storageBucket: "beeliber-main.firebasestorage.app",
+  messagingSenderId: "591358308612",
+  appId: "1:591358308612:web:fb3928d12b0e1bb000a051",
   measurementId: "G-PQBL1SG842",
   isActive: true, // Force Active
   enableGeminiAutomation: true,
@@ -40,9 +40,8 @@ export const StorageService = {
   },
 
   getCloudConfig: (): GoogleCloudConfig | null => {
-    // Return env config or saved config, forcing active
-    const saved = safeJsonParse<GoogleCloudConfig | null>(KEYS.CLOUD_CONFIG, null);
-    return saved ? { ...saved, isActive: true } : { ...DEFAULT_CLOUD_CONFIG, isActive: true };
+    // [스봉이] 로컬 스토리지의 낡은 캐시가 사고를 유발해서, 강제로 기본 설정을 쓰게 바꿨어요! 💅✨
+    return { ...DEFAULT_CLOUD_CONFIG, isActive: true };
   },
 
   uploadFile: async (file: File | Blob, path: string): Promise<string> => {

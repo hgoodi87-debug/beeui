@@ -4,7 +4,7 @@ import { AdminTab } from '../../types';
 interface AdminStore {
     activeTab: AdminTab;
     setActiveTab: (tab: AdminTab) => void;
-    activeStatusTab: 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+    activeStatusTab: string; // 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'TODAY_IN' | 'STORAGE' | 'TODAY_OUT' | 'TRANSIT' | 'ARRIVED' | 'ISSUE';
     setActiveStatusTab: (tab: 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED') => void;
     globalBranchFilter: string;
     setGlobalBranchFilter: (filter: string) => void;

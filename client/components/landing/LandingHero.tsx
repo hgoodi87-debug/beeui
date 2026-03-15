@@ -1,16 +1,18 @@
 
 import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Smartphone, ChevronRight } from "lucide-react";
+import { Smartphone, ChevronRight, MapPin } from "lucide-react";
+import { Branch } from "../../types";
 
 interface LandingHeroProps {
     t: any;
     onNavigate: (view: any) => void;
     onTrackClick: () => void;
     branchCode?: string;
+    branchData?: Branch;
 }
 
-const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, branchCode }) => {
+const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, branchCode, branchData }) => {
     const { scrollY } = useScroll();
 
     // Parallax effects for typography
@@ -61,8 +63,20 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                             hidden: { opacity: 0, scale: 0.8, filter: 'blur(10px)' },
                             visible: { opacity: 1, scale: 1, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
                         }}
-                        className="mb-6 md:mb-8"
+                        className="mb-6 md:mb-8 flex flex-col items-center gap-3"
                     >
+                        {branchData && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="px-4 py-2 rounded-2xl bg-bee-yellow text-bee-black shadow-xl shadow-bee-yellow/20 flex items-center gap-2 mb-2"
+                            >
+                                <MapPin size={14} className="animate-pulse" />
+                                <span className="text-[11px] font-black tracking-wider uppercase">
+                                    {branchData.name} {branchData.ownerName ? `| ${branchData.ownerName}` : ''}
+                                </span>
+                            </motion.div>
+                        )}
                         <span className="inline-block px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] backdrop-blur-md bg-black/20 shadow-lg">
                             {t.hero.badge || "Global Logistics Excellence"}
                         </span>

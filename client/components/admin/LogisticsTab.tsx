@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookingState, BookingStatus, ServiceType, LocationOption, AdminTab } from '../../types';
+import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/constants/admin';
 
 interface LogisticsTabProps {
     activeTab: AdminTab;
@@ -53,15 +54,27 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
 
                 <div className="flex-1 flex justify-start lg:justify-center">
                     <div className="flex bg-white/50 backdrop-blur-3xl p-1.5 rounded-2xl border border-gray-200 w-fit">
-                        {(['ALL', 'PENDING', 'ACTIVE', 'COMPLETED'] as const).map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveStatusTab(tab)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
-                            >
-                                {tab === 'ALL' ? '전체' : tab === 'PENDING' ? '대기중' : tab === 'ACTIVE' ? '진행중' : '완료됨'}
-                            </button>
-                        ))}
+                        {activeTab === 'STORAGE_BOOKINGS' ? (
+                            (['ALL', 'TODAY_IN', 'STORAGE', 'TODAY_OUT', 'COMPLETED', 'ISSUE'] as const).map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveStatusTab(tab)}
+                                    className={`px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
+                                >
+                                    {tab === 'ALL' ? '전체' : tab === 'TODAY_IN' ? '오늘 입고' : tab === 'STORAGE' ? '보관중' : tab === 'TODAY_OUT' ? '오늘 픽업' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
+                                </button>
+                            ))
+                        ) : (
+                            (['ALL', 'PENDING', 'TRANSIT', 'ARRIVED', 'COMPLETED', 'ISSUE'] as const).map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveStatusTab(tab)}
+                                    className={`px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
+                                >
+                                    {tab === 'ALL' ? '전체' : tab === 'PENDING' ? '접수 대기' : tab === 'TRANSIT' ? '이동중' : tab === 'ARRIVED' ? '도착' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
+                                </button>
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -86,8 +99,8 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                 <th className="px-6 py-4">ID/이름</th>
                                 <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 지점' : '서비스 경로'}</th>
                                 <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 기간' : '날짜/수량'}</th>
-                                <th className="px-6 py-4">결제/금액</th>
-                                <th className="px-6 py-4">상태</th>
+                                <th className="px-6 py-4">결제/정산 정보</th>
+                                <th className="px-6 py-4">운영 상태</th>
                                 <th className="px-6 py-4 text-center">액션</th>
                             </tr>
                         </thead>
@@ -135,20 +148,46 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                         )}
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className={`text-[10px] font-black uppercase mb-1 ${b.paymentStatus === 'paid' ? 'text-green-500' : 'text-red-400'}`}>
-                                            {b.paymentStatus === 'paid' ? '결제 완료' : '미결제/취소'}
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded w-fit flex items-center gap-1.5 ${b.paymentStatus === 'paid' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                                                <i className={`fa-solid ${b.paymentStatus === 'paid' ? 'fa-check' : 'fa-xmark'} text-[8px]`}></i>
+                                                {b.paymentStatus === 'paid' ? '결제 완료' : '미결제/취소'}
+                                            </div>
+                                            <div className={`text-[9px] font-black px-2 py-1 rounded w-fit flex items-center gap-1.5 ${b.settlementStatus === '정산확정' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                                                <i className="fa-solid fa-coins text-[8px]"></i>
+                                                {b.settlementStatus || '미반영'}
+                                            </div>
+                                            <div className="text-sm font-black text-bee-black tracking-tight mt-1">₩{(b.finalPrice || 0).toLocaleString()}</div>
                                         </div>
-                                        <div className="text-sm font-black text-bee-yellow tracking-tight">₩{(b.finalPrice || 0).toLocaleString()}</div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <select
-                                            value={b.status}
-                                            onChange={e => updateStatus(b.id!, e.target.value as BookingStatus)}
-                                            title="예약 상태 변경"
-                                            className={`text-[10px] font-black py-2 px-3 rounded-xl border-none outline-none shadow-sm cursor-pointer appearance-none transition-all hover:scale-105 ${getStatusStyle(b.status || BookingStatus.PENDING)}`}
-                                        >
-                                            {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="relative group/select w-fit">
+                                                <div 
+                                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full z-10"
+                                                    style={{ backgroundColor: OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[b.status || BookingStatus.PENDING]].color }}
+                                                />
+                                                <select
+                                                    value={b.status}
+                                                    onChange={e => updateStatus(b.id!, e.target.value as BookingStatus)}
+                                                    title="예약 상태 변경"
+                                                    className="text-[10px] font-black pl-7 pr-8 py-2 rounded-xl border border-gray-200 bg-white shadow-sm cursor-pointer appearance-none transition-all hover:border-bee-yellow hover:shadow-md outline-none min-w-[120px]"
+                                                >
+                                                    {Object.values(BookingStatus).map(s => (
+                                                        <option key={s} value={s}>
+                                                            {OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[s]].label} ({s})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-gray-400 pointer-events-none group-hover/select:text-bee-black transition-colors"></i>
+                                            </div>
+                                            {b.auditNote && (
+                                                <div className="text-[9px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg w-fit flex items-center gap-1 max-w-[150px] truncate" title={b.auditNote}>
+                                                    <i className="fa-solid fa-circle-exclamation"></i>
+                                                    이슈: {b.auditNote}
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex items-center justify-center gap-2">

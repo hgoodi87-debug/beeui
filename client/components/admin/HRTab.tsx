@@ -161,7 +161,20 @@ const HRTab: React.FC<HRTabProps> = ({
                             })}
                         </div>
                         {/* 지점 필터 */}
-                        <div className="text-[10px] font-black text-gray-400">{displayCategories.reduce((acc, cat) => acc + cat.list.length, 0)}명이 목록에 표시됨</div>
+                        <div className="flex flex-wrap gap-2 items-center">
+                            <span className="text-[10px] font-black text-gray-400 mr-1">지점별 필터:</span>
+                            <button onClick={() => setFilterBranch('ALL')} className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${filterBranch === 'ALL' ? 'bg-bee-yellow text-bee-black shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                                전체
+                            </button>
+                            <button onClick={() => setFilterBranch('SUPER')} className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${filterBranch === 'SUPER' ? 'bg-purple-100 text-purple-600 shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                                <i className="fa-solid fa-crown mr-1"></i> 슈퍼관리자
+                            </button>
+                            {branchLocations.sort((a,b) => (a.name || '').localeCompare(b.name || '', 'ko')).map(loc => (
+                                <button key={loc.id} onClick={() => setFilterBranch(loc.id)} className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${filterBranch === loc.id ? 'bg-bee-black text-bee-yellow shadow-sm' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                                    {loc.name}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* 직원 목록 */}

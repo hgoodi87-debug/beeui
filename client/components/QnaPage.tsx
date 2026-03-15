@@ -198,7 +198,7 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
                   >
                     <button
                       onClick={() => toggleAccordion(globalIdx)}
-                      aria-expanded={isOpen}
+                      aria-expanded={isOpen ? "true" : "false"}
                       aria-controls={`faq-answer-${globalIdx}`}
                       className={`w-full text-left p-6 md:p-8 bg-white border border-gray-100 rounded-[32px] transition-all hover:shadow-xl hover:border-bee-yellow/20 flex items-start gap-6 ${
                         isOpen ? 'ring-2 ring-bee-yellow shadow-2xl' : ''

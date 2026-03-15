@@ -8,12 +8,8 @@
 
 ## 2. 사용자 권한 정의 (Role-Based Access Control)
 
-시스템 접근 권한을 철저히 분리하여 데이터 보안과 운영 효율성을 극대화합니다.
-
-| 권한 레벨 | 데이터 열람 범위 | 기능 및 제어 권한 | 블라인드(비노출) 대상 |
-| :--- | :--- | :--- | :--- |
-| **Super Admin (본사)** | 전체 지점 예약, 전체 고객 정보, 총매출액, 지점별 정산금 | 신규 지점 생성/수정/비활성화, 지점별 수수료율 설정, 전체 예약 상태 강제 변경 | 없음 (모든 데이터 접근 가능) |
-| **Branch Admin (지점)** | 본인 지점의 예약 내역, 담당 고객 정보, 본인 지점의 커미션 수익 | 본인 지점의 예약 상태 변경 (픽업/보관/배송완료 처리) | 타 지점 데이터, 고객의 총 결제 금액(원가), 본사 수익 |
+> [!IMPORTANT]
+> 본 섹션의 최신 권한 매트릭스와 상세 정책은 [BEELIBER_SECURITY_POLICY.md](file:///c:/Users/dbcjs/Desktop/beeliber/beeliber/beeliber-main-main/beeliber-main/BEELIBER_SECURITY_POLICY.md)로 통합 및 고도화되었습니다. 시스템 구현 시 통합 보안 문서를 우선 참조하시기 바랍니다. 🛡️✨
 
 ## 3. 핵심 기능 명세 (Functional Specifications)
 

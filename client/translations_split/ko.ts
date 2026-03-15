@@ -1,8 +1,8 @@
 export const ko = {
     seo: {
-        title: '빌리버(Beeliber) - 서울 여행 마지막 날 짐 걱정 끝 | 홍대/서울역 짐 보관 & 공항 당일 배송 💅',
-        description: '체크아웃 후 짐 보관부터 인천공항까지 당일 배송까지. 홍대입구역 3번 출구 빌리버 연남점. 무거운 캐리어는 맡기고 서울 여행 마지막 순간까지 가볍게 즐기세요. (BEE2 할인코드 증정)',
-        keywords: '홍대 짐보관, 홍대 짐배송, 서울 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 서울 여행 마지막 날, 체크아웃 후 짐보관'
+        title: '빌리버(Beeliber) - 서울 여행이 가벼워지는 순간 | 짐 보관 & 공항 당일 배송 💅',
+        description: '서울 여행의 시작과 끝을 무거운 가방 없이. 홍대입구역, 서울역 등 주요 거점 짐 보관부터 인천공항 당일 배송까지. 빌리버로 두 손 자유로운 서울을 경험하세요. ✨',
+        keywords: '서울 짐보관, 홍대 짐보관, 서울역 짐보관, 명동 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 서울 여행 마지막 날, 체크아웃 후 짐보관'
     },
     nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털', login: '로그인', mypage: '마이페이지' },
     terms_page: {
@@ -38,18 +38,18 @@ export const ko = {
         ]
     },
     hero: {
-        badge: '글로벌 여행 파트너',
-        title1: '짐으로부터',
-        title2: '자유롭게',
-        subtitle: '호텔에서 공항까지, 무거운 짐은 빌리버에게 맡기고\n가장 가벼운 마음으로 여행의 모든 순간을 만끽하세요.',
-        btn_now: '예약하기',
-        track_booking: '예약 및 배송 확인',
-        book_branch: '예약하기',
-        main_title_1: '짐으로부터',
-        main_title_2: '자유롭게',
+        badge: '서울 여행 핸즈프리(Hands-free) 파트너 ✨',
+        title1: '가장 서울다운 여행,',
+        title2: '두 손 가볍게',
+        subtitle: '수하물은 빌리버에게 맡기고,\n당신은 오직 서울의 설레는 매 순간에만 집중하세요.',
+        btn_now: '지금 예약하기',
+        track_booking: '내 예약 확인',
+        book_branch: '가까운 지점 예약',
+        main_title_1: '가장 서울다운 여행,',
+        main_title_2: '두 손 가볍게',
         main_title_bags: '',
         main_title_city: '',
-        live_label: '실시간 상태 피드',
+        live_label: '실시간 배송 피드',
         search_btn: '조회하기',
         status_suffix: '현황',
         label_route: '경로',
@@ -65,57 +65,57 @@ export const ko = {
         check_info: '정보를 다시 확인해주세요.'
     },
     pain: {
-        headline: "28인치의 무게는 Beeliber에 맡기고,\n당신의 두 손에는 설렘만 담으세요.",
-        sub_copy: "여행의 황금 같은 첫날과 마지막 날,\n짐 때문에 버리는 시간 평균 4.5시간.\n\nbeeliber가 그 시간을 당신에게 돌려드립니다.",
-        point1: "계단은 당신의 최대 적입니다",
-        point2: "마지막 4시간을 낭비하지 마세요",
-        point3: "30kg 가방을 들고 만원 전철을 타는 고통",
-        badge_without: "Beeliber 없이",
-        badge_with: "Beeliber와 함께",
-        quote_bad: "\"계단이 지옥이다\"",
-        quote_good: "\"구름 위를 걷는 기분\""
+        headline: "무거운 캐리어는 빌리버가,\n당신의 손엔 서울의 낭만만 💅",
+        sub_copy: "복잡한 서울 지하철 계단과 만원 버스 속 캐리어는 이제 그만.\n빌리버가 당신의 귀한 4.5시간을 자유로 채워드립니다.",
+        point1: "악명 높은 지하철 계단은 당신의 적입니다",
+        point2: "체크아웃 후 공항 가기 전까지 '짐 노예'가 되지 마세요",
+        point3: "만원 전철에서 캐리어와 씨름하는 고통",
+        badge_without: "Beeliber 없이 무겁게",
+        badge_with: "Beeliber로 가볍게",
+        quote_bad: "\"서울 다신 안 와...\"",
+        quote_good: "\"진작 쓸걸, 완전 신세계! ✨\""
     },
     howitworks: {
-        headline: "단 3번의 터치, 마법처럼 사라지는 짐",
+        headline: "단 3단계, 서울 여행의 새로운 공식",
         badge_label: "SERVICE PROCESS",
-        step1: { title: "Drop (맡기기)", desc: "공항(혹은 호텔)의 Beeliber 데스크/파트너에게\n당신의 무거운 짐을 넘깁니다.", badge: "STEP 1. Drop" },
-        step2: { title: "Enjoy (즐기기)", desc: "두 손이 자유로운 상태로 곧바로\n관광지, 맛집, 쇼핑을 즐깁니다.", badge: "STEP 2. Enjoy" },
-        step3: { title: "Meet (만나기)", desc: "일정을 마치고 호텔 방에 도착하면,\n짐이 먼저 당신을 기다리고 있습니다.", badge: "STEP 3. Meet" }
+        step1: { title: "Drop (짐 맡기기)", desc: "홍대, 서울역 등 가까운 지점에\n당신의 무거운 짐을 가볍게 넘깁니다.", badge: "STEP 1. Drop" },
+        step2: { title: "Tour (서울 즐기기)", desc: "두 손 자유로운 상태로 핫플레이스,\n맛집, 카페 투어를 마음껏 즐깁니다.", badge: "STEP 2. Tour" },
+        step3: { title: "Meet (짐 찾기)", desc: "일정을 마치고 원하는 시간에\n가방과 기분 좋게 다시 만납니다.", badge: "STEP 3. Meet" }
     },
     trust: {
-        headline: "당신의 짐은, VIP 대접을 받습니다.",
-        badge_label: "VIP Bee-Keeper Trust",
-        tracking: { title: "실시간 이메일 알림", desc: "내 짐의 상태를 실시간으로 이메일로 전송 받으세요.", accent: "EMAIL STATUS" },
-        insurance: { title: "프리미엄 파손 보험", desc: "스크래치 하나까지 책임지는 글로벌 수준의 보험 기본 가입.", accent: "GLOBAL INSURED" },
-        seal: { title: "보안 씰(Seal) 시스템", desc: "도착 전까지 절대 열리지 않음을 보장하는 스마트 보안 씰.", accent: "SMART SEAL" },
-        footer_label1: "24/7 실시간 모니터링",
-        footer_label2: "인증된 파트너사",
-        footer_label3: "안전한 클라우드 암호화"
+        headline: "당신의 짐은, 우리에겐 VIP입니다.",
+        badge_label: "Safe & Trust Beeliber",
+        tracking: { title: "실시간 위치 알림", desc: "내 짐의 보관/배송 상태를 실시간 이메일로 확인하세요.", accent: "STATUS UPDATE" },
+        insurance: { title: "프리미엄 안심 보험", desc: "분실/파손 걱정 끝! 최대 50만 원까지 보장되는 든든한 보험.", accent: "SECURED" },
+        seal: { title: "스마트 보안 시스템", desc: "CCTV와 전문 파트너가 당신의 짐을 24시간 안전하게 지킵니다.", accent: "SAFE CARE" },
+        footer_label1: "마포/서울 공식 파트너십",
+        footer_label2: "검증된 보관 거점",
+        footer_label3: "이미 수만 명이 경험한 신뢰"
     },
     pricing: {
-        headline: "택시비보다 저렴한,\n하루의 완벽한 자유",
-        desc: "복잡한 무게/크기 계산 없이\n직관적인 플랫 요금을 제안합니다.",
-        airport_hotel: "기본 캐리어 (공항 ↔ 호텔)",
-        extra_large: "특대형 수하물",
-        price_standard: "₩20,000",
-        price_extra: "₩29,000",
-        features_standard: ["23인치 이하 모든 사이즈", "공항 ↔ 호텔 당일 배송", "배송 상태 실시간 이메일 전송", "기본 파손 보험 포함"],
-        features_extra: ["27인치 초과", "무거운 수하물 특화 관리", "당일 안전 배송 보장", "프리미엄 보험 적용"],
-        flat_rate_label: "단일 요금 💰",
+        headline: "커피 몇 잔 값으로 즐기는,\n서울 여행의 완벽한 자유",
+        desc: "복잡한 크기 계산 없이\n합리적인 단일 요금을 제안합니다.",
+        airport_hotel: "서울 거점 짐 보관 (Day)",
+        extra_large: "인천공항 당일 배송",
+        price_standard: "₩5,000~",
+        price_extra: "₩20,000~",
+        features_standard: ["서울 주요 거점 지점 보관", "4시간/1일 단위 유연한 선택", "안전한 실내 보관 및 보안", "기본 파손 보험 포함"],
+        features_extra: ["서울 거점 ➔ 인천공항 당일 배송", "무거운 캐리어 전담 서비스", "배송 상태 실시간 알림", "기본 파손 보험 포함"],
+        flat_rate_label: "정찰제 요금 💰",
         most_popular_label: "인기 서비스",
-        per_bag_label: "/ 수하물",
-        choose_service_btn: "서비스 선택하기"
+        per_bag_label: "/ 1개 기준",
+        choose_service_btn: "예약하러 가기"
     },
     reviews_section: {
-        headline: "짐 없이 걷는 여행이 얼마나 아름다운지, Beeliber가 증명합니다.",
-        review1: "짐을 맡기고 바로 경복궁으로 갔어요. 내 생애 최고의 결정! - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
-        review2: "공항 가기 전 짐 맡기고 가볍게 여행했어요! - 김*태 ⭐️⭐️⭐️⭐️⭐️",
-        review3: "실시간 트래킹 기능이 정말 최고예요. 강력 추천! - Lee J. ⭐️⭐️⭐️⭐️⭐️"
+        headline: "짐 없는 서울 여행이 얼마나 달콤한지,\n이미 수많은 여행자가 경험하고 있습니다. ✨",
+        review1: "쇼핑하고 짐 맡긴 다음 성수동 카페 투어 신나게 했어요! - 민*지 ⭐️⭐️⭐️⭐️⭐️",
+        review2: "서울역에서 공항으로 짐 보내고 몸만 가볍게 이동했어요. 최고! - James, UK ⭐️⭐️⭐️⭐️⭐️",
+        review3: "지하철 계단에서 캐리어 들고 사투 안 벌여도 되니까 너무 좋네요. - 이*한 ⭐️⭐️⭐️⭐️⭐️"
     },
     final_cta: {
-        headline: "비행기에서 내리시나요?\n아니면 곧 떠나시나요?",
-        btn_airport_hotel: "공항 ➔ 호텔 배송 예약하기",
-        btn_hotel_airport: "호텔 ➔ 공항 배송 예약하기"
+        headline: "아직도 무거운 짐을 들고 계신가요?\n지금 바로 서울의 자유를 예약하세요.",
+        btn_airport_hotel: "짐 보관 지점 찾기",
+        btn_hotel_airport: "공항 배송 예약하기"
     },
     partnership: {
         title: '제휴 문의',
@@ -297,10 +297,10 @@ export const ko = {
         sub: '우리의 전문성',
         title: '빠르고, 안전하고, 자유롭게.',
         highlight_title: '여행의 시작과 끝이 놀랍도록 가벼워집니다.',
-        highlight_desc: '무거운 짐은 빌리버에게 맡기고, 당신은 오직 여행의 순간에만 집중하세요.\n서울 주요 거점 어디서나 스마트한 보관과 배송 서비스를 경험할 수 있습니다.',
-        f1_t: '공항 ↔ 호텔 배송', f1_d: '숙소까지 짐이 먼저 체크인합니다.',
-        f2_t: '스마트 짐 보관', f2_d: '파트너 지점에서 편리하게 보관하세요.',
-        f3_t: '광역 배송 시스템', f3_d: '전국 어디든 짐 없이 여행하세요.',
+        highlight_desc: '무거운 짐은 빌리버에게 맡기고, 당신은 오직 여행의 순간에만 집중하세요.\n서울 주요 거점 어디서나 프리미엄 보관과 스마트한 배송 서비스를 경험할 수 있습니다.',
+        f1_t: '서울 허브 ↔ 공항 배송', f1_d: '공항에서 짐을 보내고 즐겁게 체크인하세요.',
+        f2_t: '프리미엄 짐 보관', f2_d: '서울 곳곳의 파트너 거점에서 안전하게 보관하세요.',
+        f3_t: '서울 거점 배송 시스템', f3_d: '서울 어디든 짐 없이 가볍게 이동하세요.',
         delivery_title: 'Bee AI 스마트 배송',
         delivery_desc: 'AI가 최적의 배송\n경로와 시간을 즉시 알려드립니다.',
         storage_title: 'Bee AI 간편 보관',
@@ -345,7 +345,7 @@ export const ko = {
         back_to_top: "맨 위로"
     },
     locations_page: {
-        title: '빌리버 거점 안내', sidebar_title: 'Global Network', sidebar_subtitle: '빌리버 거점 안내',
+        title: '빌리버 거점 안내', sidebar_title: 'Seoul Hub Network', sidebar_subtitle: '서울 핵심 거점 안내',
         select_baggage_title: '가방 선택', bag_unit_4h: '/4시간~',
         filter_all: '전체', filter_airport: '공항', filter_partner: '지점 파트너스', filter_city: '도심', back: '메인으로', no_results: '등록된 지점이 없습니다.',
         info_card_delivery: '배송(Delivery)', info_card_storage: '보관(Storage)', info_card_book: '지금 예약하기',
@@ -682,59 +682,44 @@ export const ko = {
         link_insurance: '고가 물품 및 보상 규정'
     },
     qna: {
-        title: "자주 묻는 질문",
-        subtitle: "비리버 서비스 이용에 대해 자주 묻는 질문들을 모았습니다.",
+        title: "자주 묻는 질문 (FAQ)",
+        subtitle: "비리버가 당신의 궁금증을 완벽하게 해결해 드립니다. 💅",
         categories: {
-            general: "일반",
-            booking: "예약/결제",
-            safety: "안전/보상",
-            locations: "지점안내"
+            general: "서비스 일반",
+            booking: "예약 및 결제",
+            safety: "안전 및 보상",
+            locations: "지점 안내"
         },
         items: [
             {
                 category: "general",
                 question: "비리버(Beeliber)는 어떤 서비스인가요?",
-                answer: "비리버는 여행객의 수하물을 공항에서 호텔로, 또는 지점 간 배송하고 안전하게 보관해주는 '수하물 관리 솔루션'입니다. 지인에게 짐을 맡기는 것처럼 편리하게 이용하실 수 있습니다."
+                answer: "비리버는 서울을 여행하는 분들을 위해 '짐 없는 자유'를 제공하는 전문 서비스입니다. 홍대, 서울역 등 주요 거점에 짐을 보관하거나, 보관한 짐을 인천공항으로 당일 배송해 드려요. 전국구 배송보다는 서울 중심의 짐 보관에 특화되어 있습니다. ✨"
             },
             {
                 category: "general",
-                question: "서비스 이용 방법은 어떻게 되나요?",
-                answer: "온라인 예약을 완료한 후, 지정된 지점에 짐을 전달해 주시면 됩니다. 이후 자유롭게 일정을 보내신 뒤, 목적지 지점이나 호텔에서 짐을 수령하실 수 있습니다."
+                question: "호텔에서 호텔로 배송도 되나요?",
+                answer: "현재 비리버는 '지점 중심'의 서비스를 제공하고 있습니다. 호텔 픽업보다는 가까운 비리버 지점(홍대, 서울역 등)에 짐을 맡기시거나 찾는 방식을 권장드려요. 지점에서 공항으로의 배송은 아주 완벽하게 지원합니다! 💅"
             },
             {
                 category: "booking",
-                question: "예약을 취소하거나 변경할 수 있나요?",
-                answer: "이용 24시간 전까지는 100% 환불이 가능하며, 12시간 전에는 50%가 환불됩니다. 그 이후 또는 예약 당일 미사용 시에는 규정에 따라 환불이 제한될 수 있습니다."
-            },
-            {
-                category: "booking",
-                question: "보관이 금지된 물품이 있나요?",
-                answer: "현금, 귀금속, 부패하기 쉬운 음식물, 위험물 및 법령으로 금지된 물품은 보관 및 배송이 불가능합니다. 자세한 사항은 이용약관을 참조해 주시기 바랍니다."
+                question: "예약 없이 현장에서도 이용 가능한가요?",
+                answer: "지점 상황에 따라 현장 접수가 가능할 수도 있지만, 온라인 예약을 미리 하시면 대기 없이 훨씬 빠르고 저렴하게 이용하실 수 있습니다. 가급적 미리 예약해 주세요! ✨"
             },
             {
                 category: "safety",
-                question: "짐이 안전하게 관리되나요?",
-                answer: "모든 수하물은 고유의 보안 라벨로 관리되며, 주요 거점의 보안 시스템과 실시간 모니터링을 통해 안전하게 관리됩니다. 배송 상태는 알림을 통해 직접 확인하실 수 있습니다."
+                question: "내 짐이 안전한지 어떻게 믿을 수 있나요?",
+                answer: "비리버는 검증된 전문 파트너 지점과만 협업합니다. 모든 보관 구역은 CCTV로 상시 모니터링되며, 배송 시에는 짐의 상태를 사진 찍어 이메일로 보내 드려요. 또한 모든 수하물은 기본적으로 보상 보험에 가입되어 있어 안심하셔도 됩니다. ✨"
             },
             {
                 category: "safety",
-                question: "파손이나 분실 시 보상은 어떻게 이루어지나요?",
-                answer: "비리버의 모든 예약은 기본적으로 수하물당 최대 50만 원의 보상 보험이 포함됩니다. 고가 물품의 경우 추가 옵션을 통해 보장 한도를 최대 300만 원까지 상향할 수 있습니다."
+                question: "파손이나 분실 시 보상은 어떻게 되나요?",
+                answer: "비리버는 모든 고객님께 기본 최대 50만 원의 보상 한도를 제공합니다. 고가 물품의 경우 예약 시 안심 보장 옵션을 선택하시면 최대 300만 원까지 보장 한도를 높일 수 있어요. 💅"
             },
             {
                 category: "locations",
-                question: "비리버 지점은 어디에서 이용할 수 있나요?",
-                answer: "인천공항, 김포공항 및 서울의 주요 거점(홍대, 강남, 명동 등)에 위치한 지점 파트너사를 통해 서비스를 이용하실 수 있습니다. 이용 가능한 지점은 '지점 안내' 페이지에서 확인 가능합니다."
-            },
-            {
-                category: "locations",
-                question: "지점 운영 시간은 어떻게 되나요?",
-                answer: "통상적으로 오전 9시부터 오후 9시까지 운영되나, 지점별 상황에 따라 차이가 있을 수 있습니다. 예약 시 해당 지점의 상세 운영 정보를 반드시 확인해 주시기 바랍니다."
-            },
-            {
-                category: "booking",
-                question: "예약한 픽업 시간보다 늦게 도착하면 어떻게 되나요?",
-                answer: "예약하신 픽업 시간 이후에 도착하실 경우, 원활한 서비스 운영을 위해 30분 단위로 추가 지연 요금이 발생할 수 있습니다. 다음 고객님들의 예약과 원활한 서비스 진행을 위해 가급적 예약 시간을 준수해 주시길 부탁드립니다. 💅"
+                question: "비리버 지점은 어디에 있나요?",
+                answer: "현재 서울의 가장 핫한 지역인 홍대입구역(연남), 서울역, 명동, 인사동, 용산, 강남역 등 주요 거점에서 만나보실 수 있습니다. 자세한 위치는 '지점 안내' 페이지의 지도를 확인해 주세요! 📍"
             }
         ]
     }

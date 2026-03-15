@@ -158,9 +158,9 @@ const LocationLander: React.FC<LocationLanderProps> = ({ t, lang }) => {
       <section className="max-w-4xl mx-auto px-6 py-20 border-b border-white/5">
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
             {[
-                { icon: <Clock className="text-bee-yellow" />, title: "3 Min From Station", desc: "Unbeatable accessibility right next to transit hubs." },
-                { icon: <ShieldCheck className="text-bee-yellow" />, title: "Premium Safety", desc: "Fully insured and monitored 24/7 luggage security." },
-                { icon: <Star className="text-bee-yellow" />, title: "Smart Delivery", desc: "Same-day delivery from hotel to airport or station." }
+                { icon: <Clock className="text-bee-yellow" />, title: "Seoul Hub Presence", desc: "Located at the heart of Seoul's transit hubs for maximum accessibility." },
+                { icon: <ShieldCheck className="text-bee-yellow" />, title: "Premium Seoul Safety", desc: "Certified storage facility with 24/7 monitoring and premium insurance." },
+                { icon: <Star className="text-bee-yellow" />, title: "Smart Airport Link", desc: "Seamless same-day delivery from Seoul hubs to Incheon Airport." }
             ].map((f, i) => (
                 <motion.div 
                     key={i}

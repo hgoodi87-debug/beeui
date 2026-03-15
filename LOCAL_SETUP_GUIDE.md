@@ -46,11 +46,11 @@ firebase login
 1. **코드 수정**: VS Code 등 에디터에서 원하는 코드를 수정합니다.
 2. **로컬 서버 실행**: 수정된 내용을 실시간으로 확인하려면 다음 명령어를 사용하세요.
 
-    ```bash
-    npm run dev
-    ```
+   ```bash
+   npm run dev
+   ```
 
-    브라우저에서 `http://localhost:5173`으로 접속하여 확인 가능합니다.
+   브라우저에서 `http://localhost:5173`으로 접속하여 확인 가능합니다.
 
 ---
 
@@ -62,21 +62,21 @@ firebase login
 
 1. **변경 사항 저장 및 커밋**:
 
-    ```bash
-    git add .
-    git commit -m "수정 내용 설명 (예: 헤더 수정)"
-    ```
+   ```bash
+   git add .
+   git commit -m "수정 내용 설명 (예: 헤더 수정)"
+   ```
 
 2. **GitHub에 푸시**:
 
-    ```bash
-    git push origin main
-    ```
+   ```bash
+   git push origin main
+   ```
 
 3. **확인**:
-    - GitHub 저장소의 **Actions** 탭으로 이동합니다.
-    - `Deploy to Firebase Hosting on merge` 워크플로우가 돌아가는지 확인합니다.
-    - 작업이 완료되면 `https://beeliber-main.web.app`에 자동으로 반영됩니다.
+   - GitHub 저장소의 **Actions** 탭으로 이동합니다.
+   - `Deploy to Firebase Hosting on merge` 워크플로우가 돌아가는지 확인합니다.
+   - 작업이 완료되면 `https://beeliber-main.web.app`에 자동으로 반영됩니다.
 
 ---
 
@@ -92,7 +92,7 @@ npm run build
 firebase deploy --only hosting
 ```
 
-*\*참고: 현재 로컬 환경의 Node.js 바이너리 충돌 이슈로 인해 `npm run build`가 실패할 수 있습니다. 이 경우 GitHub Actions(자동 배포)를 이용하는 것이 가장 안정적입니다.*
+_\*참고: 현재 로컬 환경의 Node.js 바이너리 충돌 이슈로 인해 `npm run build`가 실패할 수 있습니다. 이 경우 GitHub Actions(자동 배포)를 이용하는 것이 가장 안정적입니다._
 
 ---
 

@@ -16,6 +16,7 @@ import {
     Globe,
     Sparkles
 } from "lucide-react";
+import { Branch } from "../types";
 
 import TrackingWidget from "./TrackingWidget";
 import LandingHero from "./landing/LandingHero";
@@ -39,6 +40,7 @@ interface LandingRenewalProps {
     user: any;
     onSuccess?: (booking: any) => void | Promise<void>;
     branchCode?: string;
+    branchData?: Branch;
 }
 
 const LandingRenewal: React.FC<LandingRenewalProps> = ({
@@ -51,7 +53,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
     onMyPageClick,
     user,
     onSuccess,
-    branchCode
+    branchCode,
+    branchData
 }) => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const [showTracking, setShowTracking] = React.useState(false);
@@ -187,14 +190,10 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     onNavigate={onNavigate}
                     onTrackClick={() => setShowTracking(true)}
                     branchCode={branchCode}
+                    branchData={branchData}
                 />
-                <LandingPainSection t={t} />
-                <LandingHowItWorks t={t} />
-                <LandingTrustBadge t={t} />
-                <LandingPricing t={t} onNavigate={onNavigate} />
-                <LandingReviews t={t} />
 
-                {/* 💅 Beeliber Content Hub / Travel Tips Section */}
+                {/* 💅 Beeliber Content Hub / Travel Tips Section (Moved Higher for Seoul focus) */}
                 <section className="py-24 bg-white border-y border-gray-100">
                     <div className="max-w-[1200px] mx-auto px-6">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
@@ -209,32 +208,38 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">Travel Smarter</span>
                                 </motion.div>
                                 <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight italic uppercase leading-none">
-                                    The <span className="text-gray-300">Content</span> Hub 💅
+                                    The <span className="text-gray-300">Seoul</span> Hub 📍
                                 </h2>
                                 <p className="text-gray-400 font-bold text-lg mb-10">
-                                    {lang === 'ko' ? '서울을 200% 더 가볍고 완벽하게 즐기는 법. 비리버가 큐레이션한 프리미엄 여행 팁을 만나보세요.' : 'Discover how to enjoy Seoul light and perfectly. Explore premium travel tips curated by Beeliber.'}
+                                    {lang === 'ko' ? '서울을 200% 더 가볍고 완벽하게 즐기는 법. 비리버가 큐레이션한 프리미엄 서울 여행 팁을 만나보세요.' : 'Discover how to enjoy Seoul light and perfectly. Explore premium Seoul travel tips curated by Beeliber.'}
                                 </p>
                                 <button 
                                     onClick={() => onNavigate('TIPS')}
                                     className="group inline-flex items-center gap-3 px-8 py-4 bg-bee-black text-bee-yellow font-black rounded-full hover:scale-105 transition-all shadow-xl"
                                 >
-                                    Explore All Tips
+                                    {lang === 'ko' ? '서울 핫플레이스 가이드' : 'Explore Seoul Tips'}
                                     <ChevronRight className="group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-4">
-                                    <div className="w-40 h-40 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Tip 01</div>
-                                    <div className="w-40 h-56 rounded-[2.5rem] bg-bee-yellow/5 flex items-center justify-center border border-bee-yellow/20 italic font-black text-bee-yellow/30">Tip 02</div>
+                                    <div className="w-40 h-40 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Hongdae</div>
+                                    <div className="w-40 h-56 rounded-[2.5rem] bg-bee-yellow/5 flex items-center justify-center border border-bee-yellow/20 italic font-black text-bee-yellow/30">Myeongdong</div>
                                 </div>
                                 <div className="space-y-4 pt-8">
-                                    <div className="w-40 h-56 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Tip 03</div>
-                                    <div className="w-40 h-40 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Tip 04</div>
+                                    <div className="w-40 h-56 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Seoul St.</div>
+                                    <div className="w-40 h-40 rounded-[2.5rem] bg-gray-50 flex items-center justify-center border border-gray-100 italic font-black text-gray-200">Gangnam</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
+
+                <LandingPainSection t={t} />
+                <LandingHowItWorks t={t} />
+                <LandingTrustBadge t={t} />
+                <LandingPricing t={t} onNavigate={onNavigate} />
+                <LandingReviews t={t} />
 
                 <LandingFinalCTA t={t} onNavigate={onNavigate} />
             </main>

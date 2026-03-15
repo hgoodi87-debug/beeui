@@ -42,15 +42,15 @@ export const useAdminStats = ({
             const d = new Date(b.pickupDate || '');
             return d >= firstDayOfMonth && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
         });
-        const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+        const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
 
         const lifetimeBookings = bookings.filter(b => !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED);
-        const lifetimeRevenue = lifetimeBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+        const lifetimeRevenue = lifetimeBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
 
-        const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+        const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
         const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
 
-        const filterMethod = (method: string) => targetBookings.filter((b: BookingState) => b.paymentMethod === method).reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+        const filterMethod = (method: string) => targetBookings.filter((b: BookingState) => b.paymentMethod === method).reduce((sum: number, b: BookingState) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
 
         return {
             total: totalRevenue,
@@ -93,7 +93,7 @@ export const useAdminStats = ({
             const d = new Date(b.pickupDate || '');
             return d >= firstDayOfMonth && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
         });
-        const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.finalPrice || 0), 0);
+        const mtdRevenue = mtdBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
 
         const deliveryBookings = targetBookings.filter(b => b.serviceType === ServiceType.DELIVERY);
         const storageBookings = targetBookings.filter(b => b.serviceType === ServiceType.STORAGE);
@@ -111,10 +111,10 @@ export const useAdminStats = ({
         const revenueByMethod: Record<string, number> = { card: 0, cash: 0, apple: 0, samsung: 0, wechat: 0, alipay: 0, naver: 0, kakao: 0, paypal: 0 };
         targetBookings.forEach(b => {
             const method = b.paymentMethod || 'cash';
-            if (method in revenueByMethod) revenueByMethod[method] += (b.finalPrice || 0);
+            if (method in revenueByMethod) revenueByMethod[method] += (b.settlementHardCopyAmount ?? b.finalPrice ?? 0);
         });
 
-        const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.finalPrice || 0), 0);
+        const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
         const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
 
         const expByCategory: Record<string, number> = {};
@@ -131,6 +131,23 @@ export const useAdminStats = ({
 
         const cancelledCount = targetBookings.filter(b => b.status === BookingStatus.CANCELLED).length;
         const refundedCount = targetBookings.filter(b => b.status === BookingStatus.REFUNDED).length;
+        
+        // [스봉이] 마감판 전용 디테일 KPI 계산 추가 💅✨
+        let confirmedAmount = 0;
+        let unconfirmedAmount = 0;
+        let partnerPayoutTotal = 0;
+        
+        targetBookings.forEach(b => {
+            const amount = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
+            if (b.settlementStatus === 'CONFIRMED') {
+                confirmedAmount += amount;
+            } else {
+                unconfirmedAmount += amount;
+            }
+            if (b.branchSettlementAmount) {
+                partnerPayoutTotal += b.branchSettlementAmount;
+            }
+        });
 
         const discountCodeCounts: Record<string, number> = {};
         targetBookings.forEach(b => {
@@ -154,6 +171,9 @@ export const useAdminStats = ({
             discountCodeCounts,
             cancelledCount,
             refundedCount,
+            confirmedAmount,
+            unconfirmedAmount,
+            partnerPayoutTotal,
         };
     }, [bookings, expenditures, revenueStartDate, revenueEndDate, closings]);
 
@@ -173,13 +193,13 @@ export const useAdminStats = ({
             const dateKey = b.pickupDate || 'Unknown';
             if (!statsMap[dateKey]) statsMap[dateKey] = { date: dateKey, count: 0, total: 0, cumulative: 0 };
             statsMap[dateKey].count++;
-            statsMap[dateKey].total += (b.finalPrice || 0);
+            statsMap[dateKey].total += (b.settlementHardCopyAmount ?? b.finalPrice ?? 0);
 
             if (dateKey !== 'Unknown') {
                 const monthKey = dateKey.slice(0, 7);
                 if (!monthMap[monthKey]) monthMap[monthKey] = { month: monthKey, count: 0, total: 0, cumulative: 0 };
                 monthMap[monthKey].count++;
-                monthMap[monthKey].total += (b.finalPrice || 0);
+                monthMap[monthKey].total += (b.settlementHardCopyAmount ?? b.finalPrice ?? 0);
             }
         });
 
@@ -201,6 +221,18 @@ export const useAdminStats = ({
         revenueStats,
         dailySettlementStats,
         accountingDailyStats: accountingStats.daily,
-        accountingMonthlyStats: accountingStats.monthly
+        accountingMonthlyStats: accountingStats.monthly,
+        // [스봉이] 월 정산 통제판(Control Tower)을 위한 고성능 집계 데이터 추가 💅✨
+        monthlyControlStats: {
+            gross: dailySettlementStats.totalRevenue,
+            confirmed: dailySettlementStats.confirmedAmount,
+            unconfirmed: dailySettlementStats.unconfirmedAmount,
+            payout: dailySettlementStats.partnerPayoutTotal,
+            netMargin: dailySettlementStats.totalRevenue - dailySettlementStats.partnerPayoutTotal - dailySettlementStats.totalExp,
+            expenditure: dailySettlementStats.totalExp,
+            orderCount: dailySettlementStats.deliveryCount + dailySettlementStats.storageCount,
+            cancelledCount: dailySettlementStats.cancelledCount,
+            refundedCount: dailySettlementStats.refundedCount
+        }
     };
 };

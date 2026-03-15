@@ -45,11 +45,11 @@ const VisionPage: React.FC = () => {
         },
         {
             id: 3,
-            title: "Phase 3: Ecosystem (Expansion)",
-            subtitle: "Beyond the City",
-            desc: "수도권을 넘어 주요 관광 도시로 인프라를 확장하고, B2B 파트너십을 통해 호텔, 공항, 모빌리티가 하나로 연결된 비리버 에코시스템을 완성합니다. 🌍",
+            title: "Phase 3: Hyper-Local (Deepening)",
+            subtitle: "Seoul Life Integration",
+            desc: "서울 전역의 숙소, 핫플레이스, 모빌리티가 유기적으로 연결된 비리버 에코시스템을 완성합니다. 이제 짐은 공기처럼 느껴지지 않게 될 거예요. 🌍",
             icon: <Globe className="text-blue-400" />,
-            items: ["Global Branch Expansion", "Hotel-to-Hotel Delivery Network", "Mobility Alliance Integration"]
+            items: ["Ultra-Dense Seoul Network", "Door-to-Door Seoul Delivery", "Tourism Alliance Integration"]
         },
         {
             id: 4,

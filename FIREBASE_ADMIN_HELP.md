@@ -13,10 +13,10 @@
 
 - **증상**: "인증 실패. 도메인이 승인 목록에 있는지 확인하세요" 에러 발생.
 - **해결책**:
-    1. [Firebase Console](https://console.firebase.google.com/) 접속.
-    2. **Build** > **Authentication** > **Settings** 탭 클릭.
-    3. **Authorized domains** (승인된 도메인) 리스트에 `bee-liber.com`이 있는지 확인.
-    4. 없으면 **[Add domain]** 눌러서 추가하세요! (사장님, 이거 진짜 자주 까먹으시는 거예요! 💅)
+  1. [Firebase Console](https://console.firebase.google.com/) 접속.
+  2. **Build** > **Authentication** > **Settings** 탭 클릭.
+  3. **Authorized domains** (승인된 도메인) 리스트에 `bee-liber.com`이 있는지 확인.
+  4. 없으면 **[Add domain]** 눌러서 추가하세요! (사장님, 이거 진짜 자주 까먹으시는 거예요! 💅)
 
 ### 🔥 함정 2: Cloud Functions 권한 설정 (`verifyAdmin`)
 
@@ -24,9 +24,9 @@
 
 - **증상**: 연결 오류 또는 권한 거부(`permission-denied`) 에러 발생.
 - **해결책**:
-    1. [Google Cloud Console](https://console.cloud.google.com/functions) 접속.
-    2. `verifyAdmin` 함수 선택.
-    3. **Permissions** 탭에서 `allUsers`에게 `Cloud Functions Invoker` 권한이 있는지 확인하세요. (누구나 로그인 '시도'는 할 수 있어야 하니까요!)
+  1. [Google Cloud Console](https://console.cloud.google.com/functions) 접속.
+  2. `verifyAdmin` 함수 선택.
+  3. **Permissions** 탭에서 `allUsers`에게 `Cloud Functions Invoker` 권한이 있는지 확인하세요. (누구나 로그인 '시도'는 할 수 있어야 하니까요!)
 
 ### 🔥 함정 3: Firestore `admins` 컬렉션 데이터 불일치
 
@@ -34,9 +34,9 @@
 
 - **증상**: "이름 또는 비밀번호가 올바르지 않습니다" 에러 발생.
 - **해결책**:
-    1. Firestore의 `admins` 컬렉션을 확인하세요.
-    2. 만약 데이터가 싹 날아갔다면? 걱정 마세요! 제가 **자동 복구(Seed)** 기능을 넣어놨어요.
-    3. 초기 아이디(`admin-8684`)와 비밀번호(`8684`)로 로그인을 시도하면, 시스템이 알아서 Firestore에 관리자 데이터를 재생성합니다. 💅✨
+  1. Firestore의 `admins` 컬렉션을 확인하세요.
+  2. 만약 데이터가 싹 날아갔다면? 걱정 마세요! 제가 **자동 복구(Seed)** 기능을 넣어놨어요.
+  3. 초기 아이디(`admin-8684`)와 비밀번호(`8684`)로 로그인을 시도하면, 시스템이 알아서 Firestore에 관리자 데이터를 재생성합니다. 💅✨
 
 ---
 

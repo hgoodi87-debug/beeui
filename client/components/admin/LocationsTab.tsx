@@ -35,7 +35,23 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
     const [filterStatus, setFilterStatus] = React.useState<string>('ALL');
     const [searchQ, setSearchQ] = React.useState('');
     const [isBulkMapping, setIsBulkMapping] = React.useState(false);
-    const [viewMode, setViewMode] = React.useState<'LIST' | 'MAP'>('LIST');
+    const [viewMode, setViewMode] = React.useState<'TABLE' | 'MAP'>('TABLE');
+    const [isPanelOpen, setIsPanelOpen] = React.useState(false);
+
+    // [스봉이] 수정/생성 폼 열기 제어 💅
+    const handleOpenPanel = (loc?: LocationOption) => {
+        if (loc) {
+            focusLocation(loc);
+        } else {
+            // New Draft
+            setLocForm({ id: '', name: '', type: LocationType.PARTNER, isActive: false, supportsStorage: false, supportsDelivery: false });
+        }
+        setIsPanelOpen(true);
+    };
+
+    const handleClosePanel = () => {
+        setIsPanelOpen(false);
+    };
 
     const handleBulkTranslateAddresses = async () => {
         if (!window.confirm("모든 지점의 누락된 다국어 주소(영문, 일문, 중문)를 AI 번역으로 일괄 보완하시겠습니까?\n이 작업은 시간이 다소 소요될 수 있습니다. 💅")) return;
@@ -180,6 +196,12 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         { id: 'ALL', label: '전체' }, { id: 'ACTIVE', label: '활성' }, { id: 'INACTIVE', label: '비활성' },
     ];
 
+    // KPI Calculations
+    const activeCount = locations.filter(l => l.isActive !== false).length;
+    const inactiveCount = locations.filter(l => l.isActive === false).length;
+    const airportCount = locations.filter(l => l.type === LocationType.AIRPORT).length;
+    const missingCoordCount = locations.filter(l => !l.lat || !l.lng || (l.lat === 37.5665 && l.lng === 126.9780)).length;
+
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
@@ -242,34 +264,215 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                     {/* View Mode Toggle 💅 */}
                     <div className="bg-gray-100 p-1 rounded-2xl flex items-center shadow-inner border border-gray-200">
                         <button 
-                            onClick={() => setViewMode('LIST')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${viewMode === 'LIST' ? 'bg-white text-bee-black shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+                            onClick={() => setViewMode('TABLE')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${viewMode === 'TABLE' ? 'bg-white text-bee-black shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            <i className="fa-solid fa-list-ul"></i>
-                            목록 보기
+                            <i className="fa-solid fa-table"></i>
+                            데이터 테이블
                         </button>
                         <button 
                             onClick={() => setViewMode('MAP')}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${viewMode === 'MAP' ? 'bg-white text-bee-black shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                         >
                             <i className="fa-solid fa-map-location-dot"></i>
-                            지도 보기
+                            네트워크 현황 지도
                         </button>
                     </div>
 
                     {(isBulkMapping || isGeocoding) && (
                         <div className="flex items-center gap-2 px-4 py-2 bg-bee-yellow/10 rounded-full border border-bee-yellow/20 animate-pulse">
                             <i className="fa-solid fa-spinner animate-spin text-bee-yellow text-xs"></i>
-                            <span className="text-xs font-black text-bee-yellow">{isBulkMapping ? '스봉이가 사진 찾는 중...' : '스봉이가 좌표 찾는 중...'}</span>
+                            <span className="text-xs font-black text-bee-yellow">{isBulkMapping ? '스봉이가 작업 중...' : '스봉이가 좌표 찾는 중...'}</span>
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                <div className="bg-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] shadow-sm border border-gray-100 space-y-6 lg:col-span-1 h-fit">
-                    <h3 className="text-lg md:text-xl font-black flex items-center gap-3"><span className="w-2 h-8 bg-bee-yellow rounded-full"></span>지점 등록/수정</h3>
-                    <div className="space-y-4">
+            {/* --- KPI Overview --- */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
+                <div className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1"><i className="fa-solid fa-network-wired"></i> Total Network</p>
+                    <div className="flex items-end gap-3">
+                        <h3 className="text-3xl font-black text-bee-black">{locations.length}</h3>
+                        <span className="text-xs font-bold text-gray-300 mb-1">Locations</span>
+                    </div>
+                </div>
+                <div className="bg-emerald-50 p-5 rounded-[24px] border border-emerald-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 w-20 h-20 bg-emerald-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                    <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mb-1 z-10"><i className="fa-solid fa-satellite-dish"></i> Active Operational</p>
+                    <div className="flex items-end gap-3 z-10">
+                        <h3 className="text-3xl font-black text-emerald-500">{activeCount}</h3>
+                        <span className="text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full mb-1">{((activeCount/locations.length)*100).toFixed(0)}%</span>
+                    </div>
+                </div>
+                <div className="bg-orange-50 p-5 rounded-[24px] border border-orange-100 shadow-sm flex flex-col justify-between">
+                    <p className="text-[9px] font-black text-orange-600/60 uppercase tracking-widest mb-1"><i className="fa-solid fa-pause-circle"></i> Onboarding/Paused</p>
+                    <div className="flex items-end gap-3">
+                        <h3 className="text-3xl font-black text-orange-500">{inactiveCount}</h3>
+                        <span className="text-xs font-bold text-orange-300 mb-1">Pending</span>
+                    </div>
+                </div>
+                <div className={`p-5 rounded-[24px] border shadow-sm flex flex-col justify-between ${missingCoordCount > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
+                    <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${missingCoordCount > 0 ? 'text-red-500' : 'text-gray-400'}`}><i className="fa-solid fa-triangle-exclamation"></i> Action Required</p>
+                    <div className="flex items-end gap-3">
+                        <h3 className={`text-3xl font-black ${missingCoordCount > 0 ? 'text-red-600' : 'text-gray-300'}`}>{missingCoordCount}</h3>
+                        <span className={`text-[9px] font-black mb-1 ${missingCoordCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{missingCoordCount > 0 ? '좌표/주소 매핑 필요' : 'All Clear'}</span>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div className="flex flex-col xl:flex-row gap-6 relative items-start h-full min-h-[600px] overflow-hidden pb-10">
+                
+                {/* --- Main Data Table & Map Area --- */}
+                <div className={`transition-all duration-500 ease-in-out space-y-4 ${isPanelOpen ? 'w-full xl:w-2/3 hidden xl:block' : 'w-full'}`}>
+                    <div className="bg-white rounded-[24px] p-4 border border-gray-100 shadow-sm space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="relative flex-1">
+                                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
+                                <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="지점명 또는 ID 검색..." className="w-full bg-gray-50 pl-8 pr-4 py-2.5 rounded-xl text-xs font-bold border border-gray-100 focus:border-bee-yellow outline-none" />
+                            </div>
+                            <button onClick={() => handleOpenPanel()} className="shrink-0 px-4 py-2 h-[38px] bg-bee-black text-bee-yellow font-black text-[10px] rounded-xl shadow-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 uppercase tracking-widest whitespace-nowrap">
+                                <i className="fa-solid fa-plus"></i> Add Partner
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            {TYPE_FILTERS.map(f => (
+                                <button key={f.id} onClick={() => setFilterType(f.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${filterType === f.id ? 'bg-bee-black text-bee-yellow shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                                    <i className={`fa-solid ${f.icon} text-[9px]`}></i>{f.label}
+                                </button>
+                            ))}
+                            <div className="w-px h-5 bg-gray-200 mx-1"></div>
+                            {STATUS_FILTERS.map(f => (
+                                <button key={f.id} onClick={() => setFilterStatus(f.id)} className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${filterStatus === f.id ? 'bg-bee-yellow text-bee-black shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{f.label}</button>
+                            ))}
+                        </div>
+
+                        {/* 일괄 작업 바 💅 */}
+                        <div className="flex flex-wrap gap-2 items-center bg-bee-yellow/5 p-3 rounded-xl border border-bee-yellow/10">
+                            <div className="flex items-center gap-2 mr-2">
+                                <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === filteredLocations.length} onChange={toggleSelectAll} title="전체 지점 선택" className="w-4 h-4 rounded-lg accent-bee-black" />
+                                <span className="text-[10px] font-black text-bee-black uppercase tracking-tighter">일괄 선택 ({selectedIds.length})</span>
+                            </div>
+                            <div className="h-5 w-px bg-bee-yellow/20 mx-1"></div>
+                            {[
+                                { label: '활성화', key: 'isActive', val: true, icon: 'fa-check' },
+                                { label: '비활성화', key: 'isActive', val: false, icon: 'fa-slash' },
+                                { label: '배송 ON', key: 'supportsDelivery', val: true, icon: 'fa-truck' },
+                                { label: '보관 ON', key: 'supportsStorage', val: true, icon: 'fa-box-archive' },
+                                { label: '출발 ON', key: 'isOrigin', val: true, icon: 'fa-right-from-bracket' },
+                                { label: '목적지 ON', key: 'isDestination', val: true, icon: 'fa-location-dot' },
+                            ].map((btn, idx) => (
+                                <button key={idx} onClick={() => handleBulkAction({ [btn.key]: btn.val })} className="px-2 py-1.5 bg-white border border-bee-yellow/30 rounded-lg text-[9px] font-black text-bee-black hover:bg-bee-yellow hover:scale-105 transition-all shadow-sm flex items-center gap-1.5">
+                                    <i className={`fa-solid ${btn.icon} text-[8px]`}></i>{btn.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="text-[10px] font-black text-gray-400">{filteredLocations.length}개 표시 중 / 전체 {locations.length}개</div>
+                    </div>
+
+                    {viewMode === 'TABLE' ? (
+                        <div className="mt-4 bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-x-auto">
+                            <table className="w-full text-left whitespace-nowrap">
+                                <thead className="bg-gray-50 text-[10px] font-black uppercase text-gray-400 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-5 py-4 w-10">
+                                            <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === filteredLocations.length} onChange={toggleSelectAll} title="전체 지점 선택" className="w-4 h-4 rounded-lg accent-bee-black" />
+                                        </th>
+                                        <th className="px-5 py-4">Status & Type</th>
+                                        <th className="px-5 py-4">Location Name / ID</th>
+                                        <th className="px-5 py-4">Services & Capacity</th>
+                                        <th className="px-5 py-4">Commissions (D/S)</th>
+                                        <th className="px-5 py-4 text-center">Settings</th>
+                                        <th className="px-5 py-4 w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {filteredLocations.map(loc => (
+                                        <tr key={loc.id} onClick={() => handleOpenPanel(loc)} className={`hover:bg-bee-yellow/5 transition-colors cursor-pointer group ${locForm.id === loc.id ? 'bg-bee-yellow/10' : ''}`}>
+                                            <td className="px-5 py-4" onClick={e => e.stopPropagation()}>
+                                                <input type="checkbox" checked={selectedIds.includes(loc.id)} onChange={e => toggleSelect(e as any, loc.id)} title={`${loc.name} 선택`} className="w-4 h-4 rounded-lg accent-bee-black cursor-pointer" />
+                                            </td>
+                                            <td className="px-5 py-4 space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    {loc.isActive !== false ? <span className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div> ACTIVE</span> : <span className="text-[9px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-lg">PAUSED</span>}
+                                                </div>
+                                                <span className={`inline-block px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-500'}`}>{loc.type}</span>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-sm text-bee-black">{getLocName(loc)} <span className="text-[9px] text-gray-400 font-bold ml-1">{loc.id}</span></span>
+                                                    <span className="text-[10px] font-medium text-gray-400 truncate max-w-[200px]">{getLocAddress(loc)}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex gap-1.5 flex-wrap max-w-[150px]">
+                                                    {loc.supportsDelivery && <i title="배송접수 가능" className="fa-solid fa-truck text-[9px] text-yellow-500 bg-yellow-50 w-5 h-5 flex items-center justify-center rounded-md border border-yellow-100"></i>}
+                                                    {loc.supportsStorage && <i title="수하물 보관 가능" className="fa-solid fa-box-archive text-[9px] text-blue-500 bg-blue-50 w-5 h-5 flex items-center justify-center rounded-md border border-blue-100"></i>}
+                                                    {loc.isOrigin && <i title="출발 허브" className="fa-solid fa-right-from-bracket text-[9px] text-purple-500 bg-purple-50 w-5 h-5 flex items-center justify-center rounded-md border border-purple-100"></i>}
+                                                    {loc.isDestination && <i title="도착지/픽업지" className="fa-solid fa-location-dot text-[9px] text-teal-500 bg-teal-50 w-5 h-5 flex items-center justify-center rounded-md border border-teal-100"></i>}
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4 font-black italic">
+                                                <span className="text-[10px] text-emerald-600 mr-2">{loc.commissionRates?.delivery ?? 0}%</span>
+                                                <span className="text-[10px] text-blue-600">{loc.commissionRates?.storage ?? 0}%</span>
+                                            </td>
+                                            <td className="px-5 py-4 text-center">
+                                                {loc.lat && loc.lng ? (
+                                                    (loc.lat === 37.5665 && loc.lng === 126.9780) ? <span className="text-amber-500" title="기본 좌표"><i className="fa-solid fa-triangle-exclamation"></i></span> : <span className="text-emerald-500" title="지도 연동 완료"><i className="fa-solid fa-check"></i></span>
+                                                ) : <span className="text-red-400" title="지도 미연동"><i className="fa-solid fa-xmark"></i></span>}
+                                                <span className="mx-2 text-gray-200">|</span>
+                                                {loc.branchCode ? <span className="text-blue-500" title={`코드: ${loc.branchCode}`}><i className="fa-solid fa-link"></i></span> : <span className="text-gray-300" title="코드 없음"><i className="fa-solid fa-link-slash"></i></span>}
+                                            </td>
+                                            <td className="px-5 py-4 text-right">
+                                                <button onClick={(e) => { e.stopPropagation(); deleteLocation(e, loc.id); }} title="지점 영구 삭제" className="w-7 h-7 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><i className="fa-solid fa-trash-can text-[10px]"></i></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="w-full h-[600px] rounded-[40px] overflow-hidden border border-gray-100 shadow-xl bg-gray-50 relative">
+                            <LocationMap 
+                                t={t}
+                                lang={lang}
+                                branches={filteredLocations}
+                                selectedBranch={locations.find(l => l.id === locForm.id)}
+                                onLocationSelect={(loc) => loc ? focusLocation(loc) : null}
+                                currentService="SAME_DAY" // 어드민 오버뷰용 기본값 💅
+                                userLocation={{ lat: 37.5665, lng: 126.9780 }} // 서울 중심점 💅
+                            />
+                            {/* 지도 위에 띄울 간단한 통계 오버레이 💅 */}
+                            <div className="absolute bottom-6 left-6 z-10">
+                                <div className="px-6 py-4 bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[30px] flex items-center gap-6">
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Hubs</span>
+                                        <span className="text-xl font-black text-bee-black">{filteredLocations.filter(l => l.isActive !== false).length}</span>
+                                    </div>
+                                    <div className="w-px h-8 bg-gray-200"></div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Selected</span>
+                                        <span className="text-xl font-black text-bee-yellow">{locations.find(l => l.id === locForm.id)?.name || 'None'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* --- Slide-over Detail Panel --- */}
+                <div className={`transition-all duration-500 ease-in-out bg-white p-6 md:p-8 rounded-[40px] shadow-[0_0_40px_rgba(0,0,0,0.08)] border border-gray-100 flex flex-col xl:w-1/3 xl:static absolute right-0 top-0 h-full max-h-[85vh] overflow-y-auto z-20 w-11/12 max-w-lg ${isPanelOpen ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 xl:hidden'}`}>
+                    <div className="flex items-center justify-between sticky -top-6 xl:-top-8 bg-white/95 backdrop-blur-md pb-4 pt-6 xl:pt-8 z-10 border-b border-gray-50 mb-6 w-full">
+                        <h3 className="text-lg md:text-xl font-black flex items-center gap-3">
+                            <span className="w-2 h-8 bg-bee-yellow rounded-full"></span>
+                            {locForm.id ? '지점 상세 정보' : '신규 지점 등록'}
+                        </h3>
+                        <button onClick={handleClosePanel} className="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 flex items-center justify-center transition-colors shadow-sm">
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div className="space-y-6 pb-20">
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점 ID (중복불가)</label>
                             <input value={locForm.id} onChange={e => setLocForm({ ...locForm, id: e.target.value })} placeholder="예: icn-t1" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
@@ -309,7 +512,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">주소 (Address)</label>
                             <div className="flex gap-2">
                                 <input value={locForm.address} onChange={e => setLocForm({ ...locForm, address: e.target.value })} placeholder="지점의 도로명 주소를 입력하세요" className="flex-1 bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
-                                <button onClick={findCoordinates} disabled={isGeocoding} className="px-4 bg-bee-yellow text-bee-black font-black rounded-xl text-[10px] hover:scale-105 transition-all shadow-sm disabled:opacity-50 whitespace-nowrap">
+                                <button onClick={findCoordinates} title="Find Coordinates" disabled={isGeocoding} className="px-4 bg-bee-yellow text-bee-black font-black rounded-xl text-[10px] hover:scale-105 transition-all shadow-sm disabled:opacity-50 whitespace-nowrap">
                                     {isGeocoding ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-location-crosshairs"></i>} 좌표찾기
                                 </button>
                             </div>
@@ -317,6 +520,44 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 <input value={locForm.address_en || ''} onChange={e => setLocForm({ ...locForm, address_en: e.target.value })} placeholder="영어 주소 입력" title="상세 주소 (영어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.address_ja || ''} onChange={e => setLocForm({ ...locForm, address_ja: e.target.value })} placeholder="일본어 주소 입력" title="상세 주소 (일본어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.address_zh || ''} onChange={e => setLocForm({ ...locForm, address_zh: e.target.value })} placeholder="중국어 주소 입력" title="상세 주소 (중국어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                            </div>
+                        </div>
+
+                        {/* --- SaaS Multi-Branch Extension Fields 🏢 --- */}
+                        <div className="pt-4 border-t border-gray-100 space-y-4">
+                            <h4 className="text-[10px] font-black text-bee-yellow uppercase tracking-[0.2em] mb-2">SaaS Branch Matrix</h4>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">전용 URL 코드</label>
+                                    <input value={locForm.branchCode || ''} onChange={e => setLocForm({ ...locForm, branchCode: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} placeholder="예: yeonnam" className="w-full bg-bee-yellow/5 p-3 rounded-xl font-bold border border-bee-yellow/20 focus:border-bee-yellow outline-none text-xs text-bee-black" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">대표자명</label>
+                                    <input value={locForm.ownerName || ''} onChange={e => setLocForm({ ...locForm, ownerName: e.target.value })} placeholder="대표자 성함" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label htmlFor="delivery-commission" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">정산 수수료 (배송)</label>
+                                    <div className="relative">
+                                        <input id="delivery-commission" type="number" value={locForm.commissionRates?.delivery ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, delivery: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="storage-commission" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">정산 수수료 (보관)</label>
+                                    <div className="relative">
+                                        <input id="storage-commission" type="number" value={locForm.commissionRates?.storage ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, storage: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점 연락처</label>
+                                <input value={locForm.phone || locForm.contactNumber || ''} onChange={e => setLocForm({ ...locForm, phone: e.target.value })} placeholder="02-1234-5678" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
                             </div>
                         </div>
 
@@ -411,124 +652,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             {isSaving ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-floppy-disk"></i>} 지점 정보 저장하기
                         </button>
                     </div>
-                </div>
-
-                <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white rounded-[24px] p-4 border border-gray-100 shadow-sm space-y-3">
-                        <div className="relative">
-                            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
-                            <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="지점명 또는 ID 검색..." className="w-full bg-gray-50 pl-8 pr-4 py-2.5 rounded-xl text-xs font-bold border border-gray-100 focus:border-bee-yellow outline-none" />
-                        </div>
-                        <div className="flex flex-wrap gap-2 items-center">
-                            {TYPE_FILTERS.map(f => (
-                                <button key={f.id} onClick={() => setFilterType(f.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${filterType === f.id ? 'bg-bee-black text-bee-yellow shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                                    <i className={`fa-solid ${f.icon} text-[9px]`}></i>{f.label}
-                                </button>
-                            ))}
-                            <div className="w-px h-5 bg-gray-200"></div>
-                            {STATUS_FILTERS.map(f => (
-                                <button key={f.id} onClick={() => setFilterStatus(f.id)} className={`px-3 py-1.5 rounded-full text-[10px] font-black transition-all ${filterStatus === f.id ? 'bg-bee-yellow text-bee-black shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{f.label}</button>
-                            ))}
-                        </div>
-
-                        {/* 일괄 작업 바 💅 */}
-                        <div className="flex flex-wrap gap-2 items-center bg-bee-yellow/5 p-3 rounded-xl border border-bee-yellow/10">
-                            <div className="flex items-center gap-2 mr-2">
-                                <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === filteredLocations.length} onChange={toggleSelectAll} title="전체 지점 선택" className="w-4 h-4 rounded-lg accent-bee-black" />
-                                <span className="text-[10px] font-black text-bee-black uppercase tracking-tighter">일괄 선택 ({selectedIds.length})</span>
-                            </div>
-                            <div className="h-5 w-px bg-bee-yellow/20 mx-1"></div>
-                            {[
-                                { label: '활성화', key: 'isActive', val: true, icon: 'fa-check' },
-                                { label: '비활성화', key: 'isActive', val: false, icon: 'fa-slash' },
-                                { label: '배송 ON', key: 'supportsDelivery', val: true, icon: 'fa-truck' },
-                                { label: '보관 ON', key: 'supportsStorage', val: true, icon: 'fa-box-archive' },
-                                { label: '출발 ON', key: 'isOrigin', val: true, icon: 'fa-right-from-bracket' },
-                                { label: '목적지 ON', key: 'isDestination', val: true, icon: 'fa-location-dot' },
-                            ].map((btn, idx) => (
-                                <button key={idx} onClick={() => handleBulkAction({ [btn.key]: btn.val })} className="px-2 py-1.5 bg-white border border-bee-yellow/30 rounded-lg text-[9px] font-black text-bee-black hover:bg-bee-yellow hover:scale-105 transition-all shadow-sm flex items-center gap-1.5">
-                                    <i className={`fa-solid ${btn.icon} text-[8px]`}></i>{btn.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="text-[10px] font-black text-gray-400">{filteredLocations.length}개 표시 중 / 전체 {locations.length}개</div>
-                    </div>
-
-                    {viewMode === 'LIST' ? (
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 auto-rows-min">
-                            {filteredLocations.map(loc => (
-                                <div key={loc.id} onClick={() => focusLocation(loc)} className={`bg-white p-3 md:px-4 rounded-[24px] border shadow-sm hover:shadow-md transition-all group relative cursor-pointer flex flex-col sm:flex-row items-center gap-3 ${locForm.id === loc.id ? 'border-bee-yellow ring-2 ring-bee-yellow/20' : 'border-gray-100'}`}>
-                                    <div className="shrink-0" onClick={e => e.stopPropagation()}>
-                                        <input type="checkbox" checked={selectedIds.includes(loc.id)} onChange={(e) => toggleSelect(e as any, loc.id)} title={`${loc.name} 선택`} className="w-4 h-4 rounded-lg accent-bee-black cursor-pointer" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                            <h4 className="font-black text-base text-bee-black truncate leading-tight">{getLocName(loc)}</h4>
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <span className={`px-1.5 py-0.5 rounded-lg text-[7px] font-black uppercase ${loc.type === LocationType.AIRPORT ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-400'}`}>{loc.type}</span>
-                                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{loc.id}</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-[10px] text-gray-400 font-medium truncate leading-none mt-1" title={getLocAddress(loc)}>{getLocAddress(loc)}</p>
-                                    </div>
-                                    <div className="hidden xl:flex flex-wrap gap-1 shrink-0">
-                                        {loc.supportsDelivery && <span className="text-[8px] font-bold bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded">배송</span>}
-                                        {loc.supportsStorage && <span className="text-[8px] font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">보관</span>}
-                                        {loc.isOrigin && <span className="text-[8px] font-bold bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">출발</span>}
-                                        {loc.isDestination && <span className="text-[8px] font-bold bg-teal-50 text-teal-600 px-1.5 py-0.5 rounded">도착</span>}
-                                    </div>
-                                    <div className="flex items-center gap-4 shrink-0">
-                                        <div className="flex items-center gap-2">
-                                            {loc.isActive !== false ? (
-                                                <span className="flex items-center gap-1 text-[8px] font-black text-green-500 bg-green-50 px-2 py-1 rounded-lg ring-1 ring-green-100"><div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div> Active</span>
-                                            ) : (
-                                                <span className="text-[8px] font-black text-red-300 bg-red-50/50 px-2 py-1 rounded-lg">Inactive</span>
-                                            )}
-                                        </div>
-                                        <div className="w-24 text-right">
-                                            {loc.lat && loc.lng ? (
-                                                (loc.lat === 37.5665 && loc.lng === 126.9780) ? (
-                                                    <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg flex items-center justify-center gap-1 ring-1 ring-amber-200"><i className="fa-solid fa-triangle-exclamation"></i> 기본좌표</span>
-                                                ) : (
-                                                    <span className="text-[8px] font-black text-green-600/60 bg-green-50/30 px-2 py-1 rounded-lg flex items-center justify-center gap-1"><i className="fa-solid fa-location-dot"></i> 연동됨</span>
-                                                )
-                                            ) : (
-                                                <span className="text-[8px] font-black text-red-400/60 bg-red-50/30 px-2 py-1 rounded-lg flex items-center justify-center gap-1"><i className="fa-solid fa-location-xmark"></i> 없음</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <button onClick={(e) => deleteLocation(e, loc.id)} title="지점 삭제" className="absolute top-1/2 -translate-y-1/2 right-2 text-gray-200 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100"><i className="fa-solid fa-trash-can text-[10px]"></i></button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="w-full h-[600px] rounded-[40px] overflow-hidden border border-gray-100 shadow-xl bg-gray-50 relative">
-                            <LocationMap 
-                                t={t}
-                                lang={lang}
-                                branches={filteredLocations}
-                                selectedBranch={locations.find(l => l.id === locForm.id)}
-                                onLocationSelect={(loc) => loc ? focusLocation(loc) : null}
-                                currentService="SAME_DAY" // 어드민 오버뷰용 기본값 💅
-                                userLocation={{ lat: 37.5665, lng: 126.9780 }} // 서울 중심점 💅
-                            />
-                            {/* 지도 위에 띄울 간단한 통계 오버레이 💅 */}
-                            <div className="absolute bottom-6 left-6 z-10">
-                                <div className="px-6 py-4 bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[30px] flex items-center gap-6">
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Hubs</span>
-                                        <span className="text-xl font-black text-bee-black">{filteredLocations.filter(l => l.isActive !== false).length}</span>
-                                    </div>
-                                    <div className="w-px h-8 bg-gray-200"></div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Selected</span>
-                                        <span className="text-xl font-black text-bee-yellow">{locations.find(l => l.id === locForm.id)?.name || 'None'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                 </div>
             </div>
         </div>

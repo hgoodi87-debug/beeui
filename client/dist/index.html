@@ -157,13 +157,21 @@
   <script>
     // Shim process for buggy libraries
     window.process = { env: { NODE_ENV: 'production' } };
+    window.BEELIBER_REVIVAL = "V4_HARDCODED_STABLE";
+
+    console.log("%c🚀 [스봉이 리포트] 비리버 시스템 복구 엔진 V4 가동 중... 아시겠어요? 💅", "color: #FFD700; font-weight: bold; font-size: 14px;");
 
     window.onerror = function (message, source, lineno, colno, error) {
-      alert('Critical Error: ' + message + '\nLine: ' + lineno + '\nSource: ' + source);
+      console.error("Critical:", message, source, lineno);
+      // 화이트 스크린 방지를 위한 최소한의 가시성 확보
+      const root = document.getElementById('root');
+      if (root && !root.innerHTML) {
+        root.innerHTML = '<div style="background:#000;color:#FFD700;padding:20px;text-align:center;font-family:sans-serif;"><h1>🚑 시스템 긴급 복구 중 (Recovery In Progress)</h1><p>관리자에게 문의해주세요. Error: ' + message + '</p><button onclick="window.location.reload(true)" style="background:#FFD700;color:#000;border:none;padding:10px 20px;border-radius:10px;font-weight:bold;cursor:pointer;">새로고침 시도</button></div>';
+      }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-DGCtChck.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CBrxqyEB.css">
+  <script type="module" crossorigin src="/assets/index-DDBAM4kZ.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Bw-l9u_v.css">
 </head>
 
 <body class="antialiased">

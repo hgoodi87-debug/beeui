@@ -86,4 +86,8 @@ export interface BookingState {
         storage: number;
     };
     branchSettlementAmount?: number;
+    settlementHardCopyAmount?: number; // [스봉이] 주문 시점 확정 정산금 💰
+    settlementStatus?: string;         // [스봉이] 정산 상태 (미반영, 확정 등) 💅
+    statusVersion?: number;            // [스봉이] 낙관적 락을 위한 버전 🔒
+    auditNote?: string;                // [스봉이] 상태 변경 사유 (감사 로그용) 🛡️
 }

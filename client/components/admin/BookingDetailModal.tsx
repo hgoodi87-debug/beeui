@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookingState, LocationOption, ServiceType, BookingStatus, SnsType, BagSizes, DiscountCode } from '../../types';
+import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/constants/admin';
 
 import { StorageService } from '../../services/storageService';
 
@@ -168,9 +169,36 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     ) : (
                                         <div>
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">상태 (Status)</label>
-                                            <select title="예약 상태" value={selectedBooking.status} onChange={e => setSelectedBooking({ ...selectedBooking, status: e.target.value as BookingStatus })} className={`w-full p-2.5 rounded-xl border-none outline-none font-black text-xs cursor-pointer shadow-sm ${getStatusStyle(selectedBooking.status || BookingStatus.PENDING)}`}>
-                                                {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                            </select>
+                                            <div className="relative group/select">
+                                                <div 
+                                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full z-10"
+                                                    style={{ backgroundColor: OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[selectedBooking.status || BookingStatus.PENDING]].color }}
+                                                />
+                                                <select
+                                                    title="예약 상태"
+                                                    value={selectedBooking.status}
+                                                    onChange={e => setSelectedBooking({ ...selectedBooking, status: e.target.value as BookingStatus })}
+                                                    className="w-full pl-7 pr-8 py-2.5 rounded-xl border border-gray-200 bg-white font-black text-xs cursor-pointer appearance-none transition-all hover:border-bee-yellow outline-none"
+                                                >
+                                                    {Object.values(BookingStatus).map(s => (
+                                                        <option key={s} value={s}>
+                                                            {OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[s]].label} ({s})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-gray-400 pointer-events-none group-hover/select:text-bee-black transition-colors"></i>
+                                            </div>
+                                            {/* [스봉이] 상태 변경 사유 입력 (보안 로그용) 💅 */}
+                                            <div className="mt-3">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">변경 사유 (Audit Log Note)</label>
+                                                <textarea 
+                                                    title="변경 사유"
+                                                    placeholder="예: 지점 사정으로 인한 입고 지연, 기사님 배정 완료 등"
+                                                    value={selectedBooking.auditNote || ''}
+                                                    onChange={e => setSelectedBooking({ ...selectedBooking, auditNote: e.target.value })}
+                                                    className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-[11px] h-16 resize-none focus:border-bee-yellow outline-none"
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -195,11 +223,8 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     </div>
                                 </div>
                                 {selectedBooking.serviceType === ServiceType.STORAGE && (
-                                    <div className="pt-2 border-t border-gray-50 mt-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">상태 (Status)</label>
-                                        <select title="예약 상태" value={selectedBooking.status} onChange={e => setSelectedBooking({ ...selectedBooking, status: e.target.value as BookingStatus })} className={`w-full p-2.5 rounded-xl border-none outline-none font-black text-xs cursor-pointer shadow-sm ${getStatusStyle(selectedBooking.status || BookingStatus.PENDING)}`}>
-                                            {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
+                                    <div className="pt-2">
+                                        {/* Status is already in the main grid for all types */}
                                     </div>
                                 )}
                             </div>

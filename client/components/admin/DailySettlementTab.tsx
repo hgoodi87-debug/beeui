@@ -72,7 +72,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-bee-yellow hover:shadow-md transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">총 매출액</p>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">총 결제액 (Gross)</p>
                         <h3 className="text-xl font-black italic text-bee-black">₩{dailySettlementStats.totalRevenue.toLocaleString()}</h3>
                     </div>
                     <div className="mt-3 flex gap-1.5 items-center">
@@ -81,35 +81,36 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-red-400 transition-all">
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-emerald-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">당일 지출액</p>
-                        <h3 className="text-xl font-black italic text-red-500">₩{dailySettlementStats.totalExp.toLocaleString()}</h3>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">정산 확정 완료액</p>
+                        <h3 className="text-xl font-black italic text-emerald-500">₩{(dailySettlementStats.confirmedAmount || 0).toLocaleString()}</h3>
                     </div>
-                    <p className="text-[8px] font-black text-red-300 mt-2 uppercase">{Object.keys(dailySettlementStats.expByCategory).length}개 카테고리 기록됨</p>
+                    <div className="mt-3">
+                        <p className="text-[8px] font-black text-gray-400 uppercase">미확정액: ₩{(dailySettlementStats.unconfirmedAmount || 0).toLocaleString()}</p>
+                    </div>
                 </div>
 
-                <div className="bg-emerald-500 p-5 rounded-[28px] shadow-lg flex flex-col justify-between relative overflow-hidden group/card hover:-translate-y-1 transition-all">
-                    <div className="absolute top-0 right-0 p-3 opacity-20 text-white group-hover/card:scale-125 transition-transform">
-                        <i className="fa-solid fa-sack-dollar text-2xl"></i>
-                    </div>
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-orange-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-2">현금 장부 금액</p>
-                        <h3 className="text-xl font-black italic text-white">₩{dailySettlementStats.revenueByMethod.cash.toLocaleString()}</h3>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2">파트너/운송사 지급금</p>
+                        <h3 className="text-xl font-black italic text-orange-500">₩{(dailySettlementStats.partnerPayoutTotal || 0).toLocaleString()}</h3>
                     </div>
-                    <p className="text-[8px] font-black text-white/50 mt-2 uppercase">당일 수령한 현금 총액</p>
+                    <div className="mt-3">
+                        <p className="text-[8px] font-black text-orange-300 uppercase tracking-tighter">자동 산출된 지점별 정산 합계</p>
+                    </div>
                 </div>
 
                 <div className="bg-bee-black p-5 rounded-[28px] shadow-lg flex flex-col justify-between relative overflow-hidden group/card hover:-translate-y-1 transition-all">
                     <div className="absolute bottom-0 right-0 p-3 opacity-10 text-bee-yellow group-hover/card:scale-125 transition-transform">
-                        <i className="fa-solid fa-chart-pie text-2xl"></i>
+                        <i className="fa-solid fa-crown text-2xl"></i>
                     </div>
                     <div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">당일 순수익</p>
-                        <h3 className="text-xl font-black italic text-bee-yellow">₩{dailySettlementStats.netProfit.toLocaleString()}</h3>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">본사 최종 수익 (Net)</p>
+                        <h3 className="text-xl font-black italic text-bee-yellow">₩{(dailySettlementStats.netProfit - (dailySettlementStats.partnerPayoutTotal || 0)).toLocaleString()}</h3>
                     </div>
                     <div className="mt-3">
-                        <p className="text-[8px] font-black text-gray-500 uppercase">예상 부가세: ₩{dailySettlementStats.vat.toLocaleString()}</p>
+                        <p className="text-[8px] font-black text-gray-500 uppercase">지출: ₩{dailySettlementStats.totalExp.toLocaleString()} 제외됨</p>
                     </div>
                 </div>
 
@@ -169,28 +170,61 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                 <i className="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition-transform text-gray-300"></i>
                             </summary>
                             <div className="p-4 pt-0 space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar">
-                                {bookings.filter(b => b.pickupDate === revenueEndDate && b.serviceType === 'DELIVERY' && !b.isDeleted).map(b => (
-                                    <div
-                                        key={b.id}
-                                        onClick={() => { setSelectedBooking(b); }}
-                                        className="p-4 bg-white border border-gray-100 rounded-[20px] hover:border-bee-yellow hover:shadow-md cursor-pointer transition-all flex justify-between items-center group/item"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-2 h-8 rounded-full bg-bee-yellow/20"></div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-gray-300">#{b.reservationCode || (b.id ? b.id.slice(0, 6).toUpperCase() : 'N/A')}</span>
-                                                <span className="text-xs font-black text-bee-black">{b.userName} 님</span>
+                                {bookings.filter(b => b.pickupDate === revenueEndDate && b.serviceType === 'DELIVERY' && !b.isDeleted).map(b => {
+                                    const amount = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
+                                    const partnerPayout = b.branchSettlementAmount || 0;
+                                    const hqProfit = amount - partnerPayout;
+                                    
+                                    return (
+                                        <div
+                                            key={b.id}
+                                            onClick={() => { setSelectedBooking(b); }}
+                                            className="p-4 bg-white border border-gray-100 rounded-[24px] hover:border-bee-yellow hover:shadow-md cursor-pointer transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group/item"
+                                        >
+                                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                                <div className="w-2 h-10 rounded-full bg-bee-yellow/20 group-hover/item:bg-bee-yellow transition-colors"></div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-gray-300">#{b.reservationCode || (b.id ? b.id.slice(0, 6).toUpperCase() : 'N/A')}</span>
+                                                    <span className="text-sm font-black text-bee-black mt-0.5">{b.userName} 님</span>
+                                                    <div className="text-[9px] font-bold text-gray-400 flex items-center gap-1 mt-1">
+                                                        <i className="fa-solid fa-location-dot"></i> {b.pickupLocation} 지점
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-xs font-black text-bee-black">₩{(b.finalPrice || 0).toLocaleString()}</div>
-                                            <div className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full inline-block mt-1 ${b.status === BookingStatus.COMPLETED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                                            
+                                            <div className="flex items-center gap-4 lg:gap-8 w-full md:w-auto bg-gray-50/50 p-3 rounded-2xl">
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase">고객 결제액</span>
+                                                    <span className="text-xs font-black text-bee-black">₩{amount.toLocaleString()}</span>
+                                                </div>
+                                                <div className="w-px h-6 bg-gray-200"></div>
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[9px] font-black text-orange-400 uppercase">파트너 수익</span>
+                                                    <span className="text-xs font-black text-orange-500">₩{partnerPayout.toLocaleString()}</span>
+                                                </div>
+                                                <div className="w-px h-6 bg-gray-200"></div>
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[9px] font-black text-emerald-500 uppercase">본사 차익</span>
+                                                    <span className="text-xs font-black text-emerald-600">₩{hqProfit.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-row md:flex-col items-end gap-1 w-full md:w-auto justify-end">
+                                                <div className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                                                    b.settlementStatus === 'CONFIRMED' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-sm' : 'bg-gray-50 border-gray-100 text-gray-400'
                                                 }`}>
-                                                {b.status}
+                                                    <i className={`fa-solid ${b.settlementStatus === 'CONFIRMED' ? 'fa-check-circle' : 'fa-hourglass-half'} mr-1`}></i> 
+                                                    {b.settlementStatus === 'CONFIRMED' ? '정산확정' : '미확정조율'}
+                                                </div>
+                                                <div className={`text-[8px] font-black uppercase px-2 py-0.5 mt-1 rounded-full ${
+                                                    b.status === BookingStatus.COMPLETED ? 'bg-bee-black text-bee-yellow' : 'bg-white border border-gray-200 text-gray-400'
+                                                }`}>
+                                                    {b.status}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 {dailySettlementStats.deliveryCount === 0 && (
                                     <div className="py-12 flex flex-col items-center justify-center text-gray-300">
                                         <i className="fa-solid fa-ghost text-2xl mb-2 opacity-20"></i>
@@ -215,28 +249,61 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                 <i className="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition-transform text-gray-300"></i>
                             </summary>
                             <div className="p-4 pt-0 space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar">
-                                {bookings.filter(b => b.pickupDate === revenueEndDate && b.serviceType === 'STORAGE' && !b.isDeleted).map(b => (
-                                    <div
-                                        key={b.id}
-                                        onClick={() => { setSelectedBooking(b); }}
-                                        className="p-4 bg-white border border-gray-100 rounded-[20px] hover:border-bee-blue hover:shadow-md cursor-pointer transition-all flex justify-between items-center group/item"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-2 h-8 rounded-full bg-bee-blue/20"></div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-gray-300">#{b.reservationCode || (b.id ? b.id.slice(0, 6).toUpperCase() : 'N/A')}</span>
-                                                <span className="text-xs font-black text-bee-black">{b.userName} 님</span>
+                                {bookings.filter(b => b.pickupDate === revenueEndDate && b.serviceType === 'STORAGE' && !b.isDeleted).map(b => {
+                                    const amount = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
+                                    const partnerPayout = b.branchSettlementAmount || 0;
+                                    const hqProfit = amount - partnerPayout;
+
+                                    return (
+                                        <div
+                                            key={b.id}
+                                            onClick={() => { setSelectedBooking(b); }}
+                                            className="p-4 bg-white border border-gray-100 rounded-[24px] hover:border-bee-blue hover:shadow-md cursor-pointer transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group/item"
+                                        >
+                                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                                <div className="w-2 h-10 rounded-full bg-bee-blue/20 group-hover/item:bg-bee-blue transition-colors"></div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-gray-300">#{b.reservationCode || (b.id ? b.id.slice(0, 6).toUpperCase() : 'N/A')}</span>
+                                                    <span className="text-sm font-black text-bee-black mt-0.5">{b.userName} 님</span>
+                                                    <div className="text-[9px] font-bold text-gray-400 flex items-center gap-1 mt-1">
+                                                        <i className="fa-solid fa-location-dot"></i> {b.pickupLocation} 지점
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-xs font-black text-bee-black">₩{(b.finalPrice || 0).toLocaleString()}</div>
-                                            <div className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full inline-block mt-1 ${b.status === BookingStatus.COMPLETED ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                                            
+                                            <div className="flex items-center gap-4 lg:gap-8 w-full md:w-auto bg-gray-50/50 p-3 rounded-2xl">
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase">고객 결제액</span>
+                                                    <span className="text-xs font-black text-bee-black">₩{amount.toLocaleString()}</span>
+                                                </div>
+                                                <div className="w-px h-6 bg-gray-200"></div>
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[9px] font-black text-orange-400 uppercase">파트너 수익</span>
+                                                    <span className="text-xs font-black text-orange-500">₩{partnerPayout.toLocaleString()}</span>
+                                                </div>
+                                                <div className="w-px h-6 bg-gray-200"></div>
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[9px] font-black text-emerald-500 uppercase">본사 차익</span>
+                                                    <span className="text-xs font-black text-emerald-600">₩{hqProfit.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-row md:flex-col items-end gap-1 w-full md:w-auto justify-end">
+                                                <div className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                                                    b.settlementStatus === 'CONFIRMED' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-sm' : 'bg-gray-50 border-gray-100 text-gray-400'
                                                 }`}>
-                                                {b.status}
+                                                    <i className={`fa-solid ${b.settlementStatus === 'CONFIRMED' ? 'fa-check-circle' : 'fa-hourglass-half'} mr-1`}></i> 
+                                                    {b.settlementStatus === 'CONFIRMED' ? '정산확정' : '미확정조율'}
+                                                </div>
+                                                <div className={`text-[8px] font-black uppercase px-2 py-0.5 mt-1 rounded-full ${
+                                                    b.status === BookingStatus.COMPLETED ? 'bg-bee-black text-bee-yellow' : 'bg-white border border-gray-200 text-gray-400'
+                                                }`}>
+                                                    {b.status}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 {dailySettlementStats.storageCount === 0 && (
                                     <div className="py-12 flex flex-col items-center justify-center text-gray-300">
                                         <i className="fa-solid fa-ghost text-2xl mb-2 opacity-20"></i>
@@ -305,74 +372,84 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         </div>
 
                         {/* Detailed Cash Flow Ledger */}
-                        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50 group/ledger">
                             <div className="p-5 flex justify-between items-center bg-gray-50/30">
                                 <div className="space-y-0.5">
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Opening Cash (전일 이월)</p>
-                                    <p className="text-sm font-black text-gray-500 italic">₩{(dailySettlementStats.openingCash || 0).toLocaleString()}</p>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Opening Balance (전일 이월)</p>
+                                    <p className="text-sm font-black text-gray-500 font-mono italic">₩{(dailySettlementStats.openingCash || 0).toLocaleString()}</p>
                                 </div>
-                                <i className="fa-solid fa-arrow-right-long text-gray-200 text-xs"></i>
+                                <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-200">
+                                    <i className="fa-solid fa-chevron-right text-[10px]"></i>
+                                </div>
                             </div>
 
-                            <div className="p-5 grid grid-cols-2 gap-8 relative">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase block italic">장부상 현금 매출액</label>
-                                    <div className="font-black text-xl text-emerald-600 flex items-baseline gap-1">
-                                        <span className="text-xs">₩</span>{dailySettlementStats.revenueByMethod.cash.toLocaleString()}
+                            <div className="p-6 grid grid-cols-2 gap-10 relative bg-gradient-to-br from-white to-gray-50/30">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase block italic tracking-tight">장부상 현금 (System)</label>
+                                    <div className="font-black text-2xl text-bee-black flex items-baseline gap-1 font-mono">
+                                        <span className="text-sm opacity-30">₩</span>{dailySettlementStats.revenueByMethod.cash.toLocaleString()}
                                     </div>
-                                    <p className="text-[8px] font-bold text-gray-300 italic">시스템에 기록된 당일 현금 총액</p>
+                                    <p className="text-[8px] font-medium text-gray-300">정산 기준일 데이터베이스 합계</p>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-bee-black uppercase block italic">Actual Hand (실물 시재)</label>
-                                    <div className="relative group">
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-xs font-black text-bee-black transition-colors group-hover:text-bee-yellow">₩</span>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-bee-black uppercase block italic tracking-tight">실물 시재 (Physical)</label>
+                                    <div className="relative group/input flex items-baseline gap-1">
+                                        <span className="text-sm font-black text-bee-yellow group-focus-within/input:animate-pulse">₩</span>
                                         <input
                                             type="number"
                                             value={cashClosing.actualCash}
                                             onChange={e => setCashClosing({ ...cashClosing, actualCash: Number(e.target.value) })}
                                             placeholder="0"
-                                            className="w-full bg-transparent p-0 pl-4 font-black text-xl border-none outline-none focus:text-bee-yellow transition-all"
+                                            className="w-full bg-transparent p-0 font-black text-2xl border-none outline-none focus:text-bee-yellow transition-all font-mono"
                                         />
                                     </div>
-                                    <div className="w-full h-px bg-gray-100 group-hover:bg-bee-yellow transition-colors"></div>
+                                    <div className="w-full h-0.5 bg-gray-100 group-focus-within/input:bg-bee-yellow transition-all duration-500"></div>
+                                    <p className="text-[8px] font-bold text-gray-300 uppercase">현장 금고 직접 실사 금액 입력</p>
                                 </div>
-                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 text-[8px] font-black text-gray-300">VS</div>
+                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white shadow-xl shadow-gray-200/50 rounded-2xl flex items-center justify-center border border-gray-100 text-[10px] font-black text-gray-300 group-hover/ledger:text-bee-yellow group-hover/ledger:border-bee-yellow/20 transition-all duration-500">VS</div>
                             </div>
 
-                            <div className={`p-5 flex justify-between items-center transition-all duration-700 ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash === 0
-                                ? 'bg-emerald-50/50'
-                                : 'bg-red-50/50 animate-pulse-subtle'
+                            <div className={`p-6 flex justify-between items-center transition-all duration-700 ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash === 0
+                                ? 'bg-emerald-50/40'
+                                : 'bg-red-50/40'
                                 }`}>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">최종 장부 차액</span>
-                                    <span className={`text-2xl font-black italic ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash !== 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 items-center flex gap-2">
+                                        마감 차액 분석
+                                        {dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash === 0 && (
+                                            <span className="text-[8px] px-2 py-0.5 bg-emerald-500 text-white rounded-full animate-bounce">Perfect</span>
+                                        )}
+                                    </span>
+                                    <span className={`text-3xl font-black italic font-mono tracking-tighter ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash !== 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                                         ₩{(dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash).toLocaleString()}
                                     </span>
                                 </div>
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash === 0 ? 'bg-emerald-500 text-white' : 'bg-red-400 text-white'
-                                    } shadow-lg shadow-emerald-500/10 rotate-3`}>
-                                    <i className={`fa-solid ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash === 0 ? 'fa-square-check' : 'fa-triangle-exclamation'} text-lg`}></i>
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash === 0 
+                                    ? 'bg-emerald-500 text-white rotate-0' 
+                                    : 'bg-red-500 text-white rotate-[360deg] animate-pulse shadow-lg shadow-red-200'
+                                    }`}>
+                                    <i className={`fa-solid ${dailySettlementStats.revenueByMethod.cash - cashClosing.actualCash === 0 ? 'fa-check-double' : 'fa-triangle-exclamation'} text-xl`}></i>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-2 group">
-                            <label className="text-[10px] font-black text-gray-400 uppercase block ml-1 italic group-hover:text-bee-yellow transition-colors">마감 특이사항 및 메모</label>
+                        <div className="space-y-2 group/memo">
+                            <label className="text-[10px] font-black text-gray-400 uppercase block ml-1 italic group-focus-within/memo:text-bee-yellow transition-colors">Audit Notes & Discrepancy Reason</label>
                             <textarea
                                 value={cashClosing.notes}
                                 onChange={e => setCashClosing({ ...cashClosing, notes: e.target.value })}
-                                className="w-full bg-white p-5 rounded-[24px] font-bold border border-gray-100 text-xs outline-none h-20 resize-none focus:border-bee-yellow transition-all shadow-sm"
-                                placeholder="정산 관련 특이사항을 명확하게 기록해 주세요 (최종 승인 검토용)..."
+                                className="w-full bg-white p-5 rounded-[24px] font-bold border border-gray-100 text-xs outline-none h-24 resize-none focus:border-bee-yellow focus:ring-4 focus:ring-bee-yellow/5 transition-all shadow-sm"
+                                placeholder="정산 차액 발생 시 구체적인 사유를 기록해 주세요 (예: 잔돈 부족, 단순 기재 오류 등)..."
                             />
                         </div>
 
                         <button
                             onClick={handleCashClose}
-                            className="group relative w-full py-5 bg-bee-black text-white font-black rounded-[28px] overflow-hidden shadow-2xl transition-all hover:scale-[1.01] active:scale-[0.98]"
+                            className="group relative w-full py-6 bg-bee-black text-white font-black rounded-[28px] overflow-hidden shadow-2xl transition-all hover:scale-[1.01] active:scale-[0.98]"
                         >
-                            <div className="absolute inset-0 bg-bee-yellow translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out"></div>
-                            <span className="relative z-10 group-hover:text-bee-black transition-colors flex items-center justify-center gap-2">
-                                <i className="fa-solid fa-lock-open text-xs group-hover:fa-lock transition-all"></i> 일일 정산 최종 확정 및 마감
+                            <div className="absolute inset-0 bg-gradient-to-r from-bee-yellow to-yellow-500 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out"></div>
+                            <span className="relative z-10 group-hover:text-bee-black transition-colors flex items-center justify-center gap-3 tracking-widest">
+                                <i className="fa-solid fa-file-signature text-xs group-hover:scale-110 transition-transform"></i> 일일 정산 최종 확정 및 마감 승인
                             </span>
                         </button>
                     </div>
@@ -472,6 +549,15 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                             </tr>
                                         )}
                                     </tbody>
+                                    {expenditures.length > 0 && (
+                                        <tfoot className="bg-red-50/50">
+                                            <tr>
+                                                <td className="px-5 py-3 font-black text-[10px] uppercase tracking-widest text-red-900 border-t border-red-100">총 당일 지출액</td>
+                                                <td className="px-5 py-3 text-right font-black italic text-red-600 border-t border-red-100">₩{dailySettlementStats.totalExp.toLocaleString()}</td>
+                                                <td className="px-5 py-3 border-t border-red-100"></td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
                                 </table>
                             </div>
                         </div>

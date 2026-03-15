@@ -15,6 +15,7 @@ import {
   addDoc
 } from 'firebase/firestore';
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, DiscountCode, PriceSettings, StorageTier, RoutePrice, AdminUser, PartnershipInquiry, SystemNotice, HeroConfig, GoogleCloudConfig, PrivacyPolicyData, TermsPolicyData, SnsType, BagSizes, CashClosing, Expenditure, AdminTab, Branch, BranchProspect } from '../types';
+import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
 import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
@@ -48,6 +49,7 @@ import DiscountTab from './admin/DiscountTab';
 import ReportsTab from './admin/ReportsTab';
 import RoadmapTab from './admin/RoadmapTab';
 import OperationsConsole from './admin/OperationsConsole';
+import MonthlySettlementTab from './admin/MonthlySettlementTab';
 import LocationMap from './locations/LocationMap';
 import { useAdminStats } from '../src/domains/admin/hooks/useAdminStats';
 
@@ -292,6 +294,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     businessHours_en: '',
     businessHours_ja: '',
     businessHours_zh: '',
+    branchCode: '',
+    ownerName: '',
+    phone: '',
+    commissionRates: { delivery: 70, storage: 60 },
     isActive: true
   });
 
@@ -339,7 +345,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     description: ''
   });
 
-  const { revenueStats, dailySettlementStats, accountingDailyStats, accountingMonthlyStats } = useAdminStats({
+  const { revenueStats, dailySettlementStats, accountingDailyStats, accountingMonthlyStats, monthlyControlStats } = useAdminStats({
     bookings,
     expenditures,
     revenueStartDate,
@@ -555,7 +561,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const currentKST = getKSTDateString();
       setTodayKST(prev => {
         if (prev !== currentKST) {
-          console.log("KST Day changed!", currentKST);
           return currentKST;
         }
         return prev;
@@ -628,6 +633,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         if (activeStatusTab === 'ACTIVE' && ![BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any)) return false;
         if (activeStatusTab === 'COMPLETED' && b.status !== BookingStatus.COMPLETED) return false;
         if (activeStatusTab === 'CANCELLED' && ![BookingStatus.CANCELLED, BookingStatus.REFUNDED].includes(b.status as any)) return false;
+        
+        // [스봉이] 실무형 탭 추가 (P0) 💅
+        if (activeStatusTab === 'TODAY_IN' && !(b.status === BookingStatus.PENDING && b.pickupDate === todayKST)) return false;
+        if (activeStatusTab === 'STORAGE' && b.status !== BookingStatus.STORAGE) return false;
+        if (activeStatusTab === 'TODAY_OUT' && !(b.status === BookingStatus.STORAGE && (b.returnDate === todayKST || b.dropoffDate === todayKST))) return false;
+        if (activeStatusTab === 'TRANSIT' && b.status !== BookingStatus.TRANSIT) return false;
+        if (activeStatusTab === 'ARRIVED' && b.status !== BookingStatus.ARRIVED) return false;
+        if (activeStatusTab === 'ISSUE' && !(b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || !!b.auditNote)) return false;
       }
       return true;
     });
@@ -734,7 +747,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         isOrigin: true, isDestination: true, originSurcharge: 0, destinationSurcharge: 0,
         lat: 37.5665, lng: 126.9780, address: '', description: '',
         pickupGuide: '', pickupImageUrl: '',
-        businessHours: '', businessHours_en: '', businessHours_ja: '', businessHours_zh: ''
+        businessHours: '', businessHours_en: '', businessHours_ja: '', businessHours_zh: '',
+        branchCode: '', ownerName: '', phone: '',
+        commissionRates: { delivery: 70, storage: 60 }
       });
 
       alert('지점 정보가 성공적으로 저장되었습니다.');
@@ -1129,9 +1144,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     setAdminForm({ name: '', jobTitle: '', password: '' });
   };
 
-  const updateStatus = async (id: string, status: BookingStatus) => {
+  const updateStatus = async (id: string, status: BookingStatus, auditNote?: string) => {
     try {
-      await updateDoc(doc(db, 'bookings', id), { status });
+      await updateDoc(doc(db, 'bookings', id), { 
+        status,
+        ...(auditNote && { auditNote })
+      });
     } catch (e) { console.error(e); }
   };
 
@@ -1478,9 +1496,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       alert('예약 정보가 성공적으로 업데이트되었습니다.');
       setSelectedBooking(null);
       refreshData();
-    } catch (e: any) {
-      console.error("Failed to update booking:", e);
-      alert(`업데이트 실패: ${e.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -1649,16 +1664,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
 
   const getStatusStyle = (status: BookingStatus) => {
-    switch (status) {
-      case BookingStatus.PENDING: return 'text-amber-600 bg-bee-yellow/20';
-      case BookingStatus.STORAGE: return 'text-blue-700 bg-bee-blue/20';
-      case BookingStatus.TRANSIT: return 'text-indigo-600 bg-indigo-100';
-      case BookingStatus.ARRIVED: return 'text-emerald-700 bg-emerald-100';
-      case BookingStatus.COMPLETED: return 'text-green-700 bg-green-100';
-      case BookingStatus.CANCELLED: return 'text-red-500 bg-red-50';
-      case BookingStatus.REFUNDED: return 'text-red-700 bg-red-100';
-      default: return 'text-bee-grey bg-gray-100';
-    }
+    const config = OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[status || BookingStatus.PENDING]];
+    return `text-white`; // We'll handle coloring via inline style or separate logic if needed, but for now let's keep it simple or just use the config color
   };
 
   const deleteInquiry = async (id: string) => {
@@ -1704,90 +1711,106 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         <div className="px-6 flex-1 overflow-y-auto no-scrollbar space-y-8 py-4">
           {/* 메인 관제 그룹 */}
           <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">실시간 물류 관제</div>
+          {/* [Group 1] 운영 및 물류 관제 */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-2">
+              <span className="w-1 h-3 bg-bee-yellow rounded-full"></span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Operations & Logistics</span>
+            </div>
             <nav className="space-y-1">
               {[
                 { id: 'OPERATIONS', label: '실시간 통합 관제(Ops)', icon: 'fa-tower-observation' },
-                { id: 'OVERVIEW', label: '통합 현황판', icon: 'fa-chart-pie' },
+                { id: 'OVERVIEW', label: '운영 현황 상황판', icon: 'fa-chart-pie' },
                 { id: 'DELIVERY_BOOKINGS', label: '배송 예약 관리', icon: 'fa-truck-fast' },
                 { id: 'STORAGE_BOOKINGS', label: '보관 예약 관리', icon: 'fa-warehouse' },
               ].map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all group ${activeTab === item.id ? 'bg-bee-black text-bee-yellow shadow-xl shadow-bee-black/10' : 'hover:bg-gray-50 text-gray-500 hover:text-bee-black'}`}
                 >
-                  <i className={`fa-solid ${item.icon} w-5`}></i>
-                  {item.label}
+                  <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-bee-yellow animate-pulse"></div>}
                 </button>
               ))}
             </nav>
           </div>
 
-          {/* 경영 관리 그룹 */}
-          <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">재무 및 정산 관리</div>
+          {/* [Group 2] 재무 및 정산 관리 */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-2">
+              <span className="w-1 h-3 bg-bee-blue rounded-full"></span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Finance & Settlement</span>
+            </div>
             <nav className="space-y-1">
               {[
                 { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
-                { id: 'ACCOUNTING', label: '매출 결산 보고', icon: 'fa-receipt' },
-                { id: 'REPORTS', label: '데이터 실적 분석', icon: 'fa-chart-pie' },
+                { id: 'ACCOUNTING', label: '통합 매출 결산', icon: 'fa-receipt' },
+                { id: 'REPORTS', label: '분석 리포트', icon: 'fa-chart-line' },
               ].map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all group ${activeTab === item.id ? 'bg-bee-black text-bee-yellow shadow-xl shadow-bee-black/10' : 'hover:bg-gray-50 text-gray-500 hover:text-bee-black'}`}
                 >
-                  <i className={`fa-solid ${item.icon} w-5`}></i>
-                  {item.label}
+                  <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
+                  <span className="flex-1 text-left">{item.label}</span>
                 </button>
               ))}
             </nav>
           </div>
 
-          {/* 고객 지원 그룹 */}
-          <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">고객 응대 센터</div>
+          {/* [Group 3] 고객 지원 및 정보 */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-2">
+              <span className="w-1 h-3 bg-purple-400 rounded-full"></span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Support & Content</span>
+            </div>
             <nav className="space-y-1">
               {[
-                { id: 'CHATS', label: '실시간 채팅 관리', icon: 'fa-comments' },
-              ].map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
-                >
-                  <i className={`fa-solid ${item.icon} w-5`}></i>
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* 시스템 관리 그룹 */}
-          <div>
-            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">시스템 설정 및 보안</div>
-            <nav className="space-y-1">
-              {[
-                { id: 'ROADMAP', label: '서비스 로드맵', icon: 'fa-map-location-dot' },
-                { id: 'LOCATIONS', label: '전 지점 마스터 관리', icon: 'fa-location-dot' },
-                { id: 'DISCOUNTS', label: '프로모션 코드 관리', icon: 'fa-tags' },
-                { id: 'SYSTEM', label: '운임 정책 설정', icon: 'fa-sliders' },
-                { id: 'HR', label: '인사 및 권한 관리', icon: 'fa-user-tie' },
-                { id: 'PARTNERSHIP_INQUIRIES', label: 'B2B 제휴 제안', icon: 'fa-handshake' },
+                { id: 'CHATS', label: '실시간 상담 센터', icon: 'fa-comments' },
                 { id: 'NOTICE', label: '시스템 공지 창구', icon: 'fa-bullhorn' },
-                { id: 'QNA_EDITOR', label: 'Q&A 콘텐츠 관리', icon: 'fa-circle-question' },
+                { id: 'QNA_EDITOR', label: 'FAQ 콘텐츠 관리', icon: 'fa-circle-question' },
               ].map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
-                  className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'hover:bg-gray-100 text-gray-500 hover:text-bee-black lg:hover:pl-5'}`}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all group ${activeTab === item.id ? 'bg-bee-black text-bee-yellow shadow-xl shadow-bee-black/10' : 'hover:bg-gray-50 text-gray-500 hover:text-bee-black'}`}
                 >
-                  <i className={`fa-solid ${item.icon} w-5`}></i>
-                  {item.label}
+                  <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
+                  <span className="flex-1 text-left">{item.label}</span>
                 </button>
               ))}
             </nav>
+          </div>
+
+          {/* [Group 4] 시스템 인프라 설정 */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-2">
+              <span className="w-1 h-3 bg-emerald-400 rounded-full"></span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">System & Strategy</span>
+            </div>
+            <nav className="space-y-1">
+              {[
+                { id: 'ROADMAP', label: '전사 서비스 로드맵', icon: 'fa-map-location-dot' },
+                { id: 'LOCATIONS', label: '지점 마스터 관리', icon: 'fa-location-dot' },
+                { id: 'SYSTEM', label: '운영 정책 설정', icon: 'fa-sliders' },
+                { id: 'DISCOUNTS', label: '프로모션 마케팅', icon: 'fa-tags' },
+                { id: 'HR', label: '인사/권한 보안', icon: 'fa-user-tie' },
+                { id: 'PARTNERSHIP_INQUIRIES', label: 'B2B 제안서 함', icon: 'fa-handshake' },
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as AdminTab)}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all group ${activeTab === item.id ? 'bg-bee-black text-bee-yellow shadow-xl shadow-bee-black/10' : 'hover:bg-gray-50 text-gray-500 hover:text-bee-black'}`}
+                >
+                  <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
+                  <span className="flex-1 text-left">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
           </div>
         </div>
 
@@ -1875,6 +1898,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'STORAGE_BOOKINGS', label: '보관 예약 관리', icon: 'fa-warehouse' },
                         { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
                         { id: 'ACCOUNTING', label: '매출 결산 보고', icon: 'fa-receipt' },
+                        { id: 'MONTHLY_SETTLEMENT', label: '월 정산 통제판', icon: 'fa-vault' },
                         { id: 'LOCATIONS', label: '전 지점 마스터 관리', icon: 'fa-location-dot' },
                         { id: 'ROADMAP', label: '서비스 로드맵', icon: 'fa-map-location-dot' },
                         { id: 'CHATS', label: '실시간 채팅', icon: 'fa-comments' },
@@ -1973,6 +1997,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               setActiveTab={setActiveTab}
               setActiveStatusTab={setActiveStatusTab}
               dailyStats={dailyStats}
+              revenueStats={revenueStats}
+              closings={closings}
             />
           )}
 
@@ -2064,6 +2090,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handleSaveExpenditure={handleSaveExpenditure}
               expenditures={filteredExpenditures}
               deleteExpenditure={deleteExpenditure}
+            />
+          )}
+
+          {activeTab === 'MONTHLY_SETTLEMENT' && (
+            <MonthlySettlementTab
+              bookings={bookings}
+              expenditures={expenditures}
+              revenueStartDate={revenueStartDate}
+              setRevenueStartDate={setRevenueStartDate}
+              revenueEndDate={revenueEndDate}
+              setRevenueEndDate={setRevenueEndDate}
+              monthlyControlStats={monthlyControlStats}
+              accountingMonthlyStats={accountingMonthlyStats}
             />
           )}
 

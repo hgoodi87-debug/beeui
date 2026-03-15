@@ -376,6 +376,11 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                         <option value="">Select Branch</option>
                         {originLocations.map(l => <option key={l.id} value={l.id}>{getLocName(l)}</option>)}
                       </select>
+                      {serviceType === ServiceType.DELIVERY && (
+                        <p className="mt-2 text-[10px] text-bee-yellow font-black uppercase tracking-wider animate-pulse">
+                          * 배송은 반드시 지정된 서울 내 거점에 직접 방문하여 맡겨주셔야 합니다. 💅
+                        </p>
+                      )}
                     </div>
                     {serviceType === ServiceType.DELIVERY && (
                       <div>

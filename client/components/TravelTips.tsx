@@ -1,66 +1,149 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Sparkles, Map, ChevronLeft, ArrowRight, X, Clock, MapPin, ShieldCheck, Navigation } from 'lucide-react';
+import { ChevronLeft, Sparkles, Navigation, X, ArrowRight, MapPin, Building2, Map as MapIcon, Info } from 'lucide-react';
 import SEO from './SEO';
 import { TRAVEL_TIPS, TravelTip } from '../src/constants/travelTips';
-import { calculateDistance, formatDistance } from '../utils/locationUtils';
+import { LOCATIONS } from '../constants';
+import TipsMap from './tips/TipsMap';
 
-const DetailPanel: React.FC<{ tip: TravelTip | null; lang: string; onClose: () => void }> = ({ tip, lang, onClose }) => {
-    if (!tip) return null;
+// Distance calculation helper (Haversine formula)
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in km
+};
+
+const BottomSheet: React.FC<{ 
+    item: any | null; 
+    lang: string; 
+    onClose: () => void;
+    activeBranches: any[];
+}> = ({ item, lang, onClose, activeBranches }) => {
+    if (!item) return null;
+
+    const isBranch = !!item.shortCode;
+    const itemTitle = item.title as { [key: string]: string } | undefined;
+    const itemDesc = item.desc as { [key: string]: string } | undefined;
+    const itemContent = item.content as { [key: string]: string } | undefined;
+
+    const title = isBranch ? (item[`name_${lang}`] || item.name) : (itemTitle?.[lang] || itemTitle?.['ko'] || '');
+    const description = isBranch ? (item[`description_${lang}`] || item.description) : (itemDesc?.[lang] || itemDesc?.['ko'] || '');
+
+    // Find nearest branch if the selected item is a landmark
+    const nearestBranch = useMemo(() => {
+        if (isBranch || !item.coordinates) return null;
+        
+        const sorted = [...activeBranches].map(branch => ({
+            ...branch,
+            distance: calculateDistance(
+                item.coordinates.lat, 
+                item.coordinates.lng,
+                branch.lat,
+                branch.lng
+            )
+        })).sort((a, b) => a.distance - b.distance);
+        
+        return sorted[0];
+    }, [item, isBranch, activeBranches]);
 
     return (
         <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 z-[200] w-full max-w-2xl bg-black/95 backdrop-blur-3xl border-l border-white/10 shadow-2xl p-8 md:p-12 overflow-y-auto"
+            className="fixed inset-x-0 bottom-0 z-[200] max-w-4xl mx-auto"
         >
-            <button 
-                onClick={onClose}
-                className="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                title="Close Intelligence"
-            >
-                <X size={24} />
-            </button>
-
-            <div className="pt-20">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-bee-yellow/10 text-bee-yellow border border-bee-yellow/20 rounded-full mb-8 text-[10px] font-black uppercase tracking-widest">
-                    {tip.category === 'service' && <ShieldCheck size={12} />}
-                    {tip.category === 'spot' && <MapPin size={12} />}
-                    {tip.category === 'guide' && <Clock size={12} />}
-                    {tip.category}
-                </div>
+            <div className="bg-black/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[3rem] p-8 md:p-12 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
+                <div className="w-16 h-1.5 bg-white/10 rounded-full mx-auto mb-8" />
                 
-                <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight italic uppercase tracking-tighter">
-                    {tip.title[lang as keyof typeof tip.title] || tip.title['ko']}
-                </h2>
+                <button 
+                    onClick={onClose}
+                    aria-label="Close"
+                    className="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                >
+                    <X size={20} />
+                </button>
 
-                <div className="prose prose-invert max-w-none">
-                    <p className="text-xl text-white/60 font-medium leading-relaxed mb-12">
-                        {tip.desc[lang as keyof typeof tip.desc] || tip.desc['ko']}
-                    </p>
-                    
-                    <div className="space-y-8 text-white/80 leading-relaxed text-lg">
-                        {tip.content ? (
-                            <p>{tip.content[lang as keyof typeof tip.content] || tip.content['ko']}</p>
-                        ) : (
-                            <div className="p-8 border border-dashed border-white/10 rounded-3xl text-center">
-                                <Sparkles className="mx-auto mb-4 text-bee-yellow" />
-                                <p className="text-sm font-bold opacity-40">More deep-dive content is being curated for this guide. ✨</p>
-                            </div>
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                    <div className="flex-1">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-bee-yellow/10 text-bee-yellow border border-bee-yellow/20 rounded-full mb-6">
+                            {isBranch ? <Building2 size={12} /> : <MapPin size={12} />}
+                            <span className="text-[10px] font-black uppercase tracking-widest">
+                                {isBranch ? 'Beeliber Hub' : 'Seoul Landmark'}
+                            </span>
+                        </div>
+                        
+                        <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight italic uppercase tracking-tighter">
+                            {title}
+                        </h2>
+
+                        <p className="text-lg text-white/60 font-medium leading-relaxed mb-8">
+                            {description}
+                        </p>
+
+                        {!isBranch && nearestBranch && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-6 bg-bee-yellow/5 border border-bee-yellow/20 rounded-[2rem] mb-8"
+                            >
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-2 bg-bee-yellow text-bee-black rounded-lg">
+                                        <Building2 size={16} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-bee-yellow">Recommended Hub</h4>
+                                        <p className="text-sm font-bold">{nearestBranch[`name_${lang}`] || nearestBranch.name}</p>
+                                    </div>
+                                    <div className="ml-auto text-[10px] font-black bg-bee-yellow/20 text-bee-yellow px-2 py-1 rounded">
+                                        {nearestBranch.distance.toFixed(1)}km Away
+                                    </div>
+                                </div>
+                                <p className="text-xs text-white/40 leading-relaxed mb-4">
+                                    맡겨진 짐은 이 지점에서 안전하게 보관됩니다. 명소를 즐기신 후 여기서 짐을 찾으시거나, 호텔로 바로 배송 신청하세요. 💅
+                                </p>
+                                <button 
+                                    onClick={() => window.location.href = `/booking?branch=${nearestBranch.id}`}
+                                    className="text-[10px] font-black text-bee-yellow uppercase border-b border-bee-yellow/30 pb-1 hover:border-bee-yellow transition-all"
+                                >
+                                    Select This Hub
+                                </button>
+                            </motion.div>
                         )}
                     </div>
-                </div>
 
-                <div className="mt-20">
-                    <button 
-                        onClick={() => window.location.href = '/booking'}
-                        className="w-full py-6 bg-bee-yellow text-bee-black rounded-3xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform active:scale-95"
-                    >
-                        Try Beeliber Service <ArrowRight size={18} />
-                    </button>
+                    <div className="w-full md:w-72 space-y-4">
+                        <button 
+                            onClick={() => window.location.href = isBranch ? `/booking?branch=${item.id}` : '/booking'}
+                            className="w-full py-5 bg-bee-yellow text-bee-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform active:scale-95"
+                        >
+                            {isBranch ? 'Drop Luggage Here' : 'Go Hands-free'} <ArrowRight size={16} />
+                        </button>
+                        
+                        {isBranch && (
+                            <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
+                                <div className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Business Hours</div>
+                                <div className="text-sm font-bold text-bee-yellow">{item.businessHours || '09:00 - 21:00'}</div>
+                            </div>
+                        )}
+                        
+                        <div className="p-5 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                                <Info size={16} className="text-white/40" />
+                            </div>
+                            <div className="text-[10px] text-white/40 font-bold leading-tight">
+                                Real-time availability checked by 스봉이 💅
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </motion.div>
@@ -69,192 +152,136 @@ const DetailPanel: React.FC<{ tip: TravelTip | null; lang: string; onClose: () =
 
 const TravelTips: React.FC<{ lang: string }> = ({ lang }) => {
     const navigate = useNavigate();
-    const [selectedTip, setSelectedTip] = useState<TravelTip | null>(null);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-    // 💅 [스봉이] 사장님의 위치를 마법처럼 감지하는 중...
-    React.useEffect(() => {
+    useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    });
-                },
-                (error) => console.warn("[스봉이] 위치 감지 실패.. 🙄", error),
+                (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                (err) => console.warn("[스봉이] 위치 권한을 주시면 더 스마트한 안내가 가능해요 💅", err),
                 { timeout: 10000 }
             );
         }
     }, []);
 
-    const tips = React.useMemo(() => {
-        let sorted = [...TRAVEL_TIPS];
-        if (userLocation) {
-            sorted = sorted.map(tip => {
-                if (tip.coordinates) {
-                    const dist = calculateDistance(userLocation.lat, userLocation.lng, tip.coordinates.lat, tip.coordinates.lng);
-                    return { ...tip, distance: dist };
-                }
-                return { ...tip, distance: 9999 }; // 좌표 없는 건 뒤로! 💅
-            });
-            sorted.sort((a, b) => (a as any).distance - (b as any).distance);
-        }
-        return sorted;
-    }, [userLocation]);
+    const landmarks = TRAVEL_TIPS.filter(tip => tip.category === 'spot');
+    const activeBranches = useMemo(() => LOCATIONS.filter(l => l.isActive !== false), []);
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1
-            }
-        }
-    };
-
-    const cardVariants = {
-        hidden: { opacity: 0, y: 30 },
-        visible: { opacity: 1, y: 0 }
-    };
+    const selectedItem = useMemo(() => {
+        if (!selectedId) return null;
+        return [...landmarks, ...activeBranches].find(i => i.id === selectedId);
+    }, [selectedId, landmarks, activeBranches]);
 
     return (
-        <div className="min-h-screen bg-black text-white selection:bg-bee-yellow selection:text-bee-black">
+        <div className="h-screen bg-black text-white selection:bg-bee-yellow selection:text-bee-black overflow-hidden flex flex-col">
             <SEO 
-                title="서울 여행 팁 & 가이드 | Beeliber 핸즈프리 여행 💅"
-                description="서울 여행의 질을 높여주는 짐 보관, 배송 팁부터 핫플레이스 가이드까지. Beeliber와 함께 가방 없이 자유롭게 여행하세요."
+                title="지능형 서울 여행 가이드 | Beeliber Intelligence 💅"
+                description="주변 핫플레이스와 비리버 지점을 지능적으로 연결합니다. 짐 걱정 없는 완벽한 서울 여행을 시작하세요."
                 path="/tips"
-                ogType="article"
             />
 
-            <nav className="fixed top-0 inset-x-0 z-[100] px-4 py-4">
-                <div className="max-w-4xl mx-auto flex justify-between items-center backdrop-blur-xl bg-white/5 border border-white/10 rounded-full px-6 py-2 shadow-2xl">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-bee-yellow group-hover:text-bee-black transition-all">
-                            <ChevronLeft size={18} />
+            {/* Premium Header Nav */}
+            <nav className="fixed top-0 inset-x-0 z-[100] px-4 py-6 pointer-events-none">
+                <div className="max-w-6xl mx-auto flex justify-between items-center pointer-events-auto">
+                    <button onClick={() => navigate('/')} className="flex items-center gap-3 px-5 py-3 backdrop-blur-xl bg-black/50 border border-white/10 rounded-2xl group active:scale-95 transition-all">
+                        <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Back</span>
+                    </button>
+                    
+                    <div className="hidden md:flex items-center gap-6 px-8 py-3 backdrop-blur-xl bg-black/50 border border-white/10 rounded-2xl shadow-2xl">
+                        <div className="flex items-center gap-2">
+                            <MapIcon size={14} className="text-bee-yellow" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Intelligence Hub</span>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Beeliber</span>
-                    </button>
-                    <div className="flex items-center gap-1 cursor-pointer" onClick={() => navigate('/')}>
-                        <span className="text-xl font-black italic">bee</span>
-                        <span className="text-xl font-black italic text-bee-yellow">liber</span>
+                        <div className="w-px h-4 bg-white/10" />
+                        <div className="flex items-center gap-1">
+                            <span className="text-xl font-black italic">bee</span>
+                            <span className="text-xl font-black italic text-bee-yellow">liber</span>
+                        </div>
                     </div>
-                    <button className="px-5 py-2 bg-bee-yellow/10 text-bee-yellow text-[10px] font-black uppercase tracking-wider rounded-full border border-bee-yellow/20">
-                        Content Hub
-                    </button>
+
+                    <div className="px-5 py-3 backdrop-blur-xl bg-bee-yellow/10 border border-bee-yellow/20 rounded-2xl">
+                        <div className="flex items-center gap-2">
+                            <Sparkles size={12} className="text-bee-yellow" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-bee-yellow">Seoul Live</span>
+                        </div>
+                    </div>
                 </div>
             </nav>
 
-            <header className="pt-40 pb-20 px-6 text-center overflow-hidden">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-bee-yellow/10 text-bee-yellow border border-bee-yellow/20 rounded-full mb-8"
-                >
-                    <Sparkles size={12} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Travel Smarter</span>
-                </motion.div>
-                <motion.h1 
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="text-6xl md:text-8xl font-black mb-6 uppercase tracking-tighter leading-none italic"
-                >
-                    Seoul <span className="text-bee-yellow">Travel Tips</span> 💅
-                </motion.h1>
-                <motion.p 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-white/40 font-bold text-lg md:text-xl max-w-xl mx-auto"
-                >
-                    Beeliber curated guides for a premium, luggage-free experience in Korea.
-                </motion.p>
-            </header>
+            {/* Main Interactive View */}
+            <main className="flex-1 relative">
+                <TipsMap 
+                    lang={lang}
+                    landmarks={landmarks}
+                    branches={activeBranches}
+                    selectedId={selectedId}
+                    onSelect={(item) => setSelectedId(item.id)}
+                    userLocation={userLocation}
+                />
 
-            <motion.main 
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="max-w-6xl mx-auto px-6 pb-40"
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {tips.map((tip) => (
-                        <motion.article
-                            key={tip.id}
-                            variants={cardVariants}
-                            whileHover={{ y: -10 }}
-                            className="group p-10 bg-white/5 border border-white/10 rounded-[3rem] hover:bg-white/10 hover:border-bee-yellow/30 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[400px]"
-                            onClick={() => setSelectedTip(tip)}
-                        >
-                            <div className="absolute top-0 right-0 p-8 text-white/5 group-hover:text-bee-yellow/20 transition-colors pointer-events-none">
-                                {tip.category === 'service' && <ShieldCheck size={120} />}
-                                {tip.category === 'spot' && <MapPin size={120} />}
-                                {tip.category === 'guide' && <Clock size={120} />}
-                            </div>
-                            
-                            <div>
-                                <div className="mb-6 flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-bee-yellow opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-bee-yellow" />
-                                        {tip.category}
-                                    </div>
-                                    {(tip as any).distance && (tip as any).distance < 1000 && (
-                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-full border border-white/10 group-hover:border-bee-yellow/50 transition-colors">
-                                            <Navigation size={10} className="text-bee-yellow" />
-                                            <span className="text-[10px] font-black text-white/60 group-hover:text-bee-yellow transition-colors">
-                                                {formatDistance((tip as any).distance, lang)}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                                <h2 className="text-3xl font-black mb-4 pr-10 leading-tight group-hover:text-bee-yellow transition-colors">
-                                    {tip.title[lang as keyof typeof tip.title] || tip.title['ko']}
-                                </h2>
-                                <p className="text-white/40 font-bold mb-8 leading-relaxed max-w-md">
-                                    {tip.desc[lang as keyof typeof tip.desc] || tip.desc['ko']}
-                                </p>
-                            </div>
+                {/* Left Floating Info Hub (Desktop Only) */}
+                <div className="absolute top-28 left-6 z-10 hidden lg:block w-80 space-y-4">
+                    <motion.div 
+                        initial={{ x: -50, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        className="p-8 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl"
+                    >
+                        <h1 className="text-4xl font-black italic leading-none mb-4 uppercase tracking-tighter">
+                            Seoul <span className="text-bee-yellow">Compass</span> 💅
+                        </h1>
+                        <p className="text-xs font-bold text-white/40 leading-relaxed">
+                            Discover the trendiest spots in Seoul and find the nearest Beeliber Hub to drop your heavy bags instantly. 
+                        </p>
+                    </motion.div>
 
-                            <div className="flex items-center gap-2 text-bee-yellow text-xs font-black uppercase tracking-widest mt-auto">
-                                View Intelligence <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
-                            </div>
-                        </motion.article>
-                    ))}
-                    
-                    {/* Coming Soon Card */}
-                    <div className="p-10 border border-dashed border-white/10 rounded-[3rem] flex flex-col items-center justify-center text-center opacity-40">
-                        <Map className="mb-6 text-white/20" size={48} />
-                        <h3 className="font-black mb-3 uppercase tracking-[0.2em] text-sm italic">Expanding Intelligence</h3>
-                        <p className="text-[11px] font-bold text-white/30 max-w-[200px]">We are constantly curating the most premium Seoul travel experiences for our guests.</p>
+                    <div className="flex flex-col gap-2">
+                        {landmarks.slice(0, 5).map(spot => (
+                            <button
+                                key={spot.id}
+                                onClick={() => setSelectedId(spot.id)}
+                                className={`px-6 py-4 flex items-center justify-between bg-black/40 backdrop-blur-xl border rounded-[1.5rem] transition-all text-left ${selectedId === spot.id ? 'border-bee-yellow text-bee-yellow ring-2 ring-bee-yellow/20' : 'border-white/5 text-white/40 hover:border-white/20'}`}
+                            >
+                                <span className="text-[10px] font-black uppercase tracking-widest">{spot.title[lang] || spot.title['ko']}</span>
+                                <Navigation size={12} className={selectedId === spot.id ? 'opacity-100' : 'opacity-20'} />
+                            </button>
+                        ))}
                     </div>
                 </div>
-            </motion.main>
 
-            {/* Slide-over Detail Panel */}
+                {/* Legend Overlay */}
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 flex gap-4 px-6 py-3 backdrop-blur-xl bg-black/50 border border-white/10 rounded-full shadow-2xl">
+                    <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/60">
+                        <div className="w-2 h-2 rounded-full bg-bee-yellow" /> Beeliber Hub
+                    </div>
+                    <div className="w-px h-3 bg-white/20" />
+                    <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/60">
+                        <div className="w-2 h-2 rounded-full bg-white border border-bee-yellow" /> Landmark
+                    </div>
+                </div>
+            </main>
+
+            {/* Bottom Sheet Intelligence */}
             <AnimatePresence>
-                {selectedTip && (
+                {selectedId && (
                     <>
                         <motion.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setSelectedTip(null)}
-                            className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm"
+                            onClick={() => setSelectedId(null)}
+                            className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-sm md:hidden"
                         />
-                        <DetailPanel 
-                            tip={selectedTip} 
-                            lang={lang} 
-                            onClose={() => setSelectedTip(null)} 
+                        <BottomSheet 
+                            item={selectedItem}
+                            lang={lang}
+                            onClose={() => setSelectedId(null)}
+                            activeBranches={activeBranches}
                         />
                     </>
                 )}
             </AnimatePresence>
-
-            <footer className="py-20 border-t border-white/5 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/20">
-                    &copy; 2026 Beeliber Intelligence Hub. All rights reserved.
-                </p>
-            </footer>
         </div>
     );
 };

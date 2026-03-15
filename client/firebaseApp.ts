@@ -7,13 +7,18 @@ import { getFunctions } from "firebase/functions";
 const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "beeliber-main.firebasestorage.app";
 
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: storageBucket,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID
+    apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
+    authDomain: "beeliber-main.firebaseapp.com",
+    projectId: "beeliber-main",
+    storageBucket: "beeliber-main.firebasestorage.app",
+    messagingSenderId: "591358308612",
+    appId: "1:591358308612:web:fb3928d12b0e1bb000a051"
 };
+
+// [스봉이] 빌드 시점에 환경 변수가 유실되는 사고를 막기 위해 직접 박아버렸어요! 💅✨
+if (typeof window !== 'undefined') {
+    console.log("🚀 [스봉이 리포트] 비리버 시스템 엔진 가동 중... 💅✨");
+}
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);

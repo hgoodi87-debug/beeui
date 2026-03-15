@@ -43,32 +43,26 @@ export const TRAVEL_TIPS: TravelTip[] = [
             zh: '从退房到登机前，教你如何告别行李负担，轻松打卡网红地.'
         },
         content: {
-            ko: '서울 여행의 핵심은 "가벼움"입니다. 체크인 전후의 비어있는 시간을 캐리어와 사투하며 낭비하지 마세요. \n\n1. **호텔에서 공항으로 바로 송부**: 비리버 앱에서 예약 후 로비에 짐을 맡기면, 당신은 그 즉시 자유입니다. 성수동의 좁은 골목길도, 홍대의 열기 가득한 클럽거리도 두 손 자유롭게 즐기세요. \n2. **마지막 카페 투어까지 완벽하게**: 체크아웃 후 남은 5시간, 비리버가 당신의 시간을 선물합니다. \n3. **인천공항에서 여유롭게 수령**: 여행을 마무리하고 공항에 도착했을 때, 당신의 짐은 이미 안전하게 기다리고 있습니다. ✨ \n\n*Future Intelligence Peek: 곧 도입될 실시간 GPS 배송 관제 시스템을 통해 당신의 짐이 어디쯤 오고 있는지 1m 단위로 확인하게 될 거예요. 🛰️*',
-            en: 'The key to Seoul travel is "lightness." Don\'t waste the gaps before check-in or after check-out struggling with heavy luggage. \n\n1. **Direct Hotel-to-Airport Shipping**: Book on the Beeliber app, drop your bags at the lobby, and you\'re free. Navigate the narrow alleys of Seongsu or the energetic streets of Hongdae hands-free. \n2. **Complete Your Final Cafe Tour**: Beeliber gifts you those 5 hours after check-out. \n3. **Relax and Pick Up at Incheon**: When you arrive at the airport, your bags are already there waiting safely. ✨ \n\n*Future Intelligence Peek: Coming soon, our real-time GPS tracking system will let you monitor your luggage\'s exact location within 1 meter. 🛰️*',
-            ja: 'ソウル旅行の鍵は「身軽さ」です。チェックイン前後やチェックアウト後の空き時間を、重い荷物との格闘で無駄にしないでください。\n\n1. **ホテルから空港へ直接配送**: Beeliberアプリで予約し、ロビーに荷物を預ければ、その瞬間からあなたは自由です。聖水の細い路地や弘大の活気ある通りを両手いっぱいに楽しめます。\n2. **最後のカフェ巡りまで完璧に**: チェックアウト後の残り5時間、Beeliberがあなたの時間をプレゼントします。\n3. **仁川空港でゆったり受け取り**: 旅行を終えて空港に到着した時、あなたの荷物はすでに安全に待機しています。✨ \n\n*Future Intelligence Peek: まもなく導入されるリアルタイムGPS追跡システムにより、荷物が今どこにあるか1m単位で確認できるようになります。🛰️*',
-            zh: '首尔旅行的核心在于“轻便”。不要在办理入住前后或退房后的空闲时间内，因与沉重的行李“搏斗”而白白浪费时间。 \n\n1. **酒店直达机场配送**: 在Beeliber App预约后将行李交给大堂，您便立刻重获自由。两手空空地穿梭在圣水洞的窄巷，或感受弘大的火热街头。 \n2. **完美打卡最后一间咖啡厅**: 退房后的5小时空余时间，Beeliber为您精准找回。 \n3. **在仁川机场轻松提取**: 当您结束行程抵达机场时，您的行李已在此安全等候。 ✨ \n\n*Future Intelligence Peek: 即将引入的实时GPS配送监控系统，将让您能够以1米为单位实时掌握行李的最新位置。🛰️*'
+            ko: '서울 여행의 핵심은 "가벼움"입니다. 체크인 전후의 비어있는 시간을 캐리어와 사투하며 낭비하지 마세요. \n\n1. **호텔에서 공항으로 바로 송부**: 비리버 앱에서 예약 후 로비에 짐을 맡기면, 당신은 그 즉시 자유입니다. \n2. **마지막 카페 투어까지 완벽하게**: 체크아웃 후 남은 5시간, 비리버가 당신의 시간을 선물합니다. \n3. **인천공항에서 여유롭게 수령**: 여행을 마무리하고 공항에 도착했을 때, 당신의 짐은 이미 안전하게 기다리고 있습니다. ✨',
+            en: 'The key to Seoul travel is "lightness." Don\'t waste the gaps before check-in or after check-out struggling with heavy luggage.',
+            ja: 'ソウル旅行の鍵は「身軽さ」です。チェックイン前後やチェックアウト後の空き時間を、重이荷物との格闘で無駄にしないでください。',
+            zh: '首尔旅行的核心在于“轻便”。不要在办理入住前后或退房后的空闲时间内，因与沉重的行李“搏斗”而白白浪费时间。'
         }
     },
     {
         id: 'seongsu-hidden-gem',
         category: 'spot',
         title: {
-            ko: '성수동: 짐 없이 걷는 붉은 벽돌의 낭만 🧱',
-            en: 'Seongsu-dong: Red Brick Romance without Luggage',
-            ja: '聖水洞：荷物なしで歩く赤レンガのロマン',
-            zh: '圣水洞：告别行李，漫步红砖巷弄的浪漫'
+            ko: '성수동: 붉은 벽돌의 낭만 🧱',
+            en: 'Seongsu-dong: Red Brick Romance',
+            ja: '聖水洞：赤レンガのロマン',
+            zh: '圣水洞：红砖巷弄的浪漫'
         },
         desc: {
-            ko: '무거운 가방은 비리버 성수 센터에 맡기고, 힙한 팝업스토어와 카페를 정복하세요.',
-            en: 'Drop your bags at Beeliber Seongsu Center and conquer trendy pop-up stores and cafes.',
-            ja: '重いバッグはBeeliber聖水センターに預けて、ヒップなポップアップストアやカフェを制覇しましょう。',
-            zh: '把厚重的行李交给Beeliber圣水中心，尽情打卡最High的快闪店和咖啡厅。'
-        },
-        content: {
-            ko: '성수동의 팝업스토어는 대부분 좁고 대기줄이 깁니다. 캐리어를 들고 1시간 이상 기다리는 것은 여행의 질을 급격히 떨어뜨리죠. 비리버 성수 라운지에 짐을 맡기면, 당신은 마치 현지인처럼 가볍게 핫플레이스를 누빌 수 있습니다. ✨',
-            en: 'Most pop-up stores in Seongsu-dong are narrow with long queues. Waiting for over an hour with a suitcase ruins the travel experience. Leave your bags at the Beeliber Seongsu Lounge to navigate the trendiest spots as light as a local. ✨',
-            ja: '聖水洞のポップアップストアはほとんどが狭く、待ち行列が長いです。キャリアを持ったまま1時間以上待つのは、旅行の質を急激に下げてしまいます。Beeliber聖スラウンジに荷物を預ければ、地元の人のように軽やかにホットスポットを巡ることができます。✨',
-            zh: '圣水洞的快闪店大多空间狭窄且排队较长。拖着行李箱等待1小时以上会严重影响旅行体验。将行李寄存在Beeliber圣水休息室，您就能像当地人一样轻松打卡热门地标。✨'
+            ko: '비리버 성수 센터에 짐을 맡기고, 힙한 팝업스토어와 카페를 정복하세요.',
+            en: 'Drop your bags at Beeliber Seongsu Center and conquer trendy spots.',
+            ja: 'Beeliber聖水センターに荷物を預けて、ヒップなスポットを制覇しましょう。',
+            zh: '把行李交给Beeliber圣水中心，尽情打卡网红地。'
         },
         coordinates: {
             lat: 37.5447,
@@ -76,45 +70,143 @@ export const TRAVEL_TIPS: TravelTip[] = [
         }
     },
     {
-        id: 'shipping-to-airport',
-        category: 'service',
+        id: 'myeongdong-shopping',
+        category: 'spot',
         title: {
-            ko: '호텔에서 인천공항으로 짐 보내기 완벽 가이드 ✈️',
-            en: 'The Ultimate Guide: Hotel to Incheon Airport Delivery',
-            ja: '完全ガイド: ホテルから仁川空港への荷物配送',
-            zh: '攻略: 从酒店到仁川机场行李当日配送全过程'
+            ko: '명동: 쇼핑의 천국, 두 손은 가볍게 🛍️',
+            en: 'Myeong-dong: Shopping Heaven, Hands-free',
+            ja: '明洞：ショッピング天国、両手は軽く',
+            zh: '明洞：购物天堂，两手空空'
         },
         desc: {
-            ko: 'Beeliber의 당일 배송 서비스를 200% 활용하여 공항까지 가볍게 이동하는 팁.',
-            en: 'Tips for using Beeliber same-day delivery to travel light to the airport.',
-            ja: 'Beeliberの当日配送サービスを200%活用して、空港まで身軽に移動するポイント。',
-            zh: '如何200%利用Service的当日配送服务，让去机场的路不再沉重。'
+            ko: '쇼핑백으로 가득 찬 손? 비리버 명동 센터에 맡기고 더 즐거운 쇼핑을 즐기세요.',
+            en: 'Hands full of shopping bags? Leave them at Beeliber Myeongdong Center.',
+            ja: 'ショッピングバッグでいっぱいの手？Beeliber明洞センターに預けてもっと楽しもう。',
+            zh: '购物袋塞满双手？交给Beeliber明洞中心。'
         },
-        content: {
-            ko: '인천공항으로 전철을 타고 가시나요? 공항철도는 출퇴근 시간에 매우 붐빕니다. 대형 캐리어를 들고 서서 가는 고통 대신, 비리버의 "Hands-free Airport" 서비스를 선택하세요. \n\n- **T1/T2 위치 확인**: 당신의 항공사가 어느 터미널인지에 따라 정확한 위치로 짐을 배송해 드립니다.\n- **마감 시간**: 오전 10시 이전 호텔에 맡기면 당일 오후 공항 수령 가능! ✈️',
-            en: 'Taking the train to Incheon Airport? The AREX gets very crowded during peak hours. Avoid the pain of standing with a large suitcase by choosing Beeliber\'s "Hands-free Airport" service. \n\n- **T1/T2 Location Check**: We deliver your bags to the exact arrival point of your terminal.\n- **Cut-off Time**: Drop at your hotel before 10 AM for same-day afternoon pickup at the airport! ✈️',
-            ja: '仁川空港まで電車で行かれますか？空港鉄道はラッシュ時に非常に混雑します。大型キャリアを持って立っていく苦痛の代わりに、Beeliberの「Hands-free Airport」サービスを選んでください。\n\n- **T1/T2 位置確認**: 航空会社がどのターミナルかによって、正確な位置に荷物を配送します。\n- **締め切り時間**: 午前10時までにホテル에 預ければ、当日午後に空港で受け取り可能！ ✈️',
-            zh: '打算坐地铁去仁川机场吗？机场快线在上下班高峰期非常拥挤。别再忍受提着大行李箱挤地铁的痛苦，选择Beeliber的“无忧机场”服务吧。 \n\n- **确认T1/T2位置**: 我们将根据您的航空公司所在的航站楼，将行李精准配送至取件点。\n- **截止时间**: 上午10点前在酒店交寄，当天下午即可在机场提件！✈️'
+        coordinates: {
+            lat: 37.5635,
+            lng: 126.9842
         }
     },
     {
-        id: 'hongdae-safety',
-        category: 'guide',
+        id: 'bukchon-hanok',
+        category: 'spot',
         title: {
-            ko: '홍대 밤거리, 안전하게 수하물 보관하는 법 🐝',
-            en: 'Hongdae Nightlife: Safe Luggage Storage Tips',
-            ja: '弘大の夜：安全に手荷物を預ける方法',
-            zh: '弘大之夜：行李安全寄存贴士'
+            ko: '북촌 한옥마을: 고즈넉한 골목길 산책 ⛩️',
+            en: 'Bukchon Hanok Village: Quiet Alley Walk',
+            ja: '北村韓屋村：静かな路地裏散歩',
+            zh: '北村韩屋村：宁静的小巷散步'
         },
         desc: {
-            ko: '늦은 시간까지 운영하는 비리버 거점을 확인하고 홍대의 열기를 즐기세요.',
-            en: 'Check Beeliber spots operating late and enjoy the energy of Hongdae.',
-            ja: '遅くまで営業しているBeeliber拠点を確認して、弘大の熱気を楽しんでください。',
-            zh: '确认营业至深夜的Beeliber据点，尽情感受弘大的活力。'
+            ko: '언덕이 많은 북촌, 캐리어 대신 비리버와 함께 고귀한 산책을 시작하세요.',
+            en: 'Hilly Bukchon, start your noble walk with Beeliber instead of a suitcase.',
+            ja: '坂の多い北村、キャリアの代わりにBeeliberと高貴な散歩を始めましょう。',
+            zh: '坡道较多的北村，让Beeliber代劳行李，开启优雅漫步。'
+        },
+        coordinates: {
+            lat: 37.5829,
+            lng: 126.9835
+        }
+    },
+    {
+        id: 'itaewon-night',
+        category: 'spot',
+        title: {
+            ko: '이태원: 잠들지 않는 서울의 밤 🌙',
+            en: 'Itaewon: Seoul\'s Night That Never Sleeps',
+            ja: '梨泰院：眠らないソウルの夜',
+            zh: '梨泰院：不眠之城的首尔之夜'
+        },
+        desc: {
+            ko: '비리버 이태원 지점에 짐을 보관하고 자유로운 이태원의 밤을 즐기세요.',
+            en: 'Store bags at Beeliber Itaewon Branch and enjoy the free night.',
+            ja: 'Beeliber梨泰院店に荷物を預けて、自由な夜を楽しみましょう。',
+            zh: '将行李存放在Beeliber梨泰院店，尽情享受自由之夜。'
+        },
+        coordinates: {
+            lat: 37.5340,
+            lng: 126.9946
+        }
+    },
+    {
+        id: 'hongdae-street',
+        category: 'spot',
+        title: {
+            ko: '홍대: 젊음과 예술의 거리 🎨',
+            en: 'Hongdae: Street of Youth and Art',
+            ja: '弘大：若さと芸術の街',
+            zh: '弘大：青春与艺术之街'
+        },
+        desc: {
+            ko: '버스킹 공연부터 힙한 클럽까지, 무거운 짐 없이 홍대를 100% 즐기는 법.',
+            en: 'From busking to clubs, enjoy Hongdae 100% without heavy bags.',
+            ja: 'バスキングからクラブまで、重い荷物なしで弘大를 100% 즐기는 법.',
+            zh: '从街头表演到夜店，告别沉重行李，100%享受弘大魅力。'
         },
         coordinates: {
             lat: 37.5565,
             lng: 126.9239
+        }
+    },
+    {
+        id: 'gyeongbokgung-palace',
+        category: 'spot',
+        title: {
+            ko: '경복궁: 조선의 위엄 👑',
+            en: 'Gyeongbokgung Palace: Grandeur of Joseon',
+            ja: '景福宮：朝鮮の威厳',
+            zh: '景福宫：朝鲜的威严'
+        },
+        desc: {
+            ko: '한복 입고 인생샷 찍기 전, 무거운 짐은 가까운 비리버 지점에 맡기세요.',
+            en: 'Before taking life shots in Hanbok, drop your bags at a nearby Beeliber.',
+            ja: '韓服を着て人生ショットを撮る前に、重い荷物は近くのBeeliberに預けましょう。',
+            zh: '换上韩服拍美照前，把重行李交给明洞或附近的Beeliber。'
+        },
+        coordinates: {
+            lat: 37.5796,
+            lng: 126.9770
+        }
+    },
+    {
+        id: 'n-seoul-tower',
+        category: 'spot',
+        title: {
+            ko: 'N서울타워: 서울의 파노라마 🗼',
+            en: 'N Seoul Tower: Seoul Panorama',
+            ja: 'Nソウルタワー：ソウルのパノラマ',
+            zh: 'N首尔塔：首尔全景'
+        },
+        desc: {
+            ko: '남산의 가파른 언덕, 캐리어는 비리버에게 맡기고 가볍게 오르세요.',
+            en: 'Steep hills of Namsan, leave your luggage with Beeliber and climb light.',
+            ja: '南山の急な坂、キャリアはBeeliberに預けて身軽에 登りましょう.',
+            zh: '南山的陡坡，把行李交给Beeliber，轻松登顶。'
+        },
+        coordinates: {
+            lat: 37.5512,
+            lng: 126.9882
+        }
+    },
+    {
+        id: 'ddp-design',
+        category: 'spot',
+        title: {
+            ko: 'DDP: 동대문의 미래주의 🛸',
+            en: 'DDP: Dongdaemun Futurism',
+            ja: 'DDP：東大門の未来主義',
+            zh: 'DDP：东大门的未来主义'
+        },
+        desc: {
+            ko: 'DDP 전시 관람, 짐 걱정 없이 우주선 같은 건축미를 감상하세요.',
+            en: 'DDP exhibitions, enjoy the spaceship-like architecture without bag worries.',
+            ja: 'DDP展示観覧、荷物の心配なし에 宇宙船のような建築美を鑑賞してください.',
+            zh: '打卡DDP展览，告别行李负担，尽情欣赏未来感建筑。'
+        },
+        coordinates: {
+            lat: 37.5665,
+            lng: 127.0092
         }
     }
 ];

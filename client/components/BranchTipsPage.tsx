@@ -7,11 +7,13 @@ import { SEO_LOCATIONS, SeoLocation } from '../src/constants/seoLocations';
 import { TRAVEL_TIPS } from '../src/constants/travelTips';
 import { LOCATIONS } from '../constants';
 import SEO from './SEO';
+import TipsMap from './tips/TipsMap';
 
 const BranchTipsPage: React.FC<{ lang: string; t: any }> = ({ lang, t }) => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const [seoData, setSeoData] = useState<SeoLocation | null>(null);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
     useEffect(() => {
         const data = SEO_LOCATIONS.find(loc => loc.slug === slug);
@@ -21,6 +23,22 @@ const BranchTipsPage: React.FC<{ lang: string; t: any }> = ({ lang, t }) => {
             navigate('/tips', { replace: true });
         }
         window.scrollTo(0, 0);
+
+        // [스봉이] 사용자의 실시간 위치 파악 시작! 🛰️💅
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                    console.log("[스봉이] 사용자 위치 수신 성공! ✨");
+                },
+                (error) => {
+                    console.warn("[스봉이] 위치 권한이 거부되었거나 오류가 발생했어요. 🙄", error);
+                }
+            );
+        }
     }, [slug, navigate]);
 
     if (!seoData) return null;
@@ -91,6 +109,20 @@ const BranchTipsPage: React.FC<{ lang: string; t: any }> = ({ lang, t }) => {
                         {l(seoData.intros)}
                     </motion.p>
                 </header>
+
+                {/* [스봉이] 프리미엄 지도 섹션 💅✨ */}
+                <motion.section 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="mb-32"
+                >
+                    <div className="flex items-center gap-4 mb-8">
+                        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-bee-yellow italic">Interactive Discovery Map</h2>
+                        <div className="h-px flex-1 bg-bee-yellow/20" />
+                    </div>
+                    <TipsMap location={seoData} userLocation={userLocation} lang={lang} />
+                </motion.section>
 
                 {/* Hotspots Section */}
                 <section className="mb-32">

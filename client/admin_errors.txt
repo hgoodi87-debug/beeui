@@ -1,9 +1,0 @@
-﻿components/AdminDashboard.tsx(111,119): error TS2304: Cannot find name 'useAdminStore'.
-components/AdminDashboard.tsx(126,33): error TS2552: Cannot find name 'useAdmins'. Did you mean 'admins'?
-components/AdminDashboard.tsx(127,36): error TS2552: Cannot find name 'useInquiries'. Did you mean 'inquiries'?
-components/AdminDashboard.tsx(128,42): error TS2552: Cannot find name 'useBranchProspects'. Did you mean 'branchProspects'?
-components/AdminDashboard.tsx(129,35): error TS2552: Cannot find name 'useCashClosings'. Did you mean 'setCashClosing'?
-components/AdminDashboard.tsx(130,39): error TS2552: Cannot find name 'useExpenditures'. Did you mean 'expenditures'?
-components/AdminDashboard.tsx(291,44): error TS2552: Cannot find name 'useCashClosings'. Did you mean 'setCashClosing'?
-components/AdminDashboard.tsx(292,44): error TS2552: Cannot find name 'useExpenditures'. Did you mean 'expenditures'?
-components/AdminDashboard.tsx(627,38): error TS7006: Parameter 'c' implicitly has an 'any' type.

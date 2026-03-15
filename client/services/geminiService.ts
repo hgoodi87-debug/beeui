@@ -41,8 +41,8 @@ export const sendMessageToGemini = async (
 ): Promise<string> => {
   try {
     // Create instance inside the call to ensure it uses the latest key from AISTUDIO dialog
-    // Use VITE_FIREBASE_API_KEY from env or retrieve from local storage if managed elsewhere
-    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || (localStorage.getItem('beeliber_cloud_config') ? JSON.parse(localStorage.getItem('beeliber_cloud_config')!).apiKey : '');
+    // [스봉이] 환경 변수 유실과 로컬 스토리지 캐시 사고를 방지하기 위해 하드코딩으로 교체했어요! 💅✨
+    const apiKey = "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0";
 
     if (!apiKey) throw new Error("API_KEY_MISSING");
 
@@ -85,7 +85,8 @@ export const sendMessageToGemini = async (
 
 export const translateText = async (text: string, targetLang: string): Promise<string> => {
   try {
-    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || (localStorage.getItem('beeliber_cloud_config') ? JSON.parse(localStorage.getItem('beeliber_cloud_config')!).apiKey : '');
+    // [스봉이] 여기도 마찬가지로 안전하게 하드코딩! 💅✨
+    const apiKey = "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0";
     if (!apiKey) return text;
 
     const ai = new GoogleGenerativeAI(apiKey);

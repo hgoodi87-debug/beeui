@@ -194,39 +194,43 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                 </div>
             </div>
 
-            {/* Payment Method Matrix */}
-            <div className="bg-gray-50/50 p-6 rounded-[32px] border border-gray-50 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">카드결제</span>
-                    <span className="text-[11px] font-black">₩{(revenueStats?.card || 0).toLocaleString()}</span>
+            {/* Payment Method Matrix - Premium Card Style */}
+            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                <div className="flex items-center justify-between">
+                    <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <i className="fa-solid fa-credit-card text-bee-blue"></i> 결제 수단별 분석 매트릭스
+                    </h4>
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-100 animate-pulse"></div>
                 </div>
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">현금 결제</span>
-                    <span className="text-[11px] font-black text-emerald-500">₩{(revenueStats?.cash || 0).toLocaleString()}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">네이버페이</span>
-                    <span className="text-[11px] font-black text-green-500">₩{(revenueStats?.naver || 0).toLocaleString()}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">카카오페이</span>
-                    <span className="text-[11px] font-black text-yellow-500">₩{(revenueStats?.kakao || 0).toLocaleString()}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">애플페이</span>
-                    <span className="text-[11px] font-black">₩{(revenueStats?.apple || 0).toLocaleString()}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">삼성페이</span>
-                    <span className="text-[11px] font-black text-blue-400">₩{(revenueStats?.samsung || 0).toLocaleString()}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">페이팔</span>
-                    <span className="text-[11px] font-black text-blue-600">₩{(revenueStats?.paypal || 0).toLocaleString()}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col items-center">
-                    <span className="text-[8px] font-black text-gray-300 uppercase mb-1">해외결제</span>
-                    <span className="text-[11px] font-black text-gray-400">₩{(revenueStats?.alipay + revenueStats?.wechat || 0).toLocaleString()}</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                    {[
+                        { label: '카드결제', amount: revenueStats?.card || 0, icon: 'fa-credit-card', color: 'gray' },
+                        { label: '현금 결제', amount: revenueStats?.cash || 0, icon: 'fa-money-bill-wave', color: 'emerald' },
+                        { label: '네이버페이', amount: revenueStats?.naver || 0, icon: 'fa-n', color: 'green' },
+                        { label: '카카오페이', amount: revenueStats?.kakao || 0, icon: 'fa-comment', color: 'yellow' },
+                        { label: '애플페이', amount: revenueStats?.apple || 0, icon: 'fa-apple-pay', color: 'black' },
+                        { label: '삼성페이', amount: revenueStats?.samsung || 0, icon: 'fa-mobile-screen', color: 'blue' },
+                        { label: '페이팔', amount: revenueStats?.paypal || 0, icon: 'fa-paypal', color: 'indigo' },
+                        { label: '해외결제', amount: (revenueStats?.alipay || 0) + (revenueStats?.wechat || 0), icon: 'fa-globe', color: 'violet' }
+                    ].map((m, idx) => (
+                        <motion.div 
+                            key={m.label} 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="bg-gray-50/50 p-4 rounded-[24px] border border-transparent hover:border-gray-200 hover:bg-white hover:shadow-md transition-all group/method"
+                        >
+                            <div className="flex flex-col items-center text-center space-y-2">
+                                <div className={`w-8 h-8 rounded-xl bg-${m.color}-50 flex items-center justify-center text-[10px] group-hover/method:scale-110 transition-transform`}>
+                                    <i className={`fa-solid ${m.icon} ${m.amount > 0 ? `text-${m.color}-500` : 'text-gray-300'}`}></i>
+                                </div>
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{m.label}</span>
+                                <span className={`text-[11px] font-black font-mono ${m.amount > 0 ? 'text-bee-black' : 'text-gray-200'}`}>
+                                    ₩{m.amount.toLocaleString()}
+                                </span>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
             </div>
 
@@ -431,44 +435,81 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-6">
                             {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                                <div key={day} className="text-center text-[10px] font-black text-gray-300 uppercase tracking-widest pb-4 border-b border-gray-50">{day}</div>
+                                <div key={day} className="text-center text-[11px] font-black text-gray-300 uppercase tracking-[0.2em] pb-6 border-b border-gray-50">{day}</div>
                             ))}
                             {calendarDays.map((day, idx) => {
                                 const dateStr = day.toISOString().split('T')[0];
                                 const total = getDailyTotal(dateStr);
                                 const isSelected = revenueEndDate === dateStr;
+                                
+                                // Heatmap intensity (0 to 1)
+                                const intensity = total > 0 ? Math.min(total / 3000000, 1) : 0;
+                                const isHighRevenue = total >= 1500000;
 
                                 return (
-                                    <div
+                                    <motion.div
                                         key={idx}
+                                        whileHover={{ y: -5, scale: 1.02 }}
                                         onClick={() => setSelectedDetailDate(dateStr)}
-                                        className={`min-h-[100px] p-4 rounded-[28px] border-2 cursor-pointer transition-all hover:-translate-y-1 ${isSelected ? 'bg-bee-black border-bee-black shadow-xl shadow-bee-black/20' : 'bg-gray-50/50 border-transparent hover:border-bee-yellow/20 hover:bg-white hover:shadow-lg'
-                                            }`}
+                                        className={`min-h-[120px] p-5 rounded-[32px] border-2 cursor-pointer transition-all relative overflow-hidden group/day ${
+                                            isSelected 
+                                                ? 'bg-bee-black border-bee-black shadow-2xl shadow-bee-black/30' 
+                                                : 'bg-white border-gray-50 hover:border-bee-yellow/20 hover:shadow-xl'
+                                        }`}
                                     >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <span className={`text-xs font-black ${isSelected ? 'text-bee-yellow' : 'text-gray-400'}`}>{day.getDate()}</span>
-                                            {total > 1000000 && <div className="w-1.5 h-1.5 rounded-full bg-bee-yellow animate-pulse"></div>}
-                                        </div>
-                                        <div className="space-y-1">
-                                            {total > 0 && (
-                                                <>
-                                                    <p className={`text-[10px] font-black leading-tight ${isSelected ? 'text-white' : 'text-bee-black'}`}>₩{total.toLocaleString()}</p>
-                                                    <div className="w-full h-1 bg-bee-yellow/20 rounded-full overflow-hidden">
-                                                        <motion.div 
-                                                            className="bg-bee-yellow h-full" 
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${Math.min((total / 2000000) * 100, 100)}%` }}
-                                                            transition={{ duration: 0.8, ease: "easeOut" }}
-                                                        />
-                                                    </div>
+                                        {/* Heatmap background effect */}
+                                        {!isSelected && total > 0 && (
+                                            <div 
+                                                className="absolute inset-x-0 bottom-0 bg-bee-yellow/5" 
+                                                style={{ 
+                                                    height: `${intensity * 100}%`,
+                                                    opacity: intensity * 0.5 + 0.1
+                                                }}
+                                            />
+                                        )}
 
-
-                                                </>
+                                        <div className="flex justify-between items-start mb-6 relative z-10">
+                                            <span className={`text-xs font-black ${isSelected ? 'text-bee-yellow' : 'text-gray-300 group-hover/day:text-bee-black'}`}>
+                                                {day.getDate()}
+                                            </span>
+                                            {isHighRevenue && (
+                                                <div className="flex gap-0.5">
+                                                    <div className="w-1 h-1 rounded-full bg-bee-yellow animate-ping"></div>
+                                                    <div className="w-1 h-1 rounded-full bg-bee-yellow"></div>
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
+
+                                        <div className="space-y-2 relative z-10">
+                                            {total > 0 ? (
+                                                <>
+                                                    <p className={`text-xs font-black font-mono tracking-tighter leading-tight ${isSelected ? 'text-white' : 'text-bee-black'}`}>
+                                                        ₩{total.toLocaleString()}
+                                                    </p>
+                                                    <div className="h-1 bg-gray-100/50 rounded-full overflow-hidden">
+                                                        <motion.div 
+                                                            className={`h-full ${isSelected ? 'bg-bee-yellow' : 'bg-bee-yellow opacity-40'}`}
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${intensity * 100}%` }}
+                                                            transition={{ duration: 1, ease: "easeOut" }}
+                                                        />
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="h-10 flex items-center justify-center opacity-[0.03] group-hover/day:opacity-[0.08] transition-opacity">
+                                                    <i className="fa-solid fa-peace text-xl"></i>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {isSelected && (
+                                            <div className="absolute -bottom-2 -right-2 opacity-10">
+                                                <i className="fa-solid fa-fingerprint text-4xl text-white"></i>
+                                            </div>
+                                        )}
+                                    </motion.div>
                                 );
                             })}
                         </div>

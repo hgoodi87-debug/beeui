@@ -24,6 +24,7 @@ export interface TravelTip {
         lat: number;
         lng: number;
     };
+    targetBranchId?: string; // [스봉이] 명시적으로 매칭될 추천 지점 ID 🛰️✨
 }
 
 export const TRAVEL_TIPS: TravelTip[] = [
@@ -67,7 +68,8 @@ export const TRAVEL_TIPS: TravelTip[] = [
         coordinates: {
             lat: 37.5447,
             lng: 127.0567
-        }
+        },
+        targetBranchId: 'MSUS'
     },
     {
         id: 'myeongdong-shopping',
@@ -87,7 +89,8 @@ export const TRAVEL_TIPS: TravelTip[] = [
         coordinates: {
             lat: 37.5635,
             lng: 126.9842
-        }
+        },
+        targetBranchId: 'MBX-016'
     },
     {
         id: 'bukchon-hanok',
@@ -127,7 +130,8 @@ export const TRAVEL_TIPS: TravelTip[] = [
         coordinates: {
             lat: 37.5340,
             lng: 126.9946
-        }
+        },
+        targetBranchId: 'MIT'
     },
     {
         id: 'hongdae-street',
@@ -147,7 +151,8 @@ export const TRAVEL_TIPS: TravelTip[] = [
         coordinates: {
             lat: 37.5565,
             lng: 126.9239
-        }
+        },
+        targetBranchId: 'HBO'
     },
     {
         id: 'gyeongbokgung-palace',
@@ -167,7 +172,8 @@ export const TRAVEL_TIPS: TravelTip[] = [
         coordinates: {
             lat: 37.5796,
             lng: 126.9770
-        }
+        },
+        targetBranchId: 'MBX-013'
     },
     {
         id: 'n-seoul-tower',
@@ -207,6 +213,194 @@ export const TRAVEL_TIPS: TravelTip[] = [
         coordinates: {
             lat: 37.5665,
             lng: 127.0092
+        },
+        targetBranchId: 'MBX-002'
+    },
+    {
+        id: 'banpo-bridge',
+        category: 'spot',
+        title: {
+            ko: '반포대교: 달빛무지개분수 🌈',
+            en: 'Banpo Bridge: Moonlight Rainbow Fountain',
+            ja: '盤浦大橋：月光レインボー噴水',
+            zh: '盘浦大桥：月光彩虹喷泉'
+        },
+        desc: {
+            ko: '세계 최장 교량 분수의 화려한 야경을 감상하세요.',
+            en: 'Enjoy the spectacular night view of the world\'s longest bridge fountain.',
+            ja: '世界最長の橋の噴水の華やかな夜景を鑑賞してください。',
+            zh: '欣赏世界上最长的桥梁喷泉的壮丽夜景。'
+        },
+        coordinates: {
+            lat: 37.5152,
+            lng: 127.0016
+        },
+        targetBranchId: 'MIT'
+    },
+    {
+        id: '63-building',
+        category: 'spot',
+        title: {
+            ko: '63빌딩: 여의도의 황금빛 랜드마크 🏢',
+            en: '63 Building: Golden Landmark of Yeouido',
+            ja: '63ビル：汝矣島の黄金龍のランドマーク',
+            zh: '63大厦：汝矣岛的金色地标'
+        },
+        desc: {
+            ko: '전망대와 아쿠아리움에서 특별한 추억을 만드세요.',
+            en: 'Make special memories at the observatory and aquarium.',
+            ja: '展望台とアクアリウムで特別な思い出を作ってください。',
+            zh: '在观景台和水族馆留下特别的回忆。'
+        },
+        coordinates: {
+            lat: 37.5194,
+            lng: 126.9402
+        },
+        targetBranchId: 'MYS'
+    },
+    {
+        id: 'lotte-world-tower',
+        category: 'spot',
+        title: {
+            ko: '롯데월드타워: 서울의 지붕 🗼',
+            en: 'Lotte World Tower: Roof of Seoul',
+            ja: 'ロッテワールドタワー：ソウルの屋根',
+            zh: '乐天世界塔：首尔之巅'
+        },
+        desc: {
+            ko: '세계에서 5번째로 높은 빌딩에서 서울을 발아래에 두세요.',
+            en: 'Look down on Seoul from the 5th tallest building in the world.',
+            ja: '世界で5番目に高いビルからソウルを見下ろしてください。',
+            zh: '在世界第五高楼俯瞰首尔全景。'
+        },
+        coordinates: {
+            lat: 37.5126,
+            lng: 127.1025
         }
+    },
+    {
+        id: 'starfield-library',
+        category: 'spot',
+        title: {
+            ko: '별마당 도서관: 코엑스의 심장 📚',
+            en: 'Starfield Library: Heart of COEX',
+            ja: 'ピョルマダン図書館：COEXの心臓部',
+            zh: '星空图书馆：COEX核心'
+        },
+        desc: {
+            ko: '거대한 책장과 예술적 공간이 주는 영감을 느껴보세요.',
+            en: 'Feel the inspiration from huge bookshelves and artistic space.',
+            ja: '巨大な本棚と芸術的な空間が与えるインスピレーションを感じてください。',
+            zh: '感受巨大书架和艺术空间带来的灵感。'
+        },
+        coordinates: {
+            lat: 37.5118,
+            lng: 127.0588
+        }
+    },
+    {
+        id: 'heunginjimun-gate',
+        category: 'spot',
+        title: {
+            ko: '흥인지문: 동쪽의 살아있는 역사 🏯',
+            en: 'Heunginjimun: Living History of the East',
+            ja: '興仁之門：東の生きた歴史',
+            zh: '兴仁之门：东方的历史见证'
+        },
+        desc: {
+            ko: '보물 제1호, 동대문의 웅장한 자태를 만나보세요.',
+            en: 'Meet the majestic appearance of Treasure No. 1, Dongdaemun Gate.',
+            ja: '宝物第1号、東大門の雄大な姿に会ってみてください。',
+            zh: '打卡第一号国宝，感受兴仁之门的雄伟气势。'
+        },
+        coordinates: {
+            lat: 37.5711,
+            lng: 127.0097
+        },
+        targetBranchId: 'MBX-002'
+    },
+    {
+        id: 'ikseon-dong',
+        category: 'spot',
+        title: {
+            ko: '익선동: 과거와 현재의 공존 ☕',
+            en: 'Ikseon-dong: Past and Present Coexistence',
+            ja: '益善洞：過去と現在の共存',
+            zh: '益善洞：过去与现在的共存'
+        },
+        desc: {
+            ko: '좁은 골목길 사이 숨겨진 보석 같은 한옥 카페들을 탐험하세요.',
+            en: 'Explore hidden gem-like Hanok cafes in narrow alleys.',
+            ja: '狭い路地裏に隠れた宝石のような韓屋カフェを探索してください。',
+            zh: '探索狭窄巷弄间如宝石般的韩屋咖啡馆。'
+        },
+        coordinates: {
+            lat: 37.5744,
+            lng: 126.9897
+        },
+        targetBranchId: 'MBX-013'
+    },
+    {
+        id: 'gwangjang-market',
+        category: 'spot',
+        title: {
+            ko: '광장시장: 서울의 맛을 찾아서 🥟',
+            en: 'Gwangjang Market: Taste of Seoul',
+            ja: '広蔵市場：ソウルの味を求めて',
+            zh: '广藏市场：寻找首尔之味'
+        },
+        desc: {
+            ko: '빈대떡과 육회, 넷플릭스가 열광한 서울의 스트리트 푸드를 경험하세요.',
+            en: 'Experience the street food Netflix loved: Bindaetteok and Yukhoe.',
+            ja: 'ピンデトッやユッケなど、Netflixも熱狂したソウルのストリートフードを体験してください。',
+            zh: '品尝绿豆饼和生牛肉，体验令Netflix着迷的首尔街头美食。'
+        },
+        coordinates: {
+            lat: 37.5701,
+            lng: 126.9995
+        },
+        targetBranchId: 'MBX-002'
+    },
+    {
+        id: 'hannam-dong',
+        category: 'spot',
+        title: {
+            ko: '한남동: 감각적인 라이프스타일 🛍️',
+            en: 'Hannam-dong: Sensible Lifestyle',
+            ja: '漢南洞：感性的なライフスタイル',
+            zh: '汉南洞：感性的生活方式'
+        },
+        desc: {
+            ko: '트렌디한 편집숍과 전시설이 가득한 서울의 가장 힙한 동네입니다.',
+            en: 'Seoul\'s hippest neighborhood full of trendy shops and galleries.',
+            ja: 'トレンディなセレクトショップや展示施設が並ぶ、ソウルで最もヒップな街です。',
+            zh: '遍布潮流买手店和展览空间，是首尔最时髦的社区。'
+        },
+        coordinates: {
+            lat: 37.5350,
+            lng: 127.0010
+        },
+        targetBranchId: 'MIT'
+    },
+    {
+        id: 'seoul-forest',
+        category: 'spot',
+        title: {
+            ko: '서울숲: 도심 속 초록빛 휴식 🌿',
+            en: 'Seoul Forest: Green Oasis in the City',
+            ja: 'ソウルの森：都会の中の緑の休息',
+            zh: '首尔林：都市中的绿色休憩'
+        },
+        desc: {
+            ko: '성수동 핫라인을 걷다 만나는 넓은 공원에서 피크닉을 즐기세요.',
+            en: 'Enjoy a picnic in the vast park met while walking the Seongsu hotline.',
+            ja: '聖水洞のホットラインを歩いていると現れる広い公園でピクニックを楽しんでください。',
+            zh: '在漫步圣水洞热门路线时偶遇的广阔公园里享受野餐。'
+        },
+        coordinates: {
+            lat: 37.5443,
+            lng: 127.0374
+        },
+        targetBranchId: 'MSUS'
     }
 ];

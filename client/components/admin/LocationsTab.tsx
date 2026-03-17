@@ -291,32 +291,32 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
             {/* --- KPI Overview --- */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
                 <div className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm flex flex-col justify-between">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1"><i className="fa-solid fa-network-wired"></i> Total Network</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1"><i className="fa-solid fa-network-wired"></i> 전체 네트워크</p>
                     <div className="flex items-end gap-3">
                         <h3 className="text-3xl font-black text-bee-black">{locations.length}</h3>
-                        <span className="text-xs font-bold text-gray-300 mb-1">Locations</span>
+                        <span className="text-xs font-bold text-gray-300 mb-1">지점수</span>
                     </div>
                 </div>
                 <div className="bg-emerald-50 p-5 rounded-[24px] border border-emerald-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
                     <div className="absolute -right-4 -top-4 w-20 h-20 bg-emerald-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                    <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mb-1 z-10"><i className="fa-solid fa-satellite-dish"></i> Active Operational</p>
+                    <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mb-1 z-10"><i className="fa-solid fa-satellite-dish"></i> 활성 운영 지점</p>
                     <div className="flex items-end gap-3 z-10">
                         <h3 className="text-3xl font-black text-emerald-500">{activeCount}</h3>
                         <span className="text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full mb-1">{((activeCount/locations.length)*100).toFixed(0)}%</span>
                     </div>
                 </div>
                 <div className="bg-orange-50 p-5 rounded-[24px] border border-orange-100 shadow-sm flex flex-col justify-between">
-                    <p className="text-[9px] font-black text-orange-600/60 uppercase tracking-widest mb-1"><i className="fa-solid fa-pause-circle"></i> Onboarding/Paused</p>
+                    <p className="text-[9px] font-black text-orange-600/60 uppercase tracking-widest mb-1"><i className="fa-solid fa-pause-circle"></i> 준비중/일시중지</p>
                     <div className="flex items-end gap-3">
                         <h3 className="text-3xl font-black text-orange-500">{inactiveCount}</h3>
-                        <span className="text-xs font-bold text-orange-300 mb-1">Pending</span>
+                        <span className="text-xs font-bold text-orange-300 mb-1">대기</span>
                     </div>
                 </div>
                 <div className={`p-5 rounded-[24px] border shadow-sm flex flex-col justify-between ${missingCoordCount > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
-                    <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${missingCoordCount > 0 ? 'text-red-500' : 'text-gray-400'}`}><i className="fa-solid fa-triangle-exclamation"></i> Action Required</p>
+                    <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${missingCoordCount > 0 ? 'text-red-500' : 'text-gray-400'}`}><i className="fa-solid fa-triangle-exclamation"></i> 대응 필요 항목</p>
                     <div className="flex items-end gap-3">
                         <h3 className={`text-3xl font-black ${missingCoordCount > 0 ? 'text-red-600' : 'text-gray-300'}`}>{missingCoordCount}</h3>
-                        <span className={`text-[9px] font-black mb-1 ${missingCoordCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{missingCoordCount > 0 ? '좌표/주소 매핑 필요' : 'All Clear'}</span>
+                        <span className={`text-[9px] font-black mb-1 ${missingCoordCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{missingCoordCount > 0 ? '좌표/주소 매핑 필요' : '정상 탐지'}</span>
                     </div>
                 </div>
             </div>
@@ -333,7 +333,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="지점명 또는 ID 검색..." className="w-full bg-gray-50 pl-8 pr-4 py-2.5 rounded-xl text-xs font-bold border border-gray-100 focus:border-bee-yellow outline-none" />
                             </div>
                             <button onClick={() => handleOpenPanel()} className="shrink-0 px-4 py-2 h-[38px] bg-bee-black text-bee-yellow font-black text-[10px] rounded-xl shadow-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 uppercase tracking-widest whitespace-nowrap">
-                                <i className="fa-solid fa-plus"></i> Add Partner
+                                <i className="fa-solid fa-plus"></i> 신규 지점 등록
                             </button>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -379,11 +379,11 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                         <th className="px-5 py-4 w-10">
                                             <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === filteredLocations.length} onChange={toggleSelectAll} title="전체 지점 선택" className="w-4 h-4 rounded-lg accent-bee-black" />
                                         </th>
-                                        <th className="px-5 py-4">Status & Type</th>
-                                        <th className="px-5 py-4">Location Name / ID</th>
-                                        <th className="px-5 py-4">Services & Capacity</th>
-                                        <th className="px-5 py-4">Commissions (D/S)</th>
-                                        <th className="px-5 py-4 text-center">Settings</th>
+                                        <th className="px-5 py-4">상태 및 유형</th>
+                                        <th className="px-5 py-4">지점명 / ID</th>
+                                        <th className="px-5 py-4">제공 서비스</th>
+                                        <th className="px-5 py-4">수수료 (배송/보관)</th>
+                                        <th className="px-5 py-4 text-center">연동 설정</th>
                                         <th className="px-5 py-4 w-10"></th>
                                     </tr>
                                 </thead>
@@ -447,13 +447,13 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <div className="absolute bottom-6 left-6 z-10">
                                 <div className="px-6 py-4 bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[30px] flex items-center gap-6">
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Hubs</span>
+                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">활성 지점</span>
                                         <span className="text-xl font-black text-bee-black">{filteredLocations.filter(l => l.isActive !== false).length}</span>
                                     </div>
                                     <div className="w-px h-8 bg-gray-200"></div>
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Selected</span>
-                                        <span className="text-xl font-black text-bee-yellow">{locations.find(l => l.id === locForm.id)?.name || 'None'}</span>
+                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">선택된 지점</span>
+                                        <span className="text-xl font-black text-bee-yellow">{locations.find(l => l.id === locForm.id)?.name || '없음'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -468,7 +468,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <span className="w-2 h-8 bg-bee-yellow rounded-full"></span>
                             {locForm.id ? '지점 상세 정보' : '신규 지점 등록'}
                         </h3>
-                        <button onClick={handleClosePanel} className="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 flex items-center justify-center transition-colors shadow-sm">
+                        <button onClick={handleClosePanel} className="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 flex items-center justify-center transition-colors shadow-sm" title="패널 닫기">
                             <i className="fa-solid fa-xmark"></i>
                         </button>
                     </div>

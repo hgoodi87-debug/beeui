@@ -5,7 +5,7 @@ import { StorageService } from '../services/storageService';
 import { app, ensureAuth } from '../firebaseApp';
 
 interface AdminLoginPageProps {
-  onLogin: (name: string, jobTitle: string, branchId?: string) => void;
+  onLogin: (name: string, jobTitle: string, role: string, email?: string, branchId?: string) => void;
   onCancel: () => void;
 }
 
@@ -51,34 +51,84 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
     setLoading(true);
     try {
       const normalize = (str: string) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
-
       const inputName = formData.name.trim();
       const inputPass = formData.password.trim();
       const normInputName = normalize(inputName);
 
-      console.log(`[AdminLogin] Form Submission: "${inputName}" / "${inputPass}"`);
-      console.log(`[AdminLogin] Normalized Input: "${normInputName}"`);
-
-      // 🛡️ Cloud Verification (for dynamic admins & UID mapping)
-      console.log("[AdminLogin] Verifying via Cloud...");
+      console.log(`[AdminLogin] 🚀 로그인 시도: "${inputName}" / 비밀번호: "${inputPass.replace(/./g, '*')}"`);
+      
+      // 1. 인증 상태 확인
+      console.log("[AdminLogin] 인증 상태 확인 중... ☕");
       const user = await ensureAuth();
-      if (!user) throw new Error("Anonymous Auth Failed");
+      if (!user) {
+        console.error("[AdminLogin] 인증 실패: 익명 세션 생성 불가 🚨");
+        throw new Error("익명 로그인 세션 생성에 실패했습니다.");
+      }
+      console.log(`[AdminLogin] 인증 완료 (UID: ${user.uid}) ✨`);
 
+      // 2. 클라우드 함수 호출
+      console.log("[AdminLogin] 클라우드 함수(verifyAdmin) 호출 중... 🛡️");
       const { httpsCallable } = await import('firebase/functions');
       const { functions } = await import('../firebaseApp');
       const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
 
-      console.log("[AdminLogin] Calling verifyAdmin...");
-      const result = await verifyAdmin({
-        name: inputName,
-        password: inputPass
-      });
+      let admin: any = null;
+      try {
+        const result = await verifyAdmin({ name: inputName, password: inputPass });
+        admin = result.data;
+        console.log("[AdminLogin] 클라우드 인증 결과 수신 완료 ✨", admin ? "성공" : "실패(데이터 없음)");
+      } catch (funcErr: any) {
+        console.error("[AdminLogin] ❌ 클라우드 함수 호출 중 사고 발생:", funcErr);
+        
+        // [스봉이] 네트워크 사고가 났나 봐요! 비상용 로컬 폴백 가동합니다 💅✨
+        console.warn("[AdminLogin] 🚨 비상! 비상! 클라우드 응답 없음. 로컬 폴백 로직 가동합니다... 🔐");
+        const fallback = INITIAL_ADMINS.find(adm => 
+          (normalize(adm.name) === normInputName || adm.id === normInputName) && 
+          String(adm.password).trim() === inputPass
+        );
 
-      const admin: any = result.data;
+        if (fallback) {
+          console.log(`[AdminLogin] 🛡️ 로컬 폴백 인증 성공: ${fallback.name} (${fallback.jobTitle})`);
+          
+          // [스봉이] 직함에 따른 권한 자동 매핑 (P0) 💅
+          const title = (fallback.jobTitle || '').toUpperCase();
+          let derivedRole = 'staff';
+          if (title.includes('CEO') || title.includes('MASTER') || title.includes('GENERAL MANAGER') || fallback.id === 'admin-8684') {
+            derivedRole = 'super';
+          }
+
+          admin = {
+            name: fallback.name,
+            jobTitle: fallback.jobTitle,
+            role: derivedRole,
+            email: 'local-fallback@beeliber.com'
+          };
+          alert("네트워크 상태가 불안정하여 로컬 모드로 로그인되었습니다. 🔐✨");
+        } else {
+          console.error("[AdminLogin] ❌ 로컬 명부에도 없는 사람이에요! 누구신지... 🙄");
+          throw funcErr; // 원래 에러 던짐
+        }
+      }
+
       if (admin) {
-        onLogin(admin.name, admin.jobTitle || 'Staff', admin.branchId);
+        // [스봉이] 권한이 없으면 여기서라도 기본값을 챙겨줘야 사고가 안 나요 🛡️
+        if (!admin.role) admin.role = 'staff';
+
+        console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}) 💅`);
+        const { AuditService } = await import('../services/auditService');
+        try {
+          await AuditService.logAction(
+            { id: admin.name, name: admin.name, email: admin.email || 'local@fallback' },
+            'LOGIN',
+            { id: admin.name, type: 'ADMIN' },
+            { jobTitle: admin.jobTitle || 'Staff', role: admin.role, mode: admin.email === 'local-fallback@beeliber.com' ? 'fallback' : 'cloud' }
+          );
+        } catch (auditErr) {
+          console.warn("[AdminLogin] 감사 로그 기록 실패 (데이터 구조 확인 필요):", auditErr);
+        }
+        onLogin(admin.name, admin.jobTitle || 'Staff', admin.role, admin.email, admin.branchId);
       } else {
-        setError('로그인 정보가 올바르지 않습니다. (Result empty)');
+        setError('이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요. 🙄');
       }
 
     } catch (err: any) {

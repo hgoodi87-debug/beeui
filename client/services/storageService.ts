@@ -2,7 +2,7 @@
 import { db, storage } from '../firebaseApp';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc, or } from "firebase/firestore";
-import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus } from "../types";
+import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
@@ -1157,5 +1157,51 @@ export const StorageService = {
     try {
       await deleteDoc(doc(db, "branch_prospects", id));
     } catch (e) { throw e; }
+  },
+
+  // --- Notices ---
+  subscribeNotices: (callback: (data: SystemNotice[]) => void): (() => void) => {
+    try {
+      const q = query(collection(db, "notices"), orderBy("createdAt", "desc"));
+      return onSnapshot(q, (snapshot) => {
+        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as SystemNotice));
+        callback(items);
+      }, (error) => {
+        console.error("Notices sub error", error);
+        // Fallback for missing index
+        const simpleQ = query(collection(db, "notices"));
+        onSnapshot(simpleQ, (snap) => {
+          const items = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as SystemNotice));
+          items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+          callback(items);
+        });
+      });
+    } catch (e) {
+      return () => { };
+    }
+  },
+
+  saveNotice: async (notice: SystemNotice): Promise<void> => {
+    const safeData = JSON.parse(JSON.stringify(notice));
+    try {
+      if (notice.id) {
+        await setDoc(doc(db, "notices", notice.id), safeData);
+      } else {
+        safeData.createdAt = new Date().toISOString();
+        await addDoc(collection(db, "notices"), safeData);
+      }
+    } catch (e) {
+      console.error("Failed to save notice", e);
+      throw e;
+    }
+  },
+
+  deleteNotice: async (id: string): Promise<void> => {
+    try {
+      await deleteDoc(doc(db, "notices", id));
+    } catch (e) {
+      console.error("Failed to delete notice", e);
+      throw e;
+    }
   }
 };

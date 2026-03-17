@@ -29,14 +29,31 @@ export interface ChatSession {
     unreadCount?: number;
 }
 
+export type AdminStatus = 'invited' | 'active' | 'suspended' | 'resigned' | 'locked';
+
 export interface AdminUser {
     id: string;
     name: string;
     jobTitle: string;
+    email?: string;
+    phone?: string;
+    loginId?: string;
     password?: string;
-    role?: 'super' | 'branch' | 'staff';
+    role?: 'super' | 'branch' | 'staff' | 'partner' | 'driver' | 'finance' | 'cs';
     branchId?: string;
+    status?: AdminStatus;
+    permissions?: string[];
+    orgType?: 'HQ' | 'HUB' | 'PARTNER' | 'DRIVER_GROUP';
+    security?: {
+        lastLoginAt?: string;
+        failedLoginCount?: number;
+        isLocked?: boolean;
+        passwordChangedAt?: string;
+        twoFactorEnabled?: boolean;
+    };
+    memo?: string;
     createdAt: string;
+    updatedAt?: string;
 }
 
 export interface UserProfile {

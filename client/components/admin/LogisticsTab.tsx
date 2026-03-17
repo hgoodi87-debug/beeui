@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookingState, BookingStatus, ServiceType, LocationOption, AdminTab } from '../../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/constants/admin';
+import { maskName, maskEmail } from '../../src/utils/maskUtils';
 
 interface LogisticsTabProps {
     activeTab: AdminTab;
@@ -21,6 +22,18 @@ interface LogisticsTabProps {
     handleSoftDelete: (id: string) => void;
     setSelectedBooking: (b: BookingState | null) => void;
     onAddManual?: () => void;
+    adminRole?: string;
+    adminEmail?: string;
+    cancelStartDate?: string;
+    setCancelStartDate?: (d: string) => void;
+    cancelEndDate?: string;
+    setCancelEndDate?: (d: string) => void;
+    // [스봉이] 일괄 처리 전용 프롭스 💅✨
+    selectedBookingIds: string[];
+    setSelectedBookingIds: (ids: string[]) => void;
+    handleBatchUpdateStatus: (s: BookingStatus) => void;
+    isBatchUpdating: boolean;
+    t: any;
 }
 
 const LogisticsTab: React.FC<LogisticsTabProps> = ({
@@ -41,8 +54,32 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     handlePrintLabel,
     handleSoftDelete,
     setSelectedBooking,
-    onAddManual
+    onAddManual,
+    adminRole = 'staff',
+    adminEmail,
+    cancelStartDate,
+    setCancelStartDate,
+    cancelEndDate,
+    setCancelEndDate,
+    selectedBookingIds,
+    setSelectedBookingIds,
+    handleBatchUpdateStatus,
+    isBatchUpdating,
+    t
 }) => {
+    // [스봉이] KST 기준 오늘 날짜 계산 센스있게 해드려요 💅✨
+    const todayKST = React.useMemo(() => {
+        const now = new Date();
+        const kstOffset = 9 * 60; // 9 hours
+        const kstTime = new Date(now.getTime() + (kstOffset + now.getTimezoneOffset()) * 60000);
+        return kstTime.toISOString().split('T')[0];
+    }, []);
+
+    const isNotToday = (dateStr?: string) => {
+        if (!dateStr) return false;
+        return dateStr !== todayKST;
+    };
+
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-2">
@@ -61,7 +98,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     onClick={() => setActiveStatusTab(tab)}
                                     className={`px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
                                 >
-                                    {tab === 'ALL' ? '전체' : tab === 'TODAY_IN' ? '오늘 입고' : tab === 'STORAGE' ? '보관중' : tab === 'TODAY_OUT' ? '오늘 픽업' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
+                                    {tab === 'ALL' ? (t.admin?.logistics?.filter_all || '전체') : tab === 'TODAY_IN' ? '오늘 입고' : tab === 'STORAGE' ? '보관중' : tab === 'TODAY_OUT' ? '오늘 픽업' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
                                 </button>
                             ))
                         ) : (
@@ -91,100 +128,199 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                 </div>
             </div>
 
+            {/* 취소/환불 날짜 필터 UI */}
+            {(activeStatusTab === 'CANCELLED' || activeStatusTab === 'ISSUE') && setCancelStartDate && setCancelEndDate && (
+                <div className="bg-red-50/70 border border-red-100 rounded-[28px] px-6 py-4 flex flex-wrap items-center gap-4 animate-fade-in-up">
+                    <div className="flex items-center gap-2 text-red-400">
+                        <i className="fa-solid fa-calendar-xmark text-sm"></i>
+                        <span className="text-[10px] font-black uppercase tracking-widest">취소/환불 날짜 구간 필터 🗂️</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="date"
+                            title="취소 시작일"
+                            value={cancelStartDate}
+                            onChange={e => setCancelStartDate(e.target.value)}
+                            className="text-xs font-black bg-white border border-red-100 rounded-xl px-3 py-2 outline-none focus:border-red-300 transition-colors cursor-pointer text-bee-black"
+                        />
+                        <span className="text-[10px] font-bold text-red-300">에서</span>
+                        <input
+                            type="date"
+                            title="취소 종료일"
+                            value={cancelEndDate}
+                            onChange={e => setCancelEndDate(e.target.value)}
+                            className="text-xs font-black bg-white border border-red-100 rounded-xl px-3 py-2 outline-none focus:border-red-300 transition-colors cursor-pointer text-bee-black"
+                        />
+                        <span className="text-[10px] font-bold text-red-300">까지</span>
+                    </div>
+                    <div className="ml-auto text-[10px] font-black text-red-400 bg-white px-3 py-1.5 rounded-xl border border-red-100">
+                        {filteredBookings.length}건 조회됨
+                    </div>
+                </div>
+            )}
+
             <div className="bg-white/50 backdrop-blur-3xl p-2 md:p-10 rounded-[40px] shadow-lg border border-gray-200 overflow-hidden">
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-white/80 text-[10px] font-black uppercase text-gray-400 border-b border-gray-200">
                             <tr>
-                                <th className="px-6 py-4">ID/이름</th>
-                                <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 지점' : '서비스 경로'}</th>
-                                <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 기간' : '날짜/수량'}</th>
-                                <th className="px-6 py-4">결제/정산 정보</th>
-                                <th className="px-6 py-4">운영 상태</th>
-                                <th className="px-6 py-4 text-center">액션</th>
+                                <th className="px-6 py-4 w-10">
+                                    <input
+                                        type="checkbox"
+                                        title="전체 선택"
+                                        checked={filteredBookings.length > 0 && selectedBookingIds.length === filteredBookings.length}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedBookingIds(filteredBookings.map(b => b.id!));
+                                            } else {
+                                                setSelectedBookingIds([]);
+                                            }
+                                        }}
+                                        className="w-4 h-4 rounded border-gray-300 text-bee-yellow focus:ring-bee-yellow cursor-pointer"
+                                    />
+                                </th>
+                                <th className="px-6 py-4">{t.admin?.logistics?.table?.id || 'ID / 예약 고객'}</th>
+                                <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 센터' : '이동 노선'}</th>
+                                <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 일정' : '집하 일자'}</th>
+                                <th className="px-6 py-4">금융/정산 상태</th>
+                                <th className="px-6 py-4">{t.admin?.logistics?.table?.status || '운영 관제'}</th>
+                                <th className="px-6 py-4 text-center">{t.admin?.logistics?.table?.actions || '작업'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredBookings.length > 0 ? filteredBookings.map(b => (
-                                <tr key={b.id} className="group hover:bg-white/80 transition-colors">
+                                <tr key={b.id} className={`group hover:bg-white/90 transition-all ${selectedBookingIds.includes(b.id!) ? 'bg-bee-yellow/5' : ''}`}>
+                                    <td className="px-6 py-5">
+                                        <input
+                                            type="checkbox"
+                                            title="선택"
+                                            checked={selectedBookingIds.includes(b.id!)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedBookingIds([...selectedBookingIds, b.id!]);
+                                                } else {
+                                                    setSelectedBookingIds(selectedBookingIds.filter(id => id !== b.id));
+                                                }
+                                            }}
+                                            className="w-4 h-4 rounded border-gray-300 text-bee-yellow focus:ring-bee-yellow cursor-pointer"
+                                        />
+                                    </td>
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{b.reservationCode || b.id}</span>
-                                            <span className="font-black text-bee-black group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>{b.userName}</span>
-                                            <span className="text-[10px] text-gray-400 font-bold">{b.userEmail}</span>
+                                            <div className="px-2 py-0.5 bg-gray-900 text-white text-[9px] font-black w-fit rounded mb-1.5 tracking-tighter">
+                                                {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
+                                            </div>
+                                            <span className="font-black text-bee-black text-sm group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>
+                                                {adminRole === 'super' ? b.userName : maskName(b.userName || '')}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-bold">
+                                                {adminRole === 'super' ? b.userEmail : maskEmail(b.userEmail || '')}
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
                                         {b.serviceType === ServiceType.DELIVERY ? (
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-3">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase">출발</span>
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase">FROM</span>
                                                     <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                                 </div>
-                                                <i className="fa-solid fa-arrow-right text-bee-yellow text-[10px]"></i>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase">도착</span>
+                                                <i className="fa-solid fa-arrow-right-long text-bee-yellow/50 text-[10px]"></i>
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase">TO</span>
                                                     <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation || '-'}</span>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-gray-400 uppercase">보관 지점</span>
+                                                <span className="text-[9px] font-black text-gray-400 uppercase">Center</span>
                                                 <span className="text-[11px] font-bold text-bee-black">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                             </div>
                                         )}
                                     </td>
-                                    <td className="px-6 py-5">
+                                    <td className={`px-6 py-5 transition-colors ${isNotToday(b.pickupDate) ? 'bg-amber-50/50' : ''}`}>
                                         {b.serviceType === ServiceType.DELIVERY ? (
-                                            <>
-                                                <div className="text-[11px] font-bold text-bee-black">{b.pickupDate}</div>
-                                                <div className="text-[10px] text-gray-400">가방 {b.bags}개</div>
-                                            </>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-[11px] font-black ${isNotToday(b.pickupDate) ? 'text-amber-600' : 'text-bee-black'}`}>
+                                                        {b.pickupDate}
+                                                    </span>
+                                                    {isNotToday(b.pickupDate) && (
+                                                        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-black rounded uppercase tracking-tighter animate-pulse">
+                                                            {new Date(b.pickupDate || '') > new Date(todayKST) ? 'Future' : 'Past'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[9px] font-bold text-gray-400 px-1.5 py-0.5 bg-gray-50 rounded-md w-fit italic">Items: {b.bags} Bags</div>
+                                            </div>
                                         ) : (
-                                            <>
-                                                <div className="text-[11px] font-bold text-bee-black">{b.pickupDate} ~ {b.dropoffDate || b.pickupDate}</div>
-                                                <div className="text-[10px] text-gray-400">{b.pickupTime} - {b.deliveryTime} | 가방 {b.bags}개</div>
-                                            </>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-[11px] font-black ${isNotToday(b.pickupDate) ? 'text-amber-600' : 'text-bee-black'}`}>
+                                                        {b.pickupDate} ~ {b.dropoffDate || b.pickupDate}
+                                                    </span>
+                                                    {isNotToday(b.pickupDate) && (
+                                                        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-black rounded uppercase tracking-tighter animate-pulse">
+                                                            Schedule Note
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[9px] font-bold text-gray-400 px-1.5 py-0.5 bg-gray-50 rounded-md w-fit">{b.pickupTime} - {b.deliveryTime} | {b.bags} Bags</div>
+                                            </div>
                                         )}
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col gap-1.5">
-                                            <div className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded w-fit flex items-center gap-1.5 ${b.paymentStatus === 'paid' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                                                <i className={`fa-solid ${b.paymentStatus === 'paid' ? 'fa-check' : 'fa-xmark'} text-[8px]`}></i>
-                                                {b.paymentStatus === 'paid' ? '결제 완료' : '미결제/취소'}
+                                            {/* Tier 1: Payment */}
+                                            <div className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 border ${b.paymentStatus === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                                                <span className={`w-1 h-1 rounded-full ${b.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                                                {b.paymentStatus === 'paid' ? '결제완료' : '미결제'}
                                             </div>
-                                            <div className={`text-[9px] font-black px-2 py-1 rounded w-fit flex items-center gap-1.5 ${b.settlementStatus === '정산확정' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                                            {/* Tier 2: Settlement */}
+                                            <div className={`text-[9px] font-black px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 border ${b.settlementStatus === '정산확정' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
                                                 <i className="fa-solid fa-coins text-[8px]"></i>
-                                                {b.settlementStatus || '미반영'}
+                                                {b.settlementStatus || '정산미정'}
                                             </div>
-                                            <div className="text-sm font-black text-bee-black tracking-tight mt-1">₩{(b.finalPrice || 0).toLocaleString()}</div>
+                                            {/* Tier 3: Issue */}
+                                            {b.auditNote ? (
+                                                <div className="text-[9px] font-black px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 bg-orange-50 text-orange-600 border border-orange-100 animate-pulse">
+                                                    <i className="fa-solid fa-triangle-exclamation text-[8px]"></i>
+                                                    이슈 발생
+                                                </div>
+                                            ) : (
+                                                <div className="text-[9px] font-black px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 bg-gray-50 text-gray-300 border border-gray-100 opacity-50">
+                                                    <i className="fa-solid fa-check text-[8px]"></i>
+                                                    지연없음
+                                                </div>
+                                            )}
+                                            <div className="text-sm font-black text-bee-black tracking-tighter mt-1 tabular-nums">₩{(b.finalPrice || 0).toLocaleString()}</div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col gap-2">
                                             <div className="relative group/select w-fit">
                                                 <div 
-                                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full z-10"
+                                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full z-10 shadow-[0_0_8px_rgba(0,0,0,0.1)]"
                                                     style={{ backgroundColor: OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[b.status || BookingStatus.PENDING]].color }}
                                                 />
                                                 <select
                                                     value={b.status}
                                                     onChange={e => updateStatus(b.id!, e.target.value as BookingStatus)}
                                                     title="예약 상태 변경"
-                                                    className="text-[10px] font-black pl-7 pr-8 py-2 rounded-xl border border-gray-200 bg-white shadow-sm cursor-pointer appearance-none transition-all hover:border-bee-yellow hover:shadow-md outline-none min-w-[120px]"
+                                                    className="text-[10px] font-black pl-7 pr-10 py-2.5 rounded-2xl border-2 border-transparent bg-gray-50 shadow-inner cursor-pointer appearance-none transition-all hover:bg-white hover:border-bee-yellow hover:shadow-lg outline-none min-w-[140px] text-bee-black"
                                                 >
                                                     {Object.values(BookingStatus).map(s => (
                                                         <option key={s} value={s}>
-                                                            {OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[s]].label} ({s})
+                                                            {OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[s]].label}
                                                         </option>
                                                     ))}
                                                 </select>
-                                                <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-gray-400 pointer-events-none group-hover/select:text-bee-black transition-colors"></i>
+                                                <i className="fa-solid fa-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-300 pointer-events-none group-hover/select:text-bee-black transition-colors"></i>
                                             </div>
                                             {b.auditNote && (
-                                                <div className="text-[9px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg w-fit flex items-center gap-1 max-w-[150px] truncate" title={b.auditNote}>
-                                                    <i className="fa-solid fa-circle-exclamation"></i>
-                                                    이슈: {b.auditNote}
+                                                <div className="text-[9px] text-orange-600 font-bold bg-orange-50/50 px-2.5 py-1.5 rounded-xl border border-orange-100 w-fit flex items-center gap-2 max-w-[180px]" title={b.auditNote}>
+                                                    <i className="fa-solid fa-quote-left text-[7px] opacity-50"></i>
+                                                    <span className="truncate">{b.auditNote}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -224,7 +360,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                             )) : (
                                 <tr>
                                     <td colSpan={7} className="px-8 py-20 text-center text-gray-400 font-bold">
-                                        {isRefreshing ? '데이터를 불러오는 중입니다...' : (activeTab === 'TRASH' ? '휴지통이 비었습니다.' : '접수된 예약 내역이 없습니다.')}
+                                        {isRefreshing ? '데이터를 실시간 동기화 중입니다...' : (activeTab === 'TRASH' ? '휴지통이 비었습니다. 텅 비어있네요! 💅' : '접수된 예약 내역이 없습니다. (No Bookings)')}
                                     </td>
                                 </tr>
                             )}
@@ -234,89 +370,152 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
 
                 <div className="md:hidden space-y-4">
                     {filteredBookings.length > 0 ? filteredBookings.map(b => (
-                        <div key={b.id} className="bg-white/80 backdrop-blur-3xl p-5 rounded-[24px] border border-gray-200 shadow-sm flex flex-col gap-4">
+                        <div key={b.id} className="bg-white/90 backdrop-blur-3xl p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col gap-5 relative overflow-hidden group">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{b.reservationCode || b.id}</span>
-                                        <span className="text-[10px] font-bold text-gray-300">|</span>
-                                        <span className="text-[10px] font-bold text-gray-400">{b.pickupDate}</span>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="px-2 py-0.5 bg-gray-900 text-white text-[8px] font-black rounded tracking-tighter">
+                                            {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className={`text-[10px] font-black ${isNotToday(b.pickupDate) ? 'text-amber-600' : 'text-gray-400'}`}>
+                                                {b.pickupDate}
+                                            </span>
+                                            {isNotToday(b.pickupDate) && (
+                                                <span className="px-1 py-0.5 bg-amber-100 text-amber-700 text-[7px] font-black rounded border border-amber-200 uppercase">
+                                                    Caution
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <h4 className="font-black text-lg text-bee-black group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>{b.userName}</h4>
+                                    <h4 className="font-black text-lg text-bee-black group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>
+                                        {adminRole === 'super' ? b.userName : maskName(b.userName || '')}
+                                    </h4>
                                 </div>
                                 <select
                                     value={b.status}
                                     onChange={e => updateStatus(b.id!, e.target.value as BookingStatus)}
                                     title="예약 상태 변경 (모바일)"
-                                    className={`text-[10px] font-black py-1.5 px-3 rounded-xl border-none outline-none shadow-sm cursor-pointer appearance-none ${getStatusStyle(b.status || BookingStatus.PENDING)}`}
+                                    className={`text-[9px] font-black py-2 px-3 rounded-xl border-none outline-none shadow-sm cursor-pointer appearance-none ${getStatusStyle(b.status || BookingStatus.PENDING)}`}
                                 >
-                                    {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                                    {Object.values(BookingStatus).map(s => <option key={s} value={s}>{OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[s]].label}</option>)}
                                 </select>
                             </div>
 
-                            <div className="bg-gray-50/50 p-4 rounded-2xl">
+                            <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                                 {b.serviceType === ServiceType.DELIVERY ? (
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-4">
                                         <div className="flex-1">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase block mb-1">출발</span>
-                                            <span className="font-bold text-xs text-bee-black block truncate">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
+                                            <span className="text-[8px] font-black text-gray-400 uppercase block mb-1">FROM</span>
+                                            <span className="font-black text-xs text-bee-black block truncate">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                         </div>
-                                        <i className="fa-solid fa-arrow-right text-bee-yellow text-xs"></i>
+                                        <i className="fa-solid fa-arrow-right-long text-bee-yellow text-xs opacity-50"></i>
                                         <div className="flex-1 text-right">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase block mb-1">도착</span>
-                                            <span className="font-bold text-xs text-bee-black block truncate">{locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation || '-'}</span>
+                                            <span className="text-[8px] font-black text-gray-400 uppercase block mb-1">TO</span>
+                                            <span className="font-black text-xs text-bee-black block truncate">{locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation || '-'}</span>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase">보관 지점</span>
-                                            <span className="font-bold text-xs text-bee-black">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
+                                            <span className="text-[8px] font-black text-gray-400 uppercase">Center</span>
+                                            <span className="font-black text-xs text-bee-black">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
                                         </div>
-                                        <div className="flex justify-between items-center border-t border-gray-200 pt-2">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase">기간</span>
-                                            <span className="font-bold text-[10px] text-bee-black">{b.pickupDate} ~ {b.dropoffDate || b.pickupDate}</span>
+                                        <div className="flex justify-between items-center border-t border-gray-100 pt-2">
+                                            <span className="text-[8px] font-black text-gray-400 uppercase">Schedule</span>
+                                            <span className="font-black text-[10px] text-bee-black">{b.pickupDate} ~ {b.dropoffDate || b.pickupDate}</span>
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                                <div className="flex gap-2">
+                            {/* 3-Tier Badges for Mobile */}
+                            <div className="flex flex-wrap gap-2">
+                                <div className={`text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1.5 border ${b.paymentStatus === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                                    {b.paymentStatus === 'paid' ? '결제완료' : '미결제'}
+                                </div>
+                                <div className={`text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1.5 border ${b.settlementStatus === '정산확정' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
+                                    {b.settlementStatus || '정산미정'}
+                                </div>
+                                {b.auditNote && (
+                                    <div className="text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1.5 bg-orange-50 text-orange-600 border border-orange-100">
+                                        이슈 대응필요
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                                <div className="flex gap-2.5">
                                     <button
                                         onClick={() => handleResendEmail(b)}
                                         disabled={sendingEmailId === b.id}
-                                        className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-bee-black hover:text-bee-yellow flex items-center justify-center transition-colors"
+                                        className="w-9 h-9 rounded-full bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-bee-yellow flex items-center justify-center transition-all border border-gray-100"
+                                        title="이메일 재전송"
                                     >
                                         {sendingEmailId === b.id ? <i className="fa-solid fa-spinner animate-spin text-xs"></i> : <i className="fa-solid fa-envelope text-xs"></i>}
                                     </button>
                                     <button
                                         onClick={() => handleRefund(b)}
                                         disabled={refundingId === b.id || b.status === BookingStatus.REFUNDED}
-                                        title="결제 취소(환불)"
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${b.status === BookingStatus.REFUNDED
-                                            ? 'bg-red-50 text-red-300'
-                                            : 'bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600'
+                                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all border ${b.status === BookingStatus.REFUNDED
+                                            ? 'bg-red-50 text-red-200 border-red-50'
+                                            : 'bg-red-50 text-red-500 border-red-100 hover:bg-red-500 hover:text-white'
                                             }`}
+                                        title="환불 처리"
                                     >
                                         {refundingId === b.id ? <i className="fa-solid fa-spinner animate-spin text-xs"></i> : <i className="fa-solid fa-rotate-left text-xs"></i>}
                                     </button>
-
-                                    <button title="라벨 출력" onClick={() => handlePrintLabel(b)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors flex items-center justify-center">
+                                    <button onClick={() => handlePrintLabel(b)} title="라벨 출력" className="w-9 h-9 rounded-full bg-gray-50 hover:bg-bee-black hover:text-bee-yellow text-gray-500 transition-all border border-gray-100 flex items-center justify-center">
                                         <i className="fa-solid fa-print text-xs"></i>
                                     </button>
                                 </div>
-                                <span className="font-black text-lg text-bee-black">₩{(b.finalPrice || 0).toLocaleString()}</span>
+                                <span className="font-black text-xl text-bee-black tracking-tighter tabular-nums">₩{(b.finalPrice || 0).toLocaleString()}</span>
                             </div>
                         </div>
                     )) : (
                         <div className="bg-white/80 backdrop-blur-3xl p-10 rounded-[24px] text-center border border-gray-200 shadow-sm">
                             <i className="fa-solid fa-folder-open text-gray-300 text-3xl mb-3"></i>
-                            <p className="text-xs font-bold text-gray-400">{activeTab === 'TRASH' ? '휴지통이 비었습니다.' : '예약 내역이 없습니다.'}</p>
+                            <p className="text-xs font-bold text-gray-400">{activeTab === 'TRASH' ? '휴지통이 비었습니다. 💅' : '접수된 예약 내역이 없습니다.'}</p>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* [스봉이] 일괄 처리 플로팅 액션바 💅✨ */}
+            {selectedBookingIds.length > 0 && (
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in">
+                    <div className="bg-bee-black/90 backdrop-blur-2xl px-8 py-5 rounded-[30px] shadow-2xl border border-white/10 flex items-center gap-8 min-w-[500px]">
+                        <div className="flex flex-col">
+                            <span className="text-bee-yellow text-[10px] font-black uppercase tracking-widest">Selected</span>
+                            <span className="text-white text-xl font-black">{selectedBookingIds.length}<span className="text-sm ml-1 opacity-50 font-medium">items</span></span>
+                        </div>
+                        
+                        <div className="h-10 w-[1px] bg-white/10 mx-2"></div>
+
+                        <div className="flex items-center gap-3">
+                            <select 
+                                onChange={(e) => handleBatchUpdateStatus(e.target.value as BookingStatus)}
+                                disabled={isBatchUpdating}
+                                className="bg-white/10 border border-white/20 text-white text-xs font-black px-4 py-2.5 rounded-xl focus:ring-bee-yellow focus:border-bee-yellow outline-none transition-all cursor-pointer hover:bg-white/20"
+                            >
+                                <option value="" className="text-black">상태 일괄 변경 선택...</option>
+                                <option value="PENDING" className="text-black">접수 대기 (PENDING)</option>
+                                <option value="TRANSIT" className="text-black">이동중 (TRANSIT)</option>
+                                <option value="ARRIVED" className="text-black">도도착 (ARRIVED)</option>
+                                <option value="COMPLETED" className="text-black">완료 (COMPLETED)</option>
+                                <option value="CANCELLED" className="text-black">예약취소 (CANCELLED)</option>
+                            </select>
+
+                            <button 
+                                onClick={() => setSelectedBookingIds([])}
+                                className="text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-tighter px-3 py-2 transition-all"
+                            >
+                                Clear Selection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

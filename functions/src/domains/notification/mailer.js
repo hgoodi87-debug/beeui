@@ -11,8 +11,8 @@ const sendMail = async (options) => {
     // 🛡️ [스봉이] 비밀번호가 없으면 런타임 에러 대신 로그를 남기고 차단합니다.
     const pass = process.env.SMTP_PASS;
     if (!pass) {
-        console.error("❌ [Mailer] SMTP_PASS is missing in process.env! Check Firebase Secrets.");
-        throw new Error("SMTP_PASS is not configured in environment variables.");
+        console.error("❌ [Mailer] SMTP_PASS is missing! please run: firebase functions:secrets:set SMTP_PASS");
+        throw new Error("SMTP_PASS is not configured in Firebase Secrets.");
     }
 
     console.log(`[Mailer] Initializing transporter for ${options.to}`);

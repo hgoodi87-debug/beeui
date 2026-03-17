@@ -8,6 +8,11 @@ service cloud.firestore {
       return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    // Helper: Check if Super Admin 🛡️
+    function isSuperAdmin() {
+      return isAdmin() && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'super';
+    }
+
     // Helper: Valid Booking
     function isValidBooking() {
       let data = request.resource.data;
@@ -72,6 +77,13 @@ service cloud.firestore {
     match /inquiries/{inqId} {
       allow create: if isValidInquiry(); // 🛡️ Zero-Trust Security Applied
       allow read, write: if isAdmin();
+    }
+
+    // 🛡️ [스봉이] 감사 로그: 모든 관리자가 쓰기 가능, Super Admin만 읽기 가능
+    match /audit_logs/{logId} {
+      allow create: if isAdmin();
+      allow read: if isSuperAdmin();
+      allow update, delete: if false; // 감사 로그는 수정/삭제 불가! 🔐
     }
   }
 }

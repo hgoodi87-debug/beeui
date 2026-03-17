@@ -23,9 +23,13 @@ const MyPage = lazy(() => import('./components/MyPage'));
 const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
 const QnaPage = lazy(() => import('./components/QnaPage'));
 const LocationLander = lazy(() => import('./components/LocationLander'));
-const TravelTips = lazy(() => import('./components/TravelTips'));
 const VisionPage = lazy(() => import('./components/VisionPage'));
-const BranchTipsPage = lazy(() => import('./components/BranchTipsPage'));
+
+// [스봉이] 신규 FSD 팁스 페이지 군단 등장! 🏗️✨
+const TipsMainPage = lazy(() => import('./src/tips_fsd/pages/TipsMainPage').then(m => ({ default: m.TipsMainPage })));
+const TipsAreaPage = lazy(() => import('./src/tips_fsd/pages/TipsAreaPage').then(m => ({ default: m.TipsAreaPage })));
+const TipsThemePage = lazy(() => import('./src/tips_fsd/pages/TipsThemePage').then(m => ({ default: m.TipsThemePage })));
+const TipsPlacePage = lazy(() => import('./src/tips_fsd/pages/TipsPlacePage').then(m => ({ default: m.TipsPlacePage })));
 
 const Footer = lazy(() => import('./components/Footer'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
@@ -47,7 +51,32 @@ const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { lang, setLang, adminInfo, setAdminInfo } = useAppStore();
+  const { lang, setLang } = useAppStore();
+  const [adminInfo, setAdminInfo] = useState(() => {
+    // [스봉이] 금붕어 기억력 방지! 로컬 스토리지에서 이전의 영광을 되찾아옵니다 💅✨
+    const saved = localStorage.getItem('beeliber_admin_info');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // [스봉이] 사장님 지침! 한국 시간 기준 24시간 넘으면 가차 없이 쫓아냅니다 🙄💅
+        const now = Date.now();
+        const loginTime = parsed.loginAt || 0;
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+        
+        if (now - loginTime > TWENTY_FOUR_HOURS) {
+          console.warn("[App] ⏰ 어드민 세션이 만료되었습니다 (24시간 경과).");
+          localStorage.removeItem('beeliber_admin_info');
+          return { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
+        }
+        
+        console.log("[App] 🔐 어드민 세션 복구 성공! ✨");
+        return parsed;
+      } catch (e) {
+        console.error("Failed to parse admin info", e);
+      }
+    }
+    return { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
+  });
   const {
     preSelectedBooking, setPreSelectedBooking,
     lastBooking, setLastBooking,
@@ -117,6 +146,15 @@ const App: React.FC = () => {
     localStorage.setItem('beeliber_lang', lang);
   }, [lang]);
 
+  useEffect(() => {
+    // [스봉이] 어드민 정보를 잊지 않도록 도장 꾹! 🛡️✨
+    if (adminInfo.name) {
+      localStorage.setItem('beeliber_admin_info', JSON.stringify(adminInfo));
+    } else {
+      localStorage.removeItem('beeliber_admin_info');
+    }
+  }, [adminInfo]);
+
   const handleLocationSelect = (
     id: string,
     type: ServiceType = ServiceType.STORAGE,
@@ -154,9 +192,12 @@ const App: React.FC = () => {
       .then(() => console.log("[App] Booking saved to Firestore successfully."))
       .catch((saveError: any) => {
         console.error("[App] Booking Save failed (background):", saveError);
-        // 저장 실패 시 사용자에게 통보 (이미 성공 페이지에 있으므로 비침습적으로)
+        // [스봉이] 사용자가 놀라지 않게 하지만, 문제는 인지할 수 있게 깍쟁이처럼 알려줍니다. 💅
         const detail = saveError.details ? JSON.stringify(saveError.details) : (saveError.message || saveError);
-        alert(`예약 저장 중 오류가 발생했습니다.\n코드: ${saveError.code || '알수없음'}\n내용: ${detail}\n\n관리자에게 문의해주세요.`);
+        const errorMsg = lang === 'ko' 
+          ? `앗, 사장님! 예약 정보 저장 중 살짝 문제가 생겼어요. 🚨\n내용: ${detail}\n\n화면을 캡처해서 고객센터로 보내주시면 제가 금방 확인해 드릴게요! 💅✨`
+          : `Oops! There was a slight issue saving your booking. 🚨\nDetails: ${detail}\n\nPlease take a screenshot and contact support for assistance! 💅✨`;
+        alert(errorMsg);
       });
   };
 
@@ -175,6 +216,13 @@ const App: React.FC = () => {
       console.error(e);
       alert('수동 예약 저장 실패');
     }
+  };
+
+  const handleAdminLogout = () => {
+    // [스봉이] 흔적도 없이 깨끗하게 치워드릴게요. 💅✨
+    setAdminInfo({ name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 });
+    localStorage.removeItem('beeliber_admin_info');
+    navigate('/');
   };
 
   // Legacy navigations handler to not break hardcoded prop strings in subcomponents
@@ -197,7 +245,6 @@ const App: React.FC = () => {
       case 'BRANCH_ADMIN':
         if (adminInfo.branchId) return navigate(`/admin/branch/${adminInfo.branchId}`);
         return navigate('/admin');
-      case 'TIPS': return navigate('/tips');
       case 'VISION': return navigate('/vision');
       case 'USER': default: return navigate('/');
     }
@@ -213,6 +260,15 @@ const App: React.FC = () => {
 
   const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     if (!adminInfo.name) return <Navigate to="/admin" replace />;
+    
+    // [스봉이] 최고 권한자 혹은 마스터급은 어디든 갈 수 있어야죠 💅
+    const isSuper = adminInfo.role === 'super' || adminInfo.jobTitle?.toUpperCase().includes('CEO') || adminInfo.jobTitle?.toUpperCase().includes('MASTER');
+    
+    if (!isSuper) {
+      if (adminInfo.branchId) return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
+      // 권한이 애매하면 일단 안전하게 로그인 페이지로 🙄
+      return <Navigate to="/admin" replace />;
+    }
     return <>{children}</>;
   };
 
@@ -354,14 +410,23 @@ const App: React.FC = () => {
                   {/* PROGRAMMATIC SEO */}
                   <Route path="/storage/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/delivery/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
-                  <Route path="/tips" element={<AnimatedRoute><TravelTips lang={lang} /></AnimatedRoute>} />
-                  <Route path="/tips/:slug" element={<AnimatedRoute><BranchTipsPage t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tips" element={<AnimatedRoute><TipsMainPage lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tips/area/:slug" element={<AnimatedRoute><TipsAreaPage lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tips/theme/:slug" element={<AnimatedRoute><TipsThemePage lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tips/place/:slug" element={<AnimatedRoute><TipsPlacePage lang={lang} /></AnimatedRoute>} />
+                  <Route path="/tips/:slug" element={<AnimatedRoute><TipsPlacePage lang={lang} /></AnimatedRoute>} />
                   <Route path="/vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
 
                   {/* ADMIN */}
-                  <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, branchId) => { setAdminInfo({ name, jobTitle, branchId: branchId || '' }); if (branchId) navigate(`/admin/branch/${branchId}`); else navigate('/admin/dashboard'); }} onCancel={() => navigate('/')} />} />
-                  <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={() => navigate('/')} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
-                  <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={() => navigate('/')} /></AnimatedRoute></BranchAdminGuard>} />
+                  <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, role, email, branchId) => { 
+                    const info = { name, jobTitle, role, email: email || '', branchId: branchId || '', loginAt: Date.now() };
+                    setAdminInfo(info); 
+                    // [스봉이] 로그인 성공했으면 '뒤로가기' 눌러도 로그인 페이지 안 나오게 히스토리 갈아치웁니다 💅
+                    if (branchId) navigate(`/admin/branch/${branchId}`, { replace: true }); 
+                    else navigate('/admin/dashboard', { replace: true }); 
+                  }} onCancel={() => navigate('/')} />} />
+                  <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
+                  <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/mypage" element={<AnimatedRoute><div className="fixed inset-0 z-0 pointer-events-none"><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /><div className="absolute inset-0 bg-black/50 pointer-events-auto" /></div><MyPage t={t} onClose={() => { navigate(-1); }} /></AnimatedRoute>} />

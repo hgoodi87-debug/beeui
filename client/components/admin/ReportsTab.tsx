@@ -21,6 +21,8 @@ import {
 
 interface ReportsTabProps {
     bookings: BookingState[];
+    startDate?: string;
+    endDate?: string;
 }
 
 const COLORS = ['#FACC15', '#3B82F6', '#10B981', '#F87171', '#A78BFA', '#FB923C', '#2DD4BF'];
@@ -44,95 +46,105 @@ const COUNTRY_NAMES: Record<string, string> = {
     'OTHER': 'Other 🌎'
 };
 
-const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
+const ReportsTab: React.FC<ReportsTabProps> = ({ bookings, startDate, endDate }) => {
     const stats = useMemo(() => {
         const daily: Record<string, any> = {};
         const monthly: Record<string, any> = {};
         const yearly: Record<string, any> = {};
         const serviceDistribution = {
-            storage: { name: '보관 서비스', value: 0 },
-            delivery: { name: '배송 서비스', value: 0 }
+            storage: { name: 'Storage 📦', value: 0 },
+            delivery: { name: 'Delivery 🚚', value: 0 }
         };
         const countryStats: Record<string, number> = {};
+        const methodStats: Record<string, number> = {};
 
-        // Aggregating all data first for lifetime and cumulative
-        const sortedBookings = [...bookings]
-            .filter(b => !b.isDeleted && b.status === BookingStatus.COMPLETED)
-            .sort((a, b) => (a.pickupDate || '').localeCompare(b.pickupDate || ''));
+        // [스봉이] 선택된 기간이 있으면 필터링해서 분석해 드려야죠 💅
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        if (end) end.setHours(23, 59, 59, 999);
+
+        const validBookings = bookings.filter(b => {
+            if (b.isDeleted || b.status !== BookingStatus.COMPLETED) return false;
+            if (!start || !end) return true;
+            const d = new Date(b.pickupDate || b.createdAt || '');
+            return d >= start && d <= end;
+        });
+
+        const sortedBookings = [...validBookings].sort((a, b) => (a.pickupDate || '').localeCompare(b.pickupDate || ''));
 
         let cumulativeRevenue = 0;
+        let cumulativeCount = 0;
 
         sortedBookings.forEach(b => {
             const dateStr = b.pickupDate || b.createdAt?.split('T')[0] || 'Unknown';
             if (dateStr === 'Unknown') return;
 
-            const [y, m, d] = dateStr.split('-');
+            const [y, m] = dateStr.split('-');
             const monthKey = `${y}-${m}`;
             const yearKey = y;
 
             const price = b.finalPrice || 0;
             cumulativeRevenue += price;
+            cumulativeCount += 1;
 
+            // Daily Aggregation
             if (!daily[dateStr]) {
-                daily[dateStr] = {
-                    date: dateStr,
-                    displayDate: dateStr.slice(5),
-                    revenue: 0,
-                    count: 0,
-                    cumulative: cumulativeRevenue,
-                    success: { count: 0, sum: 0 }
-                };
-            } else {
-                daily[dateStr].cumulative = cumulativeRevenue;
+                daily[dateStr] = { date: dateStr, displayDate: dateStr.slice(5), revenue: 0, count: 0, cumulative: cumulativeRevenue };
             }
-
-            daily[dateStr].success.count++;
-            daily[dateStr].success.sum += price;
             daily[dateStr].revenue += price;
-            daily[dateStr].count++;
+            daily[dateStr].count += 1;
 
+            // Monthly Aggregation
             if (!monthly[monthKey]) {
-                monthly[monthKey] = { month: monthKey, success: { count: 0, sum: 0 }, sum: 0, cumulative: cumulativeRevenue };
-            } else {
-                monthly[monthKey].cumulative = cumulativeRevenue;
+                monthly[monthKey] = { month: monthKey, revenue: 0, count: 0, cumulative: cumulativeRevenue };
             }
-            monthly[monthKey].success.count++;
-            monthly[monthKey].success.sum += price;
-            monthly[monthKey].sum += price;
+            monthly[monthKey].revenue += price;
+            monthly[monthKey].count += 1;
 
+            // Yearly Aggregation
             if (!yearly[yearKey]) {
-                yearly[yearKey] = { year: yearKey, success: { count: 0, sum: 0 }, sum: 0, cumulative: cumulativeRevenue };
-            } else {
-                yearly[yearKey].cumulative = cumulativeRevenue;
+                yearly[yearKey] = { year: yearKey, revenue: 0, count: 0 };
             }
-            yearly[yearKey].success.count++;
-            yearly[yearKey].success.sum += price;
-            yearly[yearKey].sum += price;
+            yearly[yearKey].revenue += price;
+            yearly[yearKey].count += 1;
 
+            // Distributions
             if (b.serviceType === ServiceType.STORAGE) serviceDistribution.storage.value += price;
             else serviceDistribution.delivery.value += price;
 
             const cCode = b.country || 'OTHER';
             countryStats[cCode] = (countryStats[cCode] || 0) + 1;
+
+            const method = b.paymentMethod || 'other';
+            methodStats[method] = (methodStats[method] || 0) + 1;
         });
 
-        const dailyList = Object.values(daily).sort((a: any, b: any) => a.date.localeCompare(b.date));
-        const cumulativeDays = dailyList.slice(-30);
         const monthlyList = Object.values(monthly).sort((a: any, b: any) => a.month.localeCompare(b.month));
-        const yearlyList = Object.values(yearly).sort((a: any, b: any) => a.year.localeCompare(b.year));
-
-        const lifetimeRevenue = cumulativeRevenue;
-        const lifetimeCount = sortedBookings.length;
+        
+        // [스봉이] 성장률 계산도 필터링된 범위 안에서 똑똑하게! 💅
         const currentMonth = new Date().toISOString().slice(0, 7);
-        const currentMonthStats = monthly[currentMonth] || { sum: 0, success: { count: 0 } };
+        const prevMonthDate = new Date();
+        prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+        const prevMonth = prevMonthDate.toISOString().slice(0, 7);
+
+        const currentMonthData = monthly[currentMonth] || { revenue: 0, count: 0 };
+        const prevMonthData = monthly[prevMonth] || { revenue: 0, count: 0 };
+
+        // Calculate Growth Rates
+        const revenueGrowth = prevMonthData.revenue > 0 
+            ? ((currentMonthData.revenue - prevMonthData.revenue) / prevMonthData.revenue) * 100 
+            : 0;
+        
+        const countGrowth = prevMonthData.count > 0 
+            ? ((currentMonthData.count - prevMonthData.count) / prevMonthData.count) * 100 
+            : 0;
 
         const totalCountryCount = Object.values(countryStats).reduce((a, b) => a + b, 0);
 
         return {
-            daily: dailyList.slice(-14),
-            cumulativeDays,
+            daily: Object.values(daily).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(-31), // 넉넉하게 31일치 💅
             monthly: monthlyList,
-            yearly: yearlyList,
+            yearly: Object.values(yearly).sort((a: any, b: any) => a.year.localeCompare(b.year)),
             serviceDistribution: Object.values(serviceDistribution),
             countryDistribution: Object.entries(countryStats)
                 .map(([code, value]) => ({ 
@@ -141,240 +153,354 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings }) => {
                     percent: totalCountryCount > 0 ? Math.round((value / totalCountryCount) * 100) : 0
                 }))
                 .sort((a, b) => b.value - a.value),
-            lifetimeRevenue,
-            lifetimeCount,
-            currentMonthRevenue: currentMonthStats.sum,
-            currentMonthCount: currentMonthStats.success.count,
-            monthlyAvgRevenue: monthlyList.length > 0 ? Math.floor(lifetimeRevenue / monthlyList.length) : 0,
+            paymentDistribution: Object.entries(methodStats).map(([name, value]) => ({ name: name.toUpperCase(), value })),
+            lifetimeRevenue: cumulativeRevenue,
+            lifetimeCount: cumulativeCount,
+            currentMonthRevenue: currentMonthData.revenue,
+            currentMonthCount: currentMonthData.count,
+            revenueGrowth,
+            countGrowth,
+            avgOrderValue: cumulativeCount > 0 ? Math.floor(cumulativeRevenue / cumulativeCount) : 0,
+            activeDays: Object.keys(daily).length,
             totalCountryCount
         };
 
-    }, [bookings]);
+    }, [bookings, startDate, endDate]);
 
     return (
-        <div className="space-y-6 md:space-y-8 animate-fade-in-up">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm overflow-hidden group">
-                <div className="space-y-1 relative z-10">
-                    <h1 className="text-xl md:text-2xl font-black tracking-tight">실적 리포트 <span className="text-bee-yellow italic">Performance</span></h1>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Strategic Insights & Growth Matrix 💹</p>
+        <div className="space-y-10 md:space-y-12 animate-fade-in-up pb-10">
+            {/* [스봉이] 분석 리포트 헤더 - 본부장님 센스에 맞춰서 우아하게 꾸며봤어요 💅 */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[40px] border border-white/50 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-5 text-bee-black group-hover:scale-110 transition-transform duration-1000">
+                    <i className="fa-solid fa-chart-mixed text-[120px]"></i>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-bee-yellow/10 text-bee-yellow rounded-lg text-[9px] font-black uppercase italic">
-                    <i className="fa-solid fa-sparkles"></i> AI 인텔리전스 분석 적용됨
-                </div>
-            </div>
-
-            {/* Statistical Widgets */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between group hover:border-bee-yellow transition-all">
-                    <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">누적 총 매출</p>
-                        <h3 className="text-xl font-black italic text-bee-black">₩{(stats.lifetimeRevenue || 0).toLocaleString()}</h3>
-                    </div>
-                    <div className="mt-3">
-                        <span className="px-2 py-0.5 bg-bee-yellow/10 rounded-md text-[8px] font-black text-bee-yellow tracking-tighter">총 {(stats.lifetimeCount || 0)}건의 판매 실적</span>
-                    </div>
-                </div>
-
-                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between group hover:border-blue-400 transition-all">
-                    <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">올해 총 매출 ({stats.yearly[stats.yearly.length - 1]?.year || '2024'}년)</p>
-                        <h3 className="text-xl font-black italic text-blue-500">₩{(stats.yearly[stats.yearly.length - 1]?.sum || 0).toLocaleString()}</h3>
-                    </div>
-                    <p className="text-[8px] font-black text-gray-300 mt-2 uppercase tracking-tighter italic text-center">지속적인 성장세 유지 중</p>
-                </div>
-
-                <div className="bg-bee-black p-5 rounded-[28px] shadow-lg flex flex-col justify-between group/card hover:-translate-y-1 transition-all">
-                    <div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">월평균 매출액</p>
-                        <h3 className="text-xl font-black italic text-bee-yellow">₩{(stats.monthlyAvgRevenue || 0).toLocaleString()}</h3>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                        <div className="w-8 h-1 bg-gray-700 rounded-full overflow-hidden">
-                            <div className="bg-bee-yellow h-full w-[85%]"></div>
+                
+                <div className="space-y-3 relative z-10">
+                    <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-bee-yellow text-bee-black text-[9px] font-black rounded-full tracking-widest uppercase shadow-lg shadow-bee-yellow/20">Business Intelligence</span>
+                        <div className="flex gap-1">
+                            <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <div className="w-1 h-1 rounded-full bg-emerald-500/50"></div>
                         </div>
-                        <span className="text-[8px] font-black text-gray-500 italic">우수 실적 지표</span>
                     </div>
+                    <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white">
+                        Beeliber <span className="text-bee-yellow font-serif italic">Reports</span>
+                    </h1>
+                    <p className="text-sm font-bold text-gray-400">데이터로 파악하는 비리버의 어제와 오늘, 그리고 내일 🚀</p>
                 </div>
-
-                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between group hover:border-emerald-400 transition-all">
-                    <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">이번 달 실적</p>
-                        <h3 className="text-xl font-black italic text-emerald-500">₩{(stats.currentMonthRevenue || 0).toLocaleString()}</h3>
+                <div className="flex items-center gap-6 relative z-10">
+                    <div className="text-right">
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Lifetime Impact</p>
+                        <p className="text-2xl font-black text-bee-yellow font-mono">₩{stats.lifetimeRevenue.toLocaleString()}</p>
                     </div>
-                    <div className="mt-3 pt-2 border-t border-gray-50">
-                        <p className="text-[8px] font-black text-gray-300 uppercase tracking-tighter">처리량: {(stats.currentMonthCount || 0)} 건</p>
+                    <div className="w-px h-10 bg-gray-800"></div>
+                    <div className="bg-white/5 p-4 rounded-3xl border border-white/10 backdrop-blur-md">
+                        <i className="fa-solid fa-wand-magic-sparkles text-bee-yellow text-xl"></i>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Main Revenue Growth Chart */}
-                <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-black flex items-center gap-2"><i className="fa-solid fa-chart-line text-blue-500"></i> 매출 성장 곡선</h3>
-                        <span className="text-[10px] font-black text-gray-300 uppercase">최근 30일 기준</span>
+            {/* 📈 Executive Summary Section */}
+            <section className="space-y-6">
+                <div className="flex items-center gap-3 px-2">
+                    <div className="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                        <i className="fa-solid fa-bolt text-xs"></i>
                     </div>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={stats.cumulativeDays}>
-                                <defs>
-                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#FACC15" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#FACC15" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#9CA3AF' }} />
-                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#9CA3AF' }} />
-                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#FACC15' }} />
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '16px' }}
-                                    itemStyle={{ fontWeight: 900, fontSize: '12px' }}
-                                />
-                                <Area yAxisId="left" type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={3} fillOpacity={0} />
-                                <Area yAxisId="right" type="monotone" dataKey="cumulative" stroke="#FACC15" strokeWidth={4} fill="url(#colorRevenue)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
+                    <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">Executive Summary</h2>
                 </div>
 
-                {/* Service Type distribution */}
-                <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6 text-center">
-                    <h3 className="text-lg font-black flex items-center gap-2 justify-center"><i className="fa-solid fa-chart-pie text-emerald-500"></i> 서비스 타입별 비중 (매출액)</h3>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={stats.serviceDistribution}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    cornerRadius={10}
-                                >
-                                    {stats.serviceDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value: any) => typeof value === 'number' ? `₩${value.toLocaleString()}` : value} />
-                                <Legend verticalAlign="bottom" height={36} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:translate-y-[-4px] transition-all group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
+                             <i className="fa-solid fa-calendar-check text-5xl"></i>
+                        </div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">당월 실적 (MTD)</p>
+                        <h3 className="text-2xl font-black text-bee-black italic">₩{stats.currentMonthRevenue.toLocaleString()}</h3>
+                        <div className={`mt-3 flex items-center gap-1.5 text-[10px] font-bold ${stats.revenueGrowth >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                            <i className={`fa-solid ${stats.revenueGrowth >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}`}></i>
+                            {Math.abs(stats.revenueGrowth).toFixed(1)}% <span className="text-gray-300">vs prev month</span>
+                        </div>
                     </div>
-                </div>
 
-                {/* Country distribution - Intuitive Upgrade 🎉 */}
-                <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-black flex items-center gap-3">
-                            <i className="fa-solid fa-globe text-blue-400"></i> 국가별 방문 비중
+                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:translate-y-[-4px] transition-all group relative overflow-hidden">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">평균 주문가 (AOV)</p>
+                        <h3 className="text-2xl font-black text-blue-500 italic">₩{stats.avgOrderValue.toLocaleString()}</h3>
+                        <p className="mt-3 text-[10px] font-bold text-gray-300">Total Bookings: {stats.lifetimeCount.toLocaleString()}건</p>
+                    </div>
+
+                    <div className="bg-bee-yellow p-6 rounded-[32px] shadow-xl shadow-bee-yellow/10 hover:translate-y-[-4px] transition-all group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 transition-transform duration-700">
+                             <i className="fa-solid fa-star text-5xl"></i>
+                        </div>
+                        <p className="text-[10px] font-black text-bee-black/30 uppercase tracking-widest mb-2 text-bee-black">Active Days</p>
+                        <h3 className="text-2xl font-black text-bee-black italic">{stats.activeDays.toLocaleString()} Days</h3>
+                        <p className="mt-3 text-[10px] font-bold text-bee-black/50">운영 기간 내 영업일 기준</p>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:translate-y-[-4px] transition-all group relative overflow-hidden">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">성장률 (Orders)</p>
+                        <h3 className={`text-2xl font-black italic ${stats.countGrowth >= 0 ? 'text-emerald-500' : 'text-orange-500'}`}>
+                            {stats.countGrowth >= 0 ? '+' : ''}{stats.countGrowth.toFixed(1)}%
                         </h3>
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">실시간 예약 분포</span>
+                        <div className="mt-3 w-full h-1 bg-gray-50 rounded-full overflow-hidden">
+                            <div className="bg-emerald-500 h-full w-[70%]" style={{ width: `${Math.min(100, Math.max(0, 50 + stats.countGrowth))}%` }}></div>
+                        </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                        <div className="h-[280px] w-full">
+                </div>
+            </section>
+
+            {/* 📊 Financial Analysis Section */}
+            <section className="space-y-6">
+                <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                            <i className="fa-solid fa-coins text-xs"></i>
+                        </div>
+                        <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">Financial Matrix</h2>
+                    </div>
+                    <div className="flex gap-2">
+                        <span className="px-3 py-1 bg-gray-50 text-[9px] font-black text-gray-400 rounded-lg border border-gray-100 uppercase italic">Revenue Growth</span>
+                        <span className="px-3 py-1 bg-gray-50 text-[9px] font-black text-gray-400 rounded-lg border border-gray-100 uppercase italic">Profit Margin</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-1.5 h-3 bg-bee-yellow rounded-full"></span> 매출 트렌드 분석
+                            </h4>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                    <span className="text-[9px] font-black text-gray-300">Daily Revenue</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-bee-yellow"></div>
+                                    <span className="text-[9px] font-black text-gray-300">Cumulative</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="h-[350px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={stats.daily}>
+                                    <defs>
+                                        <linearGradient id="colorRevue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorCumul" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#FACC15" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#FACC15" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#FAFAFA" />
+                                    <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#D1D5DB' }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#D1D5DB' }} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.1)', padding: '20px' }}
+                                        itemStyle={{ fontWeight: 900, fontSize: '13px' }}
+                                    />
+                                    <Area type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={4} fill="url(#colorRevue)" />
+                                    <Area type="monotone" dataKey="cumulative" stroke="#FACC15" strokeWidth={4} fill="url(#colorCumul)" opacity={0.3} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8 flex flex-col justify-center">
+                        <div className="space-y-1 text-center">
+                            <h4 className="text-sm font-black text-bee-black">서비스 포인터 점유율</h4>
+                            <p className="text-[10px] font-bold text-gray-300 uppercase italic tracking-widest">Revenue distribution by Category</p>
+                        </div>
+                        <div className="h-[280px] w-full relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={stats.countryDistribution}
+                                        data={stats.serviceDistribution}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={70}
-                                        outerRadius={100}
-                                        paddingAngle={8}
+                                        innerRadius={80}
+                                        outerRadius={110}
+                                        paddingAngle={10}
                                         dataKey="value"
-                                        cornerRadius={12}
+                                        cornerRadius={15}
                                     >
-                                        {stats.countryDistribution.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                                        {stats.serviceDistribution.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={index === 0 ? '#FACC15' : '#3B82F6'} />
                                         ))}
                                     </Pie>
-                                    <Tooltip 
-                                        contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        formatter={(value: any) => [`${value} 건`, '예약수']} 
-                                    />
+                                    <Tooltip formatter={(value: any) => `₩${value.toLocaleString()}`} contentStyle={{ borderRadius: '20px', border: 'none' }} />
                                 </PieChart>
                             </ResponsiveContainer>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                                <span className="text-[10px] font-black text-gray-300 uppercase">Top Service</span>
+                                <span className="text-lg font-black text-bee-black">{stats.serviceDistribution[0]?.name.split(' ')[0]}</span>
+                            </div>
                         </div>
-                        
-                        <div className="space-y-5">
-                            {stats.countryDistribution.slice(0, 6).map((item, idx) => (
-                                <div key={item.name} className="space-y-1.5">
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-xs font-black text-bee-black flex items-center gap-2">
-                                            <div 
-                                                className="w-2 h-2 rounded-full" 
-                                                style={{ background: COLORS[(idx + 2) % COLORS.length] }}
-                                            ></div>
-                                            {item.name}
-                                        </span>
-                                        <div className="text-right">
-                                            <span className="text-[10px] font-black text-bee-black mr-2">{item.percent}%</span>
-                                            <span className="text-[9px] font-bold text-gray-300 uppercase">{item.value}건</span>
-                                        </div>
+                        <div className="flex justify-center gap-10">
+                            {stats.serviceDistribution.map((item, idx) => (
+                                <div key={item.name} className="flex flex-col items-center gap-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{ background: idx === 0 ? '#FACC15' : '#3B82F6' }}></div>
+                                        <span className="text-xs font-black text-bee-black">{item.name}</span>
                                     </div>
-                                    <div className="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden">
-                                        <motion.div 
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${item.percent}%` }}
-                                            transition={{ duration: 1, delay: idx * 0.1, ease: "circOut" }}
-                                            className="h-full rounded-full"
-                                            style={{ background: COLORS[(idx + 2) % COLORS.length] }}
-                                        />
-                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-400 font-mono">₩{item.value.toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
+            </section>
 
-            </div>
-
-            {/* Monthly Performance Table - NEW 🎉 */}
-            <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-black flex items-center gap-2">
-                        <i className="fa-solid fa-table-list text-purple-500"></i> 월별 실적 상세 요약
-                    </h3>
-                    <span className="text-[10px] font-black text-gray-300 uppercase">최근 실적 기준</span>
+            {/* 🌏 Market Intelligence Section */}
+            <section className="space-y-6">
+                <div className="flex items-center gap-3 px-2">
+                    <div className="w-8 h-8 rounded-xl bg-purple-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+                        <i className="fa-solid fa-earth-asia text-xs"></i>
+                    </div>
+                    <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">Market Intelligence</h2>
                 </div>
-                <div className="overflow-hidden rounded-[32px] border border-gray-50">
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-1.5 h-3 bg-purple-400 rounded-full"></span> 글로벌 지배력 (Global Reach)
+                            </h4>
+                            <span className="text-[9px] font-black text-gray-300 uppercase italic">Based on {stats.totalCountryCount} Registrations</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                            <div className="h-[250px] relative">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={stats.countryDistribution}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={75}
+                                            outerRadius={105}
+                                            paddingAngle={8}
+                                            dataKey="value"
+                                            cornerRadius={12}
+                                        >
+                                            {stats.countryDistribution.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                                    <span className="text-[9px] font-black text-gray-300 uppercase">Primary</span>
+                                    <p className="text-base font-black text-bee-black">{stats.countryDistribution[0]?.name.split(' ')[0]}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {stats.countryDistribution.slice(0, 5).map((item, idx) => (
+                                    <div key={item.name} className="space-y-1.5 group cursor-default">
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-xs font-black text-bee-black flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                                                <div className="w-2 h-2 rounded-full" style={{ background: COLORS[(idx + 3) % COLORS.length] }}></div>
+                                                {item.name}
+                                            </span>
+                                            <div className="text-right">
+                                                <span className="text-[10px] font-black text-gray-700">{item.percent}%</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-full h-1 bg-gray-50 rounded-full overflow-hidden">
+                                            <motion.div 
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${item.percent}%` }}
+                                                className="h-full rounded-full"
+                                                style={{ background: COLORS[(idx + 3) % COLORS.length] }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col justify-between group">
+                        <div className="space-y-1">
+                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-1.5 h-3 bg-emerald-400 rounded-full"></span> 결제 수단 선호도
+                            </h4>
+                            <p className="text-[10px] font-bold text-gray-300 italic">Payment Method Trends</p>
+                        </div>
+                        
+                        <div className="space-y-4 py-8">
+                            {stats.paymentDistribution.sort((a, b) => b.value - a.value).map((p, idx) => (
+                                <div key={p.name} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl group-hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${
+                                            idx === 0 ? 'bg-bee-black text-bee-yellow' : 'bg-white text-gray-400 border border-gray-100'
+                                        }`}>
+                                            {p.name.slice(0, 2)}
+                                        </div>
+                                        <span className="text-xs font-black text-bee-black uppercase tracking-tight">{p.name}</span>
+                                    </div>
+                                    <span className="text-sm font-black text-bee-black font-mono">{p.value}건</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button className="w-full py-4 bg-gray-50 text-[10px] font-black text-gray-300 uppercase tracking-widest rounded-2xl border border-gray-100 hover:bg-bee-black hover:text-bee-yellow hover:border-bee-black transition-all">
+                            View Full Channel Report
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* 🗓️ Detailed Historical Timeline Section */}
+            <section className="space-y-6">
+                 <div className="flex items-center gap-3 px-2">
+                    <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center text-white shadow-lg">
+                        <i className="fa-solid fa-list-check text-xs"></i>
+                    </div>
+                    <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">Historical Data Timeline</h2>
+                </div>
+
+                <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
                     <table className="w-full text-left">
-                        <thead className="bg-bee-black text-[10px] font-black uppercase text-bee-yellow">
+                        <thead className="bg-gray-50/50 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
                             <tr>
-                                <th className="px-6 py-5">정산월</th>
-                                <th className="px-6 py-5 text-center">주문 건수</th>
-                                <th className="px-6 py-5 text-right">매출액</th>
-                                <th className="px-6 py-5 text-right">누적 매출</th>
+                                <th className="px-10 py-6">정산월 <span className="text-[8px] font-serif italic normal-case ml-1 tracking-normal">Month</span></th>
+                                <th className="px-10 py-6 text-center">건수 <span className="text-[8px] font-serif italic normal-case ml-1 tracking-normal">Orders</span></th>
+                                <th className="px-10 py-6 text-right">월간 매출 <span className="text-[8px] font-serif italic normal-case ml-1 tracking-normal">Monthly</span></th>
+                                <th className="px-10 py-6 text-right">누적 기여도 <span className="text-[8px] font-serif italic normal-case ml-1 tracking-normal">Cumulative</span></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50 text-xs">
+                        <tbody className="divide-y divide-gray-50">
                             {[...(stats.monthly || [])].reverse().map(s => (
-                                <tr key={s.month} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-5 font-black text-gray-800">{s.month}</td>
-                                    <td className="px-6 py-5 text-center font-bold text-gray-400">{s.success.count.toLocaleString()} 건</td>
-                                    <td className="px-6 py-5 text-right font-black text-bee-black">
-                                        ₩{s.sum.toLocaleString()}
+                                <tr key={s.month} className="hover:bg-gray-50/50 transition-colors group">
+                                    <td className="px-10 py-6 font-black text-bee-black text-sm">{s.month}</td>
+                                    <td className="px-10 py-6 text-center">
+                                        <span className="px-3 py-1 bg-gray-100 rounded-full text-[10px] font-black text-gray-400 group-hover:bg-bee-black group-hover:text-bee-yellow transition-all">
+                                            {s.count.toLocaleString()} 건
+                                        </span>
                                     </td>
-                                    <td className="px-6 py-5 text-right">
-                                        <span className="text-[9px] font-bold text-blue-500">누적 ₩{s.cumulative.toLocaleString()}</span>
+                                    <td className="px-10 py-6 text-right font-black text-bee-black text-sm tabular-nums">
+                                        ₩{s.revenue.toLocaleString()}
+                                    </td>
+                                    <td className="px-10 py-6 text-right">
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-xs font-black text-blue-500 font-mono tracking-tighter italic">
+                                                ₩{s.cumulative.toLocaleString()}
+                                            </span>
+                                            <div className="w-20 h-0.5 bg-gray-100 mt-1.5 overflow-hidden">
+                                                <div className="h-full bg-blue-500/30" style={{ width: `${Math.min(100, (s.cumulative / stats.lifetimeRevenue) * 100)}%` }}></div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
-                            {(!stats.monthly || stats.monthly.length === 0) && (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-20 text-center text-gray-300 font-black italic">
-                                        데이터가 없습니다.
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
         </div>
     );
 };

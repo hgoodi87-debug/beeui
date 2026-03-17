@@ -143,21 +143,28 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-wrap items-center gap-6 group hover:border-bee-yellow transition-all duration-500">
                 <div className="flex items-center gap-4">
                     <div className="space-y-1">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">정산 대상 기간</label>
+                        <label htmlFor="rev-start" className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">정산 대상 시작일</label>
                         <div className="flex items-center gap-2">
                             <input 
+                                id="rev-start"
                                 type="date" 
                                 value={revenueStartDate} 
                                 onChange={(e) => setRevenueStartDate(e.target.value)}
+                                title="정산 시작일 선택"
                                 className="bg-gray-50 px-4 py-2.5 rounded-xl font-black text-[11px] outline-none"
                             />
                             <span className="text-gray-300">~</span>
-                            <input 
-                                type="date" 
-                                value={revenueEndDate} 
-                                onChange={(e) => setRevenueEndDate(e.target.value)}
-                                className="bg-gray-50 px-4 py-2.5 rounded-xl font-black text-[11px] outline-none"
-                            />
+                            <div className="space-y-1">
+                                <label htmlFor="rev-end" className="sr-only">정산 대상 종료일</label>
+                                <input 
+                                    id="rev-end"
+                                    type="date" 
+                                    value={revenueEndDate} 
+                                    onChange={(e) => setRevenueEndDate(e.target.value)}
+                                    title="정산 종료일 선택"
+                                    className="bg-gray-50 px-4 py-2.5 rounded-xl font-black text-[11px] outline-none"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -258,27 +265,34 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                                         <th className="px-6 py-4"></th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-50 text-xs">
-                                    <tr className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4"><span className="px-2 py-1 bg-bee-yellow/10 text-bee-yellow rounded-md text-[9px] font-black uppercase">PARTNER</span></td>
-                                        <td className="px-6 py-4 font-black">명동 세종호텔 지점</td>
-                                        <td className="px-6 py-4 text-center font-bold">142 건</td>
-                                        <td className="px-6 py-4 text-right font-black text-bee-black">₩1,245,000</td>
-                                        <td className="px-6 py-4 text-center"><span className="text-[10px] font-black text-emerald-500 uppercase">READY</span></td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="text-[10px] font-black text-blue-500 underline">상세보기</button>
-                                        </td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-100 text-blue-500 rounded-md text-[9px] font-black uppercase">CARRIER</span></td>
-                                        <td className="px-6 py-4 font-black">비리버 딜리버리팀(본사)</td>
-                                        <td className="px-6 py-4 text-center font-bold">85 건</td>
-                                        <td className="px-6 py-4 text-right font-black text-bee-black">₩850,000</td>
-                                        <td className="px-6 py-4 text-center"><span className="text-[10px] font-black text-gray-300 uppercase">WAITING</span></td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="text-[10px] font-black text-blue-500 underline">상세보기</button>
-                                        </td>
-                                    </tr>
+                                <tbody className="divide-y divide-gray-50 text-xs text-bee-black">
+                                    {bookings.filter(b => b.paymentStatus === 'paid' && b.status !== BookingStatus.REFUNDED).length > 0 ? (
+                                        // Simple mock grouping for demonstration based on the first few bookings
+                                        bookings.slice(0, 5).map((b, idx) => (
+                                            <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${idx % 2 === 0 ? 'bg-bee-yellow/10 text-bee-yellow' : 'bg-blue-100 text-blue-500'}`}>
+                                                        {idx % 2 === 0 ? 'PARTNER' : 'CARRIER'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 font-black">{b.pickupLocation || 'N/A'}</td>
+                                                <td className="px-6 py-4 text-center font-bold">1 건</td>
+                                                <td className="px-6 py-4 text-right font-black">₩{((b.finalPrice || 0) * 0.7).toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`text-[10px] font-black uppercase ${b.settlementStatus === '정산확정' ? 'text-emerald-500' : 'text-orange-400'}`}>
+                                                        {b.settlementStatus === '정산확정' ? 'CONFIRMED' : 'PENDING'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button className="text-[10px] font-black text-blue-500 underline hover:text-bee-black transition-colors" title="정산 상세 보기">Details</button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-20 text-center text-gray-300 font-bold">정산 대상 데이터가 부족합니다. 💅</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>

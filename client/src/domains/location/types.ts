@@ -64,6 +64,7 @@ export interface LocationOption {
         delivery: number;
         storage: number;
     };
+    distance?: number; // [스봉이] 사용자 위치로부터의 거리 (정렬용) 🛰️✨
 }
 
 export interface Branch {

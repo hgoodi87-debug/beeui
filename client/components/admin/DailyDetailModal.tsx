@@ -7,6 +7,7 @@ interface DailyDetailModalProps {
     bookings: BookingState[];
     expenditures: Expenditure[];
     setSelectedBooking: (booking: BookingState | null) => void;
+    t?: any;
 }
 
 const DailyDetailModal: React.FC<DailyDetailModalProps> = ({
@@ -14,7 +15,8 @@ const DailyDetailModal: React.FC<DailyDetailModalProps> = ({
     setSelectedDetailDate,
     bookings,
     expenditures,
-    setSelectedBooking
+    setSelectedBooking,
+    t
 }) => {
     if (!selectedDetailDate) return null;
 

@@ -129,10 +129,19 @@ export const useAdminStats = ({
         const prevClosing = (closings || []).find((c: CashClosing) => c.date === prevDateStr);
         const openingCash = prevClosing ? prevClosing.actualCashOnHand : 0;
 
-        const cancelledCount = targetBookings.filter(b => b.status === BookingStatus.CANCELLED).length;
-        const refundedCount = targetBookings.filter(b => b.status === BookingStatus.REFUNDED).length;
+        const cancelledBookings = bookings.filter(b => {
+            const d = new Date(b.pickupDate || '');
+            return d >= start && d <= end && !b.isDeleted && b.status === BookingStatus.CANCELLED;
+        });
+        const refundedBookings = bookings.filter(b => {
+            const d = new Date(b.pickupDate || '');
+            return d >= start && d <= end && !b.isDeleted && b.status === BookingStatus.REFUNDED;
+        });
+
+        const cancelledTotal = cancelledBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
+        const refundedTotal = refundedBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
         
-        // [스봉이] 마감판 전용 디테일 KPI 계산 추가 💅✨
+        // [스봉이] 마감판 전용 디테일 KPI 계산 다시 심어드려요 💅✨
         let confirmedAmount = 0;
         let unconfirmedAmount = 0;
         let partnerPayoutTotal = 0;
@@ -169,8 +178,10 @@ export const useAdminStats = ({
             mtdRevenue,
             openingCash,
             discountCodeCounts,
-            cancelledCount,
-            refundedCount,
+            cancelledCount: cancelledBookings.length,
+            refundedCount: refundedBookings.length,
+            cancelledTotal,
+            refundedTotal,
             confirmedAmount,
             unconfirmedAmount,
             partnerPayoutTotal,

@@ -138,6 +138,16 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
         }
 
         const { password: _, ...safeAdminData } = adminData;
+        
+        // [스봉이] 직함에 따른 권한 자동 부여 (DB에 role이 없어도 똑똑하게! 💅)
+        if (!safeAdminData.role) {
+            const title = (safeAdminData.jobTitle || '').toUpperCase();
+            if (title.includes('CEO') || title.includes('MASTER') || title.includes('GENERAL MANAGER') || adminId === 'admin-8684') {
+                safeAdminData.role = 'super';
+            } else {
+                safeAdminData.role = 'staff';
+            }
+        }
 
         // UID 매핑은 반드시 대기(await)해야 프론트엔드에서 대시보드 진입 시 권한 오류가 발생하지 않습니다. 🛡️
         if (request.auth && request.auth.uid) {
@@ -148,8 +158,8 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
                     lastLogin: new Date().toISOString()
                 }, { merge: true });
                 console.log(`[AdminVerify] UID Mapping success for: ${request.auth.uid}`);
-            } catch (err) {
-                console.error("UID mapping failed:", err);
+            } catch (e) {
+                console.error("UID mapping failed:", e);
             }
         }
 
@@ -249,8 +259,8 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}",
                 try {
                     const s = await db.collection('locations').doc(locId).get();
                     return s.exists ? (s.data().shortCode || locId.substring(0, 3).toUpperCase()) : locId.substring(0, 3).toUpperCase();
-                } catch (err) {
-                    console.warn(`[onBookingCreated] Location fetch failed for ${locId}, fallback to substring.`);
+                } catch (e) {
+                    console.warn(`[onBookingCreated] Location fetch failed for ${locId}, fallback to substring:`, e.message);
                     return locId.substring(0, 3).toUpperCase();
                 }
             };

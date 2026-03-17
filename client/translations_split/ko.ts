@@ -722,5 +722,138 @@ export const ko = {
                 answer: "현재 서울의 가장 핫한 지역인 홍대입구역(연남), 서울역, 명동, 인사동, 용산, 강남역 등 주요 거점에서 만나보실 수 있습니다. 자세한 위치는 '지점 안내' 페이지의 지도를 확인해 주세요! 📍"
             }
         ]
+    },
+    admin: {
+        sidebar: {
+            overview: '운영 개요',
+            logistics: '물류/예약 관리',
+            locations: '지점/거점 관리',
+            settlement: '정산 원장',
+            reports: '비즈니스 리포트',
+            accounting: '회계/자금 관리',
+            notice: '공지/팝업 관리',
+            marketing: '마케팅/쿠폰',
+            partnership: '제휴/문의 관리',
+            hr: '인사/권한 관리',
+            system: '시스템 설정',
+            cloud: '클라우드 인프라',
+            qna: 'FAQ 편집기',
+            privacy: '개인정보 약관',
+            terms: '이용약관 편집기',
+            roadmap: '개발 로드맵'
+        },
+        header: {
+            dashboard: 'CEMS 대시보드',
+            welcome: '{name}님, 반갑습니다',
+            last_sync: '최근 동기화',
+            refresh: '새로고침',
+            logout: '로그아웃',
+            staff_mode: '현장 스캔 모드'
+        },
+        overview: {
+            daily_stats: '일일 주요 지표',
+            sales_summary: '매출 요약',
+            booking_trend: '예약 추이',
+            active_tasks: '현재 진행 업무',
+            revenue: '매출액',
+            total_bookings: '총 예약건수',
+            today_settlement: '오늘의 정산액',
+            issue_count: '특이 사항'
+        },
+        logistics: {
+            filter_all: '전체 목록',
+            filter_pending: '접수 대기',
+            filter_active: '보관/이동 중',
+            filter_completed: '처리 완료',
+            filter_issue: '이슈 발생',
+            search_placeholder: '고객명/예약번호 검색...',
+            table: {
+                id: '예약번호',
+                date: '일시',
+                customer: '고객명',
+                route: '경로/지점',
+                status: '상태',
+                payment: '결제액',
+                actions: '관리'
+            },
+            detail: {
+                title: '예약 상세 정보',
+                status_change: '상태 변경',
+                memo: '관리자 메모',
+                save_memo: '메모 저장',
+                print_voucher: '바우처 출력'
+            }
+        },
+        locations: {
+            add_location: '신규 지점 등록',
+            edit_location: '지점 정보 수정',
+            total_hubs: '총 거점 수',
+            active_hubs: '운영 중',
+            status: {
+                active: '운영 중',
+                inactive: '중단',
+                maintenance: '점검 중'
+            }
+        },
+        accounting: {
+            methods: {
+                card: '카드결제',
+                cash: '현금결제',
+                naver: '네이버페이',
+                kakao: '카카오페이',
+                apple: '애플페이',
+                samsung: '삼성페이',
+                paypal: '페이팔',
+                overseas: '해외결제'
+            },
+            title: '통합 매출 결산',
+            subtitle: '기간별 매출 분석 및 재무 통계 🛡️',
+            date_start: '조회 시작일',
+            date_end: '조회 종료일',
+            export_csv: 'CSV 엑셀 내보내기',
+            daily_revenue: '일별 상세 매출',
+            monthly_summary: '월간 정산 요약',
+            calendar_view: '매출 캘린더',
+            net_profit: '선택 기간 순수익',
+            lifetime_revenue: '누적 총 매출',
+            total_revenue: '총 매출 (선택 기간)',
+            expenditure_total: '총 지출',
+            vat_estimate: '부가세 별도 (예상)',
+            no_data: '해당 기간의 매출 기록이 없습니다.',
+            no_monthly: '월간 정산 데이터가 없습니다.'
+        },
+        hr: {
+            title: '운영 인력 관리',
+            subtitle: '운영 인력 통합 관리 시스템',
+            tab_employees: '직원 명부',
+            tab_roles: '역할 & 권한',
+            tab_audit: '활동 이력',
+            total_staff: '전체 인력',
+            active_accounts: '활성 계정',
+            invited: '초대 대기',
+            security_issue: '보안 이슈',
+            search_placeholder: '이름, 직책, 이메일로 검색...',
+            filter_status: '모든 상태',
+            add_employee: '신규 직원 초대',
+            no_employees: '조건에 맞는 직원이 없습니다.',
+            audit_wip: '활동 이력 시스템 준비 중...',
+            hq: 'HQ / 본사'
+        },
+        settlement: {
+            title: '일일 시재 정산',
+            subtitle: '일일 현금/카드 시재 관리',
+            today_revenue: '오늘의 매출',
+            closing_date: '정산 기준일',
+            cash_on_hand: '실제 보유 현금',
+            difference: '차액',
+            close_action: '시재 마감하기',
+            history_title: '마감 이력',
+            clear_history: '이력 초기화',
+            no_history: '마감 이력이 없습니다.',
+            cancel_filter_title: '취소/환불 날짜 구간 필터',
+            cancel_filter_from: '에서',
+            cancel_filter_to: '까지',
+            cancel_count_suffix: '건 조회됨'
+        }
     }
 };

@@ -9,6 +9,7 @@ import { app } from '../firebaseApp';
 
 interface BranchAdminPageProps {
     branchId: string;
+    adminRole?: string;
     lang: string;
     t: any;
     onBack: () => void;
@@ -20,7 +21,7 @@ const INITIAL_STORAGE_TIERS: StorageTier[] = [
     { id: 'st-week', label: '7일 (장기)', prices: { S: 40000, M: 55000, L: 80000, XL: 110000 } }
 ];
 
-const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranchId, lang, t, onBack }) => {
+const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranchId, adminRole = 'staff', lang, t, onBack }) => {
     const navigate = useNavigate();
     const path = window.location.pathname;
     const branchId = propsBranchId || (path.startsWith('/branch/') ? path.split('/')[2] : '');
@@ -902,6 +903,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                 sendingEmailId={sendingEmailId}
                 handleRefund={handleRefund}
                 isSaving={isSaving}
+                adminRole={adminRole}
             />
         </div >
     );

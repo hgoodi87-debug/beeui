@@ -146,12 +146,14 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                         </div>
                     </div>
 
-                    {/* Branch Image - Compact for Mobile 💅 */}
+                    {/* Branch Image - Compact for Mobile + Loading Optimization 💅 */}
                     {selectedBranch.imageUrl && (
-                        <div className="w-20 h-20 md:w-64 md:h-64 shrink-0 rounded-[1.5rem] md:rounded-[6rem] overflow-hidden shadow-lg md:shadow-[0_20px_50px_rgba(0,0,0,0.2)] border-2 md:border-8 border-white bg-gray-50 group relative">
+                        <div className="w-20 h-20 md:w-64 md:h-64 shrink-0 rounded-[1.5rem] md:rounded-[6rem] overflow-hidden shadow-lg md:shadow-[0_20px_50px_rgba(0,0,0,0.2)] border-2 md:border-8 border-white bg-gray-50/50 group relative">
                             <img
                                 src={selectedBranch.imageUrl}
                                 alt={getName()}
+                                fetchPriority="high"
+                                decoding="async"
                                 className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-125"
                                 onError={(e) => {
                                     const target = e.currentTarget as HTMLImageElement;

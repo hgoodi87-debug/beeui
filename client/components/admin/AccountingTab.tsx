@@ -18,6 +18,7 @@ interface AccountingTabProps {
     handleSaveExpenditure: () => void;
     expenditures: Expenditure[];
     deleteExpenditure: (id: string) => void;
+    t: any;
 }
 
 type SubTab = 'revenue' | 'expenditure' | 'calendar';
@@ -36,7 +37,8 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     setExpForm,
     handleSaveExpenditure,
     expenditures,
-    deleteExpenditure
+    deleteExpenditure,
+    t
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
 
@@ -63,8 +65,8 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm overflow-hidden group">
                 <div className="space-y-1 relative z-10">
-                    <h1 className="text-xl md:text-2xl font-black tracking-tight">매출 결산 <span className="text-bee-yellow italic">Accounting</span></h1>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Unified Period Performance & Financial Statistics 🛡️</p>
+                    <h1 className="text-xl md:text-2xl font-black tracking-tight">{t.admin?.sidebar?.accounting || '매출 결산'} <span className="text-bee-yellow italic">Accounting</span></h1>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">통합 기간 실적 분석 및 재무 통계 🛡️</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 relative z-10">
@@ -198,20 +200,20 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
             <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
                 <div className="flex items-center justify-between">
                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <i className="fa-solid fa-credit-card text-bee-blue"></i> 결제 수단별 분석 매트릭스
+                        <i className="fa-solid fa-credit-card text-bee-blue"></i> 결제 수단별 매출 분석
                     </h4>
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-100 animate-pulse"></div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
                     {[
-                        { label: '카드결제', amount: revenueStats?.card || 0, icon: 'fa-credit-card', color: 'gray' },
-                        { label: '현금 결제', amount: revenueStats?.cash || 0, icon: 'fa-money-bill-wave', color: 'emerald' },
-                        { label: '네이버페이', amount: revenueStats?.naver || 0, icon: 'fa-n', color: 'green' },
-                        { label: '카카오페이', amount: revenueStats?.kakao || 0, icon: 'fa-comment', color: 'yellow' },
-                        { label: '애플페이', amount: revenueStats?.apple || 0, icon: 'fa-apple-pay', color: 'black' },
-                        { label: '삼성페이', amount: revenueStats?.samsung || 0, icon: 'fa-mobile-screen', color: 'blue' },
-                        { label: '페이팔', amount: revenueStats?.paypal || 0, icon: 'fa-paypal', color: 'indigo' },
-                        { label: '해외결제', amount: (revenueStats?.alipay || 0) + (revenueStats?.wechat || 0), icon: 'fa-globe', color: 'violet' }
+                        { label: t.admin?.accounting?.methods?.card || '카드결제', amount: revenueStats?.card || 0, icon: 'fa-credit-card', color: 'gray' },
+                        { label: t.admin?.accounting?.methods?.cash || '현금 결제', amount: revenueStats?.cash || 0, icon: 'fa-money-bill-wave', color: 'emerald' },
+                        { label: t.admin?.accounting?.methods?.naver || '네이버페이', amount: revenueStats?.naver || 0, icon: 'fa-n', color: 'green' },
+                        { label: t.admin?.accounting?.methods?.kakao || '카카오페이', amount: revenueStats?.kakao || 0, icon: 'fa-comment', color: 'yellow' },
+                        { label: t.admin?.accounting?.methods?.apple || '애플페이', amount: revenueStats?.apple || 0, icon: 'fa-apple-pay', color: 'black' },
+                        { label: t.admin?.accounting?.methods?.samsung || '삼성페이', amount: revenueStats?.samsung || 0, icon: 'fa-mobile-screen', color: 'blue' },
+                        { label: t.admin?.accounting?.methods?.paypal || '페이팔', amount: revenueStats?.paypal || 0, icon: 'fa-paypal', color: 'indigo' },
+                        { label: t.admin?.accounting?.methods?.overseas || '해외결제', amount: (revenueStats?.alipay || 0) + (revenueStats?.wechat || 0), icon: 'fa-globe', color: 'violet' }
                     ].map((m, idx) => (
                         <motion.div 
                             key={m.label} 
@@ -274,7 +276,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                                 </tr>
                                             ))}
                                             {accountingDailyStats.length === 0 && (
-                                                <tr><td colSpan={3} className="px-6 py-20 text-center text-gray-300 font-black italic">No records in this period.</td></tr>
+                                                <tr><td colSpan={3} className="px-6 py-20 text-center text-gray-300 font-black italic">해당 기간의 매출 기록이 없습니다.</td></tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -308,7 +310,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                                 </tr>
                                             ))}
                                             {accountingMonthlyStats.length === 0 && (
-                                                <tr><td colSpan={3} className="px-6 py-20 text-center text-gray-300 font-black italic">No monthly records.</td></tr>
+                                                <tr><td colSpan={3} className="px-6 py-20 text-center text-gray-300 font-black italic">월간 정산 데이터가 없습니다.</td></tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -361,12 +363,12 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                 </div>
                             </div>
                             <div className="space-y-2 text-left">
-                                <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">Detailed Description</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">지출 상세 내역</label>
                                 <input
                                     type="text"
                                     value={expForm.description}
                                     onChange={e => setExpForm({ ...expForm, description: e.target.value })}
-                                    placeholder="Enter expense details..."
+                                    placeholder="상세 지출 내용을 입력하세요..."
                                     className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm"
                                 />
                             </div>

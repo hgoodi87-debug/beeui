@@ -66,119 +66,12 @@ const LocationList: React.FC<LocationListProps> = ({
     }, [bh]);
 
     // [스봉이] 날짜 포맷팅 헬퍼 (YYYY-MM-DD -> MM.DD) 💅
-    const formatToMMDD = (dateStr: string | undefined) => {
+    const formatToMMDD = React.useCallback((dateStr: string | undefined) => {
         if (!dateStr || dateStr === '--.--') return '--.--';
-        // 숫자가 아닌 문자(공백 등)가 섞여있을 수 있으니 정규식으로 안전하게 추출 💅
         const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-        if (match) {
-            return `${match[2]}.${match[3]}`;
-        }
+        if (match) return `${match[2]}.${match[3]}`;
         return dateStr;
-    };
-
-    const CalendarView = ({
-        selectedDate,
-        onSelect,
-        minDate,
-        lang
-    }: {
-        selectedDate: string;
-        onSelect: (date: string) => void;
-        minDate?: string;
-        lang: string;
-    }) => {
-        const [viewDate, setViewDate] = React.useState(() => {
-            const d = selectedDate ? new Date(selectedDate) : new Date();
-            return new Date(d.getFullYear(), d.getMonth(), 1, 12, 0, 0);
-        });
-
-        const year = viewDate.getFullYear();
-        const month = viewDate.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const days = [];
-        for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
-        for (let i = 1; i <= daysInMonth; i++) days.push(i);
-        const weekDays = lang === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] :
-            lang === 'ja' ? ['日', '月', '화', '水', '木', '金', '土'] :
-                (lang.toLowerCase() === 'zh' || lang.toLowerCase() === 'zh-tw' || lang.toLowerCase() === 'zh-hk') ? ['日', '一', '二', '三', '四', '五', '六'] :
-                    ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-        const handlePrevMonth = (e: React.MouseEvent) => { e.stopPropagation(); setViewDate(new Date(year, month - 1, 1, 12, 0, 0)); };
-        const handleNextMonth = (e: React.MouseEvent) => { e.stopPropagation(); setViewDate(new Date(year, month + 1, 1, 12, 0, 0)); };
-
-        return (
-            <div className="flex flex-col gap-3 bg-white p-4 rounded-[1.5rem] border border-gray-50 shadow-sm pointer-events-auto">
-                <div className="flex items-center justify-between px-2">
-                    <span className="text-xs font-black text-gray-900 italic tracking-tighter">
-                        {lang === 'ko' ? `${year}년 ${month + 1}월` :
-                            lang === 'ja' ? `${year}年 ${month + 1}月` :
-                                (lang.toLowerCase() === 'zh' || lang.toLowerCase() === 'zh-tw' || lang.toLowerCase() === 'zh-hk') ? `${year}年 ${month + 1}月` :
-                                    `${year}. ${String(month + 1).padStart(2, '0')}`}
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <button title="이전 달" onClick={handlePrevMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronLeft className="w-3.5 h-3.5" /></button>
-                        <button title="다음 달" onClick={handleNextMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronRight className="w-3.5 h-3.5" /></button>
-                    </div>
-                </div>
-                <div className="grid grid-cols-7 gap-0.5">
-                    {weekDays.map(d => (
-                        <div key={d} className="text-[8px] font-black text-gray-300 text-center py-1 uppercase tracking-tighter">{d}</div>
-                    ))}
-                    {days.map((day, idx) => {
-                        if (day === null) return <div key={`empty-${idx}`} />;
-                        const d = new Date(year, month, day, 12, 0, 0);
-                        const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                        const isSelected = selectedDate === dStr;
-                        const disabled = (() => {
-                            const nowKST = formatKSTDate();
-                            if (minDate && dStr < minDate) return true;
-                            if (dStr < nowKST) return true;
-
-                            if (dStr === nowKST) {
-                                // [스봉이] 지점별 영업시간 반영하여 마감 여부 판단 💅 - 사장님 표 13:30 & 16:00 룰 적용!
-                                const pickupLimit = isDelivery ? 13.5 : (bh.end - 1);
-                                const pickupSlots = timeSlotsOrig.filter(h => {
-                                    const [hour, min] = h.split(':').map(Number);
-                                    const timeVal = hour + min / 60;
-                                    return timeVal >= bh.start && timeVal <= pickupLimit;
-                                });
-                                const hasPickup = !!getFirstAvailableSlot(dStr, pickupSlots);
-
-                                let hasReturn = true;
-                                if (currentService === 'SAME_DAY') {
-                                    const returnStart = 16;
-                                    const returnLimit = bh.end - 0.5;
-                                    const returnSlots = timeSlotsOrig.filter(h => {
-                                        const [hour, min] = h.split(':').map(Number);
-                                        const timeVal = hour + min / 60;
-                                        return timeVal >= returnStart && timeVal <= returnLimit;
-                                    });
-                                    hasReturn = !!getFirstAvailableSlot(dStr, returnSlots);
-                                }
-
-                                if (!hasPickup || !hasReturn) return true;
-                            }
-                            return false;
-                        })();
-                        return (
-                            <button
-                                key={day}
-                                disabled={disabled}
-                                onClick={() => onSelect(dStr)}
-                                className={`aspect-square flex items-center justify-center rounded-lg text-[10px] font-black transition-all ${disabled ? 'text-gray-100 cursor-not-allowed' :
-                                    isSelected ? 'bg-bee-yellow text-bee-black shadow-md scale-105' :
-                                        'hover:bg-gray-50 text-gray-600'
-                                    }`}
-                            >
-                                {day}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    };
+    }, []);
 
     return (
         <div className="flex flex-col h-full overflow-hidden md:pointer-events-auto select-none pointer-events-none md:border-r md:weightless-glass relative z-20">
@@ -338,6 +231,10 @@ const LocationList: React.FC<LocationListProps> = ({
                                                 }
                                             }}
                                             lang={lang}
+                                            isDelivery={isDelivery}
+                                            bh={bh}
+                                            timeSlotsOrig={timeSlotsOrig}
+                                            currentService={currentService}
                                         />
                                     ) : (
                                         <div className="max-h-[250px] overflow-y-auto no-scrollbar grid grid-cols-2 gap-2 p-1">
@@ -441,12 +338,14 @@ const LocationList: React.FC<LocationListProps> = ({
 
                                 </div>
 
-                                {/* 우측 이미지 - 라운딩 강화 및 쉐도우 💅 */}
-                                <div className="relative w-12 h-12 md:w-24 md:h-24 shrink-0 rounded-[1.2rem] md:rounded-[2rem] overflow-hidden shadow-2xl border-2 border-white/50 bg-gray-100">
+                                {/* 우측 이미지 - 라운딩 강화 및 쉐도우 + 지연 로딩 최적화 💅 */}
+                                <div className="relative w-12 h-12 md:w-24 md:h-24 shrink-0 rounded-[1.2rem] md:rounded-[2rem] overflow-hidden shadow-2xl border-2 border-white/50 bg-gray-100/50 backdrop-blur-sm">
                                     {branch.imageUrl ? (
                                         <img
                                             src={branch.imageUrl}
                                             alt={branch.name}
+                                            loading="lazy"
+                                            decoding="async"
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
                                             onError={(e) => {
                                                 (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1580978640103-ba69fa7a9003?q=80&w=2670&auto=format&fit=crop';
@@ -468,6 +367,118 @@ const LocationList: React.FC<LocationListProps> = ({
                         <p className="text-gray-400 font-bold text-sm tracking-tight">{t.locations_page?.no_results || 'No branches found.'}</p>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+};
+
+// [스봉이] 캘린더 뷰는 밖으로 빼야 성능이 영롱해집니다 💅
+const CalendarView = ({
+    selectedDate,
+    onSelect,
+    minDate,
+    lang,
+    isDelivery,
+    bh,
+    timeSlotsOrig,
+    currentService
+}: {
+    selectedDate: string;
+    onSelect: (date: string) => void;
+    minDate?: string;
+    lang: string;
+    isDelivery: boolean;
+    bh: { start: number; end: number };
+    timeSlotsOrig: string[];
+    currentService: string;
+}) => {
+    const [viewDate, setViewDate] = React.useState(() => {
+        const d = selectedDate ? new Date(selectedDate) : new Date();
+        return new Date(d.getFullYear(), d.getMonth(), 1, 12, 0, 0);
+    });
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const days = [];
+    for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(i);
+    const weekDays = lang === 'ko' ? ['일', '월', '화', '수', '목', '금', '토'] :
+        lang === 'ja' ? ['日', '月', '화', '水', '木', '金', '土'] :
+            (lang.toLowerCase() === 'zh' || lang.toLowerCase() === 'zh-tw' || lang.toLowerCase() === 'zh-hk') ? ['日', '一', '二', '三', '四', '五', '六'] :
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    const handlePrevMonth = (e: React.MouseEvent) => { e.stopPropagation(); setViewDate(new Date(year, month - 1, 1, 12, 0, 0)); };
+    const handleNextMonth = (e: React.MouseEvent) => { e.stopPropagation(); setViewDate(new Date(year, month + 1, 1, 12, 0, 0)); };
+
+    return (
+        <div className="flex flex-col gap-3 bg-white p-4 rounded-[1.5rem] border border-gray-50 shadow-sm pointer-events-auto">
+            <div className="flex items-center justify-between px-2">
+                <span className="text-xs font-black text-gray-900 italic tracking-tighter">
+                    {lang === 'ko' ? `${year}년 ${month + 1}월` :
+                        lang === 'ja' ? `${year}年 ${month + 1}月` :
+                            (lang.toLowerCase() === 'zh' || lang.toLowerCase() === 'zh-tw' || lang.toLowerCase() === 'zh-hk') ? `${year}年 ${month + 1}月` :
+                                `${year}. ${String(month + 1).padStart(2, '0')}`}
+                </span>
+                <div className="flex items-center gap-1">
+                    <button title="이전 달" onClick={handlePrevMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                    <button title="다음 달" onClick={handleNextMonth} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"><ChevronRight className="w-3.5 h-3.5" /></button>
+                </div>
+            </div>
+            <div className="grid grid-cols-7 gap-0.5">
+                {weekDays.map(d => (
+                    <div key={d} className="text-[8px] font-black text-gray-300 text-center py-1 uppercase tracking-tighter">{d}</div>
+                ))}
+                {days.map((day, idx) => {
+                    if (day === null) return <div key={`empty-${idx}`} />;
+                    const d = new Date(year, month, day, 12, 0, 0);
+                    const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    const isSelected = selectedDate === dStr;
+                    const disabled = (() => {
+                        const nowKST = formatKSTDate();
+                        if (minDate && dStr < minDate) return true;
+                        if (dStr < nowKST) return true;
+
+                        if (dStr === nowKST) {
+                            const pickupLimit = isDelivery ? 13.5 : (bh.end - 1);
+                            const pickupSlots = timeSlotsOrig.filter(h => {
+                                const [hour, min] = h.split(':').map(Number);
+                                const timeVal = hour + min / 60;
+                                return timeVal >= bh.start && timeVal <= pickupLimit;
+                            });
+                            const hasPickup = !!getFirstAvailableSlot(dStr, pickupSlots);
+
+                            let hasReturn = true;
+                            if (currentService === 'SAME_DAY') {
+                                const returnStart = 16;
+                                const returnLimit = bh.end - 0.5;
+                                const returnSlots = timeSlotsOrig.filter(h => {
+                                    const [hour, min] = h.split(':').map(Number);
+                                    const timeVal = hour + min / 60;
+                                    return timeVal >= returnStart && timeVal <= returnLimit;
+                                });
+                                hasReturn = !!getFirstAvailableSlot(dStr, returnSlots);
+                            }
+
+                            if (!hasPickup || !hasReturn) return true;
+                        }
+                        return false;
+                    })();
+                    return (
+                        <button
+                            key={day}
+                            disabled={disabled}
+                            onClick={() => onSelect(dStr)}
+                            className={`aspect-square flex items-center justify-center rounded-lg text-[10px] font-black transition-all ${disabled ? 'text-gray-100 cursor-not-allowed' :
+                                isSelected ? 'bg-bee-yellow text-bee-black shadow-md scale-105' :
+                                    'hover:bg-gray-50 text-gray-600'
+                                }`}
+                        >
+                            {day}
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );

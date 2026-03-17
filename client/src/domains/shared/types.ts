@@ -40,10 +40,16 @@ export interface StorageTier {
 }
 
 export interface SystemNotice {
+    id?: string;
+    title: string;
+    category: 'NOTICE'|'NEWS'|'EVENT'|'FAQ';
     isActive: boolean;
     imageUrl: string;
     content: string;
     linkUrl?: string;
+    startDate?: string;
+    endDate?: string;
+    createdAt?: string;
 }
 
 export interface HeroConfig {
@@ -65,6 +71,8 @@ export interface GoogleCloudConfig {
     enableGeminiAutomation?: boolean;
     googleChatWebhookUrl?: string;
     measurementId?: string;
+    mapId?: string;
+    mapSecret?: string;
 }
 
 export interface PrivacyArticle {
@@ -124,6 +132,7 @@ export interface TranslatedLocationData {
 export interface CashClosing {
     id?: string;
     date: string;
+    branchId?: string; // [스봉이] 지점별 시재 관리를 위한 필수 낙인! 💅
     totalRevenue: number;
     cashRevenue: number;
     cardRevenue: number;
@@ -144,6 +153,7 @@ export interface CashClosing {
 export interface Expenditure {
     id?: string;
     date: string;
+    branchId?: string; // [스봉이] 지점별 지출 추적! 🛡️
     category: string;
     amount: number;
     description: string;

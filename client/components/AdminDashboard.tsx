@@ -18,6 +18,7 @@ import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType,
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
 import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
+import { AuditService } from '../services/auditService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 import { useQueryClient } from '@tanstack/react-query';
@@ -42,7 +43,7 @@ import CloudTab from './admin/CloudTab';
 import PrivacyEditorTab from './admin/PrivacyEditorTab';
 import TermsEditorTab from './admin/TermsEditorTab';
 import QnaEditorTab from './admin/QnaEditorTab';
-import BookingDetailModal from './admin/BookingDetailModal';
+import BookingSidePanel from './admin/BookingSidePanel';
 import ManualBookingModal from './admin/ManualBookingModal';
 import ChatTab from './admin/ChatTab';
 import DiscountTab from './admin/DiscountTab';
@@ -87,12 +88,14 @@ interface AdminDashboardProps {
   onStaffMode?: () => void;
   adminName?: string;
   jobTitle?: string;
+  adminRole?: string;
+  adminEmail?: string;
   scanId?: string;
   lang: string;
   t: any;
 }
 
-export type StatusTab = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export type StatusTab = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ISSUE' | 'TODAY_IN' | 'STORAGE' | 'TODAY_OUT' | 'TRANSIT' | 'ARRIVED';
 
 declare global {
   interface Window {
@@ -120,8 +123,11 @@ const getKSTDateString = () => {
   return kst.toISOString().split('T')[0];
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, scanId, lang, t }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, adminRole = 'staff', adminEmail, scanId, lang, t }) => {
+  const currentActor = { id: adminName || 'unknown', name: adminName || 'unknown', email: adminEmail };
   const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
+  const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]); // [스봉이] 일괄 처리를 위한 체크박스 상태 💅
+  const [isBatchUpdating, setIsBatchUpdating] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: allBookings = [] } = useBookings();
@@ -177,8 +183,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   }, [scanId, bookings, admins, setActiveTab]);
 
-  // Notice State
-  const [notice, setNotice] = useState<SystemNotice>({ isActive: false, imageUrl: '', content: '' });
+  // Notices State
+  const [notices, setNotices] = useState<SystemNotice[]>([]);
+  const [noticeForm, setNoticeForm] = useState<Partial<SystemNotice>>({
+    title: '',
+    category: 'NOTICE',
+    isActive: true,
+    imageUrl: '',
+    content: ''
+  });
 
   // Hero Config State
   const [heroConfig, setHeroConfig] = useState<HeroConfig>({
@@ -228,17 +241,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   // Function to handle email resend
   const handleResendEmail = async (booking: BookingState) => {
     if (!booking.id) return;
-    if (!confirm(`Is it okay to resend the voucher email to ${booking.userName} (${booking.userEmail})?`)) return;
+    if (!confirm(`${booking.userName} (${booking.userEmail}) 고객님께 바우처 이메일을 재발행해 드릴까요? 💅`)) return;
 
     setSendingEmailId(booking.id);
     try {
       const functions = getFunctions(app, 'us-central1');
       const resendVoucher = httpsCallable(functions, 'resendBookingVoucher');
       await resendVoucher({ bookingId: booking.id });
-      alert('Email sent successfully!');
+      alert('바우처 이메일 발송이 깔끔하게 끝났어요. ✨');
     } catch (error: any) {
       console.error("Failed to send email:", error);
-      alert(`Failed to send email: ${error.message}`);
+      alert(`이메일 발송 중에 뭔가 꼬였나 봐요: ${error.message} 🙄`);
     } finally {
       setSendingEmailId(null);
     }
@@ -252,9 +265,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setRefundingId(booking.id);
     try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
       const functions = getFunctions(app, 'us-central1');
       const processRefund = httpsCallable(functions, 'processBookingRefund');
       await processRefund({ bookingId: booking.id });
+      await AuditService.logAction(currentActor, 'REFUND', { id: booking.id, type: 'BOOKING' }, { userName: booking.userName });
       alert('반품(환불) 처리가 완료되었습니다.');
       // Update local state to reflect change immediately (optional, or rely on snapshot)
     } catch (error: any) {
@@ -314,6 +329,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   // Accounting / Revenue State
   const [revenueStartDate, setRevenueStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [revenueEndDate, setRevenueEndDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // 취소/환불 날짜 필터 - 기본 최근 30일
+  const [cancelStartDate, setCancelStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [cancelEndDate, setCancelEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [cashClosing, setCashClosing] = useState({
     actualCash: 0,
     notes: ''
@@ -347,10 +370,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const { revenueStats, dailySettlementStats, accountingDailyStats, accountingMonthlyStats, monthlyControlStats } = useAdminStats({
     bookings,
-    expenditures,
+    expenditures: globalBranchFilter === 'ALL' ? expenditures : expenditures.filter(e => e.branchId === globalBranchFilter),
     revenueStartDate,
     revenueEndDate,
-    closings
+    closings: globalBranchFilter === 'ALL' ? closings : closings.filter(c => c.branchId === globalBranchFilter)
   });
 
   const filteredExpenditures = useMemo(() => {
@@ -371,6 +394,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     try {
       await StorageService.saveCashClosing({
         date: revenueEndDate,
+        branchId: globalBranchFilter !== 'ALL' ? globalBranchFilter : 'HEADQUARTERS',
         totalRevenue: revenueStats.total,
         cashRevenue: revenueStats.cash,
         cardRevenue: revenueStats.card,
@@ -401,12 +425,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       return;
     }
     try {
-      await StorageService.saveExpenditure({
+      const savedExp = {
         ...expForm,
+        branchId: globalBranchFilter !== 'ALL' ? globalBranchFilter : (adminRole === 'branch' ? globalBranchFilter : 'HEADQUARTERS'),
         createdBy: adminName || 'Admin',
         createdAt: new Date().toISOString()
-      } as Expenditure);
-      alert('지출 내역이 저장되었습니다.');
+      } as Expenditure;
+      
+      await StorageService.saveExpenditure(savedExp);
+      alert('지출 내역이 성공적으로 기록되었습니다. 💅');
       setExpForm({
         date: new Date().toISOString().split('T')[0],
         category: '',
@@ -529,13 +556,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         setStorageTiers(safeJsonParse('beeliber_storage_tiers', INITIAL_STORAGE_TIERS));
       }
 
-      const savedNotice = safeJsonParse('beeliber_notice', null);
-      if (savedNotice) setNotice(savedNotice);
+      const savedCloud = StorageService.getCloudConfig();
+      if (savedCloud) setCloudConfig(savedCloud);
 
       // Storage policies fetching has been offloaded to their respective components
 
-      const savedCloud = StorageService.getCloudConfig();
-      if (savedCloud) setCloudConfig(savedCloud);
+      // Storage policies fetching has been offloaded to their respective components
+
+      // (savedCloud config logic moved up)
 
     } catch (error) {
       console.error("Failed to refresh data", error);
@@ -543,6 +571,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       setTimeout(() => setIsRefreshing(false), 500); // Visual delay
     }
   };
+
+  // Subscribe to Notices
+  useEffect(() => {
+    const unsubscribe = StorageService.subscribeNotices(setNotices);
+    return () => unsubscribe();
+  }, []);
 
   // Initial Load & Subscriptions
   useEffect(() => {
@@ -585,24 +619,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
       if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
 
-      // 3. Date check (Today KST)
-      // FIX: Show all PENDING, TRANSIT, STORAGE, ARRIVED bookings regardless of date
-      // COMPLETED, CANCELLED, REFUNDED only show for today
-      const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-      const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
+      // 3. 취소/환불: 날짜 구간 필터 적용
+      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
+        const d = b.pickupDate || '';
+        return d >= cancelStartDate && d <= cancelEndDate;
+      }
 
-      if (isStatusIncomplete) return true;
+      // 4. 진행중 상태는 날짜 무관 표시
+      const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+      if (incompleteStatuses.includes(b.status as any)) return true;
+
+      // 5. 완료 건: 오늘 날짜만
       return b.pickupDate === todayKST;
     });
 
+    // [스봉이] 취소/환불 카운트는 날짜 필터 적용(미정산)
+    const cancelCount = bookings.filter(b => {
+      if (b.isDeleted) return false;
+      if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
+      if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
+      if (b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED) return false;
+      const d = b.pickupDate || '';
+      return d >= cancelStartDate && d <= cancelEndDate;
+    }).length;
+
+    // [스봉이] 긴급 이슈(취소/환불/메모) 카운트
+    const issueCount = bookings.filter(b => {
+      if (b.isDeleted) return false;
+      if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
+      if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
+      return (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || !!b.auditNote);
+    }).length;
+
     return [
-      { id: 'ALL', label: '종합 (All)', count: baseBookings.length },
-      { id: 'PENDING', label: '접수완료', count: baseBookings.filter(b => b.status === BookingStatus.PENDING).length },
-      { id: 'ACTIVE', label: '이동/보관중', count: baseBookings.filter(b => b.status === BookingStatus.TRANSIT || b.status === BookingStatus.STORAGE || b.status === BookingStatus.ARRIVED).length },
-      { id: 'COMPLETED', label: '완료', count: baseBookings.filter(b => b.status === BookingStatus.COMPLETED).length },
-      { id: 'CANCELLED', label: '취소/환불', count: baseBookings.filter(b => b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED).length },
+      { id: 'ALL' as StatusTab, label: '종합 (All)', count: baseBookings.length },
+      { id: 'PENDING' as StatusTab, label: '접수완료', count: baseBookings.filter(b => b.status === BookingStatus.PENDING).length },
+      { id: 'ACTIVE' as StatusTab, label: '이동/보관중', count: baseBookings.filter(b => b.status === BookingStatus.TRANSIT || b.status === BookingStatus.STORAGE || b.status === BookingStatus.ARRIVED).length },
+      { id: 'COMPLETED' as StatusTab, label: '완료', count: baseBookings.filter(b => b.status === BookingStatus.COMPLETED).length },
+      { id: 'CANCELLED' as StatusTab, label: '취소/환불', count: cancelCount },
+      { id: 'ISSUE' as StatusTab, label: '클레임/이슈', count: issueCount },
     ];
-  }, [bookings, activeTab, todayKST]);
+  }, [bookings, activeTab, todayKST, cancelStartDate, cancelEndDate]);
 
   // Filter Bookings for Current Tab
   const filteredBookings = useMemo(() => {
@@ -617,14 +674,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       } else {
         if (b.isDeleted === true) return false;
 
-        // FIX: Show all PENDING, TRANSIT, STORAGE, ARRIVED bookings regardless of date
-        // Hide past bookings only if they are COMPLETED, CANCELLED, or REFUNDED
-        const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-        const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
-
-        if (!isStatusIncomplete) {
-          if (b.pickupDate && b.pickupDate < todayKST) return false;
-          if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) return false;
+        // [스봉이] 취소/환불: 날짜 구간 필터 적용 💅
+        if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
+          const d = b.pickupDate || '';
+          if (d < cancelStartDate || d > cancelEndDate) return false;
+        } else {
+          // 진행중 상태는 날짜 무관 표시
+          const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+          const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
+          if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
         }
       }
 
@@ -633,7 +691,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         if (activeStatusTab === 'ACTIVE' && ![BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any)) return false;
         if (activeStatusTab === 'COMPLETED' && b.status !== BookingStatus.COMPLETED) return false;
         if (activeStatusTab === 'CANCELLED' && ![BookingStatus.CANCELLED, BookingStatus.REFUNDED].includes(b.status as any)) return false;
-        
+
         // [스봉이] 실무형 탭 추가 (P0) 💅
         if (activeStatusTab === 'TODAY_IN' && !(b.status === BookingStatus.PENDING && b.pickupDate === todayKST)) return false;
         if (activeStatusTab === 'STORAGE' && b.status !== BookingStatus.STORAGE) return false;
@@ -644,7 +702,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
       return true;
     });
-  }, [bookings, activeTab, activeStatusTab, todayKST]);
+  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate]);
 
   // Daily Statistics Calculation (Aggregated by pickupDate)
   const dailyStats = useMemo(() => {
@@ -1125,7 +1183,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
   const deleteAdmin = async (id: string) => {
-    // Note: HRTab handles the initial confirmation. Removing redundant confirm to improve UX.
+    if (!confirm('정말로 이 직원의 계정을 삭제하시겠어요? 이 작업은 되돌릴 수 없으니까 신중하게 생각하세요. 💅')) return;
     setIsSaving(true);
     try {
       await StorageService.deleteAdmin(id);
@@ -1144,12 +1202,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     setAdminForm({ name: '', jobTitle: '', password: '' });
   };
 
+  // [스봉이] 일괄 상태 업데이트 함수 💅✨
+  const handleBatchUpdateStatus = async (status: BookingStatus) => {
+    if (selectedBookingIds.length === 0) return;
+    if (!window.confirm(`${selectedBookingIds.length}건의 예약을 '${OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[status]].label}' 상태로 일괄 변경할까요?`)) return;
+
+    setIsBatchUpdating(true);
+    try {
+      const promises = selectedBookingIds.map(id => updateDoc(doc(db, 'bookings', id), { status }));
+      await Promise.all(promises);
+      setSelectedBookingIds([]);
+      alert(`성공적으로 ${selectedBookingIds.length}건을 처리했습니다. 💅`);
+    } catch (error) {
+      console.error('Batch update error:', error);
+      alert('일괄 처리 중 사고가 났어요! 🙄');
+    } finally {
+      setIsBatchUpdating(false);
+    }
+  };
+
   const updateStatus = async (id: string, status: BookingStatus, auditNote?: string) => {
     try {
-      await updateDoc(doc(db, 'bookings', id), { 
+      const { doc, updateDoc } = await import('firebase/firestore');
+      const bookingRef = doc(db, 'bookings', id);
+      await updateDoc(bookingRef, { 
         status,
-        ...(auditNote && { auditNote })
+        ...(auditNote && { auditNote }),
+        updatedAt: new Date().toISOString()
       });
+      await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id, type: 'BOOKING' }, { status, detail: auditNote });
     } catch (e) { console.error(e); }
   };
 
@@ -1256,7 +1337,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleSoftDelete = async (id: string) => {
     if (!confirm('예약 내역을 휴지통으로 이동하시겠습니까?')) return;
     try {
-      await updateDoc(doc(db, 'bookings', id), { isDeleted: true });
+      const { doc, updateDoc } = await import('firebase/firestore');
+      await updateDoc(doc(db, 'bookings', id), { isDeleted: true, updatedAt: new Date().toISOString() });
+      await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'SOFT_DELETE' });
     } catch (e) {
       console.error(e);
       alert("삭제 실패");
@@ -1266,7 +1349,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleRestore = async (id: string) => {
     if (!confirm('예약 내역을 복구하시겠습니까?')) return;
     try {
-      await updateDoc(doc(db, 'bookings', id), { isDeleted: false });
+      const { doc, updateDoc } = await import('firebase/firestore');
+      await updateDoc(doc(db, 'bookings', id), { isDeleted: false, updatedAt: new Date().toISOString() });
+      await AuditService.logAction(currentActor, 'RESTORE', { id, type: 'BOOKING' }, { method: 'RESTORE' });
     } catch (e) {
       console.error(e);
       alert("복구 실패");
@@ -1276,7 +1361,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handlePermanentDelete = async (id: string) => {
     if (!confirm('정말로 영구 삭제하시겠습니까? 복구할 수 없습니다.')) return;
     try {
+      const { doc, deleteDoc } = await import('firebase/firestore');
       await deleteDoc(doc(db, 'bookings', id));
+      await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'PERMANENT_DELETE' });
     } catch (e) {
       console.error(e);
       alert("영구 삭제 실패");
@@ -1492,8 +1579,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!selectedBooking || !selectedBooking.id) return;
     setIsSaving(true);
     try {
-      await StorageService.updateBooking(selectedBooking.id, selectedBooking);
-      alert('예약 정보가 성공적으로 업데이트되었습니다.');
+      const { doc, updateDoc } = await import('firebase/firestore');
+      const bookingRef = doc(db, 'bookings', selectedBooking.id);
+      await updateDoc(bookingRef, { ...selectedBooking, updatedAt: new Date().toISOString() });
+      await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id: selectedBooking.id!, type: 'BOOKING' }, { status: selectedBooking.status, detail: 'Manual Full Update' });
+      alert('예약 정보가 성공적으로 업데이트되었습니다. 💅');
       setSelectedBooking(null);
       refreshData();
     } finally {
@@ -1557,10 +1647,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (file) {
       try {
         const url = await StorageService.uploadFile(file, `notices/${Date.now()}_${file.name}`);
-        setNotice({ ...notice, imageUrl: url });
+        setNoticeForm({ ...noticeForm, imageUrl: url });
       } catch (e: any) {
         console.error("Notice upload error:", e);
-        alert(`공지 이미지 업로드 실패: ${e.message || "알 수 없는 오류"}\n(Firebase Storage Rules를 확인하세요.)`);
+        alert(`공지 이미지 업로드 실패: ${e.message || "알 수 없는 오류"}`);
       }
     }
   };
@@ -1592,9 +1682,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
 
-  const saveNotice = () => {
-    localStorage.setItem('beeliber_notice', JSON.stringify(notice));
-    alert('공지사항이 저장되었습니다.');
+  const saveNotice = async () => {
+    if (!noticeForm.title || !noticeForm.content) {
+      alert('제목과 내용을 모두 입력해 주세요. 💅');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await StorageService.saveNotice(noticeForm as SystemNotice);
+      setNoticeForm({ title: '', category: 'NOTICE', isActive: true, imageUrl: '', content: '' });
+      alert('공지사항이 성공적으로 저장되었습니다. ✨');
+    } catch (e) {
+      console.error(e);
+      alert('저장 실패');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const deleteNotice = async (id: string) => {
+    if (!confirm('정말로 이 공지사항을 삭제하시겠어요? 🙄')) return;
+    try {
+      await StorageService.deleteNotice(id);
+      alert('삭제되었습니다.');
+    } catch (e) {
+      console.error(e);
+      alert('삭제 실패');
+    }
   };
 
   const getDirectVideoUrl = (url?: string) => {
@@ -1699,6 +1813,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         bookings={bookings}
         expenditures={expenditures}
         setSelectedBooking={setSelectedBooking}
+        t={t}
       />
 
       {/* CEMS Sidebar */}
@@ -1892,16 +2007,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                     <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2">시스템 메뉴</div>
                     <nav className="space-y-1">
                       {[
-                        { id: 'OPERATIONS', label: '실시간 통합 관제(Ops)', icon: 'fa-tower-observation' },
-                        { id: 'OVERVIEW', label: '통합 현황판', icon: 'fa-chart-pie' },
-                        { id: 'DELIVERY_BOOKINGS', label: '배송 예약 관리', icon: 'fa-truck-fast' },
-                        { id: 'STORAGE_BOOKINGS', label: '보관 예약 관리', icon: 'fa-warehouse' },
-                        { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
-                        { id: 'ACCOUNTING', label: '매출 결산 보고', icon: 'fa-receipt' },
-                        { id: 'MONTHLY_SETTLEMENT', label: '월 정산 통제판', icon: 'fa-vault' },
-                        { id: 'LOCATIONS', label: '전 지점 마스터 관리', icon: 'fa-location-dot' },
-                        { id: 'ROADMAP', label: '서비스 로드맵', icon: 'fa-map-location-dot' },
-                        { id: 'CHATS', label: '실시간 채팅', icon: 'fa-comments' },
+                        { id: 'OPERATIONS', label: t.admin?.sidebar?.overview || '실시간 통합 관제(Ops)', icon: 'fa-tower-observation' },
+                        { id: 'OVERVIEW', label: t.admin?.sidebar?.overview || '통합 현황판', icon: 'fa-chart-pie' },
+                        { id: 'DELIVERY_BOOKINGS', label: t.admin?.sidebar?.logistics || '배송 예약 관리', icon: 'fa-truck-fast' },
+                        { id: 'STORAGE_BOOKINGS', label: t.admin?.sidebar?.logistics || '보관 예약 관리', icon: 'fa-warehouse' },
+                        { id: 'DAILY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '일일 시재 정산', icon: 'fa-calendar-check' },
+                        { id: 'ACCOUNTING', label: t.admin?.sidebar?.accounting || '매출 결산 보고', icon: 'fa-receipt' },
+                        { id: 'MONTHLY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '월 정산 통제판', icon: 'fa-vault' },
+                        { id: 'LOCATIONS', label: t.admin?.sidebar?.locations || '전 지점 마스터 관리', icon: 'fa-location-dot' },
+                        { id: 'ROADMAP', label: t.admin?.sidebar?.roadmap || '서비스 로드맵', icon: 'fa-map-location-dot' },
+                        { id: 'CHATS', label: t.admin?.sidebar?.marketing || '실시간 채팅', icon: 'fa-comments' },
                       ].map(item => (
                         <button
                           key={item.id}
@@ -1922,7 +2037,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                     <p className="text-sm font-bold text-bee-black">{adminName} 님</p>
                   </div>
                   <button onClick={onBack} className="w-full flex items-center justify-center gap-2 p-3.5 bg-white border border-gray-200 rounded-xl text-xs font-black text-red-500">
-                    <i className="fa-solid fa-power-off"></i> 시스템 종료
+                    <i className="fa-solid fa-power-off"></i> {t.admin?.header?.logout || '시스템 종료'}
                   </button>
                 </div>
               </motion.div>
@@ -1935,10 +2050,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           <div className="flex items-center gap-4">
             <div className="px-4 py-2 bg-gray-100 flex items-center gap-3 rounded-full border border-gray-200">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">서버 정상 작동중</span>
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">운영 모니터링 중</span>
             </div>
             <div className="text-xs font-bold text-gray-400">
-              <i className="fa-regular fa-calendar mr-1"></i> {todayKST} (KST)
+              <i className="fa-regular fa-calendar mr-1"></i> {todayKST} (서울/KST)
             </div>
           </div>
 
@@ -1950,7 +2065,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               aria-label="지점 필터"
               className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-bee-black focus:border-bee-yellow hover:border-gray-300 outline-none cursor-pointer transition-colors"
             >
-              <option value="ALL">전체 지점 보관/배송</option>
+              <option value="ALL">전체 지점 현황 조회</option>
               {locations.map(loc => (
                 <option key={loc.id} value={loc.id}>{loc.name} - 지점</option>
               ))}
@@ -1961,7 +2076,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent rounded-xl text-xs font-black transition-all flex items-center gap-2"
             >
               <i className={`fa-solid fa-rotate-right ${isRefreshing ? 'animate-spin' : ''}`}></i>
-              새로고침
+              {t.admin?.header?.refresh || '새로고침'}
             </button>
           </div>
         </div>
@@ -1999,6 +2114,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               dailyStats={dailyStats}
               revenueStats={revenueStats}
               closings={closings}
+              t={t}
             />
           )}
 
@@ -2022,6 +2138,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handleSoftDelete={handleSoftDelete}
               setSelectedBooking={setSelectedBooking}
               onAddManual={() => setIsManualBooking(true)}
+              cancelStartDate={cancelStartDate}
+              setCancelStartDate={setCancelStartDate}
+              cancelEndDate={cancelEndDate}
+              setCancelEndDate={setCancelEndDate}
+              selectedBookingIds={selectedBookingIds}
+              setSelectedBookingIds={setSelectedBookingIds}
+              handleBatchUpdateStatus={handleBatchUpdateStatus}
+              isBatchUpdating={isBatchUpdating}
+              t={t}
             />
           )}
 
@@ -2071,6 +2196,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               expenditures={filteredExpenditures}
               deleteExpenditure={deleteExpenditure}
               setSelectedBooking={setSelectedBooking}
+              t={t}
             />
           )}
 
@@ -2090,6 +2216,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handleSaveExpenditure={handleSaveExpenditure}
               expenditures={filteredExpenditures}
               deleteExpenditure={deleteExpenditure}
+              t={t}
             />
           )}
 
@@ -2107,15 +2234,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           )}
 
           {activeTab === 'REPORTS' && (
-            <ReportsTab bookings={bookings} />
+            <ReportsTab 
+              bookings={bookings} 
+              startDate={revenueStartDate}
+              endDate={revenueEndDate}
+            />
           )}
 
           {activeTab === 'NOTICE' && (
             <NoticeTab
-              notice={notice}
-              setNotice={setNotice}
+              notices={notices}
+              noticeForm={noticeForm}
+              setNoticeForm={setNoticeForm}
               handleNoticeImageUpload={handleNoticeImageUpload}
               saveNotice={saveNotice}
+              deleteNotice={deleteNotice}
+              isSaving={isSaving}
             />
           )}
 
@@ -2146,6 +2280,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               updateDeliveryPrice={updateDeliveryPrice}
               storageTiers={storageTiers}
               updateStoragePrice={updateStoragePrice}
+              cloudConfig={cloudConfig}
+              setCloudConfig={setCloudConfig}
+              saveCloudSettings={saveCloudSettings}
+              isSaving={isSaving}
             />
           )}
 
@@ -2182,19 +2320,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         </main>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 1. RESERVATION DETAIL MODAL (VIEW & EDIT) */}
-      {/* ------------------------------------------------------------------ */}
-      <BookingDetailModal
+      <BookingSidePanel
+        isOpen={!!selectedBooking}
+        onClose={() => setSelectedBooking(null)}
         selectedBooking={selectedBooking}
         setSelectedBooking={setSelectedBooking}
-        locations={locations}
         getStatusStyle={getStatusStyle}
+        locations={locations}
         handlePrintLabel={handlePrintLabel}
         handleUpdateBooking={handleUpdateBooking}
         isSaving={isSaving}
         handleResendEmail={handleResendEmail}
         sendingEmailId={sendingEmailId}
+        handleRefund={handleRefund}
+        bookings={bookings}
+        expenditures={expenditures}
+        t={t}
       />
 
       {/* 2. MANUAL BOOKING MODAL */}

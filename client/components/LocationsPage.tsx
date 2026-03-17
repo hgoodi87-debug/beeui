@@ -147,27 +147,50 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  // 1. Get User Location & Prices on Mount
-  // [스봉이 수정] 진입 시 무조건 내 위치 수집 시작! 💅
+  // 1. Get User Location & Prices on Mount + Caching Logic 🛰️
+  // [스봉이 수정] 진입 시 캐시된 위치 로드 후 위치 수집 시작! 💅
   useEffect(() => {
     let mounted = true;
+    const CACHE_KEY = 'beeliber_last_location';
+    const CACHE_TTL = 3600000; // 1시간 (ms)
+
+    // [스봉이] 캐시된 위치 먼저 확인해서 즉시 정렬되게! 💅
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const { lat, lng, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL) {
+          console.log("[스봉이] 캐시된 위치를 찾았어요! ✨", { lat, lng });
+          setUserLocation({ lat, lng });
+        }
+      } catch (e) {
+        console.warn("[스봉이] 캐시 데이터가 좀 이상하네요? 🙄", e);
+      }
+    }
     
     const fetchUserLocation = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             if (mounted) {
-              console.log("[스봉이] 사용자 위치 수집 성공! 🐝✨", position.coords);
-              setUserLocation({
+              const newLoc = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
-              });
+              };
+              console.log("[스봉이] 사용자 실시간 위치 수집 성공! 🐝✨", newLoc);
+              setUserLocation(newLoc);
+              
+              // [스봉이] 신선한 위치 정보는 캐시에 저장! 💅
+              localStorage.setItem(CACHE_KEY, JSON.stringify({
+                ...newLoc,
+                timestamp: Date.now()
+              }));
             }
           },
           (error) => {
             console.warn("[스봉이] 위치 수집 실패.. 🙄", error);
           },
-          { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
+          { timeout: 10000, maximumAge: 300000, enableHighAccuracy: true } // maximumAge 5분으로 늘려 부하 절감
         );
       }
     };

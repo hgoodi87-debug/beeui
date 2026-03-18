@@ -114,6 +114,24 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
         // [스봉이] 권한이 없으면 여기서라도 기본값을 챙겨줘야 사고가 안 나요 🛡️
         if (!admin.role) admin.role = 'staff';
 
+        // [스봉이] 클라우드 함수가 못다 한 "신분증 매핑(UID Mapping)"을 직접 처리합니다. 💅
+        // 이제 로그인이 완료되었으므로, 보안 규칙상 본인 UID 문서는 직접 쓸 수 있어요! ✨
+        try {
+          const { doc, setDoc } = await import('firebase/firestore');
+          const { db } = await import('../firebaseApp');
+          
+          await setDoc(doc(db, 'admins', user.uid), {
+            ...admin,
+            uid: user.uid,
+            lastLogin: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          
+          console.log(`[AdminLogin] 🛡️ UID Mapping verification/sync success: ${user.uid}`);
+        } catch (syncErr) {
+          console.warn("[AdminLogin] ⚠️ UID Mapping sync failed (but continuing login):", syncErr);
+        }
+
         console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}) 💅`);
         const { AuditService } = await import('../services/auditService');
         try {

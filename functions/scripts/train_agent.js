@@ -1,5 +1,5 @@
 // Script to "Train" Clubbang-i on the current project context
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const claudeAgent = require('../agent/claudeAgent');
 const fs = require('fs');
 const path = require('path');
@@ -63,8 +63,14 @@ Output Format:
             context: projectStructure
         });
 
+        if (!result || !result.data || !result.data.plan) {
+          console.error("🚨 [스봉이] 클빵이가 분석 결과를 제대로 안 가져왔네요! (Result missing data.plan)");
+          console.log("Full Result:", JSON.stringify(result, null, 2));
+          throw new Error("Analysis failed: No plan generated.");
+        }
+
         const reportPath = path.join(__dirname, 'clubbang_report.md');
-        const reportContent = result.data.plan; // In step 1, it will generate the analysis
+        const reportContent = result.data.plan;
 
         fs.writeFileSync(reportPath, reportContent);
         console.log(`\n✅ Report saved to ${reportPath}`);

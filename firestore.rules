@@ -33,7 +33,8 @@ service cloud.firestore {
     match /admins/{adminId} {
       allow get: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
       allow list: if isAdmin();
-      allow write: if isAdmin();
+      // [스봉이] 인증된 사용자가 본인의 신분증(UID)을 직접 등록/수정할 수 있도록 허용합니다. 💅✨
+      allow write: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
     }
 
     // Expenditures & Closings: Admin only

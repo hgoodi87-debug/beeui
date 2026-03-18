@@ -13,7 +13,7 @@ const KEYS = {
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
   apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
   authDomain: "beeliber-main.firebaseapp.com",
-  projectId: "beeliber-main",
+  projectId: "beeliber-main", // [주의] 프로젝트 ID가 불일치할 경우 이 부분을 수정하세요. 💅
   storageBucket: "beeliber-main.firebasestorage.app",
   messagingSenderId: "591358308612",
   appId: "1:591358308612:web:fb3928d12b0e1bb000a051",
@@ -786,6 +786,66 @@ export const StorageService = {
     }
   },
 
+  /**
+   * [스봉이] 인사관리 중복 데이터 정제 도구 🧹💅
+   * 이름이 같은 데이터 중 가장 최근에 업데이트된 것만 남기고 나머지는 삭제합니다.
+   */
+  deduplicateAdmins: async (): Promise<{ total: number, removed: number }> => {
+    try {
+      const snap = await getDocs(collection(db, "admins"));
+      const admins = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
+      
+      const uniqueGroups: Record<string, AdminUser[]> = {};
+      admins.forEach(admin => {
+        const name = admin.name?.trim();
+        const email = admin.email?.trim();
+        if (!name) return;
+        
+        // [스봉이] 이름만 같다고 중복이 아니죠. 이메일까지 같아야 '진짜' 중복이에요! 💅
+        const key = `${name}_${email || 'no-email'}`;
+        if (!uniqueGroups[key]) uniqueGroups[key] = [];
+        uniqueGroups[key].push(admin);
+      });
+
+      let removedCount = 0;
+      const batchSize = 500;
+      let currentBatch = writeBatch(db);
+      let operationCount = 0;
+
+      for (const key in uniqueGroups) {
+        const group = uniqueGroups[key];
+
+        if (group.length > 1) {
+          // updatedAt 기준 내림차순 정렬 (가장 최신 것이 인덱스 0)
+          group.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
+          
+          // 첫 번째(가장 최신) 하나만 남기고 나머지는 삭제 대상으로 배태 처리
+          const toRemove = group.slice(1);
+          for (const admin of toRemove) {
+            currentBatch.delete(doc(db, "admins", admin.id));
+            removedCount++;
+            operationCount++;
+
+            if (operationCount >= batchSize) {
+              await currentBatch.commit();
+              currentBatch = writeBatch(db);
+              operationCount = 0;
+            }
+          }
+        }
+      }
+
+      if (operationCount > 0) {
+        await currentBatch.commit();
+      }
+
+      return { total: admins.length, removed: removedCount };
+    } catch (e) {
+      console.error("Deduplication failed", e);
+      throw e;
+    }
+  },
+
   // --- User Profiles ---
   getUserProfile: async (uid: string): Promise<UserProfile | null> => {
     try {
@@ -1203,5 +1263,114 @@ export const StorageService = {
       console.error("Failed to delete notice", e);
       throw e;
     }
+  },
+
+  // --- TIPS CMS ---
+  getTipsAreas: async (): Promise<any[]> => {
+    try {
+      const snap = await getDocs(collection(db, "tips_areas"));
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) { console.error(e); return []; }
+  },
+
+  subscribeTipsAreas: (callback: (data: any[]) => void) => {
+    const q = query(collection(db, "tips_areas"), orderBy("order", "asc"));
+    return onSnapshot(q, (snapshot) => {
+      callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      console.warn("Tips areas sub fallback (index?):", error);
+      onSnapshot(collection(db, "tips_areas"), (snap) => {
+        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+        callback(items);
+      });
+    });
+  },
+
+  saveTipsArea: async (area: any): Promise<void> => {
+    try {
+      const safeData = { ...area, updatedAt: new Date().toISOString() };
+      const id = safeData.id;
+      if (id) {
+        delete safeData.id;
+        await setDoc(doc(db, "tips_areas", id), safeData, { merge: true });
+      } else {
+        safeData.createdAt = new Date().toISOString();
+        await addDoc(collection(db, "tips_areas"), safeData);
+      }
+    } catch (e) { console.error(e); throw e; }
+  },
+
+  deleteTipsArea: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, "tips_areas", id));
+  },
+
+  getTipsThemes: async (): Promise<any[]> => {
+    try {
+      const snap = await getDocs(collection(db, "tips_themes"));
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) { console.error(e); return []; }
+  },
+
+  subscribeTipsThemes: (callback: (data: any[]) => void) => {
+    const q = query(collection(db, "tips_themes"), orderBy("order", "asc"));
+    return onSnapshot(q, (snapshot) => {
+      callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      onSnapshot(collection(db, "tips_themes"), (snap) => {
+        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+        callback(items);
+      });
+    });
+  },
+
+  saveTipsTheme: async (theme: any): Promise<void> => {
+    try {
+      const safeData = { ...theme, updatedAt: new Date().toISOString() };
+      const id = safeData.id;
+      if (id) {
+        delete safeData.id;
+        await setDoc(doc(db, "tips_themes", id), safeData, { merge: true });
+      } else {
+        safeData.createdAt = new Date().toISOString();
+        await addDoc(collection(db, "tips_themes"), safeData);
+      }
+    } catch (e) { console.error(e); throw e; }
+  },
+
+  deleteTipsTheme: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, "tips_themes", id));
+  },
+
+  subscribeTipsContents: (filters: { area_slug?: string, theme_tag?: string, slug?: string }, callback: (data: any[]) => void) => {
+    let q = query(collection(db, "tips_contents"));
+    if (filters.area_slug) q = query(q, where("area_slug", "==", filters.area_slug));
+    if (filters.theme_tag) q = query(q, where("theme_tags", "array-contains", filters.theme_tag));
+    if (filters.slug) q = query(q, where("slug", "==", filters.slug));
+    
+    return onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      items.sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      callback(items);
+    });
+  },
+
+  saveTipsContent: async (content: any): Promise<void> => {
+    try {
+      const safeData = { ...content, updatedAt: new Date().toISOString() };
+      const id = safeData.id;
+      if (id) {
+        delete safeData.id;
+        await setDoc(doc(db, "tips_contents", id), safeData, { merge: true });
+      } else {
+        safeData.createdAt = new Date().toISOString();
+        await addDoc(collection(db, "tips_contents"), safeData);
+      }
+    } catch (e) { console.error(e); throw e; }
+  },
+
+  deleteTipsContent: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, "tips_contents", id));
   }
 };

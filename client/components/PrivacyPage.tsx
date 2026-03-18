@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StorageService } from '../services/storageService';
-import { PrivacyPolicyData } from '../types';
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 interface PrivacyPageProps {
   onBack: () => void;
@@ -8,91 +7,198 @@ interface PrivacyPageProps {
 }
 
 const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack, t }) => {
-  const [data, setData] = useState<PrivacyPolicyData | null>(null);
-
   useEffect(() => {
     window.scrollTo(0, 0);
-    loadPolicy();
   }, []);
 
-  const loadPolicy = async () => {
-    const saved = await StorageService.getPrivacyPolicy();
-    if (saved) setData(saved);
-  };
-
-  const hasDynamicData = data && Array.isArray(data.content) && data.content.length > 0;
-  const content = hasDynamicData ? data.content : (t.privacy_page?.content || []);
-  const title = (hasDynamicData && data.title) ? data.title : (t.privacy_page?.title || 'Privacy Policy');
-  const lastUpdated = (hasDynamicData && data.last_updated) ? data.last_updated : (t.privacy_page?.last_updated || 'Last Updated: 2026.02.01');
-  const intro = (hasDynamicData && data.intro) ? data.intro : (t.privacy_page?.intro || '');
+  const privacyT = t.privacy_page || {};
+  const content = privacyT.content || [];
+  const title = privacyT.title || 'Privacy Policy';
+  const lastUpdated = privacyT.last_updated || 'Last Updated: 2026.03.17';
+  const intro = privacyT.intro || '';
 
   return (
     <div
-      className="min-h-screen bg-slate-50 font-sans text-bee-black select-none"
+      className="min-h-screen bg-[#F8F9FA] font-sans text-bee-black selection:bg-bee-yellow/30"
       onContextMenu={(e) => e.preventDefault()}
       onCopy={(e) => e.preventDefault()}
-      onDragStart={(e) => e.preventDefault()}
     >
-      {/* Header */}
-      <nav className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md shadow-sm py-4 px-6 md:px-12 flex justify-between items-center transition-all">
-        <div className="flex items-center gap-1 cursor-pointer" onClick={onBack}>
-          <span className="text-3xl md:text-4xl font-black text-bee-black">bee</span>
-          <span className="text-3xl md:text-4xl font-black text-bee-yellow italic pr-1">liber</span>
-        </div>
-        <button onClick={onBack} className="text-xs font-black text-bee-black hover:text-red-500 uppercase tracking-widest flex items-center gap-2 px-6 py-3 bg-gray-100 rounded-full transition-all hover:scale-105">
-          <i className="fa-solid fa-arrow-left"></i> {t.notice?.close || 'Back'}
-        </button>
+      {/* Premium Header */}
+      <nav className="sticky top-0 z-[100] bg-white/70 backdrop-blur-xl border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center transition-all">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center gap-1 cursor-pointer group" 
+          onClick={onBack}
+        >
+          <span className="text-2xl md:text-3xl font-black text-bee-black group-hover:text-bee-yellow transition-colors italic">bee</span>
+          <span className="text-2xl md:text-3xl font-black text-bee-yellow group-hover:text-bee-black transition-colors italic pr-1 tracking-tighter">liber</span>
+        </motion.div>
+        
+        <motion.button 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onBack} 
+          className="group relative overflow-hidden px-6 py-2.5 bg-bee-black text-bee-yellow rounded-full transition-all shadow-lg hover:shadow-bee-yellow/20"
+        >
+          <span className="relative z-10 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em]">
+            <i className="fa-solid fa-arrow-left text-[8px]"></i>
+            {t.notice?.close || 'Back'}
+          </span>
+          <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 opacity-10"></div>
+        </motion.button>
       </nav>
 
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-6 py-12 md:py-20">
-        <div className="mb-12 md:mb-16 text-center animate-fade-in-up">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-bee-yellow/10 text-bee-black text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-            Legal Document
-          </span>
-          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter">{title}</h1>
-          <p className="text-gray-400 font-bold text-sm tracking-widest uppercase">
-            {lastUpdated}
-          </p>
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-6 py-16 md:py-24 relative">
+        {/* Background Decorative Elements */}
+        <div className="absolute top-20 -left-20 w-64 h-64 bg-bee-yellow/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-40 -right-20 w-80 h-80 bg-bee-black/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        {/* Title Section */}
+        <div className="mb-16 md:mb-24 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <span className="inline-block px-4 py-1.5 rounded-full bg-bee-yellow text-bee-black text-[9px] font-black uppercase tracking-[0.3em] mb-6 shadow-sm">
+              Premium Security & Legal
+            </span>
+            <h1 className="text-4xl md:text-7xl font-black mb-8 tracking-tighter leading-[1.1] text-bee-black">
+              {title.split(' ').map((word: string, i: number) => {
+                if (word.toLowerCase().includes('beeliber')) {
+                  const cleanWord = word.replace(/[,.]/g, '');
+                  const suffix = word.replace(cleanWord, '');
+                  return (
+                    <span key={i} className="inline-block mr-2">
+                      <span className="italic">bee</span>
+                      <span className="text-bee-yellow italic">liber</span>
+                      {suffix}
+                    </span>
+                  );
+                }
+                return (
+                  <span key={i} className="inline-block mr-2">
+                    {word}
+                  </span>
+                );
+              })}
+            </h1>
+            <div className="flex items-center justify-center gap-3">
+              <div className="h-[1px] w-8 bg-bee-yellow"></div>
+              <p className="text-gray-400 font-black text-[10px] tracking-[0.4em] uppercase">
+                {lastUpdated}
+              </p>
+              <div className="h-[1px] w-8 bg-bee-yellow"></div>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Intro Section */}
+        {/* Intro Card */}
         {intro && (
-          <div className="mb-12 p-8 md:p-12 bg-white rounded-[40px] text-bee-black font-bold leading-loose whitespace-pre-wrap animate-fade-in-up border border-gray-100 shadow-xl shadow-gray-200/50">
-            {intro}
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-16 relative group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-bee-yellow/10 to-transparent rounded-[40px] blur-sm group-hover:blur-md transition-all"></div>
+            <div className="relative p-8 md:p-14 bg-white/80 backdrop-blur-md rounded-[40px] border border-white shadow-2xl shadow-gray-200/50">
+              <i className="fa-solid fa-quote-left text-bee-yellow/30 text-4xl mb-6 block"></i>
+              <p className="text-bee-black font-bold leading-[1.8] text-base md:text-xl whitespace-pre-wrap tracking-tight">
+                {intro}
+              </p>
+            </div>
+          </motion.div>
         )}
 
-        <div className="space-y-8 animate-fade-in-up [animation-delay:100ms]">
+        {/* Policy Sections */}
+        <div className="space-y-6">
           {content.map((section: any, idx: number) => (
-            <div key={idx} className="bg-white rounded-[40px] p-8 md:p-12 border border-gray-50 shadow-xl shadow-gray-200/50 hover:border-bee-yellow/20 transition-all group">
-              <h2 className="text-2xl md:text-3xl font-black mb-6 flex items-center gap-4">
-                <span className="w-12 h-12 rounded-2xl bg-bee-black text-bee-yellow flex items-center justify-center text-lg shadow-sm group-hover:scale-110 transition-transform">
-                  {idx + 1}
-                </span>
-                {section.title}
-              </h2>
-              <div className="pl-0 md:pl-16 text-bee-black font-bold leading-relaxed whitespace-pre-wrap text-base md:text-lg select-none">
-                {section.text}
+            <motion.div 
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ delay: idx * 0.05 }}
+              className="group relative"
+            >
+              <div className="absolute inset-0 bg-bee-yellow opacity-0 group-hover:opacity-[0.02] rounded-[32px] transition-opacity"></div>
+              <div className="relative bg-white rounded-[32px] p-8 md:p-12 border border-gray-50 shadow-xl shadow-gray-200/30 hover:shadow-2xl hover:border-bee-yellow/20 transition-all">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+                  <div className="flex-shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-bee-black text-bee-yellow flex items-center justify-center text-xl font-black shadow-lg group-hover:rotate-6 transition-transform">
+                      {(idx + 1).toString().padStart(2, '0')}
+                    </div>
+                  </div>
+                  <div className="flex-grow">
+                    <h2 className="text-xl md:text-2xl font-black mb-6 tracking-tight text-bee-black group-hover:text-bee-yellow transition-colors">
+                      {section.title}
+                    </h2>
+                    <div className="text-gray-600 font-bold leading-[1.7] whitespace-pre-wrap text-[15px] md:text-lg tracking-tight">
+                      {section.text.split('\n').map((line: string, i: number) => (
+                        <p key={i} className={line.startsWith('-') || line.match(/^\d\)/) ? "mt-2 pl-4 border-l-2 border-bee-yellow/30" : "mt-1"}>
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-        <div className="mt-20 pt-12 border-t border-gray-100 text-center">
-          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-8">
-            {t.footer?.desc || 'Beeliber makes travel light and valuable.'}
+        {/* Footer Action */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          className="mt-24 pt-16 border-t border-gray-100 text-center"
+        >
+          <p className="text-gray-400 text-[9px] font-black uppercase tracking-[0.5em] mb-10">
+            {t.footer?.desc || 'SECURE TRAVEL WITH BEELIBER'}
           </p>
-          <button
-            onClick={onBack}
-            className="px-12 py-5 bg-bee-black text-bee-yellow font-black rounded-[25px] shadow-2xl hover:scale-105 active:scale-95 transition-all text-lg uppercase tracking-widest"
-          >
-            {t.privacy_page?.agree_button || 'Confirm & Close'}
-          </button>
-        </div>
-      </main>
-    </div>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mx-auto">
+            <motion.button
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onBack}
+              className="px-12 py-5 bg-white text-bee-black font-black rounded-[30px] shadow-xl border border-gray-100 flex items-center gap-4 hover:shadow-2xl hover:border-bee-yellow/50 transition-all group"
+            >
+              <span className="text-sm md:text-base uppercase tracking-widest">{privacyT.agree_button || 'Confirm & Close'}</span>
+              <i className="fa-solid fa-check text-bee-yellow group-hover:scale-125 transition-transform"></i>
+            </motion.button>
 
+            <motion.button
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const navigate = (window as any)._legacyNavigate;
+                if (navigate) navigate('/refund');
+                else window.location.href = '/refund';
+              }}
+              className="px-12 py-5 bg-bee-black text-bee-yellow font-black rounded-[30px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex items-center gap-4 hover:bg-bee-yellow hover:text-bee-black transition-all group"
+            >
+              <span className="text-sm md:text-base uppercase tracking-widest">{t.refund?.title || 'Refund Policy'}</span>
+              <i className="fa-solid fa-arrow-right group-hover:translate-x-2 transition-transform"></i>
+            </motion.button>
+          </div>
+        </motion.div>
+      </main>
+
+      {/* Side Progress / Floating indicator (Optional Premium touch) */}
+      <div className="fixed right-8 bottom-8 hidden lg:block">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-[1px] h-20 bg-gradient-to-t from-bee-yellow to-transparent"></div>
+          <p className="vertical-text text-[8px] font-black text-bee-yellow tracking-widest uppercase origin-bottom -rotate-180 [writing-mode:vertical-rl]">
+            BEELIBER TRUST SYSTEM
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

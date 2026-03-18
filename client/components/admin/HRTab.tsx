@@ -9,18 +9,19 @@ interface HRTabProps {
     setAdminForm: (a: Partial<AdminUser>) => void;
     showAdminPassword: boolean;
     setShowAdminPassword: (b: boolean) => void;
-    saveAdmin: () => void;
+    saveAdmin: (data?: Partial<AdminUser>) => void;
     admins: AdminUser[];
     deleteAdmin: (id: string) => void;
     isSaving: boolean;
     locations: LocationOption[];
+    onDeduplicate?: () => void;
 }
 
 type HRTabMode = 'EMPLOYEES' | 'ROLES' | 'AUDIT_LOGS';
 
 const HRTab: React.FC<HRTabProps> = ({
     adminForm, setAdminForm, showAdminPassword, setShowAdminPassword,
-    saveAdmin, admins, deleteAdmin, isSaving, locations
+    saveAdmin, admins, deleteAdmin, isSaving, locations, onDeduplicate
 }) => {
     const [activeTab, setActiveTab] = React.useState<HRTabMode>('EMPLOYEES');
     const [isDetailOpen, setIsDetailOpen] = React.useState(false);
@@ -37,15 +38,9 @@ const HRTab: React.FC<HRTabProps> = ({
     };
 
     const handleSave = async (data: Partial<AdminUser>) => {
-      // Sync local state to parent form before saving
-      setAdminForm(data);
-      // Wait for state sync or use data directly (parent saveAdmin needs to be updated to accept data eventually)
-      // For now, we'll use the existing saveAdmin which relies on adminForm state.
-      // Small delay to ensure state update propagated if using saveAdmin() immediately
-      setTimeout(() => {
-        saveAdmin();
-        setIsDetailOpen(false);
-      }, 0);
+      setIsDetailOpen(false);
+      // [스봉이] setTimeout 따위의 운발에 의존하지 않고 데이터를 직접 꽂아버립니다. 💅
+      await saveAdmin(data);
     };
 
     return (
@@ -87,6 +82,7 @@ const HRTab: React.FC<HRTabProps> = ({
                   onEdit={handleEdit}
                   onDelete={deleteAdmin}
                   onAdd={handleAdd}
+                  onDeduplicate={onDeduplicate}
                 />
               )}
 

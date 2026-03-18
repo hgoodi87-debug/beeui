@@ -58,6 +58,7 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
               <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('PRIVACY'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</button></li>
                 <li><button onClick={() => { scrollToTop(); onNavigate?.('TERMS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</button></li>
+                <li><button onClick={() => { scrollToTop(); onNavigate?.('REFUND'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</button></li>
               </ul>
             </div>
 

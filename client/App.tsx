@@ -24,12 +24,9 @@ const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
 const QnaPage = lazy(() => import('./components/QnaPage'));
 const LocationLander = lazy(() => import('./components/LocationLander'));
 const VisionPage = lazy(() => import('./components/VisionPage'));
+const RefundPage = lazy(() => import('./components/RefundPage'));
 
-// [스봉이] 신규 FSD 팁스 페이지 군단 등장! 🏗️✨
-const TipsMainPage = lazy(() => import('./src/tips_fsd/pages/TipsMainPage').then(m => ({ default: m.TipsMainPage })));
-const TipsAreaPage = lazy(() => import('./src/tips_fsd/pages/TipsAreaPage').then(m => ({ default: m.TipsAreaPage })));
-const TipsThemePage = lazy(() => import('./src/tips_fsd/pages/TipsThemePage').then(m => ({ default: m.TipsThemePage })));
-const TipsPlacePage = lazy(() => import('./src/tips_fsd/pages/TipsPlacePage').then(m => ({ default: m.TipsPlacePage })));
+
 
 const Footer = lazy(() => import('./components/Footer'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
@@ -235,6 +232,7 @@ const App: React.FC = () => {
       case 'SERVICES': return navigate('/services');
       case 'TERMS': return navigate('/terms');
       case 'PRIVACY': return navigate('/privacy');
+      case 'REFUND': return navigate('/refund');
       case 'BOOKING_SUCCESS': return navigate('/booking-success');
       case 'TRACKING': return navigate('/tracking');
       case 'QNA': return navigate('/qna');
@@ -405,16 +403,12 @@ const App: React.FC = () => {
                   <Route path="/manual" element={<AnimatedRoute><ManualPage onBack={() => navigate('/')} t={t.manual} /></AnimatedRoute>} />
                   <Route path="/terms" element={<AnimatedRoute><TermsPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
                   <Route path="/privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
+                  <Route path="/refund" element={<AnimatedRoute><RefundPage onBack={() => navigate('/privacy')} t={t} /></AnimatedRoute>} />
                   <Route path="/qna" element={<AnimatedRoute><QnaPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
                   
                   {/* PROGRAMMATIC SEO */}
                   <Route path="/storage/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/delivery/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
-                  <Route path="/tips" element={<AnimatedRoute><TipsMainPage lang={lang} /></AnimatedRoute>} />
-                  <Route path="/tips/area/:slug" element={<AnimatedRoute><TipsAreaPage lang={lang} /></AnimatedRoute>} />
-                  <Route path="/tips/theme/:slug" element={<AnimatedRoute><TipsThemePage lang={lang} /></AnimatedRoute>} />
-                  <Route path="/tips/place/:slug" element={<AnimatedRoute><TipsPlacePage lang={lang} /></AnimatedRoute>} />
-                  <Route path="/tips/:slug" element={<AnimatedRoute><TipsPlacePage lang={lang} /></AnimatedRoute>} />
                   <Route path="/vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
 
                   {/* ADMIN */}

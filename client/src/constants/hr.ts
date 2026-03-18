@@ -18,12 +18,12 @@ export interface HRStatusConfig {
 export const HR_ROLES = [
   { id: 'super', label: '슈퍼관리자', color: 'bee-black', desc: '시스템 전체 제어 및 권한 관리' },
   { id: 'hq', label: '본사운영팀', color: 'blue-600', desc: '본사 차원의 운영 및 지점 관리' },
-  { id: 'branch', label: '허브매니저', color: 'bee-yellow', desc: '담당 지점의 운영 및 정산 관리' },
+  { id: 'branch', label: '브랜치', color: 'bee-yellow', desc: '담당 지점의 운영 및 정산 관리' }, // [스봉이] '허브매니저'에서 '브랜치'로 깍쟁이처럼 변경 💅
   { id: 'finance', label: '재무/정산', color: 'emerald-600', desc: '정산 원장 및 월간 정산 통제' },
   { id: 'cs', label: 'CS팀', color: 'sky-500', desc: '고객 예약 및 클레임 대응' },
-  { id: 'staff', label: '일반스태프', color: 'gray-500', desc: '일반 운영 업무 수행' },
   { id: 'partner', label: '외부협업사', color: 'purple-500', desc: '지점 관리 등 제한적 권한' },
   { id: 'driver', label: '배송기사', color: 'orange-500', desc: '배송 관련 정보 접근' },
+  { id: 'staff', label: '일반스태프', color: 'gray-500', desc: '일반 운영 업무 수행' },
 ];
 
 export const HR_PERMISSIONS = {

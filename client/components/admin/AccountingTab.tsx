@@ -69,7 +69,34 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">통합 기간 실적 분석 및 재무 통계 🛡️</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 relative z-10">
+                <div className="flex flex-wrap items-center gap-4 relative z-10">
+                    <div className="flex items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="date"
+                                title="조회 시작일"
+                                value={revenueStartDate}
+                                onChange={e => setRevenueStartDate(e.target.value)}
+                                className="bg-white px-3 py-1.5 rounded-xl font-black text-[10px] border border-gray-100 outline-none focus:border-bee-black transition-all"
+                            />
+                            <span className="text-gray-300 font-black text-[10px]">~</span>
+                            <input
+                                type="date"
+                                title="조회 종료일"
+                                value={revenueEndDate}
+                                onChange={e => setRevenueEndDate(e.target.value)}
+                                className="bg-white px-3 py-1.5 rounded-xl font-black text-[10px] border border-gray-100 outline-none focus:border-bee-black transition-all"
+                            />
+                        </div>
+                        <button
+                            onClick={handleExportCSV}
+                            title="CSV 내보내기"
+                            className="w-8 h-8 bg-bee-yellow text-bee-black rounded-xl text-[10px] flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sm"
+                        >
+                            <i className="fa-solid fa-file-excel"></i>
+                        </button>
+                    </div>
+
                     <div className="flex bg-gray-50/80 p-1 rounded-2xl border border-gray-100">
                         <button
                             onClick={() => setActiveSubTab('revenue')}
@@ -145,56 +172,16 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
 
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-purple-400 transition-all col-span-2 md:col-span-1 lg:col-span-1">
                     <div>
-                        <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1.5 line-clamp-1">누적 총 매출</p>
-                        <h3 className="text-xl font-black italic text-bee-black">₩{(revenueStats?.lifetimeRevenue || 0).toLocaleString()}</h3>
+                        <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1.5 line-clamp-1">당월 누적매출</p>
+                        <h3 className="text-xl font-black italic text-bee-black">₩{(revenueStats?.mtdRevenue || 0).toLocaleString()}</h3>
                     </div>
                     <div className="mt-3 pt-2 border-t border-gray-50">
-                        <p className="text-[8px] font-black text-gray-300 uppercase">누적: {(revenueStats?.lifetimeCount || 0).toLocaleString()}건의 주문</p>
+                        <p className="text-[8px] font-black text-gray-300 uppercase">선택 기간 기준 당월 실적</p>
                     </div>
                 </div>
             </div>
 
-            {/* Date Range Selector & Audit Section */}
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-wrap items-center gap-6 group hover:border-bee-yellow transition-all duration-500">
-                <div className="flex items-center gap-4">
-                    <div className="space-y-1 text-left">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">조회 시작일</label>
-                        <div className="relative">
-                            <i className="fa-solid fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-[10px]"></i>
-                            <input
-                                type="date"
-                                title="조회 시작일"
-                                value={revenueStartDate}
-                                onChange={e => setRevenueStartDate(e.target.value)}
-                                className="bg-gray-50 pl-10 pr-6 py-2.5 rounded-2xl font-black text-[11px] border border-transparent outline-none focus:bg-white focus:border-bee-black transition-all"
-                            />
-                        </div>
-                    </div>
-                    <div className="pt-4 text-gray-200 font-black">~</div>
-                    <div className="space-y-1 text-left">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block ml-1">조회 종료일</label>
-                        <div className="relative">
-                            <i className="fa-solid fa-calendar-alt absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-[10px]"></i>
-                            <input
-                                type="date"
-                                title="조회 종료일"
-                                value={revenueEndDate}
-                                onChange={e => setRevenueEndDate(e.target.value)}
-                                className="bg-gray-50 pl-10 pr-6 py-2.5 rounded-2xl font-black text-[11px] border border-transparent outline-none focus:bg-white focus:border-bee-black transition-all"
-                            />
-                        </div>
-                    </div>
-                </div>
-                <div className="flex-1"></div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleExportCSV}
-                        className="px-5 py-2.5 bg-bee-yellow text-bee-black rounded-[20px] text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-bee-yellow/10 flex items-center gap-2"
-                    >
-                        <i className="fa-solid fa-file-excel"></i> CSV 엑셀 내보내기
-                    </button>
-                </div>
-            </div>
+            {/* Date Range Selector removed from here and moved to header */}
 
             {/* Payment Method Matrix - Premium Card Style */}
             <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">

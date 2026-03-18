@@ -48,6 +48,7 @@ import ManualBookingModal from './admin/ManualBookingModal';
 import ChatTab from './admin/ChatTab';
 import DiscountTab from './admin/DiscountTab';
 import ReportsTab from './admin/ReportsTab';
+import { TipsCMSTab } from './admin/TipsCMSTab';
 import RoadmapTab from './admin/RoadmapTab';
 import OperationsConsole from './admin/OperationsConsole';
 import MonthlySettlementTab from './admin/MonthlySettlementTab';
@@ -127,6 +128,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const currentActor = { id: adminName || 'unknown', name: adminName || 'unknown', email: adminEmail };
   const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]); // [스봉이] 일괄 처리를 위한 체크박스 상태 💅
+  const [searchDate, setSearchDate] = useState<string>(''); // [스봉이] 특정 일자 예약 조회 💅
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
 
   const queryClient = useQueryClient();
@@ -327,16 +329,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
 
   // Accounting / Revenue State
-  const [revenueStartDate, setRevenueStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [revenueEndDate, setRevenueEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [revenueStartDate, setRevenueStartDate] = useState(() => {
+    const now = new Date();
+    const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    return kst.toISOString().split('T')[0];
+  });
+  const [revenueEndDate, setRevenueEndDate] = useState(() => {
+    const now = new Date();
+    const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    return kst.toISOString().split('T')[0];
+  });
 
   // 취소/환불 날짜 필터 - 기본 최근 30일
   const [cancelStartDate, setCancelStartDate] = useState(() => {
     const d = new Date();
-    d.setDate(d.getDate() - 30);
-    return d.toISOString().split('T')[0];
+    const kst = new Date(d.getTime() + (9 * 60 * 60 * 1000));
+    kst.setDate(kst.getDate() - 30);
+    return kst.toISOString().split('T')[0];
   });
-  const [cancelEndDate, setCancelEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [cancelEndDate, setCancelEndDate] = useState(() => {
+    const now = new Date();
+    const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    return kst.toISOString().split('T')[0];
+  });
   const [cashClosing, setCashClosing] = useState({
     actualCash: 0,
     notes: ''
@@ -674,15 +689,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       } else {
         if (b.isDeleted === true) return false;
 
-        // [스봉이] 취소/환불: 날짜 구간 필터 적용 💅
-        if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
-          const d = b.pickupDate || '';
-          if (d < cancelStartDate || d > cancelEndDate) return false;
+        // [스봉이] 특정 일자 조회 필터 적용 💅✨ (이게 있으면 다른 날짜 제약 무시)
+        if (searchDate) {
+          const isMatchDate = b.pickupDate === searchDate || (b.dropoffDate && b.pickupDate <= searchDate && b.dropoffDate >= searchDate);
+          if (!isMatchDate) return false;
         } else {
-          // 진행중 상태는 날짜 무관 표시
-          const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-          const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
-          if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+          // [스봉이] 취소/환불: 날짜 구간 필터 적용 💅
+          if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
+            const d = b.pickupDate || '';
+            if (d < cancelStartDate || d > cancelEndDate) return false;
+          } else {
+            // 진행중 상태는 날짜 무관 표시
+            const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+            const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
+            if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+          }
         }
       }
 
@@ -1153,30 +1174,67 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
-  const saveAdmin = async () => {
-    if (!adminForm.name || !adminForm.password || !adminForm.jobTitle) {
-      alert('이름, 직책, 비밀번호를 모두 입력해주세요.');
+  /**
+   * [스봉이] 직원 정보 저장/수정 함수 💅
+   * @param data 직접 전달된 데이터가 있으면 이를 우선 사용하고, 없으면 adminForm 상태를 사용합니다.
+   */
+  const saveAdmin = async (data?: Partial<AdminUser>) => {
+    const targetForm = data || adminForm;
+
+    // [스봉이] 신규 등록 시에는 이름, 직책, 비밀번호가 모두 필수지만, 수정 시에는 비밀번호를 비워둘 수 있어요! 💅✨
+    const isNew = !targetForm.id;
+    if (!targetForm.name || !targetForm.jobTitle || (isNew && !targetForm.password)) {
+      alert(isNew ? '이름, 직책, 비밀번호를 모두 입력해주세요.' : '이름과 직책은 필수 입력 사항입니다.');
       return;
+    }
+
+
+    // [스봉이] 신규 등록 시 이름 중복 체크 💅
+    if (!targetForm.id) {
+      const existing = admins.find(a => a.name?.trim() === targetForm.name?.trim());
+      if (existing) {
+        if (!confirm(`이미 '${targetForm.name}'님은 ${existing.jobTitle}으로 등록되어 있어요. 정말 중복해서 등록하시겠어요? 🙄`)) return;
+      }
     }
 
     setIsSaving(true);
     try {
-      const finalId = adminForm.id || `admin-${Date.now()}`;
+      const finalId = targetForm.id || `admin-${Date.now()}`;
       const cleanForm: AdminUser = {
-        ...adminForm,
+        ...targetForm as AdminUser,
         id: finalId,
-        name: adminForm.name?.trim() || '',
-        jobTitle: adminForm.jobTitle?.trim() || '',
-        password: adminForm.password?.trim() || '',
-        createdAt: adminForm.createdAt || new Date().toISOString()
+        name: targetForm.name?.trim() || '',
+        jobTitle: targetForm.jobTitle?.trim() || '',
+        password: targetForm.password?.trim() || '',
+        createdAt: targetForm.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       await StorageService.saveAdmin(cleanForm);
+      // [스봉이] 데이터 저장 후 캐시 무효화 💅
+      queryClient.invalidateQueries({ queryKey: ['admins'] });
+      
       setAdminForm({ name: '', jobTitle: '', password: '' });
-      alert(adminForm.id ? '직원 정보가 수정되었습니다.' : '직원이 등록되었습니다.');
+      alert(targetForm.id ? '직원 정보가 수정되었습니다.' : '직원이 등록되었습니다.');
     } catch (e) {
       console.error("Failed to save admin", e);
       alert("직원 저장에 실패했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeduplicateAdmins = async () => {
+    if (!confirm('성함이 동일한 중복 데이터들을 정리하시겠습니까?\n가장 최근에 수정된 정보만 남고 나머지는 삭제됩니다. 💅')) return;
+    
+    setIsSaving(true);
+    try {
+      const result = await StorageService.deduplicateAdmins();
+      queryClient.invalidateQueries({ queryKey: ['admins'] });
+      alert(`정리가 끝났어요! 총 ${result.total}명 중 ${result.removed}개의 중복 데이터를 털어버렸습니다. ✨`);
+    } catch (error) {
+      console.error("Deduplication error", error);
+      alert("정리 중에 사고가 났어요. 🙄");
     } finally {
       setIsSaving(false);
     }
@@ -1914,13 +1972,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 { id: 'DISCOUNTS', label: '프로모션 마케팅', icon: 'fa-tags' },
                 { id: 'HR', label: '인사/권한 보안', icon: 'fa-user-tie' },
                 { id: 'PARTNERSHIP_INQUIRIES', label: 'B2B 제안서 함', icon: 'fa-handshake' },
+                { id: 'TIPS_CMS', label: '팁스 통합 콘텐츠 관리', icon: 'fa-lightbulb', color: 'bg-orange-400' },
               ].map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as AdminTab)}
                   className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all group ${activeTab === item.id ? 'bg-bee-black text-bee-yellow shadow-xl shadow-bee-black/10' : 'hover:bg-gray-50 text-gray-500 hover:text-bee-black'}`}
                 >
-                  <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
+                  {item.color ? (
+                     <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
+                  ) : (
+                    <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
+                  )}
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
               ))}
@@ -2017,6 +2080,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'LOCATIONS', label: t.admin?.sidebar?.locations || '전 지점 마스터 관리', icon: 'fa-location-dot' },
                         { id: 'ROADMAP', label: t.admin?.sidebar?.roadmap || '서비스 로드맵', icon: 'fa-map-location-dot' },
                         { id: 'CHATS', label: t.admin?.sidebar?.marketing || '실시간 채팅', icon: 'fa-comments' },
+                        { id: 'TIPS_CMS', label: '팁스 콘텐츠 관리', icon: 'fa-lightbulb' },
                       ].map(item => (
                         <button
                           key={item.id}
@@ -2120,6 +2184,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
           {(activeTab === 'DELIVERY_BOOKINGS' || activeTab === 'STORAGE_BOOKINGS') && (
             <LogisticsTab
+              adminRole={adminRole}
               activeTab={activeTab}
               activeStatusTab={activeStatusTab}
               setActiveStatusTab={(s: string) => setActiveStatusTab(s as any)}
@@ -2142,6 +2207,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               setCancelStartDate={setCancelStartDate}
               cancelEndDate={cancelEndDate}
               setCancelEndDate={setCancelEndDate}
+              searchDate={searchDate}
+              setSearchDate={setSearchDate}
               selectedBookingIds={selectedBookingIds}
               setSelectedBookingIds={setSelectedBookingIds}
               handleBatchUpdateStatus={handleBatchUpdateStatus}
@@ -2269,6 +2336,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               setShowAdminPassword={setShowAdminPassword}
               saveAdmin={saveAdmin}
               deleteAdmin={deleteAdmin}
+              onDeduplicate={handleDeduplicateAdmins}
               isSaving={isSaving}
               locations={locations}
             />
@@ -2316,6 +2384,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
           {activeTab === 'CHATS' && (
             <ChatTab />
+          )}
+
+          {activeTab === 'TIPS_CMS' && (
+            <TipsCMSTab />
           )}
         </main>
       </div>

@@ -28,6 +28,8 @@ interface LogisticsTabProps {
     setCancelStartDate?: (d: string) => void;
     cancelEndDate?: string;
     setCancelEndDate?: (d: string) => void;
+    searchDate: string;
+    setSearchDate: (d: string) => void;
     // [스봉이] 일괄 처리 전용 프롭스 💅✨
     selectedBookingIds: string[];
     setSelectedBookingIds: (ids: string[]) => void;
@@ -61,6 +63,8 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     setCancelStartDate,
     cancelEndDate,
     setCancelEndDate,
+    searchDate,
+    setSearchDate,
     selectedBookingIds,
     setSelectedBookingIds,
     handleBatchUpdateStatus,
@@ -115,7 +119,28 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                     </div>
                 </div>
 
-                <div className="flex-1 flex justify-start lg:justify-end">
+                <div className="flex-1 flex justify-start lg:justify-end gap-3">
+                    {/* [스봉이] 전용 날짜 조회 필터 💅✨ */}
+                    <div className="flex items-center gap-2 bg-white/50 backdrop-blur-3xl px-4 py-2 rounded-2xl border border-bee-yellow/20 shadow-lg shadow-bee-yellow/5">
+                        <i className="fa-solid fa-calendar-day text-bee-yellow text-xs"></i>
+                        <input
+                            type="date"
+                            value={searchDate}
+                            onChange={(e) => setSearchDate(e.target.value)}
+                            className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-bee-black"
+                            title="특정 일자 조회"
+                        />
+                        {searchDate && (
+                            <button 
+                                onClick={() => setSearchDate('')}
+                                className="text-gray-400 hover:text-bee-black transition-colors"
+                                title="필터 초기화"
+                            >
+                                <i className="fa-solid fa-circle-xmark text-xs"></i>
+                            </button>
+                        )}
+                    </div>
+
                     {onAddManual && (
                         <button
                             onClick={onAddManual}
@@ -351,9 +376,20 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                 onClick={() => handlePrintLabel(b)}
                                                 className="w-8 h-8 rounded-full bg-gray-100 hover:bg-bee-black hover:text-bee-yellow text-gray-500 transition-all flex items-center justify-center"
                                                 title="라벨 출력"
-                                            >
+                                             >
                                                 <i className="fa-solid fa-print"></i>
-                                            </button>
+                                             </button>
+
+                                             {/* [스봉이] 슈퍼관리자 전용 영구 삭제 버튼 (취소/환불 건에만 노출) 💅✨ */}
+                                             {adminRole === 'super' && (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
+                                                <button
+                                                    onClick={() => handlePermanentDelete(b.id!)}
+                                                    className="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center"
+                                                    title="과거 기록 영구 삭제 (복구 불가)"
+                                                >
+                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                             )}
                                         </div>
                                     </td>
                                 </tr>
@@ -465,9 +501,18 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     >
                                         {refundingId === b.id ? <i className="fa-solid fa-spinner animate-spin text-xs"></i> : <i className="fa-solid fa-rotate-left text-xs"></i>}
                                     </button>
-                                    <button onClick={() => handlePrintLabel(b)} title="라벨 출력" className="w-9 h-9 rounded-full bg-gray-50 hover:bg-bee-black hover:text-bee-yellow text-gray-500 transition-all border border-gray-100 flex items-center justify-center">
+                                     <button onClick={() => handlePrintLabel(b)} title="라벨 출력" className="w-9 h-9 rounded-full bg-gray-50 hover:bg-bee-black hover:text-bee-yellow text-gray-500 transition-all border border-gray-100 flex items-center justify-center">
                                         <i className="fa-solid fa-print text-xs"></i>
                                     </button>
+                                    {adminRole === 'super' && (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
+                                        <button
+                                            onClick={() => handlePermanentDelete(b.id!)}
+                                            className="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all border border-red-100 flex items-center justify-center"
+                                            title="영구 삭제"
+                                        >
+                                            <i className="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    )}
                                 </div>
                                 <span className="font-black text-xl text-bee-black tracking-tighter tabular-nums">₩{(b.finalPrice || 0).toLocaleString()}</span>
                             </div>
@@ -496,6 +541,8 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                             <select 
                                 onChange={(e) => handleBatchUpdateStatus(e.target.value as BookingStatus)}
                                 disabled={isBatchUpdating}
+                                title="일괄 상태 변경"
+                                aria-label="선택된 예약 상태 일괄 변경"
                                 className="bg-white/10 border border-white/20 text-white text-xs font-black px-4 py-2.5 rounded-xl focus:ring-bee-yellow focus:border-bee-yellow outline-none transition-all cursor-pointer hover:bg-white/20"
                             >
                                 <option value="" className="text-black">상태 일괄 변경 선택...</option>

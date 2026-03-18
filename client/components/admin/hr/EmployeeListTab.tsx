@@ -8,27 +8,47 @@ interface EmployeeListTabProps {
   onEdit: (admin: AdminUser) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
+  onDeduplicate?: () => void;
 }
 
 const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
-  admins, locations, onEdit, onDelete, onAdd
+  admins, locations, onEdit, onDelete, onAdd, onDeduplicate
 }) => {
-  const [filterStatus, setFilterStatus] = React.useState<string>('ALL');
+  const [activeCategory, setActiveCategory] = React.useState<'SUPER' | 'TITLE' | 'BRANCH'>('SUPER');
+  const [selectedSubFilter, setSelectedSubFilter] = React.useState<string>('ALL');
   const [searchQ, setSearchQ] = React.useState('');
 
-  // KPI 상세 계산
-  const stats = React.useMemo(() => {
-    return {
-      total: admins.length,
-      active: admins.filter(a => a.status === 'active').length,
-      invited: admins.filter(a => a.status === 'invited').length,
-      issue: admins.filter(a => a.status === 'locked' || a.status === 'suspended').length,
-    };
+  // 직책 목록 및 지점 목록 추출 (HQ 직원 위주로 추출하여 필터 혼란 방지) 💅
+  const jobTitles = React.useMemo(() => {
+    // 슈퍼 관리자가 아니면서 지점 소속이 없는(HQ) 직원들의 직책만 추출
+    const hqAdmins = admins.filter(admin => {
+        const isSuperName = admin.name === '천명' || admin.name === 'admin';
+        const isSuper = admin.role === 'super' || isSuperName;
+        return !isSuper && !admin.branchId;
+    });
+    const titles = Array.from(new Set(hqAdmins.map(a => a.jobTitle).filter(Boolean)));
+    return titles.sort();
   }, [admins]);
 
   const filteredAdmins = React.useMemo(() => {
     return admins.filter(admin => {
-      if (filterStatus !== 'ALL' && admin.status !== filterStatus) return false;
+      // 1. 카테고리 필터
+      const isSuperName = admin.name === '천명' || admin.name === 'admin';
+      const isSuper = admin.role === 'super' || isSuperName;
+
+      if (activeCategory === 'SUPER') {
+        if (!isSuper) return false;
+      } else if (activeCategory === 'TITLE') {
+        // 슈퍼 관리자가 아니면서 지점 정보가 없는(HQ) 직원이어야 함
+        if (isSuper || admin.branchId) return false;
+        if (selectedSubFilter !== 'ALL' && admin.jobTitle !== selectedSubFilter) return false;
+      } else if (activeCategory === 'BRANCH') {
+        // 슈퍼 관리자가 아니면서 지점 정보가 있는 직원이어야 함
+        if (isSuper || !admin.branchId) return false;
+        if (selectedSubFilter !== 'ALL' && admin.branchId !== selectedSubFilter) return false;
+      }
+
+      // 2. 검색 필터
       if (searchQ.trim()) {
         const q = searchQ.toLowerCase();
         if (!admin.name?.toLowerCase().includes(q) && 
@@ -37,61 +57,88 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
       }
       return true;
     }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
-  }, [admins, filterStatus, searchQ]);
+  }, [admins, activeCategory, selectedSubFilter, searchQ]);
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-      {/* KPI 현황 카드 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 카테고리 탭 상단 정렬 */}
+      <div className="flex flex-wrap gap-2">
         {[
-          { label: '전체 인력', value: stats.total, color: 'bee-black', icon: 'fa-users' },
-          { label: '활성 계정', value: stats.active, color: 'green-600', icon: 'fa-user-check' },
-          { label: '초대 대기', value: stats.invited, color: 'blue-500', icon: 'fa-paper-plane' },
-          { label: '보안 이슈', value: stats.issue, color: 'red-500', icon: 'fa-shield-red' },
-        ].map(kpi => (
-          <div key={kpi.label} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-lg transition-all">
-            <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{kpi.label}</p>
-              <h3 className={`text-2xl font-black text-${kpi.color}`}>{kpi.value}</h3>
-            </div>
-            <div className={`w-12 h-12 rounded-2xl bg-${kpi.color}/5 flex items-center justify-center text-${kpi.color} text-xl group-hover:scale-110 transition-transform`}>
-              <i className={`fa-solid ${kpi.icon}`}></i>
-            </div>
-          </div>
+          { id: 'SUPER', label: '슈퍼관리', icon: 'fa-shield-crown' },
+          { id: 'TITLE', label: '직책별', icon: 'fa-id-card-clip' },
+          { id: 'BRANCH', label: '브랜치 지점', icon: 'fa-building-flag' },
+        ].map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => {
+              setActiveCategory(cat.id as any);
+              setSelectedSubFilter('ALL');
+            }}
+            className={`px-6 py-3 rounded-2xl text-xs font-black transition-all flex items-center gap-2 ${activeCategory === cat.id ? 'bg-bee-black text-bee-yellow shadow-lg' : 'bg-white text-gray-400 border border-gray-100'}`}
+          >
+            <i className={`fa-solid ${cat.icon}`}></i>
+            {cat.label}
+          </button>
         ))}
       </div>
 
       {/* 필터 및 검색 바 */}
-      <div className="bg-white rounded-[32px] p-6 border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-4">
-        <div className="flex-1 relative">
+      <div className="bg-white rounded-[32px] p-6 border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
+        <div className="flex-1 relative w-full">
           <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"></i>
           <input 
             value={searchQ}
             onChange={e => setSearchQ(e.target.value)}
-            placeholder="이름, 직책, 이메일로 검색..." 
+            placeholder={`${activeCategory === 'SUPER' ? '슈퍼관리자' : activeCategory === 'TITLE' ? '직책' : '지점 직원'} 검색...`} 
             title="직원 검색"
             className="w-full bg-gray-50 pl-11 pr-4 py-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all"
           />
         </div>
-        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
-          <select 
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-            title="상태 필터"
-            className="bg-gray-50 px-4 py-4 rounded-2xl text-[11px] font-black border border-transparent focus:border-bee-black outline-none min-w-[120px]"
-          >
-            <option value="ALL">모든 상태</option>
-            {Object.entries(HR_STATUS_CONFIG).map(([key, config]) => (
-              <option key={key} value={key}>{(config as HRStatusConfig).label}</option>
-            ))}
-          </select>
+        <div className="flex gap-3 w-full lg:w-auto overflow-x-auto no-scrollbar pb-1 lg:pb-0">
+          {activeCategory !== 'SUPER' && (
+            <select 
+              value={selectedSubFilter}
+              onChange={e => setSelectedSubFilter(e.target.value)}
+              title="상세 필터"
+              className="bg-gray-50 px-4 py-4 rounded-2xl text-[11px] font-black border border-transparent focus:border-bee-black outline-none min-w-[150px]"
+            >
+              <option value="ALL">{activeCategory === 'TITLE' ? '모든 직책' : '모든 지점'}</option>
+              {activeCategory === 'TITLE' ? (
+                jobTitles.map(title => (
+                  <option key={title} value={title}>{title}</option>
+                ))
+              ) : (
+                locations.map(loc => (
+                  <option key={loc.id} value={loc.id}>{loc.name}</option>
+                ))
+              )}
+            </select>
+          )}
+
+          {/* [스봉이] 중복 데이터 정리 도구 버튼 💅 - 디버깅 강화 */}
+          {onDeduplicate ? (
+            <button 
+              onClick={() => {
+                console.log("[스봉이] 중복 정리 버튼 클릭됨!");
+                onDeduplicate();
+              }}
+              title="동일 이름 중복 데이터 일괄 정리"
+              className="bg-bee-black text-bee-yellow px-5 py-4 rounded-2xl text-[11px] font-black transition-all flex items-center gap-2 group hover:scale-[1.02] active:scale-95 shadow-md"
+            >
+              <i className="fa-solid fa-broom group-hover:animate-bounce"></i>
+              중복 정리
+            </button>
+          ) : (
+            <div className="hidden">중복 정리 기능 미연결</div>
+          )}
+
           <button 
             onClick={onAdd}
             title="신규 직원 추가 초대"
-            className="bg-bee-yellow px-6 py-4 rounded-2xl text-xs font-black whitespace-nowrap shadow-lg shadow-yellow-100 hover:scale-[1.02] active:scale-95 transition-all"
+            className="bg-bee-yellow px-6 py-4 rounded-2xl text-xs font-black whitespace-nowrap shadow-lg shadow-yellow-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
           >
-            <i className="fa-solid fa-user-plus mr-2"></i>
-            신규 직원 초대
+            <i className="fa-solid fa-user-plus"></i>
+            초대
           </button>
         </div>
       </div>
@@ -105,8 +152,11 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
           </div>
         ) : (
           filteredAdmins.map(admin => {
+            const isSuperName = admin.name === '천명' || admin.name === 'admin';
+            // [스봉이] 지점 소속이면 우선적으로 'branch' 역할을 부여해서 '브랜치' 배지가 나오게 합니다. 💅
+            const adminRole = isSuperName ? 'super' : (admin.role || (admin.branchId ? 'branch' : 'staff'));
             const statusConfig = (HR_STATUS_CONFIG as Record<string, HRStatusConfig>)[admin.status || 'active'] || HR_STATUS_CONFIG.active;
-            const roleConfig = HR_ROLES.find((r: HRRole) => r.id === admin.role) || HR_ROLES[HR_ROLES.length - 1];
+            const roleConfig = HR_ROLES.find((r: HRRole) => r.id === adminRole) || HR_ROLES.find(r => r.id === 'staff') || HR_ROLES[0];
             
             return (
               <div 

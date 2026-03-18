@@ -1,21 +1,21 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-interface TermsPageProps {
+interface RefundPageProps {
   onBack: () => void;
   t: any;
 }
 
-const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
+const RefundPage: React.FC<RefundPageProps> = ({ onBack, t }) => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const termsT = t.terms_page || {};
-  const content = termsT.content || [];
-  const title = termsT.title || 'Terms of Service';
-  const lastUpdated = termsT.last_updated || 'Last Updated: 2026.03.17';
-  const intro = termsT.intro || '';
+  const refundT = t.refund_page || {};
+  const content = refundT.content || [];
+  const title = refundT.title || 'Cancellation & Refund Policy';
+  const lastUpdated = refundT.last_updated || 'Last Updated: 2026.03.17';
+  const intro = refundT.intro || '';
 
   return (
     <div
@@ -65,7 +65,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
             transition={{ delay: 0.1 }}
           >
             <span className="inline-block px-4 py-1.5 rounded-full bg-bee-yellow text-bee-black text-[9px] font-black uppercase tracking-[0.3em] mb-6 shadow-sm">
-              Terms of Service & Rules
+              Premium Service Policy
             </span>
             <h1 className="text-4xl md:text-7xl font-black mb-8 tracking-tighter leading-[1.1] text-bee-black">
               {title.split(' ').map((word: string, i: number) => {
@@ -107,7 +107,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-bee-yellow/10 to-transparent rounded-[40px] blur-sm group-hover:blur-md transition-all"></div>
             <div className="relative p-8 md:p-14 bg-white/80 backdrop-blur-md rounded-[40px] border border-white shadow-2xl shadow-gray-200/50">
-              <i className="fa-solid fa-file-contract text-bee-yellow/30 text-4xl mb-6 block"></i>
+              <i className="fa-solid fa-receipt text-bee-yellow/30 text-4xl mb-6 block"></i>
               <p className="text-bee-black font-bold leading-[1.8] text-base md:text-xl whitespace-pre-wrap tracking-tight">
                 {intro}
               </p>
@@ -140,7 +140,7 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
                     </h2>
                     <div className="text-gray-600 font-bold leading-[1.7] whitespace-pre-wrap text-[15px] md:text-lg tracking-tight">
                       {section.text.split('\n').map((line: string, i: number) => (
-                        <p key={i} className={line.startsWith('-') || line.match(/^\d\)/) || line.match(/^[가-힣]\)/) ? "mt-2 pl-4 border-l-2 border-bee-yellow/30" : "mt-1"}>
+                        <p key={i} className={line.startsWith('-') || line.match(/^\d\)/) ? "mt-2 pl-4 border-l-2 border-bee-yellow/30" : "mt-1"}>
                           {line}
                         </p>
                       ))}
@@ -159,42 +159,26 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
           className="mt-24 pt-16 border-t border-gray-100 text-center"
         >
           <p className="text-gray-400 text-[9px] font-black uppercase tracking-[0.5em] mb-10">
-            {t.footer?.desc || 'SECURE TRAVEL WITH BEELIBER'}
+            {t.footer?.desc || 'FAIR TRADING WITH BEELIBER'}
           </p>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mx-auto">
-            <motion.button
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onBack}
-              className="px-12 py-5 bg-white text-bee-black font-black rounded-[30px] shadow-xl border border-gray-100 flex items-center gap-4 hover:shadow-2xl hover:border-bee-yellow/50 transition-all group"
-            >
-              <span className="text-sm md:text-base uppercase tracking-widest">{termsT.agree_button || 'Confirm & Close'}</span>
-              <i className="fa-solid fa-check text-bee-yellow group-hover:scale-125 transition-transform"></i>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                const navigate = (window as any)._legacyNavigate;
-                if (navigate) navigate('/privacy');
-                else window.location.href = '/privacy';
-              }}
-              className="px-12 py-5 bg-bee-black text-bee-yellow font-black rounded-[30px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex items-center gap-4 hover:bg-bee-yellow hover:text-bee-black transition-all group"
-            >
-              <span className="text-sm md:text-base uppercase tracking-widest">{t.privacy_page?.title || 'Privacy Policy'}</span>
-              <i className="fa-solid fa-shield-halved group-hover:rotate-12 transition-transform"></i>
-            </motion.button>
-          </div>
+          <motion.button
+            whileHover={{ scale: 1.05, y: -5 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onBack}
+            className="px-16 py-6 bg-bee-black text-bee-yellow font-black rounded-[30px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex items-center gap-4 mx-auto hover:bg-bee-yellow hover:text-bee-black transition-all group"
+          >
+            <span className="text-sm md:text-lg uppercase tracking-widest">{refundT.agree_button || 'Confirm & Close'}</span>
+            <i className="fa-solid fa-check-double group-hover:scale-125 transition-transform"></i>
+          </motion.button>
         </motion.div>
       </main>
 
-      {/* Side Progress */}
+      {/* Side Progress / Floating indicator */}
       <div className="fixed right-8 bottom-8 hidden lg:block">
         <div className="flex flex-col items-center gap-4">
           <div className="w-[1px] h-20 bg-gradient-to-t from-bee-yellow to-transparent"></div>
           <p className="vertical-text text-[8px] font-black text-bee-yellow tracking-widest uppercase origin-bottom -rotate-180 [writing-mode:vertical-rl]">
-            BEELIBER LEGAL SYSTEM
+            BEELIBER REFUND POLICY
           </p>
         </div>
       </div>
@@ -202,4 +186,4 @@ const TermsPage: React.FC<TermsPageProps> = ({ onBack, t }) => {
   );
 };
 
-export default TermsPage;
+export default RefundPage;

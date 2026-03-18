@@ -1,4 +1,0 @@
-[Timestamp: 2026-02-11T05:41:20.448Z] Training Failed:
-TypeError: Cannot read properties of undefined (reading 'plan')
-    at trainAgent (C:\Users\dbcjs\Desktop\beeliber\beeliber\beeliber-main-main\beeliber-main\functions\scripts\train_agent.js:67:43)
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)

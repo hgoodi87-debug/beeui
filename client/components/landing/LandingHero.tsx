@@ -90,7 +90,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                             }}
                             className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
                         >
-                            {t.hero.main_title_1} {t.hero.main_title_bags && t.hero.main_title_bags.trim() !== "" && (
+                            {t.hero.main_title_1 || t.hero.title1} {t.hero.main_title_bags && t.hero.main_title_bags.trim() !== "" && (
                                 <span className="text-bee-yellow">{t.hero.main_title_bags}</span>
                             )}
                         </motion.h1>
@@ -103,7 +103,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                             }}
                             className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
                         >
-                            {t.hero.main_title_2} {t.hero.main_title_city && t.hero.main_title_city.trim() !== "" && (
+                            {t.hero.main_title_2 || t.hero.title2} {t.hero.main_title_city && t.hero.main_title_city.trim() !== "" && (
                                 <span>{t.hero.main_title_city}</span>
                             )}
                         </motion.div>

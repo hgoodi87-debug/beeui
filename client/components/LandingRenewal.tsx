@@ -219,42 +219,35 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                 <LandingFinalCTA t={t} onNavigate={onNavigate} />
             </main>
 
-            {/* Floating Tracking Widget Overlay */}
             <AnimatePresence>
                 {showTracking && (
-                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 sm:p-10">
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-10">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+                            className="absolute inset-0 bg-black/60 backdrop-blur-3xl"
                             onClick={() => setShowTracking(false)}
                         />
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                            className="relative w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl overflow-hidden"
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-5xl bg-white rounded-[3.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden"
                         >
-                            <div className="p-10 md:p-16">
-                                <div className="flex justify-between items-center mb-12">
-                                    <div className="space-y-4">
-                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-bee-yellow text-bee-black rounded-full shadow-lg shadow-bee-yellow/20">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.hero.status_suffix || 'Tracking status'}</span>
-                                        </div>
-                                        <h3 className="text-4xl md:text-5xl font-display font-black text-bee-black tracking-tighter leading-tight">
-                                            {t.hero.live_label || 'Real-time GPS Monitoring'}
-                                        </h3>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowTracking(false)}
-                                        className="w-14 h-14 rounded-full bg-bee-light flex items-center justify-center hover:bg-bee-yellow transition-all active:scale-90"
-                                        title="Close Tracking Widget"
-                                    >
-                                        <X className="w-6 h-6" />
-                                    </button>
-                                </div>
-                                <TrackingWidget t={t} isModal={true} onClose={() => setShowTracking(false)} />
+                            {/* Modal Header 💅 */}
+                            <div className="absolute top-8 right-8 z-[1001]">
+                                <button
+                                    onClick={() => setShowTracking(false)}
+                                    className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center hover:bg-bee-yellow hover:scale-110 transition-all active:scale-95 shadow-lg border border-gray-100"
+                                    title="Close Tracking"
+                                >
+                                    <X className="w-6 h-6 text-bee-black" />
+                                </button>
+                            </div>
+
+                            <div className="p-10 md:p-20 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                                <TrackingWidget t={t} isModal={true} onClose={() => setShowTracking(false)} theme="light" />
                             </div>
                         </motion.div>
                     </div>

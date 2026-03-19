@@ -51,27 +51,27 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
         </button>
       )}
 
-      <div className={`text-center ${isModal ? 'mb-12' : 'mb-16 animate-fade-in-up'}`}>
+      <div className={`text-center ${isModal ? 'mb-10' : 'mb-16 animate-fade-in-up'}`}>
         <div className="inline-block px-4 py-1.5 bg-bee-yellow/10 border border-bee-yellow/20 rounded-full mb-6">
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-bee-yellow flex items-center gap-2">
             <i className="fa-solid fa-satellite-dish animate-pulse"></i>
             {t.tracking?.live_label || "Live Status Feed"}
           </span>
         </div>
-        <h2 className={`${isModal ? 'text-3xl md:text-4xl' : 'text-4xl md:text-5xl'} font-black ${theme === 'light' ? 'text-bee-black' : 'text-white'} mb-6 tracking-tighter leading-tight break-keep`}>
+        <h2 className={`${isModal ? 'text-3xl md:text-5xl' : 'text-4xl md:text-6xl'} font-display font-black ${theme === 'light' ? 'text-bee-black' : 'text-white'} mb-8 tracking-tighter leading-tight break-keep`}>
           {t.tracking_page?.title || t.services_page?.tracking_page?.title || "예약 현황 및 배송 상태 조회"}
         </h2>
-        <div className="max-w-xl mx-auto">
-          <p className={`${theme === 'light' ? 'text-gray-500 bg-gray-50' : 'text-gray-400 bg-black/40'} font-bold text-sm md:text-base leading-relaxed break-keep py-4 px-8 rounded-2xl border ${theme === 'light' ? 'border-gray-100' : 'border-white/10'} shadow-sm`}>
+        <div className="max-w-2xl mx-auto">
+          <p className={`${theme === 'light' ? 'text-gray-600 bg-gray-50/50' : 'text-gray-400 bg-white/5'} font-bold text-sm md:text-lg leading-relaxed break-keep py-4 px-8 rounded-3xl border ${theme === 'light' ? 'border-gray-100' : 'border-white/10'} shadow-sm backdrop-blur-sm`}>
             {t.tracking_page?.subtitle || t.services_page?.tracking_page?.subtitle || "이름과 이메일을 입력하여 현재 짐의 이동 상태를 패스워드 없이 쉽게 확인하세요."}
           </p>
         </div>
       </div>
 
-      <div className={`${isModal ? 'w-full' : 'max-w-4xl mx-auto'} ${theme === 'light' ? 'bg-white border-gray-200 shadow-sm' : 'bg-black/20 border-white/10'} border p-4 rounded-[2.5rem] flex flex-col md:flex-row gap-4 mb-8`}>
-        <div className="flex-1 flex flex-col md:flex-row gap-3">
+      <div className={`${isModal ? 'w-full' : 'max-w-4xl mx-auto'} ${theme === 'light' ? 'bg-gray-50/50 border-gray-100 shadow-xl shadow-black/5' : 'bg-white/5 border-white/10'} border p-3 rounded-[3rem] flex flex-col md:flex-row gap-3 mb-10`}>
+        <div className="flex-1 flex flex-col md:flex-row gap-3 p-2">
           <div className="flex-1 relative group">
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-bee-yellow transition-colors pointer-events-none">
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-bee-yellow transition-colors pointer-events-none">
               <i className="fa-solid fa-user"></i>
             </div>
             <input
@@ -81,11 +81,11 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={handleKeyDown}
-              className={`w-full ${theme === 'light' ? 'bg-white border-gray-200 text-bee-black placeholder:text-gray-400' : 'bg-white/5 border-white/5 text-white placeholder:text-gray-600'} border rounded-2xl py-4 pl-14 pr-6 focus:outline-none focus:ring-2 focus:ring-bee-yellow/50 focus:border-transparent font-bold transition-all text-sm`}
+              className={`w-full ${theme === 'light' ? 'bg-white border-gray-100 text-bee-black placeholder:text-gray-400 shadow-sm' : 'bg-white/5 border-white/5 text-white placeholder:text-gray-600'} border-2 rounded-[1.5rem] py-4.5 pl-14 pr-6 focus:outline-none focus:ring-4 focus:ring-bee-yellow/20 focus:border-bee-yellow font-black transition-all text-sm`}
             />
           </div>
           <div className="flex-1 relative group">
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-bee-yellow transition-colors pointer-events-none">
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-bee-yellow transition-colors pointer-events-none">
               <i className="fa-solid fa-envelope"></i>
             </div>
             <input
@@ -95,7 +95,7 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={handleKeyDown}
-              className={`w-full ${theme === 'light' ? 'bg-white border-gray-200 text-bee-black placeholder:text-gray-400' : 'bg-white/5 border-white/5 text-white placeholder:text-gray-600'} border rounded-2xl py-4 pl-14 pr-6 focus:outline-none focus:ring-2 focus:ring-bee-yellow/50 focus:border-transparent font-bold transition-all text-sm`}
+              className={`w-full ${theme === 'light' ? 'bg-white border-gray-100 text-bee-black placeholder:text-gray-400 shadow-sm' : 'bg-white/5 border-white/5 text-white placeholder:text-gray-600'} border-2 rounded-[1.5rem] py-4.5 pl-14 pr-6 focus:outline-none focus:ring-4 focus:ring-bee-yellow/20 focus:border-bee-yellow font-black transition-all text-sm`}
             />
           </div>
         </div>
@@ -104,7 +104,7 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
           disabled={isLoading}
           title="Search Booking"
           aria-label="Search Booking"
-          className="md:w-64 w-full h-16 bg-bee-yellow hover:bg-yellow-400 text-bee-black rounded-2xl font-black transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(255,215,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(255,215,0,0.5)] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap text-base"
+          className="md:w-64 w-full h-18 bg-bee-yellow hover:bg-yellow-400 text-bee-black rounded-[2rem] font-black transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(255,215,0,0.5)] hover:shadow-[0_25px_50px_-12px_rgba(255,215,0,0.7)] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap text-base"
         >
           {isLoading ? (
             <i className="fa-solid fa-circle-notch animate-spin text-xl"></i>
@@ -130,37 +130,45 @@ const TrackingWidget: React.FC<{ t: any; onClose?: () => void; isModal?: boolean
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className={`${theme === 'light' ? 'bg-white border-gray-200 hover:bg-gray-50' : 'bg-white/5 border-white/10 hover:bg-white/10'} border rounded-3xl p-6 transition-colors group shadow-sm`}
+                  className={`${theme === 'light' ? 'bg-white border-gray-100 hover:border-bee-yellow hover:shadow-xl' : 'bg-white/5 border-white/10 hover:bg-white/10'} border-2 rounded-[2rem] p-7 transition-all group overflow-hidden relative shadow-sm`}
                 >
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${booking.serviceType === 'DELIVERY' ? 'bg-bee-yellow text-bee-black' : 'bg-bee-blue text-white'}`}>
+                  <div className="flex flex-col gap-5">
+                    <div className="flex items-center gap-5">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg ${booking.serviceType === 'DELIVERY' ? 'bg-bee-yellow text-bee-black shadow-bee-yellow/20' : 'bg-bee-black text-white shadow-black/20'}`}>
                         <i className={`fa-solid ${booking.serviceType === 'DELIVERY' ? 'fa-truck-fast' : 'fa-warehouse'}`}></i>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[9px] font-black ${theme === 'light' ? 'text-gray-500 bg-gray-100' : 'text-gray-400 bg-white/5'} uppercase tracking-widest px-2 py-0.5 rounded`}>{booking.id}</span>
-                          <span className="text-[9px] font-black text-bee-yellow uppercase tracking-widest">{booking.serviceType}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-black ${theme === 'light' ? 'text-gray-400 bg-gray-50' : 'text-gray-400 bg-white/5'} uppercase tracking-widest px-2.5 py-1 rounded-full border ${theme === 'light' ? 'border-gray-100' : 'border-white/5'}`}>{booking.id}</span>
+                            <span className="text-[10px] font-black text-bee-yellow uppercase tracking-widest">{booking.serviceType}</span>
+                          </div>
+                          <div className={`px-4 py-1.5 rounded-full text-[11px] font-black shadow-sm ${booking.status === BookingStatus.CANCELLED ? 'bg-red-50 text-red-500 border border-red-100' :
+                            booking.status === BookingStatus.COMPLETED ? 'bg-green-50 text-green-600 border border-green-100' :
+                              'bg-bee-yellow text-bee-black'
+                            }`}>
+                            {(t.status_mapping && booking.status && t.status_mapping[booking.status])
+                              ? t.status_mapping[booking.status]
+                              : booking.status}
+                          </div>
                         </div>
-                        <h3 className={`text-base font-bold ${theme === 'light' ? 'text-bee-black' : 'text-white'} group-hover:text-bee-yellow transition-colors cursor-pointer`}>
-                          {booking.pickupDate} <span className={`${theme === 'light' ? 'text-gray-400' : 'text-white/50'} text-xs font-normal`}>| {booking.pickupTime}</span>
+                        <h3 className={`text-xl font-display font-black ${theme === 'light' ? 'text-bee-black' : 'text-white'} group-hover:text-bee-yellow transition-colors`}>
+                          {booking.pickupDate} <span className={`${theme === 'light' ? 'text-gray-400' : 'text-white/50'} text-sm font-bold ml-1`}>at {booking.pickupTime}</span>
                         </h3>
                       </div>
                     </div>
 
-                    <div className={`flex items-center justify-between pt-4 border-t ${theme === 'light' ? 'border-gray-100' : 'border-white/5'}`}>
-                      <span className={`text-xs font-bold ${theme === 'light' ? 'text-gray-500' : 'text-white/60'} truncate max-w-[60%]`}>
-                        {booking.pickupLocation}
-                        {booking.serviceType === 'DELIVERY' && <i className="fa-solid fa-arrow-right mx-2 text-bee-yellow/50"></i>}
-                        {booking.serviceType === 'DELIVERY' && booking.dropoffLocation}
-                      </span>
-                      <div className={`px-3 py-1 rounded-full text-[10px] font-black ${booking.status === BookingStatus.CANCELLED ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                        booking.status === BookingStatus.COMPLETED ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                          'bg-bee-yellow text-bee-black shadow-[0_0_15px_rgba(255,215,0,0.3)]'
-                        }`}>
-                        {(t.status_mapping && booking.status && t.status_mapping[booking.status])
-                          ? t.status_mapping[booking.status]
-                          : booking.status}
+                    <div className={`flex items-center justify-between pt-5 border-t ${theme === 'light' ? 'border-gray-50' : 'border-white/5'}`}>
+                      <div className={`flex items-center gap-2 text-xs font-black ${theme === 'light' ? 'text-gray-600' : 'text-white/70'} overflow-hidden`}>
+                        <i className="fa-solid fa-location-dot text-bee-yellow"></i>
+                        <span className="truncate">
+                          {booking.pickupLocation}
+                          {booking.serviceType === 'DELIVERY' && <i className="fa-solid fa-arrow-right mx-3 text-bee-yellow/40"></i>}
+                          {booking.serviceType === 'DELIVERY' && booking.dropoffLocation}
+                        </span>
+                      </div>
+                      <div className={`text-sm font-black ${theme === 'light' ? 'text-bee-black' : 'text-bee-yellow'}`}>
+                        ₩{booking.finalPrice?.toLocaleString()}
                       </div>
                     </div>
                   </div>

@@ -292,9 +292,12 @@ const LocationList: React.FC<LocationListProps> = ({
             {/* List Area - Horizontal Cards on Mobile, Vertical Scroll on PC 💅 */}
             <div className="flex-none md:flex-1 pointer-events-auto bg-transparent border-none mt-auto md:mt-0 h-auto md:h-full w-full max-w-full relative z-20 pb-6 md:pb-0 md:overflow-hidden">
                 <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto no-scrollbar snap-x snap-mandatory gap-3 md:gap-4 px-4 md:px-6 pt-2 md:pt-4 pb-4 md:h-full">
-                    {filteredBranches.map((branch) => {
+                    {filteredBranches.map((branch, index) => {
                         const isSelected = selectedBranch?.id === branch.id;
                         const isActive = branch.isActive !== false;
+                        
+                        // [스봉이] 가장 가까운 지점 찾기 (정렬된 상태라면 index 0)
+                        const isClosest = index === 0 && branch.distance !== undefined && branch.distance < 5000;
 
                         return (
                             <motion.button
@@ -305,6 +308,12 @@ const LocationList: React.FC<LocationListProps> = ({
                                 onClick={() => onBranchClick(branch)}
                                 className={`group flex flex-row items-center gap-3 md:gap-5 p-2 md:p-5 rounded-[1.8rem] md:rounded-[2.5rem] text-left transition-all relative shrink-0 snap-center md:snap-start w-[140px] md:w-full md:mx-auto shadow-xl border border-white/20 ${isSelected ? 'bg-white ring-4 ring-bee-yellow/50 shadow-2xl scale-[1.02]' : 'bg-white/40 backdrop-blur-md hover:bg-white hover:shadow-2xl'}`}
                             >
+                                {isClosest && (
+                                    <div className="absolute -top-2 -left-2 z-30 bg-bee-black text-bee-yellow text-[8px] md:text-[10px] font-black px-2 py-1 rounded-lg shadow-lg border border-bee-yellow/30 animate-bounce font-montserrat italic uppercase tracking-tighter">
+                                        Closest ✨
+                                    </div>
+                                )}
+
                                 <div className="flex-1 flex flex-col items-start gap-1 md:gap-2.5 min-w-0">
                                     {/* 지점명 - 폰트 강화 💅 */}
                                     <div className="text-[12px] md:text-[20px] font-black tracking-[-0.05em] whitespace-nowrap overflow-hidden text-ellipsis w-full text-gray-900 group-hover:text-bee-black transition-colors">
@@ -312,18 +321,19 @@ const LocationList: React.FC<LocationListProps> = ({
                                     </div>
 
                                     {/* 상태 뱃지 - 정밀하게 💅 */}
-                                    <div className={`px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-wider w-fit border shadow-sm ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                                        {isActive ? 'ACTIVE' : 'CLOSE'}
+                                    <div className="flex items-center gap-1.5">
+                                        <div className={`px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-wider w-fit border shadow-sm ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                                            {isActive ? 'ACTIVE' : 'CLOSE'}
+                                        </div>
+                                        {branch.distance !== undefined && (
+                                            <div className="text-[8px] md:text-[12px] font-black text-blue-500 italic font-montserrat">
+                                                {formatDistance(branch.distance, lang)}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* 서비스 태그들 - 몬세라트 💅 */}
                                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                        {branch.distance !== undefined && branch.distance < 1000 && (
-                                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[7px] md:text-[11px] font-[1000] bg-blue-50 text-blue-600 border border-blue-100 shadow-sm whitespace-nowrap italic font-montserrat tracking-tighter">
-                                                <LocateFixed size={8} className="md:w-2.5 md:h-2.5" />
-                                                {formatDistance(branch.distance, lang)}
-                                            </span>
-                                        )}
                                         {branch.supportsDelivery && (
                                             <span className="px-1.5 py-0.5 rounded-full text-[7px] md:text-[11px] font-black uppercase tracking-tighter bg-bee-black text-bee-yellow shadow-md whitespace-nowrap font-montserrat italic">
                                                 {t.locations_page?.service_delivery || 'DEL'}

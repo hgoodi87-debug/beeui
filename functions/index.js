@@ -1,7 +1,4 @@
 const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
-const googleChatWebhookSecret = defineSecret("GOOGLE_CHAT_WEBHOOK_URL");
-const smtpPassSecret = defineSecret("SMTP_PASS");
 const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
@@ -65,7 +62,7 @@ const assertSuperAdmin = async (request) => {
 // --- HTTPS Callables (v2) ---
 
 // 1. Resend Voucher
-exports.resendBookingVoucher = onCall({ secrets: [smtpPassSecret] }, async (request) => {
+exports.resendBookingVoucher = onCall(async (request) => {
     await assertAdmin(request);
     const { bookingId } = request.data;
     if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required.');
@@ -259,7 +256,7 @@ exports.partnerApi = onRequest(async (req, res) => {
 });
 
 // 6. Google Chat Notifier (CORS Proxy)
-exports.notifyGoogleChat = onRequest({ secrets: [googleChatWebhookSecret] }, async (req, res) => {
+exports.notifyGoogleChat = onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.method === 'OPTIONS') {
         res.set('Access-Control-Allow-Methods', 'POST');
@@ -270,7 +267,7 @@ exports.notifyGoogleChat = onRequest({ secrets: [googleChatWebhookSecret] }, asy
     const { text, sessionId, senderName, senderEmail, role } = req.body;
     try {
         const configSnap = await admin.firestore().collection('settings').doc('cloud_config').get();
-        const webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : googleChatWebhookSecret.value();
+        const webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : process.env.GOOGLE_CHAT_WEBHOOK_URL;
 
         const displayRole = role === 'user' ? `👤 ${senderName || 'Guest'}` : '🐝 BeeBot';
         const payload = { text: `*${displayRole}*: ${text}`, thread: { threadKey: sessionId } };
@@ -285,7 +282,7 @@ exports.notifyGoogleChat = onRequest({ secrets: [googleChatWebhookSecret] }, asy
 // --- Firestore Triggers (v2) ---
 
 // 7. On Booking Created (Voucher + Validation + Notifier)
-exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}", secrets: [googleChatWebhookSecret, smtpPassSecret] }, async (event) => {
+exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}" }, async (event) => {
     const bookingId = event.params.bookingId;
     const booking = event.data.data();
 
@@ -347,7 +344,7 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}",
     // 3. Google Chat Notification (사장님 커스텀 로직 적용 💅✨)
     try {
         const configSnap = await admin.firestore().collection('settings').doc('cloud_config').get();
-        const webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : googleChatWebhookSecret.value();
+        const webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : process.env.GOOGLE_CHAT_WEBHOOK_URL;
 
         const displayedCode = booking.reservationCode || bookingId;
         const bagDetails = Object.entries(booking.bagSizes || {})

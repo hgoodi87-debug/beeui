@@ -32,6 +32,25 @@ const safeJsonParse = <T>(key: string, fallback: T): T => {
   } catch { return fallback; }
 };
 
+const runSnapshotFallback = async <T>({
+  sourceQuery,
+  parser,
+  callback,
+  label
+}: {
+  sourceQuery: any;
+  parser: (snapshot: any) => T;
+  callback: (data: T) => void;
+  label: string;
+}) => {
+  try {
+    const snapshot = await getDocs(sourceQuery);
+    callback(parser(snapshot));
+  } catch (fallbackError) {
+    console.error(`${label} fallback failed:`, fallbackError);
+  }
+};
+
 export const StorageService = {
   // --- Configuration ---
   saveCloudConfig: (config: GoogleCloudConfig) => {
@@ -255,12 +274,16 @@ export const StorageService = {
         callback(bookings);
       }, (error) => {
         console.error("Booking subscription error:", error);
-        // Fallback for missing index
         const simpleQ = query(collection(db, "bookings"), limit(1000));
-        onSnapshot(simpleQ, (snap) => {
-          const bks = snap.docs.map(d => ({ ...d.data(), id: d.id } as BookingState));
-          bks.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-          callback(bks);
+        void runSnapshotFallback({
+          sourceQuery: simpleQ,
+          parser: (snap) => {
+            const fallbackBookings = snap.docs.map((d: any) => ({ ...d.data(), id: d.id } as BookingState));
+            fallbackBookings.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+            return fallbackBookings;
+          },
+          callback,
+          label: "Booking subscription"
         });
       });
     } catch (e) {
@@ -292,13 +315,17 @@ export const StorageService = {
         callback(filtered);
       }, (error) => {
         console.error("Location booking sub error, falling back to all-fetch filter:", error);
-        // If index is missing or query fails, fetch all and filter client-side for immediate recovery 💅
         const simpleQ = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(1000));
-        return onSnapshot(simpleQ, (snapshot) => {
-          const bks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
-          const filtered = bks.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
-          filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-          callback(filtered);
+        void runSnapshotFallback({
+          sourceQuery: simpleQ,
+          parser: (snapshot) => {
+            const fallbackBookings = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState));
+            const filtered = fallbackBookings.filter((b: BookingState) => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
+            filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+            return filtered;
+          },
+          callback,
+          label: "Location booking subscription"
         });
       });
     } catch (e) {
@@ -914,12 +941,16 @@ export const StorageService = {
         callback(items);
       }, (error) => {
         console.error("Admins subscription error (likely index missing):", error);
-        // Fallback: Simple query without ordering
         const simpleQ = query(dbRef, limit(100));
-        onSnapshot(simpleQ, (snap) => {
-          const items = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
-          items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-          callback(items);
+        void runSnapshotFallback({
+          sourceQuery: simpleQ,
+          parser: (snap) => {
+            const items = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
+            items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+            return items;
+          },
+          callback,
+          label: "Admins subscription"
         });
       });
     } catch (e) {
@@ -1129,11 +1160,12 @@ export const StorageService = {
         callback(items);
       }, (error) => {
         console.error("Discount codes sub error", error);
-        // Fallback for missing index
         const simpleQ = query(collection(db, "promo_codes"));
-        onSnapshot(simpleQ, (snap) => {
-          const items = snap.docs.map(d => ({ ...d.data(), id: d.id } as DiscountCode));
-          callback(items);
+        void runSnapshotFallback({
+          sourceQuery: simpleQ,
+          parser: (snap) => snap.docs.map((d: any) => ({ ...d.data(), id: d.id } as DiscountCode)),
+          callback,
+          label: "Discount codes subscription"
         });
       });
     } catch (e) {
@@ -1159,6 +1191,19 @@ export const StorageService = {
       const snap = await getDocs(collection(db, "branches"));
       return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (e) { console.error(e); return []; }
+  },
+  getBranchByCode: async (code: string): Promise<any | null> => {
+    try {
+      if (!code) return null;
+      const branchQuery = query(collection(db, "branches"), where("branchCode", "==", code), limit(1));
+      const snap = await getDocs(branchQuery);
+      if (snap.empty) return null;
+      const branch = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      return branch.isActive === false ? null : branch;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   },
   subscribeBranches: (callback: (data: any[]) => void) => {
     const q = query(collection(db, "branches"), orderBy("createdAt", "desc"));
@@ -1228,12 +1273,16 @@ export const StorageService = {
         callback(items);
       }, (error) => {
         console.error("Notices sub error", error);
-        // Fallback for missing index
         const simpleQ = query(collection(db, "notices"));
-        onSnapshot(simpleQ, (snap) => {
-          const items = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as SystemNotice));
-          items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-          callback(items);
+        void runSnapshotFallback({
+          sourceQuery: simpleQ,
+          parser: (snap) => {
+            const items = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as SystemNotice));
+            items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+            return items;
+          },
+          callback,
+          label: "Notices subscription"
         });
       });
     } catch (e) {

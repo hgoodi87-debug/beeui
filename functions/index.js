@@ -12,6 +12,51 @@ const { processRefundEmail } = require("./src/domains/notification/refundService
 
 admin.initializeApp();
 
+const ADMIN_ROLES = new Set(['super', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs']);
+
+const assertAuthenticated = (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) {
+        throw new HttpsError('unauthenticated', 'Authentication required.');
+    }
+    return uid;
+};
+
+const getAdminContext = async (uid) => {
+    if (!uid) {
+        return null;
+    }
+
+    const snap = await admin.firestore().collection('admins').doc(uid).get();
+    if (!snap.exists) {
+        return null;
+    }
+
+    const data = snap.data() || {};
+    if (!ADMIN_ROLES.has(data.role)) {
+        return null;
+    }
+
+    return { id: snap.id, ...data };
+};
+
+const assertAdmin = async (request) => {
+    const uid = assertAuthenticated(request);
+    const adminContext = await getAdminContext(uid);
+    if (!adminContext) {
+        throw new HttpsError('permission-denied', 'Admin access required.');
+    }
+    return { uid, adminContext };
+};
+
+const assertSuperAdmin = async (request) => {
+    const { adminContext } = await assertAdmin(request);
+    if (adminContext.role !== 'super') {
+        throw new HttpsError('permission-denied', 'Super admin access required.');
+    }
+    return adminContext;
+};
+
 /**
  * 💅 Beeliber Backend v2 Engine
  * Hyper-Gap Innovation Roadmap Implementation
@@ -21,6 +66,7 @@ admin.initializeApp();
 
 // 1. Resend Voucher
 exports.resendBookingVoucher = onCall({ secrets: [smtpPassSecret] }, async (request) => {
+    await assertAdmin(request);
     const { bookingId } = request.data;
     if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required.');
 
@@ -36,6 +82,7 @@ exports.resendBookingVoucher = onCall({ secrets: [smtpPassSecret] }, async (requ
 
 // 2. Process Refund
 exports.processBookingRefund = onCall(async (request) => {
+    await assertAdmin(request);
     const { bookingId } = request.data;
     if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required.');
 
@@ -53,6 +100,7 @@ exports.processBookingRefund = onCall(async (request) => {
 
 // 3. Cancel Booking
 exports.cancelBooking = onCall(async (request) => {
+    const uid = assertAuthenticated(request);
     const { bookingId } = request.data;
     if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required.');
 
@@ -62,6 +110,12 @@ exports.cancelBooking = onCall(async (request) => {
         if (!snap.exists) throw new HttpsError('not-found', 'Booking not found');
 
         const booking = snap.data();
+        const adminContext = await getAdminContext(uid);
+        const isOwner = booking.userId && booking.userId === uid;
+        if (!adminContext && !isOwner) {
+            throw new HttpsError('permission-denied', 'You do not have access to cancel this booking.');
+        }
+
         if (booking.status === '취소됨' || booking.status === '환불완료') {
             return { success: true, message: 'Already cancelled.' };
         }
@@ -80,13 +134,27 @@ exports.cancelBooking = onCall(async (request) => {
 // 4. Claude Agent Proxy
 const claudeAgent = require('./agent/claudeAgent');
 exports.runClaudeAgent = onCall({ timeoutSeconds: 540, memory: "1GiB" }, async (request) => {
+    await assertSuperAdmin(request);
     console.log("Starting Claude Agent via v2...");
-    return await claudeAgent.runAgent(request.data);
+    const payload = request.data && typeof request.data === 'object' ? request.data : {};
+    const task = typeof payload.task === 'string' ? payload.task.trim() : '';
+    const agentName = typeof payload.agentName === 'string' ? payload.agentName.trim() : 'clubbang-i';
+
+    if (!task) {
+        throw new HttpsError('invalid-argument', 'task is required.');
+    }
+
+    if (task.length > 4000 || agentName.length > 64) {
+        throw new HttpsError('invalid-argument', 'Request payload is too large.');
+    }
+
+    return await claudeAgent.runAgent({ ...payload, task, agentName });
 });
 
 // 4-1. Secure Admin Verification (Full CORS Permitted) 🛡️💅
 exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) => {
-    const { name, password } = request.data;
+    const requestUid = assertAuthenticated(request);
+    const { name, password } = request.data || {};
     if (!name || !password) throw new HttpsError('invalid-argument', 'Name and password required.');
 
     const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
@@ -113,23 +181,6 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
         if (adminDoc) {
             adminData = adminDoc.data();
             adminId = adminDoc.id;
-        } else {
-            console.log(`No adminDoc found for "${name}". Checking hardcoded fallback list...`);
-            const initialAdmins = [
-                { id: 'admin-001', name: '천명', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
-                { id: 'admin-8684', name: 'admin', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
-                { id: 'admin-002', name: '매니저', jobTitle: 'General Manager', password: '1234', createdAt: new Date().toISOString() },
-                { id: 'admin-003', name: '스태프', jobTitle: 'Staff', password: '0000', createdAt: new Date().toISOString() },
-                { id: 'admin-004', name: '진호', jobTitle: 'Master', password: '4608', createdAt: new Date().toISOString() }
-            ];
-            const fallback = initialAdmins.find(adm => (normalize(adm.name) === inputName || adm.id === inputName) && String(adm.password) === inputPassword);
-
-            if (fallback) {
-                console.log(`Fallback matched for ${fallback.name}. Seeding immediately...`);
-                await db.collection('admins').doc(fallback.id).set(fallback);
-                adminData = fallback;
-                adminId = fallback.id;
-            }
         }
 
         if (!adminData) {
@@ -150,17 +201,15 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
         }
 
         // UID 매핑은 반드시 대기(await)해야 프론트엔드에서 대시보드 진입 시 권한 오류가 발생하지 않습니다. 🛡️
-        if (request.auth && request.auth.uid) {
-            try {
-                await db.collection('admins').doc(request.auth.uid).set({
-                    ...safeAdminData,
-                    uid: request.auth.uid,
-                    lastLogin: new Date().toISOString()
-                }, { merge: true });
-                console.log(`[AdminVerify] UID Mapping success for: ${request.auth.uid}`);
-            } catch (e) {
-                console.error("UID mapping failed:", e);
-            }
+        try {
+            await db.collection('admins').doc(requestUid).set({
+                ...safeAdminData,
+                uid: requestUid,
+                lastLogin: new Date().toISOString()
+            }, { merge: true });
+            console.log(`[AdminVerify] UID Mapping success for: ${requestUid}`);
+        } catch (e) {
+            console.error("UID mapping failed:", e);
         }
 
         return { ...safeAdminData, id: adminId };

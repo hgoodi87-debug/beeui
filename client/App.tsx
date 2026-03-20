@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
-import { BookingState, LocationOption, BookingStatus, Branch, ServiceType } from './types';
+import { BookingState, BookingStatus, ServiceType } from './types';
 import { User } from 'firebase/auth';
 // Deployment trigger: 2026-01-23 01:35 (Recovery from rollback)
 
@@ -84,7 +84,11 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const { data: currentUser } = useCurrentUser();
-  const { data: locations = [] } = useLocations();
+  const shouldLoadBookingLocations =
+    location.pathname === '/booking' ||
+    location.pathname === '/booking-success' ||
+    /^\/admin\/branch\/[^/]+\/booking$/.test(location.pathname);
+  const { data: bookingLocations = [] } = useLocations({ enabled: shouldLoadBookingLocations });
 
   const [t, setT] = useState<any>(null);
 
@@ -124,10 +128,11 @@ const App: React.FC = () => {
         if (code) {
           setCustomerBranchCode(code);
           try {
-            const branches = await StorageService.getBranches();
-            const branch = branches.find(b => b.branchCode === code && b.isActive);
+            const branch = await StorageService.getBranchByCode(code);
             if (branch) {
               setCustomerBranch(branch);
+            } else {
+              setCustomerBranch(null);
             }
           } catch (e) { console.error("Error fetching branch via code", e); }
         }
@@ -396,8 +401,8 @@ const App: React.FC = () => {
                   {/* OTHER */}
                   <Route path="/services" element={<AnimatedRoute><ServicesPage onBack={() => navigate('/')} t={t.services_page} landingT={t.landing_renewal} /></AnimatedRoute>} />
                   <Route path="/locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate('/')} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={setLang} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} /></AnimatedRoute>} />
-                  <Route path="/booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate('/locations')} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
-                  <Route path="/booking-success" element={<AnimatedRoute fade><BookingSuccess booking={lastBooking} locations={locations} onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate('/locations')} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
+                  <Route path="/booking-success" element={<AnimatedRoute fade><BookingSuccess booking={lastBooking} locations={bookingLocations} onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/tracking" element={<AnimatedRoute><UserTrackingPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/partnership" element={<AnimatedRoute><PartnershipPage onBack={() => navigate('/')} t={t} /></AnimatedRoute>} />
                   <Route path="/manual" element={<AnimatedRoute><ManualPage onBack={() => navigate('/')} t={t.manual} /></AnimatedRoute>} />
@@ -421,7 +426,7 @@ const App: React.FC = () => {
                   }} onCancel={() => navigate('/')} />} />
                   <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />
-                  <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={locations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
+                  <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/mypage" element={<AnimatedRoute><div className="fixed inset-0 z-0 pointer-events-none"><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /><div className="absolute inset-0 bg-black/50 pointer-events-auto" /></div><MyPage t={t} onClose={() => { navigate(-1); }} /></AnimatedRoute>} />
 

@@ -1,22 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { app, db, storage } from '../firebaseApp';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-  doc,
-  updateDoc,
-  deleteDoc,
-  setDoc,
-  getDoc,
-  addDoc
-} from 'firebase/firestore';
-import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, DiscountCode, PriceSettings, StorageTier, RoutePrice, AdminUser, PartnershipInquiry, SystemNotice, HeroConfig, GoogleCloudConfig, PrivacyPolicyData, TermsPolicyData, SnsType, BagSizes, CashClosing, Expenditure, AdminTab, Branch, BranchProspect } from '../types';
+import { db } from '../firebaseApp';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, PriceSettings, StorageTier, AdminUser, SystemNotice, HeroConfig, GoogleCloudConfig, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
-import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
 import { AuditService } from '../services/auditService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
@@ -25,34 +12,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAdminStore } from '../src/store/adminStore';
 import { useAdmins } from '../src/domains/admin/hooks/useAdmins';
 import { useInquiries } from '../src/domains/admin/hooks/useInquiries';
-import { useBranchProspects } from '../src/domains/admin/hooks/useBranchProspects';
 import { useCashClosings } from '../src/domains/admin/hooks/useCashClosings';
 import { useExpenditures } from '../src/domains/admin/hooks/useExpenditures';
 import { sendMessageToGemini } from '../services/geminiService';
 import DailyDetailModal from './admin/DailyDetailModal';
-import OverviewTab from './admin/OverviewTab';
-import LogisticsTab from './admin/LogisticsTab';
-import LocationsTab from './admin/LocationsTab';
-import DailySettlementTab from './admin/DailySettlementTab';
-import AccountingTab from './admin/AccountingTab';
-import NoticeTab from './admin/NoticeTab';
-import PartnershipTab from './admin/PartnershipTab';
-import HRTab from './admin/HRTab';
-import SystemTab from './admin/SystemTab';
-import CloudTab from './admin/CloudTab';
-import PrivacyEditorTab from './admin/PrivacyEditorTab';
-import TermsEditorTab from './admin/TermsEditorTab';
-import QnaEditorTab from './admin/QnaEditorTab';
 import BookingSidePanel from './admin/BookingSidePanel';
 import ManualBookingModal from './admin/ManualBookingModal';
-import ChatTab from './admin/ChatTab';
-import DiscountTab from './admin/DiscountTab';
-import ReportsTab from './admin/ReportsTab';
-import { TipsCMSTab } from './admin/TipsCMSTab';
-import RoadmapTab from './admin/RoadmapTab';
-import OperationsConsole from './admin/OperationsConsole';
-import MonthlySettlementTab from './admin/MonthlySettlementTab';
-import LocationMap from './locations/LocationMap';
 import { useAdminStats } from '../src/domains/admin/hooks/useAdminStats';
 
 
@@ -83,6 +48,33 @@ const LOCATION_TYPE_OPTIONS = [
   { value: LocationType.GUESTHOUSE, label: '게스트하우스 (Guesthouse)' },
   { value: LocationType.OTHER, label: '기타 (Other)' },
 ];
+
+const OverviewTab = lazy(() => import('./admin/OverviewTab'));
+const LogisticsTab = lazy(() => import('./admin/LogisticsTab'));
+const LocationsTab = lazy(() => import('./admin/LocationsTab'));
+const DailySettlementTab = lazy(() => import('./admin/DailySettlementTab'));
+const AccountingTab = lazy(() => import('./admin/AccountingTab'));
+const NoticeTab = lazy(() => import('./admin/NoticeTab'));
+const PartnershipTab = lazy(() => import('./admin/PartnershipTab'));
+const HRTab = lazy(() => import('./admin/HRTab'));
+const SystemTab = lazy(() => import('./admin/SystemTab'));
+const CloudTab = lazy(() => import('./admin/CloudTab'));
+const PrivacyEditorTab = lazy(() => import('./admin/PrivacyEditorTab'));
+const TermsEditorTab = lazy(() => import('./admin/TermsEditorTab'));
+const QnaEditorTab = lazy(() => import('./admin/QnaEditorTab'));
+const ChatTab = lazy(() => import('./admin/ChatTab'));
+const DiscountTab = lazy(() => import('./admin/DiscountTab'));
+const ReportsTab = lazy(() => import('./admin/ReportsTab'));
+const TipsCMSTab = lazy(() => import('./admin/TipsCMSTab').then((module) => ({ default: module.TipsCMSTab })));
+const RoadmapTab = lazy(() => import('./admin/RoadmapTab'));
+const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
+const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
+
+const AdminTabFallback: React.FC = () => (
+  <div className="rounded-[32px] border border-dashed border-gray-200 bg-white/80 px-6 py-10 text-center text-sm font-bold text-gray-400 shadow-sm">
+    탭 화면을 불러오는 중입니다.
+  </div>
+);
 
 interface AdminDashboardProps {
   onBack: () => void;
@@ -127,6 +119,9 @@ const getKSTDateString = () => {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, adminRole = 'staff', adminEmail, scanId, lang, t }) => {
   const currentActor = { id: adminName || 'unknown', name: adminName || 'unknown', email: adminEmail };
   const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
+  const needsAdminDirectory = Boolean(scanId) || activeTab === 'HR' || activeTab === 'OPERATIONS';
+  const needsInquiryData = activeTab === 'PARTNERSHIP_INQUIRIES';
+  const needsSettlementData = ['OVERVIEW', 'DAILY_SETTLEMENT', 'ACCOUNTING', 'MONTHLY_SETTLEMENT'].includes(activeTab);
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]); // [스봉이] 일괄 처리를 위한 체크박스 상태 💅
   const [searchDate, setSearchDate] = useState<string>(''); // [스봉이] 특정 일자 예약 조회 💅
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
@@ -144,11 +139,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   }, [allBookings, globalBranchFilter]);
 
   const { data: locations = [] } = useLocations();
-  const { data: admins = [] } = useAdmins();
-  const { data: inquiries = [] } = useInquiries();
-  const { data: branchProspects = [] } = useBranchProspects();
-  const { data: closings = [], refetch: refetchCashClosings } = useCashClosings();
-  const { data: expenditures = [], refetch: refetchExpenditures } = useExpenditures();
+  const { data: admins = [] } = useAdmins({ enabled: needsAdminDirectory });
+  const { data: inquiries = [] } = useInquiries({ enabled: needsInquiryData });
+  const { data: closings = [] } = useCashClosings({ enabled: needsSettlementData });
+  const { data: expenditures = [] } = useExpenditures({ enabled: needsSettlementData });
 
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
@@ -247,7 +241,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setSendingEmailId(booking.id);
     try {
-      const functions = getFunctions(app, 'us-central1');
+      const { httpsCallable } = await import('firebase/functions');
+      const { functions } = await import('../firebaseApp');
       const resendVoucher = httpsCallable(functions, 'resendBookingVoucher');
       await resendVoucher({ bookingId: booking.id });
       alert('바우처 이메일 발송이 깔끔하게 끝났어요. ✨');
@@ -267,8 +262,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setRefundingId(booking.id);
     try {
-      const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const functions = getFunctions(app, 'us-central1');
+      const { httpsCallable } = await import('firebase/functions');
+      const { functions } = await import('../firebaseApp');
       const processRefund = httpsCallable(functions, 'processBookingRefund');
       await processRefund({ bookingId: booking.id });
       await AuditService.logAction(currentActor, 'REFUND', { id: booking.id, type: 'BOOKING' }, { userName: booking.userName });
@@ -551,7 +546,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         queryClient.invalidateQueries({ queryKey: ['bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['admins'] }),
         queryClient.invalidateQueries({ queryKey: ['inquiries'] }),
-        queryClient.invalidateQueries({ queryKey: ['branchProspects'] }),
         queryClient.invalidateQueries({ queryKey: ['cashClosings'] }),
         queryClient.invalidateQueries({ queryKey: ['expenditures'] }),
       ]);
@@ -589,9 +583,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   // Subscribe to Notices
   useEffect(() => {
+    if (activeTab !== 'NOTICE') {
+      return;
+    }
+
     const unsubscribe = StorageService.subscribeNotices(setNotices);
     return () => unsubscribe();
-  }, []);
+  }, [activeTab]);
 
   // Initial Load & Subscriptions
   useEffect(() => {
@@ -2146,6 +2144,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         </div>
 
         <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
+          <Suspense fallback={<AdminTabFallback />}>
           { activeTab === 'OPERATIONS' && (
             <OperationsConsole
               bookings={bookings}
@@ -2389,6 +2388,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           {activeTab === 'TIPS_CMS' && (
             <TipsCMSTab />
           )}
+          </Suspense>
         </main>
       </div>
 

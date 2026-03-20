@@ -3,7 +3,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StorageService } from '../../../../services/storageService';
 import { CashClosing } from '../../../../types';
 
-export const useCashClosings = () => {
+interface UseCashClosingsOptions {
+    enabled?: boolean;
+}
+
+export const useCashClosings = ({ enabled = true }: UseCashClosingsOptions = {}) => {
     const queryClient = useQueryClient();
 
     const query = useQuery<CashClosing[]>({
@@ -13,14 +17,19 @@ export const useCashClosings = () => {
             return Array.isArray(data) ? data : [];
         },
         staleTime: Infinity,
+        enabled,
     });
 
     useEffect(() => {
+        if (!enabled) {
+            return;
+        }
+
         const unsubscribe = StorageService.subscribeCashClosings((data) => {
             queryClient.setQueryData(['cashClosings'], Array.isArray(data) ? data : []);
         });
         return () => unsubscribe();
-    }, [queryClient]);
+    }, [enabled, queryClient]);
 
     return query;
 };

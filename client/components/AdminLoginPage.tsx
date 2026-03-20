@@ -1,22 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { AdminUser } from '../types';
-import { StorageService } from '../services/storageService';
-import { app, ensureAuth } from '../firebaseApp';
+import { ensureAuth } from '../firebaseApp';
 
 interface AdminLoginPageProps {
   onLogin: (name: string, jobTitle: string, role: string, email?: string, branchId?: string) => void;
   onCancel: () => void;
 }
-
-// Initial Admin Data with Job Title
-const INITIAL_ADMINS: AdminUser[] = [
-  { id: 'admin-001', name: '천명', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
-  { id: 'admin-8684', name: 'admin', jobTitle: 'CEO', password: '8684', createdAt: new Date().toISOString() },
-  { id: 'admin-002', name: '매니저', jobTitle: 'General Manager', password: '1234', createdAt: new Date().toISOString() },
-  { id: 'admin-003', name: '스태프', jobTitle: 'Staff', password: '0000', createdAt: new Date().toISOString() },
-  { id: 'admin-004', name: '진호', jobTitle: 'Master', password: '4608', createdAt: new Date().toISOString() }
-];
 
 const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -50,10 +39,8 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
 
     setLoading(true);
     try {
-      const normalize = (str: string) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
       const inputName = formData.name.trim();
       const inputPass = formData.password.trim();
-      const normInputName = normalize(inputName);
 
       console.log(`[AdminLogin] 🚀 로그인 시도: "${inputName}" / 비밀번호: "${inputPass.replace(/./g, '*')}"`);
       
@@ -79,58 +66,12 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
         console.log("[AdminLogin] 클라우드 인증 결과 수신 완료 ✨", admin ? "성공" : "실패(데이터 없음)");
       } catch (funcErr: any) {
         console.error("[AdminLogin] ❌ 클라우드 함수 호출 중 사고 발생:", funcErr);
-        
-        // [스봉이] 네트워크 사고가 났나 봐요! 비상용 로컬 폴백 가동합니다 💅✨
-        console.warn("[AdminLogin] 🚨 비상! 비상! 클라우드 응답 없음. 로컬 폴백 로직 가동합니다... 🔐");
-        const fallback = INITIAL_ADMINS.find(adm => 
-          (normalize(adm.name) === normInputName || adm.id === normInputName) && 
-          String(adm.password).trim() === inputPass
-        );
-
-        if (fallback) {
-          console.log(`[AdminLogin] 🛡️ 로컬 폴백 인증 성공: ${fallback.name} (${fallback.jobTitle})`);
-          
-          // [스봉이] 직함에 따른 권한 자동 매핑 (P0) 💅
-          const title = (fallback.jobTitle || '').toUpperCase();
-          let derivedRole = 'staff';
-          if (title.includes('CEO') || title.includes('MASTER') || title.includes('GENERAL MANAGER') || fallback.id === 'admin-8684') {
-            derivedRole = 'super';
-          }
-
-          admin = {
-            name: fallback.name,
-            jobTitle: fallback.jobTitle,
-            role: derivedRole,
-            email: 'local-fallback@beeliber.com'
-          };
-          alert("네트워크 상태가 불안정하여 로컬 모드로 로그인되었습니다. 🔐✨");
-        } else {
-          console.error("[AdminLogin] ❌ 로컬 명부에도 없는 사람이에요! 누구신지... 🙄");
-          throw funcErr; // 원래 에러 던짐
-        }
+        throw funcErr;
       }
 
       if (admin) {
         // [스봉이] 권한이 없으면 여기서라도 기본값을 챙겨줘야 사고가 안 나요 🛡️
         if (!admin.role) admin.role = 'staff';
-
-        // [스봉이] 클라우드 함수가 못다 한 "신분증 매핑(UID Mapping)"을 직접 처리합니다. 💅
-        // 이제 로그인이 완료되었으므로, 보안 규칙상 본인 UID 문서는 직접 쓸 수 있어요! ✨
-        try {
-          const { doc, setDoc } = await import('firebase/firestore');
-          const { db } = await import('../firebaseApp');
-          
-          await setDoc(doc(db, 'admins', user.uid), {
-            ...admin,
-            uid: user.uid,
-            lastLogin: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-          
-          console.log(`[AdminLogin] 🛡️ UID Mapping verification/sync success: ${user.uid}`);
-        } catch (syncErr) {
-          console.warn("[AdminLogin] ⚠️ UID Mapping sync failed (but continuing login):", syncErr);
-        }
 
         console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}) 💅`);
         const { AuditService } = await import('../services/auditService');
@@ -139,7 +80,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
             { id: admin.name, name: admin.name, email: admin.email || 'local@fallback' },
             'LOGIN',
             { id: admin.name, type: 'ADMIN' },
-            { jobTitle: admin.jobTitle || 'Staff', role: admin.role, mode: admin.email === 'local-fallback@beeliber.com' ? 'fallback' : 'cloud' }
+            { jobTitle: admin.jobTitle || 'Staff', role: admin.role, mode: 'cloud' }
           );
         } catch (auditErr) {
           console.warn("[AdminLogin] 감사 로그 기록 실패 (데이터 구조 확인 필요):", auditErr);

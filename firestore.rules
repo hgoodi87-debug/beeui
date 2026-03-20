@@ -5,7 +5,9 @@ service cloud.firestore {
     
     // Helper: Check if administrative user
     function isAdmin() {
-      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role in ['super', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs'];
     }
 
     // Helper: Check if Super Admin 🛡️
@@ -31,10 +33,9 @@ service cloud.firestore {
 
     // Admins: ONLY Admins can see or list admins. No public leaks! 🛡️
     match /admins/{adminId} {
-      allow get: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
+      allow get: if isAdmin();
       allow list: if isAdmin();
-      // [스봉이] 인증된 사용자가 본인의 신분증(UID)을 직접 등록/수정할 수 있도록 허용합니다. 💅✨
-      allow write: if isAdmin() || (request.auth != null && request.auth.uid == adminId);
+      allow create, update, delete: if isAdmin();
     }
 
     // Expenditures & Closings: Admin only

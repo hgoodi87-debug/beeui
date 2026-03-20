@@ -5,7 +5,8 @@ service firebase.storage {
     // Helper: Check if administrative user from Firestore
     function isAdmin() {
       return request.auth != null && 
-        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.role in ['super', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs'];
     }
 
     // 📍 Locations: Public read for branding/guide images, Admin only write

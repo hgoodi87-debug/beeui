@@ -8,7 +8,19 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Removing manualChunks to simplify build and isolate errors
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return;
+          }
+
+          if (id.includes('/firebase/')) {
+            return 'vendor-firebase';
+          }
+
+          if (id.includes('/@tanstack/')) {
+            return 'vendor-query';
+          }
+        }
       }
     }
   },

@@ -122,7 +122,9 @@ const LocationList: React.FC<LocationListProps> = ({
                             className={`flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border transition-all duration-300 shadow-md min-w-[45px] md:min-w-[60px] ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900 hover:border-bee-yellow'}`}
                         >
                             <Luggage className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
-                            <span className="text-[11px] md:text-[14px] font-[1000] italic tracking-tighter leading-none">{Object.values(baggageCounts as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
+                            <span className="text-[11px] md:text-[14px] font-[1000] italic tracking-tighter leading-none">
+                                {baggageCounts ? Object.values(baggageCounts as Record<string, number>).reduce((a, b) => (a || 0) + (b || 0), 0) : 0}
+                            </span>
                         </button>
 
                         {/* 날짜 & 시간 선택 (맡기기/찾기) - 슬림 와이드 & 스마트 정보 노출 💅 */}
@@ -297,7 +299,7 @@ const LocationList: React.FC<LocationListProps> = ({
                         const isActive = branch.isActive !== false;
                         
                         // [스봉이] 가장 가까운 지점 찾기 (정렬된 상태라면 index 0)
-                        const isClosest = index === 0 && branch.distance !== undefined && branch.distance < 5000;
+                        const isClosest = index === 0 && branch && branch.distance !== undefined && branch.distance < 5; // 5km 이내면 가깝다고 해줄게요 💅
 
                         return (
                             <motion.button

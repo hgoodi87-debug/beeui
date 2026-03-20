@@ -207,10 +207,13 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 
   const locations = useMemo(() => {
     let sortedData = [...rawLocations];
-    if (userLocation) {
+    if (userLocation && userLocation.lat && userLocation.lng) {
       console.log("[스봉이] 사용자 위치 기반 영롱한 정렬 시작 💅✨");
       sortedData = sortedData.map(loc => {
-        if (!loc.lat || !loc.lng) return { ...loc, distance: 9999 };
+        // [스봉이] 위경도 데이터가 부실하면 정렬에서 밀어버려야죠 💅
+        if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') {
+          return { ...loc, distance: 99999 };
+        }
         const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng);
         return { ...loc, distance: dist };
       });

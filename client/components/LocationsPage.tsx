@@ -224,43 +224,9 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   }, [rawLocations, userLocation]);
 
 
-  // Handle Browser Back Button for Step-by-Step Navigation
-  useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
-      const state = event.state;
-      if (state?.view === 'locations-list') {
-        setSelectedBranch(null);
-      } else if (!state || state.view === undefined) {
-        onBack();
-      } else if (state.view === 'locations-detail' && state.id) {
-        const found = locations.find(l => l.id === state.id);
-        if (found) setSelectedBranch(found);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    if (!window.history.state || window.history.state.view !== 'locations-list') {
-      window.history.replaceState({ view: 'locations-list' }, "");
-    }
-
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [locations, onBack]);
-
   // Sync selection with history
   const handleBranchSelect = useCallback((branch: LocationOption | null) => {
-    if (branch) {
-      if (window.history.state?.id !== branch.id) {
-        window.history.pushState({ view: 'locations-detail', id: branch.id }, "");
-      }
-      setSelectedBranch(branch);
-    } else {
-      if (window.history.state?.view === 'locations-detail') {
-        window.history.back();
-      } else {
-        setSelectedBranch(null);
-      }
-    }
+    setSelectedBranch(branch);
   }, []);
 
   useEffect(() => {

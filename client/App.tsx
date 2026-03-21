@@ -1,13 +1,18 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
+import { flushSync } from 'react-dom';
 import { BookingState, BookingStatus, ServiceType } from './types';
 import { User } from 'firebase/auth';
 // Deployment trigger: 2026-01-23 01:35 (Recovery from rollback)
 
 // Lazy load components
-const LandingRenewal = lazy(() => import('./components/LandingRenewal'));
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const loadLandingRenewal = () => import('./components/LandingRenewal');
+const loadAdminDashboard = () => import('./components/AdminDashboard');
+const loadBranchAdminPage = () => import('./components/BranchAdminPage');
+
+const LandingRenewal = lazy(loadLandingRenewal);
+const AdminDashboard = lazy(loadAdminDashboard);
 import AdminLoginPage from './components/AdminLoginPage';
 const ManualPage = lazy(() => import('./components/ManualPage'));
 const BookingSuccess = lazy(() => import('./components/BookingSuccess'));
@@ -20,7 +25,7 @@ const StaffScanPage = lazy(() => import('./components/StaffScanPage'));
 const BookingPage = lazy(() => import('./components/BookingPage'));
 const LocationsPage = lazy(() => import('./components/LocationsPage'));
 const MyPage = lazy(() => import('./components/MyPage'));
-const BranchAdminPage = lazy(() => import('./components/BranchAdminPage'));
+const BranchAdminPage = lazy(loadBranchAdminPage);
 const QnaPage = lazy(() => import('./components/QnaPage'));
 const LocationLander = lazy(() => import('./components/LocationLander'));
 const VisionPage = lazy(() => import('./components/VisionPage'));
@@ -477,13 +482,25 @@ const App: React.FC = () => {
                   <Route path="/vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
 
                   {/* ADMIN */}
-                  <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, role, email, branchId) => { 
+                  <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, role, email, branchId) => {
                     const info = { name, jobTitle, role, email: email || '', branchId: branchId || '', loginAt: Date.now() };
                     const nextPath = getAdminHomePath(role, jobTitle, branchId);
-                    setAdminInfo(info);
-                    setPersistedAdminInfo({ name, jobTitle, branchId: branchId || '' });
+
+                    flushSync(() => {
+                      setAdminInfo(info);
+                      setPersistedAdminInfo({ name, jobTitle, branchId: branchId || '' });
+                    });
                     localStorage.setItem('beeliber_admin_info', JSON.stringify(info));
-                    window.location.replace(nextPath);
+
+                    void (async () => {
+                      if (nextPath === '/admin/dashboard') {
+                        await loadAdminDashboard();
+                      } else if (nextPath.startsWith('/admin/branch/')) {
+                        await loadBranchAdminPage();
+                      }
+
+                      navigate(nextPath, { replace: true });
+                    })();
                   }} onCancel={() => navigate('/')} />} />
                   <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />

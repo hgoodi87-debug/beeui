@@ -73,7 +73,12 @@ const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { lang, setLang } = useAppStore();
+  const {
+    lang,
+    setLang,
+    setAdminInfo: setPersistedAdminInfo,
+    clearAdminInfo: clearPersistedAdminInfo,
+  } = useAppStore();
   const [adminInfo, setAdminInfo] = useState(() => {
     // [스봉이] 금붕어 기억력 방지! 로컬 스토리지에서 이전의 영광을 되찾아옵니다 💅✨
     const saved = localStorage.getItem('beeliber_admin_info');
@@ -88,12 +93,14 @@ const App: React.FC = () => {
         if (now - loginTime > TWENTY_FOUR_HOURS) {
           console.warn("[App] ⏰ 어드민 세션이 만료되었습니다 (24시간 경과).");
           localStorage.removeItem('beeliber_admin_info');
+          clearPersistedAdminInfo();
           return EMPTY_ADMIN_INFO;
         }
 
         if (isSupabaseAdminAuthEnabled() && !hasActiveAdminSession()) {
           console.warn("[App] 🔒 Supabase 관리자 세션이 없어 기존 어드민 캐시를 비웁니다.");
           localStorage.removeItem('beeliber_admin_info');
+          clearPersistedAdminInfo();
           return EMPTY_ADMIN_INFO;
         }
         
@@ -185,16 +192,18 @@ const App: React.FC = () => {
       localStorage.setItem('beeliber_admin_info', JSON.stringify(adminInfo));
     } else {
       localStorage.removeItem('beeliber_admin_info');
+      clearPersistedAdminInfo();
     }
-  }, [adminInfo]);
+  }, [adminInfo, clearPersistedAdminInfo]);
 
   useEffect(() => {
     if (adminInfo.name && isSupabaseAdminAuthEnabled() && !hasActiveAdminSession()) {
       console.warn('[App] Supabase 관리자 세션이 없어 접근을 정리합니다.');
       setAdminInfo(EMPTY_ADMIN_INFO);
       localStorage.removeItem('beeliber_admin_info');
+      clearPersistedAdminInfo();
     }
-  }, [adminInfo.name]);
+  }, [adminInfo.name, clearPersistedAdminInfo]);
 
   const handleLocationSelect = (
     id: string,
@@ -265,6 +274,7 @@ const App: React.FC = () => {
       console.warn('[App] Supabase 관리자 로그아웃 후처리 실패:', error);
     });
     setAdminInfo(EMPTY_ADMIN_INFO);
+    clearPersistedAdminInfo();
     localStorage.removeItem('beeliber_admin_info');
     navigate('/');
   };
@@ -469,8 +479,11 @@ const App: React.FC = () => {
                   {/* ADMIN */}
                   <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, role, email, branchId) => { 
                     const info = { name, jobTitle, role, email: email || '', branchId: branchId || '', loginAt: Date.now() };
-                    setAdminInfo(info); 
-                    navigate(getAdminHomePath(role, jobTitle, branchId), { replace: true });
+                    const nextPath = getAdminHomePath(role, jobTitle, branchId);
+                    setAdminInfo(info);
+                    setPersistedAdminInfo({ name, jobTitle, branchId: branchId || '' });
+                    localStorage.setItem('beeliber_admin_info', JSON.stringify(info));
+                    window.location.replace(nextPath);
                   }} onCancel={() => navigate('/')} />} />
                   <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />

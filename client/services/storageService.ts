@@ -128,7 +128,14 @@ export const StorageService = {
     try {
       const { auth, ensureAuth, db } = await import('../firebaseApp');
       const { collection, doc, setDoc, onSnapshot } = await import('firebase/firestore');
-      await ensureAuth();
+      const currentUser = await ensureAuth();
+
+      // 예약 저장 직전의 인증 UID를 문서에 고정해 두어야, 후속 onSnapshot 읽기가 규칙에 막히지 않습니다.
+      const bookingOwnerUid = safeBooking.userId || auth.currentUser?.uid || currentUser?.uid;
+      if (!bookingOwnerUid) {
+        throw new Error('예약 저장용 사용자 인증을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      }
+      safeBooking.userId = bookingOwnerUid;
 
       const docRef = safeBooking.id ? doc(db, 'bookings', safeBooking.id) : doc(collection(db, 'bookings'));
       safeBooking.id = docRef.id;

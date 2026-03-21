@@ -33,12 +33,14 @@ export type AdminStatus = 'invited' | 'active' | 'suspended' | 'resigned' | 'loc
 
 export interface AdminUser {
     id: string;
+    uid?: string;
     name: string;
     jobTitle: string;
     email?: string;
     phone?: string;
     loginId?: string;
     password?: string;
+    lastLogin?: string;
     role?: 'super' | 'branch' | 'staff' | 'partner' | 'driver' | 'finance' | 'cs';
     branchId?: string;
     status?: AdminStatus;

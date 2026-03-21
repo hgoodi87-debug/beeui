@@ -157,6 +157,63 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
     const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
     const inputName = normalize(name);
     const inputPassword = String(password || '').trim();
+    const hasPassword = (data) => String(data?.password || '').trim().length > 0;
+    const isUidMappedRecord = (docId, data) => Boolean(data?.uid && data.uid === docId);
+    const getIdentifiers = (docId, data) => new Set([
+        docId,
+        data?.name,
+        data?.loginId,
+        data?.email
+    ].map(normalize).filter(Boolean));
+    const inferRole = (docId, data) => {
+        if (ADMIN_ROLES.has(data?.role)) {
+            return data.role;
+        }
+
+        const title = String(data?.jobTitle || '').toUpperCase();
+        if (title.includes('CEO') || title.includes('MASTER') || title.includes('GENERAL MANAGER') || docId === 'admin-8684') {
+            return 'super';
+        }
+
+        return data?.branchId ? 'branch' : 'staff';
+    };
+    const getRoleScore = (docId, data) => inferRole(docId, data) === 'super' ? 2 : 1;
+    const getFreshness = (data) => new Date(
+        data?.updatedAt ||
+        data?.lastLogin ||
+        data?.createdAt ||
+        data?.security?.lastLoginAt ||
+        0
+    ).getTime();
+    const getCompleteness = (data) => ([
+        data?.email,
+        data?.loginId,
+        hasPassword(data) ? 'password' : '',
+        data?.phone,
+        data?.branchId,
+        data?.role,
+        data?.orgType,
+        data?.memo,
+        Array.isArray(data?.permissions) && data.permissions.length > 0 ? 'permissions' : ''
+    ].filter(Boolean).length);
+    const sortAdminDocs = (left, right) => {
+        const leftData = left.data() || {};
+        const rightData = right.data() || {};
+
+        const credentialDiff = Number(hasPassword(rightData)) - Number(hasPassword(leftData));
+        if (credentialDiff !== 0) return credentialDiff;
+
+        const canonicalDiff = Number(isUidMappedRecord(left.id, leftData)) - Number(isUidMappedRecord(right.id, rightData));
+        if (canonicalDiff !== 0) return canonicalDiff;
+
+        const roleDiff = getRoleScore(right.id, rightData) - getRoleScore(left.id, leftData);
+        if (roleDiff !== 0) return roleDiff;
+
+        const completenessDiff = getCompleteness(rightData) - getCompleteness(leftData);
+        if (completenessDiff !== 0) return completenessDiff;
+
+        return getFreshness(rightData) - getFreshness(leftData);
+    };
     const emergencyBootstrapAdmin = {
         id: 'admin-8684',
         name: 'admin',
@@ -172,13 +229,12 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
 
         // [스봉이] 전체 검색을 기본으로 하여 정규화 매칭 보장 💅
         const allAdminsSnap = await db.collection('admins').get();
-        const hasCredentialedAdmin = allAdminsSnap.docs.some((doc) => String(doc.data().password || '').trim().length > 0);
-        let adminDoc = allAdminsSnap.docs.find(doc => {
-            const data = doc.data();
-            const dbName = normalize(data.name);
-            const dbPass = String(data.password || '').trim();
-            return (dbName === inputName || doc.id === inputName) && dbPass === inputPassword;
-        });
+        const allAdminDocs = [...allAdminsSnap.docs];
+        const hasCredentialedAdmin = allAdminDocs.some((doc) => hasPassword(doc.data()));
+        const matchingDocs = allAdminDocs
+            .filter((doc) => getIdentifiers(doc.id, doc.data()).has(inputName))
+            .sort(sortAdminDocs);
+        let adminDoc = matchingDocs.find((doc) => String(doc.data().password || '').trim() === inputPassword) || null;
 
         let adminData = null;
         let adminId = null;
@@ -189,8 +245,16 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
         }
 
         const emergencyMatched =
-            (inputName === normalize(emergencyBootstrapAdmin.name) || inputName === emergencyBootstrapAdmin.id) &&
+            getIdentifiers(emergencyBootstrapAdmin.id, emergencyBootstrapAdmin).has(inputName) &&
             inputPassword === emergencyBootstrapAdmin.password;
+
+        // [스봉이] 비밀번호가 전멸한 비상 상황이면, 이미 등록된 직원 문서를 8684 복구 비밀번호로 임시 진입시켜 문을 다시 열어줍니다.
+        if (!adminData && !hasCredentialedAdmin && inputPassword === emergencyBootstrapAdmin.password && matchingDocs.length > 0) {
+            adminDoc = matchingDocs[0];
+            adminData = adminDoc.data();
+            adminId = adminDoc.id;
+            console.warn(`[AdminVerify] Recovery login granted for "${name}" because no credentialed admin record was found.`);
+        }
 
         // [스봉이] 원본 관리자 문서가 전부 사라졌을 때만, 문서에 적힌 비상 계정으로 최소 복구를 허용합니다.
         if (!adminData && emergencyMatched && !hasCredentialedAdmin) {

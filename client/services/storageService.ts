@@ -791,7 +791,11 @@ export const StorageService = {
     const safeAdmin = JSON.parse(JSON.stringify(admin));
     try {
       if (admin.id) {
-        await setDoc(doc(db, "admins", admin.id), safeAdmin);
+        if (!String(safeAdmin.password || '').trim()) {
+          delete safeAdmin.password;
+        }
+
+        await setDoc(doc(db, "admins", admin.id), safeAdmin, { merge: true });
       } else {
         await addDoc(collection(db, "admins"), safeAdmin);
       }
@@ -831,9 +835,12 @@ export const StorageService = {
 
       const normalize = (value?: string) => value?.trim().toLowerCase() || '';
       const getFreshness = (admin: AdminUser) => new Date(admin.updatedAt || admin.createdAt || 0).getTime();
+      const hasPassword = (admin: AdminUser) => String(admin.password || '').trim().length > 0;
+      const isUidMappedRecord = (admin: AdminUser) => Boolean(admin.uid && admin.uid === admin.id);
       const getCompleteness = (admin: AdminUser) => ([
         admin.email,
         admin.loginId,
+        hasPassword(admin) ? 'password' : '',
         admin.phone,
         admin.branchId,
         admin.role,
@@ -873,6 +880,12 @@ export const StorageService = {
         if (group.length <= 1) continue;
 
         group.sort((a, b) => {
+          const credentialDiff = Number(hasPassword(b)) - Number(hasPassword(a));
+          if (credentialDiff !== 0) return credentialDiff;
+
+          const canonicalDiff = Number(isUidMappedRecord(a)) - Number(isUidMappedRecord(b));
+          if (canonicalDiff !== 0) return canonicalDiff;
+
           const completenessDiff = getCompleteness(b) - getCompleteness(a);
           if (completenessDiff !== 0) return completenessDiff;
           return getFreshness(b) - getFreshness(a);

@@ -127,6 +127,7 @@ Supabase Storage에서 미리 만들어둘 버킷:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_PROJECT_REF`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 
 ### 서버 작업 시 필요
 
@@ -226,3 +227,4 @@ Supabase Storage에서 미리 만들어둘 버킷:
 3. Storage 버킷 이름 승인
 4. 저한테 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PROJECT_REF` 전달 준비
 5. Phase 1 끝나면 secret key rotate
+6. 프론트 env에 `VITE_ADMIN_AUTH_PROVIDER=supabase` 전환 시점 결정

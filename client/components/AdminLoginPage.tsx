@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { ensureAuth } from '../firebaseApp';
+import { getAdminAuthProvider, isSupabaseAdminAuthEnabled, loginAdmin, warmAdminAuth } from '../services/adminAuthService';
 
 interface AdminLoginPageProps {
   onLogin: (name: string, jobTitle: string, role: string, email?: string, branchId?: string) => void;
@@ -15,10 +14,12 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const authProvider = getAdminAuthProvider();
+  const isSupabaseMode = isSupabaseAdminAuthEnabled();
 
   // Pre-warm Auth and Functions
   useEffect(() => {
-    ensureAuth().catch(console.error);
+    warmAdminAuth().catch(console.error);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +34,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
     setError('');
 
     if (!formData.name || !formData.password) {
-      setError('이름과 비밀번호를 입력해주세요.');
+      setError(isSupabaseMode ? '이메일과 비밀번호를 입력해주세요.' : '이름과 비밀번호를 입력해주세요.');
       return;
     }
 
@@ -42,65 +43,43 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       const inputName = formData.name.trim();
       const inputPass = formData.password.trim();
 
-      console.log(`[AdminLogin] 🚀 로그인 시도: "${inputName}" / 비밀번호: "${inputPass.replace(/./g, '*')}"`);
-      
-      // 1. 인증 상태 확인
-      console.log("[AdminLogin] 인증 상태 확인 중... ☕");
-      const user = await ensureAuth();
-      if (!user) {
-        console.error("[AdminLogin] 인증 실패: 익명 세션 생성 불가 🚨");
-        throw new Error("익명 로그인 세션 생성에 실패했습니다.");
-      }
-      console.log(`[AdminLogin] 인증 완료 (UID: ${user.uid}) ✨`);
+      console.log(`[AdminLogin] 🚀 ${authProvider.toUpperCase()} 로그인 시도: "${inputName}" / 비밀번호: "${inputPass.replace(/./g, '*')}"`);
 
-      // 2. 클라우드 함수 호출
-      console.log("[AdminLogin] 클라우드 함수(verifyAdmin) 호출 중... 🛡️");
-      const { httpsCallable } = await import('firebase/functions');
-      const { functions } = await import('../firebaseApp');
-      const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
+      const admin = await loginAdmin(inputName, inputPass);
 
-      let admin: any = null;
+      console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}, provider: ${admin.provider}) 💅`);
+      const { AuditService } = await import('../services/auditService');
       try {
-        const result = await verifyAdmin({ name: inputName, password: inputPass });
-        admin = result.data;
-        console.log("[AdminLogin] 클라우드 인증 결과 수신 완료 ✨", admin ? "성공" : "실패(데이터 없음)");
-      } catch (funcErr: any) {
-        console.error("[AdminLogin] ❌ 클라우드 함수 호출 중 사고 발생:", funcErr);
-        throw funcErr;
+        await AuditService.logAction(
+          { id: admin.email || admin.name, name: admin.name, email: admin.email || 'local@fallback' },
+          'LOGIN',
+          { id: admin.employeeId || admin.name, type: 'ADMIN' },
+          { jobTitle: admin.jobTitle || 'Staff', role: admin.role, mode: admin.provider }
+        );
+      } catch (auditErr) {
+        console.warn("[AdminLogin] 감사 로그 기록 실패 (데이터 구조 확인 필요):", auditErr);
       }
-
-      if (admin) {
-        // [스봉이] 권한이 없으면 여기서라도 기본값을 챙겨줘야 사고가 안 나요 🛡️
-        if (!admin.role) admin.role = 'staff';
-
-        console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}) 💅`);
-        const { AuditService } = await import('../services/auditService');
-        try {
-          await AuditService.logAction(
-            { id: admin.name, name: admin.name, email: admin.email || 'local@fallback' },
-            'LOGIN',
-            { id: admin.name, type: 'ADMIN' },
-            { jobTitle: admin.jobTitle || 'Staff', role: admin.role, mode: 'cloud' }
-          );
-        } catch (auditErr) {
-          console.warn("[AdminLogin] 감사 로그 기록 실패 (데이터 구조 확인 필요):", auditErr);
-        }
-        onLogin(admin.name, admin.jobTitle || 'Staff', admin.role, admin.email, admin.branchId);
-      } else {
-        setError('이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요. 🙄');
-      }
+      onLogin(admin.name, admin.jobTitle || 'Staff', admin.role, admin.email, admin.branchId);
 
     } catch (err: any) {
       console.error("Login Error Details:", err);
       const errCode = err.code || "unknown";
       const errMsg = err.message || "Unknown error";
 
-      if (errCode === 'unauthenticated' || errCode === 'functions/unauthenticated') {
-        setError('이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.');
+      if (errCode === 'invalid-identifier') {
+        setError('Supabase 관리자 로그인은 이메일 기준으로 입력해주세요.');
+      } else if (errCode === 'unauthenticated' || errCode === 'functions/unauthenticated' || errCode === 'supabase/400' || errCode === 'invalid_credentials') {
+        setError(isSupabaseMode ? '이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.' : '이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.');
       } else if (errCode === 'permission-denied' || errCode === 'functions/permission-denied') {
         setError('해당 관리자 계정의 접근 권한이 거부되었습니다.');
+      } else if (errCode === 'supabase/missing-employee') {
+        setError('Supabase 직원 프로필이 아직 준비되지 않았습니다. 부트스트랩 상태를 확인해주세요.');
+      } else if (errCode === 'supabase/inactive-admin') {
+        setError('비활성화된 관리자 계정입니다. HQ 권한 상태를 확인해주세요.');
       } else if (errCode === 'auth/unauthorized-domain' || errMsg.includes('referer') || errMsg.includes('requests-from-referer')) {
         setError(`인증 실패. [${window.location.origin}] 도메인이 파이어베이스 승인 목록에 등록되어 있는지 확인해주세요.`);
+      } else if (String(errCode).startsWith('supabase/')) {
+        setError(`Supabase 연결 오류 (${errCode})가 발생했습니다. Phase 1 스키마와 Auth 설정을 확인해주세요.`);
       } else {
         setError(`연결 오류 (Code: ${errCode}). 인터넷 연결이나 파이어베이스 설정을 확인해주세요.`);
       }
@@ -137,13 +116,15 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
           )}
           <div className="space-y-4">
             <div className="group">
-              <label className="block text-[10px] font-black text-gray-500 group-focus-within:text-bee-yellow uppercase tracking-widest mb-2 ml-2 transition-colors">Admin Name</label>
+              <label className="block text-[10px] font-black text-gray-500 group-focus-within:text-bee-yellow uppercase tracking-widest mb-2 ml-2 transition-colors">
+                {isSupabaseMode ? 'Admin Email' : 'Admin Name'}
+              </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="관리자 이름 (Name)"
+                placeholder={isSupabaseMode ? '관리자 이메일 (Email)' : '관리자 이름 (Name)'}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold placeholder-gray-600 focus:outline-none focus:border-bee-yellow focus:bg-white/10 transition-all shadow-inner"
                 autoFocus
               />
@@ -179,7 +160,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <i className="fa-solid fa-circle-notch animate-spin"></i>
-                  <span>Connecting...</span>
+                  <span>{isSupabaseMode ? 'Connecting to Supabase...' : 'Connecting...'}</span>
                 </div>
               ) : (
                 <span className="flex items-center justify-center gap-2">
@@ -197,6 +178,10 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
             </button>
           </div>
         </form>
+
+        <p className="mt-5 text-center text-[10px] font-bold tracking-[0.25em] uppercase text-gray-500">
+          {isSupabaseMode ? 'Supabase Admin Auth Mode' : 'Firebase Admin Auth Mode'}
+        </p>
 
         <p className="mt-12 text-center text-[10px] text-gray-600 font-bold uppercase tracking-[0.4em]">
           Beeliber Systems &copy; 2025

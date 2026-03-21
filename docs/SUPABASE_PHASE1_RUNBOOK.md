@@ -71,6 +71,22 @@ Supabase 콘솔에서 `SQL Editor`를 연다.
 - `driver`
 - `cs_staff`
 
+### Step 4. 프론트 전환용 env 준비
+
+`client/.env` 또는 배포 환경변수에 아래 값을 넣어둡니다.
+
+```env
+VITE_SUPABASE_URL=https://fzvfyeskdivulazjjpgr.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=사장님_프로젝트_publishable_key
+VITE_ADMIN_AUTH_PROVIDER=supabase
+```
+
+메모:
+
+- `publishable key`만 프론트에 넣습니다.
+- `secret key`는 절대 프론트에 넣으면 안 됩니다.
+- `VITE_ADMIN_AUTH_PROVIDER=supabase`를 넣기 전까지는 기존 Firebase 관리자 로그인 경로가 유지됩니다.
+
 ---
 
 ## 3. 첫 관리자 부트스트랩
@@ -207,6 +223,7 @@ set
 - 이메일 로그인 켜짐
 - 사장님 계정 생성 완료
 - 추후 Google OAuth 유지 여부 결정
+- 프론트 env에 `VITE_ADMIN_AUTH_PROVIDER=supabase` 넣을 준비 완료
 
 ### Database
 

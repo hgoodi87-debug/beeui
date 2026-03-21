@@ -108,29 +108,31 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                     </h1>
                 </div>
 
-                <div className="flex-1 flex justify-start lg:justify-center">
-                    <div className="flex bg-white/50 backdrop-blur-3xl p-1.5 rounded-2xl border border-gray-200 w-fit">
-                        {activeTab === 'STORAGE_BOOKINGS' ? (
-                            (['ALL', 'TODAY_IN', 'STORAGE', 'TODAY_OUT', 'COMPLETED', 'ISSUE'] as const).map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveStatusTab(tab)}
-                                    className={`px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
-                                >
-                                    {tab === 'ALL' ? (t.admin?.logistics?.filter_all || '전체') : tab === 'TODAY_IN' ? '오늘 입고' : tab === 'STORAGE' ? '보관중' : tab === 'TODAY_OUT' ? '오늘 픽업' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
-                                </button>
-                            ))
-                        ) : (
-                            (['ALL', 'PENDING', 'TRANSIT', 'ARRIVED', 'COMPLETED', 'ISSUE'] as const).map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveStatusTab(tab)}
-                                    className={`px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
-                                >
-                                    {tab === 'ALL' ? '전체' : tab === 'PENDING' ? '접수 대기' : tab === 'TRANSIT' ? '이동중' : tab === 'ARRIVED' ? '도착' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
-                                </button>
-                            ))
-                        )}
+                <div className="flex-1 min-w-0 flex justify-start lg:justify-center">
+                    <div className="max-w-full overflow-x-auto no-scrollbar">
+                        <div className="flex flex-nowrap bg-white/50 backdrop-blur-3xl p-1.5 rounded-2xl border border-gray-200 min-w-max">
+                            {activeTab === 'STORAGE_BOOKINGS' ? (
+                                (['ALL', 'TODAY_IN', 'STORAGE', 'TODAY_OUT', 'COMPLETED', 'ISSUE'] as const).map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveStatusTab(tab)}
+                                        className={`shrink-0 whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
+                                    >
+                                        {tab === 'ALL' ? (t.admin?.logistics?.filter_all || '전체') : tab === 'TODAY_IN' ? '오늘 입고' : tab === 'STORAGE' ? '보관중' : tab === 'TODAY_OUT' ? '오늘 픽업' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
+                                    </button>
+                                ))
+                            ) : (
+                                (['ALL', 'PENDING', 'TRANSIT', 'ARRIVED', 'COMPLETED', 'ISSUE'] as const).map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveStatusTab(tab)}
+                                        className={`shrink-0 whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
+                                    >
+                                        {tab === 'ALL' ? '전체' : tab === 'PENDING' ? '접수 대기' : tab === 'TRANSIT' ? '이동중' : tab === 'ARRIVED' ? '도착' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
+                                    </button>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -170,12 +172,12 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
 
             {/* 취소/환불 날짜 필터 UI */}
             {(activeStatusTab === 'CANCELLED' || activeStatusTab === 'ISSUE') && setCancelStartDate && setCancelEndDate && (
-                <div className="bg-red-50/70 border border-red-100 rounded-[28px] px-6 py-4 flex flex-wrap items-center gap-4 animate-fade-in-up">
-                    <div className="flex items-center gap-2 text-red-400">
+                <div className="bg-red-50/70 border border-red-100 rounded-[28px] px-6 py-4 flex flex-nowrap items-center gap-4 overflow-x-auto no-scrollbar animate-fade-in-up">
+                    <div className="flex shrink-0 items-center gap-2 text-red-400">
                         <i className="fa-solid fa-calendar-xmark text-sm"></i>
                         <span className="text-[10px] font-black uppercase tracking-widest">취소/환불 날짜 구간 필터 🗂️</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                         <input
                             type="date"
                             title="취소 시작일"
@@ -193,7 +195,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                         />
                         <span className="text-[10px] font-bold text-red-300">까지</span>
                     </div>
-                    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                    <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
                         <div className="text-[10px] font-black text-red-400 bg-white px-3 py-1.5 rounded-xl border border-red-100">
                             {filteredBookings.length}건 조회됨
                         </div>

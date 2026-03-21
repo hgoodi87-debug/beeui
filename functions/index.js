@@ -10,6 +10,8 @@ const { processRefundEmail } = require("./src/domains/notification/refundService
 admin.initializeApp();
 
 const ADMIN_ROLES = new Set(['super', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs']);
+const MAILER_SECRETS = ['SMTP_PASS'];
+const NOTIFICATION_SECRETS = ['SMTP_PASS', 'GOOGLE_CHAT_WEBHOOK_URL'];
 
 const assertAuthenticated = (request) => {
     const uid = request.auth && request.auth.uid;
@@ -62,7 +64,7 @@ const assertSuperAdmin = async (request) => {
 // --- HTTPS Callables (v2) ---
 
 // 1. Resend Voucher
-exports.resendBookingVoucher = onCall(async (request) => {
+exports.resendBookingVoucher = onCall({ secrets: MAILER_SECRETS }, async (request) => {
     await assertAdmin(request);
     const { bookingId } = request.data;
     if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required.');
@@ -78,7 +80,7 @@ exports.resendBookingVoucher = onCall(async (request) => {
 });
 
 // 2. Process Refund
-exports.processBookingRefund = onCall(async (request) => {
+exports.processBookingRefund = onCall({ secrets: MAILER_SECRETS }, async (request) => {
     await assertAdmin(request);
     const { bookingId } = request.data;
     if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required.');
@@ -346,7 +348,7 @@ exports.partnerApi = onRequest(async (req, res) => {
 });
 
 // 6. Google Chat Notifier (CORS Proxy)
-exports.notifyGoogleChat = onRequest(async (req, res) => {
+exports.notifyGoogleChat = onRequest({ secrets: ['GOOGLE_CHAT_WEBHOOK_URL'] }, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.method === 'OPTIONS') {
         res.set('Access-Control-Allow-Methods', 'POST');
@@ -372,7 +374,7 @@ exports.notifyGoogleChat = onRequest(async (req, res) => {
 // --- Firestore Triggers (v2) ---
 
 // 7. On Booking Created (Voucher + Validation + Notifier)
-exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}" }, async (event) => {
+exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}", secrets: NOTIFICATION_SECRETS }, async (event) => {
     const bookingId = event.params.bookingId;
     const booking = event.data.data();
 
@@ -473,7 +475,7 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}" 
 });
 
 // 8. On Booking Updated (Arrival + Commission)
-exports.onBookingUpdated = onDocumentUpdated("bookings/{bookingId}", async (event) => {
+exports.onBookingUpdated = onDocumentUpdated({ document: "bookings/{bookingId}", secrets: MAILER_SECRETS }, async (event) => {
     const before = event.data.before.data();
     const after = event.data.after.data();
     const bookingId = event.params.bookingId;

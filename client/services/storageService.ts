@@ -122,7 +122,7 @@ export const StorageService = {
   },
 
   // --- Bookings ---
-  saveBooking: async (booking: BookingState): Promise<void> => {
+  saveBooking: async (booking: BookingState): Promise<BookingState> => {
     const safeBooking = JSON.parse(JSON.stringify(booking));
 
     try {
@@ -145,17 +145,27 @@ export const StorageService = {
       return new Promise((resolve, reject) => {
         let isResolved = false;
 
+        const timeoutId = setTimeout(() => {
+          if (!isResolved) {
+            isResolved = true;
+            unsubscribe();
+            reject(new Error('예약 저장 확인이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'));
+          }
+        }, 20000);
+
         const unsubscribe = onSnapshot(docRef, (snap) => {
           if (!snap.exists()) return;
           const data = snap.data();
 
           if (data.status === '접수완료') {
             isResolved = true;
+            clearTimeout(timeoutId);
             unsubscribe();
             console.log("[StorageService] Backend validation successful! 🎉", data);
-            resolve();
+            resolve({ ...(data as BookingState), id: snap.id });
           } else if (data.status === 'ERROR' || data.status === '예약실패') {
             isResolved = true;
+            clearTimeout(timeoutId);
             unsubscribe();
             console.error("[StorageService] Backend validation failed! 🚨", data);
             reject(new Error(data.error || 'Server validation failed.'));
@@ -163,6 +173,7 @@ export const StorageService = {
         }, (err) => {
           if (!isResolved) {
             isResolved = true;
+            clearTimeout(timeoutId);
             unsubscribe();
             reject(err);
           }
@@ -191,6 +202,7 @@ export const StorageService = {
         setDoc(docRef, finalizedBooking).catch(err => {
           if (!isResolved) {
             isResolved = true;
+            clearTimeout(timeoutId);
             unsubscribe();
             reject(err);
           }

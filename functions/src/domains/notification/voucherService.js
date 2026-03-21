@@ -5,6 +5,10 @@ const { getTranslations } = require("../../shared/translations");
 
 const processVoucherEmail = async (bookingId, booking, admin) => {
     const userEmail = booking.userEmail;
+    if (!userEmail) {
+        console.warn(`[Voucher] Missing userEmail for booking ${bookingId}. Voucher email skipped.`);
+        return { success: false, error: "No email" };
+    }
     const lang = (booking.language || 'ko').split('-')[0];
     const t = getTranslations(lang);
 

@@ -227,7 +227,7 @@ const App: React.FC = () => {
     navigate('/booking');
   };
 
-  const handleBookingSuccess = (booking: BookingState) => {
+  const handleBookingSuccess = async (booking: BookingState) => {
     console.log("[App] handleBookingSuccess triggered with data:", booking);
     const finalBooking = {
       ...booking,
@@ -236,24 +236,29 @@ const App: React.FC = () => {
       status: booking.status || '접수완료',
       createdAt: booking.createdAt || new Date().toISOString()
     };
-    console.log("[App] Final Booking prepared. Navigating immediately.", finalBooking);
+    console.log("[App] Final Booking prepared. Waiting for server confirmation.", finalBooking);
 
-    // 💅 1단계: 상태 저장 & 즉시 화면 전환 (지연 제거)
-    setLastBooking(finalBooking);
-    navigate('/booking-success');
+    try {
+      const savedBooking = await StorageService.saveBooking(finalBooking);
+      const confirmedBooking = {
+        ...finalBooking,
+        ...savedBooking,
+        id: savedBooking.id || finalBooking.id,
+        userId: savedBooking.userId || finalBooking.userId,
+        status: savedBooking.status || '접수완료',
+      };
 
-    // 💅 2단계: Firestore 저장은 백그라운드에서 처리 (await 없음)
-    StorageService.saveBooking(finalBooking)
-      .then(() => console.log("[App] Booking saved to Firestore successfully."))
-      .catch((saveError: any) => {
-        console.error("[App] Booking Save failed (background):", saveError);
-        // [스봉이] 사용자가 놀라지 않게 하지만, 문제는 인지할 수 있게 깍쟁이처럼 알려줍니다. 💅
-        const detail = saveError.details ? JSON.stringify(saveError.details) : (saveError.message || saveError);
-        const errorMsg = lang === 'ko' 
-          ? `앗, 사장님! 예약 정보 저장 중 살짝 문제가 생겼어요. 🚨\n내용: ${detail}\n\n화면을 캡처해서 고객센터로 보내주시면 제가 금방 확인해 드릴게요! 💅✨`
-          : `Oops! There was a slight issue saving your booking. 🚨\nDetails: ${detail}\n\nPlease take a screenshot and contact support for assistance! 💅✨`;
-        alert(errorMsg);
-      });
+      setLastBooking(confirmedBooking);
+      navigate('/booking-success');
+      console.log("[App] Booking saved to Firestore successfully.", confirmedBooking);
+    } catch (saveError: any) {
+      console.error("[App] Booking Save failed:", saveError);
+      const detail = saveError?.details ? JSON.stringify(saveError.details) : (saveError?.message || saveError);
+      const errorMsg = lang === 'ko'
+        ? `앗, 사장님. 예약 저장이 끝나기 전에 성공 화면으로 넘기면 안 되잖아요.\n이번엔 저장을 중단했고요, 오류는 이거예요.\n\n${detail}\n\n같은 화면에서 다시 시도해 주세요. 계속 이러면 제가 더 깊게 잡아드릴게요.`
+        : `Oops. The booking could not be confirmed.\n\n${detail}\n\nPlease stay on this page and try again.`;
+      alert(errorMsg);
+    }
   };
 
   const handleBranchManualBookingSuccess = async (booking: BookingState) => {

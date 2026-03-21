@@ -32,7 +32,7 @@ interface BookingPageProps {
     initialReturnDate?: string;
     initialBagSizes?: { S: number, M: number, L: number, XL: number };
     onBack: () => void;
-    onSuccess: (booking: BookingState) => void;
+    onSuccess: (booking: BookingState) => void | Promise<void>;
     user?: any;
     customerBranchId?: string;
     customerBranchRates?: { delivery: number; storage: number };
@@ -502,11 +502,12 @@ const BookingPage: React.FC<BookingPageProps> = ({
         try {
             // 💅 데이터를 확실하게 클론해서 넘겼줍니다. (App.tsx에서 상태 업데이트가 꼬이지 않게!)
             const clonedBooking = JSON.parse(JSON.stringify(finalBooking));
-            setIsSubmitting(false); // navigate 전에 스피너 해제
-            onSuccess(clonedBooking);
+            prefetchBookingSuccess();
+            await onSuccess(clonedBooking);
         } catch (e) {
             console.error("Booking Error", e);
-            alert("Booking Failed. Please try again.");
+            alert(e instanceof Error ? e.message : "Booking Failed. Please try again.");
+        } finally {
             setIsSubmitting(false);
         }
     };

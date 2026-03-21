@@ -234,7 +234,23 @@ set
 
 ---
 
-## 6. 지금 당장 사장님이 해야 할 한 줄 요약
+## 6. Phase 1 종료 직후 해야 할 보안 작업
+
+이건 꼭 하셔야 합니다.
+
+- 이번 대화에 나온 secret key는 더 이상 깨끗한 키로 보면 안 됩니다.
+- Phase 1 검증이 끝나는 즉시 Supabase에서 secret key를 rotate 해야 합니다.
+- 새 key는 로컬 파일에 박지 말고 시크릿 저장소와 환경변수로만 교체합니다.
+
+순서:
+
+1. Supabase `API Settings`에서 secret key rotate
+2. 배포 시크릿과 로컬 환경변수 교체
+3. 예전 key 폐기 확인
+
+---
+
+## 7. 지금 당장 사장님이 해야 할 한 줄 요약
 
 사장님은 지금 Supabase 콘솔에서
 
@@ -242,4 +258,4 @@ set
 2. 위 migration SQL 실행하고
 3. 본인 Auth 계정 하나 만든 뒤
 4. 첫 관리자 부트스트랩 SQL만 실행하시면 됩니다.
-
+5. Phase 1 끝나면 secret key rotate 하시면 됩니다.

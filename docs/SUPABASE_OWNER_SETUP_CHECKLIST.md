@@ -105,6 +105,17 @@ Supabase Storage에서 미리 만들어둘 버킷:
 - 지점은 물리적 이름이 아니라 `branch_code`를 기준 키로 삼기
 - 화면 표시 이름과 식별 키를 분리하기
 
+## G. Phase 1 종료 후 키 회전
+
+이번처럼 `secret key`가 채팅이나 외부 공유 경로에 한 번이라도 노출됐으면, Phase 1이 끝난 뒤 반드시 새 키로 바꿔야 합니다.
+
+사장님이 꼭 해야 할 것:
+
+1. Supabase `API Settings`에서 기존 secret key rotate
+2. 새 key를 서버 환경변수와 시크릿 저장소에만 반영
+3. 예전 key가 들어간 로컬 메모, 채팅, 임시 파일 정리
+4. GitHub Actions / 배포 시크릿도 함께 교체
+
 ---
 
 ## 2. 제가 Supabase에서 받아야 할 값
@@ -214,4 +225,4 @@ Supabase Storage에서 미리 만들어둘 버킷:
 2. region / auth 방식 / 역할 체계 승인
 3. Storage 버킷 이름 승인
 4. 저한테 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PROJECT_REF` 전달 준비
-
+5. Phase 1 끝나면 secret key rotate

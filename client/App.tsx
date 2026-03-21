@@ -46,6 +46,28 @@ import { useAppStore } from './src/store/appStore';
 import { useBookingStore } from './src/store/bookingStore';
 
 const EMPTY_ADMIN_INFO = { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
+const DASHBOARD_ADMIN_ROLES = new Set(['super', 'hq', 'finance', 'cs']);
+
+const isDashboardAdmin = (role?: string, jobTitle?: string) => {
+  const normalizedRole = (role || '').trim().toLowerCase();
+  const normalizedTitle = (jobTitle || '').trim().toUpperCase();
+
+  return (
+    DASHBOARD_ADMIN_ROLES.has(normalizedRole) ||
+    normalizedTitle.includes('CEO') ||
+    normalizedTitle.includes('MASTER') ||
+    normalizedTitle.includes('CTO') ||
+    normalizedTitle.includes('CFO')
+  );
+};
+
+const getAdminHomePath = (role?: string, jobTitle?: string, branchId?: string) => {
+  if (isDashboardAdmin(role, jobTitle) || !branchId) {
+    return '/admin/dashboard';
+  }
+
+  return `/admin/branch/${branchId}`;
+};
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -277,23 +299,29 @@ const App: React.FC = () => {
   const BranchAdminGuard = ({ children }: { children: React.ReactNode }) => {
     const hasAdminAccess = Boolean(adminInfo.name) && (!isSupabaseAdminAuthEnabled() || hasActiveAdminSession());
     if (!hasAdminAccess) return <Navigate to="/admin" replace />;
-    const urlBranchId = location.pathname.split('/').pop();
-    if (adminInfo.branchId && urlBranchId !== adminInfo.branchId) return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
+
+    if (isDashboardAdmin(adminInfo.role, adminInfo.jobTitle)) {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+
+    const pathSegments = location.pathname.split('/');
+    const urlBranchId = pathSegments[3] || '';
+    if (adminInfo.branchId && urlBranchId !== adminInfo.branchId) {
+      return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
+    }
+
     return <>{children}</>;
   };
 
   const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     const hasAdminAccess = Boolean(adminInfo.name) && (!isSupabaseAdminAuthEnabled() || hasActiveAdminSession());
     if (!hasAdminAccess) return <Navigate to="/admin" replace />;
-    
-    // [스봉이] 최고 권한자 혹은 마스터급은 어디든 갈 수 있어야죠 💅
-    const isSuper = adminInfo.role === 'super' || adminInfo.jobTitle?.toUpperCase().includes('CEO') || adminInfo.jobTitle?.toUpperCase().includes('MASTER');
-    
-    if (!isSuper) {
+
+    if (!isDashboardAdmin(adminInfo.role, adminInfo.jobTitle)) {
       if (adminInfo.branchId) return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
-      // 권한이 애매하면 일단 안전하게 로그인 페이지로 🙄
       return <Navigate to="/admin" replace />;
     }
+
     return <>{children}</>;
   };
 
@@ -442,9 +470,7 @@ const App: React.FC = () => {
                   <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, role, email, branchId) => { 
                     const info = { name, jobTitle, role, email: email || '', branchId: branchId || '', loginAt: Date.now() };
                     setAdminInfo(info); 
-                    // [스봉이] 로그인 성공했으면 '뒤로가기' 눌러도 로그인 페이지 안 나오게 히스토리 갈아치웁니다 💅
-                    if (branchId) navigate(`/admin/branch/${branchId}`, { replace: true }); 
-                    else navigate('/admin/dashboard', { replace: true }); 
+                    navigate(getAdminHomePath(role, jobTitle, branchId), { replace: true });
                   }} onCancel={() => navigate('/')} />} />
                   <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />

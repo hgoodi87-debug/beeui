@@ -122,7 +122,7 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
                 console.log("[스봉이] 중복 정리 버튼 클릭됨!");
                 onDeduplicate();
               }}
-              title="동일 이름 중복 데이터 일괄 정리"
+              title="이메일 또는 로그인ID까지 같은 완전 중복만 안전하게 정리"
               className="bg-bee-black text-bee-yellow px-5 py-4 rounded-2xl text-[11px] font-black transition-all flex items-center gap-2 group hover:scale-[1.02] active:scale-95 shadow-md"
             >
               <i className="fa-solid fa-broom group-hover:animate-bounce"></i>

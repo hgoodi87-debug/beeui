@@ -1223,7 +1223,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
   const handleDeduplicateAdmins = async () => {
-    if (!confirm('성함이 동일한 중복 데이터들을 정리하시겠습니까?\n가장 최근에 수정된 정보만 남고 나머지는 삭제됩니다. 💅')) return;
+    if (!confirm('완전히 같은 직원으로 식별되는 중복 데이터만 정리하시겠습니까?\n이메일 또는 로그인ID가 없는 애매한 기록은 자동 삭제하지 않습니다. 💅')) return;
     
     setIsSaving(true);
     try {

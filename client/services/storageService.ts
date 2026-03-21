@@ -822,58 +822,87 @@ export const StorageService = {
 
   /**
    * [스봉이] 인사관리 중복 데이터 정제 도구 🧹💅
-   * 이름이 같은 데이터 중 가장 최근에 업데이트된 것만 남기고 나머지는 삭제합니다.
+   * 같은 사람으로 식별 가능한 "완전 중복"만 보수적으로 정리합니다.
    */
   deduplicateAdmins: async (): Promise<{ total: number, removed: number }> => {
     try {
       const snap = await getDocs(collection(db, "admins"));
       const admins = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
-      
+
+      const normalize = (value?: string) => value?.trim().toLowerCase() || '';
+      const getFreshness = (admin: AdminUser) => new Date(admin.updatedAt || admin.createdAt || 0).getTime();
+      const getCompleteness = (admin: AdminUser) => ([
+        admin.email,
+        admin.loginId,
+        admin.phone,
+        admin.branchId,
+        admin.role,
+        admin.orgType,
+        admin.memo,
+        admin.updatedAt,
+        Array.isArray(admin.permissions) && admin.permissions.length > 0 ? 'permissions' : ''
+      ].filter(Boolean).length);
+
       const uniqueGroups: Record<string, AdminUser[]> = {};
       admins.forEach(admin => {
-        const name = admin.name?.trim();
-        const email = admin.email?.trim();
-        if (!name) return;
-        
-        // [스봉이] 이름만 같다고 중복이 아니죠. 이메일까지 같아야 '진짜' 중복이에요! 💅
-        const key = `${name}_${email || 'no-email'}`;
+        const name = normalize(admin.name);
+        const email = normalize(admin.email);
+        const loginId = normalize(admin.loginId);
+
+        // [스봉이] 이름만 같거나, 연락 식별자도 없는 애매한 기록은 절대 자동 삭제하면 안 돼요.
+        if (!name || (!email && !loginId)) return;
+
+        const key = [
+          name,
+          email,
+          loginId,
+          normalize(admin.role),
+          normalize(admin.jobTitle),
+          normalize(admin.branchId),
+          normalize(admin.orgType)
+        ].join('|');
+
         if (!uniqueGroups[key]) uniqueGroups[key] = [];
         uniqueGroups[key].push(admin);
       });
 
-      let removedCount = 0;
-      const batchSize = 500;
-      let currentBatch = writeBatch(db);
-      let operationCount = 0;
+      const idsToRemove: string[] = [];
 
       for (const key in uniqueGroups) {
         const group = uniqueGroups[key];
+        if (group.length <= 1) continue;
 
-        if (group.length > 1) {
-          // updatedAt 기준 내림차순 정렬 (가장 최신 것이 인덱스 0)
-          group.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
-          
-          // 첫 번째(가장 최신) 하나만 남기고 나머지는 삭제 대상으로 배태 처리
-          const toRemove = group.slice(1);
-          for (const admin of toRemove) {
-            currentBatch.delete(doc(db, "admins", admin.id));
-            removedCount++;
-            operationCount++;
+        group.sort((a, b) => {
+          const completenessDiff = getCompleteness(b) - getCompleteness(a);
+          if (completenessDiff !== 0) return completenessDiff;
+          return getFreshness(b) - getFreshness(a);
+        });
 
-            if (operationCount >= batchSize) {
-              await currentBatch.commit();
-              currentBatch = writeBatch(db);
-              operationCount = 0;
-            }
-          }
-        }
+        group.slice(1).forEach(admin => {
+          if (admin.id) idsToRemove.push(admin.id);
+        });
       }
 
-      if (operationCount > 0) {
+      // [스봉이] 혹시라도 정리 후보가 비정상적으로 많으면 자동 삭제를 막아서 전멸 사고를 차단합니다.
+      const safetyThreshold = Math.max(20, Math.floor(admins.length * 0.6));
+      if (idsToRemove.length > safetyThreshold) {
+        throw new Error(`중복 정리 후보가 너무 많아 자동 삭제를 차단했습니다. (${idsToRemove.length}건)`);
+      }
+
+      if (idsToRemove.length === 0) {
+        return { total: admins.length, removed: 0 };
+      }
+
+      const batchSize = 450;
+      for (let i = 0; i < idsToRemove.length; i += batchSize) {
+        const currentBatch = writeBatch(db);
+        idsToRemove.slice(i, i + batchSize).forEach((id) => {
+          currentBatch.delete(doc(db, "admins", id));
+        });
         await currentBatch.commit();
       }
 
-      return { total: admins.length, removed: removedCount };
+      return { total: admins.length, removed: idsToRemove.length };
     } catch (e) {
       console.error("Deduplication failed", e);
       throw e;

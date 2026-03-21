@@ -20,8 +20,18 @@ vi.mock('firebase/firestore', () => {
         getDocs: vi.fn(),
         setDoc: vi.fn(),
         addDoc: vi.fn(),
+        updateDoc: vi.fn(),
+        deleteDoc: vi.fn(),
         query: vi.fn(() => queryMock),
         where: vi.fn(),
+        writeBatch: vi.fn(() => ({
+            delete: vi.fn(),
+            commit: vi.fn(() => Promise.resolve()),
+        })),
+        orderBy: vi.fn(),
+        limit: vi.fn(),
+        onSnapshot: vi.fn(),
+        or: vi.fn(),
     };
 });
 
@@ -30,6 +40,13 @@ vi.mock('firebase/storage', () => ({
     ref: vi.fn(),
     uploadBytes: vi.fn(),
     getDownloadURL: vi.fn(),
+}));
+
+vi.mock('firebase/functions', () => ({
+    getFunctions: vi.fn(() => ({
+        httpsCallable: vi.fn(),
+    })),
+    httpsCallable: vi.fn(),
 }));
 
 vi.mock('firebase/auth', () => ({

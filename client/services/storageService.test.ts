@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { StorageService } from './storageService';
-import { getDoc, getDocs } from 'firebase/firestore';
+import { doc, getDoc, getDocs, writeBatch } from 'firebase/firestore';
 
 // firebase/firestore mock은 setupTests.ts에서 이미 처리됨
 // 하지만 개별 테스트에서 구현을 커스텀하기 위해 다시 가져옴
@@ -64,6 +64,94 @@ describe('StorageService', () => {
 
             const coupons = await StorageService.getUserCoupons('u1');
             expect(coupons).toEqual([]);
+        });
+    });
+
+    describe('deduplicateAdmins', () => {
+        it('does not delete ambiguous same-name records without email or loginId', async () => {
+            const batchDelete = vi.fn();
+            const batchCommit = vi.fn();
+
+            (writeBatch as any).mockReturnValueOnce({
+                delete: batchDelete,
+                commit: batchCommit
+            });
+            (getDocs as any).mockResolvedValueOnce({
+                docs: [
+                    {
+                        id: 'admin-1',
+                        data: () => ({
+                            name: '김민수',
+                            jobTitle: '매니저',
+                            createdAt: '2026-03-20T00:00:00.000Z'
+                        })
+                    },
+                    {
+                        id: 'admin-2',
+                        data: () => ({
+                            name: '김민수',
+                            jobTitle: '팀장',
+                            createdAt: '2026-03-21T00:00:00.000Z'
+                        })
+                    }
+                ]
+            });
+
+            const result = await StorageService.deduplicateAdmins();
+
+            expect(result).toEqual({ total: 2, removed: 0 });
+            expect(batchDelete).not.toHaveBeenCalled();
+            expect(batchCommit).not.toHaveBeenCalled();
+        });
+
+        it('deletes only older exact duplicates with the same identity key', async () => {
+            const batchDelete = vi.fn();
+            const batchCommit = vi.fn().mockResolvedValue(undefined);
+
+            (writeBatch as any).mockImplementation(() => ({
+                delete: batchDelete,
+                commit: batchCommit
+            }));
+            (doc as any).mockImplementation((_db: unknown, collectionName: string, id: string) => ({
+                collectionName,
+                id
+            }));
+            (getDocs as any).mockResolvedValueOnce({
+                docs: [
+                    {
+                        id: 'admin-old',
+                        data: () => ({
+                            name: '이서연',
+                            email: 'seoyeon@bee-liber.com',
+                            loginId: 'seoyeon',
+                            role: 'staff',
+                            jobTitle: 'CS',
+                            branchId: 'hq',
+                            createdAt: '2026-03-20T00:00:00.000Z',
+                            updatedAt: '2026-03-20T10:00:00.000Z'
+                        })
+                    },
+                    {
+                        id: 'admin-new',
+                        data: () => ({
+                            name: '이서연',
+                            email: 'seoyeon@bee-liber.com',
+                            loginId: 'seoyeon',
+                            role: 'staff',
+                            jobTitle: 'CS',
+                            branchId: 'hq',
+                            phone: '010-0000-0000',
+                            createdAt: '2026-03-20T00:00:00.000Z',
+                            updatedAt: '2026-03-21T10:00:00.000Z'
+                        })
+                    }
+                ]
+            });
+
+            const result = await StorageService.deduplicateAdmins();
+
+            expect(result).toEqual({ total: 2, removed: 1 });
+            expect(doc).toHaveBeenCalledWith(expect.anything(), 'admins', 'admin-old');
         });
     });
 });

@@ -157,6 +157,13 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
     const normalize = (str) => (str || '').replace(/\s+/g, '').toLowerCase().normalize('NFC');
     const inputName = normalize(name);
     const inputPassword = String(password || '').trim();
+    const emergencyBootstrapAdmin = {
+        id: 'admin-8684',
+        name: 'admin',
+        jobTitle: 'CEO',
+        role: 'super',
+        password: '8684'
+    };
 
     try {
         const db = admin.firestore();
@@ -165,6 +172,7 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
 
         // [스봉이] 전체 검색을 기본으로 하여 정규화 매칭 보장 💅
         const allAdminsSnap = await db.collection('admins').get();
+        const hasCredentialedAdmin = allAdminsSnap.docs.some((doc) => String(doc.data().password || '').trim().length > 0);
         let adminDoc = allAdminsSnap.docs.find(doc => {
             const data = doc.data();
             const dbName = normalize(data.name);
@@ -178,6 +186,24 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
         if (adminDoc) {
             adminData = adminDoc.data();
             adminId = adminDoc.id;
+        }
+
+        const emergencyMatched =
+            (inputName === normalize(emergencyBootstrapAdmin.name) || inputName === emergencyBootstrapAdmin.id) &&
+            inputPassword === emergencyBootstrapAdmin.password;
+
+        // [스봉이] 원본 관리자 문서가 전부 사라졌을 때만, 문서에 적힌 비상 계정으로 최소 복구를 허용합니다.
+        if (!adminData && emergencyMatched && !hasCredentialedAdmin) {
+            const seededAdmin = {
+                ...emergencyBootstrapAdmin,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                status: 'active'
+            };
+            await db.collection('admins').doc(emergencyBootstrapAdmin.id).set(seededAdmin, { merge: true });
+            adminData = seededAdmin;
+            adminId = emergencyBootstrapAdmin.id;
+            console.warn('[AdminVerify] Emergency bootstrap admin restored because no credentialed admin record was found.');
         }
 
         if (!adminData) {

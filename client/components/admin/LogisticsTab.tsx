@@ -34,6 +34,7 @@ interface LogisticsTabProps {
     selectedBookingIds: string[];
     setSelectedBookingIds: (ids: string[]) => void;
     handleBatchUpdateStatus: (s: BookingStatus) => void;
+    handleBulkCleanupPastIssues: (ids: string[]) => void;
     isBatchUpdating: boolean;
     t: any;
 }
@@ -68,6 +69,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     selectedBookingIds,
     setSelectedBookingIds,
     handleBatchUpdateStatus,
+    handleBulkCleanupPastIssues,
     isBatchUpdating,
     t
 }) => {
@@ -83,6 +85,19 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
         if (!dateStr) return false;
         return dateStr !== todayKST;
     };
+
+    const cleanupTargetBookings = React.useMemo(() => {
+        return filteredBookings.filter((booking) => {
+            if (booking.isDeleted) return false;
+            const hasIssueTrace = booking.status === BookingStatus.CANCELLED ||
+                booking.status === BookingStatus.REFUNDED ||
+                Boolean(booking.auditNote?.trim());
+            if (!hasIssueTrace) return false;
+
+            const cleanupBaseDate = booking.returnDate || booking.dropoffDate || booking.pickupDate;
+            return Boolean(cleanupBaseDate) && cleanupBaseDate < todayKST;
+        });
+    }, [filteredBookings, todayKST]);
 
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
@@ -178,8 +193,21 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                         />
                         <span className="text-[10px] font-bold text-red-300">까지</span>
                     </div>
-                    <div className="ml-auto text-[10px] font-black text-red-400 bg-white px-3 py-1.5 rounded-xl border border-red-100">
-                        {filteredBookings.length}건 조회됨
+                    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                        <div className="text-[10px] font-black text-red-400 bg-white px-3 py-1.5 rounded-xl border border-red-100">
+                            {filteredBookings.length}건 조회됨
+                        </div>
+                        {cleanupTargetBookings.length > 0 && (
+                            <button
+                                onClick={() => handleBulkCleanupPastIssues(cleanupTargetBookings.map(booking => booking.id!).filter(Boolean))}
+                                disabled={isBatchUpdating}
+                                className="px-4 py-2 bg-red-500 text-white rounded-xl text-[10px] font-black shadow-lg shadow-red-200/60 hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                title="지난 취소/환불/이슈 예약을 일괄 휴지통 이동"
+                            >
+                                <i className={`fa-solid ${isBatchUpdating ? 'fa-spinner animate-spin' : 'fa-trash-can'}`}></i>
+                                지난 취소/환불/이슈 {cleanupTargetBookings.length}건 정리
+                            </button>
+                        )}
                     </div>
                 </div>
             )}

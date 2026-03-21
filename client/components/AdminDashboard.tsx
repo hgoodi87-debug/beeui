@@ -1402,6 +1402,72 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
+  const isPastIssueCleanupTarget = (booking?: BookingState | null) => {
+    if (!booking || booking.isDeleted) return false;
+    const hasIssueTrace = booking.status === BookingStatus.CANCELLED ||
+      booking.status === BookingStatus.REFUNDED ||
+      Boolean(booking.auditNote?.trim());
+    if (!hasIssueTrace) return false;
+
+    const cleanupBaseDate = booking.returnDate || booking.dropoffDate || booking.pickupDate;
+    return Boolean(cleanupBaseDate) && cleanupBaseDate < todayKST;
+  };
+
+  const handleBulkCleanupPastIssueBookings = async (ids: string[]) => {
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+    const targetBookings = uniqueIds
+      .map(id => bookings.find(booking => booking.id === id))
+      .filter((booking): booking is BookingState => Boolean(booking?.id) && isPastIssueCleanupTarget(booking));
+
+    if (targetBookings.length === 0) {
+      alert('휴지통으로 옮길 지난 취소/환불/이슈 예약이 없어요. 날짜 지난 건만 골라드리니까요.');
+      return;
+    }
+
+    if (!confirm(
+      `[일괄 정리]\n\n` +
+      `${targetBookings.length}건의 지난 취소/환불/이슈 예약을 휴지통으로 이동할까요?\n` +
+      `이 작업은 영구 삭제가 아니라 휴지통 이동이라 복구는 가능합니다.`
+    )) {
+      return;
+    }
+
+    setIsBatchUpdating(true);
+    try {
+      const { doc, writeBatch } = await import('firebase/firestore');
+      const updatedAt = new Date().toISOString();
+      const candidateIds = new Set(targetBookings.map(booking => booking.id!));
+
+      for (let i = 0; i < targetBookings.length; i += 400) {
+        const batch = writeBatch(db);
+        targetBookings.slice(i, i + 400).forEach((booking) => {
+          batch.update(doc(db, 'bookings', booking.id!), { isDeleted: true, updatedAt });
+        });
+        await batch.commit();
+      }
+
+      setSelectedBookingIds(prev => prev.filter(id => !candidateIds.has(id)));
+      await AuditService.logAction(
+        currentActor,
+        'DELETE',
+        { id: 'bulk-past-issue-cleanup', type: 'BOOKING' },
+        {
+          method: 'BULK_SOFT_DELETE_PAST_ISSUES',
+          count: targetBookings.length,
+          activeTab,
+          activeStatusTab
+        }
+      );
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      alert(`지난 취소/환불/이슈 ${targetBookings.length}건을 휴지통으로 정리해드렸어요. 휴지통에서 복구도 가능합니다.`);
+    } catch (e) {
+      console.error(e);
+      alert('일괄 삭제 중 오류가 발생했어요. 잠깐만, 다시 정리해보죠.');
+    } finally {
+      setIsBatchUpdating(false);
+    }
+  };
+
   const handleRestore = async (id: string) => {
     if (!confirm('예약 내역을 복구하시겠습니까?')) return;
     try {
@@ -2211,6 +2277,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               selectedBookingIds={selectedBookingIds}
               setSelectedBookingIds={setSelectedBookingIds}
               handleBatchUpdateStatus={handleBatchUpdateStatus}
+              handleBulkCleanupPastIssues={handleBulkCleanupPastIssueBookings}
               isBatchUpdating={isBatchUpdating}
               t={t}
             />

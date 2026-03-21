@@ -14,14 +14,50 @@ export interface AdminAuthResult {
   branchCode?: string;
 }
 
+interface SupabaseAdminSession {
+  accessToken: string;
+  refreshToken?: string;
+  userId: string;
+  email: string;
+  provider: 'supabase';
+  savedAt: number;
+}
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || '';
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
+const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
+const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
 const normalizeRole = (role?: string) => {
   const candidate = (role || '').trim().toLowerCase();
   if (!candidate) return 'staff';
   return candidate;
+};
+
+const mapSupabaseRoleToLegacyRole = (roleCode?: string) => {
+  const normalized = (roleCode || '').trim().toLowerCase();
+
+  switch (normalized) {
+    case 'super_admin':
+      return 'super';
+    case 'hq_admin':
+      return 'hq';
+    case 'hub_manager':
+      return 'branch';
+    case 'partner_manager':
+      return 'partner';
+    case 'finance_staff':
+      return 'finance';
+    case 'cs_staff':
+      return 'cs';
+    case 'driver':
+      return 'driver';
+    case 'ops_staff':
+      return 'staff';
+    default:
+      return normalizeRole(normalized);
+  }
 };
 
 export const getAdminAuthProvider = (): AdminAuthProvider => {
@@ -36,6 +72,66 @@ export const isSupabaseAdminAuthEnabled = () => getAdminAuthProvider() === 'supa
 export const warmAdminAuth = async () => {
   if (getAdminAuthProvider() === 'firebase') {
     await ensureAuth();
+  }
+};
+
+const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
+  if (getAdminAuthProvider() !== 'supabase') return null;
+
+  const raw = sessionStorage.getItem(SUPABASE_ADMIN_SESSION_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<SupabaseAdminSession>;
+    const savedAt = Number(parsed.savedAt || 0);
+    const isExpired = !savedAt || Date.now() - savedAt > ADMIN_SESSION_TTL_MS;
+
+    if (!parsed.accessToken || !parsed.userId || !parsed.email || isExpired) {
+      sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+      return null;
+    }
+
+    return {
+      accessToken: parsed.accessToken,
+      refreshToken: parsed.refreshToken,
+      userId: parsed.userId,
+      email: parsed.email,
+      provider: 'supabase',
+      savedAt,
+    };
+  } catch (error) {
+    console.warn('[AdminAuth] Supabase 관리자 세션 파싱 실패:', error);
+    sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+    return null;
+  }
+};
+
+export const hasActiveAdminSession = () => {
+  if (getAdminAuthProvider() !== 'supabase') {
+    return true;
+  }
+  return Boolean(readSupabaseAdminSession());
+};
+
+export const clearAdminAuthSession = async () => {
+  if (getAdminAuthProvider() !== 'supabase') return;
+
+  const session = readSupabaseAdminSession();
+  sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+
+  if (!session?.accessToken) return;
+
+  try {
+    await fetch(`${supabaseUrl}/auth/v1/logout`, {
+      method: 'POST',
+      headers: {
+        apikey: supabasePublishableKey,
+        Authorization: `Bearer ${session.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.warn('[AdminAuth] Supabase 관리자 로그아웃 정리 실패:', error);
   }
 };
 
@@ -212,7 +308,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   const primaryBranch = assignments.find((entry) => entry.is_primary)?.branch || assignments[0]?.branch || null;
 
   sessionStorage.setItem(
-    'beeliber_supabase_admin_session',
+    SUPABASE_ADMIN_SESSION_KEY,
     JSON.stringify({
       accessToken,
       refreshToken: authResponse.refresh_token,
@@ -226,7 +322,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   return {
     name: employee.name || profile?.display_name || user.email || identifier,
     jobTitle: employee.job_title || 'Staff',
-    role: normalizeRole(primaryRole),
+    role: mapSupabaseRoleToLegacyRole(primaryRole),
     email: employee.email || profile?.email || user.email || identifier,
     branchId: primaryBranch?.id || '',
     branchCode: primaryBranch?.branch_code || '',

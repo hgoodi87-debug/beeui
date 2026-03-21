@@ -83,6 +83,7 @@ Supabase Storage에서 미리 만들어둘 버킷:
 - `hq_admin`
 - `hub_manager`
 - `partner_manager`
+- `finance_staff`
 - `ops_staff`
 - `driver`
 - `cs_staff`
@@ -115,6 +116,11 @@ Supabase Storage에서 미리 만들어둘 버킷:
 2. 새 key를 서버 환경변수와 시크릿 저장소에만 반영
 3. 예전 key가 들어간 로컬 메모, 채팅, 임시 파일 정리
 4. GitHub Actions / 배포 시크릿도 함께 교체
+
+메모:
+
+- 현재 Firebase 레거시 `finance` 역할은 Supabase에서 `finance_staff`로 승격 없이 분리 유지합니다.
+- 프론트 어드민 UI에는 자동으로 `finance` 권한으로 다시 매핑되게 맞춰둘 예정입니다.
 
 ---
 

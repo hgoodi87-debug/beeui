@@ -183,6 +183,7 @@ values
   ('hq_admin', 'HQ Admin', '본사 운영 및 정산 관리 권한'),
   ('hub_manager', 'Hub Manager', '허브/지점 운영 관리 권한'),
   ('partner_manager', 'Partner Manager', '파트너 지점 운영/정산 조회 권한'),
+  ('finance_staff', 'Finance Staff', '정산/재무 중심 조회 권한'),
   ('ops_staff', 'Ops Staff', '운영 실무 권한'),
   ('driver', 'Driver', '배송 기사 권한'),
   ('cs_staff', 'CS Staff', '고객 응대 권한')
@@ -245,6 +246,7 @@ set search_path = public
 as $$
   select
     public.has_any_role(array['super_admin', 'hq_admin'])
+    or public.has_any_role(array['finance_staff'])
     or exists (
       select 1
       from public.employee_branch_assignments eba
@@ -290,7 +292,7 @@ for select
 to authenticated
 using (
   id = auth.uid()
-  or public.has_any_role(array['super_admin', 'hq_admin'])
+  or public.has_any_role(array['super_admin', 'hq_admin', 'finance_staff'])
 );
 
 drop policy if exists "profiles_insert_self" on public.profiles;
@@ -334,7 +336,7 @@ create policy "branches_select_authenticated"
 on public.branches
 for select
 to authenticated
-using (is_active = true or public.has_any_role(array['super_admin', 'hq_admin']));
+using (is_active = true or public.has_any_role(array['super_admin', 'hq_admin', 'finance_staff']));
 
 drop policy if exists "branches_manage_hq_only" on public.branches;
 create policy "branches_manage_hq_only"
@@ -351,7 +353,7 @@ for select
 to authenticated
 using (
   profile_id = auth.uid()
-  or public.has_any_role(array['super_admin', 'hq_admin'])
+  or public.has_any_role(array['super_admin', 'hq_admin', 'finance_staff'])
   or (
     public.has_any_role(array['hub_manager', 'partner_manager'])
     and public.shares_branch_with_employee(id)
@@ -385,7 +387,7 @@ on public.employee_roles
 for select
 to authenticated
 using (
-  public.has_any_role(array['super_admin', 'hq_admin'])
+  public.has_any_role(array['super_admin', 'hq_admin', 'finance_staff'])
   or exists (
     select 1
     from public.employees e
@@ -408,7 +410,7 @@ on public.employee_branch_assignments
 for select
 to authenticated
 using (
-  public.has_any_role(array['super_admin', 'hq_admin'])
+  public.has_any_role(array['super_admin', 'hq_admin', 'finance_staff'])
   or exists (
     select 1
     from public.employees e

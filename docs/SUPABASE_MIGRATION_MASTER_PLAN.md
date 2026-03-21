@@ -6,6 +6,10 @@
 
 앞으로 전환 관련 작업은 이 문서를 단일 기준으로 삼는다.
 
+현재 운영 경계는 별도 문서로 관리한다.
+
+- [Firebase / Supabase 운영 경계표](/Users/cm/Desktop/beeliber/beeliber-main/docs/FIREBASE_SUPABASE_OPERATING_BOUNDARY.md)
+
 - 운영 원칙: 운영 코어 우선 전환
 - 전환 방식: 병행 검증 + 단계적 절체
 - 우선 목표: 직원/권한/지점/관리자 로그인 안정화
@@ -261,6 +265,7 @@ Beeliber는 RLS를 나중에 붙이면 안 된다.
 - `hq_admin`
 - `hub_manager`
 - `partner_manager`
+- `finance_staff`
 - `ops_staff`
 - `driver`
 - `cs_staff`
@@ -387,4 +392,3 @@ Beeliber는 RLS를 나중에 붙이면 안 된다.
 - `docs/ADMIN_QUERY_MAP.md`
 - `docs/BOOKING_DELIVERY_SETTLEMENT_FLOW.md`
 - `docs/RLS_POLICY_DRAFT.md`
-

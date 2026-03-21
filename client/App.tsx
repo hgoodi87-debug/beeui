@@ -38,11 +38,14 @@ import SEO from './components/SEO';
 
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
+import { clearAdminAuthSession, hasActiveAdminSession, isSupabaseAdminAuthEnabled } from './services/adminAuthService';
 import { useLocations } from './src/domains/location/hooks/useLocations';
 import { useCurrentUser } from './src/domains/user/hooks/useCurrentUser';
 
 import { useAppStore } from './src/store/appStore';
 import { useBookingStore } from './src/store/bookingStore';
+
+const EMPTY_ADMIN_INFO = { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -63,7 +66,13 @@ const App: React.FC = () => {
         if (now - loginTime > TWENTY_FOUR_HOURS) {
           console.warn("[App] ⏰ 어드민 세션이 만료되었습니다 (24시간 경과).");
           localStorage.removeItem('beeliber_admin_info');
-          return { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
+          return EMPTY_ADMIN_INFO;
+        }
+
+        if (isSupabaseAdminAuthEnabled() && !hasActiveAdminSession()) {
+          console.warn("[App] 🔒 Supabase 관리자 세션이 없어 기존 어드민 캐시를 비웁니다.");
+          localStorage.removeItem('beeliber_admin_info');
+          return EMPTY_ADMIN_INFO;
         }
         
         console.log("[App] 🔐 어드민 세션 복구 성공! ✨");
@@ -72,7 +81,7 @@ const App: React.FC = () => {
         console.error("Failed to parse admin info", e);
       }
     }
-    return { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
+    return EMPTY_ADMIN_INFO;
   });
   const {
     preSelectedBooking, setPreSelectedBooking,
@@ -157,6 +166,14 @@ const App: React.FC = () => {
     }
   }, [adminInfo]);
 
+  useEffect(() => {
+    if (adminInfo.name && isSupabaseAdminAuthEnabled() && !hasActiveAdminSession()) {
+      console.warn('[App] Supabase 관리자 세션이 없어 접근을 정리합니다.');
+      setAdminInfo(EMPTY_ADMIN_INFO);
+      localStorage.removeItem('beeliber_admin_info');
+    }
+  }, [adminInfo.name]);
+
   const handleLocationSelect = (
     id: string,
     type: ServiceType = ServiceType.STORAGE,
@@ -222,7 +239,10 @@ const App: React.FC = () => {
 
   const handleAdminLogout = () => {
     // [스봉이] 흔적도 없이 깨끗하게 치워드릴게요. 💅✨
-    setAdminInfo({ name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 });
+    clearAdminAuthSession().catch((error) => {
+      console.warn('[App] Supabase 관리자 로그아웃 후처리 실패:', error);
+    });
+    setAdminInfo(EMPTY_ADMIN_INFO);
     localStorage.removeItem('beeliber_admin_info');
     navigate('/');
   };
@@ -255,14 +275,16 @@ const App: React.FC = () => {
 
 
   const BranchAdminGuard = ({ children }: { children: React.ReactNode }) => {
-    if (!adminInfo.name) return <Navigate to="/admin" replace />;
+    const hasAdminAccess = Boolean(adminInfo.name) && (!isSupabaseAdminAuthEnabled() || hasActiveAdminSession());
+    if (!hasAdminAccess) return <Navigate to="/admin" replace />;
     const urlBranchId = location.pathname.split('/').pop();
     if (adminInfo.branchId && urlBranchId !== adminInfo.branchId) return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
     return <>{children}</>;
   };
 
   const AdminGuard = ({ children }: { children: React.ReactNode }) => {
-    if (!adminInfo.name) return <Navigate to="/admin" replace />;
+    const hasAdminAccess = Boolean(adminInfo.name) && (!isSupabaseAdminAuthEnabled() || hasActiveAdminSession());
+    if (!hasAdminAccess) return <Navigate to="/admin" replace />;
     
     // [스봉이] 최고 권한자 혹은 마스터급은 어디든 갈 수 있어야죠 💅
     const isSuper = adminInfo.role === 'super' || adminInfo.jobTitle?.toUpperCase().includes('CEO') || adminInfo.jobTitle?.toUpperCase().includes('MASTER');

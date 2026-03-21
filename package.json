@@ -1,16 +1,20 @@
 {
-    "name": "beeliber-root",
-    "private": true,
-    "workspaces": [
-        "client",
-        "functions"
-    ],
-    "scripts": {
-        "dev": "npm run dev --workspace=beeliber-web",
-        "build": "npm run build --workspace=beeliber-web",
-        "deploy": "npm run build && firebase deploy",
-        "client:install": "npm install --workspace=beeliber-web",
-        "supabase:verify": "node scripts/supabase/verifyPhase1Access.mjs",
-        "supabase:bootstrap-admin": "node scripts/supabase/bootstrapFirstAdmin.mjs"
-    }
+  "name": "beeliber-root",
+  "private": true,
+  "workspaces": [
+    "client",
+    "functions"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=beeliber-web",
+    "build": "npm run build --workspace=beeliber-web",
+    "deploy": "npm run build && firebase deploy",
+    "client:install": "npm install --workspace=beeliber-web",
+    "supabase:verify": "node scripts/supabase/verifyPhase1Access.mjs",
+    "supabase:bootstrap-admin": "node scripts/supabase/bootstrapFirstAdmin.mjs",
+    "supabase:sync-phase1-auth": "node scripts/supabase/syncFirebasePhase1Auth.mjs",
+    "supabase:sync-phase1-org": "node scripts/supabase/syncFirebasePhase1Org.mjs",
+    "supabase:phase1-run": "node scripts/supabase/runPhase1Migration.mjs",
+    "supabase:export-login-inventory": "node scripts/supabase/exportPhase1LoginInventory.mjs"
+  }
 }

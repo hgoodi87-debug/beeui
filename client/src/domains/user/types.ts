@@ -41,7 +41,7 @@ export interface AdminUser {
     loginId?: string;
     password?: string;
     lastLogin?: string;
-    role?: 'super' | 'branch' | 'staff' | 'partner' | 'driver' | 'finance' | 'cs';
+    role?: 'super' | 'hq' | 'branch' | 'staff' | 'partner' | 'driver' | 'finance' | 'cs';
     branchId?: string;
     status?: AdminStatus;
     permissions?: string[];

@@ -96,6 +96,7 @@
 - `hq_admin`
 - `hub_manager`
 - `partner_manager`
+- `finance_staff`
 - `ops_staff`
 - `driver`
 - `cs_staff`
@@ -364,4 +365,3 @@
 6. `employee_branch_assignments`
 
 이 범위가 끝나야 관리자 로그인과 인사관리가 살아납니다.
-

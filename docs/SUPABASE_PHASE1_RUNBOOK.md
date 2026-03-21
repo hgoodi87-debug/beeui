@@ -10,6 +10,10 @@
 - 직원/권한/지점 구조
 - RLS 기본 정책
 
+현재 운영에서 무엇을 Firebase에 남기고 무엇을 Supabase로 넘기는지는 아래 문서를 같이 본다.
+
+- [Firebase / Supabase 운영 경계표](/Users/cm/Desktop/beeliber/beeliber-main/docs/FIREBASE_SUPABASE_OPERATING_BOUNDARY.md)
+
 ---
 
 ## 1. 먼저 준비할 것
@@ -67,6 +71,7 @@ Supabase 콘솔에서 `SQL Editor`를 연다.
 - `hq_admin`
 - `hub_manager`
 - `partner_manager`
+- `finance_staff`
 - `ops_staff`
 - `driver`
 - `cs_staff`
@@ -86,6 +91,11 @@ VITE_ADMIN_AUTH_PROVIDER=supabase
 - `publishable key`만 프론트에 넣습니다.
 - `secret key`는 절대 프론트에 넣으면 안 됩니다.
 - `VITE_ADMIN_AUTH_PROVIDER=supabase`를 넣기 전까지는 기존 Firebase 관리자 로그인 경로가 유지됩니다.
+- Supabase role code는 프론트에서 기존 어드민 권한(`super`, `hq`, `branch`, `finance`, `staff`, `driver`, `cs`, `partner`)으로 다시 매핑됩니다.
+- Firebase Hosting GitHub Actions 배포를 쓴다면 아래 이름으로도 같이 넣어야 합니다.
+  - Repository Secret `VITE_SUPABASE_URL`
+  - Repository Secret `VITE_SUPABASE_PUBLISHABLE_KEY`
+  - Repository Variable `VITE_ADMIN_AUTH_PROVIDER=supabase`
 
 ---
 
@@ -239,7 +249,181 @@ set
 
 ---
 
-## 5. 제가 다음에 이어서 할 작업
+## 5. Firebase 직원/지점 이관 스크립트
+
+Phase 1 SQL이 깔렸다고 바로 직원 구조가 채워지는 건 아니니까, 순서를 이렇게 가는 게 제일 안전합니다.
+
+1. Firebase `admins` -> Supabase Auth 사용자 생성
+2. Firebase `admins / locations / branches` -> Supabase Phase 1 조직 테이블 반영
+3. 프론트 env를 `VITE_ADMIN_AUTH_PROVIDER=supabase`로 전환
+
+### 5-1. Firebase 관리자 -> Supabase Auth
+
+파일:
+
+- [syncFirebasePhase1Auth.mjs](/Users/cm/Desktop/beeliber/beeliber-main/scripts/supabase/syncFirebasePhase1Auth.mjs)
+
+실행 전제:
+
+1. Firebase Admin SDK가 읽을 수 있는 자격증명 준비
+2. Supabase Email Auth 활성화
+3. 현재 Firebase `admins` 문서에 email + password가 들어 있는 원본 관리자 문서가 존재
+
+Firebase 자격증명은 둘 중 하나면 됩니다.
+
+- `FIREBASE_SERVICE_ACCOUNT_PATH=/절대경로/service-account.json`
+- `FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", ... }'`
+
+읽기 전용 미리보기:
+
+```bash
+SUPABASE_URL=프로젝트_URL \
+SUPABASE_SECRET_KEY=서버_전용_secret_key \
+FIREBASE_PROJECT_ID=beeliber-main \
+npm run supabase:sync-phase1-auth
+```
+
+실제 반영:
+
+```bash
+SUPABASE_URL=프로젝트_URL \
+SUPABASE_SECRET_KEY=서버_전용_secret_key \
+FIREBASE_PROJECT_ID=beeliber-main \
+SUPABASE_APPLY=true \
+npm run supabase:sync-phase1-auth
+```
+
+선택 옵션:
+
+- 기존 Auth 계정 메타데이터도 같이 맞추고 싶으면 `SUPABASE_AUTH_UPDATE_EXISTING=true`
+- 기존 Auth 계정 비밀번호까지 Firebase 값으로 덮고 싶으면 `SUPABASE_AUTH_UPDATE_PASSWORD=true`
+
+주의:
+
+- 기본값은 `dry-run`
+- email 없는 관리자 문서는 건너뜁니다.
+- password 없는 문서도 건너뜁니다.
+- 비밀번호는 로그에 출력하지 않습니다.
+
+### 5-2. Firebase 직원/지점 -> Supabase 조직 테이블
+
+Phase 1 SQL이 깔린 다음에는, Firebase `admins` / `locations` / `branches`를 Supabase Phase 1 테이블로 맞춰 넣는 스크립트를 쓸 수 있습니다.
+
+파일:
+
+- [syncFirebasePhase1Org.mjs](/Users/cm/Desktop/beeliber/beeliber-main/scripts/supabase/syncFirebasePhase1Org.mjs)
+
+실행 전제:
+
+1. Firebase Admin SDK가 읽을 수 있는 자격증명 준비
+2. Supabase Phase 1 SQL 실행 완료
+3. Supabase Auth에 최소한 옮길 직원 이메일 계정이 먼저 생성되어 있음
+  - 가장 쉬운 방법은 바로 위 `supabase:sync-phase1-auth`를 먼저 돌리는 겁니다.
+
+여기서도 Firebase 자격증명은 아래 둘 중 하나면 됩니다.
+
+- `FIREBASE_SERVICE_ACCOUNT_PATH=/절대경로/service-account.json`
+- `FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", ... }'`
+
+읽기 전용 미리보기:
+
+```bash
+SUPABASE_URL=프로젝트_URL \
+SUPABASE_SECRET_KEY=서버_전용_secret_key \
+FIREBASE_PROJECT_ID=beeliber-main \
+npm run supabase:sync-phase1-org
+```
+
+실제 반영:
+
+```bash
+SUPABASE_URL=프로젝트_URL \
+SUPABASE_SECRET_KEY=서버_전용_secret_key \
+FIREBASE_PROJECT_ID=beeliber-main \
+SUPABASE_APPLY=true \
+npm run supabase:sync-phase1-org
+```
+
+이 스크립트가 하는 일:
+
+- Firebase `admins` 문서에서 UID 매핑 문서를 제외하고 정규 직원 후보를 고릅니다.
+- Firebase `locations` + `branches`를 Supabase `branches` 후보로 병합합니다.
+- Supabase Auth에 이미 존재하는 이메일 계정만 골라 `profiles`, `employees`, `employee_roles`, `employee_branch_assignments`를 맞춰 넣습니다.
+- 레거시 역할은 아래처럼 변환합니다.
+  - `super` -> `super_admin`
+  - `branch` -> `hub_manager`
+  - `partner` -> `partner_manager`
+  - `finance` -> `finance_staff`
+  - `cs` -> `cs_staff`
+  - `driver` -> `driver`
+  - 그 외 -> `ops_staff`
+
+주의:
+
+- 이 스크립트는 기본값이 `dry-run`입니다.
+- Supabase Auth에 아직 없는 이메일 계정은 자동 생성하지 않고, “미일치”로만 리포트합니다.
+
+### 5-3. 일괄 실행
+
+위 두 단계를 따로 돌리기 귀찮으면, 준비가 끝난 뒤 아래 일괄 실행기로 한 번에 진행할 수 있습니다.
+
+파일:
+
+- [runPhase1Migration.mjs](/Users/cm/Desktop/beeliber/beeliber-main/scripts/supabase/runPhase1Migration.mjs)
+
+실행:
+
+```bash
+SUPABASE_URL=프로젝트_URL \
+SUPABASE_SECRET_KEY=서버_전용_secret_key \
+FIREBASE_PROJECT_ID=beeliber-main \
+FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", ... }' \
+npm run supabase:phase1-run
+```
+
+이 스크립트 순서:
+
+1. `supabase:verify`
+2. `supabase:sync-phase1-auth`
+3. `supabase:sync-phase1-org`
+4. 마지막 `supabase:verify`
+
+중요:
+
+- 이 일괄 실행기는 `verify` 단계에서 테이블이 없으면 바로 멈춥니다.
+- 즉, 반드시 먼저 SQL Editor에서 [20260321_000001_phase1_auth_org_core.sql](/Users/cm/Desktop/beeliber/beeliber-main/supabase/migrations/20260321_000001_phase1_auth_org_core.sql)을 실행해야 합니다.
+
+---
+
+## 6. 로그인 인벤토리 산출
+
+직원들이 실제로 무슨 이메일로 로그인해야 하는지 공유하려면 아래 스크립트로 로그인 인벤토리를 뽑습니다.
+
+파일:
+
+- [exportPhase1LoginInventory.mjs](/Users/cm/Desktop/beeliber/beeliber-main/scripts/supabase/exportPhase1LoginInventory.mjs)
+
+실행:
+
+```bash
+SUPABASE_URL=프로젝트_URL \
+SUPABASE_SECRET_KEY=서버_전용_secret_key \
+npm run supabase:export-login-inventory
+```
+
+산출물:
+
+- [SUPABASE_PHASE1_LOGIN_INVENTORY.md](/Users/cm/Desktop/beeliber/beeliber-main/docs/SUPABASE_PHASE1_LOGIN_INVENTORY.md)
+- [SUPABASE_PHASE1_LOGIN_INVENTORY.csv](/Users/cm/Desktop/beeliber/beeliber-main/docs/SUPABASE_PHASE1_LOGIN_INVENTORY.csv)
+
+메모:
+
+- `@staff.bee-liber.invalid` 는 synthetic 로그인 이메일입니다.
+- 실제 이메일이 확보되면 나중에 Supabase 계정 이메일을 교체해야 합니다.
+
+---
+
+## 7. 제가 다음에 이어서 할 작업
 
 이 단계가 끝나면 제가 바로 이어서 할 수 있는 건 이겁니다.
 

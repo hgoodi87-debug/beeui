@@ -24,6 +24,9 @@ jobs:
         run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_ADMIN_AUTH_PROVIDER: ${{ vars.VITE_ADMIN_AUTH_PROVIDER }}
 
       - name: Prepare Firebase credentials
         shell: bash

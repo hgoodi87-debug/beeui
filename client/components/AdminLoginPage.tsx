@@ -76,6 +76,8 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
         setError('Supabase 직원 프로필이 아직 준비되지 않았습니다. 부트스트랩 상태를 확인해주세요.');
       } else if (errCode === 'supabase/inactive-admin') {
         setError('비활성화된 관리자 계정입니다. HQ 권한 상태를 확인해주세요.');
+      } else if (errCode === 'supabase/firebase-bridge-failed') {
+        setError('Firebase 관리자 권한 연결에 실패했어요. 잠시 후 다시 시도해주세요.');
       } else if (errCode === 'auth/unauthorized-domain' || errMsg.includes('referer') || errMsg.includes('requests-from-referer')) {
         setError(`인증 실패. [${window.location.origin}] 도메인이 파이어베이스 승인 목록에 등록되어 있는지 확인해주세요.`);
       } else if (String(errCode).startsWith('supabase/')) {

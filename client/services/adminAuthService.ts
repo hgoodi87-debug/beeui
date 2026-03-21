@@ -181,12 +181,26 @@ const supabaseRequest = async <T>(
   return body as T;
 };
 
-const loginWithFirebase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
-  const user = await ensureAuth();
-  if (!user) {
-    throw new Error('익명 로그인 세션 생성에 실패했습니다.');
+const bridgeFirebaseAdminSession = async (identifier: string, password: string) => {
+  try {
+    await ensureAuth();
+    const { httpsCallable } = await import('firebase/functions');
+    const { functions } = await import('../firebaseApp');
+    const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
+    await verifyAdmin({ name: identifier, password });
+  } catch (error) {
+    const wrapped = new Error('Firebase 관리자 권한 연결에 실패했습니다.') as Error & {
+      code?: string;
+      cause?: unknown;
+    };
+    wrapped.code = 'supabase/firebase-bridge-failed';
+    wrapped.cause = error;
+    throw wrapped;
   }
+};
 
+const loginWithFirebase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
+  await ensureAuth();
   const { httpsCallable } = await import('firebase/functions');
   const { functions } = await import('../firebaseApp');
   const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
@@ -306,6 +320,8 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   );
 
   const primaryBranch = assignments.find((entry) => entry.is_primary)?.branch || assignments[0]?.branch || null;
+
+  await bridgeFirebaseAdminSession(identifier, password);
 
   sessionStorage.setItem(
     SUPABASE_ADMIN_SESSION_KEY,

@@ -81,6 +81,27 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Admin CMS / Ops collections
+    match /notices/{noticeId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /branch_prospects/{prospectId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /tips_areas/{areaId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /tips_themes/{themeId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /tips_contents/{contentId} {
+      allow read, write: if isAdmin();
+    }
+
     // 🛡️ [스봉이] 감사 로그: 모든 관리자가 쓰기 가능, Super Admin만 읽기 가능
     match /audit_logs/{logId} {
       allow create: if isAdmin();

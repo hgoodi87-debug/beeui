@@ -89,6 +89,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
             [BookingStatus.PENDING]: 'bg-gray-100 text-gray-600',
+            [BookingStatus.CONFIRMED]: 'bg-teal-100 text-teal-600',
             [BookingStatus.TRANSIT]: 'bg-blue-100 text-blue-600',
             [BookingStatus.STORAGE]: 'bg-purple-100 text-purple-600',
             [BookingStatus.ARRIVED]: 'bg-green-100 text-green-600',
@@ -131,6 +132,13 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             </div>
         );
     }
+
+    const initialActionStatus = booking.serviceType === ServiceType.STORAGE
+        ? BookingStatus.STORAGE
+        : BookingStatus.TRANSIT;
+    const canStartHandling =
+        booking.status === BookingStatus.PENDING ||
+        booking.status === BookingStatus.CONFIRMED;
 
     return (
         <div className="min-h-screen bg-[#fafafb] pb-32 font-sans">
@@ -265,9 +273,9 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                 >
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Update Status</p>
                     <div className="grid grid-cols-2 gap-3">
-                        {booking.status === BookingStatus.PENDING && (
+                        {canStartHandling && (
                             <button
-                                onClick={() => handleStatusUpdate(BookingStatus.TRANSIT)}
+                                onClick={() => handleStatusUpdate(initialActionStatus)}
                                 disabled={isUpdating}
                                 className="col-span-2 py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-[0.98] transition-all"
                             >

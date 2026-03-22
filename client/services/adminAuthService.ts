@@ -29,6 +29,11 @@ const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabas
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
 const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
+const clearStoredSupabaseAdminSession = () => {
+  localStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+  sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+};
+
 const normalizeRole = (role?: string) => {
   const candidate = (role || '').trim().toLowerCase();
   if (!candidate) return 'staff';
@@ -78,7 +83,9 @@ export const warmAdminAuth = async () => {
 const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
   if (getAdminAuthProvider() !== 'supabase') return null;
 
-  const raw = sessionStorage.getItem(SUPABASE_ADMIN_SESSION_KEY);
+  const raw =
+    localStorage.getItem(SUPABASE_ADMIN_SESSION_KEY)
+    || sessionStorage.getItem(SUPABASE_ADMIN_SESSION_KEY);
   if (!raw) return null;
 
   try {
@@ -87,11 +94,11 @@ const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
     const isExpired = !savedAt || Date.now() - savedAt > ADMIN_SESSION_TTL_MS;
 
     if (!parsed.accessToken || !parsed.userId || !parsed.email || isExpired) {
-      sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+      clearStoredSupabaseAdminSession();
       return null;
     }
 
-    return {
+    const session: SupabaseAdminSession = {
       accessToken: parsed.accessToken,
       refreshToken: parsed.refreshToken,
       userId: parsed.userId,
@@ -99,9 +106,14 @@ const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
       provider: 'supabase',
       savedAt,
     };
+
+    // 카메라 인식으로 새 탭/웹뷰가 열려도 24시간 세션이 살아남도록 localStorage 기준으로 승격합니다.
+    localStorage.setItem(SUPABASE_ADMIN_SESSION_KEY, JSON.stringify(session));
+
+    return session;
   } catch (error) {
     console.warn('[AdminAuth] Supabase 관리자 세션 파싱 실패:', error);
-    sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+    clearStoredSupabaseAdminSession();
     return null;
   }
 };
@@ -117,7 +129,7 @@ export const clearAdminAuthSession = async () => {
   if (getAdminAuthProvider() !== 'supabase') return;
 
   const session = readSupabaseAdminSession();
-  sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+  clearStoredSupabaseAdminSession();
 
   if (!session?.accessToken) return;
 
@@ -323,7 +335,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
 
   const primaryBranch = assignments.find((entry) => entry.is_primary)?.branch || assignments[0]?.branch || null;
 
-  sessionStorage.setItem(
+  localStorage.setItem(
     SUPABASE_ADMIN_SESSION_KEY,
     JSON.stringify({
       accessToken,

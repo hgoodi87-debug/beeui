@@ -52,6 +52,7 @@ import { useBookingStore } from './src/store/bookingStore';
 
 const EMPTY_ADMIN_INFO = { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
 const DASHBOARD_ADMIN_ROLES = new Set(['super', 'hq', 'finance', 'cs']);
+const isSafeInternalPath = (path: unknown): path is string => typeof path === 'string' && /^\/(?!\/)/.test(path);
 
 const isDashboardAdmin = (role?: string, jobTitle?: string) => {
   const normalizedRole = (role || '').trim().toLowerCase();
@@ -72,6 +73,18 @@ const getAdminHomePath = (role?: string, jobTitle?: string, branchId?: string) =
   }
 
   return `/admin/branch/${branchId}`;
+};
+
+const resolveAdminRedirectPath = (candidatePath: unknown, fallbackPath: string) => {
+  if (!isSafeInternalPath(candidatePath)) {
+    return fallbackPath;
+  }
+
+  if (candidatePath === '/admin') {
+    return fallbackPath;
+  }
+
+  return candidatePath;
 };
 
 const App: React.FC = () => {
@@ -127,6 +140,7 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const { data: currentUser } = useCurrentUser();
+  const adminHomePath = getAdminHomePath(adminInfo.role, adminInfo.jobTitle, adminInfo.branchId);
   const shouldLoadBookingLocations =
     location.pathname === '/booking' ||
     location.pathname === '/booking-success' ||
@@ -335,11 +349,22 @@ const App: React.FC = () => {
 
   const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     const hasAdminAccess = Boolean(adminInfo.name) && (!isSupabaseAdminAuthEnabled() || hasActiveAdminSession());
-    if (!hasAdminAccess) return <Navigate to="/admin" replace />;
+    if (!hasAdminAccess) {
+      return <Navigate to="/admin" replace state={{ from: `${location.pathname}${location.search}` }} />;
+    }
 
     if (!isDashboardAdmin(adminInfo.role, adminInfo.jobTitle)) {
       if (adminInfo.branchId) return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
       return <Navigate to="/admin" replace />;
+    }
+
+    return <>{children}</>;
+  };
+
+  const AdminAccessGuard = ({ children }: { children: React.ReactNode }) => {
+    const hasAdminAccess = Boolean(adminInfo.name) && (!isSupabaseAdminAuthEnabled() || hasActiveAdminSession());
+    if (!hasAdminAccess) {
+      return <Navigate to="/admin" replace state={{ from: `${location.pathname}${location.search}` }} />;
     }
 
     return <>{children}</>;
@@ -489,7 +514,8 @@ const App: React.FC = () => {
                   {/* ADMIN */}
                   <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, role, email, branchId) => {
                     const info = { name, jobTitle, role, email: email || '', branchId: branchId || '', loginAt: Date.now() };
-                    const nextPath = getAdminHomePath(role, jobTitle, branchId);
+                    const fallbackPath = getAdminHomePath(role, jobTitle, branchId);
+                    const nextPath = resolveAdminRedirectPath((location.state as { from?: string } | null)?.from, fallbackPath);
 
                     flushSync(() => {
                       setAdminInfo(info);
@@ -510,7 +536,7 @@ const App: React.FC = () => {
                   <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={lang} t={t} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={lang} t={t} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
-                  <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => navigate('/admin/dashboard')} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute>} />
+                  <Route path="/staff/scan" element={<AdminAccessGuard><AnimatedRoute><StaffScanPage onBack={() => navigate(adminHomePath)} adminName={adminInfo.name} t={t} lang={lang} /></AnimatedRoute></AdminAccessGuard>} />
                   <Route path="/mypage" element={<AnimatedRoute><div className="fixed inset-0 z-0 pointer-events-none"><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate('/mypage')} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /><div className="absolute inset-0 bg-black/50 pointer-events-auto" /></div><MyPage t={t} onClose={() => { navigate(-1); }} /></AnimatedRoute>} />
 
                   {/* FALLBACK */}

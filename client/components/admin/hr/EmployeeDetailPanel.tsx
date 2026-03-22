@@ -133,15 +133,31 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 ml-1">이메일 (시스템 ID)</label>
-                    <input 
-                      value={formData.email || ''} 
-                      onChange={e => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all" 
-                      placeholder="example@bee-liber.com"
-                      title="이메일 주소 입력"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 ml-1">로그인 ID</label>
+                      <input 
+                        value={formData.loginId || ''} 
+                        onChange={e => setFormData({ ...formData, loginId: e.target.value })}
+                        className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all" 
+                        placeholder={formData.branchId ? `${formData.branchId}` : '직접 입력'}
+                        title="로그인 ID 입력"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 ml-1">내부 인증 이메일</label>
+                      <input 
+                        value={formData.email || ''} 
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all" 
+                        placeholder="example@bee-liber.com"
+                        title="내부 인증 이메일 입력"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-gray-50 px-4 py-3 text-[10px] font-bold text-gray-500 leading-relaxed">
+                    지점 계정은 로그인 ID를 지점 ID로 쓰면 되고요. 본사/슈퍼관리자는 직접 원하는 로그인 ID를 넣으면 됩니다. 이메일은 내부 인증 연결용으로만 씁니다, 아시겠어요?
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

@@ -34,7 +34,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
     setError('');
 
     if (!formData.name || !formData.password) {
-      setError(isSupabaseMode ? '이메일과 비밀번호를 입력해주세요.' : '이름과 비밀번호를 입력해주세요.');
+      setError(isSupabaseMode ? '로그인 ID와 비밀번호를 입력해주세요.' : '이름과 비밀번호를 입력해주세요.');
       return;
     }
 
@@ -67,13 +67,15 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       const errMsg = err.message || "Unknown error";
 
       if (errCode === 'invalid-identifier') {
-        setError('Supabase 관리자 로그인은 이메일 기준으로 입력해주세요.');
+        setError('로그인 ID 형식이 올바르지 않습니다.');
       } else if (errCode === 'unauthenticated' || errCode === 'functions/unauthenticated' || errCode === 'supabase/400' || errCode === 'invalid_credentials') {
-        setError(isSupabaseMode ? '이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.' : '이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.');
+        setError(isSupabaseMode ? '로그인 ID 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.' : '이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.');
       } else if (errCode === 'permission-denied' || errCode === 'functions/permission-denied') {
         setError('해당 관리자 계정의 접근 권한이 거부되었습니다.');
       } else if (errCode === 'supabase/missing-employee') {
         setError('Supabase 직원 프로필이 아직 준비되지 않았습니다. 부트스트랩 상태를 확인해주세요.');
+      } else if (errCode === 'supabase/missing-auth-email') {
+        setError('이 계정은 내부 인증 이메일 연결이 아직 없어요. 인사관리에서 로그인 ID와 이메일을 같이 확인해주세요.');
       } else if (errCode === 'supabase/inactive-admin') {
         setError('비활성화된 관리자 계정입니다. HQ 권한 상태를 확인해주세요.');
       } else if (errCode === 'supabase/firebase-bridge-failed') {
@@ -119,14 +121,14 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
           <div className="space-y-4">
             <div className="group">
               <label className="block text-[10px] font-black text-gray-500 group-focus-within:text-bee-yellow uppercase tracking-widest mb-2 ml-2 transition-colors">
-                {isSupabaseMode ? 'Admin Email' : 'Admin Name'}
+                {isSupabaseMode ? 'Admin ID' : 'Admin Name'}
               </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder={isSupabaseMode ? '관리자 이메일 (Email)' : '관리자 이름 (Name)'}
+                placeholder={isSupabaseMode ? '지점ID / 로그인ID / 이메일' : '관리자 이름 (Name)'}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold placeholder-gray-600 focus:outline-none focus:border-bee-yellow focus:bg-white/10 transition-all shadow-inner"
                 autoFocus
               />
@@ -182,7 +184,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
         </form>
 
         <p className="mt-5 text-center text-[10px] font-bold tracking-[0.25em] uppercase text-gray-500">
-          {isSupabaseMode ? 'Supabase Admin Auth Mode' : 'Firebase Admin Auth Mode'}
+          {isSupabaseMode ? 'Supabase Admin ID Login Mode' : 'Firebase Admin Auth Mode'}
         </p>
 
         <p className="mt-12 text-center text-[10px] text-gray-600 font-bold uppercase tracking-[0.4em]">

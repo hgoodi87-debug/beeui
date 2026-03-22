@@ -1178,6 +1178,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
    */
   const saveAdmin = async (data?: Partial<AdminUser>) => {
     const targetForm = data || adminForm;
+    const normalizedLoginId = targetForm.loginId?.trim() || targetForm.branchId?.trim() || '';
 
     // [스봉이] 신규 등록 시에는 이름, 직책, 비밀번호가 모두 필수지만, 수정 시에는 비밀번호를 비워둘 수 있어요! 💅✨
     const isNew = !targetForm.id;
@@ -1197,12 +1198,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setIsSaving(true);
     try {
-      const finalId = targetForm.id || `admin-${Date.now()}`;
+      const finalId = targetForm.id || normalizedLoginId || `admin-${Date.now()}`;
       const cleanForm: AdminUser = {
         ...targetForm as AdminUser,
         id: finalId,
         name: targetForm.name?.trim() || '',
         jobTitle: targetForm.jobTitle?.trim() || '',
+        loginId: normalizedLoginId || undefined,
         password: targetForm.password?.trim() || '',
         createdAt: targetForm.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()

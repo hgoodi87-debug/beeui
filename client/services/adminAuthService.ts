@@ -181,13 +181,14 @@ const supabaseRequest = async <T>(
   return body as T;
 };
 
-const bridgeFirebaseAdminSession = async (identifier: string, password: string) => {
+const verifyLegacyAdminCredentials = async (identifier: string, password: string) => {
   try {
     await ensureAuth();
     const { httpsCallable } = await import('firebase/functions');
     const { functions } = await import('../firebaseApp');
     const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
-    await verifyAdmin({ name: identifier, password });
+    const result = await verifyAdmin({ name: identifier, password });
+    return (result.data || null) as Record<string, any> | null;
   } catch (error) {
     const wrapped = new Error('Firebase 관리자 권한 연결에 실패했습니다.') as Error & {
       code?: string;
@@ -200,12 +201,7 @@ const bridgeFirebaseAdminSession = async (identifier: string, password: string) 
 };
 
 const loginWithFirebase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
-  await ensureAuth();
-  const { httpsCallable } = await import('firebase/functions');
-  const { functions } = await import('../firebaseApp');
-  const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
-  const result = await verifyAdmin({ name: identifier, password });
-  const admin = result.data as Record<string, any> | null;
+  const admin = await verifyLegacyAdminCredentials(identifier, password);
 
   if (!admin) {
     const error = new Error('이름 또는 비밀번호가 올바르지 않습니다.') as Error & { code?: string };
@@ -224,9 +220,15 @@ const loginWithFirebase = async (identifier: string, password: string): Promise<
 };
 
 const loginWithSupabase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
-  if (!identifier.includes('@')) {
-    const error = new Error('Supabase 관리자 로그인은 이메일 기준으로만 받습니다.') as Error & { code?: string };
-    error.code = 'invalid-identifier';
+  const verifiedAdmin = await verifyLegacyAdminCredentials(identifier, password);
+  const resolvedEmail = String(
+    verifiedAdmin?.email ||
+    (identifier.includes('@') ? identifier : '')
+  ).trim();
+
+  if (!resolvedEmail) {
+    const error = new Error('Supabase 로그인에 필요한 내부 이메일이 설정되지 않았습니다.') as Error & { code?: string };
+    error.code = 'supabase/missing-auth-email';
     throw error;
   }
 
@@ -243,7 +245,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     {
       method: 'POST',
       body: JSON.stringify({
-        email: identifier,
+        email: resolvedEmail,
         password,
       }),
     }
@@ -321,15 +323,13 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
 
   const primaryBranch = assignments.find((entry) => entry.is_primary)?.branch || assignments[0]?.branch || null;
 
-  await bridgeFirebaseAdminSession(identifier, password);
-
   sessionStorage.setItem(
     SUPABASE_ADMIN_SESSION_KEY,
     JSON.stringify({
       accessToken,
       refreshToken: authResponse.refresh_token,
       userId: user.id,
-      email: user.email || identifier,
+      email: user.email || resolvedEmail || identifier,
       provider: 'supabase',
       savedAt: Date.now(),
     })

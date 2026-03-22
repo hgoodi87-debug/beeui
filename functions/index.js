@@ -161,12 +161,18 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
     const inputPassword = String(password || '').trim();
     const hasPassword = (data) => String(data?.password || '').trim().length > 0;
     const isUidMappedRecord = (docId, data) => Boolean(data?.uid && data.uid === docId);
-    const getIdentifiers = (docId, data) => new Set([
-        docId,
-        data?.name,
-        data?.loginId,
-        data?.email
-    ].map(normalize).filter(Boolean));
+    const getIdentifiers = (docId, data) => {
+        const inferredRole = inferRole(docId, data);
+        const allowBranchIdLogin = Boolean(data?.branchId) && !['super', 'hq', 'finance', 'cs'].includes(inferredRole);
+
+        return new Set([
+            docId,
+            data?.name,
+            data?.loginId,
+            data?.email,
+            allowBranchIdLogin ? data?.branchId : ''
+        ].map(normalize).filter(Boolean));
+    };
     const inferRole = (docId, data) => {
         if (ADMIN_ROLES.has(data?.role)) {
             return data.role;

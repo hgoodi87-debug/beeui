@@ -14,7 +14,7 @@ interface EmployeeListTabProps {
 const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
   admins, locations, onEdit, onDelete, onAdd, onDeduplicate
 }) => {
-  const [activeCategory, setActiveCategory] = React.useState<'SUPER' | 'TITLE' | 'BRANCH'>('SUPER');
+  const [activeCategory, setActiveCategory] = React.useState<'ALL' | 'SUPER' | 'TITLE' | 'BRANCH'>('ALL');
   const [selectedSubFilter, setSelectedSubFilter] = React.useState<string>('ALL');
   const [searchQ, setSearchQ] = React.useState('');
 
@@ -38,6 +38,8 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
 
       if (activeCategory === 'SUPER') {
         if (!isSuper) return false;
+      } else if (activeCategory === 'ALL') {
+        // [스봉이] 전체 명부는 괜히 숨기지 말고 그대로 다 보여줘야 덜 놀라죠, 참나.
       } else if (activeCategory === 'TITLE') {
         // 슈퍼 관리자가 아니면서 지점 정보가 없는(HQ) 직원이어야 함
         if (isSuper || admin.branchId) return false;
@@ -64,6 +66,7 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
       {/* 카테고리 탭 상단 정렬 */}
       <div className="flex flex-wrap gap-2">
         {[
+          { id: 'ALL', label: '전체 직원', icon: 'fa-users' },
           { id: 'SUPER', label: '슈퍼관리', icon: 'fa-shield-crown' },
           { id: 'TITLE', label: '직책별', icon: 'fa-id-card-clip' },
           { id: 'BRANCH', label: '브랜치 지점', icon: 'fa-building-flag' },
@@ -89,7 +92,7 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
           <input 
             value={searchQ}
             onChange={e => setSearchQ(e.target.value)}
-            placeholder={`${activeCategory === 'SUPER' ? '슈퍼관리자' : activeCategory === 'TITLE' ? '직책' : '지점 직원'} 검색...`} 
+            placeholder={`${activeCategory === 'ALL' ? '전체 직원' : activeCategory === 'SUPER' ? '슈퍼관리자' : activeCategory === 'TITLE' ? '직책' : '지점 직원'} 검색...`} 
             title="직원 검색"
             className="w-full bg-gray-50 pl-11 pr-4 py-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all"
           />
@@ -143,12 +146,18 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
         </div>
       </div>
 
+      <div className="flex items-center justify-between gap-3 text-[11px] font-black text-gray-400 px-1">
+        <span>총 {admins.length}명</span>
+        <span>현재 {filteredAdmins.length}명 표시</span>
+      </div>
+
       {/* 직원 그리드 목록 */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredAdmins.length === 0 ? (
           <div className="col-span-full py-32 text-center text-gray-300">
             <i className="fa-solid fa-user-slash text-5xl mb-4 opacity-20"></i>
             <p className="text-sm font-black italic opacity-40">조건에 맞는 직원이 없습니다.</p>
+            <p className="text-[11px] font-bold opacity-40 mt-2">필터나 검색어부터 한 번 비워보세요.</p>
           </div>
         ) : (
           filteredAdmins.map(admin => {

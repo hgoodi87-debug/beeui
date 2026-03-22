@@ -243,11 +243,11 @@ Supabase 목표:
 
 ### Supabase 버킷 초안 매핑
 
-- `bookings/*` -> `booking-proofs/`
-- `users/*` -> `customer-files/` 또는 `user-private/`
-- `locations/*` -> `branch-assets/`
-- `notices/*` -> `notice-assets/`
-- `hero/*` -> `branding-assets/`
+- `bookings/*` -> `ops-private/`
+- `users/*` -> `customer-private/`
+- `locations/*` -> `branch-public/`
+- `notices/*` -> `backoffice-private/`
+- `hero/*` -> `brand-public/`
 
 ---
 
@@ -329,4 +329,3 @@ Supabase 목표:
 1. `ADMIN_QUERY_MAP.md`
 2. `SUPABASE_OWNER_SETUP_CHECKLIST.md`
 3. `SUPABASE_SCHEMA_DRAFT.md`
-

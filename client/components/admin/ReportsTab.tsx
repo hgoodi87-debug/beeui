@@ -21,8 +21,10 @@ import {
 
 interface ReportsTabProps {
     bookings: BookingState[];
-    startDate?: string;
-    endDate?: string;
+    startDate: string;
+    endDate: string;
+    onStartDateChange: (date: string) => void;
+    onEndDateChange: (date: string) => void;
 }
 
 const COLORS = ['#FACC15', '#3B82F6', '#10B981', '#F87171', '#A78BFA', '#FB923C', '#2DD4BF'];
@@ -46,8 +48,21 @@ const COUNTRY_NAMES: Record<string, string> = {
     'OTHER': 'Other 🌎'
 };
 
-const ReportsTab: React.FC<ReportsTabProps> = ({ bookings, startDate, endDate }) => {
+const ReportsTab: React.FC<ReportsTabProps> = ({ 
+    bookings, 
+    startDate, 
+    endDate,
+    onStartDateChange,
+    onEndDateChange
+}) => {
     const stats = useMemo(() => {
+        const isReportableBooking = (booking: BookingState) => {
+            if (booking.isDeleted) return false;
+            if (booking.status === BookingStatus.CANCELLED) return false;
+            if (booking.status === BookingStatus.REFUNDED) return false;
+            return true;
+        };
+
         const daily: Record<string, any> = {};
         const monthly: Record<string, any> = {};
         const yearly: Record<string, any> = {};
@@ -64,7 +79,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings, startDate, endDate })
         if (end) end.setHours(23, 59, 59, 999);
 
         const validBookings = bookings.filter(b => {
-            if (b.isDeleted || b.status !== BookingStatus.COMPLETED) return false;
+            if (!isReportableBooking(b)) return false;
             if (!start || !end) return true;
             const d = new Date(b.pickupDate || b.createdAt || '');
             return d >= start && d <= end;
@@ -83,7 +98,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings, startDate, endDate })
             const monthKey = `${y}-${m}`;
             const yearKey = y;
 
-            const price = b.finalPrice || 0;
+            const price = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
             cumulativeRevenue += price;
             cumulativeCount += 1;
 
@@ -193,14 +208,39 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings, startDate, endDate })
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Lifetime Impact</p>
                         <p className="text-2xl font-black text-bee-yellow font-mono">₩{stats.lifetimeRevenue.toLocaleString()}</p>
                     </div>
-                    <div className="w-px h-10 bg-gray-800"></div>
                     <div className="bg-white/5 p-4 rounded-3xl border border-white/10 backdrop-blur-md">
                         <i className="fa-solid fa-wand-magic-sparkles text-bee-yellow text-xl"></i>
                     </div>
                 </div>
             </div>
 
-            {/* 📈 Executive Summary Section */}
+            {/* [스봉이] 사장님 피드백대로 날짜 필터 깔끔하게 넣어드렸어요 💅 */}
+            <div className="flex flex-wrap items-center gap-4 px-4 py-6 bg-white rounded-[32px] border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-bee-black flex items-center justify-center text-bee-yellow shadow-lg">
+                        <i className="fa-solid fa-calendar-range text-xs"></i>
+                    </div>
+                    <span className="text-xs font-black text-gray-500 uppercase tracking-widest">조회 기간 설정</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <input 
+                        type="date" 
+                        value={startDate}
+                        onChange={(e) => onStartDateChange(e.target.value)}
+                        className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-bee-black focus:border-bee-yellow outline-none transition-all cursor-pointer"
+                    />
+                    <span className="text-gray-300 font-black">~</span>
+                    <input 
+                        type="date" 
+                        value={endDate}
+                        onChange={(e) => onEndDateChange(e.target.value)}
+                        className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-bee-black focus:border-bee-yellow outline-none transition-all cursor-pointer"
+                    />
+                </div>
+                <div className="ml-auto hidden md:block">
+                    <span className="text-[10px] font-bold text-gray-300 italic">※ 선택하신 기간의 데이터가 실시간으로 분석됩니다. 💅</span>
+                </div>
+            </div>
             <section className="space-y-6">
                 <div className="flex items-center gap-3 px-2">
                     <div className="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
@@ -209,7 +249,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings, startDate, endDate })
                     <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">Executive Summary</h2>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:translate-y-[-4px] transition-all group relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
                              <i className="fa-solid fa-calendar-check text-5xl"></i>
@@ -227,16 +267,6 @@ const ReportsTab: React.FC<ReportsTabProps> = ({ bookings, startDate, endDate })
                         <h3 className="text-2xl font-black text-blue-500 italic">₩{stats.avgOrderValue.toLocaleString()}</h3>
                         <p className="mt-3 text-[10px] font-bold text-gray-300">Total Bookings: {stats.lifetimeCount.toLocaleString()}건</p>
                     </div>
-
-                    <div className="bg-bee-yellow p-6 rounded-[32px] shadow-xl shadow-bee-yellow/10 hover:translate-y-[-4px] transition-all group relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 transition-transform duration-700">
-                             <i className="fa-solid fa-star text-5xl"></i>
-                        </div>
-                        <p className="text-[10px] font-black text-bee-black/30 uppercase tracking-widest mb-2 text-bee-black">Active Days</p>
-                        <h3 className="text-2xl font-black text-bee-black italic">{stats.activeDays.toLocaleString()} Days</h3>
-                        <p className="mt-3 text-[10px] font-bold text-bee-black/50">운영 기간 내 영업일 기준</p>
-                    </div>
-
                     <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:translate-y-[-4px] transition-all group relative overflow-hidden">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">성장률 (Orders)</p>
                         <h3 className={`text-2xl font-black italic ${stats.countGrowth >= 0 ? 'text-emerald-500' : 'text-orange-500'}`}>

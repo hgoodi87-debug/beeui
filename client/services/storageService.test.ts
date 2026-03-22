@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { StorageService } from './storageService';
-import { doc, getDoc, getDocs, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, getDocs, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
 
 // firebase/firestore mock은 setupTests.ts에서 이미 처리됨
 // 하지만 개별 테스트에서 구현을 커스텀하기 위해 다시 가져옴
@@ -68,6 +68,99 @@ describe('StorageService', () => {
     });
 
     describe('deduplicateAdmins', () => {
+        it('filters uid-mapped shadow admin docs from the employee directory list', async () => {
+            (getDocs as any).mockResolvedValueOnce({
+                docs: [
+                    {
+                        id: 'anonymous-uid-001',
+                        data: () => ({
+                            uid: 'anonymous-uid-001',
+                            name: '이서연',
+                            email: 'seoyeon@bee-liber.com',
+                            loginId: 'seoyeon',
+                            role: 'staff',
+                            jobTitle: 'CS',
+                            branchId: 'hq',
+                            createdAt: '2026-03-20T00:00:00.000Z',
+                            updatedAt: '2026-03-21T10:00:00.000Z'
+                        })
+                    },
+                    {
+                        id: 'admin-seoyeon',
+                        data: () => ({
+                            name: '이서연',
+                            email: 'seoyeon@bee-liber.com',
+                            loginId: 'seoyeon',
+                            password: '1234',
+                            role: 'staff',
+                            jobTitle: 'CS',
+                            branchId: 'hq',
+                            createdAt: '2026-03-20T00:00:00.000Z',
+                            updatedAt: '2026-03-20T10:00:00.000Z'
+                        })
+                    }
+                ]
+            });
+
+            const admins = await StorageService.getAdmins();
+
+            expect(admins).toHaveLength(1);
+            expect(admins[0].id).toBe('admin-seoyeon');
+        });
+
+        it('filters uid-mapped shadow admin docs from realtime directory updates', async () => {
+            const unsubscribe = vi.fn();
+            const callback = vi.fn();
+
+            (onSnapshot as any).mockImplementationOnce((_query: unknown, onNext: (snapshot: any) => void) => {
+                onNext({
+                    docs: [
+                        {
+                            id: 'anonymous-uid-001',
+                            data: () => ({
+                                uid: 'anonymous-uid-001',
+                                name: '이서연',
+                                email: 'seoyeon@bee-liber.com',
+                                loginId: 'seoyeon',
+                                role: 'staff',
+                                jobTitle: 'CS',
+                                branchId: 'hq',
+                                createdAt: '2026-03-20T00:00:00.000Z',
+                                updatedAt: '2026-03-21T10:00:00.000Z'
+                            })
+                        },
+                        {
+                            id: 'admin-seoyeon',
+                            data: () => ({
+                                name: '이서연',
+                                email: 'seoyeon@bee-liber.com',
+                                loginId: 'seoyeon',
+                                password: '1234',
+                                role: 'staff',
+                                jobTitle: 'CS',
+                                branchId: 'hq',
+                                createdAt: '2026-03-20T00:00:00.000Z',
+                                updatedAt: '2026-03-20T10:00:00.000Z'
+                            })
+                        }
+                    ]
+                });
+
+                return unsubscribe;
+            });
+
+            const cleanup = StorageService.subscribeAdmins(callback);
+
+            expect(callback).toHaveBeenCalledTimes(1);
+            expect(callback).toHaveBeenCalledWith([
+                expect.objectContaining({
+                    id: 'admin-seoyeon',
+                    name: '이서연'
+                })
+            ]);
+            expect(cleanup).toBe(unsubscribe);
+        });
+
         it('preserves password-bearing canonical admin records over uid-mapped duplicates', async () => {
             const batchDelete = vi.fn();
             const batchCommit = vi.fn().mockResolvedValue(undefined);

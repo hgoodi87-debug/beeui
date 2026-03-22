@@ -21,6 +21,7 @@ interface SupabaseAdminSession {
   email: string;
   provider: 'supabase';
   savedAt: number;
+  expiresAt?: number;
 }
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
@@ -28,10 +29,36 @@ const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.tr
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
 const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const ACCESS_TOKEN_FALLBACK_TTL_MS = 55 * 60 * 1000;
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 const clearStoredSupabaseAdminSession = () => {
   localStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
   sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
+};
+
+const persistSupabaseAdminSession = (session: SupabaseAdminSession) => {
+  const serialized = JSON.stringify(session);
+  localStorage.setItem(SUPABASE_ADMIN_SESSION_KEY, serialized);
+  sessionStorage.setItem(SUPABASE_ADMIN_SESSION_KEY, serialized);
+};
+
+const resolveSessionExpiry = (savedAt: number, expiresAt?: number) => {
+  if (typeof expiresAt === 'number' && Number.isFinite(expiresAt) && expiresAt > 0) {
+    return expiresAt;
+  }
+
+  return savedAt + ACCESS_TOKEN_FALLBACK_TTL_MS;
+};
+
+const isSessionPastKstWindow = (savedAt: number) => {
+  if (!savedAt) return true;
+  return Date.now() - savedAt > ADMIN_SESSION_TTL_MS;
+};
+
+const shouldRefreshSession = (session: SupabaseAdminSession) => {
+  if (!session.refreshToken) return false;
+  return session.expiresAt - Date.now() <= ACCESS_TOKEN_REFRESH_BUFFER_MS;
 };
 
 const normalizeRole = (role?: string) => {
@@ -91,7 +118,7 @@ const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
   try {
     const parsed = JSON.parse(raw) as Partial<SupabaseAdminSession>;
     const savedAt = Number(parsed.savedAt || 0);
-    const isExpired = !savedAt || Date.now() - savedAt > ADMIN_SESSION_TTL_MS;
+    const isExpired = isSessionPastKstWindow(savedAt);
 
     if (!parsed.accessToken || !parsed.userId || !parsed.email || isExpired) {
       clearStoredSupabaseAdminSession();
@@ -105,10 +132,11 @@ const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
       email: parsed.email,
       provider: 'supabase',
       savedAt,
+      expiresAt: resolveSessionExpiry(savedAt, Number(parsed.expiresAt || 0)),
     };
 
-    // 카메라 인식으로 새 탭/웹뷰가 열려도 24시간 세션이 살아남도록 localStorage 기준으로 승격합니다.
-    localStorage.setItem(SUPABASE_ADMIN_SESSION_KEY, JSON.stringify(session));
+    // 새 탭이나 웹뷰에서도 같은 24시간 세션을 붙잡도록 두 저장소를 동기화합니다.
+    persistSupabaseAdminSession(session);
 
     return session;
   } catch (error) {
@@ -123,6 +151,98 @@ export const hasActiveAdminSession = () => {
     return true;
   }
   return Boolean(readSupabaseAdminSession());
+};
+
+export const getActiveAdminAccessToken = () => {
+  if (getAdminAuthProvider() !== 'supabase') {
+    return '';
+  }
+  return readSupabaseAdminSession()?.accessToken || '';
+};
+
+export const ensureActiveAdminSession = async () => {
+  if (getAdminAuthProvider() !== 'supabase') {
+    return null;
+  }
+
+  const currentSession = readSupabaseAdminSession();
+  if (!currentSession) {
+    return null;
+  }
+
+  if (!shouldRefreshSession(currentSession)) {
+    return currentSession;
+  }
+
+  try {
+    const authResponse = await supabaseRequest<{
+      access_token: string;
+      refresh_token?: string;
+      expires_in?: number;
+      user?: {
+        id?: string;
+        email?: string;
+      };
+    }>(
+      '/auth/v1/token?grant_type=refresh_token',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          refresh_token: currentSession.refreshToken,
+        }),
+      }
+    );
+
+    const refreshedSession: SupabaseAdminSession = {
+      accessToken: authResponse.access_token,
+      refreshToken: authResponse.refresh_token || currentSession.refreshToken,
+      userId: authResponse.user?.id || currentSession.userId,
+      email: authResponse.user?.email || currentSession.email,
+      provider: 'supabase',
+      savedAt: currentSession.savedAt,
+      expiresAt: resolveSessionExpiry(
+        Date.now(),
+        authResponse.expires_in ? Date.now() + authResponse.expires_in * 1000 : undefined
+      ),
+    };
+
+    persistSupabaseAdminSession(refreshedSession);
+    return refreshedSession;
+  } catch (error) {
+    console.warn('[AdminAuth] Supabase 관리자 세션 갱신 실패:', error);
+
+    if (isSessionPastKstWindow(currentSession.savedAt)) {
+      clearStoredSupabaseAdminSession();
+      return null;
+    }
+
+    return currentSession;
+  }
+};
+
+export const getActiveAdminRequestHeaders = async (): Promise<Record<string, string>> => {
+  const headers: Record<string, string> = {
+    'X-Admin-Auth-Provider': getAdminAuthProvider(),
+  };
+
+  const supabaseAccessToken = (await ensureActiveAdminSession())?.accessToken || getActiveAdminAccessToken();
+  if (supabaseAccessToken) {
+    headers['X-Supabase-Access-Token'] = supabaseAccessToken;
+  }
+
+  try {
+    const { auth } = await import('../firebaseApp');
+    const currentUser = auth.currentUser || await ensureAuth();
+    const firebaseIdToken = await currentUser?.getIdToken?.();
+
+    if (firebaseIdToken) {
+      headers.Authorization = `Bearer ${firebaseIdToken}`;
+    }
+  } catch (error) {
+    console.warn('[AdminAuth] Firebase 요청 토큰 확보 실패:', error);
+  }
+
+  return headers;
 };
 
 export const clearAdminAuthSession = async () => {
@@ -247,6 +367,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   const authResponse = await supabaseRequest<{
     access_token: string;
     refresh_token: string;
+    expires_in?: number;
     user: {
       id: string;
       email?: string;
@@ -335,17 +456,18 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
 
   const primaryBranch = assignments.find((entry) => entry.is_primary)?.branch || assignments[0]?.branch || null;
 
-  localStorage.setItem(
-    SUPABASE_ADMIN_SESSION_KEY,
-    JSON.stringify({
-      accessToken,
-      refreshToken: authResponse.refresh_token,
-      userId: user.id,
-      email: user.email || resolvedEmail || identifier,
-      provider: 'supabase',
-      savedAt: Date.now(),
-    })
-  );
+  persistSupabaseAdminSession({
+    accessToken,
+    refreshToken: authResponse.refresh_token,
+    userId: user.id,
+    email: user.email || resolvedEmail || identifier,
+    provider: 'supabase',
+    savedAt: Date.now(),
+    expiresAt: resolveSessionExpiry(
+      Date.now(),
+      authResponse.expires_in ? Date.now() + authResponse.expires_in * 1000 : undefined
+    ),
+  });
 
   return {
     name: employee.name || profile?.display_name || user.email || identifier,

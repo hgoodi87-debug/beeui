@@ -60,12 +60,16 @@ Supabase에서 결정해야 할 것:
 
 Supabase Storage에서 미리 만들어둘 버킷:
 
-1. `booking-proofs`
-2. `delivery-proofs`
-3. `employee-docs`
-4. `branch-assets`
-5. `notice-assets`
-6. `branding-assets`
+1. `brand-public`
+2. `branch-public`
+3. `ops-private`
+4. `customer-private`
+5. `backoffice-private`
+
+권장 구분:
+
+- `brand-public`, `branch-public` = 공개 버킷
+- `ops-private`, `customer-private`, `backoffice-private` = 비공개 버킷
 
 각 버킷별로 정해야 할 것:
 
@@ -74,6 +78,11 @@ Supabase Storage에서 미리 만들어둘 버킷:
 - 서명 URL이 필요한지
 - 최대 파일 크기
 - 허용 MIME 타입
+
+실행용 정책 초안:
+
+- [SUPABASE_STORAGE_POLICY_DRAFT.md](/Users/cm/Desktop/beeliber/beeliber-main/docs/SUPABASE_STORAGE_POLICY_DRAFT.md)
+- [20260322_000002_storage_bucket_rls_draft.sql](/Users/cm/Desktop/beeliber/beeliber-main/supabase/migrations/20260322_000002_storage_bucket_rls_draft.sql)
 
 ## E. 역할 체계 승인
 
@@ -174,13 +183,14 @@ Supabase Storage에서 미리 만들어둘 버킷:
 
 ### Storage
 
-- 위 버킷 6개 생성
+- 위 버킷 5개 생성
 
 ### SQL 준비
 
 - `uuid` 기본 생성 전략 확인
 - `updated_at trigger` 패턴 준비
 - soft delete용 `status` 컬럼 정책 확정
+- `storage.objects` RLS와 signed URL 전략 확인
 
 ---
 

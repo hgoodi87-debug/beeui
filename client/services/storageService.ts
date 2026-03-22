@@ -51,6 +51,93 @@ const runSnapshotFallback = async <T>({
   }
 };
 
+const normalizeAdminField = (value?: string) => value?.trim().toLowerCase() || '';
+
+const getAdminDirectoryFreshness = (admin: AdminUser) =>
+  new Date(
+    admin.updatedAt ||
+    admin.lastLogin ||
+    admin.createdAt ||
+    admin.security?.lastLoginAt ||
+    0
+  ).getTime();
+
+const hasAdminDirectoryPassword = (admin: AdminUser) => String(admin.password || '').trim().length > 0;
+
+const isUidMappedAdminRecord = (admin: AdminUser) => Boolean(admin.uid && admin.uid === admin.id);
+
+const getAdminDirectoryCompleteness = (admin: AdminUser) => ([
+  admin.email,
+  admin.loginId,
+  hasAdminDirectoryPassword(admin) ? 'password' : '',
+  admin.phone,
+  admin.branchId,
+  admin.role,
+  admin.orgType,
+  admin.memo,
+  admin.updatedAt,
+  Array.isArray(admin.permissions) && admin.permissions.length > 0 ? 'permissions' : ''
+].filter(Boolean).length);
+
+const getAdminDirectoryIdentityKey = (admin: AdminUser) => {
+  const name = normalizeAdminField(admin.name);
+  const email = normalizeAdminField(admin.email);
+  const loginId = normalizeAdminField(admin.loginId);
+
+  // [스봉이] 이름만 같은 애매한 사람까지 합치면 대형 사고니까, 로그인 식별자 있는 경우만 묶어요.
+  if (!name || (!email && !loginId)) return '';
+
+  return [
+    name,
+    email,
+    loginId,
+    normalizeAdminField(admin.role),
+    normalizeAdminField(admin.jobTitle),
+    normalizeAdminField(admin.branchId),
+    normalizeAdminField(admin.orgType)
+  ].join('|');
+};
+
+const sortAdminDirectoryCandidates = (left: AdminUser, right: AdminUser) => {
+  const credentialDiff = Number(hasAdminDirectoryPassword(right)) - Number(hasAdminDirectoryPassword(left));
+  if (credentialDiff !== 0) return credentialDiff;
+
+  const canonicalDiff = Number(isUidMappedAdminRecord(left)) - Number(isUidMappedAdminRecord(right));
+  if (canonicalDiff !== 0) return canonicalDiff;
+
+  const completenessDiff = getAdminDirectoryCompleteness(right) - getAdminDirectoryCompleteness(left);
+  if (completenessDiff !== 0) return completenessDiff;
+
+  return getAdminDirectoryFreshness(right) - getAdminDirectoryFreshness(left);
+};
+
+const collapseAdminDirectoryEntries = (admins: AdminUser[]): AdminUser[] => {
+  const grouped = new Map<string, AdminUser[]>();
+  const passthrough: AdminUser[] = [];
+
+  admins.forEach((admin) => {
+    const key = getAdminDirectoryIdentityKey(admin);
+    if (!key) {
+      passthrough.push(admin);
+      return;
+    }
+
+    const existing = grouped.get(key) || [];
+    existing.push(admin);
+    grouped.set(key, existing);
+  });
+
+  const collapsed = [
+    ...passthrough,
+    ...Array.from(grouped.values()).map((group) => {
+      if (group.length === 1) return group[0];
+      return [...group].sort(sortAdminDirectoryCandidates)[0];
+    })
+  ];
+
+  return collapsed.sort((a, b) => getAdminDirectoryFreshness(b) - getAdminDirectoryFreshness(a));
+};
+
 export const StorageService = {
   // --- Configuration ---
   saveCloudConfig: (config: GoogleCloudConfig) => {
@@ -820,7 +907,8 @@ export const StorageService = {
   getAdmins: async (): Promise<AdminUser[]> => {
     try {
       const snap = await getDocs(collection(db, "admins"));
-      return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
+      const admins = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
+      return collapseAdminDirectoryEntries(admins);
     } catch (e) {
       console.error("Failed to get admins", e);
       return [];
@@ -999,7 +1087,8 @@ export const StorageService = {
       const q = query(dbRef, orderBy("createdAt", "desc"));
       return onSnapshot(q, (snapshot) => {
         const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
-        callback(items);
+        const normalizedItems = collapseAdminDirectoryEntries(items);
+        callback(normalizedItems);
       }, (error) => {
         console.error("Admins subscription error (likely index missing):", error);
         const simpleQ = query(dbRef, limit(100));
@@ -1007,8 +1096,7 @@ export const StorageService = {
           sourceQuery: simpleQ,
           parser: (snap) => {
             const items = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
-            items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-            return items;
+            return collapseAdminDirectoryEntries(items);
           },
           callback,
           label: "Admins subscription"

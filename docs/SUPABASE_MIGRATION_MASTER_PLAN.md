@@ -220,10 +220,16 @@
 
 ### 권장 버킷 구조
 
-- `booking-proofs/`
-- `delivery-proofs/`
-- `employee-docs/`
-- `partner-settlement-files/`
+- `brand-public`
+- `branch-public`
+- `ops-private`
+- `customer-private`
+- `backoffice-private`
+
+메모:
+
+- 공개 자산은 `brand-public`, `branch-public`
+- 운영 증빙/고객 파일/정산 첨부는 private 버킷으로 분리
 
 ## Phase 5. 병행 운영과 컷오버
 

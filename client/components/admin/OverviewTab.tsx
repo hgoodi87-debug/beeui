@@ -85,8 +85,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
             </div>
 
-            {/* A. 프리미엄 KPI 위젯 - 운영 흐름 중심으로 재정렬 💅 */}
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+            {/* A. 프리미엄 KPI 위젯 - [스봉이] 모바일 가독성 및 줄바꿈 최적화 💅 */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
                 {[
                     { label: '오늘 전체 가동', value: stats.totalToday, color: 'text-bee-black', bg: 'bg-white' },
                     { label: '입고 확인 대기', value: stats.expectedIn, color: 'text-orange-600', bg: 'bg-orange-50', isPulse: stats.expectedIn > 0 },
@@ -95,15 +95,15 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                     { label: '정산 미확정', value: stats.unsettledCount, color: 'text-purple-600', bg: 'bg-purple-50' },
                     { label: '오늘 결제 완료', value: stats.newPayments, color: 'text-emerald-600', bg: 'bg-emerald-50' },
                 ].map((kpi, idx) => (
-                    <div key={idx} className={`${kpi.bg} p-5 rounded-3xl shadow-sm border border-gray-100/50 hover:shadow-md transition-all cursor-default group`}>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1 group-hover:text-bee-black transition-colors">
+                    <div key={idx} className={`${kpi.bg} p-4 md:p-5 rounded-3xl shadow-sm border border-gray-100/50 hover:shadow-md transition-all cursor-default group flex flex-col justify-between min-h-[90px] md:min-h-[110px]`}>
+                        <span className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-tight md:tracking-widest block mb-1 group-hover:text-bee-black transition-colors whitespace-nowrap overflow-hidden text-ellipsis">
                             {kpi.label}
                         </span>
                         <div className="flex items-center gap-2">
-                            <h4 className={`text-xl font-black ${kpi.color}`}>
-                                {kpi.value}
+                            <h4 className={`text-xl md:text-2xl font-black ${kpi.color} tabular-nums`}>
+                                {kpi.value.toLocaleString()}
                             </h4>
-                            {kpi.isPulse && <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>}
+                            {kpi.isPulse && <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-orange-500 animate-ping"></span>}
                         </div>
                     </div>
                 ))}
@@ -204,11 +204,11 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                         </h3>
                         <button onClick={() => setActiveTab('LOCATIONS')} className="text-[10px] font-black text-gray-400 hover:text-bee-black transition-colors uppercase tracking-widest">Manage Centers →</button>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
+                    <div className="overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+                        <table className="w-full text-left min-w-[700px] md:min-w-full">
                             <thead>
-                                <tr className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                    <th className="pb-4">지점명</th>
+                                <tr className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                                    <th className="pb-4 sticky left-0 bg-white group-hover:bg-gray-50 transition-colors z-10">지점명</th>
                                     <th className="pb-4">오늘 매출</th>
                                     <th className="pb-4">오늘 전체</th>
                                     <th className="pb-4">입고대기</th>
@@ -221,19 +221,19 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                             <tbody className="divide-y divide-gray-50">
                                 {branchStats.map((branch, idx) => (
                                     <tr key={idx} className="group hover:bg-gray-50 transition-colors">
-                                        <td className="py-4 font-black text-bee-black">
+                                        <td className="py-4 font-black text-bee-black sticky left-0 bg-white group-hover:bg-gray-50 transition-colors z-10">
                                             <div className="flex items-center gap-2">
                                                 <span className="w-1 h-3 bg-bee-yellow rounded-full"></span>
-                                                {branch.name}
+                                                <span className="whitespace-nowrap">{branch.name}</span>
                                             </div>
                                         </td>
                                         <td className="py-4 font-black text-emerald-600 tabular-nums">₩{branch.revenue.toLocaleString()}</td>
-                                        <td className="py-4 font-bold text-gray-600">{branch.bookings}건</td>
+                                        <td className="py-4 font-bold text-gray-600 tabular-nums">{branch.bookings}건</td>
                                         <td className="py-4">
-                                            <span className={`font-bold ${branch.pending > 0 ? 'text-orange-500' : 'text-gray-400'}`}>{branch.pending}</span>
+                                            <span className={`font-black tabular-nums border px-1.5 py-0.5 rounded-md ${branch.pending > 0 ? 'bg-orange-50 text-orange-500 border-orange-100' : 'text-gray-300 border-transparent'}`}>{branch.pending}</span>
                                         </td>
-                                        <td className="py-4 font-bold text-gray-600">{branch.active}</td>
-                                        <td className="py-4 font-bold text-bee-yellow">{branch.completed}</td>
+                                        <td className="py-4 font-bold text-gray-600 tabular-nums">{branch.active}</td>
+                                        <td className="py-4 font-bold text-bee-yellow tabular-nums">{branch.completed}</td>
                                         <td className="py-4">
                                             {branch.issues > 0 ? (
                                                 <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-black animate-pulse">
@@ -243,9 +243,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                                         </td>
                                         <td className="py-4 text-center">
                                             {branch.cashClosed ? (
-                                                <span className="text-emerald-500 text-xs font-black underline decoration-emerald-200 underline-offset-4">CLOSED</span>
+                                                <span className="text-emerald-500 text-[10px] font-black underline decoration-emerald-200 underline-offset-4">CLOSED</span>
                                             ) : (
-                                                <span className="text-gray-300 text-xs font-bold">OPEN</span>
+                                                <span className="text-gray-300 text-[10px] font-bold">OPEN</span>
                                             )}
                                         </td>
                                     </tr>

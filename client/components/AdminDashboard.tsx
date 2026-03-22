@@ -6,6 +6,7 @@ import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType,
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
 import { StorageService } from '../services/storageService';
 import { AuditService } from '../services/auditService';
+import { uploadBranchManagedAsset, uploadHeroManagedAsset, uploadNoticeManagedAsset } from '../services/supabaseStorageUploadService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 import { useQueryClient } from '@tanstack/react-query';
@@ -1770,7 +1771,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const url = await StorageService.uploadFile(file, `notices/${Date.now()}_${file.name}`);
+        const url = await uploadNoticeManagedAsset(file, {
+          firebasePath: `notices/${Date.now()}_${file.name}`,
+          noticeId: noticeForm.id,
+          originalFileName: file.name,
+        });
         setNoticeForm({ ...noticeForm, imageUrl: url });
       } catch (e: any) {
         console.error("Notice upload error:", e);
@@ -1783,7 +1788,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const url = await StorageService.uploadFile(file, `locations/${Date.now()}_pickup_${file.name}`);
+        const url = await uploadBranchManagedAsset(file, {
+          firebasePath: `locations/${Date.now()}_pickup_${file.name}`,
+          branchCode: locForm.branchCode || locForm.shortCode || locForm.id || 'branch',
+          branchType: locForm.type === LocationType.PARTNER || locForm.isPartner ? 'partner' : 'hub',
+          assetCategory: 'pickup',
+          entityId: locForm.id,
+          originalFileName: file.name,
+        });
         setLocForm({ ...locForm, pickupImageUrl: url });
       } catch (e: any) {
         console.error("Pickup image upload error:", e);
@@ -1796,7 +1808,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const url = await StorageService.uploadFile(file, `locations/${Date.now()}_main_${file.name}`);
+        const url = await uploadBranchManagedAsset(file, {
+          firebasePath: `locations/${Date.now()}_main_${file.name}`,
+          branchCode: locForm.branchCode || locForm.shortCode || locForm.id || 'branch',
+          branchType: locForm.type === LocationType.PARTNER || locForm.isPartner ? 'partner' : 'hub',
+          assetCategory: 'main',
+          entityId: locForm.id,
+          originalFileName: file.name,
+        });
         setLocForm({ ...locForm, imageUrl: url });
       } catch (e: any) {
         console.error("Location main image upload error:", e);
@@ -1868,7 +1887,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const url = await StorageService.uploadFile(file, `hero/${Date.now()}_${file.name}`);
+        const url = await uploadHeroManagedAsset(file, {
+          firebasePath: `hero/${Date.now()}_${file.name}`,
+          assetCategory: field === 'imageUrl' ? 'hero-image' : 'hero-mobile-image',
+          entityId: 'hero-config',
+          originalFileName: file.name,
+        });
         setHeroConfig({ ...heroConfig, [field]: url });
         alert(`이미지 업로드 성공! [${field === 'imageUrl' ? 'PC' : '모바일'}] 저장 버튼을 눌러야 최종 반영됩니다.`);
       } catch (e: any) {
@@ -1888,7 +1912,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
       setIsSaving(true);
       try {
-        const url = await StorageService.uploadFile(file, `hero/videos/${Date.now()}_${file.name}`);
+        const url = await uploadHeroManagedAsset(file, {
+          firebasePath: `hero/videos/${Date.now()}_${file.name}`,
+          assetCategory: 'hero-video',
+          entityId: 'hero-config',
+          originalFileName: file.name,
+        });
         setHeroConfig({ ...heroConfig, videoUrl: url });
         alert("영상 업로드가 완료되었습니다. 반드시 아래 '히어로 설정 저장하기' 버튼을 눌러야 확정됩니다.");
       } catch (e: any) {
@@ -2373,6 +2402,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               bookings={bookings} 
               startDate={revenueStartDate}
               endDate={revenueEndDate}
+              onStartDateChange={setRevenueStartDate}
+              onEndDateChange={setRevenueEndDate}
             />
           )}
 

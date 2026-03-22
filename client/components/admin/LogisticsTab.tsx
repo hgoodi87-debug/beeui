@@ -495,16 +495,19 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                 )}
                             </div>
 
-                            {/* 3-Tier Badges for Mobile */}
-                            <div className="flex flex-wrap gap-2">
-                                <div className={`text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1.5 border ${b.paymentStatus === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                            {/* 3-Tier Badges for Mobile - [스봉이] 줄바꿈 방지 및 가독성 최적화 💅 */}
+                            <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-2 pb-1">
+                                <div className="shrink-0 text-[8px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5 border whitespace-nowrap bg-emerald-50 text-emerald-600 border-emerald-100">
+                                    <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
                                     {b.paymentStatus === 'paid' ? '결제완료' : '미결제'}
                                 </div>
-                                <div className={`text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1.5 border ${b.settlementStatus === '정산확정' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
+                                <div className="shrink-0 text-[8px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5 border whitespace-nowrap bg-blue-50 text-blue-600 border-blue-100">
+                                    <i className="fa-solid fa-coins text-[7px]"></i>
                                     {b.settlementStatus || '정산미정'}
                                 </div>
                                 {b.auditNote && (
-                                    <div className="text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1.5 bg-orange-50 text-orange-600 border border-orange-100">
+                                    <div className="shrink-0 text-[8px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5 bg-orange-50 text-orange-600 border border-orange-100 whitespace-nowrap animate-pulse">
+                                        <i className="fa-solid fa-triangle-exclamation text-[7px]"></i>
                                         이슈 대응필요
                                     </div>
                                 )}
@@ -556,36 +559,42 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                 </div>
             </div>
 
-            {/* [스봉이] 일괄 처리 플로팅 액션바 💅✨ */}
+            {/* [스봉이] 일괄 처리 플로팅 액션바 - 모바일 터짐 방지 및 세련된 레이아웃 💅✨ */}
             {selectedBookingIds.length > 0 && (
-                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in">
-                    <div className="bg-bee-black/90 backdrop-blur-2xl px-8 py-5 rounded-[30px] shadow-2xl border border-white/10 flex items-center gap-8 min-w-[500px]">
-                        <div className="flex flex-col">
-                            <span className="text-bee-yellow text-[10px] font-black uppercase tracking-widest">Selected</span>
-                            <span className="text-white text-xl font-black">{selectedBookingIds.length}<span className="text-sm ml-1 opacity-50 font-medium">items</span></span>
+                <div className="fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in w-[calc(100%-32px)] md:w-auto md:min-w-[500px] max-w-2xl px-4">
+                    <div className="bg-bee-black/90 backdrop-blur-2xl px-6 py-4 md:px-8 md:py-5 rounded-[28px] md:rounded-[30px] shadow-2xl border border-white/10 flex flex-col md:flex-row items-center gap-4 md:gap-8">
+                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                            <div className="flex flex-col">
+                                <span className="text-bee-yellow text-[9px] font-black uppercase tracking-widest">Selected</span>
+                                <span className="text-white text-lg font-black">{selectedBookingIds.length}<span className="text-xs ml-1 opacity-50 font-medium">items</span></span>
+                            </div>
+                            <div className="hidden md:block h-10 w-[1px] bg-white/10 mx-2"></div>
+                            <button 
+                                onClick={() => setSelectedBookingIds([])}
+                                className="md:hidden text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-tighter px-3 py-2 bg-white/5 rounded-xl border border-white/10"
+                            >
+                                취소
+                            </button>
                         </div>
                         
-                        <div className="h-10 w-[1px] bg-white/10 mx-2"></div>
-
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 w-full md:w-auto">
                             <select 
                                 onChange={(e) => handleBatchUpdateStatus(e.target.value as BookingStatus)}
                                 disabled={isBatchUpdating}
                                 title="일괄 상태 변경"
-                                aria-label="선택된 예약 상태 일괄 변경"
-                                className="bg-white/10 border border-white/20 text-white text-xs font-black px-4 py-2.5 rounded-xl focus:ring-bee-yellow focus:border-bee-yellow outline-none transition-all cursor-pointer hover:bg-white/20"
+                                className="flex-1 md:flex-none bg-white/10 border border-white/20 text-white text-[10px] font-black px-4 py-3 rounded-xl focus:ring-bee-yellow focus:border-bee-yellow outline-none transition-all cursor-pointer hover:bg-white/20 appearance-none"
                             >
-                                <option value="" className="text-black">상태 일괄 변경 선택...</option>
-                                <option value="PENDING" className="text-black">접수 대기 (PENDING)</option>
-                                <option value="TRANSIT" className="text-black">이동중 (TRANSIT)</option>
-                                <option value="ARRIVED" className="text-black">도도착 (ARRIVED)</option>
-                                <option value="COMPLETED" className="text-black">완료 (COMPLETED)</option>
-                                <option value="CANCELLED" className="text-black">예약취소 (CANCELLED)</option>
+                                <option value="" className="text-black">상태 일괄 변경...</option>
+                                <option value="PENDING" className="text-black">접수 대기</option>
+                                <option value="TRANSIT" className="text-black">이동중</option>
+                                <option value="ARRIVED" className="text-black">도착</option>
+                                <option value="COMPLETED" className="text-black">완료</option>
+                                <option value="CANCELLED" className="text-black">취소/환불</option>
                             </select>
 
                             <button 
                                 onClick={() => setSelectedBookingIds([])}
-                                className="text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-tighter px-3 py-2 transition-all"
+                                className="hidden md:block text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-tighter px-3 py-2 transition-all"
                             >
                                 Clear Selection
                             </button>

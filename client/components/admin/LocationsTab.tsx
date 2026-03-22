@@ -288,35 +288,35 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                 </div>
             </div>
 
-            {/* --- KPI Overview --- */}
+            {/* --- KPI Overview - [스봉이] 모바일 가독성 최적화 💅 --- */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
-                <div className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm flex flex-col justify-between">
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1"><i className="fa-solid fa-network-wired"></i> 전체 네트워크</p>
-                    <div className="flex items-end gap-3">
-                        <h3 className="text-3xl font-black text-bee-black">{locations.length}</h3>
-                        <span className="text-xs font-bold text-gray-300 mb-1">지점수</span>
+                <div className="bg-white p-4 md:p-5 rounded-[24px] border border-gray-100 shadow-sm flex flex-col justify-between min-h-[100px] md:min-h-[120px]">
+                    <p className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-tight md:tracking-widest mb-1 whitespace-nowrap"><i className="fa-solid fa-network-wired"></i> 전체 네트워크</p>
+                    <div className="flex items-end gap-2 md:gap-3">
+                        <h3 className="text-2xl md:text-3xl font-black text-bee-black">{locations.length}</h3>
+                        <span className="text-[10px] font-bold text-gray-300 mb-1">지점수</span>
                     </div>
                 </div>
-                <div className="bg-emerald-50 p-5 rounded-[24px] border border-emerald-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-                    <div className="absolute -right-4 -top-4 w-20 h-20 bg-emerald-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                    <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mb-1 z-10"><i className="fa-solid fa-satellite-dish"></i> 활성 운영 지점</p>
-                    <div className="flex items-end gap-3 z-10">
-                        <h3 className="text-3xl font-black text-emerald-500">{activeCount}</h3>
-                        <span className="text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full mb-1">{((activeCount/locations.length)*100).toFixed(0)}%</span>
+                <div className="bg-emerald-50 p-4 md:p-5 rounded-[24px] border border-emerald-100 shadow-sm flex flex-col justify-between min-h-[100px] md:min-h-[120px] relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 w-16 h-16 md:w-20 md:h-20 bg-emerald-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                    <p className="text-[9px] md:text-[10px] font-black text-emerald-600/60 uppercase tracking-tight md:tracking-widest mb-1 z-10 whitespace-nowrap"><i className="fa-solid fa-satellite-dish"></i> 활성 운영 지점</p>
+                    <div className="flex items-end gap-2 md:gap-3 z-10">
+                        <h3 className="text-2xl md:text-3xl font-black text-emerald-500">{activeCount}</h3>
+                        <span className="text-[9px] md:text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full mb-1">{((activeCount/locations.length)*100).toFixed(0)}%</span>
                     </div>
                 </div>
-                <div className="bg-orange-50 p-5 rounded-[24px] border border-orange-100 shadow-sm flex flex-col justify-between">
-                    <p className="text-[9px] font-black text-orange-600/60 uppercase tracking-widest mb-1"><i className="fa-solid fa-pause-circle"></i> 준비중/일시중지</p>
-                    <div className="flex items-end gap-3">
-                        <h3 className="text-3xl font-black text-orange-500">{inactiveCount}</h3>
-                        <span className="text-xs font-bold text-orange-300 mb-1">대기</span>
+                <div className="bg-orange-50 p-4 md:p-5 rounded-[24px] border border-orange-100 shadow-sm flex flex-col justify-between min-h-[100px] md:min-h-[120px]">
+                    <p className="text-[9px] md:text-[10px] font-black text-orange-600/60 uppercase tracking-tight md:tracking-widest mb-1 whitespace-nowrap"><i className="fa-solid fa-pause-circle"></i> 준비/일시중지</p>
+                    <div className="flex items-end gap-2 md:gap-3">
+                        <h3 className="text-2xl md:text-3xl font-black text-orange-500">{inactiveCount}</h3>
+                        <span className="text-[10px] font-bold text-orange-300 mb-1">대기</span>
                     </div>
                 </div>
-                <div className={`p-5 rounded-[24px] border shadow-sm flex flex-col justify-between ${missingCoordCount > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
-                    <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${missingCoordCount > 0 ? 'text-red-500' : 'text-gray-400'}`}><i className="fa-solid fa-triangle-exclamation"></i> 대응 필요 항목</p>
-                    <div className="flex items-end gap-3">
-                        <h3 className={`text-3xl font-black ${missingCoordCount > 0 ? 'text-red-600' : 'text-gray-300'}`}>{missingCoordCount}</h3>
-                        <span className={`text-[9px] font-black mb-1 ${missingCoordCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{missingCoordCount > 0 ? '좌표/주소 매핑 필요' : '정상 탐지'}</span>
+                <div className={`p-4 md:p-5 rounded-[24px] border shadow-sm flex flex-col justify-between min-h-[100px] md:min-h-[120px] ${missingCoordCount > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
+                    <p className={`text-[9px] md:text-[10px] font-black uppercase tracking-tight md:tracking-widest mb-1 whitespace-nowrap ${missingCoordCount > 0 ? 'text-red-500' : 'text-gray-400'}`}><i className="fa-solid fa-triangle-exclamation"></i> 대응 필요</p>
+                    <div className="flex items-end gap-2 md:gap-3">
+                        <h3 className={`text-2xl md:text-3xl font-black ${missingCoordCount > 0 ? 'text-red-600' : 'text-gray-300'}`}>{missingCoordCount}</h3>
+                        <span className={`text-[8px] md:text-[9px] font-black mb-1 leading-tight ${missingCoordCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{missingCoordCount > 0 ? '좌표/주소\n매핑 필요' : '정상 탐지'}</span>
                     </div>
                 </div>
             </div>

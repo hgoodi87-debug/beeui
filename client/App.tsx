@@ -43,7 +43,7 @@ import SEO from './components/SEO';
 
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
-import { clearAdminAuthSession, hasActiveAdminSession, isSupabaseAdminAuthEnabled } from './services/adminAuthService';
+import { clearAdminAuthSession, ensureActiveAdminSession, hasActiveAdminSession, isSupabaseAdminAuthEnabled } from './services/adminAuthService';
 import { useLocations } from './src/domains/location/hooks/useLocations';
 import { useCurrentUser } from './src/domains/user/hooks/useCurrentUser';
 
@@ -216,12 +216,49 @@ const App: React.FC = () => {
   }, [adminInfo, clearPersistedAdminInfo]);
 
   useEffect(() => {
-    if (adminInfo.name && isSupabaseAdminAuthEnabled() && !hasActiveAdminSession()) {
-      console.warn('[App] Supabase 관리자 세션이 없어 접근을 정리합니다.');
+    if (!adminInfo.name || !isSupabaseAdminAuthEnabled()) {
+      return;
+    }
+
+    let disposed = false;
+
+    const syncAdminSession = async () => {
+      const session = await ensureActiveAdminSession();
+      if (disposed || session) {
+        return;
+      }
+
+      console.warn('[App] Supabase 관리자 세션이 24시간 창을 넘어 만료되어 접근을 정리합니다.');
       setAdminInfo(EMPTY_ADMIN_INFO);
       localStorage.removeItem('beeliber_admin_info');
       clearPersistedAdminInfo();
-    }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void syncAdminSession();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      void syncAdminSession();
+    };
+
+    void syncAdminSession();
+
+    const sessionTimer = window.setInterval(() => {
+      void syncAdminSession();
+    }, 5 * 60 * 1000);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(sessionTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
   }, [adminInfo.name, clearPersistedAdminInfo]);
 
   const handleLocationSelect = (

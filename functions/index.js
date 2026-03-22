@@ -6,6 +6,7 @@ const { calculateBookingStoragePrice } = require('./src/shared/pricing');
 const { processVoucherEmail } = require("./src/domains/notification/voucherService");
 const { processArrivalEmail } = require("./src/domains/notification/arrivalService");
 const { processRefundEmail } = require("./src/domains/notification/refundService");
+const { handleSignedUploadRequest, isSignedUploadHttpError } = require("./src/domains/storage/signedUploadService");
 
 admin.initializeApp();
 
@@ -374,6 +375,34 @@ exports.notifyGoogleChat = onRequest({ secrets: ['GOOGLE_CHAT_WEBHOOK_URL'] }, a
         return res.status(200).send('Sent');
     } catch (e) {
         return res.status(500).send(e.message);
+    }
+});
+
+// 6-1. Supabase Signed Upload URL Issuer (Draft)
+exports.issueSupabaseSignedUpload = onRequest(async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Supabase-Access-Token, X-Admin-Auth-Provider');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(204).send('');
+    }
+
+    try {
+        const response = await handleSignedUploadRequest({
+            req,
+            admin,
+            getAdminContext
+        });
+        return res.status(200).json(response);
+    } catch (error) {
+        if (isSignedUploadHttpError(error)) {
+            console.warn('[issueSupabaseSignedUpload]', error.logMessage);
+            return res.status(error.status).json({ message: error.message });
+        }
+
+        console.error('[issueSupabaseSignedUpload] unexpected error:', error);
+        return res.status(500).json({ message: 'signed upload URL 발급에 실패했습니다.' });
     }
 });
 

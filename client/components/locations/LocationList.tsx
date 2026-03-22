@@ -13,6 +13,7 @@ interface LocationListProps {
     onSearchChange: (val: string) => void;
     onSearchSubmit?: (val: string) => void;
     filteredBranches: any[];
+    totalBranchCount?: number;
     selectedBranch: any;
     onBranchClick: (branch: any) => void;
     currentService: 'SAME_DAY' | 'SCHEDULED' | 'STORAGE';
@@ -34,7 +35,7 @@ interface LocationListProps {
 }
 
 const LocationList: React.FC<LocationListProps> = ({
-    t, lang, searchTerm, onSearchChange, onSearchSubmit, filteredBranches, selectedBranch, onBranchClick, currentService, onServiceChange, onReset,
+    t, lang, searchTerm, onSearchChange, onSearchSubmit, filteredBranches, totalBranchCount, selectedBranch, onBranchClick, currentService, onServiceChange, onReset,
     bookingDate, onDateChange, bookingTime, onTimeChange,
     returnDate, onReturnDateChange, returnTime, onReturnTimeChange,
     baggageCounts, onBaggageChange,
@@ -42,9 +43,74 @@ const LocationList: React.FC<LocationListProps> = ({
     onBack,
     onFindMyLocation
 }) => {
+    const INITIAL_BRANCH_RENDER_COUNT = 8;
+    const SEARCH_BRANCH_RENDER_COUNT = 16;
+    const BRANCH_RENDER_BATCH_SIZE = 10;
+    const BRANCH_RENDER_INTERVAL_MS = 70;
     const [activeStep, setActiveStep] = React.useState<'BAGGAGE' | 'PICKUP_DATE' | 'PICKUP_TIME' | 'RETURN_DATE' | 'RETURN_TIME' | null>(null);
+    const [visibleBranchCount, setVisibleBranchCount] = React.useState(INITIAL_BRANCH_RENDER_COUNT);
 
     const isDelivery = currentService === 'SAME_DAY' || currentService === 'SCHEDULED';
+    const normalizedSearchTerm = searchTerm.trim();
+    const hiddenBranchCount = Math.max((totalBranchCount || filteredBranches.length) - filteredBranches.length, 0);
+    const selectedBranchIndex = React.useMemo(
+        () => filteredBranches.findIndex((branch) => branch.id === selectedBranch?.id),
+        [filteredBranches, selectedBranch?.id]
+    );
+    const visibleBranches = React.useMemo(() => {
+        const minimumCount = selectedBranchIndex >= 0 ? selectedBranchIndex + 1 : 0;
+        const safeCount = Math.max(visibleBranchCount, minimumCount);
+        return filteredBranches.slice(0, safeCount);
+    }, [filteredBranches, visibleBranchCount, selectedBranchIndex]);
+
+    React.useEffect(() => {
+        const minimumVisibleCount = normalizedSearchTerm ? SEARCH_BRANCH_RENDER_COUNT : INITIAL_BRANCH_RENDER_COUNT;
+        const nextVisibleCount = Math.min(
+            filteredBranches.length,
+            Math.max(minimumVisibleCount, selectedBranchIndex >= 0 ? selectedBranchIndex + 1 : 0)
+        );
+
+        React.startTransition(() => {
+            setVisibleBranchCount(nextVisibleCount);
+        });
+
+        if (filteredBranches.length <= nextVisibleCount) {
+            return;
+        }
+
+        let cancelled = false;
+        let timerId: number | null = null;
+
+        const pump = () => {
+            timerId = window.setTimeout(() => {
+                if (cancelled) return;
+
+                React.startTransition(() => {
+                    setVisibleBranchCount((prev) => {
+                        const next = Math.min(
+                            filteredBranches.length,
+                            Math.max(prev + BRANCH_RENDER_BATCH_SIZE, selectedBranchIndex >= 0 ? selectedBranchIndex + 1 : 0)
+                        );
+
+                        if (next < filteredBranches.length && !cancelled) {
+                            pump();
+                        }
+
+                        return next;
+                    });
+                });
+            }, BRANCH_RENDER_INTERVAL_MS);
+        };
+
+        pump();
+
+        return () => {
+            cancelled = true;
+            if (timerId) {
+                window.clearTimeout(timerId);
+            }
+        };
+    }, [filteredBranches, normalizedSearchTerm, selectedBranchIndex]);
 
     // [스봉이] 영업시간 파싱 및 동적 슬롯 생성 💅
     const bh = React.useMemo(() => {
@@ -294,7 +360,7 @@ const LocationList: React.FC<LocationListProps> = ({
             {/* List Area - Horizontal Cards on Mobile, Vertical Scroll on PC 💅 */}
             <div className="flex-none md:flex-1 pointer-events-auto bg-transparent border-none mt-auto md:mt-0 h-auto md:h-full w-full max-w-full relative z-20 pb-6 md:pb-0 md:overflow-hidden">
                 <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto no-scrollbar snap-x snap-mandatory gap-3 md:gap-4 px-4 md:px-6 pt-2 md:pt-4 pb-4 md:h-full">
-                    {filteredBranches.map((branch, index) => {
+                    {visibleBranches.map((branch, index) => {
                         const isSelected = selectedBranch?.id === branch.id;
                         const isActive = branch.isActive !== false;
                         
@@ -356,7 +422,8 @@ const LocationList: React.FC<LocationListProps> = ({
                                         <img
                                             src={branch.imageUrl}
                                             alt={branch.name}
-                                            loading="lazy"
+                                            loading={index < 4 ? 'eager' : 'lazy'}
+                                            fetchPriority={index < 2 ? 'high' : 'auto'}
                                             decoding="async"
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
                                             onError={(e) => {
@@ -377,6 +444,28 @@ const LocationList: React.FC<LocationListProps> = ({
                 {filteredBranches.length === 0 && (
                     <div className="py-10 text-center flex flex-col items-center w-full bg-white/50 backdrop-blur-sm rounded-[2rem]">
                         <p className="text-gray-400 font-bold text-sm tracking-tight">{t.locations_page?.no_results || 'No branches found.'}</p>
+                    </div>
+                )}
+
+                {filteredBranches.length > 0 && hiddenBranchCount > 0 && (
+                    <div className="px-4 md:px-6 pt-1">
+                        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/70 backdrop-blur-md border border-white/40 shadow-sm text-[10px] md:text-[11px] font-black text-gray-500 uppercase tracking-[0.08em]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-bee-yellow" />
+                            {lang === 'ko'
+                                ? `가까운 3개 지점만 표시 중 · ${hiddenBranchCount}개는 지도에서 확인`
+                                : `Showing nearest 3 · ${hiddenBranchCount} more on map`}
+                        </div>
+                    </div>
+                )}
+
+                {visibleBranches.length > 0 && visibleBranches.length < filteredBranches.length && (
+                    <div className="px-4 md:px-6 pt-1">
+                        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/70 backdrop-blur-md border border-white/40 shadow-sm text-[10px] md:text-[11px] font-black text-gray-500 uppercase tracking-[0.12em]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-bee-yellow animate-pulse" />
+                            {lang === 'ko'
+                                ? `지점 ${visibleBranches.length}/${filteredBranches.length} 불러오는 중`
+                                : `Loading ${visibleBranches.length}/${filteredBranches.length}`}
+                        </div>
                     </div>
                 )}
             </div>

@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy, useDeferredValue } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageService } from '../services/storageService';
 import LocationList from './locations/LocationList';
-import LocationMap from './locations/LocationMap';
-import BranchDetails from './locations/BranchDetails';
 import SEO from './SEO';
 import { LocationOption, ServiceType } from '../types';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 import { formatKSTDate, isAllSlotsPast, addDaysToDateStr, getFirstAvailableSlot, isPastKSTTime } from '../utils/dateUtils';
 import { calculateDistance } from '../utils/locationUtils';
 
+const LocationMap = lazy(() => import('./locations/LocationMap'));
+const BranchDetails = lazy(() => import('./locations/BranchDetails'));
 
 interface LocationsPageProps {
   onBack: () => void;
@@ -37,7 +37,6 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 }) => {
   const { data: rawLocations = [] } = useLocations();
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchAddress, setSearchAddress] = useState('');
   const [selectedBranch, setSelectedBranch] = useState<LocationOption | null>(null);
   const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>('STORAGE');
   const [bookingDate, setBookingDate] = useState(formatKSTDate());
@@ -46,6 +45,9 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   const [returnTime, setReturnTime] = useState('11:00');
   const [baggageCounts, setBaggageCounts] = useState({ S: 0, M: 0, L: 0, XL: 0 });
   const [deliveryPrices, setDeliveryPrices] = useState<any>({ S: 20000, M: 20000, L: 25000, XL: 29000 });
+  const [shouldRenderMap, setShouldRenderMap] = useState(false);
+  const [mapSearchAddress, setMapSearchAddress] = useState('');
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   // [스봉이 수정] 훅은 항상 최상단에! 조건부 렌더링 내부에서 훅을 쓰면 리액트가 화낸답니다. 💅
   const handleBaggageChange = useCallback((size: string, delta: number) => {
@@ -205,6 +207,14 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     return () => { mounted = false; };
   }, []);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShouldRenderMap(true);
+    }, 180);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const locations = useMemo(() => {
     let sortedData = [...rawLocations];
     if (userLocation && userLocation.lat && userLocation.lng) {
@@ -240,10 +250,10 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
 
   const filteredLocations = useMemo(() => {
     let result = locations;
-    if (searchTerm) {
+    if (deferredSearchTerm) {
       result = result.filter(l =>
-        l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        l.address?.toLowerCase().includes(searchTerm.toLowerCase())
+        l.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+        l.address?.toLowerCase().includes(deferredSearchTerm.toLowerCase())
       );
     }
     if (currentService === 'STORAGE') {
@@ -254,7 +264,26 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     // [스봉이] 활성화된 지점만 보여드려야죠? 🙄💅
     result = result.filter(l => l.isActive !== false);
     return result;
-  }, [locations, searchTerm, currentService]);
+  }, [locations, deferredSearchTerm, currentService]);
+
+  const listLocations = useMemo(() => {
+    return filteredLocations.slice(0, 3);
+  }, [filteredLocations]);
+
+  useEffect(() => {
+    const normalizedSearch = deferredSearchTerm.trim();
+
+    if (!normalizedSearch) {
+      setMapSearchAddress('');
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setMapSearchAddress(normalizedSearch);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [deferredSearchTerm]);
 
   // [스봉이 수정] 버튼 클릭 시 지도가 이동하지 않는 버그 수정 💅
   // panToUserTrigger 카운터를 증가시켜 LocationMap이 명시적 요청을 구분할 수 있도록 함
@@ -288,17 +317,29 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
       <div className="fixed inset-0 z-0 font-pretendard">
         {/* 1. Map as Full Background */}
         <div className="absolute inset-0 z-0">
-          <LocationMap
-            t={t}
-            lang={lang}
-            branches={filteredLocations}
-            selectedBranch={selectedBranch}
-            onLocationSelect={handleBranchSelect}
-            currentService={currentService}
-            userLocation={userLocation}
-            searchAddress={searchTerm}
-            panToUserTrigger={panToUserTrigger}
-          />
+          <Suspense
+            fallback={
+              <div className="w-full h-full bg-[radial-gradient(circle_at_top,#fff8d6_0%,#f8fafc_38%,#e2e8f0_100%)]">
+                <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]" />
+              </div>
+            }
+          >
+            {shouldRenderMap ? (
+              <LocationMap
+                t={t}
+                lang={lang}
+                branches={filteredLocations}
+                selectedBranch={selectedBranch}
+                onLocationSelect={handleBranchSelect}
+                currentService={currentService}
+                userLocation={userLocation}
+                searchAddress={mapSearchAddress}
+                panToUserTrigger={panToUserTrigger}
+              />
+            ) : (
+              <div className="w-full h-full bg-[radial-gradient(circle_at_top,#fff8d6_0%,#f8fafc_38%,#e2e8f0_100%)]" />
+            )}
+          </Suspense>
         </div>
 
         {/* 2. Fullscreen UI Overlay - Filters (Top) & Horizontal Cards (Bottom) 💅 */}
@@ -309,7 +350,8 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             onFindMyLocation={findMyLocation}
-            filteredBranches={filteredLocations}
+            filteredBranches={listLocations}
+            totalBranchCount={filteredLocations.length}
             selectedBranch={selectedBranch}
             onBranchClick={handleBranchSelect}
             currentService={currentService}
@@ -337,27 +379,29 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
           {selectedBranch && (
             <div className="absolute inset-0 z-50 pointer-events-none flex items-end md:items-center justify-center">
               <div className="pointer-events-auto w-full md:max-w-2xl px-2 md:px-0">
-                <BranchDetails
-                  selectedBranch={selectedBranch}
-                  onClose={() => handleBranchSelect(null)}
-                  currentService={currentService}
-                  onBook={(type) => {
-                    if (!selectedBranch.id) return;
-                    onSelectLocation(
-                      selectedBranch.id,
-                      type as ServiceType,
-                      `${bookingDate} ${bookingTime}`,
-                      `${returnDate} ${returnTime}`,
-                      baggageCounts
-                    );
-                  }}
-                  bookingDate={bookingDate}
-                  onDateChange={setBookingDate}
-                  baggageCounts={baggageCounts as any}
-                  onBaggageChange={handleBaggageChange}
-                  t={t}
-                  lang={lang}
-                />
+                <Suspense fallback={<div className="w-full h-[320px] rounded-t-[2rem] md:rounded-[3rem] bg-white/90 backdrop-blur-2xl shadow-2xl" />}>
+                  <BranchDetails
+                    selectedBranch={selectedBranch}
+                    onClose={() => handleBranchSelect(null)}
+                    currentService={currentService}
+                    onBook={(type) => {
+                      if (!selectedBranch.id) return;
+                      onSelectLocation(
+                        selectedBranch.id,
+                        type as ServiceType,
+                        `${bookingDate} ${bookingTime}`,
+                        `${returnDate} ${returnTime}`,
+                        baggageCounts
+                      );
+                    }}
+                    bookingDate={bookingDate}
+                    onDateChange={setBookingDate}
+                    baggageCounts={baggageCounts as any}
+                    onBaggageChange={handleBaggageChange}
+                    t={t}
+                    lang={lang}
+                  />
+                </Suspense>
               </div>
             </div>
           )}

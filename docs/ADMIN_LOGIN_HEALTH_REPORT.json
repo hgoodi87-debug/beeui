@@ -1,0 +1,366 @@
+{
+  "generatedAt": "2026-03-22T04:43:02.135Z",
+  "mode": "DRY_RUN",
+  "totalFirebaseDocs": 56,
+  "totalAuthUsers": 53,
+  "checkedAccounts": 44,
+  "healthyAccounts": 44,
+  "repairableAccounts": 0,
+  "manualAccounts": 0,
+  "healthyRows": [
+    {
+      "docId": "0nXM49WS8LSTICreh6TygRS6Wr32",
+      "name": "현정",
+      "identifierType": "loginId",
+      "identifierValue": "yoo",
+      "selectedDocId": "0nXM49WS8LSTICreh6TygRS6Wr32",
+      "authEmail": "yoo0912345@gmail.com"
+    },
+    {
+      "docId": "2zHMNX5Vv7gzA2Bq7J2NMmbR3Jp2",
+      "name": "바오",
+      "identifierType": "branchId",
+      "identifierValue": "HBO",
+      "selectedDocId": "admin-branch-HBO-1773371032207",
+      "authEmail": "hbo@bee-liber.com"
+    },
+    {
+      "docId": "LgJFfcaHJFgzBJsIAil982xWsCC2",
+      "name": "진호",
+      "identifierType": "loginId",
+      "identifierValue": "rlaxowl98",
+      "selectedDocId": "iXfS3Vl6Qxd35uk6NNkXvTkDBI93",
+      "authEmail": "rlaxowl98@gmail.con"
+    },
+    {
+      "docId": "ZANWVVnq4TXN2NJ65gfdt32OgB53",
+      "name": "천명",
+      "identifierType": "loginId",
+      "identifierValue": "dbcjsaud",
+      "selectedDocId": "ZANWVVnq4TXN2NJ65gfdt32OgB53",
+      "authEmail": "dbcjsaud@gmail.com"
+    },
+    {
+      "docId": "admin-1768533643975",
+      "name": "연남",
+      "identifierType": "branchId",
+      "identifierValue": "MYN",
+      "selectedDocId": "admin-1768533643975",
+      "authEmail": "legacy-myn-admin-1768533643975-ce628b2c3d@staff.bee-liber.invalid"
+    },
+    {
+      "docId": "admin-1771906117225",
+      "name": "동대문",
+      "identifierType": "branchId",
+      "identifierValue": "MDD",
+      "selectedDocId": "admin-branch-MDD-1773371035910",
+      "authEmail": "mdd@bee-liber.com"
+    },
+    {
+      "docId": "admin-1771906131022",
+      "name": "용산",
+      "identifierType": "branchId",
+      "identifierValue": "MYS",
+      "selectedDocId": "admin-branch-MYS-1773371039506",
+      "authEmail": "mys@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-AGS-1773371027854",
+      "name": "안국역지점",
+      "identifierType": "branchId",
+      "identifierValue": "AGS",
+      "selectedDocId": "admin-branch-AGS-1773371027854",
+      "authEmail": "ags@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-BPY-1773371028629",
+      "name": "부평지점",
+      "identifierType": "branchId",
+      "identifierValue": "BPY",
+      "selectedDocId": "admin-branch-BPY-1773371028629",
+      "authEmail": "bpy@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-BSN-1773371028979",
+      "name": "부산역지점",
+      "identifierType": "branchId",
+      "identifierValue": "BSN",
+      "selectedDocId": "admin-branch-BSN-1773371028979",
+      "authEmail": "bsn@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-CMR-1773371029342",
+      "name": "충무로지점",
+      "identifierType": "branchId",
+      "identifierValue": "CMR",
+      "selectedDocId": "admin-branch-CMR-1773371029342",
+      "authEmail": "cmr@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-CWN-1773371029687",
+      "name": "창원지점",
+      "identifierType": "branchId",
+      "identifierValue": "CWN",
+      "selectedDocId": "admin-branch-CWN-1773371029687",
+      "authEmail": "cwn@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-DDP-1773371030068",
+      "name": "동대문DDP점",
+      "identifierType": "branchId",
+      "identifierValue": "DDP",
+      "selectedDocId": "admin-branch-DDP-1773371030068",
+      "authEmail": "ddp@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-DGU-1773371030411",
+      "name": "대구지점",
+      "identifierType": "branchId",
+      "identifierValue": "DGU",
+      "selectedDocId": "admin-branch-DGU-1773371030411",
+      "authEmail": "dgu@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-GAL-1773371030783",
+      "name": "광안리지점",
+      "identifierType": "branchId",
+      "identifierValue": "GAL",
+      "selectedDocId": "admin-branch-GAL-1773371030783",
+      "authEmail": "gal@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-GHE-1773371031125",
+      "name": "김해공항지점",
+      "identifierType": "branchId",
+      "identifierValue": "GHE",
+      "selectedDocId": "admin-branch-GHE-1773371031125",
+      "authEmail": "ghe@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-GJU-1773371031494",
+      "name": "광주지점",
+      "identifierType": "branchId",
+      "identifierValue": "GJU",
+      "selectedDocId": "admin-branch-GJU-1773371031494",
+      "authEmail": "gju@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-GMP-1773371031832",
+      "name": "김포공항",
+      "identifierType": "branchId",
+      "identifierValue": "GMP",
+      "selectedDocId": "admin-branch-GMP-1773371031832",
+      "authEmail": "gmp@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-HDA-1773371032550",
+      "name": "홍대지점",
+      "identifierType": "branchId",
+      "identifierValue": "HDA",
+      "selectedDocId": "admin-branch-HDA-1773371032550",
+      "authEmail": "hda@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-HDE-1773371032925",
+      "name": "해운대지점",
+      "identifierType": "branchId",
+      "identifierValue": "HDE",
+      "selectedDocId": "admin-branch-HDE-1773371032925",
+      "authEmail": "hde@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-IN1T-1773371033293",
+      "name": "인천공항 T1",
+      "identifierType": "branchId",
+      "identifierValue": "IN1T",
+      "selectedDocId": "admin-branch-IN1T-1773371033293",
+      "authEmail": "in1t@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-IN2T-1773371033744",
+      "name": "인천공항 T2",
+      "identifierType": "branchId",
+      "identifierValue": "IN2T",
+      "selectedDocId": "admin-branch-IN2T-1773371033744",
+      "authEmail": "in2t@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-ISD-1773371034084",
+      "name": "인사동지점",
+      "identifierType": "branchId",
+      "identifierValue": "ISD",
+      "selectedDocId": "admin-branch-ISD-1773371034084",
+      "authEmail": "isd@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-JDM-1773371034473",
+      "name": "제주동문시장점",
+      "identifierType": "branchId",
+      "identifierValue": "JDM",
+      "selectedDocId": "admin-branch-JDM-1773371034473",
+      "authEmail": "jdm@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-JEJ-1773371034826",
+      "name": "제주지점",
+      "identifierType": "branchId",
+      "identifierValue": "JEJ",
+      "selectedDocId": "admin-branch-JEJ-1773371034826",
+      "authEmail": "jej@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-JNO-1773371035176",
+      "name": "종로지점",
+      "identifierType": "branchId",
+      "identifierValue": "JNO",
+      "selectedDocId": "admin-branch-JNO-1773371035176",
+      "authEmail": "jno@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MD2-1773371035515",
+      "name": "명동2호점",
+      "identifierType": "branchId",
+      "identifierValue": "MD2",
+      "selectedDocId": "admin-branch-MD2-1773371035515",
+      "authEmail": "md2@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MDM-1773371036315",
+      "name": "동대문지점",
+      "identifierType": "branchId",
+      "identifierValue": "MDM",
+      "selectedDocId": "admin-branch-MDM-1773371036315",
+      "authEmail": "mdm@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MEC-1773371036659",
+      "name": "머니박스제일환전센터",
+      "identifierType": "branchId",
+      "identifierValue": "MEC",
+      "selectedDocId": "admin-branch-MEC-1773371036659",
+      "authEmail": "mec@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MGH-1773371037032",
+      "name": "광장시장점",
+      "identifierType": "branchId",
+      "identifierValue": "MGH",
+      "selectedDocId": "admin-branch-MGH-1773371037032",
+      "authEmail": "mgh@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MGN-1773371037385",
+      "name": "강남역점",
+      "identifierType": "branchId",
+      "identifierValue": "MGN",
+      "selectedDocId": "admin-branch-MGN-1773371037385",
+      "authEmail": "mgn@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MIW-1773371037740",
+      "name": "이태원지점",
+      "identifierType": "branchId",
+      "identifierValue": "MIW",
+      "selectedDocId": "admin-branch-MIW-1773371037740",
+      "authEmail": "miw@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MMP-1773371038160",
+      "name": "마포지점",
+      "identifierType": "branchId",
+      "identifierValue": "MMP",
+      "selectedDocId": "admin-branch-MMP-1773371038160",
+      "authEmail": "mmp@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MSIS-1773371038497",
+      "name": "강남 신사점",
+      "identifierType": "branchId",
+      "identifierValue": "MSIS",
+      "selectedDocId": "admin-branch-MSIS-1773371038497",
+      "authEmail": "msis@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-MSUS-1773371038839",
+      "name": "성수역점",
+      "identifierType": "branchId",
+      "identifierValue": "MSUS",
+      "selectedDocId": "admin-branch-MSUS-1773371038839",
+      "authEmail": "msus@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-NDM-1773371039892",
+      "name": "남대문지점",
+      "identifierType": "branchId",
+      "identifierValue": "NDM",
+      "selectedDocId": "admin-branch-NDM-1773371039892",
+      "authEmail": "ndm@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-NPO-1773371040210",
+      "name": "남포지점",
+      "identifierType": "branchId",
+      "identifierValue": "NPO",
+      "selectedDocId": "admin-branch-NPO-1773371040210",
+      "authEmail": "npo@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-PTK-1773371040541",
+      "name": "평택지점",
+      "identifierType": "branchId",
+      "identifierValue": "PTK",
+      "selectedDocId": "admin-branch-PTK-1773371040541",
+      "authEmail": "ptk@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-SDO-1773371041020",
+      "name": "송도지점",
+      "identifierType": "branchId",
+      "identifierValue": "SDO",
+      "selectedDocId": "admin-branch-SDO-1773371041020",
+      "authEmail": "sdo@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-SRK-1773371041374",
+      "name": "서울역지점",
+      "identifierType": "branchId",
+      "identifierValue": "SRK",
+      "selectedDocId": "admin-branch-SRK-1773371041374",
+      "authEmail": "srk@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-SWN-1773371041748",
+      "name": "수원지점",
+      "identifierType": "branchId",
+      "identifierValue": "SWN",
+      "selectedDocId": "admin-branch-SWN-1773371041748",
+      "authEmail": "swn@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-USO-1773371042088",
+      "name": "운서역지점",
+      "identifierType": "branchId",
+      "identifierValue": "USO",
+      "selectedDocId": "admin-branch-USO-1773371042088",
+      "authEmail": "uso@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-USS-1773371042445",
+      "name": "울산삼산지점",
+      "identifierType": "branchId",
+      "identifierValue": "USS",
+      "selectedDocId": "admin-branch-USS-1773371042445",
+      "authEmail": "uss@bee-liber.com"
+    },
+    {
+      "docId": "admin-branch-YDO-1773371042781",
+      "name": "여의도지점",
+      "identifierType": "branchId",
+      "identifierValue": "YDO",
+      "selectedDocId": "admin-branch-YDO-1773371042781",
+      "authEmail": "ydo@bee-liber.com"
+    }
+  ],
+  "repairRows": [],
+  "manualRows": []
+}

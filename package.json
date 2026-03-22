@@ -15,6 +15,7 @@
     "supabase:sync-phase1-auth": "node scripts/supabase/syncFirebasePhase1Auth.mjs",
     "supabase:sync-phase1-org": "node scripts/supabase/syncFirebasePhase1Org.mjs",
     "supabase:phase1-run": "node scripts/supabase/runPhase1Migration.mjs",
-    "supabase:export-login-inventory": "node scripts/supabase/exportPhase1LoginInventory.mjs"
+    "supabase:export-login-inventory": "node scripts/supabase/exportPhase1LoginInventory.mjs",
+    "supabase:repair-admin-login-health": "node scripts/supabase/repairAdminLoginHealth.mjs"
   }
 }

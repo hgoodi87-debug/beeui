@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, LocateFixed, Plane, Store, Calendar, Clock, Wallet, Luggage, Handshake, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import BaggageCounter from './BaggageCounter';
@@ -187,6 +188,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                 const next = activeStep === 'BAGGAGE' ? null : 'BAGGAGE';
                                 setActiveStep(next);
                             }}
+                            aria-label={lang.startsWith('ko') ? '가방 선택 열기' : 'Open baggage selector'}
                             className={`flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 rounded-full border transition-all duration-300 shadow-md min-w-[45px] md:min-w-[60px] ${activeStep === 'BAGGAGE' ? 'bg-bee-black border-bee-black text-bee-yellow' : 'bg-white border-gray-200 text-gray-900 hover:border-bee-yellow'}`}
                         >
                             <Luggage className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
@@ -252,10 +254,62 @@ const LocationList: React.FC<LocationListProps> = ({
                         </button>
                     </div>
 
-                    {/* Date/Time Accordion - 날짜는 이전처럼 팝업 말고 레이아웃 내에서! 💅 */}
-                    <AnimatePresence>
-                        {activeStep && (
+                    {/* Date/Time Accordion / Baggage Side Sheet 💅 */}
+                    {activeStep === 'BAGGAGE' && typeof document !== 'undefined' && createPortal(
+                        <motion.div
+                            key="baggage-sheet"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 1 }}
+                            className="fixed inset-y-0 right-0 z-[90] flex justify-end pointer-events-none md:left-[420px]"
+                        >
                             <motion.div
+                                initial={{ x: "100%" }}
+                                animate={{ x: 0 }}
+                                exit={{ x: "100%" }}
+                                transition={{ type: "spring", stiffness: 320, damping: 32 }}
+                                className="pointer-events-auto relative h-full w-[min(22rem,calc(100vw-0.5rem))] overflow-y-auto border-l border-gray-100 bg-white/97 shadow-[0_24px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl md:my-4 md:mr-4 md:h-[calc(100vh-2rem)] md:w-[min(21rem,calc(100vw-460px))] md:rounded-[1.8rem] md:border md:border-white/60"
+                            >
+                                <div className="absolute left-0 top-1/2 hidden -translate-x-full -translate-y-1/2 md:flex">
+                                    <button
+                                        title="닫기"
+                                        onClick={() => setActiveStep(null)}
+                                        className="flex h-12 w-12 items-center justify-center rounded-l-[1.1rem] rounded-r-none border border-r-0 border-white/60 bg-white/90 text-gray-400 shadow-[0_12px_28px_rgba(15,23,42,0.12)] backdrop-blur-md transition-colors hover:text-gray-700"
+                                    >
+                                        <ChevronRight className="h-5 w-5 rotate-180" />
+                                    </button>
+                                </div>
+
+                                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 px-4 py-3.5 backdrop-blur-md md:rounded-t-[1.8rem]">
+                                    <h3 className="text-[13px] font-black italic tracking-tighter text-gray-900">
+                                        {t.booking?.bags_selection_title || 'Select Baggage'}
+                                    </h3>
+                                    <button title="닫기" onClick={() => setActiveStep(null)}>
+                                        <X size={18} className="text-gray-400" />
+                                    </button>
+                                </div>
+                                <div className="p-3 sm:p-4">
+                                    <div className="rounded-[1.25rem] border border-gray-100 bg-gray-50/50 p-2.5 shadow-sm">
+                                        <BaggageCounter
+                                            t={t}
+                                            lang={lang}
+                                            baggageCounts={baggageCounts}
+                                            onCountChange={onBaggageChange}
+                                            onConfirm={() => setActiveStep('PICKUP_DATE')}
+                                            deliveryPrices={deliveryPrices}
+                                            currentService={currentService}
+                                        />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>,
+                        document.body
+                    )}
+
+                    <AnimatePresence>
+                        {activeStep && activeStep !== 'BAGGAGE' && (
+                            <motion.div
+                                key="datetime-accordion"
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
@@ -264,27 +318,14 @@ const LocationList: React.FC<LocationListProps> = ({
                                 <div className="p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-sm font-black italic tracking-tighter text-gray-900">
-                                            {activeStep === 'BAGGAGE' ? (t.booking?.bags_selection_title || 'Select Baggage') :
-                                                activeStep === 'PICKUP_DATE' ? (t.booking?.pickup_schedule || 'Select Pickup Date') :
-                                                    activeStep === 'PICKUP_TIME' ? (t.booking?.select_time || 'Select Pickup Time') :
-                                                        activeStep === 'RETURN_DATE' ? (t.booking?.delivery_schedule || 'Select Return Date') : (t.booking?.select_time || 'Select Return Time')}
+                                            {activeStep === 'PICKUP_DATE' ? (t.booking?.pickup_schedule || 'Select Pickup Date') :
+                                                activeStep === 'PICKUP_TIME' ? (t.booking?.select_time || 'Select Pickup Time') :
+                                                    activeStep === 'RETURN_DATE' ? (t.booking?.delivery_schedule || 'Select Return Date') : (t.booking?.select_time || 'Select Return Time')}
                                         </h3>
                                         <button title="닫기" onClick={() => setActiveStep(null)}><X size={16} className="text-gray-400" /></button>
                                     </div>
 
-                                    {activeStep === 'BAGGAGE' ? (
-                                        <div className="bg-white p-2 md:p-4 rounded-[1.5rem] border border-gray-50 shadow-sm">
-                                            <BaggageCounter
-                                                t={t}
-                                                lang={lang}
-                                                baggageCounts={baggageCounts}
-                                                onCountChange={onBaggageChange}
-                                                onConfirm={() => setActiveStep('PICKUP_DATE')}
-                                                deliveryPrices={deliveryPrices}
-                                                currentService={currentService}
-                                            />
-                                        </div>
-                                    ) : activeStep.includes('DATE') ? (
+                                    {activeStep.includes('DATE') ? (
                                         <CalendarView
                                             selectedDate={activeStep === 'PICKUP_DATE' ? (bookingDate || '') : (returnDate || '')}
                                             minDate={activeStep === 'PICKUP_DATE' ? formatKSTDate() : (bookingDate || formatKSTDate())}
@@ -312,7 +353,6 @@ const LocationList: React.FC<LocationListProps> = ({
                                                 const isPast = activeStep === 'PICKUP_TIME' ? isPastKSTTime(bookingDate || '', h) : (isPastKSTTime(returnDate || '', h) || (returnDate === bookingDate && h <= (bookingTime || '')));
                                                 const isSelected = activeStep === 'PICKUP_TIME' ? bookingTime === h : returnTime === h;
 
-                                                // [스봉이] 배송은 13:30/16:00 픽스, 보관은 영업시간 반영 다이내믹 가드 💅
                                                 const isPickupStep = activeStep.includes('PICKUP');
                                                 const pickupLimit = isDelivery ? 13.5 : (bh.end - 0.5);
                                                 const returnStart = isDelivery ? 16 : bh.start;

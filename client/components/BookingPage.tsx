@@ -24,6 +24,7 @@ import { STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 import {
     BagCategoryId,
     DEFAULT_DELIVERY_PRICES,
+    buildCategoryBagSizes,
     createEmptyBagSizes,
     getBagCategoryDescription,
     getBagCategoriesForService,
@@ -604,36 +605,36 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 <h3 className="text-xl font-black italic uppercase tracking-tight">{tBooking.schedule_info || 'Schedule & Locations'}</h3>
                             </div>
 
-                            <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100">
+                            <div className="p-5 sm:p-6 xl:p-7 bg-gray-50 rounded-[2.2rem] border border-gray-100">
                                 {/* Service Type Toggle - Modified Position */}
-                                <div className="flex bg-white rounded-xl p-1 border border-gray-200 mb-8 max-w-sm mx-auto">
+                                <div className="flex bg-white rounded-xl p-1 border border-gray-200 mb-6 max-w-sm mx-auto">
                                     <button
                                         onClick={() => setBooking(prev => {
                                             const nextBagSizes = sanitizeDeliveryBagSizes(prev.bagSizes);
                                             return { ...prev, serviceType: ServiceType.DELIVERY, bagSizes: nextBagSizes, bags: getTotalBags(nextBagSizes) };
                                         })}
-                                        className={`flex-1 py-3 rounded-lg text-xs font-black transition-all ${booking.serviceType === ServiceType.DELIVERY ? 'bg-bee-black text-bee-yellow shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
+                                        className={`flex-1 py-2.5 rounded-lg text-xs font-black transition-all ${booking.serviceType === ServiceType.DELIVERY ? 'bg-bee-black text-bee-yellow shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
                                     >
                                         {t.booking?.delivery || 'DELIVERY'}
                                     </button>
                                     <button
                                         onClick={() => setBooking(prev => ({ ...prev, serviceType: ServiceType.STORAGE }))}
-                                        className={`flex-1 py-3 rounded-lg text-xs font-black transition-all ${booking.serviceType === ServiceType.STORAGE ? 'bg-bee-yellow text-bee-black shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
+                                        className={`flex-1 py-2.5 rounded-lg text-xs font-black transition-all ${booking.serviceType === ServiceType.STORAGE ? 'bg-bee-yellow text-bee-black shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
                                     >
                                         {t.booking?.storage || 'STORAGE'}
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-5">
                                     <div className="space-y-4">
-                                        <div className="rounded-[2rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-5">
+                                        <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{booking.serviceType === ServiceType.DELIVERY ? tBooking.from : tBooking.select_storage}</label>
                                             <select
                                                 title="Select Pickup Location"
                                                 aria-label="Select Pickup Location"
                                                 value={booking.pickupLocation}
                                                 onChange={(e) => setBooking(prev => ({ ...prev, pickupLocation: e.target.value }))}
-                                                className="w-full rounded-[1.6rem] border-2 border-bee-yellow bg-white px-5 py-4 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
+                                                className="w-full rounded-[1.45rem] border-2 border-bee-yellow bg-white px-5 py-3.5 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
                                             >
                                                 <option value="">{booking.serviceType === ServiceType.DELIVERY ? tBooking.select_origin : tBooking.select_storage}</option>
                                                 {originLocations.map(loc => (
@@ -641,12 +642,12 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 ))}
                                             </select>
 
-                                            <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50/90 p-4 sm:p-5">
+                                            <div className="rounded-[1.55rem] border border-gray-100 bg-gray-50/90 p-3.5 sm:p-4">
                                                 <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
                                                     <Calendar size={14} />
                                                     <span>{tBooking.pickup_schedule || 'Pickup Schedule'}</span>
                                                 </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-3">
+                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_116px] gap-3">
                                                     <div className="relative">
                                                         <input
                                                             type="date"
@@ -655,7 +656,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             value={booking.pickupDate?.split(' ')[0]}
                                                             min={formatKSTDate()}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
-                                                            className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
+                                                            className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
                                                         />
                                                         <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
                                                             <span className="truncate">{getLocalizedDate(booking.pickupDate || '', lang)}</span>
@@ -668,7 +669,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             aria-label="Pickup Time"
                                                             value={booking.pickupTime}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
-                                                            className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
+                                                            className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                         >
                                                             {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
                                                                 const isPast = isPastKSTTime(booking.pickupDate || '', h);
@@ -690,7 +691,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
                                     <div className="space-y-4">
                                         {booking.serviceType === ServiceType.DELIVERY ? (
-                                            <div className="rounded-[2rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-5">
+                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4">
                                                 <div>
                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.to || 'To'}</label>
                                                     <select
@@ -698,7 +699,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         aria-label="Select Dropoff Location"
                                                         value={booking.dropoffLocation}
                                                         onChange={e => setBooking(prev => ({ ...prev, dropoffLocation: e.target.value }))}
-                                                        className="mt-2 w-full rounded-[1.6rem] border border-gray-200 bg-white px-5 py-4 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
+                                                        className="mt-2 w-full rounded-[1.45rem] border border-gray-200 bg-white px-5 py-3.5 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
                                                     >
                                                         <option value="">{tBooking.select_dest || 'Select Destination'}</option>
                                                         {destinationLocations.map(loc => (
@@ -708,12 +709,12 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50/90 p-4 sm:p-5">
+                                                <div className="rounded-[1.55rem] border border-gray-100 bg-gray-50/90 p-3.5 sm:p-4">
                                                     <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
                                                         <Calendar size={14} />
                                                         <span>{tBooking.delivery_schedule || 'Delivery Schedule'}</span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-3">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_116px] gap-3">
                                                         <div className="relative">
                                                             <input
                                                                 type="date"
@@ -722,7 +723,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate}
                                                                 min={booking.pickupDate}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
+                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
                                                             />
                                                             <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
                                                                 <span className="truncate">{getLocalizedDate(booking.dropoffDate || '', lang)}</span>
@@ -735,7 +736,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 aria-label="Delivery Time"
                                                                 value={booking.deliveryTime}
                                                                 onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
+                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                             >
                                                                 {generateTimeSlots(pickupLoc, 'DELIVERY').map(h => {
                                                                     const isPast = isPastKSTTime(booking.dropoffDate || '', h);
@@ -754,23 +755,23 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="rounded-[2rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-5">
-                                                <div className="rounded-[1.5rem] border border-dashed border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
+                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4">
+                                                <div className="rounded-[1.4rem] border border-dashed border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
                                                     <p className="text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
                                                         {lang.startsWith('ko') ? '보관 안내' : 'Storage Notice'}
                                                     </p>
-                                                    <p className="mt-2 text-sm font-bold leading-6 text-bee-black">
+                                                    <p className="mt-2 text-sm font-bold leading-5 text-bee-black">
                                                         {lang.startsWith('ko')
                                                             ? '맡기실 일정과 찾으실 일정을 차례대로 고르면 자동으로 보관 시간이 계산됩니다.'
                                                             : 'Pick the start and return schedule, and storage time will be calculated automatically.'}
                                                     </p>
                                                 </div>
-                                                <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50/90 p-4 sm:p-5">
+                                                <div className="rounded-[1.55rem] border border-gray-100 bg-gray-50/90 p-3.5 sm:p-4">
                                                     <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
                                                         <Calendar size={14} />
                                                         <span>{tBooking.dropoff_schedule || tBooking.return_schedule_label || 'Retrieval Schedule'}</span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-3">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_116px] gap-3">
                                                         <div className="relative">
                                                             <input
                                                                 type="date"
@@ -779,7 +780,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate?.split(' ')[0]}
                                                                 min={booking.pickupDate || formatKSTDate()}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
+                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
                                                             />
                                                             <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
                                                                 <span className="truncate">{getLocalizedDate(booking.dropoffDate || '', lang)}</span>
@@ -792,7 +793,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 aria-label="Retrieval Time"
                                                                 value={booking.deliveryTime}
                                                                 onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
+                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                             >
                                                                 {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
                                                                     const isRetrievalPast = isPastKSTTime(booking.dropoffDate || '', h);
@@ -849,7 +850,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 <h3 className="text-xl font-black italic uppercase tracking-tight">{tBooking.bags_label || 'Baggage Selection'}</h3>
                             </div>
 
-                            <div className={`grid gap-4 ${booking.serviceType === ServiceType.DELIVERY ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'}`}>
+                            <div className={`grid gap-4 ${booking.serviceType === ServiceType.DELIVERY ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 2xl:grid-cols-3'}`}>
                                 {visibleBagCategories.map((category) => {
                                     const count = getBagCategoryCount(booking.bagSizes, category.id);
                                     const isDelivery = booking.serviceType === ServiceType.DELIVERY;
@@ -861,69 +862,71 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     const description = getBagCategoryDescription(category.id, lang, booking.serviceType || ServiceType.STORAGE);
 
                                     return (
-                                        <div key={category.id} className="overflow-hidden rounded-[2.1rem] border border-gray-100 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)]">
-                                            <div className="p-5 sm:p-6 space-y-5">
+                                        <div key={category.id} className="w-full min-w-0 overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)]">
+                                            <div className="p-4 sm:p-5 space-y-3">
                                                 <div className="flex items-start justify-between gap-3">
-                                                    <div className="min-w-0">
-                                                        <div className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-400">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 whitespace-nowrap">
                                                             {isDelivery ? (lang.startsWith('ko') ? '배송 품목' : 'Delivery item') : (lang.startsWith('ko') ? '보관 품목' : 'Storage item')}
                                                         </div>
-                                                        <div className="mt-1 text-2xl font-black leading-tight text-bee-black break-keep">
+                                                        <div className="mt-1 text-xl sm:text-2xl font-black leading-tight text-bee-black break-keep">
                                                             {label}
                                                         </div>
                                                     </div>
-                                                    <div className={`shrink-0 rounded-[1.4rem] px-4 py-3 text-center ${visual.chipClassName}`}>
-                                                        <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-70">
+                                                    <div className={`shrink-0 rounded-[1.25rem] px-3 py-2.5 text-center ${visual.chipClassName}`}>
+                                                        <div className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70 whitespace-nowrap">
                                                             {lang.startsWith('ko') ? '선택 수량' : 'Selected'}
                                                         </div>
-                                                        <div className="mt-1 text-3xl font-black leading-none">{count}</div>
+                                                        <div className="mt-1 text-[2rem] font-black leading-none">{count}</div>
                                                     </div>
                                                 </div>
 
-                                                <div className={`flex h-40 items-center justify-center rounded-[1.8rem] bg-gradient-to-br ${visual.accentClassName}`}>
-                                                    <img
-                                                        src={visual.imageSrc}
-                                                        alt={label}
-                                                        className="h-28 w-28 object-contain"
-                                                        loading="lazy"
-                                                    />
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.45rem] bg-gradient-to-br ${visual.accentClassName}`}>
+                                                        <img
+                                                            src={visual.imageSrc}
+                                                            alt={label}
+                                                            className="h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 object-contain"
+                                                            loading="lazy"
+                                                        />
+                                                    </div>
+
+                                                    <p className="min-w-0 flex-1 text-xs sm:text-sm font-semibold leading-5 sm:leading-6 text-gray-500 break-keep">
+                                                        {description}
+                                                    </p>
                                                 </div>
 
-                                                <p className="text-sm font-semibold leading-6 text-gray-500 break-keep min-h-[72px]">
-                                                    {description}
-                                                </p>
-
-                                                <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-                                                    <div>
-                                                        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
+                                                <div className="flex items-end justify-between gap-3">
+                                                    <div className="min-w-0">
+                                                        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 whitespace-nowrap">
                                                             {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
                                                         </div>
-                                                        <div className="mt-1 text-[1.7rem] font-black leading-none text-bee-yellow">
+                                                        <div className="mt-1 text-[1.45rem] sm:text-[1.7rem] font-black leading-none text-bee-yellow whitespace-nowrap">
                                                             ₩{unitPrice.toLocaleString()}
                                                         </div>
-                                                        <div className="mt-2 text-[11px] font-bold leading-5 text-gray-500 break-keep">
+                                                        <div className="mt-1 text-[11px] font-bold leading-5 text-gray-500 break-keep">
                                                             {isDelivery
                                                                 ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
                                                                 : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2 rounded-full bg-gray-50 px-2.5 py-2.5 self-start xl:self-auto">
+                                                    <div className="flex shrink-0 items-center gap-2 rounded-full bg-gray-50 px-2 py-2">
                                                         <button
                                                             title="Decrease"
                                                             aria-label="Decrease"
                                                             onClick={() => updateBagCount(category.id, -1)}
-                                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
+                                                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
                                                             disabled={count === 0}
                                                         >
                                                             <i className="fa-solid fa-minus text-xs"></i>
                                                         </button>
-                                                        <span className="w-8 text-center text-xl font-black text-bee-black">{count}</span>
+                                                        <span className="w-7 text-center text-lg sm:text-xl font-black text-bee-black">{count}</span>
                                                         <button
                                                             title="Increase"
                                                             aria-label="Increase"
                                                             onClick={() => updateBagCount(category.id, 1)}
-                                                            className="flex h-11 w-11 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
+                                                            className="flex h-10 w-10 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
                                                         >
                                                             <i className="fa-solid fa-plus text-xs"></i>
                                                         </button>

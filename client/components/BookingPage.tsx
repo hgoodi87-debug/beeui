@@ -862,73 +862,71 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
                                     return (
                                         <div key={category.id} className="overflow-hidden rounded-[2.1rem] border border-gray-100 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)]">
-                                            <div className="p-5 sm:p-6">
-                                                <div className="flex items-start gap-4">
-                                                    <div className={`flex h-28 w-28 shrink-0 items-center justify-center rounded-[1.8rem] bg-gradient-to-br ${visual.accentClassName}`}>
-                                                        <img
-                                                            src={visual.imageSrc}
-                                                            alt={label}
-                                                            className="h-24 w-24 object-contain"
-                                                            loading="lazy"
-                                                        />
+                                            <div className="p-5 sm:p-6 space-y-5">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="min-w-0">
+                                                        <div className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-400">
+                                                            {isDelivery ? (lang.startsWith('ko') ? '배송 품목' : 'Delivery item') : (lang.startsWith('ko') ? '보관 품목' : 'Storage item')}
+                                                        </div>
+                                                        <div className="mt-1 text-2xl font-black leading-tight text-bee-black break-keep">
+                                                            {label}
+                                                        </div>
                                                     </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="min-w-0">
-                                                                <div className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-400">
-                                                                    {isDelivery ? (lang.startsWith('ko') ? '배송 품목' : 'Delivery item') : (lang.startsWith('ko') ? '보관 품목' : 'Storage item')}
-                                                                </div>
-                                                                <div className="mt-1 text-xl font-black leading-tight text-bee-black break-keep">
-                                                                    {label}
-                                                                </div>
-                                                                <p className="mt-2 text-xs font-semibold leading-5 text-gray-500">
-                                                                    {description}
-                                                                </p>
-                                                            </div>
-                                                            <div className={`rounded-[1.4rem] px-4 py-3 text-center ${visual.chipClassName}`}>
-                                                                <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-70">
-                                                                    {lang.startsWith('ko') ? '선택 수량' : 'Selected'}
-                                                                </div>
-                                                                <div className="mt-1 text-3xl font-black leading-none">{count}</div>
-                                                            </div>
+                                                    <div className={`shrink-0 rounded-[1.4rem] px-4 py-3 text-center ${visual.chipClassName}`}>
+                                                        <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-70">
+                                                            {lang.startsWith('ko') ? '선택 수량' : 'Selected'}
                                                         </div>
+                                                        <div className="mt-1 text-3xl font-black leading-none">{count}</div>
+                                                    </div>
+                                                </div>
 
-                                                        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                                                            <div>
-                                                                <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
-                                                                    {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
-                                                                </div>
-                                                                <div className="mt-1 text-[1.7rem] font-black leading-none text-bee-yellow">
-                                                                    ₩{unitPrice.toLocaleString()}
-                                                                </div>
-                                                                <div className="mt-2 text-[11px] font-bold leading-5 text-gray-500">
-                                                                    {isDelivery
-                                                                        ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
-                                                                        : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
-                                                                </div>
-                                                            </div>
+                                                <div className={`flex h-40 items-center justify-center rounded-[1.8rem] bg-gradient-to-br ${visual.accentClassName}`}>
+                                                    <img
+                                                        src={visual.imageSrc}
+                                                        alt={label}
+                                                        className="h-28 w-28 object-contain"
+                                                        loading="lazy"
+                                                    />
+                                                </div>
 
-                                                            <div className="flex items-center gap-2 rounded-full bg-gray-50 px-2.5 py-2.5 self-start sm:self-auto">
-                                                                <button
-                                                                    title="Decrease"
-                                                                    aria-label="Decrease"
-                                                                    onClick={() => updateBagCount(category.id, -1)}
-                                                                    className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
-                                                                    disabled={count === 0}
-                                                                >
-                                                                    <i className="fa-solid fa-minus text-xs"></i>
-                                                                </button>
-                                                                <span className="w-8 text-center text-xl font-black text-bee-black">{count}</span>
-                                                                <button
-                                                                    title="Increase"
-                                                                    aria-label="Increase"
-                                                                    onClick={() => updateBagCount(category.id, 1)}
-                                                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
-                                                                >
-                                                                    <i className="fa-solid fa-plus text-xs"></i>
-                                                                </button>
-                                                            </div>
+                                                <p className="text-sm font-semibold leading-6 text-gray-500 break-keep min-h-[72px]">
+                                                    {description}
+                                                </p>
+
+                                                <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                                                    <div>
+                                                        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
+                                                            {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
                                                         </div>
+                                                        <div className="mt-1 text-[1.7rem] font-black leading-none text-bee-yellow">
+                                                            ₩{unitPrice.toLocaleString()}
+                                                        </div>
+                                                        <div className="mt-2 text-[11px] font-bold leading-5 text-gray-500 break-keep">
+                                                            {isDelivery
+                                                                ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
+                                                                : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 rounded-full bg-gray-50 px-2.5 py-2.5 self-start xl:self-auto">
+                                                        <button
+                                                            title="Decrease"
+                                                            aria-label="Decrease"
+                                                            onClick={() => updateBagCount(category.id, -1)}
+                                                            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
+                                                            disabled={count === 0}
+                                                        >
+                                                            <i className="fa-solid fa-minus text-xs"></i>
+                                                        </button>
+                                                        <span className="w-8 text-center text-xl font-black text-bee-black">{count}</span>
+                                                        <button
+                                                            title="Increase"
+                                                            aria-label="Increase"
+                                                            onClick={() => updateBagCount(category.id, 1)}
+                                                            className="flex h-11 w-11 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
+                                                        >
+                                                            <i className="fa-solid fa-plus text-xs"></i>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>

@@ -19,7 +19,7 @@ import {
 import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
-import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
+import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 import {
     BagCategoryId,
@@ -470,6 +470,28 @@ const BookingPage: React.FC<BookingPageProps> = ({
     }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, booking.serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime, lang, appliedCoupon]);
 
     const tBooking = t.booking || {};
+    const getCompactScheduleDate = React.useCallback((dateStr: string) => {
+        if (!dateStr) {
+            return lang.startsWith('ko') ? '날짜 선택' : 'Select date';
+        }
+
+        const cleanDateStr = dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr;
+        const date = new Date(cleanDateStr);
+        if (isNaN(date.getTime())) return dateStr;
+
+        if (lang.startsWith('ko')) {
+            const weekdayMap = ['일', '월', '화', '수', '목', '금', '토'];
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${month}.${day} (${weekdayMap[date.getDay()]})`;
+        }
+
+        return new Intl.DateTimeFormat(lang === 'ja' ? 'ja-JP' : 'en-US', {
+            month: 'short',
+            day: 'numeric',
+        }).format(date);
+    }, [lang]);
+
     const handleBook = async () => {
         console.log("[BookingPage] handleBook triggered. Current state:", booking);
 
@@ -647,8 +669,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                     <Calendar size={14} />
                                                     <span>{tBooking.pickup_schedule || 'Pickup Schedule'}</span>
                                                 </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_116px] gap-3">
-                                                    <div className="relative">
+                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.35fr)_108px] md:grid-cols-[minmax(0,1.55fr)_116px] gap-3">
+                                                    <div className="relative min-w-0">
                                                         <input
                                                             type="date"
                                                             title="Pickup Date"
@@ -656,12 +678,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             value={booking.pickupDate?.split(' ')[0]}
                                                             min={formatKSTDate()}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
-                                                            className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
+                                                            className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none"
                                                         />
-                                                        <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
-                                                            <span className="truncate">{getLocalizedDate(booking.pickupDate || '', lang)}</span>
+                                                        <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
+                                                            <span className="min-w-0 text-[13px] sm:text-[14px] md:text-[15px] font-black whitespace-nowrap">
+                                                                {getCompactScheduleDate(booking.pickupDate || '')}
+                                                            </span>
+                                                            <Calendar className="ml-3 h-5 w-5 shrink-0 text-gray-400" />
                                                         </div>
-                                                        <Calendar className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                                                     </div>
                                                     <div className="relative">
                                                         <select
@@ -714,8 +738,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         <Calendar size={14} />
                                                         <span>{tBooking.delivery_schedule || 'Delivery Schedule'}</span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_116px] gap-3">
-                                                        <div className="relative">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.35fr)_108px] md:grid-cols-[minmax(0,1.55fr)_116px] gap-3">
+                                                        <div className="relative min-w-0">
                                                             <input
                                                                 type="date"
                                                                 title="Delivery Date"
@@ -723,12 +747,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate}
                                                                 min={booking.pickupDate}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
+                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none"
                                                             />
-                                                            <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
-                                                                <span className="truncate">{getLocalizedDate(booking.dropoffDate || '', lang)}</span>
+                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
+                                                                <span className="min-w-0 text-[13px] sm:text-[14px] md:text-[15px] font-black whitespace-nowrap">
+                                                                    {getCompactScheduleDate(booking.dropoffDate || '')}
+                                                                </span>
+                                                                <Calendar className="ml-3 h-5 w-5 shrink-0 text-gray-400" />
                                                             </div>
-                                                            <Calendar className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                                                         </div>
                                                         <div className="relative">
                                                             <select
@@ -771,8 +797,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         <Calendar size={14} />
                                                         <span>{tBooking.dropoff_schedule || tBooking.return_schedule_label || 'Retrieval Schedule'}</span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_116px] gap-3">
-                                                        <div className="relative">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.35fr)_108px] md:grid-cols-[minmax(0,1.55fr)_116px] gap-3">
+                                                        <div className="relative min-w-0">
                                                             <input
                                                                 type="date"
                                                                 title="Drop-off Date"
@@ -780,12 +806,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate?.split(' ')[0]}
                                                                 min={booking.pickupDate || formatKSTDate()}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
+                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none"
                                                             />
-                                                            <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
-                                                                <span className="truncate">{getLocalizedDate(booking.dropoffDate || '', lang)}</span>
+                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
+                                                                <span className="min-w-0 text-[13px] sm:text-[14px] md:text-[15px] font-black whitespace-nowrap">
+                                                                    {getCompactScheduleDate(booking.dropoffDate || '')}
+                                                                </span>
+                                                                <Calendar className="ml-3 h-5 w-5 shrink-0 text-gray-400" />
                                                             </div>
-                                                            <Calendar className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                                                         </div>
                                                         <div className="relative">
                                                             <select

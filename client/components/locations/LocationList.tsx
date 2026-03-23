@@ -268,7 +268,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                 animate={{ x: 0 }}
                                 exit={{ x: "100%" }}
                                 transition={{ type: "spring", stiffness: 320, damping: 32 }}
-                                className="pointer-events-auto relative h-full w-[min(22rem,calc(100vw-0.5rem))] overflow-y-auto border-l border-gray-100 bg-white/97 shadow-[0_24px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl md:my-4 md:mr-4 md:h-[calc(100vh-2rem)] md:w-[min(21rem,calc(100vw-460px))] md:rounded-[1.8rem] md:border md:border-white/60"
+                                className="pointer-events-auto relative h-full w-[min(19rem,calc(100vw-0.3rem))] overflow-y-auto border-l border-gray-100 bg-white/97 shadow-[0_24px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl md:my-4 md:mr-4 md:h-[calc(100vh-2rem)] md:w-[min(18.5rem,calc(100vw-480px))] md:rounded-[1.65rem] md:border md:border-white/60"
                             >
                                 <div className="absolute left-0 top-1/2 hidden -translate-x-full -translate-y-1/2 md:flex">
                                     <button
@@ -280,7 +280,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                     </button>
                                 </div>
 
-                                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 px-4 py-3.5 backdrop-blur-md md:rounded-t-[1.8rem]">
+                                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 px-3 py-2.5 backdrop-blur-md md:rounded-t-[1.65rem]">
                                     <h3 className="text-[13px] font-black italic tracking-tighter text-gray-900">
                                         {t.booking?.bags_selection_title || 'Select Baggage'}
                                     </h3>
@@ -288,8 +288,8 @@ const LocationList: React.FC<LocationListProps> = ({
                                         <X size={18} className="text-gray-400" />
                                     </button>
                                 </div>
-                                <div className="p-3 sm:p-4">
-                                    <div className="rounded-[1.25rem] border border-gray-100 bg-gray-50/50 p-2.5 shadow-sm">
+                                <div className="p-2.5 sm:p-3">
+                                    <div className="rounded-[1.1rem] border border-gray-100 bg-gray-50/50 p-2 shadow-sm">
                                         <BaggageCounter
                                             t={t}
                                             lang={lang}

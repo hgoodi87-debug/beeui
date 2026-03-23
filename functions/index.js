@@ -15,8 +15,6 @@ admin.initializeApp();
 const ADMIN_ROLES = new Set(['super', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs']);
 const MAILER_SECRETS = ['SMTP_PASS'];
 const NOTIFICATION_SECRETS = ['SMTP_PASS', 'GOOGLE_CHAT_WEBHOOK_URL'];
-const TOSS_PAYMENT_SECRETS = ['TOSS_PAYMENTS_SECRET_KEY'];
-const ADMIN_ACCOUNT_SYNC_SECRETS = ['SUPABASE_SERVICE_ROLE_KEY'];
 
 const assertAuthenticated = (request) => {
     const uid = request.auth && request.auth.uid;
@@ -175,7 +173,7 @@ exports.createTossPaymentSession = onCall(async (request) => {
     });
 });
 
-exports.confirmTossPayment = onCall({ secrets: TOSS_PAYMENT_SECRETS }, async (request) => {
+exports.confirmTossPayment = onCall(async (request) => {
     const uid = assertAuthenticated(request);
     const payload = request.data && typeof request.data === 'object' ? request.data : {};
     const paymentKey = typeof payload.paymentKey === 'string' ? payload.paymentKey.trim() : '';
@@ -202,7 +200,7 @@ exports.confirmTossPayment = onCall({ secrets: TOSS_PAYMENT_SECRETS }, async (re
 });
 
 // 4-2. HR Admin Account Sync
-exports.upsertAdminAccount = onCall({ secrets: ADMIN_ACCOUNT_SYNC_SECRETS }, async (request) => {
+exports.upsertAdminAccount = onCall(async (request) => {
     const { uid, adminContext } = await assertAdmin(request);
     const payload = request.data && typeof request.data === 'object' ? request.data : {};
     const adminInput = payload.admin && typeof payload.admin === 'object' ? payload.admin : null;
@@ -260,7 +258,7 @@ exports.upsertAdminAccount = onCall({ secrets: ADMIN_ACCOUNT_SYNC_SECRETS }, asy
     }
 });
 
-exports.deleteAdminAccount = onCall({ secrets: ADMIN_ACCOUNT_SYNC_SECRETS }, async (request) => {
+exports.deleteAdminAccount = onCall(async (request) => {
     const { uid, adminContext } = await assertAdmin(request);
     const payload = request.data && typeof request.data === 'object' ? request.data : {};
     const adminId = typeof payload.adminId === 'string' ? payload.adminId.trim() : '';

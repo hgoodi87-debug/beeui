@@ -28,6 +28,15 @@ jobs:
           ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BEELIBER_MAIN }}
           EOF
 
+      - name: Inject Runtime Environment
+        shell: bash
+        run: |
+          {
+            echo ""
+            echo "SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}"
+            echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          } >> functions/.env
+
       - name: Deploy Firebase Functions
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json

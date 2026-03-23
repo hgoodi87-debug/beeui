@@ -1,5 +1,10 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import {
+    SEO_DEFAULT_OG_IMAGE,
+    SITE_URL,
+    STATIC_ROUTE_META
+} from '../src/constants/seoRouteMeta';
 
 interface SEOProps {
     title?: string;
@@ -22,21 +27,21 @@ const SEO: React.FC<SEOProps> = ({
     ogImage: customOgImage,
     ogType = 'website'
 }) => {
-    const siteUrl = 'https://bee-liber.com';
     // 💅 [스봉이] 쿼리 파라미터가 섞이지 않도록 정규화된 Canonical URL 생성
-    const cleanPath = path.split('?')[0];
-    const canonicalUrl = `${siteUrl}${cleanPath}`;
-    const currentUrl = `${siteUrl}${path}`;
+    const cleanPath = path.split('?')[0] || '/';
+    const canonicalUrl = `${SITE_URL}${cleanPath}`;
+    const currentUrl = `${SITE_URL}${path}`;
+    const routeDefault = STATIC_ROUTE_META[cleanPath];
 
     // Default values
-    const defaultTitle = '빌리버(Beeliber) - 서울 여행이 가벼워지는 순간 | 짐 보관 & 공항 당일 배송 💅';
-    const defaultDescription = '서울 여행의 시작과 끝을 무거운 가방 없이. 홍대, 서울역 등 주요 거점 짐 보관부터 인천공항 당일 배송까지. 비리버(Beeliber)와 함께 가장 서울다운 여행을 즐기세요. ✨';
-    const defaultKeywords = '서울 짐보관, 홍대 짐보관, 서울역 짐보관, 명동 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 서울 여행 마지막 날, 체크아웃 후 짐보관';
+    const defaultTitle = routeDefault?.title || '빌리버 | 서울 짐보관 · 인천공항 당일 짐배송';
+    const defaultDescription = routeDefault?.description || '서울 주요 거점 짐 보관부터 인천공항 당일 짐배송까지. 체크아웃 후 무거운 짐 없이 가볍게 여행하세요.';
+    const defaultKeywords = routeDefault?.keywords || '서울 짐보관, 홍대 짐보관, 서울역 짐보관, 명동 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 체크아웃 후 짐보관';
 
     const metaTitle = title || defaultTitle;
     const metaDescription = description || defaultDescription;
     const metaKeywords = keywords || defaultKeywords;
-    const ogImg = customOgImage || "https://bee-liber.com/og-main.png"; // 💅 프리미엄 메인 OG 이미지 (가칭)
+    const ogImg = customOgImage || SEO_DEFAULT_OG_IMAGE;
 
     return (
         <Helmet>
@@ -73,16 +78,15 @@ const SEO: React.FC<SEOProps> = ({
             )}
 
             {/* Alternate Language Links (Hreflang) */}
-            <link rel="alternate" hrefLang="ko-KR" href={`${siteUrl}${cleanPath}`} />
-            <link rel="alternate" hrefLang="en" href={`${siteUrl}${cleanPath}?lang=en`} />
-            <link rel="alternate" hrefLang="ja-JP" href={`${siteUrl}${cleanPath}?lang=ja`} />
-            <link rel="alternate" hrefLang="zh-CN" href={`${siteUrl}${cleanPath}?lang=zh`} />
-            <link rel="alternate" hrefLang="zh-TW" href={`${siteUrl}${cleanPath}?lang=zh-TW`} />
-            <link rel="alternate" hrefLang="zh-HK" href={`${siteUrl}${cleanPath}?lang=zh-HK`} />
-            <link rel="alternate" hrefLang="x-default" href={`${siteUrl}${cleanPath}`} />
+            <link rel="alternate" hrefLang="ko-KR" href={`${SITE_URL}${cleanPath}`} />
+            <link rel="alternate" hrefLang="en" href={`${SITE_URL}${cleanPath}?lang=en`} />
+            <link rel="alternate" hrefLang="ja-JP" href={`${SITE_URL}${cleanPath}?lang=ja`} />
+            <link rel="alternate" hrefLang="zh-CN" href={`${SITE_URL}${cleanPath}?lang=zh`} />
+            <link rel="alternate" hrefLang="zh-TW" href={`${SITE_URL}${cleanPath}?lang=zh-TW`} />
+            <link rel="alternate" hrefLang="zh-HK" href={`${SITE_URL}${cleanPath}?lang=zh-HK`} />
+            <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}${cleanPath}`} />
         </Helmet>
     );
 };
 
 export default SEO;
-

@@ -13,17 +13,15 @@ export enum SnsType {
 }
 
 export interface BagSizes {
-    S: number;
-    M: number;
-    L: number;
-    XL: number;
+    handBag: number;
+    carrier: number;
+    strollerBicycle: number;
 }
 
 export interface PriceSettings {
-    S: number;
-    M: number;
-    L: number;
-    XL: number;
+    handBag: number;
+    carrier: number;
+    strollerBicycle: number;
 }
 
 export interface RoutePrice {

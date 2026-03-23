@@ -67,6 +67,26 @@ const normalizeRole = (role?: string) => {
   return candidate;
 };
 
+const isLocalPreviewHost = () => {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+};
+
+const isFirebaseRefererBlockedError = (error: unknown) => {
+  const details = [
+    error instanceof Error ? error.message : '',
+    typeof (error as { code?: unknown })?.code === 'string' ? String((error as { code?: string }).code) : '',
+    error && typeof error === 'object' && 'cause' in error && (error as { cause?: unknown }).cause instanceof Error
+      ? (error as { cause: Error }).cause.message
+      : '',
+    error && typeof error === 'object' && 'cause' in error && typeof ((error as { cause?: { code?: unknown } }).cause?.code) === 'string'
+      ? String((error as { cause?: { code?: string } }).cause?.code)
+      : '',
+  ].join(' ').toLowerCase();
+
+  return details.includes('requests-from-referer') || details.includes('unauthorized-domain') || details.includes('referer');
+};
+
 const mapSupabaseRoleToLegacyRole = (roleCode?: string) => {
   const normalized = (roleCode || '').trim().toLowerCase();
 
@@ -102,9 +122,11 @@ export const getAdminAuthProvider = (): AdminAuthProvider => {
 export const isSupabaseAdminAuthEnabled = () => getAdminAuthProvider() === 'supabase';
 
 export const warmAdminAuth = async () => {
-  if (getAdminAuthProvider() === 'firebase') {
-    await ensureAuth();
-  }
+  await Promise.allSettled([
+    ensureAuth(),
+    import('../firebaseApp'),
+    import('firebase/functions'),
+  ]);
 };
 
 const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
@@ -315,9 +337,13 @@ const supabaseRequest = async <T>(
 
 const verifyLegacyAdminCredentials = async (identifier: string, password: string) => {
   try {
-    await ensureAuth();
-    const { httpsCallable } = await import('firebase/functions');
-    const { functions } = await import('../firebaseApp');
+    const [, firebaseFunctionsModule, firebaseAppModule] = await Promise.all([
+      ensureAuth(),
+      import('firebase/functions'),
+      import('../firebaseApp'),
+    ]);
+    const { httpsCallable } = firebaseFunctionsModule;
+    const { functions } = firebaseAppModule;
     const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
     const result = await verifyAdmin({ name: identifier, password });
     return (result.data || null) as Record<string, any> | null;
@@ -326,7 +352,12 @@ const verifyLegacyAdminCredentials = async (identifier: string, password: string
       code?: string;
       cause?: unknown;
     };
-    wrapped.code = 'supabase/firebase-bridge-failed';
+    wrapped.code = isFirebaseRefererBlockedError(error)
+      ? 'auth/unauthorized-domain'
+      : 'supabase/firebase-bridge-failed';
+    wrapped.message = error instanceof Error && error.message
+      ? error.message
+      : 'Firebase 관리자 권한 연결에 실패했습니다.';
     wrapped.cause = error;
     throw wrapped;
   }
@@ -352,15 +383,31 @@ const loginWithFirebase = async (identifier: string, password: string): Promise<
 };
 
 const loginWithSupabase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
-  const verifiedAdmin = await verifyLegacyAdminCredentials(identifier, password);
-  const resolvedEmail = String(
-    verifiedAdmin?.email ||
-    (identifier.includes('@') ? identifier : '')
-  ).trim();
+  const directEmailInput = identifier.includes('@') ? identifier.trim() : '';
+  let verifiedAdmin: Record<string, any> | null = null;
+  let resolvedEmail = directEmailInput;
+
+  if (!(isLocalPreviewHost() && directEmailInput)) {
+    try {
+      verifiedAdmin = await verifyLegacyAdminCredentials(identifier, password);
+      resolvedEmail = String(
+        verifiedAdmin?.email ||
+        directEmailInput
+      ).trim();
+    } catch (error) {
+      if (!(isLocalPreviewHost() && directEmailInput && isFirebaseRefererBlockedError(error))) {
+        throw error;
+      }
+
+      console.warn('[AdminAuth] localhost에서는 Firebase 브리지 없이 이메일 직로그인으로 우회합니다.');
+    }
+  }
 
   if (!resolvedEmail) {
     const error = new Error('Supabase 로그인에 필요한 내부 이메일이 설정되지 않았습니다.') as Error & { code?: string };
-    error.code = 'supabase/missing-auth-email';
+    error.code = isLocalPreviewHost()
+      ? 'supabase/local-email-login-required'
+      : 'supabase/missing-auth-email';
     throw error;
   }
 
@@ -387,7 +434,8 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   const accessToken = authResponse.access_token;
   const user = authResponse.user;
 
-  const profiles = await supabaseRequest<Array<{
+  const [profiles, employees] = await Promise.all([
+    supabaseRequest<Array<{
     id: string;
     email?: string;
     display_name?: string;
@@ -395,9 +443,8 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     `/rest/v1/profiles?select=id,email,display_name&id=eq.${encodeURIComponent(user.id)}&limit=1`,
     {},
     accessToken
-  );
-
-  const employees = await supabaseRequest<Array<{
+  ),
+    supabaseRequest<Array<{
     id: string;
     name?: string;
     email?: string;
@@ -408,7 +455,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     `/rest/v1/employees?select=id,name,email,job_title,employment_status,profile_id&profile_id=eq.${encodeURIComponent(user.id)}&limit=1`,
     {},
     accessToken
-  );
+  )]);
 
   const employee = employees[0];
   const profile = profiles[0];
@@ -425,7 +472,8 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     throw error;
   }
 
-  const employeeRoles = await supabaseRequest<Array<{
+  const [employeeRoles, assignments] = await Promise.all([
+    supabaseRequest<Array<{
     is_primary: boolean;
     role: {
       code?: string;
@@ -435,13 +483,9 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     `/rest/v1/employee_roles?select=is_primary,role:roles(code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
     {},
     accessToken
-  );
+  ),
 
-  const primaryRole = employeeRoles.find((entry) => entry.is_primary)?.role?.code
-    || employeeRoles[0]?.role?.code
-    || 'ops_staff';
-
-  const assignments = await supabaseRequest<Array<{
+    supabaseRequest<Array<{
     is_primary: boolean;
     branch: {
       id: string;
@@ -452,7 +496,11 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     `/rest/v1/employee_branch_assignments?select=is_primary,branch:branches(id,branch_code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
     {},
     accessToken
-  );
+  )]);
+
+  const primaryRole = employeeRoles.find((entry) => entry.is_primary)?.role?.code
+    || employeeRoles[0]?.role?.code
+    || 'ops_staff';
 
   const primaryBranch = assignments.find((entry) => entry.is_primary)?.branch || assignments[0]?.branch || null;
 

@@ -1,5 +1,14 @@
 import React from 'react';
 import { LocationOption, StorageTier, ServiceType, BookingStatus } from '../../types';
+import {
+    BagCategoryId,
+    createEmptyBagSizes,
+    getBagCategoriesForService,
+    getBagCategoryCount,
+    getBagCategoryLabel,
+    getStoragePriceForCategory,
+    sanitizeDeliveryBagSizes,
+} from '../../src/domains/booking/bagCategoryUtils';
 
 interface ManualBookingModalProps {
     isManualBooking: boolean;
@@ -11,7 +20,7 @@ interface ManualBookingModalProps {
     deliveryPrices: any;
     calculateManualPrice: (f: any) => number;
     handleResetManualBags: () => void;
-    handleAddBagToManual: (size: 'S' | 'M' | 'L' | 'XL') => void;
+    handleAddBagToManual: (categoryId: BagCategoryId) => void;
     handleManualBookingSave: () => void;
     isSaving: boolean;
 }
@@ -31,6 +40,7 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({
     isSaving
 }) => {
     if (!isManualBooking) return null;
+    const categories = getBagCategoriesForService(manualBookingForm.serviceType || ServiceType.STORAGE);
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
@@ -47,7 +57,18 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({
                                 value={manualBookingForm.serviceType}
                                 onChange={e => {
                                     const val = e.target.value as ServiceType;
-                                    const next = { ...manualBookingForm, serviceType: val };
+                                    const currentBagSizes = manualBookingForm.bagSizes || createEmptyBagSizes();
+                                    const nextBagSizes = val === ServiceType.DELIVERY
+                                        ? sanitizeDeliveryBagSizes(currentBagSizes)
+                                        : currentBagSizes;
+                                    const totalBags = Object.values(nextBagSizes).reduce((sum, count) => Number(sum) + Number(count), 0);
+                                    const next = {
+                                        ...manualBookingForm,
+                                        serviceType: val,
+                                        bagSizes: nextBagSizes,
+                                        bags: totalBags,
+                                        insuranceBagCount: Math.min(Number(manualBookingForm.insuranceBagCount || totalBags), totalBags)
+                                    };
                                     setManualBookingForm({ ...next, finalPrice: calculateManualPrice(next) });
                                 }}
                                 className="w-full bg-gray-50 p-4 rounded-2xl font-bold border border-gray-100 focus:border-bee-yellow outline-none"
@@ -289,7 +310,9 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({
                             </div>
                         </div>
                         <div className="mb-4">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">가방 개수 (S/M/L/XL 합계)</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">
+                                가방 개수 ({manualBookingForm.serviceType === ServiceType.DELIVERY ? '쇼핑백, 손가방/캐리어 합계' : '쇼핑백, 손가방/캐리어/유모차, 자전거 합계'})
+                            </label>
                             <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-2xl border border-gray-100">
                                 <input type="number" value={manualBookingForm.bags} onChange={e => {
                                     const next = { ...manualBookingForm, bags: Number(e.target.value) };
@@ -303,7 +326,7 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({
                     {/* 가방 사이즈별 선택 섹션 */}
                     <div className="space-y-4 p-6 bg-gray-50 rounded-[32px] border border-gray-100">
                         <div className="flex justify-between items-center">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">가방 사이즈별 신속 선택</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">가방 종류별 신속 선택</label>
                             {manualBookingForm.serviceType === ServiceType.STORAGE && (
                                 <select
                                     value={manualBookingForm.selectedStorageTierId}
@@ -314,27 +337,33 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({
                                 </select>
                             )}
                         </div>
-                        <div className="grid grid-cols-4 gap-3">
-                            {(['S', 'M', 'L', 'XL'] as const).map(size => {
+                        <div className={`grid gap-3 ${manualBookingForm.serviceType === ServiceType.DELIVERY ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                            {categories.map(category => {
                                 const activePrices = manualBookingForm.serviceType === ServiceType.DELIVERY
                                     ? deliveryPrices
-                                    : (storageTiers.find(t => t.id === manualBookingForm.selectedStorageTierId)?.prices || { S: 0, M: 0, L: 0, XL: 0 });
-                                const price = activePrices[size];
-                                const count = manualBookingForm.bagSizes?.[size] || 0;
+                                    : (storageTiers.find(t => t.id === manualBookingForm.selectedStorageTierId)?.prices || createEmptyBagSizes());
+                                const price = getStoragePriceForCategory(activePrices, category.id);
+                                const count = getBagCategoryCount(manualBookingForm.bagSizes, category.id);
 
                                 return (
                                     <button
-                                        key={size}
-                                        onClick={() => handleAddBagToManual(size)}
-                                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all ${count > 0 ? 'bg-bee-yellow border-bee-yellow shadow-md' : 'bg-white border-gray-100 hover:border-bee-yellow/50'}`}
+                                        key={category.id}
+                                        onClick={() => handleAddBagToManual(category.id)}
+                                        className={`relative flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all ${count > 0 ? 'bg-bee-yellow border-bee-yellow shadow-md' : 'bg-white border-gray-100 hover:border-bee-yellow/50'}`}
                                     >
-                                        <span className={`text-[9px] font-black uppercase ${count > 0 ? 'text-bee-black/40' : 'text-gray-300'}`}>{size}</span>
+                                        <span className={`text-[9px] font-black tracking-tight ${count > 0 ? 'text-bee-black/40' : 'text-gray-300'}`}>{getBagCategoryLabel(category.id, 'ko')}</span>
                                         <span className="font-black text-xs md:text-sm text-bee-black">₩{price.toLocaleString()}</span>
                                         {count > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-bee-black text-bee-yellow text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">{count}</span>}
                                     </button>
                                 );
                             })}
                         </div>
+                        {manualBookingForm.serviceType === ServiceType.DELIVERY && (
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-red-500">배송 수기예약은 쇼핑백, 손가방과 캐리어만 접수합니다.</p>
+                                <p className="text-[10px] font-black text-red-500">쇼핑백, 손가방만 단독으로는 저장할 수 없고 캐리어를 1개 이상 함께 넣어야 합니다.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

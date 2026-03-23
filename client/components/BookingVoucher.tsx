@@ -15,6 +15,7 @@ interface BookingVoucherProps {
 const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, pickupLoc, dropoffLoc, onBack }) => {
     const couponRef = React.useRef<HTMLDivElement>(null);
     const simpleQRRef = React.useRef<HTMLDivElement>(null);
+    const voucherText = t.booking_voucher || {};
 
     // 폰트 깨짐 방지 및 언어별 폰트 설정
     const safeDate = (dateStr: string) => {
@@ -68,7 +69,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
             link.click();
         } catch (err) {
             console.error('Failed to save simple QR image:', err);
-            alert(lang === 'ko' ? '이미지 저장에 실패했습니다.' : 'Failed to save QR image.');
+            alert(voucherText.image_save_failed || (lang === 'ko' ? '이미지 저장에 실패했습니다.' : 'Failed to save QR image.'));
         }
     };
 
@@ -87,7 +88,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
             link.click();
         } catch (err) {
             console.error('Failed to save coupon image:', err);
-            alert(lang === 'ko' ? '이미지 저장에 실패했습니다.' : 'Failed to save coupon image.');
+            alert(voucherText.image_save_failed || (lang === 'ko' ? '이미지 저장에 실패했습니다.' : 'Failed to save coupon image.'));
         }
     };
 
@@ -165,18 +166,18 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                             <span className="text-2xl font-black text-white">liber</span>
                         </div>
                         <div className="relative z-10">
-                            <span className="text-[9px] font-black text-bee-yellow/60 uppercase tracking-[0.4em]">Official Reservation Receipt</span>
+                            <span className="text-[9px] font-black text-bee-yellow/60 uppercase tracking-[0.4em]">{voucherText.official_receipt || 'Official Reservation Receipt'}</span>
                         </div>
                     </div>
 
                     {/* Booking ID & Date Row */}
                     <div className="px-8 py-6 bg-gray-50/50 flex justify-between items-center border-b border-dashed border-gray-200">
                         <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Reservation ID</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.reservation_id || 'Reservation ID'}</p>
                             <h3 className="text-sm font-black text-bee-black">{booking.reservationCode || booking.id}</h3>
                         </div>
                         <div className="text-right">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Issue Date</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.issue_date || 'Issue Date'}</p>
                             <h3 className="text-sm font-black text-bee-black">
                                 {safeDate(booking.createdAt || '')}
                             </h3>
@@ -194,13 +195,17 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                     className="w-full h-full object-contain"
                                 />
                                 <div className="absolute -bottom-2 px-3 py-1 bg-bee-black rounded-full shadow-lg border border-white/10">
-                                    <p className="text-[8px] font-black text-bee-yellow uppercase tracking-tighter">Scan to Verify</p>
+                                    <p className="text-[8px] font-black text-bee-yellow uppercase tracking-tighter">{voucherText.scan_to_verify || 'Scan to Verify'}</p>
                                 </div>
                             </div>
-                            <p className="text-[11px] font-black text-bee-black mb-1 uppercase tracking-widest">본 바우처를 대원에게 제시하세요</p>
+                            <p className="text-[11px] font-black text-bee-black mb-1 uppercase tracking-widest">{voucherText.show_to_staff || '본 바우처를 직원에게 제시하세요'}</p>
                             <p className="text-[9px] font-bold text-gray-500 leading-relaxed max-w-[260px]">
-                                지점 방문 시 본 코드를 제시해 주세요. <br />
-                                현장 확인 후 즉시 처리가 진행됩니다.
+                                {(voucherText.show_code_note || '지점 방문 시 본 코드를 제시해 주세요.\n현장 확인 후 즉시 처리가 진행됩니다.').split('\n').map((line: string, index: number, arr: string[]) => (
+                                    <React.Fragment key={index}>
+                                        {line}
+                                        {index < arr.length - 1 ? <br /> : null}
+                                    </React.Fragment>
+                                ))}
                             </p>
                         </div>
 
@@ -225,7 +230,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                                 className="px-2 py-0.5 bg-bee-yellow text-bee-black rounded-lg text-[10px] font-black italic shadow-sm hover:scale-105 transition-transform flex items-center gap-1 no-print"
                                             >
                                                 <i className="fa-solid fa-location-arrow text-[8px]"></i>
-                                                {lang === 'ko' ? '길찾기' : 'NAV'}
+                                                {voucherText.directions_short || (lang === 'ko' ? '길찾기' : 'NAV')}
                                             </a>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -247,8 +252,8 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                         <div className="flex flex-wrap items-center gap-2 mb-1">
                                             <h4 className="text-base font-black text-bee-black leading-tight">
                                                 {booking.serviceType === ServiceType.DELIVERY
-                                                    ? (dropoffLoc ? getLocName(dropoffLoc) : (booking.dropoffAddress || 'Address Specified'))
-                                                    : `${getLocName(pickupLoc)} (${t.storage_tiers?.[booking.selectedStorageTierId || ''] || (lang === 'ko' ? '보관' : 'Storage')})`
+                                                    ? (dropoffLoc ? getLocName(dropoffLoc) : (booking.dropoffAddress || voucherText.address_specified || 'Address Specified'))
+                                                    : `${getLocName(pickupLoc)} (${t.storage_tiers?.[booking.selectedStorageTierId || ''] || voucherText.storage || (lang === 'ko' ? '보관' : 'Storage')})`
                                                 }
                                             </h4>
                                             {booking.serviceType === ServiceType.DELIVERY && dropoffLoc && (
@@ -259,7 +264,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                                     className="px-2 py-0.5 bg-bee-yellow text-bee-black rounded-lg text-[10px] font-black italic shadow-sm hover:scale-105 transition-transform flex items-center gap-1 no-print"
                                                 >
                                                     <i className="fa-solid fa-location-arrow text-[8px]"></i>
-                                                    {lang === 'ko' ? '길찾기' : 'NAV'}
+                                                    {voucherText.directions_short || (lang === 'ko' ? '길찾기' : 'NAV')}
                                                 </a>
                                             )}
                                         </div>
@@ -281,7 +286,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         {(pickupLoc.pickupImageUrl || getLocGuide(pickupLoc)) && (
                             <div className="p-4 bg-yellow-50/50 rounded-2xl border border-bee-yellow/20 mt-4">
                                 <p className="text-[9px] font-black text-bee-yellow uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <i className="fa-solid fa-camera"></i> {lang === 'ko' ? '지점 및 픽업 안내' : 'Branch & Pickup Guide'}
+                                    <i className="fa-solid fa-camera"></i> {voucherText.branch_pickup_guide || (lang === 'ko' ? '지점 및 픽업 안내' : 'Branch & Pickup Guide')}
                                 </p>
                                 {pickupLoc.pickupImageUrl && (
                                     <img
@@ -329,7 +334,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                     <p className="text-2xl font-black italic text-bee-black leading-none">
                                         ₩{(booking.finalPrice || 0).toLocaleString()}
                                     </p>
-                                    <p className="text-[8px] font-bold text-gray-300 uppercase tracking-tighter mt-1">VAT Included</p>
+                                    <p className="text-[8px] font-bold text-gray-300 uppercase tracking-tighter mt-1">{voucherText.vat_included || 'VAT Included'}</p>
                                 </div>
                             </div>
                         </div>
@@ -341,14 +346,14 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                 className="flex-1 py-4 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
                             >
                                 <i className="fa-solid fa-download"></i>
-                                {lang === 'ko' ? '바우처 저장' : (t.voucher_save || 'Save Voucher')}
+                                {voucherText.save_voucher || t.voucher_save || 'Save Voucher'}
                             </button>
                             <button
                                 onClick={onBack}
                                 className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
                             >
                                 <i className="fa-solid fa-house"></i>
-                                {lang === 'ko' ? '홈으로' : (t.back_home || 'Home')}
+                                {voucherText.home || t.back_home || 'Home'}
                             </button>
                         </div>
 
@@ -394,19 +399,19 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                         <span className="text-xl font-black italic text-bee-yellow">money</span>
                                         <span className="text-xl font-black text-white">box</span>
                                     </div>
-                                    <p className="text-[10px] font-black text-bee-yellow/80 uppercase tracking-widest whitespace-nowrap">Yeonnam Branch Official Partner</p>
+                                    <p className="text-[10px] font-black text-bee-yellow/80 uppercase tracking-widest whitespace-nowrap">{voucherText.moneybox_partner || 'Yeonnam Branch Official Partner'}</p>
                                 </div>
                                 <div className="px-3 py-1 bg-bee-yellow rounded-full shadow-lg border border-white/20">
-                                    <p className="text-[10px] font-black text-bee-black uppercase">VIP Coupon</p>
+                                    <p className="text-[10px] font-black text-bee-black uppercase">{voucherText.vip_coupon || 'VIP Coupon'}</p>
                                 </div>
                             </div>
 
                             {/* Main Title */}
                             <div className="text-center mb-6">
-                                <h3 className="text-2xl font-black text-white italic tracking-tight mb-1 uppercase">Currency Exchange</h3>
+                                <h3 className="text-2xl font-black text-white italic tracking-tight mb-1 uppercase">{voucherText.currency_exchange || 'Currency Exchange'}</h3>
                                 <div className="flex items-center justify-center gap-2">
                                     <div className="h-px w-8 bg-bee-yellow/30" />
-                                    <span className="text-3xl font-black text-bee-yellow">Special Benefit</span>
+                                    <span className="text-3xl font-black text-bee-yellow">{voucherText.special_benefit || 'Special Benefit'}</span>
                                     <div className="h-px w-8 bg-bee-yellow/30" />
                                 </div>
                             </div>
@@ -416,21 +421,21 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                 <div className="flex items-start gap-3">
                                     <i className="fa-solid fa-location-dot text-bee-yellow mt-1 text-xs"></i>
                                     <div>
-                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">ADDRESS</p>
+                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">{voucherText.branch_address || 'ADDRESS'}</p>
                                         <p className="text-[11px] font-bold text-white leading-tight">서울 마포구 월드컵북로2길 93 (연남점)</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <i className="fa-solid fa-clock text-bee-yellow mt-1 text-xs"></i>
                                     <div>
-                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">OPEN HOURS</p>
-                                        <p className="text-[11px] font-bold text-white">09:00 - 21:00 (Everyday)</p>
+                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">{voucherText.open_hours || 'OPEN HOURS'}</p>
+                                        <p className="text-[11px] font-bold text-white">{voucherText.everyday_hours || '09:00 - 21:00 (Everyday)'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <i className="fa-solid fa-id-card text-bee-yellow mt-1 text-xs"></i>
                                     <div>
-                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">COUPON CODE</p>
+                                        <p className="text-[10px] font-bold text-white/50 mb-0.5">{voucherText.coupon_code || 'COUPON CODE'}</p>
                                         <p className="text-sm font-black text-bee-yellow">BEELIBER-VIP-2026</p>
                                     </div>
                                 </div>
@@ -439,14 +444,14 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                             {/* Footer Mente */}
                             <div className="text-center space-y-2">
                                 <p className="text-[12px] font-black text-white italic tracking-wide">
-                                    {lang === 'ko' ? '"직원을 보여주세요"' : '"Show to staff"'}
+                                    {voucherText.show_to_staff_short || (lang === 'ko' ? '"직원을 보여주세요"' : '"Show to staff"')}
                                 </p>
                                 <p className="text-[10px] font-bold text-red-500 bg-red-500/10 py-1 rounded-lg border border-red-500/20">
-                                    {lang === 'ko' ? '금액이 작은 권종은 우대가 어렵습니다' : 'Lower denominational currencies may not be eligible for preference.'}
+                                    {voucherText.coupon_small_note || (lang === 'ko' ? '금액이 작은 권종은 우대가 어렵습니다' : 'Lower denominational currencies may not be eligible for preference.')}
                                 </p>
                                 <div className="pt-2">
                                     <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] animate-pulse">
-                                        {lang === 'ko' ? '터치하여 쿠폰 이미지 저장' : 'Touch to save coupon image'}
+                                        {voucherText.touch_to_save_coupon || (lang === 'ko' ? '터치하여 쿠폰 이미지 저장' : 'Touch to save coupon image')}
                                     </p>
                                 </div>
 
@@ -471,7 +476,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
             {/* Print Note */}
             <p className="text-center text-[9px] font-bold text-gray-400 my-8 italic">
                 <i className="fa-solid fa-circle-info mr-1 text-bee-yellow"></i>
-                Please capture this screen or use the PDF save function for quick access at the service counter.
+                {voucherText.quick_access_note || 'Please capture this screen or use the PDF save function for quick access at the service counter.'}
             </p>
 
             {/* Actions Area */}
@@ -483,7 +488,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                     <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center group-hover:bg-bee-black group-hover:text-bee-yellow transition-colors">
                         <i className="fa-solid fa-qrcode"></i>
                     </div>
-                    <span className="text-xs uppercase tracking-widest">{lang === 'ko' ? '심플 QR 이미지 저장' : 'Save Simple QR Image'}</span>
+                    <span className="text-xs uppercase tracking-widest">{voucherText.save_simple_qr || (lang === 'ko' ? '심플 QR 이미지 저장' : 'Save Simple QR Image')}</span>
                 </button>
                 <button
                     onClick={() => window.print()}
@@ -520,7 +525,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         <h3 className="text-xl font-black text-bee-black tracking-tighter">{booking.reservationCode || booking.id}</h3>
                     </div>
                     <div className="mt-8 pt-6 border-t border-gray-100 w-full text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                        Official Service Voucher
+                        {voucherText.official_service_voucher || 'Official Service Voucher'}
                     </div>
                 </div>
             </div>

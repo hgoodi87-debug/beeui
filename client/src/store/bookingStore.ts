@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import { BookingState, Branch, ServiceType } from '../../types';
+import { BookingState, Branch, ServiceType, BagSizes } from '../../types';
 
 export interface PreSelectedBooking {
     pickupLocation: string;
     serviceType: ServiceType;
     date?: string;
     returnDate?: string;
-    bagCounts?: { S: number, M: number, L: number, XL: number };
+    bagCounts?: BagSizes;
 }
 
 interface BookingStoreState {

@@ -41,6 +41,7 @@ export const zhTW = {
         book_delivery: '預訂配送',
         book_storage: '預訂寄存',
         book_branch: '據點預約 (地圖)',
+        btn_now: '立即預訂',
         main_title_1: '從行李中，',
         main_title_2: '獲得自由。',
         main_title_bags: 'BAGS.',
@@ -135,10 +136,10 @@ export const zhTW = {
         insurance_bags_label: '適用行李數量 (Number of Bags)',
         insurance_limit_1: '50~100萬韓元',
         insurance_limit_2: '100~200萬韓元',
-        size_s: '小型行李, 購物袋',
-        size_m: '20~23英吋, 大型購物袋',
-        size_l: '24~26英吋',
-        size_xl: '27~30英吋',
+        size_s: '購物袋、手提包',
+        size_m: '行李箱',
+        size_l: '行李箱',
+        size_xl: '嬰兒車、自行車',
         weight_info: '標準重量為20KG。如果超過20KG，每5KG將收取5,000韓元的額外費用（最大30KG）。',
         insurance_limit_3: '200~300萬韓元',
         insurance_surcharge_1: '100% 附加',
@@ -161,11 +162,11 @@ export const zhTW = {
         total_label: '最終合計',
         bags_label: '行李總數',
         bags_selection_title: '請選擇行李數量',
-        bags_selection_sub: '您可以根據 M, L, XL 尺寸調整數量。',
+        bags_selection_sub: '請調整購物袋、手提包、行李箱及嬰兒車、自行車數量。',
         contact_info_title: '請輸入預訂人資訊',
-        size_m_desc: '登機箱、背包',
-        size_l_desc: '託運行李',
-        size_xl_desc: '大型行李',
+        size_m_desc: '登機與託運行李箱',
+        size_l_desc: '登機與託運行李箱',
+        size_xl_desc: '嬰兒車、自行車',
         sns_channels: {
             kakao: 'KakaoTalk',
             line: 'LINE',
@@ -177,6 +178,9 @@ export const zhTW = {
         },
         back_to_list: '返回列表',
         print_voucher: '列印 / 保存憑證',
+        country: '國家',
+        country_placeholder: '選擇國家',
+        airport_late_notice: '機場分店請務必依照預約的領取時間準時抵達。若未按時到場，可能產生額外保管費用，請特別留意。',
         restricted_items: [
             '現金、有價證券、貴金屬 (超過50萬韓元)',
             '藝術品、古董、稀有收藏品',
@@ -219,7 +223,7 @@ export const zhTW = {
         alert_cancel_error: '取消過程中發生錯誤。請聯繫客服。'
     },
     storage_tiers: {
-        'st-4h': '4小時以內', 'st-1d': '1天 (24小時)', 'st-week': '7天 (長期)'
+        'st-4h': '首4小時', 'st-1d': '首日 1天 (24小時)', 'st-week': '追加1天'
     },
     features: {
         sub: '專業服務',
@@ -318,6 +322,7 @@ export const zhTW = {
         trust_desc: "透過明確的狀態更新和實時郵件通知，您可以隨時透明地查看行李的移動過程。",
         status_update: "狀態更新",
         current_status: "當前狀態",
+        back: "返回首頁",
         moving: "運送中",
         pickup_complete: "提取完成 (T1)",
         transferring: "運送至分撥中心並分類",
@@ -393,9 +398,9 @@ export const zhTW = {
         currently_closed: '該據點目前已暫停服務。',
         ai_prompt: 'Bee AI 將協助您完成預訂。',
         bag_size_s_desc: '~20英吋 (機內隨身)',
-        bag_size_m_desc: '~23英吋 (機內隨身)',
-        bag_size_l_desc: '~27英吋 (託運行李)',
-        bag_size_xl_desc: '~32英吋+ (特大型)',
+        bag_size_m_desc: '行李箱',
+        bag_size_l_desc: '行李箱',
+        bag_size_xl_desc: '嬰兒車、自行車',
         btn_apply: '應用',
         btn_reload_page: '整理頁面',
         label_back_to_list: '返回列表',
@@ -576,20 +581,64 @@ export const zhTW = {
         header_subtitle: "與您的身高直接對比！ 嗡嗡~",
         height_label: "設置您的身高",
         size_m_range: "20~23英吋",
-        size_m_desc: "登機箱/短期旅行",
+        size_m_desc: "行李箱",
         size_l_range: "24~26英吋",
-        size_l_desc: "一周旅行用",
+        size_l_desc: "行李箱",
         size_xl_range: "27~30英吋",
-        size_xl_desc: "長期/移民搬家包",
+        size_xl_desc: "嬰兒車、自行車",
         hook_text: "“{size} 尺寸非常適合您的身高！”",
         hook_sub: "需要我幫您預訂嗎？ 嗡嗡~ ✨",
         info_note: "本模擬是基於實際拍攝圖片的參考指南，根據行李箱品牌和設計的不同可能會有細微差異。 嗡嗡~！"
+    },
+    branch_admin: {
+        title: '分店管理系統',
+        manual_booking: '手動預訂（現場）',
+        reservation_list: '預訂現況',
+        all_bookings: '全部預訂',
+        pending_bookings: '等待中',
+        active_bookings: '運送／寄存中',
+        completed_bookings: '已完成預訂',
+        no_bookings: '沒有可顯示的預訂。',
+        refresh: '重新整理',
+        branch_info: '分店資訊',
+        manual_booking_btn: '現場手動預訂',
+        search_placeholder: '搜尋客戶姓名或預訂編號',
+        status_update_success: '狀態已更新。',
+        booking_created_success: '手動預訂已建立。'
     },
     login_modal: {
         title: '提示',
         desc: '當前登錄功能已停用。',
         note: '使用服務無需登錄。',
-        confirm: '確認'
+        confirm: '確認',
+        title_new: '開始使用 Beeliber',
+        subtitle_new: '立即登入，開始使用 Beeliber 的服務。',
+        benefit: '新會員立即獲得 2,000 韓元優惠券',
+        login_btn: '登入',
+        signup_link: '註冊',
+        google_continue: '使用 Google 繼續',
+        or_divider: '或',
+        email_label: '電子郵件地址',
+        password_label: '密碼',
+        forgot_password: '忘記密碼',
+        error_google: 'Google 登入失敗。',
+        error_email: '電子郵件或密碼不正確。'
+    },
+    signup_modal: {
+        promo: '立即註冊並領取 2,000 韓元折扣券！',
+        welcome: '歡迎來到 Beeliber！',
+        subtitle: '讓旅行的開始更輕鬆一些吧。',
+        signup_btn: '完成註冊',
+        login_link: '已經有帳號了嗎？立即登入',
+        google_signup: '使用 Google 註冊',
+        email_signup: '使用電子郵件註冊',
+        nickname_label: '暱稱',
+        nickname_placeholder: '請輸入一個好記的名稱',
+        email_placeholder: 'example@beeliber.com',
+        password_placeholder: '請輸入 8 個字以上',
+        error_google: 'Google 註冊失敗。',
+        error_signup: '註冊時發生錯誤。',
+        back: '返回'
     },
     common: {
         confirm: '確認',
@@ -667,5 +716,331 @@ export const zhTW = {
         noResult: '找不到相關預訂記錄。',
         check_info: '請再次確認您輸入的資訊是否正確。',
         status_suffix: '狀態'
+    },
+    refund_page: {
+        title: '信任的標準，Beeliber 取消與退款政策 v1.0',
+        last_updated: '生效日：2026-03-17',
+        agree_button: '確認並關閉',
+        intro: '本政策旨在說明 Beeliber（以下稱「公司」）服務之預訂取消、變更、退款及追加費用處理標準。本政策將與服務條款一併適用。',
+        content: [
+            { title: '1. 適用範圍', text: '本政策適用於公司提供的下列服務。\n- 行李寄存預訂服務\n- 與合作夥伴聯動的行李配送預訂服務\n- 含附加服務的預訂服務\n\n公司可負責寄存服務與配送預訂之受理、付款、客戶應對及營運協調，實際配送則可能由與公司合作的夥伴執行。\n\n目前服務範圍如下。\n- Hub 分店：寄存及與合作夥伴聯動的配送\n- 合作夥伴分店：僅提供寄存\n- 機場→飯店配送、飯店取件服務：目前未提供' },
+            { title: '2. 預訂取消與變更標準', text: '使用者可於服務開始前確認預訂內容，並依公司規定方式取消或變更預訂。\n是否可變更將依營運狀況、分店情形、時段、行李數量、合作夥伴可營運情況及配送動線等因素限制。' },
+            { title: '3. 退款標準', text: '1) 服務開始前取消\n- 預訂確認後，於服務開始前取消：可全額退款\n- 但若為促銷商品、特別折扣商品等另有退款標準者，將優先適用其條件。\n\n2) 服務開始後取消\n- 行李完成交件後即視為服務已開始，原則上難以全額退款。\n- 若為配送預訂，在合作夥伴排車或配送準備開始後，可能只能依實際發生成本進行全額或部分退款。\n- 但如因公司責任導致無法提供服務，將給予全額或部分退款。\n\n3) 公司責任\n公司於下列情況將提供全額退款或合理補償。\n- 未能正常提供預訂服務\n- 因營運錯誤導致重複扣款\n- 因公司因素單方面取消\n- 因公司或合作夥伴因素導致配送聯動無法進行\n\n4) 使用者責任\n下列情況可能限制退款。\n- 未遵守交件或領取時間\n- 嘗試寄送禁止或限制物品\n- 行李資訊與預訂內容顯著不符\n- 因使用者失聯等原因導致服務難以進行' },
+            { title: '4. No-show 及現場未履行', text: '下列情況視為 No-show 或現場未履行。\n- 使用者於預訂時間內未現身\n- 因失聯無法提供服務\n- 現場確認後因行李不符標準而被拒收\n此時實際發生的營運成本、人力成本及合作夥伴排車成本等，可能自退款金額中扣除。' },
+            { title: '5. 追加費用標準', text: '下列情況可能產生追加費用。\n- 超過預訂寄存時間\n- 超出預訂行李數量或尺寸\n- 現場確認後需特殊保管\n- 領取延誤或需再次配送' },
+            { title: '6. 未領取行李處理', text: '若超過預訂領取時間或寄存期間後仍未領回行李，公司可另行收取追加保管費。若長期未領取，公司將嘗試聯繫使用者，必要時進行另行保管或返還程序。' },
+            { title: '7. 天災及不可抗力', text: '因天災、豪雨、大雪、颱風、交通管制、國家機關命令、系統故障等不可抗力事由，服務提供可能延遲、變更或取消。' },
+            { title: '8. 退款方式與處理期間', text: '退款原則上將以原付款方式退回。如無法以相同方式退款，將另行協議，處理時間則依金融機構作業情況而定。' },
+            { title: '9. 異議與客戶諮詢', text: '若對取消、退款或追加費用有異議，請透過客服中心聯繫公司，我們將確認相關資料後於合理範圍內處理。\n\n[公司資訊]\n商號：Beeliber | 統一編號：159-88-03869\n代表：朴鎭浩 | 地址：首爾市麻浦區世界杯北路2街93，1樓\n電子郵件：rlaxowl98@bee-liber.com | 電話：010-2922-7731' }
+        ]
+    },
+    qna: {
+        title: "常見問題（FAQ）",
+        subtitle: "Beeliber 會俐落地幫您解開疑問。💅",
+        categories: {
+            general: "服務一般",
+            booking: "預訂與付款",
+            safety: "安全與賠償",
+            locations: "分店指南"
+        },
+        items: [
+            {
+                category: "general",
+                question: "Beeliber 是什麼服務？",
+                answer: "Beeliber 是為造訪首爾的旅客提供「無行李的自由」的專業服務。您可於弘大、首爾站等主要據點寄存行李，也能將寄存的行李當日配送至仁川機場。相較於全國配送，我們更專注在首爾市區的行李寄存與移動。✨"
+            },
+            {
+                category: "general",
+                question: "可以提供飯店到飯店的配送嗎？",
+                answer: "目前 Beeliber 以「分店為中心」提供服務。比起飯店取件，我們更建議您在附近的 Beeliber 分店（如弘大、首爾站等）寄存或領取行李。不過分店至機場的配送支援得很完整。💅"
+            },
+            {
+                category: "booking",
+                question: "沒有預訂也能現場使用嗎？",
+                answer: "依分店現場情況，有時可受理現場申請；但若提前線上預訂，通常可更快速且更划算地使用服務。建議盡量先預訂。✨"
+            },
+            {
+                category: "safety",
+                question: "我怎麼相信行李是安全的？",
+                answer: "Beeliber 僅與經過驗證的專業合作夥伴分店合作。所有保管區域皆有 CCTV 持續監控，配送時也會拍攝行李狀態並透過電子郵件發送給您。此外，所有行李皆基本包含賠償保險，請放心使用。✨"
+            },
+            {
+                category: "safety",
+                question: "若發生損壞或遺失，賠償怎麼計算？",
+                answer: "Beeliber 基本提供每位客戶最高 50 萬韓元的賠償上限。若是高價物品，您可於預訂時加購安心保障選項，將賠償上限提高至最高 300 萬韓元。💅"
+            },
+            {
+                category: "locations",
+                question: "Beeliber 分店在哪裡？",
+                answer: "目前可於首爾主要區域使用，例如弘大入口站（延南）、首爾站、明洞、仁寺洞、龍山、江南站等。詳細位置請至「分店指南」頁面查看地圖。📍"
+            }
+        ]
+    },
+    admin: {
+        sidebar: {
+            overview: '營運總覽',
+            logistics: '物流／預訂管理',
+            locations: '分店／據點管理',
+            settlement: '結算台帳',
+            reports: '商業報表',
+            accounting: '會計／資金管理',
+            notice: '公告／彈窗管理',
+            marketing: '行銷／優惠券',
+            partnership: '合作／諮詢管理',
+            hr: '人事／權限管理',
+            system: '系統設定',
+            cloud: '雲端基礎設施',
+            qna: 'FAQ 編輯器',
+            privacy: '個資條款',
+            terms: '服務條款編輯器',
+            roadmap: '開發路線圖'
+        },
+        header: {
+            dashboard: 'CEMS 儀表板',
+            welcome: '歡迎，{name}',
+            last_sync: '最近同步',
+            refresh: '重新整理',
+            logout: '登出',
+            staff_mode: '現場掃描模式'
+        },
+        overview: {
+            daily_stats: '每日重點指標',
+            sales_summary: '營收摘要',
+            booking_trend: '預訂趨勢',
+            active_tasks: '目前進行中的工作',
+            revenue: '營收',
+            total_bookings: '總預訂數',
+            today_settlement: '今日結算金額',
+            issue_count: '異常事項'
+        },
+        logistics: {
+            filter_all: '全部列表',
+            filter_pending: '等待受理',
+            filter_active: '寄存／運送中',
+            filter_completed: '處理完成',
+            filter_issue: '發生異常',
+            search_placeholder: '搜尋客戶姓名／預訂編號...',
+            table: {
+                id: '預訂編號',
+                date: '日期時間',
+                customer: '客戶姓名',
+                route: '路線／分店',
+                status: '狀態',
+                payment: '付款金額',
+                actions: '管理'
+            },
+            detail: {
+                title: '預訂詳細資訊',
+                status_change: '變更狀態',
+                memo: '管理員備註',
+                save_memo: '儲存備註',
+                print_voucher: '列印憑證'
+            }
+        },
+        locations: {
+            add_location: '新增分店',
+            edit_location: '修改分店資訊',
+            total_hubs: '據點總數',
+            active_hubs: '營運中',
+            status: {
+                active: '營運中',
+                inactive: '暫停',
+                maintenance: '維護中'
+            }
+        },
+        accounting: {
+            methods: {
+                card: '信用卡',
+                cash: '現金',
+                naver: 'Naver Pay',
+                kakao: 'Kakao Pay',
+                apple: 'Apple Pay',
+                samsung: 'Samsung Pay',
+                paypal: 'PayPal',
+                overseas: '海外付款'
+            },
+            title: '整合營收結算',
+            subtitle: '依期間分析營收與財務統計 🛡️',
+            date_start: '查詢開始日',
+            date_end: '查詢結束日',
+            export_csv: '匯出 CSV',
+            daily_revenue: '每日詳細營收',
+            monthly_summary: '每月結算摘要',
+            calendar_view: '營收行事曆',
+            net_profit: '所選期間淨利',
+            lifetime_revenue: '累計總營收',
+            total_revenue: '總營收（所選期間）',
+            expenditure_total: '總支出',
+            vat_estimate: '未含稅（預估）',
+            no_data: '此期間沒有營收紀錄。',
+            no_monthly: '沒有月結資料。'
+        },
+        hr: {
+            title: '營運人力管理',
+            subtitle: '營運人力整合管理系統',
+            tab_employees: '員工名單',
+            tab_roles: '角色與權限',
+            tab_audit: '活動紀錄',
+            total_staff: '總人力',
+            active_accounts: '啟用帳號',
+            invited: '等待邀請',
+            security_issue: '安全問題',
+            search_placeholder: '以姓名、職稱、電子郵件搜尋...',
+            filter_status: '全部狀態',
+            add_employee: '邀請新員工',
+            no_employees: '沒有符合條件的員工。',
+            audit_wip: '活動紀錄系統準備中...',
+            hq: 'HQ／總部'
+        },
+        settlement: {
+            title: '每日現金結算',
+            subtitle: '每日現金／刷卡現金流管理',
+            today_revenue: '今日營收',
+            closing_date: '結算基準日',
+            cash_on_hand: '實際持有現金',
+            difference: '差額',
+            close_action: '執行現金結算',
+            history_title: '結算紀錄',
+            clear_history: '清除紀錄',
+            no_history: '沒有結算紀錄。',
+            cancel_filter_title: '取消／退款日期區間篩選',
+            cancel_filter_from: '從',
+            cancel_filter_to: '到',
+            cancel_count_suffix: '筆已查詢'
+        }
     }
 };
+
+zhTW.seo.locations_title = '分店指南 | 查找首爾附近 Beeliber 行李寄存點';
+zhTW.seo.locations_desc = '查看離您最近的 Beeliber 行李寄存分店、營業時間，以及可用的寄存與配送服務。';
+zhTW.seo.services_title = '服務介紹 | 行李寄存與機場即日配送';
+zhTW.seo.services_desc = '一次查看行李寄存、機場即日配送、使用方法與服務範圍。';
+zhTW.seo.qna_title = '常見問題 | Beeliber';
+zhTW.seo.qna_desc = '查看有關預約、取消退款、行李安全與分店使用方式的常見問題。';
+zhTW.terms_page.intro = '本條款旨在規範 Beeliber（以下稱「公司」）所提供之行李寄存、行李配送預約、付款、預約查詢、通知及客服支援等相關服務中，公司與使用者之權利、義務與責任事項。\n\n本條款適用於網站、行動網頁、App 及公司營運之其他線上渠道。';
+zhTW.privacy_page.intro = 'Beeliber 重視您的個人資料，並遵守相關法規，讓您可以安心使用服務。特別是為了安全的 QR 碼交接認證、行李補償處理與預約營運，公司制定如下個人資料處理方針。';
+zhTW.howitworks.badge_label = '服務流程';
+zhTW.howitworks.step1.badge = 'STEP 1. Drop';
+zhTW.howitworks.step2.badge = 'STEP 2. Enjoy';
+zhTW.howitworks.step3.badge = 'STEP 3. Meet';
+zhTW.trust.badge_label = '安心與信任';
+zhTW.trust.tracking.accent = '狀態更新';
+zhTW.trust.insurance.accent = '安心保障';
+zhTW.trust.seal.accent = '安全管理';
+zhTW.trust.footer_label1 = '麻浦／首爾官方合作';
+zhTW.trust.footer_label2 = '已驗證寄存據點';
+zhTW.trust.footer_label3 = '數萬名旅客選擇的信任';
+zhTW.servicedetails = {
+    delivery_title: '不必帶著',
+    delivery_accent: '沉重行李抵達',
+    delivery_desc: '在車站附近分店寄放行李後，我們會直接送到飯店大廳，讓您一開始就能輕裝旅行。',
+    handsfree_title: '優雅地',
+    handsfree_accent: '開始行程',
+    handsfree_desc: '退房後先寄放行李，再慢慢逛街吃飯，等出發去機場或車站前再取回即可。'
+};
+zhTW.locations_page.label_deposit_date = '寄放日期';
+zhTW.locations_page.label_return_date = '領取日期';
+zhTW.locations_page.date_hint = '請選擇您希望開始寄存或配送的日期。';
+zhTW.locations_page.return_date_hint = '請選擇您預計領取或結束服務的日期。';
+zhTW.locations_page.extra_storage = '額外寄存費：每日將加收 ₩{amount}。';
+zhTW.services_page.status_update_label = '狀態更新';
+zhTW.services_page.safety_insurance_title = '安心補償保險';
+zhTW.services_page.safety_insurance_desc = '如有遺失或損壞，最高可賠償 50 萬韓元。';
+zhTW.services_page.service_1_title = '行李配送服務';
+zhTW.services_page.service_1_desc = '從機場到飯店、從飯店到飯店，或任何您指定的地點，我們都能快速且安全地協助運送行李。';
+zhTW.services_page.service_2_title = '行李寄存服務';
+zhTW.services_page.service_2_desc = '當行程變動、入住前退房後有空檔，或想輕鬆移動時，都可以使用安全寄存服務。';
+zhTW.services_page.why_title = '為什麼選擇 Beeliber？';
+zhTW.services_page.why_1_t = '可靠';
+zhTW.services_page.why_1_d = '細緻又負責任的服務';
+zhTW.services_page.why_2_t = '便利';
+zhTW.services_page.why_2_d = '從輕鬆預約到取件都很順暢';
+zhTW.services_page.why_3_t = '支援';
+zhTW.services_page.why_3_d = '親切專業團隊隨時待命協助您';
+zhTW.services_page.cta = '現在就和 Beeliber 一起體驗沒有行李的輕鬆旅行！';
+zhTW.services_page.service_prefix = '服務';
+zhTW.size_simulator.size_s_range = '18~20 吋';
+zhTW.size_simulator.size_s_desc = '手提袋／小型隨身行李';
+zhTW.terms = {
+    usage_title: '同意使用條款',
+    privacy_title: '同意個人資料處理方針',
+    insurance_title: '確認高價物品與補償規定',
+    agree_format: '我同意 {link}',
+    link_usage: '使用條款',
+    link_privacy: '個人資料處理方針',
+    link_insurance: '高價物品與補償規定'
+};
+zhTW.staff_scan = {
+    no_scan_info: '找不到掃描的預約資料。',
+    booking_not_found: '找不到預約資料。',
+    load_error: '載入資料時發生錯誤。',
+    invalid_access: '無效的存取。',
+    auth_required: '需要員工權限。\n請先完成管理員登入。',
+    admin_home: '返回管理員首頁',
+    go_login: '前往登入',
+    staff_mode: '員工模式',
+    current_status: '目前狀態',
+    booking_id: '預約 ID',
+    service_type: '服務類型',
+    from: '出發 / 寄放',
+    to: '到達 / 領取',
+    payment_details: '付款資訊',
+    method: '付款方式',
+    discount: '折扣',
+    total_amount: '總付款金額',
+    update_status: '更新狀態',
+    confirm_update: "確定將狀態改為「{status}」嗎？",
+    changed: '狀態已更新。',
+    failed: '更新狀態失敗。',
+    confirm_pickup_checkin: '確認取件 / 入庫',
+    storage_in_progress: '寄存中',
+    delivery_arrival_complete: '配送 / 到達完成',
+    customer_pickup_complete: '客戶領取（標記完成）',
+    already_completed: '此預約已完成。',
+    preview_image: '預覽圖片',
+    statuses: {
+        pending: '待處理',
+        confirmed: '預約確認',
+        transit: '運送中',
+        storage: '寄存中',
+        arrived: '已到達',
+        completed: '已完成',
+        cancelled: '已取消'
+    },
+    payment_statuses: {
+        paid: '已付款',
+        unpaid: '未付款',
+        refunded: '已退款',
+        unknown: '未知'
+    }
+};
+zhTW.booking_voucher = {
+    image_save_failed: '儲存圖片失敗。',
+    official_receipt: '官方預約憑證',
+    reservation_id: '預約編號',
+    issue_date: '發出日期',
+    scan_to_verify: '掃碼確認',
+    show_to_staff: '請向工作人員出示此憑證',
+    show_code_note: '到店時請出示此代碼。\n現場確認後會立即處理您的需求。',
+    directions_short: '導航',
+    branch_pickup_guide: '分店與取件指南',
+    storage: '寄存',
+    vat_included: '已含增值稅',
+    save_voucher: '儲存憑證',
+    home: '返回首頁',
+    branch_address: '地址',
+    open_hours: '營業時間',
+    coupon_code: '優惠碼',
+    show_to_staff_short: '「請向工作人員出示」',
+    coupon_small_note: '小面額貨幣可能無法享有最佳匯率。',
+    touch_to_save_coupon: '點按以儲存優惠券圖片',
+    quick_access_note: '為了在服務櫃檯快速確認，請截圖此畫面或儲存成 PDF。',
+    save_simple_qr: '儲存簡易 QR 圖片',
+    official_service_voucher: '官方服務憑證'
+};
+zhTW.booking_voucher.moneybox_partner = '延南店官方合作夥伴';
+zhTW.booking_voucher.vip_coupon = 'VIP 優惠券';
+zhTW.booking_voucher.currency_exchange = '換匯優惠';
+zhTW.booking_voucher.special_benefit = '特別禮遇';
+zhTW.booking_voucher.everyday_hours = '09:00 - 21:00（每日）';
+zhTW.booking_voucher.address_specified = '已填寫地址';

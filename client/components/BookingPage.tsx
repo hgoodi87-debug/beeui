@@ -13,14 +13,30 @@ import {
     Info,
     CheckCircle2,
     AlertCircle,
-    Package,
     ChevronLeft,
     RefreshCcw
 } from 'lucide-react';
 import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
+import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
 import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
+import {
+    BagCategoryId,
+    DEFAULT_DELIVERY_PRICES,
+    createEmptyBagSizes,
+    getBagCategoryDescription,
+    getBagCategoriesForService,
+    getBagCategoryCount,
+    getBagCategoryLabel,
+    getStoragePriceForCategory,
+    getTotalBags,
+    getBagCategoryVisualMeta,
+    hasStandaloneHandBagDeliverySelection,
+    sanitizeBagSizes,
+    sanitizeDeliveryBagSizes,
+    updateBagCategoryCount,
+} from '../src/domains/booking/bagCategoryUtils';
 
 interface BookingPageProps {
     t: any;
@@ -30,15 +46,13 @@ interface BookingPageProps {
     initialServiceType?: ServiceType;
     initialDate?: string;
     initialReturnDate?: string;
-    initialBagSizes?: { S: number, M: number, L: number, XL: number };
+    initialBagSizes?: BagSizes;
     onBack: () => void;
     onSuccess: (booking: BookingState) => void | Promise<void>;
     user?: any;
     customerBranchId?: string;
     customerBranchRates?: { delivery: number; storage: number };
 }
-
-const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
 
 const COUNTRY_NAMES: Record<string, string> = {
     'KR': 'Korea 🇰🇷',
@@ -72,8 +86,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
     customerBranchId,
     customerBranchRates
 }) => {
+    const isTossPaymentFlowEnabled = isTossPaymentsFlowEnabled();
+    const isMockPaymentMode = isTossPaymentFlowEnabled && isTossPaymentsMockMode();
     const isMember = !!user && !user.isAnonymous;
     const defaultDate = formatKSTDate();
+    const normalizedInitialBagSizes = initialServiceType === ServiceType.DELIVERY
+        ? sanitizeDeliveryBagSizes(initialBagSizes)
+        : sanitizeBagSizes(initialBagSizes);
 
     const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
     const [storageTiers, setStorageTiers] = useState<StorageTier[]>([]);
@@ -130,8 +149,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
         pickupTime: initPickupTime || (initialServiceType === ServiceType.DELIVERY ? '09:00' : '10:00'),
         dropoffDate: initReturnDate || initPickupDate || defaultDate,
         deliveryTime: initReturnTime || (initialServiceType === ServiceType.DELIVERY ? '16:00' : '14:00'),
-        bagSizes: initialBagSizes || { S: 0, M: 0, L: 0, XL: 0 },
-        bags: initialBagSizes ? Object.values(initialBagSizes).reduce((a, b) => a + b, 0) : 0,
+        bagSizes: normalizedInitialBagSizes,
+        bags: getTotalBags(normalizedInitialBagSizes),
         userName: isMember ? (user.displayName || user.email?.split('@')[0] || 'Member') : '',
         userEmail: isMember ? (user.email || '') : '',
         snsChannel: 'kakao',
@@ -327,22 +346,51 @@ const BookingPage: React.FC<BookingPageProps> = ({
         }
     }, [booking.dropoffDate, booking.pickupDate, pickupLoc, booking.serviceType, booking.deliveryTime, booking.pickupTime]);
 
-    const updateBagCount = (size: keyof BagSizes, delta: number) => {
+    useEffect(() => {
+        if (booking.serviceType !== ServiceType.DELIVERY || !booking.bagSizes?.strollerBicycle) return;
+        setBooking(prev => ({
+            ...prev,
+            bagSizes: sanitizeDeliveryBagSizes(prev.bagSizes),
+            bags: getTotalBags(sanitizeDeliveryBagSizes(prev.bagSizes))
+        }));
+    }, [booking.serviceType, booking.bagSizes?.strollerBicycle]);
+
+    const visibleBagCategories = useMemo(
+        () => getBagCategoriesForService(booking.serviceType || ServiceType.STORAGE),
+        [booking.serviceType]
+    );
+
+    const baseStoragePrices: PriceSettings = useMemo(() => ({
+        handBag: STORAGE_RATES.handBag.hours4,
+        carrier: STORAGE_RATES.carrier.hours4,
+        strollerBicycle: STORAGE_RATES.strollerBicycle.hours4,
+    }), []);
+
+    const updateBagCount = (categoryId: BagCategoryId, delta: number) => {
         setBooking(prev => {
-            const current = prev.bagSizes?.[size] || 0;
-            const next = Math.max(0, current + delta);
+            const currentService = prev.serviceType || ServiceType.STORAGE;
+            const nextBagSizes = updateBagCategoryCount(
+                prev.bagSizes || createEmptyBagSizes(),
+                categoryId,
+                delta
+            );
+            const normalizedBagSizes = currentService === ServiceType.DELIVERY
+                ? sanitizeDeliveryBagSizes(nextBagSizes)
+                : nextBagSizes;
+
             return {
                 ...prev,
-                bagSizes: {
-                    ...prev.bagSizes!,
-                    [size]: next
-                }
+                bagSizes: normalizedBagSizes,
+                bags: getTotalBags(normalizedBagSizes)
             };
         });
     };
 
     const priceDetails = useMemo(() => {
-        const { S = 0, M = 0, L = 0, XL = 0 } = booking.bagSizes || {};
+        const normalizedBagSizes = booking.serviceType === ServiceType.DELIVERY
+            ? sanitizeDeliveryBagSizes(booking.bagSizes)
+            : sanitizeBagSizes(booking.bagSizes);
+        const { handBag = 0, carrier = 0, strollerBicycle = 0 } = normalizedBagSizes;
         const isDelivery = booking.serviceType === ServiceType.DELIVERY;
         const originSurcharge = isDelivery ? (pickupLoc?.originSurcharge || 0) : 0;
         const destSurcharge = isDelivery ? (dropoffLoc?.destinationSurcharge || 0) : 0;
@@ -352,7 +400,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
         let durationText = '';
 
         if (isDelivery) {
-            const deliveryBase = (S * (deliveryPrices.S || 15000)) + (M * deliveryPrices.M) + (L * deliveryPrices.L) + (XL * deliveryPrices.XL);
+            const deliveryBase = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * deliveryPrices.carrier);
 
             // Overnight Storage Fee calculation
             const pickupD = new Date(booking.pickupDate || '');
@@ -361,7 +409,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
             let storageFee = 0;
             if (diffDays > 0) {
-                storageFee = (S * (STORAGE_RATES.S.day1)) + (M * STORAGE_RATES.M.day1) + (L * STORAGE_RATES.L.day1) + (XL * STORAGE_RATES.XL.day1);
+                storageFee = (handBag * STORAGE_RATES.handBag.extraDay) + (carrier * STORAGE_RATES.carrier.extraDay);
                 storageFee *= diffDays;
                 durationText = lang.startsWith('ko') ? `${diffDays}일 보관 포함` : `${diffDays}d storage incl.`;
                 breakdown = lang.startsWith('ko') ? `기본배송 + ${diffDays}일 보관료` : `Base delivery + ${diffDays}d storage`;
@@ -374,20 +422,20 @@ const BookingPage: React.FC<BookingPageProps> = ({
             const retrievalDateTime = new Date(`${booking.dropoffDate || booking.pickupDate}T${booking.deliveryTime || '23:59'}`);
 
             if (!isNaN(pickupDateTime.getTime()) && !isNaN(retrievalDateTime.getTime())) {
-                const result = calculateStoragePrice(pickupDateTime, retrievalDateTime, booking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 }, lang);
+                const result = calculateStoragePrice(pickupDateTime, retrievalDateTime, normalizedBagSizes, lang);
                 base = result.total;
                 breakdown = result.breakdown;
                 durationText = result.durationText;
 
                 // If total is 0 but bags are selected, show minimum (4h) price as preview 💅
-                if (base === 0 && (S + M + L + XL) > 0) {
-                    base = (S * STORAGE_RATES.S.hours4) + (M * STORAGE_RATES.M.hours4) + (L * STORAGE_RATES.L.hours4) + (XL * STORAGE_RATES.XL.hours4);
+                if (base === 0 && getTotalBags(normalizedBagSizes) > 0) {
+                    base = (handBag * STORAGE_RATES.handBag.hours4) + (carrier * STORAGE_RATES.carrier.hours4) + (strollerBicycle * STORAGE_RATES.strollerBicycle.hours4);
                     durationText = lang.startsWith('ko') ? '기본 4시간 예상' : 'Est. 4h base';
                 }
             }
         }
 
-        const totalBags = S + M + L + XL;
+        const totalBags = getTotalBags(normalizedBagSizes);
 
         let insuranceFee = 0;
         if (booking.agreedToPremium) {
@@ -440,34 +488,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
         }
 
         setIsSubmitting(true);
-
-
-        // 💅 Custom Reservation Code Generation
-        // Delivery: [OriginShort]-[DestShort]-[Random4] (e.g. MYN-IN1T-1234)
-        // Storage: [BranchShort]-[Random4] (e.g. MYN-5678)
-        const generateShortCode = () => {
-            const random4 = Math.floor(1000 + Math.random() * 9000).toString();
-
-            if (booking.serviceType === ServiceType.DELIVERY) {
-                const origin = originLocations.find(l => l.id === booking.pickupLocation);
-                const dest = destinationLocations.find((l: LocationOption) => l.id === booking.dropoffLocation);
-                const originCode = origin?.shortCode || booking.pickupLocation || 'UNK';
-                const destCode = dest?.shortCode || booking.dropoffLocation || 'UNK';
-                return `${originCode}-${destCode}-${random4}`;
-            } else {
-                const storageLoc = originLocations.find(l => l.id === booking.pickupLocation);
-                const locCode = storageLoc?.shortCode || booking.pickupLocation || 'UNK';
-                return `${locCode}-${random4}`;
-            }
-        };
-
-        const generatedCode = generateShortCode();
-
         const finalBooking: BookingState = {
             ...booking as BookingState,
-            id: booking.id || generatedCode,
-            reservationCode: generatedCode,
-            pickupLoc: pickupLoc, // Ensure full object is passed for voucher 💅
+            pickupLoc: pickupLoc,
             returnLoc: booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined,
             price: priceDetails.base + priceDetails.originSurcharge + priceDetails.destSurcharge + priceDetails.insuranceFee,
             discountCode: appliedCoupon?.code,
@@ -475,20 +498,20 @@ const BookingPage: React.FC<BookingPageProps> = ({
             finalPrice: priceDetails.total,
             status: BookingStatus.PENDING,
             createdAt: new Date().toISOString(),
-            bags: (booking.bagSizes?.S || 0) + (booking.bagSizes?.M || 0) + (booking.bagSizes?.L || 0) + (booking.bagSizes?.XL || 0),
+            bags: getTotalBags(booking.serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(booking.bagSizes) : sanitizeBagSizes(booking.bagSizes)),
             pickupLocation: booking.pickupLocation || '',
             dropoffLocation: booking.dropoffLocation || '',
             pickupDate: booking.pickupDate || '',
             pickupTime: booking.pickupTime || '',
             dropoffDate: booking.dropoffDate || '',
             deliveryTime: booking.deliveryTime || '',
-            bagSizes: booking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 },
-            language: lang, // 'ko', 'en', 'zh', 'zh-HK', 'zh-TW', etc 그대로 저장
+            bagSizes: booking.serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(booking.bagSizes) : sanitizeBagSizes(booking.bagSizes),
+            language: lang,
             branchId: customerBranchId,
-            branchCommissionRates: customerBranchRates
+            branchCommissionRates: customerBranchRates,
+            paymentMethod: 'card',
+            paymentStatus: priceDetails.total > 0 ? 'pending' : 'paid'
         };
-
-        console.log("[BookingPage] Final booking data object created:", finalBooking);
 
         const channelMap: Record<string, any> = {
             kakao: 'KakaoTalk',
@@ -500,10 +523,37 @@ const BookingPage: React.FC<BookingPageProps> = ({
         finalBooking.snsType = channelMap[booking.snsChannel || 'kakao'] || 'None';
 
         try {
-            // 💅 데이터를 확실하게 클론해서 넘겼줍니다. (App.tsx에서 상태 업데이트가 꼬이지 않게!)
-            const clonedBooking = JSON.parse(JSON.stringify(finalBooking));
             prefetchBookingSuccess();
-            await onSuccess(clonedBooking);
+
+            if (booking.serviceType === ServiceType.DELIVERY && hasStandaloneHandBagDeliverySelection(booking.bagSizes)) {
+                throw new Error('배송은 쇼핑백, 손가방만 단독으로 접수할 수 없어요. 캐리어를 1개 이상 함께 선택해 주세요.');
+            }
+
+            if (!isTossPaymentFlowEnabled) {
+                await onSuccess(JSON.parse(JSON.stringify(finalBooking)) as BookingState);
+                return;
+            }
+
+            const session = await createTossPaymentSession(finalBooking);
+            const serverBooking = JSON.parse(JSON.stringify(session.booking)) as BookingState;
+
+            if (!session.requiresPayment) {
+                await onSuccess(serverBooking);
+                return;
+            }
+
+            if (!isTossPaymentsEnabled()) {
+                throw new Error('토스페이먼츠 클라이언트 키가 아직 설정되지 않았습니다. 결제 연동 환경변수를 먼저 넣어주세요.');
+            }
+
+            await requestTossCardPayment({
+                orderId: session.orderId || '',
+                orderName: session.orderName || 'Beeliber Reservation',
+                amount: session.amount,
+                customerKey: session.customerKey || '',
+                customerName: serverBooking.userName,
+                customerEmail: serverBooking.userEmail,
+            });
         } catch (e) {
             console.error("Booking Error", e);
             alert(e instanceof Error ? e.message : "Booking Failed. Please try again.");
@@ -558,7 +608,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 {/* Service Type Toggle - Modified Position */}
                                 <div className="flex bg-white rounded-xl p-1 border border-gray-200 mb-8 max-w-sm mx-auto">
                                     <button
-                                        onClick={() => setBooking(prev => ({ ...prev, serviceType: ServiceType.DELIVERY }))}
+                                        onClick={() => setBooking(prev => {
+                                            const nextBagSizes = sanitizeDeliveryBagSizes(prev.bagSizes);
+                                            return { ...prev, serviceType: ServiceType.DELIVERY, bagSizes: nextBagSizes, bags: getTotalBags(nextBagSizes) };
+                                        })}
                                         className={`flex-1 py-3 rounded-lg text-xs font-black transition-all ${booking.serviceType === ServiceType.DELIVERY ? 'bg-bee-black text-bee-yellow shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
                                     >
                                         {t.booking?.delivery || 'DELIVERY'}
@@ -571,59 +624,64 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                                     <div className="space-y-4">
-                                        <div className="space-y-2">
+                                        <div className="rounded-[2rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-5">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{booking.serviceType === ServiceType.DELIVERY ? tBooking.from : tBooking.select_storage}</label>
                                             <select
                                                 title="Select Pickup Location"
                                                 aria-label="Select Pickup Location"
                                                 value={booking.pickupLocation}
                                                 onChange={(e) => setBooking(prev => ({ ...prev, pickupLocation: e.target.value }))}
-                                                className="w-full p-4 bg-white border-2 border-bee-yellow rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow"
+                                                className="w-full rounded-[1.6rem] border-2 border-bee-yellow bg-white px-5 py-4 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
                                             >
                                                 <option value="">{booking.serviceType === ServiceType.DELIVERY ? tBooking.select_origin : tBooking.select_storage}</option>
                                                 {originLocations.map(loc => (
                                                     <option key={loc.id} value={loc.id}>{getLocName(loc)}</option>
                                                 ))}
                                             </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.pickup_schedule || 'Pickup Schedule'}</label>
-                                            <div className="flex gap-2">
-                                                <div className="flex-1 relative">
-                                                    <input
-                                                        type="date"
-                                                        title="Pickup Date"
-                                                        aria-label="Pickup Date"
-                                                        value={booking.pickupDate?.split(' ')[0]}
-                                                        min={formatKSTDate()}
-                                                        onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
-                                                        className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none text-transparent"
-                                                    />
-                                                    <div className="absolute inset-0 flex items-center px-4 pointer-events-none font-bold text-sm text-gray-900">
-                                                        {getLocalizedDate(booking.pickupDate || '', lang)}
-                                                    </div>
+
+                                            <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50/90 p-4 sm:p-5">
+                                                <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
+                                                    <Calendar size={14} />
+                                                    <span>{tBooking.pickup_schedule || 'Pickup Schedule'}</span>
                                                 </div>
-                                                <div className="flex-1 relative">
-                                                    <select
-                                                        title="Pickup Time"
-                                                        aria-label="Pickup Time"
-                                                        value={booking.pickupTime}
-                                                        onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
-                                                        className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
-                                                    >
-                                                        {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
-                                                            const isPast = isPastKSTTime(booking.pickupDate || '', h);
-                                                            return (
-                                                                <option key={h} value={h} disabled={isPast}>
-                                                                    {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
-                                                                </option>
-                                                            );
-                                                        })}
-                                                    </select>
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                                        <Clock size={16} />
+                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-3">
+                                                    <div className="relative">
+                                                        <input
+                                                            type="date"
+                                                            title="Pickup Date"
+                                                            aria-label="Pickup Date"
+                                                            value={booking.pickupDate?.split(' ')[0]}
+                                                            min={formatKSTDate()}
+                                                            onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
+                                                            className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
+                                                        />
+                                                        <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
+                                                            <span className="truncate">{getLocalizedDate(booking.pickupDate || '', lang)}</span>
+                                                        </div>
+                                                        <Calendar className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                                                    </div>
+                                                    <div className="relative">
+                                                        <select
+                                                            title="Pickup Time"
+                                                            aria-label="Pickup Time"
+                                                            value={booking.pickupTime}
+                                                            onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
+                                                            className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
+                                                        >
+                                                            {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
+                                                                const isPast = isPastKSTTime(booking.pickupDate || '', h);
+                                                                return (
+                                                                    <option key={h} value={h} disabled={isPast}>
+                                                                        {h} {isPast ? `(${t.booking?.slot_past || '마감'})` : ''}
+                                                                    </option>
+                                                                );
+                                                            })}
+                                                        </select>
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                            <Clock size={18} />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -631,18 +689,16 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </div>
 
                                     <div className="space-y-4">
-
-
                                         {booking.serviceType === ServiceType.DELIVERY ? (
-                                            <>
-                                                <div className="space-y-2">
+                                            <div className="rounded-[2rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-5">
+                                                <div>
                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.to || 'To'}</label>
                                                     <select
                                                         title="Select Dropoff Location"
                                                         aria-label="Select Dropoff Location"
                                                         value={booking.dropoffLocation}
                                                         onChange={e => setBooking(prev => ({ ...prev, dropoffLocation: e.target.value }))}
-                                                        className="w-full p-4 bg-white border border-gray-200 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow transition-colors"
+                                                        className="mt-2 w-full rounded-[1.6rem] border border-gray-200 bg-white px-5 py-4 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
                                                     >
                                                         <option value="">{tBooking.select_dest || 'Select Destination'}</option>
                                                         {destinationLocations.map(loc => (
@@ -652,10 +708,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.delivery_schedule || 'Delivery Schedule'}</label>
-                                                    <div className="flex gap-2">
-                                                        <div className="flex-1 relative">
+                                                <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50/90 p-4 sm:p-5">
+                                                    <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
+                                                        <Calendar size={14} />
+                                                        <span>{tBooking.delivery_schedule || 'Delivery Schedule'}</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-3">
+                                                        <div className="relative">
                                                             <input
                                                                 type="date"
                                                                 title="Delivery Date"
@@ -663,19 +722,20 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate}
                                                                 min={booking.pickupDate}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow text-transparent"
+                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
                                                             />
-                                                            <div className="absolute inset-0 flex items-center px-4 pointer-events-none font-bold text-sm text-gray-900">
-                                                                {getLocalizedDate(booking.dropoffDate || '', lang)}
+                                                            <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
+                                                                <span className="truncate">{getLocalizedDate(booking.dropoffDate || '', lang)}</span>
                                                             </div>
+                                                            <Calendar className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                                                         </div>
-                                                        <div className="flex-1 relative">
+                                                        <div className="relative">
                                                             <select
                                                                 title="Delivery Time"
                                                                 aria-label="Delivery Time"
                                                                 value={booking.deliveryTime}
                                                                 onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                                className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                             >
                                                                 {generateTimeSlots(pickupLoc, 'DELIVERY').map(h => {
                                                                     const isPast = isPastKSTTime(booking.dropoffDate || '', h);
@@ -687,22 +747,31 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 })}
                                                             </select>
                                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                                                <Clock size={16} />
+                                                                <Clock size={18} />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </>
+                                            </div>
                                         ) : (
-                                            <>
-                                                <div className="space-y-2 invisible pointer-events-none select-none" aria-hidden="true">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Duration</label>
-                                                    <div className="w-full p-4 border border-transparent rounded-2xl font-bold text-sm">Spacer</div>
+                                            <div className="rounded-[2rem] border border-gray-100 bg-white p-5 sm:p-6 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-5">
+                                                <div className="rounded-[1.5rem] border border-dashed border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
+                                                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
+                                                        {lang.startsWith('ko') ? '보관 안내' : 'Storage Notice'}
+                                                    </p>
+                                                    <p className="mt-2 text-sm font-bold leading-6 text-bee-black">
+                                                        {lang.startsWith('ko')
+                                                            ? '맡기실 일정과 찾으실 일정을 차례대로 고르면 자동으로 보관 시간이 계산됩니다.'
+                                                            : 'Pick the start and return schedule, and storage time will be calculated automatically.'}
+                                                    </p>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.dropoff_schedule || tBooking.return_schedule_label || 'Retrieval Schedule'}</label>
-                                                    <div className="flex gap-2">
-                                                        <div className="flex-1 relative">
+                                                <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50/90 p-4 sm:p-5">
+                                                    <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
+                                                        <Calendar size={14} />
+                                                        <span>{tBooking.dropoff_schedule || tBooking.return_schedule_label || 'Retrieval Schedule'}</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px] gap-3">
+                                                        <div className="relative">
                                                             <input
                                                                 type="date"
                                                                 title="Drop-off Date"
@@ -710,19 +779,20 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate?.split(' ')[0]}
                                                                 min={booking.pickupDate || formatKSTDate()}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none text-transparent"
+                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 font-black text-transparent outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25"
                                                             />
-                                                            <div className="absolute inset-0 flex items-center px-4 pointer-events-none font-bold text-sm text-gray-900">
-                                                                {getLocalizedDate(booking.dropoffDate || '', lang)}
+                                                            <div className="pointer-events-none absolute inset-0 flex items-center px-5 pr-12 text-base font-black text-bee-black">
+                                                                <span className="truncate">{getLocalizedDate(booking.dropoffDate || '', lang)}</span>
                                                             </div>
+                                                            <Calendar className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                                                         </div>
-                                                        <div className="flex-1 relative">
+                                                        <div className="relative">
                                                             <select
                                                                 title="Retrieval Time"
                                                                 aria-label="Retrieval Time"
                                                                 value={booking.deliveryTime}
                                                                 onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                                className="w-full p-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-bee-yellow appearance-none cursor-pointer pr-10"
+                                                                className="h-16 w-full rounded-[1.5rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                             >
                                                                 {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
                                                                     const isRetrievalPast = isPastKSTTime(booking.dropoffDate || '', h);
@@ -736,12 +806,12 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 })}
                                                             </select>
                                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                                                <Clock size={16} />
+                                                                <Clock size={18} />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </>
+                                            </div>
                                         )}
                                     </div>
 
@@ -779,59 +849,103 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 <h3 className="text-xl font-black italic uppercase tracking-tight">{tBooking.bags_label || 'Baggage Selection'}</h3>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                {Object.entries(booking.bagSizes || {}).map(([size, count]) => {
+                            <div className={`grid gap-4 ${booking.serviceType === ServiceType.DELIVERY ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'}`}>
+                                {visibleBagCategories.map((category) => {
+                                    const count = getBagCategoryCount(booking.bagSizes, category.id);
                                     const isDelivery = booking.serviceType === ServiceType.DELIVERY;
                                     const unitPrice = isDelivery
-                                        ? (deliveryPrices[size as keyof PriceSettings] || 0)
-                                        : (STORAGE_RATES[size as keyof BagSizes]?.hours4 || 0);
+                                        ? getStoragePriceForCategory(deliveryPrices, category.id)
+                                        : getStoragePriceForCategory(baseStoragePrices, category.id);
+                                    const visual = getBagCategoryVisualMeta(category.id);
+                                    const label = getBagCategoryLabel(category.id, lang);
+                                    const description = getBagCategoryDescription(category.id, lang, booking.serviceType || ServiceType.STORAGE);
 
                                     return (
-                                        <div key={size} className="flex flex-col p-4 border border-gray-100 rounded-2xl bg-white hover:border-bee-yellow transition-all gap-3 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center shrink-0">
-                                                    <Package className="text-gray-400" size={20} />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="text-[9px] text-gray-500 font-bold truncate mb-0.5 uppercase tracking-tighter opacity-80">
-                                                        {size === 'S' && (lang.startsWith('ko') ? '기내용/소형백' : 'Cabin/Small')}
-                                                        {size === 'M' && (lang.startsWith('ko') ? '작은 캐리어' : 'Carry-on Bag')}
-                                                        {size === 'L' && (lang.startsWith('ko') ? '위탁 수하물' : 'Checked Bag')}
-                                                        {size === 'XL' && (lang.startsWith('ko') ? '대형/특입' : 'Extra Large')}
+                                        <div key={category.id} className="overflow-hidden rounded-[2.1rem] border border-gray-100 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)]">
+                                            <div className="p-5 sm:p-6">
+                                                <div className="flex items-start gap-4">
+                                                    <div className={`flex h-28 w-28 shrink-0 items-center justify-center rounded-[1.8rem] bg-gradient-to-br ${visual.accentClassName}`}>
+                                                        <img
+                                                            src={visual.imageSrc}
+                                                            alt={label}
+                                                            className="h-24 w-24 object-contain"
+                                                            loading="lazy"
+                                                        />
                                                     </div>
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <span className="font-black text-xl leading-none">{size}</span>
-                                                        <span className="text-[10px] text-bee-yellow font-extrabold leading-tight">
-                                                            (₩{unitPrice.toLocaleString()}{!isDelivery && (lang.startsWith('ko') ? '/4시간~' : '/4h~')})
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="min-w-0">
+                                                                <div className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-400">
+                                                                    {isDelivery ? (lang.startsWith('ko') ? '배송 품목' : 'Delivery item') : (lang.startsWith('ko') ? '보관 품목' : 'Storage item')}
+                                                                </div>
+                                                                <div className="mt-1 text-xl font-black leading-tight text-bee-black break-keep">
+                                                                    {label}
+                                                                </div>
+                                                                <p className="mt-2 text-xs font-semibold leading-5 text-gray-500">
+                                                                    {description}
+                                                                </p>
+                                                            </div>
+                                                            <div className={`rounded-[1.4rem] px-4 py-3 text-center ${visual.chipClassName}`}>
+                                                                <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-70">
+                                                                    {lang.startsWith('ko') ? '선택 수량' : 'Selected'}
+                                                                </div>
+                                                                <div className="mt-1 text-3xl font-black leading-none">{count}</div>
+                                                            </div>
+                                                        </div>
 
-                                            <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-                                                <button
-                                                    title="Decrease"
-                                                    aria-label="Decrease"
-                                                    onClick={() => updateBagCount(size as keyof BagSizes, -1)}
-                                                    className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                                                    disabled={count === 0}
-                                                >
-                                                    <i className="fa-solid fa-minus text-[10px]"></i>
-                                                </button>
-                                                <span className="font-black text-base">{count}</span>
-                                                <button
-                                                    title="Increase"
-                                                    aria-label="Increase"
-                                                    onClick={() => updateBagCount(size as keyof BagSizes, 1)}
-                                                    className="w-8 h-8 rounded-full bg-bee-black text-bee-yellow flex items-center justify-center hover:bg-gray-800 transition-colors shadow-sm"
-                                                >
-                                                    <i className="fa-solid fa-plus text-[10px]"></i>
-                                                </button>
+                                                        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                                                            <div>
+                                                                <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
+                                                                    {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
+                                                                </div>
+                                                                <div className="mt-1 text-[1.7rem] font-black leading-none text-bee-yellow">
+                                                                    ₩{unitPrice.toLocaleString()}
+                                                                </div>
+                                                                <div className="mt-2 text-[11px] font-bold leading-5 text-gray-500">
+                                                                    {isDelivery
+                                                                        ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
+                                                                        : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-2 rounded-full bg-gray-50 px-2.5 py-2.5 self-start sm:self-auto">
+                                                                <button
+                                                                    title="Decrease"
+                                                                    aria-label="Decrease"
+                                                                    onClick={() => updateBagCount(category.id, -1)}
+                                                                    className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
+                                                                    disabled={count === 0}
+                                                                >
+                                                                    <i className="fa-solid fa-minus text-xs"></i>
+                                                                </button>
+                                                                <span className="w-8 text-center text-xl font-black text-bee-black">{count}</span>
+                                                                <button
+                                                                    title="Increase"
+                                                                    aria-label="Increase"
+                                                                    onClick={() => updateBagCount(category.id, 1)}
+                                                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
+                                                                >
+                                                                    <i className="fa-solid fa-plus text-xs"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     )
                                 })}
                             </div>
+                            {booking.serviceType === ServiceType.DELIVERY && (
+                                <div className="space-y-1">
+                                    <p className="text-[11px] font-bold text-red-500">
+                                        배송은 쇼핑백, 손가방과 캐리어만 접수 가능합니다.
+                                    </p>
+                                    <p className="text-[11px] font-bold text-red-500">
+                                        쇼핑백, 손가방 단독 배송은 불가하고 캐리어를 1개 이상 함께 선택해야 합니다.
+                                    </p>
+                                </div>
+                            )}
                         </section>
 
                         {/* Step 3: User Info */}
@@ -943,35 +1057,35 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     <div className="py-2 border-b border-white/10 space-y-2">
                                         <span className="text-gray-400 font-bold text-xs uppercase">{tBooking.bags_label || 'Bags'}</span>
                                         <div className="space-y-1">
-                                            {Object.entries(booking.bagSizes || {}).map(([size, count]) => {
+                                            {visibleBagCategories.map((category) => {
+                                                const count = getBagCategoryCount(booking.bagSizes, category.id);
                                                 if (count === 0) return null;
                                                 const isDelivery = booking.serviceType === ServiceType.DELIVERY;
                                                 let itemPrice = 0;
 
                                                 if (isDelivery) {
-                                                    const unitPrice = deliveryPrices[size as keyof PriceSettings] || 0;
+                                                    const unitPrice = getStoragePriceForCategory(deliveryPrices, category.id);
                                                     itemPrice = unitPrice * count;
                                                 } else {
                                                     // 💅 Recalculate accurate price for this bag type/count based on duration
                                                     const pickupDateTime = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
                                                     const retrievalDateTime = new Date(`${booking.dropoffDate || booking.pickupDate}T${booking.deliveryTime || '23:59'}`);
                                                     if (!isNaN(pickupDateTime.getTime()) && !isNaN(retrievalDateTime.getTime())) {
-                                                        // Calculate for specific bag size
-                                                        const singleBagSizes = { S: 0, M: 0, L: 0, XL: 0, [size]: count };
+                                                        const singleBagSizes = buildCategoryBagSizes(category.id, count);
                                                         const res = calculateStoragePrice(pickupDateTime, retrievalDateTime, singleBagSizes, lang);
                                                         itemPrice = res.total;
 
                                                         // Min price guard (if 0, fallback to 4h)
                                                         if (itemPrice === 0) {
-                                                            const rate = STORAGE_RATES[size as keyof BagSizes]?.hours4 || 0;
+                                                            const rate = getStoragePriceForCategory(baseStoragePrices, category.id);
                                                             itemPrice = rate * count;
                                                         }
                                                     }
                                                 }
 
                                                 return (
-                                                    <div key={size} className="flex justify-between items-center text-[11px]">
-                                                        <span className="text-white/70">{size} SIZE x {count}</span>
+                                                    <div key={category.id} className="flex justify-between items-center text-[11px]">
+                                                        <span className="text-white/70">{getBagCategoryLabel(category.id, lang)} x {count}</span>
                                                         <span className="font-bold">₩{itemPrice.toLocaleString()}</span>
                                                     </div>
                                                 );
@@ -1060,6 +1174,18 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10">
+                                    {isMockPaymentMode && (
+                                        <div className="rounded-2xl border border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-bee-yellow mb-1">
+                                                Local Mock Payment
+                                            </p>
+                                            <p className="text-[11px] font-bold text-white/80 leading-relaxed">
+                                                {lang === 'ko'
+                                                    ? '지금은 로컬 토스 mock 모드예요. 실제 카드 결제 없이 성공 페이지 흐름만 확인합니다.'
+                                                    : 'Local Toss mock mode is enabled. This simulates the success flow without charging a real card.'}
+                                            </p>
+                                        </div>
+                                    )}
                                     <label className="flex items-start gap-3 cursor-pointer group">
                                         <input title="Agree to Terms" type="checkbox" checked={booking.agreedToTerms} onChange={e => setBooking(prev => ({ ...prev, agreedToTerms: e.target.checked }))} className="w-5 h-5 mt-0.5 accent-bee-yellow rounded" />
                                         <div className="flex flex-col">
@@ -1117,7 +1243,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         <div className="w-5 h-5 border-2 border-bee-black border-t-transparent rounded-full animate-spin" />
                                     ) : (
                                         <>
-                                            {tBooking.book_now || 'COMPLETE BOOKING'} <ArrowRight size={20} />
+                                            {isMockPaymentMode
+                                                ? (lang === 'ko' ? '결제 흐름 테스트하기' : 'TEST PAYMENT FLOW')
+                                                : (tBooking.book_now || 'COMPLETE BOOKING')} <ArrowRight size={20} />
                                         </>
                                     )}
                                 </button>

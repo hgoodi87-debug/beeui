@@ -11,6 +11,7 @@ interface StaffScanPageProps {
 }
 
 const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lang }) => {
+    const scanText = t.staff_scan || {};
     const [bookingId, setBookingId] = useState<string | null>(null);
     const [booking, setBooking] = useState<BookingState | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -33,9 +34,9 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             loadBooking(bookingId);
         } else {
             setIsLoading(false);
-            setError("스캔된 예약 정보가 없습니다.");
+            setError(scanText.no_scan_info || "스캔된 예약 정보가 없습니다.");
         }
-    }, [bookingId]);
+    }, [bookingId, scanText.no_scan_info]);
 
     const loadBooking = async (id: string) => {
         setIsLoading(true);
@@ -46,19 +47,30 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             if (found) {
                 setBooking(found);
             } else {
-                setError("예약 정보를 찾을 수 없습니다.");
+                setError(scanText.booking_not_found || "예약 정보를 찾을 수 없습니다.");
             }
         } catch (err) {
             console.error(err);
-            setError("데이터 로드 중 오류가 발생했습니다.");
+            setError(scanText.load_error || "데이터 로드 중 오류가 발생했습니다.");
         } finally {
             setIsLoading(false);
         }
     };
 
+    const getStatusLabel = (status: BookingStatus | string) => {
+        const normalized = String(status || '').toLowerCase();
+        return scanText.statuses?.[normalized] || status;
+    };
+
+    const getPaymentStatusLabel = (status?: string) => {
+        const normalized = String(status || 'unknown').toLowerCase();
+        return scanText.payment_statuses?.[normalized] || normalized;
+    };
+
     const handleStatusUpdate = async (newStatus: BookingStatus) => {
         if (!booking) return;
-        if (!confirm(`상태를 '${newStatus}'(으)로 변경하시겠습니까?`)) return;
+        const confirmMessage = (scanText.confirm_update || "상태를 '{status}'(으)로 변경하시겠습니까?").replace('{status}', getStatusLabel(newStatus));
+        if (!confirm(confirmMessage)) return;
 
         setIsUpdating(true);
         try {
@@ -66,10 +78,10 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
 
             // 로컬 상태 즉시 업데이트
             setBooking(prev => prev ? { ...prev, status: newStatus } : null);
-            alert("상태가 변경되었습니다.");
+            alert(scanText.changed || "상태가 변경되었습니다.");
         } catch (err) {
             console.error(err);
-            alert("상태 변경 실패");
+            alert(scanText.failed || "상태 변경 실패");
         } finally {
             setIsUpdating(false);
         }
@@ -98,7 +110,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
         };
         return (
             <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${styles[status] || 'bg-gray-100 text-gray-400'}`}>
-                {status}
+                {getStatusLabel(status)}
             </span>
         );
     };
@@ -115,11 +127,15 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
                 <i className="fa-solid fa-circle-exclamation text-4xl text-bee-yellow mb-4"></i>
-                <p className="text-gray-800 font-black text-lg mb-2">{error || "잘못된 접근입니다."}</p>
+                <p className="text-gray-800 font-black text-lg mb-2">{error || (scanText.invalid_access || "잘못된 접근입니다.")}</p>
                 {!adminName && (
                     <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                        스태프 권한이 필요합니다.<br/>
-                        먼저 관리자 로그인을 완료해주세요. 💅
+                        {(scanText.auth_required || '스태프 권한이 필요합니다.\n먼저 관리자 로그인을 완료해주세요.').split('\n').map((line: string, index: number, arr: string[]) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                {index < arr.length - 1 ? <br /> : null}
+                            </React.Fragment>
+                        ))}
                     </p>
                 )}
                 <button 
@@ -127,7 +143,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     title="Go back to Admin"
                     className="px-8 py-3 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all"
                 >
-                    {adminName ? "관리자 홈으로" : "로그인하러 가기"}
+                    {adminName ? (scanText.admin_home || "관리자 홈으로") : (scanText.go_login || "로그인하러 가기")}
                 </button>
             </div>
         );
@@ -145,10 +161,10 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             {/* Header */}
             <header className="bg-bee-black px-6 py-4 flex justify-between items-center sticky top-0 z-50">
                 <div className="flex items-center gap-3">
-                    <button title="Back" aria-label="Back" onClick={onBack} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
+                    <button title={t.common?.back || "Back"} aria-label={t.common?.back || "Back"} onClick={onBack} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
                         <i className="fa-solid fa-chevron-left text-xs"></i>
                     </button>
-                    <span className="font-black text-bee-yellow italic text-lg tracking-tight">Staff Mode</span>
+                    <span className="font-black text-bee-yellow italic text-lg tracking-tight">{scanText.staff_mode || "Staff Mode"}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -165,11 +181,11 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                 >
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Current Status</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{scanText.current_status || "Current Status"}</p>
                             {getStatusBadge(booking.status)}
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Booking ID</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{scanText.booking_id || "Booking ID"}</p>
                             <p className="text-xs font-black text-bee-black">{booking.id}</p>
                         </div>
                     </div>
@@ -192,8 +208,8 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                             <i className={`fa-solid ${booking.serviceType === ServiceType.DELIVERY ? 'fa-truck-fast' : 'fa-warehouse'}`}></i>
                         </div>
                         <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Service Type</p>
-                            <p className="text-base font-black text-bee-black">{booking.serviceType}</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{scanText.service_type || "Service Type"}</p>
+                            <p className="text-base font-black text-bee-black">{booking.serviceType === ServiceType.DELIVERY ? t.booking?.delivery : t.booking?.storage}</p>
                         </div>
                     </div>
 
@@ -202,18 +218,18 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
 
                         <div className="relative pl-8">
                             <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full border-4 border-white bg-bee-black shadow-sm"></div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">From</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{scanText.from || t.booking?.from || "From"}</p>
                             <p className="text-sm font-bold text-bee-black leading-tight mb-1">{getLocName(booking.pickupLocation)}</p>
                             <p className="text-xs text-gray-400">{booking.pickupDate} {booking.pickupTime}</p>
                         </div>
 
                         <div className="relative pl-8">
                             <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full border-4 border-white bg-bee-yellow shadow-sm"></div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">To</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{scanText.to || t.booking?.to || "To"}</p>
                             <p className="text-sm font-bold text-bee-black leading-tight mb-1">
                                 {booking.serviceType === ServiceType.DELIVERY
                                     ? (booking.dropoffLocation ? getLocName(booking.dropoffLocation) : booking.dropoffAddress)
-                                    : `${getLocName(booking.pickupLocation)} (Storage)`}
+                                    : `${getLocName(booking.pickupLocation)} (${t.booking_voucher?.storage || t.locations_page?.tag_storage || 'Storage'})`}
                             </p>
                             <p className="text-xs text-gray-400">{booking.dropoffDate} {booking.serviceType === ServiceType.DELIVERY ? booking.deliveryTime : ''}</p>
                         </div>
@@ -232,16 +248,16 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                             <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
                                 <i className="fa-solid fa-receipt"></i>
                             </div>
-                            <span className="text-sm font-black text-bee-black">Payment Details</span>
+                            <span className="text-sm font-black text-bee-black">{scanText.payment_details || "Payment Details"}</span>
                         </div>
                         <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${booking.paymentStatus === 'paid' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                            {booking.paymentStatus || 'unknown'}
+                            {getPaymentStatusLabel(booking.paymentStatus)}
                         </span>
                     </div>
 
                     <div className="space-y-3 pt-3 border-t border-gray-100">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-gray-400">Method</span>
+                            <span className="text-xs font-bold text-gray-400">{scanText.method || "Method"}</span>
                             <span className="text-xs font-black text-bee-black uppercase">
                                 {booking.paymentMethod || 'Card'}
                             </span>
@@ -249,7 +265,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                         {booking.discountAmount ? (
                             <div className="flex justify-between items-center">
                                 <span className="text-xs font-bold text-gray-400">
-                                    Discount {booking.promoCode ? <span className="text-[9px] bg-red-50 text-red-500 px-1.5 py-0.5 rounded ml-1">{booking.promoCode}</span> : ''}
+                                    {(scanText.discount || 'Discount')} {booking.promoCode ? <span className="text-[9px] bg-red-50 text-red-500 px-1.5 py-0.5 rounded ml-1">{booking.promoCode}</span> : ''}
                                 </span>
                                 <span className="text-xs font-bold text-red-500">
                                     -{booking.discountAmount.toLocaleString()} KRW
@@ -257,7 +273,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                             </div>
                         ) : null}
                         <div className="flex justify-between items-center pt-2 border-t border-gray-50">
-                            <span className="text-xs font-black text-gray-500">Total Amount</span>
+                            <span className="text-xs font-black text-gray-500">{scanText.total_amount || "Total Amount"}</span>
                             <span className="text-lg font-black text-blue-600">
                                 {(booking.finalPrice ?? booking.price ?? 0).toLocaleString()} <span className="text-xs ml-1 text-gray-400">KRW</span>
                             </span>
@@ -271,7 +287,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Update Status</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">{scanText.update_status || "Update Status"}</p>
                     <div className="grid grid-cols-2 gap-3">
                         {canStartHandling && (
                             <button
@@ -279,7 +295,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                                 disabled={isUpdating}
                                 className="col-span-2 py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-[0.98] transition-all"
                             >
-                                <i className="fa-solid fa-box-open mr-2"></i> 픽업/입고 확인
+                                <i className="fa-solid fa-box-open mr-2"></i> {scanText.confirm_pickup_checkin || '픽업/입고 확인'}
                             </button>
                         )}
 
@@ -290,14 +306,14 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                                     disabled={isUpdating}
                                     className="py-4 bg-white border border-gray-200 text-bee-black rounded-2xl font-bold text-sm hover:border-bee-yellow transition-all"
                                 >
-                                    보관 중
+                                    {scanText.storage_in_progress || '보관 중'}
                                 </button>
                                 <button
                                     onClick={() => handleStatusUpdate(BookingStatus.ARRIVED)}
                                     disabled={isUpdating}
                                     className="py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-[0.98] transition-all"
                                 >
-                                    <i className="fa-solid fa-flag-checkered mr-2"></i> 배송/도착 완료
+                                    <i className="fa-solid fa-flag-checkered mr-2"></i> {scanText.delivery_arrival_complete || '배송/도착 완료'}
                                 </button>
                             </>
                         )}
@@ -308,13 +324,13 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                                 disabled={isUpdating}
                                 className="col-span-2 py-4 bg-green-500 text-white rounded-2xl font-black text-sm shadow-lg active:scale-[0.98] transition-all"
                             >
-                                <i className="fa-solid fa-check mr-2"></i> 고객 수령 (완료 처리)
+                                <i className="fa-solid fa-check mr-2"></i> {scanText.customer_pickup_complete || '고객 수령 (완료 처리)'}
                             </button>
                         )}
 
                         {booking.status === BookingStatus.COMPLETED && (
                             <div className="col-span-2 py-4 bg-gray-100 text-gray-400 rounded-2xl font-bold text-sm text-center">
-                                이미 완료된 예약입니다
+                                {scanText.already_completed || '이미 완료된 예약입니다'}
                             </div>
                         )}
                     </div>
@@ -324,7 +340,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             {/* Floating Image Preview (if present) */}
             {(booking.imageUrl || booking.pickupImageUrl) && (
                 <div className="fixed bottom-6 right-6">
-                    <button title="Preview Image" aria-label="Preview Image" className="w-14 h-14 rounded-full bg-white shadow-2xl border border-gray-100 flex items-center justify-center text-bee-black" onClick={() => window.open(booking.imageUrl || booking.pickupImageUrl, '_blank')}>
+                    <button title={scanText.preview_image || 'Preview Image'} aria-label={scanText.preview_image || 'Preview Image'} className="w-14 h-14 rounded-full bg-white shadow-2xl border border-gray-100 flex items-center justify-center text-bee-black" onClick={() => window.open(booking.imageUrl || booking.pickupImageUrl, '_blank')}>
                         <i className="fa-solid fa-image text-xl"></i>
                     </button>
                 </div>

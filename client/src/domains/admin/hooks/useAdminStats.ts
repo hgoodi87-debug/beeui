@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { BookingState, BookingStatus, ServiceType, Expenditure, CashClosing } from '../../../../types';
+import { sanitizeBagSizes } from '../../booking/bagCategoryUtils';
 
 interface StatisticsParams {
     bookings: BookingState[];
@@ -98,13 +99,13 @@ export const useAdminStats = ({
         const deliveryBookings = targetBookings.filter(b => b.serviceType === ServiceType.DELIVERY);
         const storageBookings = targetBookings.filter(b => b.serviceType === ServiceType.STORAGE);
 
-        const bagSizes = { S: 0, M: 0, L: 0, XL: 0 };
+        const bagSizes = { handBag: 0, carrier: 0, strollerBicycle: 0 };
         targetBookings.forEach(b => {
             if (b.bagSizes) {
-                bagSizes.S += (b.bagSizes.S || 0);
-                bagSizes.M += (b.bagSizes.M || 0);
-                bagSizes.L += (b.bagSizes.L || 0);
-                bagSizes.XL += (b.bagSizes.XL || 0);
+                const normalized = sanitizeBagSizes(b.bagSizes);
+                bagSizes.handBag += normalized.handBag;
+                bagSizes.carrier += normalized.carrier;
+                bagSizes.strollerBicycle += normalized.strollerBicycle;
             }
         });
 

@@ -7,11 +7,26 @@ import { RecaptchaService } from '../services/recaptchaService';
 import { calculateStoragePrice, STORAGE_RATES } from '../utils/pricing';
 import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { Clock } from 'lucide-react';
+import {
+  BagCategoryId,
+  DEFAULT_DELIVERY_PRICES,
+  DEFAULT_STORAGE_TIERS as INITIAL_STORAGE_TIERS,
+  createEmptyBagSizes,
+  getBagCategoriesForService,
+  getBagCategoryCount,
+  getBagCategoryLabel,
+  getStoragePriceForCategory,
+  getTotalBags,
+  hasStandaloneHandBagDeliverySelection,
+  sanitizeBagSizes,
+  sanitizeDeliveryBagSizes,
+  updateBagCategoryCount,
+} from '../src/domains/booking/bagCategoryUtils';
 
 interface BookingWidgetProps {
   lang: string;
   t: any;
-  preSelectedBooking?: { id: string; type: 'STORAGE' | 'DELIVERY'; bagCounts?: { S: number; M: number; L: number; XL: number } } | null;
+  preSelectedBooking?: { id: string; type: 'STORAGE' | 'DELIVERY'; bagCounts?: BagSizes } | null;
   onLocationsClick?: () => void;
   onTermsClick?: () => void;
   onPrivacyClick?: () => void;
@@ -21,13 +36,6 @@ interface BookingWidgetProps {
   /** @deprecated use preSelectedBooking instead */
   initialBooking?: BookingState | null;
 }
-
-const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
-const INITIAL_STORAGE_TIERS: StorageTier[] = [
-  { id: 'st-4h', label: '4h', prices: { S: 2000, M: 3000, L: 5000, XL: 7000 } },
-  { id: 'st-1d', label: '1d', prices: { S: 8000, M: 10000, L: 15000, XL: 20000 } },
-  { id: 'st-week', label: '1w', prices: { S: 40000, M: 55000, L: 80000, XL: 110000 } }
-];
 
 const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooking, initialBooking, onTermsClick, onPrivacyClick, onFinalBookClick, onSuccess, initialLocationId }) => {
   const [locations, setLocations] = useState<LocationOption[]>(INITIAL_LOCATIONS);
@@ -40,7 +48,7 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     serviceType: ServiceType.DELIVERY, pickupLocation: '', pickupAddress: '', pickupAddressDetail: '',
     dropoffLocation: '', dropoffAddress: '', dropoffAddressDetail: '',
     pickupDate: formatKSTDate(), pickupTime: '09:00', deliveryTime: '16:00', dropoffDate: formatKSTDate(),
-    bags: 0, bagSizes: { S: 0, M: 0, L: 0, XL: 0 }, selectedStorageTierId: INITIAL_STORAGE_TIERS[0].id,
+    bags: 0, bagSizes: createEmptyBagSizes(), selectedStorageTierId: INITIAL_STORAGE_TIERS[0].id,
     userName: '', userEmail: '', snsChannel: 'kakao', snsId: '',
     status: BookingStatus.PENDING, price: 0, createdAt: new Date().toISOString(),
     agreedToTerms: false, agreedToPrivacy: false, agreedToHighValue: false, agreedToPremium: false,
@@ -71,6 +79,7 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const tBooking = t.booking || {};
 
   const isModification = !!initialBooking;
 
@@ -99,22 +108,41 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     } else if (preSelectedBooking) {
       const bType = preSelectedBooking.type === 'STORAGE' ? ServiceType.STORAGE : ServiceType.DELIVERY;
       setServiceType(bType);
-      const bagCounts = preSelectedBooking.bagCounts || { S: 0, M: 0, L: 0, XL: 0 };
+      const bagCounts = bType === ServiceType.DELIVERY
+        ? sanitizeDeliveryBagSizes(preSelectedBooking.bagCounts)
+        : sanitizeBagSizes(preSelectedBooking.bagCounts);
       setBooking(prev => ({
         ...prev,
         serviceType: bType,
         pickupLocation: preSelectedBooking.id,
         bagSizes: bagCounts,
-        bags: Object.values(bagCounts).reduce((a: number, b: number) => a + b, 0)
+        bags: getTotalBags(bagCounts)
       }));
     } else if (initialLocationId) {
       setBooking(prev => ({ ...prev, pickupLocation: initialLocationId }));
     }
   }, [preSelectedBooking, initialBooking, initialLocationId]);
 
+  useEffect(() => {
+    if (serviceType !== ServiceType.DELIVERY || !booking.bagSizes.strollerBicycle) return;
+    setBooking(prev => ({
+      ...prev,
+      bagSizes: sanitizeDeliveryBagSizes(prev.bagSizes),
+      bags: getTotalBags(sanitizeDeliveryBagSizes(prev.bagSizes))
+    }));
+  }, [serviceType, booking.bagSizes.strollerBicycle]);
+
   const selectedBranch = useMemo(() => {
     return locations.find(l => l.id === booking.pickupLocation);
   }, [booking.pickupLocation, locations]);
+
+  const visibleBagCategories = useMemo(() => getBagCategoriesForService(serviceType), [serviceType]);
+
+  const baseStoragePrices: PriceSettings = useMemo(() => ({
+    handBag: STORAGE_RATES.handBag.hours4,
+    carrier: STORAGE_RATES.carrier.hours4,
+    strollerBicycle: STORAGE_RATES.strollerBicycle.hours4,
+  }), []);
 
   const parseBusinessHours = (hoursStr: string) => {
     if (!hoursStr || hoursStr === '24시간' || hoursStr === '24 Hours') return { start: 0, end: 24 };
@@ -260,14 +288,14 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
     setBooking(prev => ({ ...prev, [key]: value }));
   };
 
-  const updateBagSize = (size: 'S' | 'M' | 'L' | 'XL', delta: number) => {
-    const newCount = Math.max(0, booking.bagSizes[size] + delta);
+  const updateBagSize = (categoryId: BagCategoryId, delta: number) => {
     setBooking(prev => {
-      const newSizes = { ...prev.bagSizes, [size]: newCount };
+      const nextBagSizes = updateBagCategoryCount(prev.bagSizes || createEmptyBagSizes(), categoryId, delta);
+      const normalizedBagSizes = serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(nextBagSizes) : nextBagSizes;
       return {
         ...prev,
-        bagSizes: newSizes,
-        bags: Object.values(newSizes).reduce((a, b) => a + b, 0)
+        bagSizes: normalizedBagSizes,
+        bags: getTotalBags(normalizedBagSizes)
       };
     });
   };
@@ -282,18 +310,30 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
 
     if (isDelivery) {
       const activePrices = deliveryPrices;
-      const base = (booking.bagSizes.S * (activePrices.S || 0)) +
-        (booking.bagSizes.M * (activePrices.M || 0)) +
-        (booking.bagSizes.L * (activePrices.L || 0)) +
-        (booking.bagSizes.XL * (activePrices.XL || 0));
-      const discount = appliedCoupon ? appliedCoupon.amountPerBag * booking.bags : 0;
-
-      const subtotal = Math.max(0, base - discount);
+      const deliveryBagSizes = sanitizeDeliveryBagSizes(booking.bagSizes);
+      const deliveryBase = (deliveryBagSizes.handBag * (activePrices.handBag || 0)) +
+        (deliveryBagSizes.carrier * (activePrices.carrier || 0));
+      const pickupMidnight = Date.parse(`${booking.pickupDate}T00:00:00+09:00`);
+      const dropoffMidnight = Date.parse(`${booking.dropoffDate}T00:00:00+09:00`);
+      const diffDays =
+        Number.isFinite(pickupMidnight) && Number.isFinite(dropoffMidnight) && dropoffMidnight > pickupMidnight
+          ? Math.floor((dropoffMidnight - pickupMidnight) / (24 * 60 * 60 * 1000))
+          : 0;
+      const storageFee =
+        diffDays > 0
+          ? diffDays * (
+              (deliveryBagSizes.handBag * STORAGE_RATES.handBag.extraDay) +
+              (deliveryBagSizes.carrier * STORAGE_RATES.carrier.extraDay)
+            )
+          : 0;
+      const deliveryBagCount = getTotalBags(deliveryBagSizes);
+      const discount = appliedCoupon ? appliedCoupon.amountPerBag * deliveryBagCount : 0;
+      const subtotal = Math.max(0, deliveryBase + storageFee - discount);
       return {
         total: subtotal + originSurcharge + destSurcharge,
         discount,
-        durationText: '',
-        breakdown: '',
+        durationText: diffDays > 0 ? `${diffDays}${lang.startsWith('ko') ? '일' : 'd'} storage` : '',
+        breakdown: diffDays > 0 ? `${diffDays}${lang.startsWith('ko') ? '일 보관료 포함' : 'd storage incl.'}` : '',
         originSurcharge,
         destSurcharge
       };
@@ -317,8 +357,13 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
   const handleFinalBook = async () => {
     setIsSubmitting(true);
     try {
+      if (serviceType === ServiceType.DELIVERY && hasStandaloneHandBagDeliverySelection(booking.bagSizes)) {
+        throw new Error('배송은 쇼핑백, 손가방만 단독으로 접수할 수 없어요. 캐리어를 1개 이상 함께 선택해 주세요.');
+      }
       const recaptchaToken = (await RecaptchaService.execute('BOOKING')) || undefined;
-      const finalBooking = { ...booking, finalPrice: priceDetails.total, createdAt: new Date().toISOString(), recaptchaToken };
+      const sanitizedBagSizes = serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(booking.bagSizes) : sanitizeBagSizes(booking.bagSizes);
+      const sanitizedBags = getTotalBags(sanitizedBagSizes);
+      const finalBooking = { ...booking, bagSizes: sanitizedBagSizes, bags: sanitizedBags, finalPrice: priceDetails.total, createdAt: new Date().toISOString(), recaptchaToken };
       if (isModification && initialBooking?.id) {
         await StorageService.updateBooking(initialBooking.id, finalBooking as any);
       } else {
@@ -377,9 +422,14 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
                         {originLocations.map(l => <option key={l.id} value={l.id}>{getLocName(l)}</option>)}
                       </select>
                       {serviceType === ServiceType.DELIVERY && (
-                        <p className="mt-2 text-[10px] text-bee-yellow font-black uppercase tracking-wider animate-pulse">
-                          * 배송은 반드시 지정된 서울 내 거점에 직접 방문하여 맡겨주셔야 합니다. 💅
-                        </p>
+                        <div className="mt-2 space-y-1">
+                          <p className="text-[10px] text-bee-yellow font-black uppercase tracking-wider animate-pulse">
+                            * 배송은 반드시 지정된 서울 내 거점에 직접 방문하여 맡겨주셔야 합니다. 💅
+                          </p>
+                          <p className="text-[10px] text-red-500 font-black">
+                            * 쇼핑백, 손가방 단독 배송은 불가하고 캐리어 1개 이상과 함께 예약해야 합니다.
+                          </p>
+                        </div>
                       )}
                     </div>
                     {serviceType === ServiceType.DELIVERY && (
@@ -458,17 +508,31 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
               )}
 
               {currentStep === 2 && (
-                <div className="grid grid-cols-2 gap-4">
-                  {(['S', 'M', 'L', 'XL'] as const).map(size => (
-                    <div key={size} className="p-6 bg-white border-2 border-gray-50 rounded-[32px] flex flex-col gap-4">
-                      <span className="text-xl font-black">{size}</span>
+                <div className={`grid gap-4 ${serviceType === ServiceType.DELIVERY ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                  {visibleBagCategories.map(category => {
+                    const count = getBagCategoryCount(booking.bagSizes, category.id);
+                    const unitPrice = serviceType === ServiceType.DELIVERY
+                      ? getStoragePriceForCategory(deliveryPrices, category.id)
+                      : getStoragePriceForCategory(baseStoragePrices, category.id);
+
+                    return (
+                    <div key={category.id} className="p-6 bg-white border-2 border-gray-50 rounded-[32px] flex flex-col gap-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[11px] font-black text-gray-500 tracking-tight">{getBagCategoryLabel(category.id, lang)}</span>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xl font-black">{count}</span>
+                          <span className="text-[11px] font-black text-bee-yellow">
+                            ₩{unitPrice.toLocaleString()}{serviceType === ServiceType.STORAGE ? (lang.startsWith('ko') ? '/4시간~' : '/4h~') : ''}
+                          </span>
+                        </div>
+                      </div>
                       <div className="flex items-center justify-between">
-                        <button onClick={() => updateBagSize(size, -1)} className="w-10 h-10 rounded-xl bg-gray-100 font-bold">-</button>
-                        <span className="text-xl font-black">{booking.bagSizes[size]}</span>
-                        <button onClick={() => updateBagSize(size, 1)} className="w-10 h-10 rounded-xl bg-bee-black text-bee-yellow font-bold">+</button>
+                        <button onClick={() => updateBagSize(category.id, -1)} disabled={count === 0} className="w-10 h-10 rounded-xl bg-gray-100 font-bold disabled:opacity-50">-</button>
+                        <span className="text-xl font-black">{count}</span>
+                        <button onClick={() => updateBagSize(category.id, 1)} className="w-10 h-10 rounded-xl bg-bee-black text-bee-yellow font-bold disabled:bg-gray-200 disabled:text-gray-400">+</button>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
 

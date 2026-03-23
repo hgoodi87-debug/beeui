@@ -26,14 +26,20 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
         viewport: { once: true },
         transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] as const }
     };
+    const seoTitle = lang === 'ko'
+        ? '서비스 안내 | 빌리버 짐보관 · 공항 당일 배송'
+        : 'Services | Beeliber Luggage Storage & Same-Day Airport Delivery';
+    const seoDescription = lang === 'ko'
+        ? '짐 보관, 공항 당일 배송, 이용 방법과 운영 범위를 한 번에 확인하세요.'
+        : 'See Beeliber luggage storage, same-day airport delivery, and how the service works.';
 
     return (
         <div className="relative flex flex-col min-h-screen w-full bg-white overflow-x-hidden font-pretendard text-bee-black">
             <SEO
-                title={t.seo?.locations_title || `Services - Beeliber`}
-                description={t.seo?.locations_desc || 'Enjoy luggage-free travel with Beeliber.'}
-                keywords={t.seo?.keywords}
+                title={seoTitle}
+                description={seoDescription}
                 lang={lang}
+                path="/services"
             />
             {/* Nav */}
             <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center transition-all duration-300">

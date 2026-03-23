@@ -1,8 +1,14 @@
 export const ko = {
     seo: {
-        title: '빌리버(Beeliber) - 서울 여행이 가벼워지는 순간 | 짐 보관 & 공항 당일 배송 💅',
-        description: '서울 여행의 시작과 끝을 무거운 가방 없이. 홍대입구역, 서울역 등 주요 거점 짐 보관부터 인천공항 당일 배송까지. 빌리버로 두 손 자유로운 서울을 경험하세요. ✨',
-        keywords: '서울 짐보관, 홍대 짐보관, 서울역 짐보관, 명동 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 서울 여행 마지막 날, 체크아웃 후 짐보관'
+        title: '빌리버 | 서울 짐보관 · 인천공항 당일 짐배송',
+        description: '홍대입구역, 서울역, 명동 등 주요 거점 짐 보관부터 인천공항 당일 짐배송까지. 체크아웃 후 무거운 캐리어 없이 가볍게 여행하세요.',
+        keywords: '서울 짐보관, 홍대 짐보관, 서울역 짐보관, 명동 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 서울 여행 마지막 날, 체크아웃 후 짐보관',
+        locations_title: '지점 안내 | 빌리버 서울 짐보관 지점 찾기',
+        locations_desc: '내 위치에서 가까운 빌리버 짐보관 지점과 운영시간, 예약 가능한 보관·배송 서비스를 확인하세요.',
+        services_title: '서비스 안내 | 빌리버 짐보관 · 공항 당일 배송',
+        services_desc: '짐 보관, 공항 당일 배송, 이용 방법과 운영 범위를 한 번에 확인하세요.',
+        qna_title: '자주 묻는 질문 | 빌리버',
+        qna_desc: '예약, 취소·환불, 보관 안전, 지점 이용 방법까지 빌리버 FAQ를 확인하세요.'
     },
     nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털', login: '로그인', mypage: '마이페이지' },
     terms_page: {
@@ -220,10 +226,10 @@ export const ko = {
         insurance_limit_1: "50~100만원",
         insurance_limit_2: "100~200만원",
         insurance_limit_3: "200~300만원",
-        size_s: "소형가방, 작은 쇼핑백",
-        size_m: "20~23인치, 큰 쇼핑백",
-        size_l: "24~26인치",
-        size_xl: "27~30인치",
+        size_s: "쇼핑백, 손가방",
+        size_m: "캐리어",
+        size_l: "캐리어",
+        size_xl: "유모차, 자전거",
         weight_info: "표준 무게는 20KG입니다. 20KG 초과 시 5KG당 5,000원의 추가 요금이 발생합니다 (최대 30KG).",
         insurance_surcharge_1: "100% 할증",
         insurance_surcharge_2: "200% 할증",
@@ -245,11 +251,11 @@ export const ko = {
         total_label: "최종 합계",
         bags_label: "전체 가방 수",
         bags_selection_title: "가방 수량 선택",
-        bags_selection_sub: "보유하신 가방의 사이즈별 수량을 조정해주세요.",
+        bags_selection_sub: "쇼핑백, 손가방 / 캐리어 / 유모차, 자전거 수량을 조정해주세요.",
         contact_info_title: "예약자 정보 입력",
-        size_m_desc: "기내용 캐리어, 백팩",
-        size_l_desc: "위탁용 수하물",
-        size_xl_desc: "대형 수하물",
+        size_m_desc: "기내용, 위탁용 캐리어",
+        size_l_desc: "기내용, 위탁용 캐리어",
+        size_xl_desc: "유모차, 자전거",
         sns_channels: {
             kakao: "카카오톡",
             line: "라인",
@@ -314,7 +320,7 @@ export const ko = {
         ]
     },
     storage_tiers: {
-        'st-4h': '4시간 이하', 'st-1d': '1일 (24시간)', 'st-week': '7일 (장기)'
+        'st-4h': '4시간 기본', 'st-1d': '첫 1일 (24시간)', 'st-week': '추가 1일'
     },
     features: {
         sub: '우리의 전문성',
@@ -397,9 +403,9 @@ export const ko = {
         view_details: '상세보기',
         ai_prompt: 'Bee AI가 예약하시는 것을 도와드리겠습니다.',
         bag_size_s_desc: '~20인치 (기내용)',
-        bag_size_m_desc: '~23인치 (기내용)',
-        bag_size_l_desc: '~27인치 (위탁용)',
-        bag_size_xl_desc: '~32인치+ (특대형)',
+        bag_size_m_desc: '캐리어',
+        bag_size_l_desc: '캐리어',
+        bag_size_xl_desc: '유모차, 자전거',
         btn_apply: '적용하기',
         btn_reload_page: '페이지 새로고침',
         label_back_to_list: '목록으로',
@@ -623,11 +629,11 @@ export const ko = {
         size_s_range: "12인치 이하",
         size_s_desc: "소형 가방 / 백팩",
         size_m_range: "20~23인치",
-        size_m_desc: "기내용 수하물",
+        size_m_desc: "캐리어",
         size_l_range: "24~26인치",
-        size_l_desc: "일반 수하물",
+        size_l_desc: "캐리어",
         size_xl_range: "27~30인치",
-        size_xl_desc: "대형 수하물",
+        size_xl_desc: "유모차, 자전거",
         hook_text: "선택하신 수하물의 크기를 확인해 보세요.",
         hook_sub: "이대로 예약을 진행하시겠습니까?",
         info_note: "본 시뮬레이션은 표준 규격을 바탕으로 제작되었으며, 실제 가방의 크기는 브랜드와 디자인에 따라 다를 수 있습니다."
@@ -880,3 +886,79 @@ export const ko = {
         }
     }
 };
+
+ko.staff_scan = {
+    no_scan_info: '스캔된 예약 정보가 없습니다.',
+    booking_not_found: '예약 정보를 찾을 수 없습니다.',
+    load_error: '데이터 로드 중 오류가 발생했습니다.',
+    invalid_access: '잘못된 접근입니다.',
+    auth_required: '스태프 권한이 필요합니다.\n먼저 관리자 로그인을 완료해주세요.',
+    admin_home: '관리자 홈으로',
+    go_login: '로그인하러 가기',
+    staff_mode: '스태프 모드',
+    current_status: '현재 상태',
+    booking_id: '예약 ID',
+    service_type: '서비스 유형',
+    from: '출발 / 맡김',
+    to: '도착 / 찾기',
+    payment_details: '결제 정보',
+    method: '결제 수단',
+    discount: '할인',
+    total_amount: '총 결제 금액',
+    update_status: '상태 변경',
+    confirm_update: "상태를 '{status}'(으)로 변경하시겠습니까?",
+    changed: '상태가 변경되었습니다.',
+    failed: '상태 변경에 실패했습니다.',
+    confirm_pickup_checkin: '픽업/입고 확인',
+    storage_in_progress: '보관 중',
+    delivery_arrival_complete: '배송/도착 완료',
+    customer_pickup_complete: '고객 수령 (완료 처리)',
+    already_completed: '이미 완료된 예약입니다.',
+    preview_image: '이미지 미리보기',
+    statuses: {
+        pending: '대기',
+        confirmed: '예약 확정',
+        transit: '이동 중',
+        storage: '보관 중',
+        arrived: '도착 완료',
+        completed: '이용 완료',
+        cancelled: '취소'
+    },
+    payment_statuses: {
+        paid: '결제 완료',
+        unpaid: '미결제',
+        refunded: '환불 완료',
+        unknown: '미확인'
+    }
+};
+
+ko.booking_voucher = {
+    image_save_failed: '이미지 저장에 실패했습니다.',
+    official_receipt: '공식 예약 확인서',
+    reservation_id: '예약 번호',
+    issue_date: '발급 일자',
+    scan_to_verify: '스캔하여 확인',
+    show_to_staff: '본 바우처를 직원에게 제시하세요',
+    show_code_note: '지점 방문 시 본 코드를 제시해 주세요.\n현장 확인 후 즉시 처리가 진행됩니다.',
+    directions_short: '길찾기',
+    branch_pickup_guide: '지점 및 픽업 안내',
+    storage: '보관',
+    vat_included: 'VAT 포함',
+    save_voucher: '바우처 저장',
+    home: '홈으로',
+    branch_address: '주소',
+    open_hours: '운영 시간',
+    coupon_code: '쿠폰 코드',
+    show_to_staff_short: '"직원에게 보여주세요"',
+    coupon_small_note: '금액이 작은 권종은 우대가 어려울 수 있습니다.',
+    touch_to_save_coupon: '터치하여 쿠폰 이미지 저장',
+    quick_access_note: '서비스 카운터에서 빠르게 확인할 수 있도록 이 화면을 캡처하거나 PDF로 저장해 주세요.',
+    save_simple_qr: '심플 QR 이미지 저장',
+    official_service_voucher: '공식 서비스 바우처'
+};
+ko.booking_voucher.moneybox_partner = '연남점 공식 제휴처';
+ko.booking_voucher.vip_coupon = 'VIP 쿠폰';
+ko.booking_voucher.currency_exchange = '환전 혜택';
+ko.booking_voucher.special_benefit = '특별 우대';
+ko.booking_voucher.everyday_hours = '09:00 - 21:00 (매일)';
+ko.booking_voucher.address_specified = '주소 별도 지정';

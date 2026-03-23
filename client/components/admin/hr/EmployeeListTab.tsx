@@ -61,6 +61,34 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
     }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
   }, [admins, activeCategory, selectedSubFilter, searchQ]);
 
+  const getSyncBadge = (admin: AdminUser) => {
+    if (admin.syncStatus?.status === 'error') {
+      return {
+        label: '동기화 실패',
+        className: 'bg-red-50 text-red-700 border border-red-100',
+      };
+    }
+
+    if (admin.syncStatus?.status === 'synced' && admin.syncStatus.profileId && admin.syncStatus.employeeId) {
+      return {
+        label: admin.syncStatus.syntheticEmail ? '임시메일 연동' : '로그인 연동 완료',
+        className: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+      };
+    }
+
+    if (admin.email || admin.loginId) {
+      return {
+        label: '동기화 필요',
+        className: 'bg-amber-50 text-amber-700 border border-amber-100',
+      };
+    }
+
+    return {
+      label: '명부 전용',
+      className: 'bg-gray-100 text-gray-500 border border-gray-200',
+    };
+  };
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* 카테고리 탭 상단 정렬 */}
@@ -166,6 +194,7 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
             const adminRole = isSuperName ? 'super' : (admin.role || (admin.branchId ? 'branch' : 'staff'));
             const statusConfig = (HR_STATUS_CONFIG as Record<string, HRStatusConfig>)[admin.status || 'active'] || HR_STATUS_CONFIG.active;
             const roleConfig = HR_ROLES.find((r: HRRole) => r.id === adminRole) || HR_ROLES.find(r => r.id === 'staff') || HR_ROLES[0];
+            const syncBadge = getSyncBadge(admin);
             
             return (
               <div 
@@ -174,9 +203,12 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
                 className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative overflow-hidden"
               >
                 {/* 우측 상단 상태 뱃지 */}
-                <div className="absolute top-4 right-4 flex gap-2">
+                <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
                    <div className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${statusConfig.color} shadow-sm`}>
                      {statusConfig.label}
+                   </div>
+                   <div className={`px-2.5 py-1 rounded-full text-[9px] font-black tracking-tight shadow-sm ${syncBadge.className}`}>
+                     {syncBadge.label}
                    </div>
                 </div>
 
@@ -193,6 +225,21 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
                         {locations.find(l => l.id === admin.branchId)?.name || 'HQ / 본사'}
                       </span>
                     </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-400">
+                        {admin.syncStatus?.authEmail || admin.email || admin.loginId || '로그인 정보 미설정'}
+                      </span>
+                      {admin.syncStatus?.syntheticEmail && (
+                        <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black text-amber-700">
+                          임시 이메일
+                        </span>
+                      )}
+                    </div>
+                    {admin.syncStatus?.status === 'error' && admin.syncStatus.lastError && (
+                      <p className="mt-2 max-w-[240px] text-[10px] font-bold leading-relaxed text-red-500">
+                        {admin.syncStatus.lastError}
+                      </p>
+                    )}
                   </div>
                 </div>
 

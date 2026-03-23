@@ -81,8 +81,8 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-bee-black select-none">
       <SEO 
-        title={`${qnaData.title} | Beeliber Premium Support`}
-        description={qnaData.subtitle}
+        title={t.seo?.qna_title || `${qnaData.title} | 빌리버 FAQ`}
+        description={t.seo?.qna_desc || qnaData.subtitle}
         lang={lang}
         path="/qna"
         schema={faqSchema}

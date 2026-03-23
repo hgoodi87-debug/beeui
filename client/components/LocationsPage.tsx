@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { StorageService } from '../services/storageService';
 import LocationList from './locations/LocationList';
 import SEO from './SEO';
-import { LocationOption, ServiceType } from '../types';
+import { BagSizes, LocationOption, ServiceType } from '../types';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 import { formatKSTDate, isAllSlotsPast, addDaysToDateStr, getFirstAvailableSlot, isPastKSTTime } from '../utils/dateUtils';
 import { calculateDistance } from '../utils/locationUtils';
+import { BagCategoryId, DEFAULT_DELIVERY_PRICES, createEmptyBagSizes, sanitizeDeliveryBagSizes, updateBagCategoryCount } from '../src/domains/booking/bagCategoryUtils';
 
 const LocationMap = lazy(() => import('./locations/LocationMap'));
 const BranchDetails = lazy(() => import('./locations/BranchDetails'));
@@ -18,7 +19,7 @@ interface LocationsPageProps {
     type: ServiceType,
     date?: string,
     returnDate?: string,
-    bagCounts?: { S: number, M: number, L: number, XL: number }
+    bagCounts?: BagSizes
   ) => void;
   t: any;
   lang: string;
@@ -43,19 +44,24 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   const [bookingTime, setBookingTime] = useState('09:00');
   const [returnDate, setReturnDate] = useState(formatKSTDate());
   const [returnTime, setReturnTime] = useState('11:00');
-  const [baggageCounts, setBaggageCounts] = useState({ S: 0, M: 0, L: 0, XL: 0 });
-  const [deliveryPrices, setDeliveryPrices] = useState<any>({ S: 20000, M: 20000, L: 25000, XL: 29000 });
+  const [baggageCounts, setBaggageCounts] = useState<BagSizes>(createEmptyBagSizes());
+  const [deliveryPrices, setDeliveryPrices] = useState<any>(DEFAULT_DELIVERY_PRICES);
   const [shouldRenderMap, setShouldRenderMap] = useState(false);
   const [mapSearchAddress, setMapSearchAddress] = useState('');
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   // [스봉이 수정] 훅은 항상 최상단에! 조건부 렌더링 내부에서 훅을 쓰면 리액트가 화낸답니다. 💅
-  const handleBaggageChange = useCallback((size: string, delta: number) => {
-    setBaggageCounts(prev => ({
-      ...prev,
-      [size]: Math.max(0, (prev[size as keyof typeof prev] as number || 0) + delta)
-    }));
-  }, []);
+  const handleBaggageChange = useCallback((categoryId: BagCategoryId, delta: number) => {
+    setBaggageCounts(prev => {
+      const next = updateBagCategoryCount(prev || createEmptyBagSizes(), categoryId, delta);
+      return currentService === 'STORAGE' ? next : sanitizeDeliveryBagSizes(next);
+    });
+  }, [currentService]);
+
+  useEffect(() => {
+    if (currentService === 'STORAGE') return;
+    setBaggageCounts(prev => (prev.strollerBicycle > 0 ? sanitizeDeliveryBagSizes(prev) : prev));
+  }, [currentService]);
 
   // [스봉이 추가] 지점 및 서비스 타입에 따른 지능적 시간 설정 💅
   const DELIVERY_PICKUP_HOURS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
@@ -309,10 +315,11 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   return (
     <div className="relative min-h-screen bg-slate-50 font-sans text-bee-black">
       <SEO
-        title={t.seo?.locations_title || `Locations & Booking - Beeliber`}
-        description={t.seo?.locations_desc || 'Find Beeliber luggage storage and delivery locations near you.'}
+        title={t.seo?.locations_title || '지점 안내 | 빌리버 서울 짐보관 지점 찾기'}
+        description={t.seo?.locations_desc || '내 위치에서 가까운 빌리버 짐보관 지점과 운영시간, 예약 가능한 보관·배송 서비스를 확인하세요.'}
         keywords={t.seo?.keywords}
         lang={lang}
+        path="/locations"
       />
       <div className="fixed inset-0 z-0 font-pretendard">
         {/* 1. Map as Full Background */}
@@ -396,7 +403,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
                     }}
                     bookingDate={bookingDate}
                     onDateChange={setBookingDate}
-                    baggageCounts={baggageCounts as any}
+                    baggageCounts={baggageCounts}
                     onBaggageChange={handleBaggageChange}
                     t={t}
                     lang={lang}

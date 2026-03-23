@@ -7,12 +7,16 @@ const { processVoucherEmail } = require("./src/domains/notification/voucherServi
 const { processArrivalEmail } = require("./src/domains/notification/arrivalService");
 const { processRefundEmail } = require("./src/domains/notification/refundService");
 const { handleSignedUploadRequest, isSignedUploadHttpError } = require("./src/domains/storage/signedUploadService");
+const { createTossPaymentSession, confirmTossPaymentSession } = require("./src/domains/payments/tossPaymentsService");
+const { upsertAdminAccount, deleteAdminAccount } = require("./src/domains/admin/upsertAdminAccountService");
 
 admin.initializeApp();
 
 const ADMIN_ROLES = new Set(['super', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs']);
 const MAILER_SECRETS = ['SMTP_PASS'];
 const NOTIFICATION_SECRETS = ['SMTP_PASS', 'GOOGLE_CHAT_WEBHOOK_URL'];
+const TOSS_PAYMENT_SECRETS = ['TOSS_PAYMENTS_SECRET_KEY'];
+const ADMIN_ACCOUNT_SYNC_SECRETS = ['SUPABASE_SERVICE_ROLE_KEY'];
 
 const assertAuthenticated = (request) => {
     const uid = request.auth && request.auth.uid;
@@ -55,6 +59,14 @@ const assertSuperAdmin = async (request) => {
         throw new HttpsError('permission-denied', 'Super admin access required.');
     }
     return adminContext;
+};
+
+const assertHqLevelAdmin = async (request) => {
+    const { uid, adminContext } = await assertAdmin(request);
+    if (!['super', 'hq'].includes(adminContext.role)) {
+        throw new HttpsError('permission-denied', 'HQ admin access required.');
+    }
+    return { uid, adminContext };
 };
 
 /**
@@ -151,6 +163,137 @@ exports.runClaudeAgent = onCall({ timeoutSeconds: 540, memory: "1GiB" }, async (
     return await claudeAgent.runAgent({ ...payload, task, agentName });
 });
 
+// 4-1. Toss Payment Session
+exports.createTossPaymentSession = onCall(async (request) => {
+    const uid = assertAuthenticated(request);
+    const payload = request.data && typeof request.data === 'object' ? request.data : {};
+
+    return await createTossPaymentSession({
+        admin,
+        uid,
+        bookingInput: payload.booking,
+    });
+});
+
+exports.confirmTossPayment = onCall({ secrets: TOSS_PAYMENT_SECRETS }, async (request) => {
+    const uid = assertAuthenticated(request);
+    const payload = request.data && typeof request.data === 'object' ? request.data : {};
+    const paymentKey = typeof payload.paymentKey === 'string' ? payload.paymentKey.trim() : '';
+    const orderId = typeof payload.orderId === 'string' ? payload.orderId.trim() : '';
+    const amount = Number(payload.amount || 0);
+
+    if (!paymentKey || !orderId || !Number.isFinite(amount) || amount < 0) {
+        throw new HttpsError('invalid-argument', 'paymentKey, orderId, amount가 필요합니다.');
+    }
+
+    const secretKey = String(process.env.TOSS_PAYMENTS_SECRET_KEY || '').trim();
+    if (!secretKey) {
+        throw new HttpsError('failed-precondition', '토스페이먼츠 시크릿 키가 아직 설정되지 않았습니다.');
+    }
+
+    return await confirmTossPaymentSession({
+        admin,
+        uid,
+        secretKey,
+        paymentKey,
+        orderId,
+        amount,
+    });
+});
+
+// 4-2. HR Admin Account Sync
+exports.upsertAdminAccount = onCall({ secrets: ADMIN_ACCOUNT_SYNC_SECRETS }, async (request) => {
+    const { uid, adminContext } = await assertAdmin(request);
+    const payload = request.data && typeof request.data === 'object' ? request.data : {};
+    const adminInput = payload.admin && typeof payload.admin === 'object' ? payload.admin : null;
+
+    if (!adminInput) {
+        throw new HttpsError('invalid-argument', 'admin payload is required.');
+    }
+
+    try {
+        return await upsertAdminAccount({
+            firestore: admin.firestore(),
+            actor: {
+                uid,
+                role: adminContext.role,
+                name: adminContext.name || '',
+                email: adminContext.email || '',
+                loginId: adminContext.loginId || '',
+                branchId: adminContext.branchId || '',
+            },
+            input: adminInput,
+        });
+    } catch (error) {
+        console.error('[upsertAdminAccount] sync failed:', error);
+
+        const candidateId =
+            String(adminInput?.id || adminInput?.loginId || adminInput?.branchId || '').trim();
+        if (candidateId) {
+            try {
+                const candidateRef = admin.firestore().collection('admins').doc(candidateId);
+                const candidateSnap = await candidateRef.get();
+                if (candidateSnap.exists) {
+                    await candidateRef.set({
+                        syncStatus: {
+                            provider: 'supabase',
+                            status: 'error',
+                            lastError: typeof error?.message === 'string' ? error.message : '직원 계정 동기화에 실패했습니다.',
+                            syncedAt: new Date().toISOString(),
+                        },
+                        updatedAt: new Date().toISOString(),
+                        updatedBy: uid,
+                        updatedByRole: adminContext.role || '',
+                    }, { merge: true });
+                }
+            } catch (syncError) {
+                console.error('[upsertAdminAccount] failed to persist sync error state:', syncError);
+            }
+        }
+
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+
+        const message = typeof error?.message === 'string' ? error.message : '직원 계정 동기화에 실패했습니다.';
+        throw new HttpsError('internal', message);
+    }
+});
+
+exports.deleteAdminAccount = onCall({ secrets: ADMIN_ACCOUNT_SYNC_SECRETS }, async (request) => {
+    const { uid, adminContext } = await assertAdmin(request);
+    const payload = request.data && typeof request.data === 'object' ? request.data : {};
+    const adminId = typeof payload.adminId === 'string' ? payload.adminId.trim() : '';
+
+    if (!adminId) {
+        throw new HttpsError('invalid-argument', 'adminId is required.');
+    }
+
+    try {
+        return await deleteAdminAccount({
+            firestore: admin.firestore(),
+            actor: {
+                uid,
+                role: adminContext.role,
+                name: adminContext.name || '',
+                email: adminContext.email || '',
+                loginId: adminContext.loginId || '',
+                branchId: adminContext.branchId || '',
+            },
+            adminId,
+        });
+    } catch (error) {
+        console.error('[deleteAdminAccount] sync failed:', error);
+
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+
+        const message = typeof error?.message === 'string' ? error.message : '직원 삭제 동기화에 실패했습니다.';
+        throw new HttpsError('internal', message);
+    }
+});
+
 // 4-1. Secure Admin Verification (Full CORS Permitted) 🛡️💅
 exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) => {
     const requestUid = assertAuthenticated(request);
@@ -230,20 +373,59 @@ exports.verifyAdmin = onCall({ cors: true, invoker: 'public' }, async (request) 
         role: 'super',
         password: '8684'
     };
+    const rawInputName = String(name || '').trim();
+    const exactLookupCandidates = Array.from(new Set([
+        rawInputName,
+        rawInputName.toLowerCase(),
+        rawInputName.toUpperCase()
+    ].filter(Boolean)));
 
     try {
         const db = admin.firestore();
 
         console.log(`[AdminVerify] Attempting login for: ${name} (Normalized: ${inputName})`);
 
-        // [스봉이] 전체 검색을 기본으로 하여 정규화 매칭 보장 💅
-        const allAdminsSnap = await db.collection('admins').get();
-        const allAdminDocs = [...allAdminsSnap.docs];
-        const hasCredentialedAdmin = allAdminDocs.some((doc) => hasPassword(doc.data()));
-        const matchingDocs = allAdminDocs
+        const fastLookups = await Promise.allSettled([
+            ...exactLookupCandidates.map((candidate) => db.collection('admins').doc(candidate).get()),
+            db.collection('admins').where('loginId', '==', rawInputName).limit(5).get(),
+            db.collection('admins').where('email', '==', rawInputName).limit(5).get(),
+            db.collection('admins').where('name', '==', rawInputName).limit(5).get(),
+            db.collection('admins').where('branchId', '==', rawInputName.toUpperCase()).limit(5).get(),
+        ]);
+
+        const candidateDocsById = new Map();
+        for (const result of fastLookups) {
+            if (result.status !== 'fulfilled') continue;
+            const value = result.value;
+
+            if (typeof value.exists === 'boolean') {
+                if (value.exists) {
+                    candidateDocsById.set(value.id, value);
+                }
+                continue;
+            }
+
+            if (Array.isArray(value.docs)) {
+                value.docs.forEach((doc) => candidateDocsById.set(doc.id, doc));
+            }
+        }
+
+        let allAdminDocs = [...candidateDocsById.values()];
+        let hasCredentialedAdmin = allAdminDocs.some((doc) => hasPassword(doc.data()));
+        let matchingDocs = allAdminDocs
             .filter((doc) => getIdentifiers(doc.id, doc.data()).has(inputName))
             .sort(sortAdminDocs);
         let adminDoc = matchingDocs.find((doc) => String(doc.data().password || '').trim() === inputPassword) || null;
+
+        if (!adminDoc) {
+            const allAdminsSnap = await db.collection('admins').get();
+            allAdminDocs = [...allAdminsSnap.docs];
+            hasCredentialedAdmin = allAdminDocs.some((doc) => hasPassword(doc.data()));
+            matchingDocs = allAdminDocs
+                .filter((doc) => getIdentifiers(doc.id, doc.data()).has(inputName))
+                .sort(sortAdminDocs);
+            adminDoc = matchingDocs.find((doc) => String(doc.data().password || '').trim() === inputPassword) || null;
+        }
 
         let adminData = null;
         let adminId = null;

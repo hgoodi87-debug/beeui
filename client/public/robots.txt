@@ -1,6 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /admin
 Disallow: /admin/
+Disallow: /staff
 Disallow: /staff/
+Disallow: /mypage
+Disallow: /booking-success
+Disallow: /payments/
 
 Sitemap: https://bee-liber.com/sitemap.xml

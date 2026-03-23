@@ -24,7 +24,7 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
       setFormData({ ...employee });
     } else {
       setFormData({
-        status: 'invited',
+        status: 'active',
         permissions: [],
         orgType: 'HQ',
         security: {
@@ -48,6 +48,38 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
   const handleSave = () => {
     onSave(formData);
   };
+
+  const syncSummary = React.useMemo(() => {
+    if (formData.syncStatus?.status === 'error') {
+      return {
+        label: 'Supabase 동기화 실패',
+        tone: 'bg-red-50 border-red-100 text-red-700',
+        detail: formData.syncStatus.lastError || '로그인 계정 동기화 중 오류가 발생했습니다. 값을 확인하고 다시 저장해 주세요.',
+      };
+    }
+
+    if (formData.syncStatus?.status === 'synced' && formData.syncStatus.profileId && formData.syncStatus.employeeId) {
+      return {
+        label: formData.syncStatus.syntheticEmail ? 'Supabase 연동 완료 (임시 이메일)' : 'Supabase 연동 완료',
+        tone: 'bg-emerald-50 border-emerald-100 text-emerald-700',
+        detail: `Auth ${formData.syncStatus.authEmail || formData.email || '미설정'} / 직원ID ${formData.syncStatus.employeeId}`,
+      };
+    }
+
+    if (formData.email || formData.loginId) {
+      return {
+        label: '저장 후 Supabase 동기화 예정',
+        tone: 'bg-amber-50 border-amber-100 text-amber-700',
+        detail: '지금 저장하면 로그인 계정과 직원 테이블을 같이 맞춥니다.',
+      };
+    }
+
+    return {
+      label: '로그인 연동 정보 미설정',
+      tone: 'bg-gray-50 border-gray-200 text-gray-500',
+      detail: '로그인 ID 또는 내부 인증 이메일이 없으면 명부 전용 상태로 남습니다.',
+    };
+  }, [formData]);
 
   return (
     <AnimatePresence>
@@ -110,6 +142,21 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
             <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
               {activeSubTab === 'BASIC' && (
                 <div className="space-y-6 animate-fade-in">
+                  <div className={`rounded-[24px] border px-5 py-4 ${syncSummary.tone}`}>
+                    <div className="flex items-center gap-2 text-[11px] font-black">
+                      <i className="fa-solid fa-link"></i>
+                      <span>{syncSummary.label}</span>
+                    </div>
+                    <p className="mt-2 text-[10px] font-bold leading-relaxed opacity-90">
+                      {syncSummary.detail}
+                    </p>
+                    {formData.syncStatus?.syncedAt && (
+                      <p className="mt-2 text-[10px] font-bold opacity-70">
+                        최근 동기화: {formData.syncStatus.syncedAt}
+                      </p>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 ml-1">성명</label>

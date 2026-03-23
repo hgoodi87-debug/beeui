@@ -1,5 +1,6 @@
 import React from 'react';
 import { LocationOption, StorageTier, ServiceType, BookingStatus } from '../types';
+import { createEmptyBagSizes } from '../src/domains/booking/bagCategoryUtils';
 
 interface BranchManualBookingModalProps {
     isOpen: boolean;
@@ -36,8 +37,8 @@ const BranchManualBookingModal: React.FC<BranchManualBookingModalProps> = ({
         dropoffDate: new Date().toISOString().split('T')[0],
         deliveryTime: '18:00',
         bags: 1,
-        bagSizes: { S: 1, M: 0, L: 0, XL: 0 } as Record<string, number>,
-        finalPrice: 10000,
+        bagSizes: { ...createEmptyBagSizes(), handBag: 1 } as Record<string, number>,
+        finalPrice: 4000,
         paymentMethod: 'cash',
         useInsurance: false,
         insuranceLevel: 1,

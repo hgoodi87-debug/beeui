@@ -6,6 +6,7 @@ import BranchManualBookingModal from './BranchManualBookingModal';
 import BookingDetailModal from './admin/BookingDetailModal';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '../firebaseApp';
+import { DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS } from '../src/domains/booking/bagCategoryUtils';
 
 interface BranchAdminPageProps {
     branchId: string;
@@ -15,11 +16,7 @@ interface BranchAdminPageProps {
     onBack: () => void;
 }
 
-const INITIAL_STORAGE_TIERS: StorageTier[] = [
-    { id: 'st-4h', label: '4시간 이하 (Under 4h)', prices: { S: 2000, M: 3000, L: 5000, XL: 7000 } },
-    { id: 'st-1d', label: '1일 (24시간)', prices: { S: 8000, M: 10000, L: 15000, XL: 20000 } },
-    { id: 'st-week', label: '7일 (장기)', prices: { S: 40000, M: 55000, L: 80000, XL: 110000 } }
-];
+const INITIAL_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
 
 const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranchId, adminRole = 'staff', lang, t, onBack }) => {
     const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import { ServiceType, SnsType } from '../shared/types';
+import { ServiceType, SnsType, BagSizes } from '../shared/types';
 import { LocationOption } from '../location/types';
 
 export enum BookingStatus {
@@ -36,12 +36,7 @@ export interface BookingState {
     returnDate?: string;
     returnTime?: string;
     bags: number;
-    bagSizes: {
-        S: number;
-        M: number;
-        L: number;
-        XL: number;
-    };
+    bagSizes: BagSizes;
     price: number;
     userName: string;
     userEmail: string;
@@ -58,6 +53,11 @@ export interface BookingState {
     snsType?: SnsType;
     paymentMethod?: 'card' | 'cash' | 'apple' | 'samsung' | 'wechat' | 'alipay' | 'naver' | 'kakao' | 'paypal';
     paymentStatus?: 'pending' | 'paid' | 'cancelled';
+    paymentProvider?: 'toss' | 'manual' | 'other';
+    paymentOrderId?: string;
+    paymentKey?: string;
+    paymentReceiptUrl?: string;
+    paymentApprovedAt?: string;
     pickupAddress?: string;
     pickupAddressDetail?: string;
     dropoffAddress?: string;

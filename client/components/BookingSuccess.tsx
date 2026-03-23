@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { motion } from 'framer-motion';
-import { BookingState, LocationOption } from '../types';
+import { BookingState, LocationOption, LocationType } from '../types';
 import BookingVoucher from './BookingVoucher';
 
 interface BookingSuccessProps {
@@ -133,8 +133,33 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
         return (l[`name_${lang}` as keyof LocationOption] as string) || (l[`name_${dbLang}` as keyof LocationOption] as string) || (t.location_names && t.location_names[l.id]) || l.name_en || l.name;
     };
 
-    const pickupLoc = locations.find(l => l.id === booking.pickupLocation);
-    const dropoffLoc = locations.find(l => l.id === booking.dropoffLocation);
+    const buildFallbackLocation = (id: string, name: string, address?: string): LocationOption => ({
+        id: id || 'UNKNOWN',
+        shortCode: id || 'UNKNOWN',
+        name: name || (lang === 'ko' ? '지점 확인 중' : 'Branch pending'),
+        type: LocationType.OTHER,
+        address: address || '',
+        description: '',
+        supportsDelivery: true,
+        supportsStorage: true,
+    });
+
+    const pickupLoc = locations.find(l => l.id === booking.pickupLocation)
+        || booking.pickupLoc
+        || buildFallbackLocation(
+            booking.pickupLocation,
+            booking.pickupAddress || (lang === 'ko' ? '픽업 지점 확인 중' : 'Pickup branch pending'),
+            booking.pickupAddress
+        );
+    const dropoffLoc = locations.find(l => l.id === booking.dropoffLocation)
+        || booking.returnLoc
+        || (booking.dropoffLocation || booking.dropoffAddress
+            ? buildFallbackLocation(
+                booking.dropoffLocation,
+                booking.dropoffAddress || (lang === 'ko' ? '도착 지점 확인 중' : 'Drop-off pending'),
+                booking.dropoffAddress
+            )
+            : undefined);
 
     const getBusinessHoursText = (loc?: LocationOption) => {
         if (!loc) return "09:00 - 21:00";
@@ -221,7 +246,7 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                             booking={booking}
                             t={t}
                             lang={lang}
-                            pickupLoc={pickupLoc || locations[0]}
+                            pickupLoc={pickupLoc}
                             dropoffLoc={dropoffLoc}
                             onBack={() => { }} // Not needed here
                         />

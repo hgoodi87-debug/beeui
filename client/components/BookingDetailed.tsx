@@ -18,9 +18,11 @@ import {
     Search,
     Ticket
 } from 'lucide-react';
-import { LocationOption, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier, DiscountCode } from '../types';
+import { LocationOption, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, DiscountCode } from '../types';
 import { StorageService } from '../services/storageService';
 import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, generateTimeSlots, calculateDaysDifference } from '../utils/dateUtils';
+import { calculateStoragePrice, STORAGE_RATES } from '../utils/pricing';
+import { DEFAULT_DELIVERY_PRICES, getTotalBags, sanitizeBagSizes, sanitizeDeliveryBagSizes } from '../src/domains/booking/bagCategoryUtils';
 
 interface BookingDetailedProps {
     t: any;
@@ -34,8 +36,6 @@ interface BookingDetailedProps {
     onSuccess: (booking: BookingState) => void;
     user?: any; // Add user prop
 }
-
-const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
 
 const COUNTRY_NAMES: Record<string, string> = {
     'KR': 'Korea 🇰🇷',
@@ -53,7 +53,6 @@ const COUNTRY_NAMES: Record<string, string> = {
     'ETC': 'Other 🌏'
 };
 
-
 const BookingDetailed: React.FC<BookingDetailedProps> = ({
     t,
     lang,
@@ -67,20 +66,19 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
     user
 }) => {
     const isMember = !!user && !user.isAnonymous;
+    const normalizedInitialBags = useMemo(
+        () => (serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(initialBags) : sanitizeBagSizes(initialBags)),
+        [initialBags, serviceType]
+    );
 
     const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
-    const [storageTiers, setStorageTiers] = useState<StorageTier[]>([]);
 
     // Fetch prices from Firestore on mount
     useEffect(() => {
         const fetchPrices = async () => {
             try {
-                const [dPrices, sTiers] = await Promise.all([
-                    StorageService.getDeliveryPrices(),
-                    StorageService.getStorageTiers()
-                ]);
+                const dPrices = await StorageService.getDeliveryPrices();
                 if (dPrices) setDeliveryPrices(dPrices);
-                if (sTiers) setStorageTiers(sTiers);
             } catch (error) {
                 console.error("Failed to fetch prices in BookingDetailed", error);
             }
@@ -96,8 +94,8 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         pickupTime: serviceType === ServiceType.DELIVERY ? '09:00' : '10:00',
         dropoffDate: initialDate,
         deliveryTime: serviceType === ServiceType.DELIVERY ? '16:00' : '11:00',
-        bagSizes: initialBags,
-        bags: (initialBags.S || 0) + (initialBags.M || 0) + (initialBags.L || 0) + (initialBags.XL || 0),
+        bagSizes: normalizedInitialBags,
+        bags: getTotalBags(normalizedInitialBags),
         userName: isMember ? (user.displayName || user.email?.split('@')[0] || 'Member') : '',
         userEmail: isMember ? (user.email || '') : '',
         snsChannel: 'kakao',
@@ -107,7 +105,7 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         agreedToHighValue: false,
         agreedToPremium: false,
         insuranceLevel: 1,
-        insuranceBagCount: (initialBags.S || 0) + (initialBags.M || 0) + (initialBags.L || 0) + (initialBags.XL || 0),
+        insuranceBagCount: getTotalBags(normalizedInitialBags),
         country: 'KR'
     });
 
@@ -175,6 +173,21 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         }
     }, [user]);
 
+    useEffect(() => {
+        if (serviceType !== ServiceType.DELIVERY || !(booking.bagSizes?.strollerBicycle || 0)) {
+            return;
+        }
+
+        const nextBagSizes = sanitizeDeliveryBagSizes(booking.bagSizes);
+        const totalBags = getTotalBags(nextBagSizes);
+        setBooking(prev => ({
+            ...prev,
+            bagSizes: nextBagSizes,
+            bags: totalBags,
+            insuranceBagCount: Math.min(Number(prev.insuranceBagCount || totalBags), totalBags)
+        }));
+    }, [serviceType, booking.bagSizes?.strollerBicycle]);
+
     const pickupLoc = useMemo(() => locations.find(l => l.id === booking.pickupLocation), [locations, booking.pickupLocation]);
     const dropoffLoc = useMemo(() => locations.find(l => l.id === booking.dropoffLocation), [locations, booking.dropoffLocation]);
 
@@ -211,28 +224,30 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
     );
 
     const priceDetails = useMemo(() => {
-        const { S = 0, M = 0, L = 0, XL = 0 } = booking.bagSizes || {};
+        const normalizedBagSizes = serviceType === ServiceType.DELIVERY
+            ? sanitizeDeliveryBagSizes(booking.bagSizes)
+            : sanitizeBagSizes(booking.bagSizes);
+        const { handBag = 0, carrier = 0 } = normalizedBagSizes;
 
         let base = 0;
         let storageFee = 0;
         if (serviceType === ServiceType.DELIVERY) {
-            base = (S * (deliveryPrices.S || 15000)) + (M * deliveryPrices.M) + (L * deliveryPrices.L) + (XL * deliveryPrices.XL);
+            base = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * deliveryPrices.carrier);
 
             // [스봉이 수지타산 로직] 배송인데 날짜가 다르면 보관료 추가 💰💅
             const daysDiff = calculateDaysDifference(booking.pickupDate || '', booking.dropoffDate || booking.pickupDate || '');
             if (daysDiff > 0) {
-                const day1Tier = storageTiers.find(t => t.id === 'st-1d') || storageTiers[0];
-                const day1Prices = day1Tier?.prices || { S: 2000, M: 3000, L: 5000, XL: 7000 };
-                storageFee = daysDiff * ((S * (day1Prices.S || 2000)) + (M * day1Prices.M) + (L * day1Prices.L) + (XL * day1Prices.XL));
+                storageFee = daysDiff * (
+                    (handBag * STORAGE_RATES.handBag.extraDay) +
+                    (carrier * STORAGE_RATES.carrier.extraDay)
+                );
             }
         } else {
-            // Storage calculation
-            const selectedTierId = booking.selectedStorageTierId || 'st-1d';
-            const tier = storageTiers.find(t => t.id === selectedTierId) || storageTiers[0];
-            if (tier && tier.prices) {
-                base = ((S || 0) * (tier.prices.S || 2000)) + ((M || 0) * (tier.prices.M || 0)) + ((L || 0) * (tier.prices.L || 0)) + ((XL || 0) * (tier.prices.XL || 0));
-            } else {
-                base = ((S || 0) * 2000) + ((M || 0) * 3000) + ((L || 0) * 5000) + ((XL || 0) * 7000);
+            const start = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
+            const end = new Date(`${booking.dropoffDate || booking.pickupDate}T${booking.deliveryTime}`);
+
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                base = calculateStoragePrice(start, end, normalizedBagSizes, lang).total;
             }
         }
 
@@ -255,7 +270,7 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
             discountAmount,
             total: Math.max(0, base + storageFee + originSurcharge + destSurcharge + insuranceFee - discountAmount)
         };
-    }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, booking.bags, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, serviceType, booking.selectedStorageTierId, appliedCoupon]);
+    }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, booking.bags, pickupLoc, dropoffLoc, deliveryPrices, serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime, lang, appliedCoupon]);
 
     const handleApplyCoupon = async () => {
         if (!couponInput.trim()) return;
@@ -330,6 +345,10 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         };
 
         const generatedCode = generateShortCode();
+        const finalBagSizes = serviceType === ServiceType.DELIVERY
+            ? sanitizeDeliveryBagSizes(booking.bagSizes)
+            : sanitizeBagSizes(booking.bagSizes);
+        const totalBags = getTotalBags(finalBagSizes);
 
         // Construct valid BookingState with all mandatory fields
         const finalBooking: BookingState = {
@@ -340,14 +359,14 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
             finalPrice: priceDetails.total,
             status: BookingStatus.PENDING,
             createdAt: new Date().toISOString(),
-            bags: (booking.bagSizes?.S || 0) + (booking.bagSizes?.M || 0) + (booking.bagSizes?.L || 0) + (booking.bagSizes?.XL || 0),
+            bags: totalBags,
             pickupLocation: booking.pickupLocation || '',
             dropoffLocation: booking.dropoffLocation || '',
             pickupDate: booking.pickupDate || '',
             pickupTime: booking.pickupTime || '',
             dropoffDate: booking.dropoffDate || '',
             deliveryTime: booking.deliveryTime || '',
-            bagSizes: booking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 }
+            bagSizes: finalBagSizes
         };
 
         // Mapping snsChannel to snsType (Backend/Success page expectations)
@@ -801,4 +820,3 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
 };
 
 export default BookingDetailed;
-

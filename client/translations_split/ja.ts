@@ -187,10 +187,10 @@ export const ja = {
         agree_premium: '[必須] プレミアム保険および第三者情報提供同意',
         agree_high_value_simple: '[必須] 高価品管理への同意',
         premium_note: '(未選択の場合、最大補償額は50万ウォンに制限されます。)',
-        size_s: '小型バッグ、ショッピングバッグ',
-        size_m: '20~23インチ、大型ショッピングバッグ',
-        size_l: '24~26インチ',
-        size_xl: '27~30インチ',
+        size_s: 'ショッピングバッグ・ハンドバッグ',
+        size_m: 'キャリーケース',
+        size_l: 'キャリーケース',
+        size_xl: 'ベビーカー・自転車',
         insurance_limit_tag: '限度',
         book_now_btn: '今すぐ予約',
         storage_pricing_title: '保管料金表',
@@ -210,11 +210,11 @@ export const ja = {
         capture_instruction: '写真をアップロードしてください',
         bags_label: 'バッグ数',
         bags_selection_title: 'バッグ数を選択してください',
-        bags_selection_sub: 'M, L, XL サイズごとに数量を調整できます。',
+        bags_selection_sub: 'ショッピングバッグ、ハンドバッグ、キャリーケース、ベビーカー・自転車の数量を調整できます。',
         contact_info_title: '予約者情報を入力してください',
-        size_m_desc: '機内持ち込み用キャリア, バックパック',
-        size_l_desc: '受託手荷物',
-        size_xl_desc: '大型手荷物, ゴルフバッグ',
+        size_m_desc: '機内持ち込み・受託手荷物キャリー',
+        size_l_desc: '機内持ち込み・受託手荷物キャリー',
+        size_xl_desc: 'ベビーカー、自転車',
         sns_channels: {
             kakao: 'KakaoTalk',
             line: 'LINE',
@@ -275,7 +275,7 @@ export const ja = {
         alert_cancel_error: 'キャンセル中にエラーが発生しました。カスタマーセンターまでお問い合わせください。'
     },
     storage_tiers: {
-        'st-4h': '4時間以下', 'st-1d': '1日 (24時間)', 'st-week': '7日 (長期)'
+        'st-4h': '最初の4時間', 'st-1d': '初日 1日 (24時間)', 'st-week': '追加 1日'
     },
     features: {
         sub: '私たちの専門性',
@@ -352,9 +352,9 @@ export const ja = {
         currently_closed: 'この拠点は現在営業時間外です。',
         ai_prompt: 'Bee AIが予約のお手伝いをします。',
         bag_size_s_desc: '~20インチ (機内持ち込み)',
-        bag_size_m_desc: '~23インチ (受託手荷物)',
-        bag_size_l_desc: '~27インチ (大型)',
-        bag_size_xl_desc: '~32インチ+ (特大)',
+        bag_size_m_desc: 'キャリーケース',
+        bag_size_l_desc: 'キャリーケース',
+        bag_size_xl_desc: 'ベビーカー・自転車',
         btn_apply: '適用',
         btn_reload_page: 'リロード',
         label_back_to_list: 'リストに戻る',
@@ -598,4 +598,131 @@ export const ja = {
             }
         ]
     }
+};
+
+ja.seo.locations_title = '拠点案内 | ソウルで近くの荷物保管拠点を探す';
+ja.seo.locations_desc = '現在地に近い Beeliber の荷物保管拠点、営業時間、利用可能な保管・配送サービスを確認できます。';
+ja.seo.services_title = 'サービス案内 | 荷物保管・空港当日配送';
+ja.seo.services_desc = '荷物保管、空港当日配送、利用方法、サービス範囲をまとめて確認できます。';
+ja.seo.qna_title = 'よくある質問 | Beeliber';
+ja.seo.qna_desc = '予約、キャンセル・払い戻し、荷物の安全、拠点利用方法についてよくある質問を確認してください。';
+ja.terms_page.intro = '本規約は、Beeliber（以下「会社」）が提供する荷物保管、荷物配送予約連携、決済、予約照会、通知、カスタマーサポートなどの関連サービスについて、会社と利用者の権利・義務・責任を定めるものです。\n\n本規約はウェブサイト、モバイルウェブ、アプリ、および会社が運営する各種オンラインチャネルに共通して適用されます。';
+ja.privacy_page.intro = 'Beeliber はお客様の個人情報を大切にし、安心してサービスをご利用いただけるよう関連法令を遵守しています。特に QR コードによる安全な受け渡し認証と手荷物補償対応のため、以下のとおり個人情報処理方針を定めます。';
+ja.refund_page = {
+    title: 'キャンセル・払い戻しポリシー v1.0',
+    last_updated: '施行日: 2026-03-17',
+    agree_button: '確認して閉じる',
+    intro: '本ポリシーは、Beeliber サービスの予約キャンセル、変更、払い戻し、追加料金の基準を案内するものです。利用規約とあわせて適用されます。',
+    content: [
+        { title: '1. 適用範囲', text: '本ポリシーは、荷物保管予約、提携パートナー連携の配送予約、および付加サービスを含む予約に適用されます。' },
+        { title: '2. 変更およびキャンセル', text: '利用者はサービス開始前であれば、拠点状況、時間帯、荷物数、配送導線などの条件に応じて変更またはキャンセルを申請できます。' },
+        { title: '3. 払い戻し基準', text: 'サービス開始前のキャンセルは、原則として全額払い戻しの対象です。ただし、プロモーション商品など別途条件がある場合はその基準が優先されます。サービス開始後は実際に発生した運営費用に応じて全額または一部払い戻しとなる場合があります。' },
+        { title: '4. No-show', text: '予約時間に現れない場合、連絡が取れない場合、または現場で規定外の荷物であることが確認された場合は No-show とみなされ、実費が控除されることがあります。' },
+        { title: '5. 追加料金', text: '予約時間超過、荷物数やサイズ超過、特別保管、受け取り遅延、再配送依頼などの場合、追加料金が発生することがあります。' },
+        { title: '6. 未受取荷物', text: '予約された受け取り時刻や保管期間を過ぎても荷物が引き取られない場合、追加保管料が発生することがあります。' },
+        { title: '7. 不可抗力', text: '天災、交通統制、国家機関の措置、システム障害など不可抗力により、サービスが遅延・変更・中止される場合があります。' },
+        { title: '8. 返金方法', text: '返金は原則として元の決済手段で行われます。金融機関や決済会社の事情により反映時期が異なる場合があります。' },
+        { title: '9. 異議申立て', text: 'キャンセル、払い戻し、追加料金について異議がある場合は、関連記録を確認のうえカスタマーサポートで対応します。' }
+    ]
+};
+ja.servicedetails = {
+    delivery_title: '荷物なしで',
+    delivery_accent: '軽やかな到着',
+    delivery_desc: '駅近くの到着拠点に荷物を預ければ、ホテルロビーまで直接お届けします。手ぶらで旅を始めましょう。',
+    handsfree_title: '優雅で',
+    handsfree_accent: '完璧な出発',
+    handsfree_desc: 'チェックアウト後に荷物を預け、街を楽しみ、駅や空港へ向かう直前に荷物を受け取れば完了です。'
+};
+ja.services_page.status_update_label = 'ステータス更新';
+ja.services_page.safety_insurance_title = '安心補償保険';
+ja.services_page.safety_insurance_desc = '紛失・破損時は最大50万ウォンまで補償されます。';
+ja.terms = {
+    usage_title: '利用規約に同意',
+    privacy_title: '個人情報処理方針に同意',
+    insurance_title: '高価品および補償規定を確認',
+    agree_format: '{link}に同意します',
+    link_usage: '利用規約',
+    link_privacy: '個人情報処理方針',
+    link_insurance: '高価品および補償規定'
+};
+ja.staff_scan = {
+    no_scan_info: 'スキャンされた予約情報がありません。',
+    booking_not_found: '予約情報が見つかりません。',
+    load_error: 'データの読み込み中にエラーが発生しました。',
+    invalid_access: '無効なアクセスです。',
+    auth_required: 'スタッフ権限が必要です。\nまず管理者ログインを完了してください。',
+    admin_home: '管理者ホームへ',
+    go_login: 'ログインへ',
+    staff_mode: 'スタッフモード',
+    current_status: '現在の状態',
+    booking_id: '予約 ID',
+    service_type: 'サービス種類',
+    from: '出発 / 預け',
+    to: '到着 / 受取',
+    payment_details: '決済情報',
+    method: '決済手段',
+    discount: '割引',
+    total_amount: '合計金額',
+    update_status: 'ステータス変更',
+    confirm_update: "状態を「{status}」に変更しますか？",
+    changed: '状態が変更されました。',
+    failed: '状態の変更に失敗しました。',
+    confirm_pickup_checkin: '集荷 / 入庫確認',
+    storage_in_progress: '保管中',
+    delivery_arrival_complete: '配送 / 到着完了',
+    customer_pickup_complete: 'お客様受取（完了処理）',
+    already_completed: 'すでに完了した予約です。',
+    preview_image: '画像プレビュー',
+    statuses: {
+        pending: '受付待機',
+        confirmed: '予約確定',
+        transit: '移動中',
+        storage: '保管中',
+        arrived: '到着完了',
+        completed: '利用完了',
+        cancelled: 'キャンセル'
+    },
+    payment_statuses: {
+        paid: '支払い完了',
+        unpaid: '未払い',
+        refunded: '払い戻し済み',
+        unknown: '未確認'
+    }
+};
+ja.booking_voucher = {
+    image_save_failed: '画像の保存に失敗しました。',
+    official_receipt: '公式予約確認書',
+    reservation_id: '予約番号',
+    issue_date: '発行日',
+    scan_to_verify: 'スキャンして確認',
+    show_to_staff: 'このバウチャーをスタッフに提示してください',
+    show_code_note: '拠点訪問時にこのコードをご提示ください。\n現場確認後、すぐに処理が進行します。',
+    directions_short: '道順',
+    branch_pickup_guide: '拠点・受取ガイド',
+    storage: '保管',
+    vat_included: 'VAT込み',
+    save_voucher: 'バウチャー保存',
+    home: 'ホームへ',
+    branch_address: '住所',
+    open_hours: '営業時間',
+    coupon_code: 'クーポンコード',
+    show_to_staff_short: '「スタッフに見せてください」',
+    coupon_small_note: '少額紙幣は優待対象外となる場合があります。',
+    touch_to_save_coupon: 'タップしてクーポン画像を保存',
+    quick_access_note: 'サービスカウンターですぐ確認できるよう、この画面をキャプチャするか PDF で保存してください。',
+    save_simple_qr: 'シンプル QR 画像を保存',
+    official_service_voucher: '公式サービスバウチャー'
+};
+ja.booking_voucher.moneybox_partner = '延南店 公式提携先';
+ja.booking_voucher.vip_coupon = 'VIP クーポン';
+ja.booking_voucher.currency_exchange = '両替特典';
+ja.booking_voucher.special_benefit = '特別優待';
+ja.booking_voucher.everyday_hours = '09:00 - 21:00（毎日）';
+ja.booking_voucher.address_specified = '住所指定';
+ja.tracking.name_placeholder = '予約者名を入力';
+ja.services_page.back = 'ホームに戻る';
+ja.size_simulator = {
+    ...(ja.size_simulator || {}),
+    size_s_range: '18〜20インチ',
+    size_s_desc: 'ハンドバッグ／小型機内持ち込み'
 };

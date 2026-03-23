@@ -77,8 +77,8 @@ const VisionPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-black text-white selection:bg-bee-yellow selection:text-bee-black">
             <SEO 
-                title="비전 & 로드맵 | Beeliber 초격차 전략 💅"
-                description="세상에서 가장 가벼운 여행을 만드는 비리버의 미래 비전. Phase 1부터 Phase 4까지 이어지는 하이퍼-갭 로드맵을 확인하세요."
+                title="비전과 로드맵 | 빌리버"
+                description="빌리버의 서비스 확장 방향과 운영 로드맵을 확인하세요."
                 path="/vision"
             />
 

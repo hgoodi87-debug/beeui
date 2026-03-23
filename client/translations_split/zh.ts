@@ -170,10 +170,10 @@ export const zh = {
         agree_premium: '[必选] 加入高价物品安心保障(Premium)及同意提供第三方信息',
         agree_high_value_simple: '[必选] 高价物品管理协议',
         premium_note: '(若不加入，最大赔偿限额限制为50万韩元。)',
-        size_s: '小型行李, 购物袋',
-        size_m: '20~23英寸, 大型购物袋',
-        size_l: '24~26英寸',
-        size_xl: '27~30英寸',
+        size_s: '购物袋、手提包',
+        size_m: '行李箱',
+        size_l: '行李箱',
+        size_xl: '婴儿车、自行车',
         insurance_limit_tag: '限额',
         book_now_btn: '去预订',
         storage_pricing_title: '寄存价格表',
@@ -193,11 +193,11 @@ export const zh = {
         capture_instruction: '照片上传',
         bags_label: '行李总数',
         bags_selection_title: '选择行李数量',
-        bags_selection_sub: '可按 M, L, XL 尺寸调整数量',
+        bags_selection_sub: '请调整购物袋、手提包、行李箱与婴儿车、自行车的数量。',
         contact_info_title: '请输入预订人信息',
-        size_m_desc: '登机箱, 背包',
-        size_l_desc: '托运行李',
-        size_xl_desc: '大型行李',
+        size_m_desc: '登机箱与托运行李箱',
+        size_l_desc: '登机箱与托运行李箱',
+        size_xl_desc: '婴儿车、自行车',
         sns_channels: {
             kakao: 'KakaoTalk',
             line: 'LINE',
@@ -258,7 +258,7 @@ export const zh = {
         alert_cancel_error: '取消过程中发生错误。请联系客服。'
     },
     storage_tiers: {
-        'st-4h': '4小时以内', 'st-1d': '1天 (24小时)', 'st-week': '7天 (长期)'
+        'st-4h': '前4小时', 'st-1d': '首日 1天 (24小时)', 'st-week': '追加1天'
     },
     features: {
         sub: '专业服务',
@@ -418,9 +418,9 @@ export const zh = {
         currently_closed: '该站点当前已关闭。',
         ai_prompt: 'Bee AI 将协助您完成您的预约。',
         bag_size_s_desc: '~20寸 (可登机)',
-        bag_size_m_desc: '~23寸 (可登机)',
-        bag_size_l_desc: '~27寸 (托运行李)',
-        bag_size_xl_desc: '~32寸+ (特大型)',
+        bag_size_m_desc: '行李箱',
+        bag_size_l_desc: '行李箱',
+        bag_size_xl_desc: '婴儿车、自行车',
         btn_apply: '应用',
         btn_reload_page: '刷新页面',
         label_back_to_list: '返回列表',
@@ -519,4 +519,166 @@ export const zh = {
             }
         ]
     }
+};
+
+zh.seo.locations_title = '网点指南 | 查找首尔附近的 Beeliber 行李寄存点';
+zh.seo.locations_desc = '查看离您最近的 Beeliber 行李寄存网点、营业时间，以及可用的寄存与配送服务。';
+zh.seo.services_title = '服务介绍 | 行李寄存与机场当日配送';
+zh.seo.services_desc = '一次查看行李寄存、机场当日配送、使用方法与服务范围。';
+zh.seo.qna_title = '常见问题 | Beeliber';
+zh.seo.qna_desc = '查看有关预约、取消退款、行李安全与网点使用方式的常见问题。';
+zh.terms_page.intro = '本条款旨在规定 Beeliber（以下简称“公司”）所提供的行李寄存、行李配送预约、支付、订单查询、通知与客服支持等相关服务中，公司与用户之间的权利、义务与责任事项。\n\n本条款适用于公司运营的网站、移动网页、应用及其他线上渠道。';
+zh.privacy_page.intro = 'Beeliber 重视您的个人信息，并遵守相关法律法规，让您可以放心使用服务。特别是为了安全的 QR 码交接认证、行李补偿处理及预约运营，公司制定如下个人信息处理方针。';
+zh.servicedetails = {
+    delivery_title: '无需带着',
+    delivery_accent: '沉重行李抵达',
+    delivery_desc: '在车站附近的网点寄存行李后，我们会直接把行李送到酒店大堂，让您轻装开始旅程。',
+    handsfree_title: '优雅地',
+    handsfree_accent: '开启行程',
+    handsfree_desc: '退房后寄存行李，轻松逛街购物，再在前往机场或车站前取回行李即可。'
+};
+zh.services_page.status_update_label = '状态更新';
+zh.services_page.safety_insurance_title = '安心补偿保险';
+zh.services_page.safety_insurance_desc = '发生丢失或损坏时，最高可赔偿 50 万韩元。';
+zh.terms = {
+    usage_title: '同意使用条款',
+    privacy_title: '同意个人信息处理方针',
+    insurance_title: '确认高价物品与补偿规定',
+    agree_format: '我同意 {link}',
+    link_usage: '使用条款',
+    link_privacy: '个人信息处理方针',
+    link_insurance: '高价物品与补偿规定'
+};
+zh.staff_scan = {
+    no_scan_info: '未找到扫描的预约信息。',
+    booking_not_found: '找不到预约信息。',
+    load_error: '加载数据时发生错误。',
+    invalid_access: '访问无效。',
+    auth_required: '需要员工权限。\n请先完成管理员登录。',
+    admin_home: '前往管理员主页',
+    go_login: '前往登录',
+    staff_mode: '员工模式',
+    current_status: '当前状态',
+    booking_id: '预约 ID',
+    service_type: '服务类型',
+    from: '出发 / 寄放',
+    to: '到达 / 领取',
+    payment_details: '支付信息',
+    method: '支付方式',
+    discount: '优惠',
+    total_amount: '总支付金额',
+    update_status: '更新状态',
+    confirm_update: "确定将状态更改为“{status}”吗？",
+    changed: '状态已更新。',
+    failed: '状态更新失败。',
+    confirm_pickup_checkin: '确认取件 / 入库',
+    storage_in_progress: '寄存中',
+    delivery_arrival_complete: '配送 / 到达完成',
+    customer_pickup_complete: '客户领取（标记完成）',
+    already_completed: '该预约已完成。',
+    preview_image: '预览图片',
+    statuses: {
+        pending: '待处理',
+        confirmed: '预约确认',
+        transit: '运送中',
+        storage: '寄存中',
+        arrived: '已到达',
+        completed: '已完成',
+        cancelled: '已取消'
+    },
+    payment_statuses: {
+        paid: '已支付',
+        unpaid: '未支付',
+        refunded: '已退款',
+        unknown: '未知'
+    }
+};
+zh.booking_voucher = {
+    image_save_failed: '保存图片失败。',
+    official_receipt: '官方预约凭证',
+    reservation_id: '预约编号',
+    issue_date: '签发日期',
+    scan_to_verify: '扫码确认',
+    show_to_staff: '请向工作人员出示本凭证',
+    show_code_note: '到店时请出示此代码。\n现场确认后会立即处理您的请求。',
+    directions_short: '导航',
+    branch_pickup_guide: '网点与取件指南',
+    storage: '寄存',
+    vat_included: '含增值税',
+    save_voucher: '保存凭证',
+    home: '回到首页',
+    branch_address: '地址',
+    open_hours: '营业时间',
+    coupon_code: '优惠码',
+    show_to_staff_short: '“请出示给工作人员”',
+    coupon_small_note: '小面额货币可能无法享受最优汇率。',
+    touch_to_save_coupon: '点击保存优惠券图片',
+    quick_access_note: '为了在服务柜台快速确认，请截屏此页面或保存为 PDF。',
+    save_simple_qr: '保存简易二维码图片',
+    official_service_voucher: '官方服务凭证'
+};
+zh.booking_voucher.moneybox_partner = '延南店官方合作伙伴';
+zh.booking_voucher.vip_coupon = 'VIP 优惠券';
+zh.booking_voucher.currency_exchange = '换汇优惠';
+zh.booking_voucher.special_benefit = '特别礼遇';
+zh.booking_voucher.everyday_hours = '09:00 - 21:00（每日）';
+zh.booking_voucher.address_specified = '已填写地址';
+zh.tracking.name_placeholder = '请输入预约人姓名';
+zh.size_simulator = {
+    ...(zh.size_simulator || {}),
+    size_s_range: '18~20 寸',
+    size_s_desc: '手提袋／小型随身行李'
+};
+zh.manual = {
+    title: '服务使用指南',
+    subtitle: 'How to use Beeliber',
+    desc: '有了 Beeliber，您可以不必再担心沉重的行李。',
+    step_prefix: '步骤',
+    copyright: 'Beeliber Global Logistics Manual © 2025',
+    steps: [
+        { title: '选择出发地', desc: '选择寄放行李的位置。' },
+        { title: '选择目的地', desc: '选择领取行李的位置。' },
+        { title: '设置日期', desc: '选择使用日期。' },
+        { title: '寄放时间', desc: '请选择 09:00~13:00 之间。' },
+        { title: '到达时间', desc: '请选择 16:00~21:00 之间。' },
+        { title: '尺寸与金额', desc: '查看行李尺寸对应的价格。' },
+        { title: '优惠码', desc: '输入折扣码。' },
+        { title: '预约人姓名', desc: '请输入实名。' },
+        { title: '电子邮箱', desc: '用于查询预约。' },
+        { title: '选择社交软件', desc: '请选择沟通方式。' },
+        { title: '填写账号 ID', desc: '填写后即可完成！' }
+    ],
+    cta_title: '准备好出发了吗？',
+    cta_desc: '立即体验无行李的自由旅行。',
+    cta_btn: '前往预约'
+};
+zh.chatbot = {
+    header: 'Beeliber 助手',
+    online: '在线',
+    welcome: '您好，这里是 Beeliber 客服中心。请问有什么可以帮您？',
+    placeholder: '请输入您的问题。',
+    tooltip: '帮助',
+    quick_book: '立即预订',
+    quick_price: '费用说明',
+    start_chat: '开始咨询',
+    name: '姓名',
+    email: '电子邮箱',
+    form_title: '开始咨询',
+    form_desc: '为了更好地协助您，请输入姓名和电子邮箱。',
+    topic_menu_title: '请选择您需要的服务',
+    topic_delivery: '配送说明',
+    topic_storage: '寄存说明',
+    topic_other: '其他咨询',
+    topic_refund: '退款咨询',
+    topic_delivery_sub: '价格与使用方式',
+    topic_storage_sub: '位置与寄存费用',
+    topic_other_sub: '一般咨询',
+    topic_refund_sub: '退款政策与流程',
+    user_label: '客户',
+    notify_template: '[聊天机器人提醒] 客户点击了 “{userText}” 按钮。',
+    request_consult: '申请咨询',
+    ai_delivery_prompt: '请说明行李配送服务的使用方式、价格以及机场到酒店的流程。',
+    ai_storage_prompt: '请说明行李寄存服务的使用方式、网点位置和 4 小时 / 1 天价格。',
+    ai_other_prompt: '请说明一般咨询内容以及如何联系客户服务团队。',
+    ai_refund_prompt: '请详细说明取消与退款政策。'
 };

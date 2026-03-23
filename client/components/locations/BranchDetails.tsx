@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Clock, MapPin, Sparkles, Compass, Star, Store, ArrowRight } from 'lucide-react';
-import { LocationOption } from "../../types";
+import { BagSizes, LocationOption } from "../../types";
 import { SEO_LOCATIONS } from '../../src/constants/seoLocations';
+import { BagCategoryId } from '../../src/domains/booking/bagCategoryUtils';
 
 interface BranchDetailsProps {
     t: any;
@@ -13,8 +14,8 @@ interface BranchDetailsProps {
     onBook: (type: 'DELIVERY' | 'STORAGE') => void;
     bookingDate: string;
     onDateChange: (date: string) => void;
-    baggageCounts: { S: number, M: number, L: number, XL: number };
-    onBaggageChange: (size: 'S' | 'M' | 'L' | 'XL', delta: number) => void;
+    baggageCounts: BagSizes;
+    onBaggageChange: (categoryId: BagCategoryId, delta: number) => void;
 }
 
 const BranchDetails: React.FC<BranchDetailsProps> = ({

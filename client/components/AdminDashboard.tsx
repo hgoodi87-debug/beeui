@@ -20,14 +20,44 @@ import DailyDetailModal from './admin/DailyDetailModal';
 import BookingSidePanel from './admin/BookingSidePanel';
 import ManualBookingModal from './admin/ManualBookingModal';
 import { useAdminStats } from '../src/domains/admin/hooks/useAdminStats';
+import {
+  createEmptyBagSizes,
+  BagCategoryId,
+  DEFAULT_DELIVERY_PRICES as PRICING_DEFAULT_DELIVERY_PRICES,
+  DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS,
+  getBagCategoriesForService,
+  getTotalBags,
+  hasStandaloneHandBagDeliverySelection,
+  normalizeDeliveryPrices as normalizeDeliveryPriceSettings,
+  normalizeStorageTierPrices,
+  sanitizeBagSizes,
+  sanitizeDeliveryBagSizes,
+  updateBagCategoryCount
+} from '../src/domains/booking/bagCategoryUtils';
 
 
-const DEFAULT_DELIVERY_PRICES: PriceSettings = { S: 20000, M: 20000, L: 25000, XL: 29000 };
-const INITIAL_STORAGE_TIERS: StorageTier[] = [
-  { id: 'st-4h', label: '4시간 이하 (Under 4h)', prices: { S: 2000, M: 3000, L: 5000, XL: 7000 } },
-  { id: 'st-1d', label: '1일 (24시간)', prices: { S: 8000, M: 10000, L: 15000, XL: 20000 } },
-  { id: 'st-week', label: '7일 (장기)', prices: { S: 40000, M: 55000, L: 80000, XL: 110000 } }
-];
+const DEFAULT_DELIVERY_PRICES: PriceSettings = PRICING_DEFAULT_DELIVERY_PRICES;
+const INITIAL_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
+
+const normalizeStorageTierDefaults = (tiers: StorageTier[] | null | undefined): StorageTier[] => {
+  if (!Array.isArray(tiers) || tiers.length === 0) {
+    return INITIAL_STORAGE_TIERS;
+  }
+
+  const weeklyTier = tiers.find((tier) => tier.id === 'st-week');
+  const weeklyMax = weeklyTier ? Math.max(...Object.values(weeklyTier.prices || { handBag: 0, carrier: 0, strollerBicycle: 0 })) : 0;
+  if (weeklyMax > 20000) {
+    return INITIAL_STORAGE_TIERS;
+  }
+
+  return tiers.map((tier) => {
+    const normalizedPrices = normalizeStorageTierPrices(tier.prices);
+    if (tier.id === 'st-4h') return { ...tier, label: '4시간 기본 (Base 4h)', prices: normalizedPrices };
+    if (tier.id === 'st-1d') return { ...tier, label: '첫 1일 (24시간)', prices: normalizedPrices };
+    if (tier.id === 'st-week') return { ...tier, label: '추가 1일 (Extra Day)', prices: normalizedPrices };
+    return tier;
+  });
+};
 
 // HERO constant removed
 
@@ -218,7 +248,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     pickupTime: '10:00',
     deliveryTime: '16:00',
     bags: 1,
-    bagSizes: { S: 1, M: 0, L: 0, XL: 0 },
+    bagSizes: { ...createEmptyBagSizes(), handBag: 1 },
     userName: '',
     userEmail: '',
     snsType: SnsType.NONE,
@@ -554,16 +584,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       // Sync local storage items using safe parse
       const cloudDeliveryPrices = await StorageService.getDeliveryPrices();
       if (cloudDeliveryPrices) {
-        setDeliveryPrices(cloudDeliveryPrices);
+        setDeliveryPrices(normalizeDeliveryPriceSettings(cloudDeliveryPrices));
       } else {
-        setDeliveryPrices(safeJsonParse('beeliber_delivery_prices', DEFAULT_DELIVERY_PRICES));
+        setDeliveryPrices(normalizeDeliveryPriceSettings(safeJsonParse('beeliber_delivery_prices', DEFAULT_DELIVERY_PRICES)));
       }
 
       const cloudTiers = await StorageService.getStorageTiers();
       if (cloudTiers && Array.isArray(cloudTiers)) {
-        setStorageTiers(cloudTiers);
+        setStorageTiers(normalizeStorageTierDefaults(cloudTiers));
       } else {
-        setStorageTiers(safeJsonParse('beeliber_storage_tiers', INITIAL_STORAGE_TIERS));
+        setStorageTiers(normalizeStorageTierDefaults(safeJsonParse('beeliber_storage_tiers', INITIAL_STORAGE_TIERS)));
       }
 
       const savedCloud = StorageService.getCloudConfig();
@@ -762,7 +792,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
   const updateDeliveryPrice = (size: keyof PriceSettings, price: number) => {
-    const newPrices = { ...deliveryPrices, [size]: price };
+    const newPrices = normalizeDeliveryPriceSettings({
+      ...deliveryPrices,
+      [size]: size === 'strollerBicycle' ? 0 : price,
+      strollerBicycle: 0,
+    });
     setDeliveryPrices(newPrices);
     localStorage.setItem('beeliber_delivery_prices', JSON.stringify(newPrices));
     // Also save to Firestore
@@ -772,7 +806,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const updateStoragePrice = (tierId: string, size: keyof PriceSettings, price: number) => {
     const updated = storageTiers.map(tier => {
       if (tier.id === tierId) {
-        return { ...tier, prices: { ...tier.prices, [size]: price } };
+        return { ...tier, prices: normalizeStorageTierPrices({ ...tier.prices, [size]: price }) };
       }
       return tier;
     });
@@ -1296,8 +1330,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleManualBookingSave = async () => {
     try {
       setIsSaving(true);
+      const finalBagSizes = manualBookingForm.serviceType === ServiceType.DELIVERY
+        ? sanitizeDeliveryBagSizes(manualBookingForm.bagSizes as Partial<BagSizes>)
+        : sanitizeBagSizes(manualBookingForm.bagSizes as Partial<BagSizes>);
+      const totalBags = getTotalBags(finalBagSizes);
+      if (manualBookingForm.serviceType === ServiceType.DELIVERY && hasStandaloneHandBagDeliverySelection(finalBagSizes)) {
+        throw new Error('배송 수기예약은 쇼핑백, 손가방만 단독으로 저장할 수 없어요. 캐리어를 1개 이상 함께 넣어주세요.');
+      }
       const newBooking = {
         ...manualBookingForm,
+        bagSizes: finalBagSizes,
+        bags: totalBags,
+        insuranceBagCount: Math.min(Number(manualBookingForm.insuranceBagCount || totalBags), totalBags),
         createdAt: new Date().toISOString()
       } as BookingState;
 
@@ -1319,8 +1363,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const calculateManualPrice = (form: Partial<BookingState>) => {
     if (form.serviceType === ServiceType.DELIVERY) {
-      const bags = (form.bagSizes as BagSizes) || { S: 0, M: 0, L: 0, XL: 0 };
-      let price = (bags.S * deliveryPrices.S) + (bags.M * deliveryPrices.M) + (bags.L * deliveryPrices.L) + (bags.XL * deliveryPrices.XL);
+      const bags = sanitizeDeliveryBagSizes(form.bagSizes as Partial<BagSizes>);
+      let price = (bags.handBag * deliveryPrices.handBag) + (bags.carrier * deliveryPrices.carrier);
       // Insurance Surcharge (Only if useInsurance is true)
       if (form.useInsurance && form.insuranceLevel && form.insuranceBagCount) {
         price += (Number(form.insuranceLevel) * 10000 * Number(form.insuranceBagCount));
@@ -1337,34 +1381,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
       const hRate = storageTiers.find(t => t.id === 'st-4h')?.prices || INITIAL_STORAGE_TIERS[0].prices;
       const dRate = storageTiers.find(t => t.id === 'st-1d')?.prices || INITIAL_STORAGE_TIERS[1].prices;
-      const wRate = storageTiers.find(t => t.id === 'st-week')?.prices || INITIAL_STORAGE_TIERS[2].prices;
+      const extraDayRate = storageTiers.find(t => t.id === 'st-week')?.prices || INITIAL_STORAGE_TIERS[2].prices;
 
       const resolveInternal = (targetH: number, size: keyof PriceSettings): number => {
         if (targetH <= 0) return 0;
         const hr = hRate[size];
         const dr = dRate[size];
-        const wr = wRate[size];
+        const edr = extraDayRate[size];
+        const hourlyAfter4h = Math.max(0, Math.round((dr - hr) / 20));
 
-        if (targetH <= 12) {
-          const units = Math.ceil(targetH / 4);
-          return units * hr;
+        if (targetH <= 4) {
+          return hr;
         }
 
-        if (targetH <= 168) {
-          const days = Math.ceil(targetH / 24);
-          return Math.min(days * dr, wr);
+        if (targetH < 24) {
+          return hr + (Math.ceil(targetH - 4) * hourlyAfter4h);
         }
 
-        const extraHours = targetH - 168;
-        const extraDays = Math.ceil(extraHours / 24);
-        return wr + (extraDays * dr);
+        if (targetH === 24) {
+          return dr;
+        }
+
+        return dr + (Math.ceil((targetH - 24) / 24) * edr);
       };
 
-      const bags = (form.bagSizes as BagSizes) || { S: 0, M: 0, L: 0, XL: 0 };
-      const price = (resolveInternal(h, 'S') * (bags.S || 0)) +
-        (resolveInternal(h, 'M') * (bags.M || 0)) +
-        (resolveInternal(h, 'L') * (bags.L || 0)) +
-        (resolveInternal(h, 'XL') * (bags.XL || 0));
+      const bags = sanitizeBagSizes(form.bagSizes as BagSizes);
+      const price = (resolveInternal(h, 'handBag') * (bags.handBag || 0)) +
+        (resolveInternal(h, 'carrier') * (bags.carrier || 0)) +
+        (resolveInternal(h, 'strollerBicycle') * (bags.strollerBicycle || 0));
 
       // Apply Manual Discount
       const discount = Number(form.discountAmount || 0);
@@ -1372,10 +1416,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
-  const handleAddBagToManual = (size: keyof BagSizes) => {
-    const currentBagSizes = (manualBookingForm.bagSizes as BagSizes) || { S: 0, M: 0, L: 0, XL: 0 };
-    const newBagSizes = { ...currentBagSizes, [size]: (currentBagSizes[size] || 0) + 1 };
-    const totalBags = Object.values(newBagSizes).reduce((a, b) => a + b, 0);
+  const handleAddBagToManual = (categoryId: BagCategoryId) => {
+    const allowedCategories = getBagCategoriesForService(manualBookingForm.serviceType || ServiceType.STORAGE);
+    if (!allowedCategories.some((category) => category.id === categoryId)) {
+      return;
+    }
+    const currentBagSizes = sanitizeBagSizes(manualBookingForm.bagSizes as BagSizes);
+    const newBagSizes = updateBagCategoryCount(currentBagSizes, categoryId, 1);
+    const totalBags = getTotalBags(newBagSizes);
 
     const updatedForm = { ...manualBookingForm, bagSizes: newBagSizes, bags: totalBags };
     setManualBookingForm({
@@ -1387,7 +1435,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleResetManualBags = () => {
     setManualBookingForm(prev => ({
       ...prev,
-      bagSizes: { S: 0, M: 0, L: 0, XL: 0 },
+      bagSizes: createEmptyBagSizes(),
       bags: 0,
       finalPrice: 0
     }));

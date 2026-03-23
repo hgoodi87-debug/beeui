@@ -2,6 +2,14 @@ import React from 'react';
 import { BookingState, LocationOption, ServiceType, BookingStatus, SnsType } from '../../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/constants/admin';
 import { StorageService } from '../../services/storageService';
+import {
+    createEmptyBagSizes,
+    getBagCategoriesForService,
+    getBagCategoryCount,
+    getBagCategoryLabel,
+    sanitizeDeliveryBagSizes,
+    setBagCategoryCount,
+} from '../../src/domains/booking/bagCategoryUtils';
 
 interface BookingDetailModalProps {
     selectedBooking: BookingState | null;
@@ -239,17 +247,20 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">총 수량 (Total Bags)</label>
                                     <input readOnly={adminRole !== 'super'} type="number" value={selectedBooking.bags || 0} title="총 수하물 수량" className="w-full text-2xl font-black text-bee-black bg-white border border-gray-200 p-2 rounded-2xl read-only:bg-gray-100" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {(['S', 'M', 'L', 'XL'] as const).map(size => (
-                                        <div key={size}>
-                                            <label className="text-[8px] font-black text-gray-400 uppercase block mb-1">{size}</label>
-                                            <input readOnly={adminRole !== 'super'} type="number" value={(selectedBooking.bagSizes as any)?.[size] || 0} onChange={e => {
-                                                const newSizes = { ...(selectedBooking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 }), [size]: Number(e.target.value) };
+                                <div className={`grid gap-2 ${selectedBooking.serviceType === ServiceType.DELIVERY ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                                    {getBagCategoriesForService(selectedBooking.serviceType).map(category => {
+                                        const count = getBagCategoryCount(selectedBooking.bagSizes, category.id);
+                                        return (
+                                        <div key={category.id}>
+                                            <label className="text-[8px] font-black text-gray-400 block mb-1">{getBagCategoryLabel(category.id, 'ko')}</label>
+                                            <input readOnly={adminRole !== 'super'} type="number" value={count} onChange={e => {
+                                                const nextSizes = setBagCategoryCount(selectedBooking.bagSizes || createEmptyBagSizes(), category.id, Number(e.target.value));
+                                                const newSizes = selectedBooking.serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(nextSizes) : nextSizes;
                                                 const total = Object.values(newSizes).reduce((a, b) => Number(a) + Number(b), 0);
                                                 setSelectedBooking({ ...selectedBooking, bagSizes: newSizes, bags: total });
-                                            }} title={`${size} 사이즈 수하물 수량`} className="w-full bg-white p-2 rounded-xl border border-gray-200 text-xs font-black read-only:bg-gray-100" />
+                                            }} title={`${getBagCategoryLabel(category.id, 'ko')} 수량`} className="w-full bg-white p-2 rounded-xl border border-gray-200 text-xs font-black read-only:bg-gray-100" />
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </div>
                         </div>

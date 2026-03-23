@@ -31,6 +31,18 @@ export interface ChatSession {
 
 export type AdminStatus = 'invited' | 'active' | 'suspended' | 'resigned' | 'locked';
 
+export interface AdminSyncStatus {
+    provider: 'supabase';
+    status: 'synced' | 'pending' | 'error';
+    syncedAt?: string;
+    profileId?: string;
+    employeeId?: string;
+    authEmail?: string;
+    branchCode?: string;
+    syntheticEmail?: boolean;
+    lastError?: string;
+}
+
 export interface AdminUser {
     id: string;
     uid?: string;
@@ -54,6 +66,7 @@ export interface AdminUser {
         twoFactorEnabled?: boolean;
     };
     memo?: string;
+    syncStatus?: AdminSyncStatus;
     createdAt: string;
     updatedAt?: string;
 }

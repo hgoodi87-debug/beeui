@@ -5,6 +5,14 @@ import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/c
 import { StorageService } from '../../services/storageService';
 import { AuditService } from '../../services/auditService';
 import { maskName, maskEmail, maskPhone, maskId } from '../../src/utils/maskUtils';
+import {
+    createEmptyBagSizes,
+    getBagCategoriesForService,
+    getBagCategoryCount,
+    getBagCategoryLabel,
+    sanitizeDeliveryBagSizes,
+    setBagCategoryCount,
+} from '../../src/domains/booking/bagCategoryUtils';
 
 interface BookingSidePanelProps {
     isOpen: boolean;
@@ -293,23 +301,27 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                     )}
                                 </div>
 
-                                <div className="pt-6 border-t border-gray-100 grid grid-cols-4 gap-4 relative z-10">
-                                    {(['S', 'M', 'L', 'XL'] as const).map(size => (
-                                        <div key={size} className="text-center bg-gray-50 p-3 rounded-2xl group/size hover:bg-bee-yellow/10 transition-colors">
-                                            <div className="text-[9px] font-black text-gray-400 uppercase mb-1">{size} 사이즈</div>
+                                <div className={`pt-6 border-t border-gray-100 grid gap-4 relative z-10 ${selectedBooking.serviceType === ServiceType.DELIVERY ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                                    {getBagCategoriesForService(selectedBooking.serviceType).map(category => {
+                                        const count = getBagCategoryCount(selectedBooking.bagSizes, category.id);
+                                        return (
+                                        <div key={category.id} className="text-center p-3 rounded-2xl group/size transition-colors bg-gray-50 hover:bg-bee-yellow/10">
+                                            <div className="text-[9px] font-black text-gray-400 tracking-tight mb-1">{getBagCategoryLabel(category.id, 'ko')}</div>
                                             <input
-                                                title={`${size} 수량`}
+                                                title={`${getBagCategoryLabel(category.id, 'ko')} 수량`}
                                                 type="number"
-                                                value={(selectedBooking.bagSizes as any)?.[size] || 0}
+                                                value={count}
                                                 onChange={e => {
-                                                    const newSizes = { ...(selectedBooking.bagSizes || { S: 0, M: 0, L: 0, XL: 0 }), [size]: Number(e.target.value) };
+                                                    const nextSizes = setBagCategoryCount(selectedBooking.bagSizes || createEmptyBagSizes(), category.id, Number(e.target.value));
+                                                    const newSizes = selectedBooking.serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(nextSizes) : nextSizes;
                                                     const total = Object.values(newSizes).reduce((a, b) => Number(a) + Number(b), 0);
                                                     setSelectedBooking({ ...selectedBooking, bagSizes: newSizes, bags: total });
                                                 }}
-                                                className="w-full bg-transparent text-center font-black text-lg outline-none group-hover/size:text-bee-black"
+                                                disabled={adminRole !== 'super'}
+                                                className="w-full bg-transparent text-center font-black text-lg outline-none group-hover/size:text-bee-black disabled:text-gray-300"
                                             />
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </div>
                         </div>

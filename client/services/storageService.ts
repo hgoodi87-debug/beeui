@@ -4,6 +4,15 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc, or } from "firebase/firestore";
 import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
+import { isSupabaseAdminAuthEnabled } from './adminAuthService';
+import {
+  DEFAULT_DELIVERY_PRICES as PRICING_DEFAULT_DELIVERY_PRICES,
+  DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS,
+  getTotalBags,
+  normalizeDeliveryPrices as normalizeDeliveryPriceSettings,
+  normalizeStorageTierPrices,
+  sanitizeDeliveryBagSizes
+} from '../src/domains/booking/bagCategoryUtils';
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
 const KEYS = {
@@ -22,6 +31,117 @@ const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
   enableGeminiAutomation: true,
   // [보안] 클라이언트 웹훅 노출 금지! 🛡️ 세팅은 DB 또는 환경변수(Server)에서 관리합니다.
   googleChatWebhookUrl: ""
+};
+
+const LOCAL_ADMIN_DATA_BRIDGE_URL = import.meta.env.VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?.trim() || '';
+const LOCAL_ADMIN_DATA_BRIDGE_POLL_MS = 10000;
+const DEFAULT_DELIVERY_PRICES: PriceSettings = PRICING_DEFAULT_DELIVERY_PRICES;
+const DEFAULT_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
+
+const normalizeDeliveryPrices = (prices: PriceSettings | null | undefined): PriceSettings | null => {
+  if (!prices) return null;
+  return normalizeDeliveryPriceSettings(prices);
+};
+
+const normalizeStorageTiers = (tiers: StorageTier[] | null | undefined): StorageTier[] | null => {
+  if (!Array.isArray(tiers) || tiers.length === 0) return null;
+
+  const weeklyTier = tiers.find((tier) => tier.id === 'st-week');
+  const weeklyMax = weeklyTier ? Math.max(...Object.values(weeklyTier.prices || { handBag: 0, carrier: 0, strollerBicycle: 0 })) : 0;
+
+  if (weeklyMax > 20000) {
+    return DEFAULT_STORAGE_TIERS;
+  }
+
+  return tiers.map((tier) => {
+    const normalizedPrices = normalizeStorageTierPrices(tier.prices);
+    if (tier.id === 'st-4h') return { ...tier, label: '4시간 기본 (Base 4h)', prices: normalizedPrices };
+    if (tier.id === 'st-1d') return { ...tier, label: '첫 1일 (24시간)', prices: normalizedPrices };
+    if (tier.id === 'st-week') return { ...tier, label: '추가 1일 (Extra Day)', prices: normalizedPrices };
+    return tier;
+  });
+};
+
+const normalizeBookingForDeliveryPolicy = (booking: BookingState): BookingState => {
+  if (booking.serviceType !== 'DELIVERY') {
+    return booking;
+  }
+
+  const bagSizes = sanitizeDeliveryBagSizes(booking.bagSizes);
+  const totalBags = getTotalBags(bagSizes);
+
+  return {
+    ...booking,
+    bagSizes,
+    bags: totalBags,
+    insuranceBagCount: typeof booking.insuranceBagCount === 'number'
+      ? Math.min(booking.insuranceBagCount, totalBags)
+      : booking.insuranceBagCount,
+  };
+};
+
+const normalizeBookingsForDeliveryPolicy = (bookings: BookingState[]): BookingState[] =>
+  bookings.map((booking) => normalizeBookingForDeliveryPolicy(booking));
+
+const canUseLocalAdminDataBridge = () => {
+  if (typeof window === 'undefined') return false;
+  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) return false;
+  const hostname = window.location.hostname;
+  return Boolean(LOCAL_ADMIN_DATA_BRIDGE_URL) && (hostname === 'localhost' || hostname === '127.0.0.1');
+};
+
+const canUseSupabaseAdminAccountSync = () =>
+  isSupabaseAdminAuthEnabled() &&
+  !canUseLocalAdminDataBridge() &&
+  import.meta.env.MODE !== 'test' &&
+  !import.meta.env.VITEST;
+
+const fetchLocalAdminBridge = async <T>(path: string): Promise<T> => {
+  const response = await fetch(`${LOCAL_ADMIN_DATA_BRIDGE_URL}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Local admin data bridge request failed (${response.status})`);
+  }
+
+  return response.json() as Promise<T>;
+};
+
+const sortBookingsByPickupDateDesc = (items: BookingState[]) =>
+  [...items].sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+
+const subscribeLocalAdminBridge = <T>(
+  path: string,
+  callback: (data: T) => void,
+  fallback: T,
+  transform?: (data: T) => T,
+  label?: string
+): (() => void) => {
+  let active = true;
+
+  const run = async () => {
+    try {
+      const data = await fetchLocalAdminBridge<T>(path);
+      if (!active) return;
+      callback(transform ? transform(data) : data);
+    } catch (error) {
+      console.error(`${label || 'Local admin bridge'} fetch failed:`, error);
+      if (!active) return;
+      callback(fallback);
+    }
+  };
+
+  void run();
+  const timer = window.setInterval(() => void run(), LOCAL_ADMIN_DATA_BRIDGE_POLL_MS);
+
+  return () => {
+    active = false;
+    window.clearInterval(timer);
+  };
 };
 
 // Helper for safe JSON parse (utility)
@@ -306,9 +426,18 @@ export const StorageService = {
   },
 
   getBookings: async (): Promise<BookingState[]> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        return normalizeBookingsForDeliveryPolicy(await fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings'));
+      } catch (e) {
+        console.error("Error fetching bookings from local admin bridge", e);
+        return [];
+      }
+    }
+
     try {
       const querySnapshot = await getDocs(collection(db, "bookings"));
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      return normalizeBookingsForDeliveryPolicy(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
     } catch (e) {
       console.error("Error fetching bookings from cloud", e);
       return [];
@@ -319,7 +448,7 @@ export const StorageService = {
     try {
       const q = query(collection(db, "bookings"), where("pickupDate", "==", date));
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      return normalizeBookingsForDeliveryPolicy(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
     } catch (e) {
       console.error("Error fetching bookings by date", e);
       return [];
@@ -329,7 +458,7 @@ export const StorageService = {
   getArchivedBookings: async (): Promise<BookingState[]> => {
     try {
       const querySnapshot = await getDocs(collection(db, "archived_bookings"));
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      return normalizeBookingsForDeliveryPolicy(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
     } catch (e) {
       console.error("Error fetching archived bookings", e);
       return [];
@@ -340,7 +469,7 @@ export const StorageService = {
     try {
       const q = query(collection(db, "bookings"), where("createdAt", ">=", date), where("createdAt", "<", date + 'z'));
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      return normalizeBookingsForDeliveryPolicy(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
     } catch (e) {
       console.error("Error fetching bookings by creation date", e);
       return [];
@@ -352,7 +481,7 @@ export const StorageService = {
       if (!id) return null;
       const snap = await getDoc(doc(db, "bookings", id));
       if (snap.exists()) {
-        return { ...snap.data(), id: snap.id } as BookingState;
+        return normalizeBookingForDeliveryPolicy({ ...snap.data(), id: snap.id } as BookingState);
       }
 
       // Try searching by reservationCode if direct ID fails 🛡️
@@ -360,7 +489,7 @@ export const StorageService = {
       const querySnap = await getDocs(q);
       if (!querySnap.empty) {
         const doc = querySnap.docs[0];
-        return { ...doc.data(), id: doc.id } as BookingState;
+        return normalizeBookingForDeliveryPolicy({ ...doc.data(), id: doc.id } as BookingState);
       }
 
       return null;
@@ -371,10 +500,20 @@ export const StorageService = {
   },
 
   subscribeBookings: (callback: (data: BookingState[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<BookingState[]>(
+        '/api/collections/bookings',
+        callback,
+        [],
+        (items) => sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(items)),
+        'Bookings local bridge'
+      );
+    }
+
     try {
       const q = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(1000));
       return onSnapshot(q, (snapshot) => {
-        const bookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+        const bookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
         // Sort in memory to be safe against index issues
         bookings.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
         callback(bookings);
@@ -384,7 +523,7 @@ export const StorageService = {
         void runSnapshotFallback({
           sourceQuery: simpleQ,
           parser: (snap) => {
-            const fallbackBookings = snap.docs.map((d: any) => ({ ...d.data(), id: d.id } as BookingState));
+            const fallbackBookings = normalizeBookingsForDeliveryPolicy(snap.docs.map((d: any) => ({ ...d.data(), id: d.id } as BookingState)));
             fallbackBookings.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
             return fallbackBookings;
           },
@@ -399,6 +538,23 @@ export const StorageService = {
   },
 
   subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<BookingState[]>(
+        '/api/collections/bookings',
+        callback,
+        [],
+        (items) => {
+          const filtered = normalizeBookingsForDeliveryPolicy(items).filter((booking) =>
+            booking.pickupLocation === locationId ||
+            booking.dropoffLocation === locationId ||
+            booking.branchId === locationId
+          );
+          return sortBookingsByPickupDateDesc(filtered);
+        },
+        `Location booking local bridge (${locationId})`
+      );
+    }
+
     try {
       console.log(`[Storage] Subscribing to bookings for location: ${locationId}`);
       // OR query: pickupLocation is ID OR dropoffLocation is ID
@@ -414,7 +570,7 @@ export const StorageService = {
       );
 
       return onSnapshot(q, (snapshot) => {
-        const bookings = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+        const bookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
         // Ensure strictly sorted and filtered in memory as back-up
         const filtered = bookings.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
         filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
@@ -425,7 +581,7 @@ export const StorageService = {
         void runSnapshotFallback({
           sourceQuery: simpleQ,
           parser: (snapshot) => {
-            const fallbackBookings = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState));
+            const fallbackBookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState)));
             const filtered = fallbackBookings.filter((b: BookingState) => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
             filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
             return filtered;
@@ -450,7 +606,7 @@ export const StorageService = {
     try {
       const q = query(collection(db, "bookings"), where("userEmail", "==", email));
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      return normalizeBookingsForDeliveryPolicy(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
     } catch (e) {
       console.error("Search error", e);
       return [];
@@ -465,7 +621,7 @@ export const StorageService = {
         where("userName", "==", name)
       );
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      return normalizeBookingsForDeliveryPolicy(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
     } catch (e) {
       console.error("Search by name/email error", e);
       return [];
@@ -489,6 +645,28 @@ export const StorageService = {
 
   // --- Locations ---
   subscribeLocations: (callback: (data: LocationOption[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<LocationOption[]>(
+        '/api/collections/locations',
+        callback,
+        [],
+        (items) => items.map((cloudLoc) => {
+          const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
+          if (!initialLoc) return cloudLoc;
+
+          const enriched = { ...cloudLoc };
+          Object.keys(initialLoc).forEach((key) => {
+            const k = key as keyof LocationOption;
+            if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
+              (enriched as Record<string, any>)[k] = initialLoc[k];
+            }
+          });
+          return enriched;
+        }),
+        'Locations local bridge'
+      );
+    }
+
     try {
       console.log("[Storage] Subscribing to locations real-time...");
       return onSnapshot(collection(db, "locations"), (snap) => {
@@ -520,6 +698,28 @@ export const StorageService = {
   },
 
   getLocations: async (): Promise<LocationOption[]> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        const items = await fetchLocalAdminBridge<LocationOption[]>('/api/collections/locations');
+        return items.map((cloudLoc) => {
+          const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
+          if (!initialLoc) return cloudLoc;
+
+          const enriched = { ...cloudLoc };
+          Object.keys(initialLoc).forEach((key) => {
+            const k = key as keyof LocationOption;
+            if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
+              (enriched as Record<string, any>)[k] = initialLoc[k];
+            }
+          });
+          return enriched;
+        });
+      } catch (e) {
+        console.error("Error fetching locations from local admin bridge", e);
+        return [];
+      }
+    }
+
     try {
       const querySnapshot = await getDocs(collection(db, "locations"));
 
@@ -636,11 +836,20 @@ export const StorageService = {
 
   // --- Storage Tiers ---
   getStorageTiers: async (): Promise<StorageTier[] | null> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        return normalizeStorageTiers(await fetchLocalAdminBridge<StorageTier[] | null>('/api/settings/storage_tiers'));
+      } catch (e) {
+        console.error("Failed to get storage tiers from local admin bridge", e);
+        return null;
+      }
+    }
+
     try {
       const snap = await getDoc(doc(db, "settings", "storage_tiers"));
       if (snap.exists()) {
         const data = snap.data();
-        return data.tiers || null;
+        return normalizeStorageTiers(data.tiers || null);
       }
       return null;
     } catch (e) {
@@ -651,7 +860,8 @@ export const StorageService = {
 
   saveStorageTiers: async (tiers: StorageTier[]): Promise<void> => {
     try {
-      await setDoc(doc(db, "settings", "storage_tiers"), { tiers });
+      const normalizedTiers = tiers.map((tier) => ({ ...tier, prices: normalizeStorageTierPrices(tier.prices) }));
+      await setDoc(doc(db, "settings", "storage_tiers"), { tiers: normalizedTiers });
     } catch (e) {
       console.error("Failed to save storage tiers", e);
       throw e;
@@ -660,6 +870,14 @@ export const StorageService = {
 
   // --- Hero Config ---
   getHeroConfig: async (): Promise<HeroConfig | null> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        return await fetchLocalAdminBridge<HeroConfig | null>('/api/settings/hero');
+      } catch {
+        return null;
+      }
+    }
+
     try {
       const snap = await getDoc(doc(db, "settings", "hero"));
       return snap.exists() ? snap.data() as HeroConfig : null;
@@ -668,10 +886,19 @@ export const StorageService = {
 
   // --- Price Settings ---
   getDeliveryPrices: async (): Promise<PriceSettings | null> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        return normalizeDeliveryPrices(await fetchLocalAdminBridge<PriceSettings | null>('/api/settings/delivery_prices'));
+      } catch (e) {
+        console.error("Failed to get delivery prices from local admin bridge", e);
+        return null;
+      }
+    }
+
     try {
       const snap = await getDoc(doc(db, "settings", "delivery_prices"));
       if (snap.exists()) {
-        return snap.data() as PriceSettings;
+        return normalizeDeliveryPrices(snap.data() as PriceSettings);
       }
       return null;
     } catch (e) {
@@ -682,7 +909,7 @@ export const StorageService = {
 
   saveDeliveryPrices: async (prices: PriceSettings): Promise<void> => {
     try {
-      await setDoc(doc(db, "settings", "delivery_prices"), prices);
+      await setDoc(doc(db, "settings", "delivery_prices"), normalizeDeliveryPrices(prices));
     } catch (e) {
       console.error("Failed to save delivery prices", e);
       throw e;
@@ -696,6 +923,16 @@ export const StorageService = {
   },
 
   subscribeHeroConfig: (callback: (config: HeroConfig | null) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<HeroConfig | null>(
+        '/api/settings/hero',
+        callback,
+        null,
+        undefined,
+        'Hero config local bridge'
+      );
+    }
+
     try {
       const heroRef = doc(db, "settings", "hero");
       return onSnapshot(heroRef, (snap) => {
@@ -713,6 +950,14 @@ export const StorageService = {
 
   // --- Inquiries ---
   getInquiries: async (): Promise<PartnershipInquiry[]> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        return await fetchLocalAdminBridge<PartnershipInquiry[]>('/api/collections/inquiries');
+      } catch {
+        return [];
+      }
+    }
+
     try {
       const querySnapshot = await getDocs(collection(db, "inquiries"));
       return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
@@ -720,6 +965,16 @@ export const StorageService = {
   },
 
   subscribeInquiries: (callback: (data: PartnershipInquiry[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<PartnershipInquiry[]>(
+        '/api/collections/inquiries',
+        callback,
+        [],
+        (items) => [...items].sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()),
+        'Inquiries local bridge'
+      );
+    }
+
     try {
       const q = query(collection(db, "inquiries"));
       return onSnapshot(q, (snapshot) => {
@@ -806,6 +1061,15 @@ export const StorageService = {
   },
 
   getCashClosings: async (): Promise<CashClosing[]> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        return await fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
+      } catch (e) {
+        console.error("Failed to get closings from local admin bridge", e);
+        return [];
+      }
+    }
+
     try {
       const q = query(collection(db, "daily_closings"), orderBy("date", "desc"), limit(500));
       const snap = await getDocs(q);
@@ -817,6 +1081,16 @@ export const StorageService = {
   },
 
   subscribeCashClosings: (callback: (data: CashClosing[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<CashClosing[]>(
+        '/api/collections/daily_closings',
+        callback,
+        [],
+        undefined,
+        'Cash closings local bridge'
+      );
+    }
+
     try {
       const q = query(collection(db, "daily_closings"), orderBy("date", "desc"), limit(500));
       return onSnapshot(q, (snapshot) => {
@@ -863,6 +1137,15 @@ export const StorageService = {
   },
 
   getExpenditures: async (): Promise<Expenditure[]> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        return await fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
+      } catch (e) {
+        console.error("Failed to get expenditures from local admin bridge", e);
+        return [];
+      }
+    }
+
     try {
       const q = query(collection(db, "expenditures"), orderBy("date", "desc"), limit(1000));
       const snap = await getDocs(q);
@@ -874,6 +1157,16 @@ export const StorageService = {
   },
 
   subscribeExpenditures: (callback: (data: Expenditure[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<Expenditure[]>(
+        '/api/collections/expenditures',
+        callback,
+        [],
+        undefined,
+        'Expenditures local bridge'
+      );
+    }
+
     try {
       const q = query(collection(db, "expenditures"), orderBy("date", "desc"), limit(1000));
       return onSnapshot(q, (snapshot) => {
@@ -889,6 +1182,16 @@ export const StorageService = {
   saveAdmin: async (admin: AdminUser): Promise<void> => {
     const safeAdmin = JSON.parse(JSON.stringify(admin));
     try {
+      if (canUseSupabaseAdminAccountSync()) {
+        const { ensureAuth, functions } = await import('../firebaseApp');
+        const { httpsCallable } = await import('firebase/functions');
+
+        await ensureAuth();
+        const upsertAdminAccount = httpsCallable(functions, 'upsertAdminAccount');
+        await upsertAdminAccount({ admin: safeAdmin });
+        return;
+      }
+
       if (admin.id) {
         if (!String(safeAdmin.password || '').trim()) {
           delete safeAdmin.password;
@@ -905,6 +1208,16 @@ export const StorageService = {
   },
 
   getAdmins: async (): Promise<AdminUser[]> => {
+    if (canUseLocalAdminDataBridge()) {
+      try {
+        const items = await fetchLocalAdminBridge<AdminUser[]>('/api/collections/admins');
+        return collapseAdminDirectoryEntries(items);
+      } catch (e) {
+        console.error("Failed to get admins from local admin bridge", e);
+        return [];
+      }
+    }
+
     try {
       const snap = await getDocs(collection(db, "admins"));
       const admins = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
@@ -917,6 +1230,16 @@ export const StorageService = {
 
   deleteAdmin: async (id: string): Promise<void> => {
     try {
+      if (canUseSupabaseAdminAccountSync()) {
+        const { ensureAuth, functions } = await import('../firebaseApp');
+        const { httpsCallable } = await import('firebase/functions');
+
+        await ensureAuth();
+        const deleteAdminAccount = httpsCallable(functions, 'deleteAdminAccount');
+        await deleteAdminAccount({ adminId: id });
+        return;
+      }
+
       await deleteDoc(doc(db, "admins", id));
     } catch (e) {
       console.error("Failed to delete admin", e);
@@ -1082,6 +1405,16 @@ export const StorageService = {
   },
 
   subscribeAdmins: (callback: (data: AdminUser[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<AdminUser[]>(
+        '/api/collections/admins',
+        callback,
+        [],
+        (items) => collapseAdminDirectoryEntries(items),
+        'Admins local bridge'
+      );
+    }
+
     try {
       const dbRef = collection(db, "admins");
       const q = query(dbRef, orderBy("createdAt", "desc"));
@@ -1415,6 +1748,16 @@ export const StorageService = {
 
   // --- Notices ---
   subscribeNotices: (callback: (data: SystemNotice[]) => void): (() => void) => {
+    if (canUseLocalAdminDataBridge()) {
+      return subscribeLocalAdminBridge<SystemNotice[]>(
+        '/api/collections/notices',
+        callback,
+        [],
+        (items) => [...items].sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()),
+        'Notices local bridge'
+      );
+    }
+
     try {
       const q = query(collection(db, "notices"), orderBy("createdAt", "desc"));
       return onSnapshot(q, (snapshot) => {

@@ -6,6 +6,10 @@ interface ImportMetaEnv {
   readonly VITE_RECAPTCHA_SITE_KEY?: string;
   readonly VITE_GOOGLE_CHAT_WEBHOOK_URL?: string;
   readonly VITE_GEMINI_API_KEY?: string;
+  readonly VITE_TOSS_PAYMENTS_ENABLED?: 'true' | 'false';
+  readonly VITE_TOSS_PAYMENTS_CLIENT_KEY?: string;
+  readonly VITE_TOSS_PAYMENTS_MOCK_MODE?: 'true' | 'false';
+  readonly VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
   readonly VITE_ADMIN_AUTH_PROVIDER?: 'firebase' | 'supabase';

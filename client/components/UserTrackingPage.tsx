@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookingState, BookingStatus, ServiceType } from '../types';
 import { StorageService } from '../services/storageService';
 import { ChevronLeft, Search, Package, MapPin, Clock, CreditCard, X, AlertCircle, Trash2, Sparkles, ArrowRight } from 'lucide-react';
+import SEO from './SEO';
 
 interface UserTrackingPageProps {
     onBack: () => void;
@@ -107,6 +108,12 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
 
     return (
         <div className="min-h-screen bg-white font-sans pb-20">
+            <SEO
+                title={lang === 'ko' ? '예약 조회 | 빌리버 배송 상태 확인' : 'Booking Tracking | Beeliber'}
+                description={lang === 'ko' ? '예약자 정보로 현재 짐 보관·배송 상태를 간편하게 확인하세요.' : 'Check your current luggage storage and delivery status.'}
+                lang={lang}
+                path="/tracking"
+            />
             {/* Header */}
             <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
                 <button onClick={onBack} title={t.tracking?.go_back || "Go Back"} className="p-2 hover:bg-gray-100 rounded-full transition-colors">

@@ -120,7 +120,7 @@ const Hero: React.FC<HeroProps> = ({ onStorageClick, t, lang }) => {
       try {
         const tiers = await StorageService.getStorageTiers();
         if (tiers && tiers.length > 0) {
-          setStartPrice(tiers[0].prices.S);
+          setStartPrice(tiers[0].prices.handBag);
         }
       } catch (e) {
         console.error("Failed to load start price", e);

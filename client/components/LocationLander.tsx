@@ -1,9 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, ShieldCheck, ArrowRight, Star, ChevronLeft, Sparkles, Compass } from 'lucide-react';
 import { SEO_LOCATIONS, SeoLocation } from '../src/constants/seoLocations';
+import {
+  buildDeliveryLanderMeta,
+  buildStorageLanderMeta
+} from '../src/constants/seoRouteMeta';
 import { LOCATIONS } from '../constants';
 import SEO from './SEO';
 import BookingWidget from './BookingWidget';
@@ -17,7 +21,12 @@ interface LocationLanderProps {
 const LocationLander: React.FC<LocationLanderProps> = ({ t, lang }) => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [seoData, setSeoData] = useState<SeoLocation | null>(null);
+  const landingBasePath = location.pathname.startsWith('/delivery/')
+    ? '/delivery'
+    : '/storage';
+  const isDeliveryLander = landingBasePath === '/delivery';
 
   useEffect(() => {
     const data = SEO_LOCATIONS.find(loc => loc.slug === slug);
@@ -30,6 +39,10 @@ const LocationLander: React.FC<LocationLanderProps> = ({ t, lang }) => {
   }, [slug, navigate]);
 
   if (!seoData) return null;
+
+  const landerMeta = isDeliveryLander
+    ? buildDeliveryLanderMeta(seoData)
+    : buildStorageLanderMeta(seoData);
 
   // 관련 지표 및 데이터 매핑
   const l = (key: keyof SeoLocation['titles']) => {
@@ -55,13 +68,13 @@ const LocationLander: React.FC<LocationLanderProps> = ({ t, lang }) => {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-bee-yellow selection:text-bee-black">
       <SEO 
-        title={l('ko' as any)}
-        description={d('ko' as any)}
-        keywords={k('ko' as any)}
+        title={lang === 'ko' ? landerMeta.title : l(lang as any)}
+        description={lang === 'ko' ? landerMeta.description : d(lang as any)}
+        keywords={lang === 'ko' ? landerMeta.keywords : k(lang as any)}
         lang={lang}
-        path={`/storage/${slug}`}
+        path={`${landingBasePath}/${slug}`}
         ogType="article"
-        ogImage="https://bee-liber.com/og-locations.png" // 💅 지역별 특화 OG 이미지 (가칭)
+        ogImage="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b"
       />
 
       {/* 🍯 FAQ Schema (JSON-LD) for Google Rich Results */}

@@ -193,10 +193,10 @@ export const en = {
         insurance_limit_1: "0.5~1.0M KRW",
         insurance_limit_2: "1.0~2.0M KRW",
         insurance_limit_3: "2.0~3.0M KRW",
-        size_s: 'Small bag, Shopping bag',
-        size_m: '20~23", Large shopping bag',
-        size_l: '24~26"',
-        size_xl: '27~30"',
+        size_s: 'Shopping Bag, Handbag',
+        size_m: 'Suitcase',
+        size_l: 'Suitcase',
+        size_xl: 'Stroller, Bicycle',
         weight_info: "Standard weight is 20KG. Extra 5,000 KRW applies per 5KG over limit (Max 30KG).",
         insurance_surcharge_1: "100% Surcharge",
         insurance_surcharge_2: "200% Surcharge",
@@ -218,11 +218,11 @@ export const en = {
         total_label: "Total Sum",
         bags_label: "Total Bags",
         bags_selection_title: "Select Baggage",
-        bags_selection_sub: "Adjust quantity for each bag size.",
+        bags_selection_sub: "Adjust the quantity for shopping bags, handbags, suitcases, and stroller or bicycle storage.",
         contact_info_title: "Customer Information",
-        size_m_desc: "Carry-on, Backpack",
-        size_l_desc: "Checked Baggage",
-        size_xl_desc: "X-Large",
+        size_m_desc: "Carry-on and checked suitcases",
+        size_l_desc: "Carry-on and checked suitcases",
+        size_xl_desc: "Stroller, bicycle",
         sns_channels: {
             kakao: "KakaoTalk",
             line: "Line",
@@ -278,7 +278,7 @@ export const en = {
         alert_cancel_error: 'Error during cancellation. Please contact support.'
     },
     storage_tiers: {
-        'st-4h': '4 Hours', 'st-1d': '1 Day (24h)', 'st-week': '7 Days (Long Term)'
+        'st-4h': 'Base 4 Hours', 'st-1d': 'First 24 Hours', 'st-week': 'Extra Day'
     },
     features: {
         sub: 'Our Expertise',
@@ -360,9 +360,9 @@ export const en = {
         currently_closed: 'This branch is currently closed.',
         ai_prompt: 'Bee AI will help you with your reservation.',
         bag_size_s_desc: '~20" (Carry-on)',
-        bag_size_m_desc: '~23" (Large Carry-on)',
-        bag_size_l_desc: '~27" (Checked)',
-        bag_size_xl_desc: '~32"+ (Extra Large)',
+        bag_size_m_desc: 'Suitcase',
+        bag_size_l_desc: 'Suitcase',
+        bag_size_xl_desc: 'Stroller, Bicycle',
         btn_apply: 'Apply',
         btn_reload_page: 'Reload Page',
         label_back_to_list: 'Back to List',
@@ -562,11 +562,11 @@ export const en = {
         header_subtitle: "Compare directly with your height!",
         height_label: "Set your height",
         size_m_range: "20~23 inches",
-        size_m_desc: "Carry-on / Short Trip",
+        size_m_desc: "Suitcase",
         size_l_range: "24~26 inches",
-        size_l_desc: "One-week Trip",
+        size_l_desc: "Suitcase",
         size_xl_range: "27~30 inches",
-        size_xl_desc: "Long-term / Immigrant",
+        size_xl_desc: "Stroller, Bicycle",
         hook_text: "\"{size} size is perfect for your height!\"",
         hook_sub: "Shall I help you with the reservation?",
         info_note: "This simulation is a guide based on actual photos and may vary slightly depending on the brand and design."
@@ -645,7 +645,7 @@ export const en = {
         header_title: "Bee Staff Boong-Boong",
         welcome: "Hello! I'm Bee AI. How can I help you today?",
         sync_status: "Syncing {count} branches in real-time!",
-        placeholder: "e.g. Send 2 L-size bags from Seoul Station to T2!",
+        placeholder: "e.g. Send 2 suitcases from Seoul Station to T2!",
         btn_analyze: "Start Analysis!",
         result_intro: "\"I found the branch info! Here's the result compared with Beeliber branch data!\"",
         label_delivery: "Delivery",
@@ -737,4 +737,164 @@ export const en = {
             }
         ]
     }
+};
+
+en.seo.locations_title = 'Locations | Find nearby luggage storage in Seoul';
+en.seo.locations_desc = 'Check nearby Beeliber luggage storage branches, opening hours, and available storage or delivery services.';
+en.seo.services_title = 'Services | Luggage storage and same-day airport delivery';
+en.seo.services_desc = 'See luggage storage, same-day airport delivery, how it works, and service coverage at a glance.';
+en.seo.qna_title = 'FAQ | Beeliber';
+en.seo.qna_desc = 'Check frequently asked questions about booking, refunds, luggage safety, and branch use.';
+en.terms_page.intro = 'These Terms explain the rights, obligations, and responsibilities between Beeliber ("Company") and users regarding luggage storage, delivery booking, payment, notifications, booking lookup, and customer support.\n\nThese Terms apply across the website, mobile web, app, and other online channels operated by the Company.';
+en.privacy_page.intro = 'Beeliber values your personal information and complies with applicable privacy laws so you can use the service with confidence. We process personal information for safe QR-based check-in/check-out, luggage compensation support, booking operations, and customer service.';
+en.refund_page = {
+    title: 'Cancellation & Refund Policy v1.0',
+    last_updated: 'Effective Date: 2026-03-17',
+    agree_button: 'Confirm & Close',
+    intro: 'This policy explains the rules for booking cancellation, changes, refunds, and additional charges for Beeliber services. It is applied together with the Terms of Service.',
+    content: [
+        { title: '1. Scope', text: 'This policy applies to luggage storage bookings, luggage delivery bookings with partners, and bookings that include additional services.' },
+        { title: '2. Changes and Cancellation', text: 'Users may request changes or cancellation before the service begins, subject to branch operations, time slots, luggage quantity, and delivery route conditions.' },
+        { title: '3. Refund Standard', text: 'Before service starts, bookings are generally refundable in full unless a promotional or special-product policy states otherwise. After service starts, refunds may be reduced according to actual operating costs. If the Company is responsible, a full or reasonable refund will be provided.' },
+        { title: '4. No-show', text: 'If a customer does not arrive on time, cannot be contacted, or presents luggage that does not meet policy, the case may be treated as a no-show and operating costs may be deducted from the refund.' },
+        { title: '5. Additional Fees', text: 'Extra fees may apply for storage beyond the reserved time, excess luggage quantity or size, special handling, delayed pickup, or redelivery requests.' },
+        { title: '6. Unclaimed Luggage', text: 'If luggage is not collected after the reserved time or storage period, extra storage charges may apply and separate handling procedures may begin.' },
+        { title: '7. Force Majeure', text: 'Service may be delayed, changed, or cancelled due to severe weather, transport control, government orders, or system failures beyond the Company’s control.' },
+        { title: '8. Refund Method', text: 'Refunds are generally returned to the original payment method. Timing may vary depending on the payment provider or financial institution.' },
+        { title: '9. Questions and Objections', text: 'If you have questions about cancellation, refunds, or extra charges, please contact customer support and we will review the case with relevant records.' }
+    ]
+};
+en.servicedetails = {
+    delivery_title: 'Arrive',
+    delivery_accent: 'light and easy',
+    delivery_desc: 'Drop your luggage at a nearby branch and have it delivered straight to your hotel lobby so your trip starts hands-free.',
+    handsfree_title: 'Check out',
+    handsfree_accent: 'without baggage',
+    handsfree_desc: 'Leave your luggage after checkout, enjoy the city, and pick it up right before you head to the airport or station.'
+};
+en.services_page.status_update_label = 'Status Update';
+en.services_page.safety_insurance_title = 'Safety Compensation Insurance';
+en.services_page.safety_insurance_desc = 'Coverage up to KRW 500,000 for loss or damage.';
+en.terms = {
+    usage_title: 'Agree to Terms of Service',
+    privacy_title: 'Agree to Privacy Policy',
+    insurance_title: 'Confirm High-value Item & Compensation Policy',
+    agree_format: 'I agree to {link}',
+    link_usage: 'Terms of Service',
+    link_privacy: 'Privacy Policy',
+    link_insurance: 'High-value Item & Compensation Policy'
+};
+en.staff_scan = {
+    no_scan_info: 'No scanned booking information was found.',
+    booking_not_found: 'Booking information could not be found.',
+    load_error: 'An error occurred while loading data.',
+    invalid_access: 'Invalid access.',
+    auth_required: 'Staff permission is required.\nPlease complete admin login first.',
+    admin_home: 'Go to Admin Home',
+    go_login: 'Go to Login',
+    staff_mode: 'Staff Mode',
+    current_status: 'Current Status',
+    booking_id: 'Booking ID',
+    service_type: 'Service Type',
+    from: 'From',
+    to: 'To',
+    payment_details: 'Payment Details',
+    method: 'Method',
+    discount: 'Discount',
+    total_amount: 'Total Amount',
+    update_status: 'Update Status',
+    confirm_update: "Do you want to change the status to '{status}'?",
+    changed: 'Status has been updated.',
+    failed: 'Failed to update status.',
+    confirm_pickup_checkin: 'Confirm Pickup / Check-in',
+    storage_in_progress: 'In Storage',
+    delivery_arrival_complete: 'Delivery / Arrival Complete',
+    customer_pickup_complete: 'Customer Pickup (Mark Complete)',
+    already_completed: 'This booking is already completed.',
+    preview_image: 'Preview Image',
+    statuses: {
+        pending: 'Pending',
+        confirmed: 'Confirmed',
+        transit: 'In Transit',
+        storage: 'In Storage',
+        arrived: 'Arrived',
+        completed: 'Completed',
+        cancelled: 'Cancelled'
+    },
+    payment_statuses: {
+        paid: 'Paid',
+        unpaid: 'Unpaid',
+        refunded: 'Refunded',
+        unknown: 'Unknown'
+    }
+};
+en.booking_voucher = {
+    image_save_failed: 'Failed to save image.',
+    official_receipt: 'Official Reservation Receipt',
+    reservation_id: 'Reservation ID',
+    issue_date: 'Issue Date',
+    scan_to_verify: 'Scan to Verify',
+    show_to_staff: 'Please show this voucher to our staff.',
+    show_code_note: 'Please present this code when you visit the branch.\nYour request will be processed right after on-site verification.',
+    directions_short: 'NAV',
+    branch_pickup_guide: 'Branch & Pickup Guide',
+    storage: 'Storage',
+    vat_included: 'VAT Included',
+    save_voucher: 'Save Voucher',
+    home: 'Home',
+    branch_address: 'Address',
+    open_hours: 'Open Hours',
+    coupon_code: 'Coupon Code',
+    show_to_staff_short: '"Show to staff"',
+    coupon_small_note: 'Lower-denomination currencies may not qualify for the best exchange rate.',
+    touch_to_save_coupon: 'Touch to save coupon image',
+    quick_access_note: 'Please capture this screen or save it as a PDF for quick access at the service counter.',
+    save_simple_qr: 'Save Simple QR Image',
+    official_service_voucher: 'Official Service Voucher'
+};
+en.booking_voucher.moneybox_partner = 'Yeonnam Branch Official Partner';
+en.booking_voucher.vip_coupon = 'VIP Coupon';
+en.booking_voucher.currency_exchange = 'Currency Exchange';
+en.booking_voucher.special_benefit = 'Special Benefit';
+en.booking_voucher.everyday_hours = '09:00 - 21:00 (Everyday)';
+en.booking_voucher.address_specified = 'Address Specified';
+en.tracking.name_placeholder = 'Enter reservation name';
+en.services_page.footer_msg = 'Enjoy your light travel!';
+en.size_simulator.size_s_range = '18~20"';
+en.size_simulator.size_s_desc = 'Hand bag / small carry-on';
+en.login_modal = {
+    title: 'Notice',
+    desc: 'Login is currently available only for supported accounts.',
+    note: 'Please sign in with the account type provided by Beeliber.',
+    confirm: 'Confirm'
+};
+en.chatbot = {
+    header: 'Beeliber Bot',
+    online: 'Online',
+    welcome: 'Hello. This is the Beeliber customer desk. How can we help you today?',
+    placeholder: 'Type your question here.',
+    tooltip: 'Help',
+    quick_book: 'Book Now',
+    quick_price: 'Pricing',
+    start_chat: 'Start Chat',
+    name: 'Name',
+    email: 'Email',
+    form_title: 'Start a conversation',
+    form_desc: 'Please enter your name and email so we can support you properly.',
+    topic_menu_title: 'Please choose the service you need',
+    topic_delivery: 'Delivery Guide',
+    topic_storage: 'Storage Guide',
+    topic_other: 'General Inquiry',
+    topic_refund: 'Refund Inquiry',
+    topic_delivery_sub: 'Pricing and how it works',
+    topic_storage_sub: 'Locations and storage fee',
+    topic_other_sub: 'General support',
+    topic_refund_sub: 'Refund policy and process',
+    user_label: 'Customer',
+    notify_template: '[Chatbot Alert] Customer clicked the "{userText}" button.',
+    request_consult: 'Request Consultation',
+    ai_delivery_prompt: 'Please explain how the luggage delivery service works, including pricing and the airport-to-hotel flow.',
+    ai_storage_prompt: 'Please explain how the luggage storage service works, including locations and hourly/day pricing.',
+    ai_other_prompt: 'Please guide the customer on general support topics and how to contact the team.',
+    ai_refund_prompt: 'Please explain the cancellation and refund policy in detail.'
 };

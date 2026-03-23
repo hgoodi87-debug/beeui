@@ -20,6 +20,10 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   // Pre-warm Auth and Functions
   useEffect(() => {
     warmAdminAuth().catch(console.error);
+
+    // 로그인 직후 대시보드 lazy 로딩 대기를 줄이기 위한 사전 워밍업
+    void import('./AdminDashboard');
+    void import('./BranchAdminPage');
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,18 +52,18 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       const admin = await loginAdmin(inputName, inputPass);
 
       console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}, provider: ${admin.provider}) 💅`);
-      const { AuditService } = await import('../services/auditService');
-      try {
-        await AuditService.logAction(
+      onLogin(admin.name, admin.jobTitle || 'Staff', admin.role, admin.email, admin.branchId);
+
+      void import('../services/auditService')
+        .then(({ AuditService }) => AuditService.logAction(
           { id: admin.email || admin.name, name: admin.name, email: admin.email || 'local@fallback' },
           'LOGIN',
           { id: admin.employeeId || admin.name, type: 'ADMIN' },
           { jobTitle: admin.jobTitle || 'Staff', role: admin.role, mode: admin.provider }
-        );
-      } catch (auditErr) {
-        console.warn("[AdminLogin] 감사 로그 기록 실패 (데이터 구조 확인 필요):", auditErr);
-      }
-      onLogin(admin.name, admin.jobTitle || 'Staff', admin.role, admin.email, admin.branchId);
+        ))
+        .catch((auditErr) => {
+          console.warn("[AdminLogin] 감사 로그 기록 실패 (데이터 구조 확인 필요):", auditErr);
+        });
 
     } catch (err: any) {
       console.error("Login Error Details:", err);
@@ -68,6 +72,8 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
 
       if (errCode === 'invalid-identifier') {
         setError('로그인 ID 형식이 올바르지 않습니다.');
+      } else if (errCode === 'supabase/local-email-login-required') {
+        setError('로컬 프리뷰에서는 이메일 형식으로 로그인해 주세요. 로그인ID/지점ID는 Firebase localhost 허용 후에 붙습니다.');
       } else if (errCode === 'unauthenticated' || errCode === 'functions/unauthenticated' || errCode === 'supabase/400' || errCode === 'invalid_credentials') {
         setError(isSupabaseMode ? '로그인 ID 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.' : '이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.');
       } else if (errCode === 'permission-denied' || errCode === 'functions/permission-denied') {
@@ -81,7 +87,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       } else if (errCode === 'supabase/firebase-bridge-failed') {
         setError('Firebase 관리자 권한 연결에 실패했어요. 잠시 후 다시 시도해주세요.');
       } else if (errCode === 'auth/unauthorized-domain' || errMsg.includes('referer') || errMsg.includes('requests-from-referer')) {
-        setError(`인증 실패. [${window.location.origin}] 도메인이 파이어베이스 승인 목록에 등록되어 있는지 확인해주세요.`);
+        setError(`로컬 인증이 막혔어요. [${window.location.origin}] 를 Firebase/GCP 허용 도메인 또는 허용 리퍼러에 추가해 주세요. 급하면 로컬에서는 이메일 로그인으로 먼저 붙으시면 됩니다.`);
       } else if (String(errCode).startsWith('supabase/')) {
         setError(`Supabase 연결 오류 (${errCode})가 발생했습니다. Phase 1 스키마와 Auth 설정을 확인해주세요.`);
       } else {
@@ -108,7 +114,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
             <span className="text-4xl font-black italic text-bee-yellow">bee</span>
             <span className="text-4xl font-black text-white">liber</span>
           </div>
-          <p className="text-bee-yellow font-black uppercase tracking-[0.3em] text-[10px] mt-3 drop-shadow-sm">Logistics Control Portal</p>
+          <p className="text-bee-yellow font-black uppercase tracking-[0.3em] text-[10px] mt-3 drop-shadow-sm">물류 관제 포털</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white/5 backdrop-blur-2xl p-10 rounded-[40px] border border-white/10 shadow-2xl space-y-6 hover:shadow-bee-yellow/5 transition-all duration-500">
@@ -121,21 +127,21 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
           <div className="space-y-4">
             <div className="group">
               <label className="block text-[10px] font-black text-gray-500 group-focus-within:text-bee-yellow uppercase tracking-widest mb-2 ml-2 transition-colors">
-                {isSupabaseMode ? 'Admin ID' : 'Admin Name'}
+                {isSupabaseMode ? '관리자 로그인 ID' : '관리자 이름'}
               </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder={isSupabaseMode ? '지점ID / 로그인ID / 이메일' : '관리자 이름 (Name)'}
+                placeholder={isSupabaseMode ? '지점ID / 로그인ID / 이메일' : '관리자 이름'}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold placeholder-gray-600 focus:outline-none focus:border-bee-yellow focus:bg-white/10 transition-all shadow-inner"
                 autoFocus
               />
             </div>
 
             <div className="relative group">
-              <label className="block text-[10px] font-black text-gray-500 group-focus-within:text-bee-yellow uppercase tracking-widest mb-2 ml-2 transition-colors">Password</label>
+              <label className="block text-[10px] font-black text-gray-500 group-focus-within:text-bee-yellow uppercase tracking-widest mb-2 ml-2 transition-colors">비밀번호</label>
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
@@ -164,11 +170,11 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <i className="fa-solid fa-circle-notch animate-spin"></i>
-                  <span>{isSupabaseMode ? 'Connecting to Supabase...' : 'Connecting...'}</span>
+                  <span>{isSupabaseMode ? '관리자 권한을 확인하는 중...' : '로그인 확인 중...'}</span>
                 </div>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  SECURE LOGIN <i className="fa-solid fa-arrow-right"></i>
+                  안전 로그인 <i className="fa-solid fa-arrow-right"></i>
                 </span>
               )}
             </button>
@@ -184,7 +190,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
         </form>
 
         <p className="mt-5 text-center text-[10px] font-bold tracking-[0.25em] uppercase text-gray-500">
-          {isSupabaseMode ? 'Supabase Admin ID Login Mode' : 'Firebase Admin Auth Mode'}
+          {isSupabaseMode ? 'Supabase 관리자 로그인 모드' : 'Firebase 관리자 인증 모드'}
         </p>
 
         <p className="mt-12 text-center text-[10px] text-gray-600 font-bold uppercase tracking-[0.4em]">

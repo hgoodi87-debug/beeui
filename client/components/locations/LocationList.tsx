@@ -4,6 +4,8 @@ import { Search, MapPin, LocateFixed, Plane, Store, Calendar, Clock, Wallet, Lug
 import BaggageCounter from './BaggageCounter';
 import { generateTimeSlots, isPastKSTTime, getFirstAvailableSlot, formatKSTDate } from '../../utils/dateUtils';
 import { formatDistance } from '../../utils/locationUtils';
+import { BagCategoryId } from '../../src/domains/booking/bagCategoryUtils';
+import { BagSizes } from '../../types';
 
 
 interface LocationListProps {
@@ -27,8 +29,8 @@ interface LocationListProps {
     onReturnDateChange?: (date: string) => void;
     returnTime?: string;
     onReturnTimeChange?: (time: string) => void;
-    baggageCounts: any;
-    onBaggageChange: (size: 'S' | 'M' | 'L' | 'XL', delta: number) => void;
+    baggageCounts: BagSizes;
+    onBaggageChange: (categoryId: BagCategoryId, delta: number) => void;
     deliveryPrices?: any;
     onBack?: () => void;
     onFindMyLocation?: () => void;

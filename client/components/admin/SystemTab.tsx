@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
-import { StorageTier, PriceSettings, GoogleCloudConfig } from '../../types';
+import { StorageTier, PriceSettings, GoogleCloudConfig, ServiceType } from '../../types';
 import DiscountTab from './DiscountTab'; // Mirroring discount logic here
+import {
+    getBagCategoriesForService,
+    getBagCategoryLabel,
+    getStoragePriceForCategory,
+} from '../../src/domains/booking/bagCategoryUtils';
+
+const DELIVERY_BAG_CATEGORIES = getBagCategoriesForService(ServiceType.DELIVERY);
+const STORAGE_BAG_CATEGORIES = getBagCategoriesForService(ServiceType.STORAGE);
 
 interface SystemTabProps {
     deliveryPrices: PriceSettings;
@@ -65,16 +73,19 @@ const SystemTab: React.FC<SystemTabProps> = ({
                             <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Delivery Standard</span>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            {(['S', 'M', 'L', 'XL'] as const).map(size => (
-                                <div key={size} className="bg-gray-50 p-6 rounded-3xl border border-transparent hover:border-bee-yellow transition-all">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">{size} Size</label>
+                            {DELIVERY_BAG_CATEGORIES.map(category => (
+                                <div
+                                    key={category.id}
+                                    className="bg-gray-50 p-6 rounded-3xl border transition-all border-transparent hover:border-bee-yellow"
+                                >
+                                    <label className="text-[10px] font-black text-gray-400 tracking-tight mb-3 block">{getBagCategoryLabel(category.id, 'ko')}</label>
                                     <div className="flex items-center gap-2">
                                         <span className="font-bold text-gray-300 text-sm">₩</span>
                                         <input
                                             type="number"
-                                            value={deliveryPrices[size]}
-                                            onChange={(e) => updateDeliveryPrice(size, Number(e.target.value))}
-                                            title={`${size} 사이즈 배송 요금`}
+                                            value={getStoragePriceForCategory(deliveryPrices, category.id)}
+                                            onChange={(e) => updateDeliveryPrice(category.primaryKey, Number(e.target.value))}
+                                            title={`${getBagCategoryLabel(category.id, 'ko')} 배송 요금`}
                                             className="bg-transparent font-black text-2xl w-full outline-none"
                                         />
                                     </div>
@@ -82,6 +93,7 @@ const SystemTab: React.FC<SystemTabProps> = ({
                             ))}
                         </div>
                         <p className="mt-6 text-[10px] text-gray-400 font-medium">* 모든 요금은 가방 1개당 단가(KRW) 기준입니다.</p>
+                        <p className="mt-2 text-[10px] font-black text-red-500">* 배송은 쇼핑백, 손가방과 캐리어만 접수합니다.</p>
                     </div>
 
                     <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 space-y-8">
@@ -98,15 +110,15 @@ const SystemTab: React.FC<SystemTabProps> = ({
                                         <h4 className="font-black text-bee-black text-sm">{tier.label}</h4>
                                         <i className="fa-solid fa-clock-rotate-left text-gray-200 group-hover:text-bee-blue transition-colors"></i>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-3">
-                                        {(['S', 'M', 'L', 'XL'] as const).map(size => (
-                                            <div key={size} className="bg-white p-3 rounded-2xl text-center border border-gray-100 group-hover:border-bee-blue/20">
-                                                <div className="text-[9px] font-black text-gray-300 uppercase mb-2">{size}</div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        {STORAGE_BAG_CATEGORIES.map(category => (
+                                            <div key={category.id} className="bg-white p-3 rounded-2xl text-center border border-gray-100 group-hover:border-bee-blue/20">
+                                                <div className="text-[9px] font-black text-gray-300 tracking-tight mb-2">{getBagCategoryLabel(category.id, 'ko')}</div>
                                                 <input
                                                     type="number"
-                                                    value={tier.prices[size]}
-                                                    onChange={(e) => updateStoragePrice(tier.id, size, Number(e.target.value))}
-                                                    title={`${tier.label} - ${size} 사이즈 보관 요금`}
+                                                    value={getStoragePriceForCategory(tier.prices, category.id)}
+                                                    onChange={(e) => updateStoragePrice(tier.id, category.primaryKey, Number(e.target.value))}
+                                                    title={`${tier.label} - ${getBagCategoryLabel(category.id, 'ko')} 보관 요금`}
                                                     className="w-full bg-transparent text-center font-black text-sm outline-none"
                                                 />
                                             </div>

@@ -2,15 +2,15 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
-import { SEO_LOCATIONS } from '../src/constants/seoLocations.ts';
-import { ALL_PRERENDER_ROUTES } from '../src/constants/prerenderRoutes.ts';
 import {
+  ALL_PRERENDER_ROUTES,
   buildDeliveryLanderMeta,
   buildStorageLanderMeta,
+  SEO_BUILD_LOCATIONS,
   SEO_DEFAULT_OG_IMAGE,
   SITE_URL,
   STATIC_ROUTE_META,
-} from '../src/constants/seoRouteMeta.ts';
+} from './seoBuildData.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,7 +27,7 @@ const buildAlternateLinks = (routePath) => [
   { hrefLang: 'x-default', href: `${SITE_URL}${routePath}` },
 ];
 
-const locationMetaMap = new Map(SEO_LOCATIONS.map((location) => [location.slug, location]));
+const locationMetaMap = new Map(SEO_BUILD_LOCATIONS.map((location) => [location.slug, location]));
 
 const ensureMeta = (document, attrName, attrValue) => {
   let node = document.head.querySelector(`meta[${attrName}="${attrValue}"]`);

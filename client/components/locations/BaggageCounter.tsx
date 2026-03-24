@@ -50,20 +50,20 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
                     return (
                         <div
                             key={category.id}
-                            className={`group relative flex items-center gap-4 p-4 md:p-5 bg-white rounded-[1.5rem] md:rounded-[2rem] border transition-all duration-300 ${count > 0 ? 'border-bee-yellow bg-bee-yellow/[0.03] shadow-lg' : 'border-gray-100 shadow-sm'}`}
+                            className={`group relative flex items-center gap-4 p-4 md:p-6 bg-white rounded-[2rem] md:rounded-[2.5rem] border transition-all duration-300 ${count > 0 ? 'border-bee-yellow bg-bee-yellow/[0.03] shadow-lg' : 'border-gray-100 shadow-sm'}`}
                         >
-                            {/* Visual Image Section 💅 */}
-                            <div className="relative w-20 h-20 md:w-28 md:h-28 shrink-0 flex items-center justify-center bg-gray-50/50 rounded-2xl overflow-hidden group-hover:bg-white transition-colors duration-500">
-                                <div className={`absolute inset-0 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${count > 0 ? 'bg-bee-yellow/10 opacity-100' : 'bg-gray-200/20'}`} />
+                            {/* Visual Image Section 💅 - 더욱 키웠습니다! */}
+                            <div className="relative w-28 h-28 md:w-36 md:h-36 shrink-0 flex items-center justify-center bg-gray-50/50 rounded-3xl overflow-hidden group-hover:bg-white transition-colors duration-500">
+                                <div className={`absolute inset-0 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${count > 0 ? 'bg-bee-yellow/15 opacity-100' : 'bg-gray-200/20'}`} />
                                 <img
                                     src={visual.imageSrc}
                                     alt={label}
-                                    className="relative w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-110"
+                                    className="relative w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-110"
                                 />
                             </div>
 
                             {/* Content Section 💅 */}
-                            <div className="flex-1 min-w-0 pr-2">
+                            <div className="flex-1 min-w-0 pr-1">
                                 <div className="flex flex-col">
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-[9px] font-black text-bee-black/30 uppercase tracking-[0.15em] font-montserrat">

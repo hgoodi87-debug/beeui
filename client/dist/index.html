@@ -141,6 +141,31 @@
   <!-- reCAPTCHA Enterprise -->
   <script src="https://www.google.com/recaptcha/enterprise.js?render=6Lf59FMsAAAAAO-qcqBdXcn_CDR8A7jP6wud0RWP"></script>
 
+  <!-- Google tag (gtag.js) - GA4 📊 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA4_MEASUREMENT_ID%"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    if ("%VITE_GA4_MEASUREMENT_ID%") {
+      gtag('config', '%VITE_GA4_MEASUREMENT_ID%');
+    }
+  </script>
+
+  <!-- Meta Pixel Code 💅 -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '2813327635677634');
+    fbq('track', 'PageView');
+  </script>
+
   <!-- Naver Maps SDK (Moved to index.html for Stability & Auth Fix) 💅 -->
   <!-- Naver Map SDK is now dynamically loaded in components (LocationMap.tsx) for better language control -->
 
@@ -292,13 +317,18 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-Bsvfv6gc.js"></script>
+  <script type="module" crossorigin src="/assets/index-Ce0iwRKL.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-query-BnCmuCcb.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-firebase-EPACGnX2.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-CXeqV8yX.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-CxHdR3Va.css">
 </head>
 
 <body class="antialiased">
+  <!-- Meta Pixel noscript 💅 -->
+  <noscript>
+    <img height="1" width="1" style="display:none" 
+         src="https://www.facebook.com/tr?id=2813327635677634&ev=PageView&noscript=1"/>
+  </noscript>
   <div id="root"></div>
 </body>
 

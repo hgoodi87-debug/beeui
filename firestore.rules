@@ -108,5 +108,13 @@ service cloud.firestore {
       allow read: if isSuperAdmin();
       allow update, delete: if false; // 감사 로그는 수정/삭제 불가! 🔐
     }
+
+    // 💬 챗봇 세션 및 메시지: 익명 유저가 AI와 대화할 수 있도록 퍼블릭 읽기/쓰기 허용 💅
+    match /chats/{chatId} {
+      allow read, write: if true;
+    }
+    match /chat_sessions/{sessionId} {
+      allow read, write: if true;
+    }
   }
 }

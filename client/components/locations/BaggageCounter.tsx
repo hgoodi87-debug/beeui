@@ -37,17 +37,6 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between px-1">
-                <div className="flex flex-col pl-1">
-                    <h3 className="text-[18px] md:text-[22px] font-black text-gray-900 tracking-tighter leading-tight">
-                        {t.locations_page?.select_baggage_title || "Luggage Selection"}
-                    </h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-0.5 font-montserrat italic">
-                        Premium Luggage Care
-                    </p>
-                </div>
-            </div>
-
             <div className={listLayoutClass}>
                 {categories.map((category) => {
                     const count = getBagCategoryCount(baggageCounts, category.id);

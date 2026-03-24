@@ -33,14 +33,19 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
         carrier: STORAGE_RATES.carrier.hours4,
         strollerBicycle: STORAGE_RATES.strollerBicycle.hours4,
     };
-    const listLayoutClass = 'grid grid-cols-1 gap-2';
+    const listLayoutClass = 'flex flex-col gap-2 md:gap-3';
 
     return (
-        <div className="space-y-2.5">
-            <div className="flex items-center justify-between pl-1">
-                <label className="text-[10px] font-black text-gray-500 tracking-[0.18em] uppercase">
-                    {t.locations_page?.select_baggage_title || "Luggage Selection"}
-                </label>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+                <div className="flex flex-col pl-1">
+                    <h3 className="text-[18px] md:text-[22px] font-black text-gray-900 tracking-tighter leading-tight">
+                        {t.locations_page?.select_baggage_title || "Luggage Selection"}
+                    </h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-0.5 font-montserrat italic">
+                        Premium Luggage Care
+                    </p>
+                </div>
             </div>
 
             <div className={listLayoutClass}>
@@ -56,85 +61,68 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
                     return (
                         <div
                             key={category.id}
-                            className="overflow-hidden rounded-[0.95rem] border border-gray-100 bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)]"
+                            className={`group relative flex items-center gap-4 p-4 md:p-5 bg-white rounded-[1.5rem] md:rounded-[2rem] border transition-all duration-300 ${count > 0 ? 'border-bee-yellow bg-bee-yellow/[0.03] shadow-lg' : 'border-gray-100 shadow-sm'}`}
                         >
-                            <div className="p-2.5 sm:p-3 space-y-2">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                        <div className="text-[8px] font-black uppercase tracking-[0.08em] text-gray-400 whitespace-nowrap">
-                                            {isDelivery ? (lang.startsWith('ko') ? '배송 품목' : 'Delivery item') : (lang.startsWith('ko') ? '보관 품목' : 'Storage item')}
-                                        </div>
-                                        <div className="mt-0.5 text-[0.9rem] sm:text-[0.96rem] font-black leading-tight text-bee-black break-keep">
-                                            {label}
-                                        </div>
-                                    </div>
+                            {/* Visual Image Section 💅 */}
+                            <div className="relative w-20 h-20 md:w-28 md:h-28 shrink-0 flex items-center justify-center bg-gray-50/50 rounded-2xl overflow-hidden group-hover:bg-white transition-colors duration-500">
+                                <div className={`absolute inset-0 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${count > 0 ? 'bg-bee-yellow/10 opacity-100' : 'bg-gray-200/20'}`} />
+                                <img
+                                    src={visual.imageSrc}
+                                    alt={label}
+                                    className="relative w-16 h-16 md:w-24 md:h-24 object-contain drop-shadow-md transition-transform duration-500 group-hover:scale-110"
+                                />
+                            </div>
 
-                                    <div className={`shrink-0 rounded-[0.9rem] px-2 py-1.5 text-center min-w-[3.2rem] ${visual.chipClassName}`}>
-                                        <div className="text-[8px] font-black tracking-[0.06em] uppercase opacity-70 whitespace-nowrap">
-                                            {lang.startsWith('ko') ? '선택' : 'Qty'}
-                                        </div>
-                                        <div className="mt-0.5 text-[1.2rem] font-black leading-none">{count}</div>
+                            {/* Content Section 💅 */}
+                            <div className="flex-1 min-w-0 pr-2">
+                                <div className="flex flex-col">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[9px] font-black text-bee-black/30 uppercase tracking-[0.15em] font-montserrat">
+                                            {isDelivery ? 'Delivery' : 'Storage'}
+                                        </span>
+                                        {count > 0 && (
+                                            <span className="px-2 py-0.5 bg-bee-yellow text-bee-black text-[10px] font-black rounded-full shadow-sm animate-pulse-subtle">
+                                                SELECTED
+                                            </span>
+                                        )}
                                     </div>
-                                </div>
-
-                                <div className="flex items-center gap-2.5">
-                                    <div className={`flex h-[2.9rem] w-[2.9rem] shrink-0 items-center justify-center rounded-[0.8rem] bg-gradient-to-br ${visual.accentClassName}`}>
-                                        <img
-                                            src={visual.imageSrc}
-                                            alt={label}
-                                            className="h-8 w-8 object-contain"
-                                            loading="lazy"
-                                        />
-                                    </div>
-
-                                    <p
-                                        className="min-w-0 text-[10px] sm:text-[10.5px] font-semibold leading-[1.35] text-gray-500 break-keep"
-                                        style={{
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 2,
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden',
-                                        }}
-                                    >
+                                    <h4 className="text-[17px] md:text-[20px] font-black tracking-tight text-gray-900 leading-tight mb-1.5">
+                                        {label}
+                                    </h4>
+                                    <p className="text-[11px] md:text-[12px] font-medium text-gray-400 line-clamp-1 italic mb-3">
                                         {description}
                                     </p>
-                                </div>
-
-                                <div className="rounded-[0.9rem] bg-gray-50/80 px-2.5 py-2">
-                                    <div className="flex items-end justify-between gap-2">
-                                        <div className="min-w-0 flex-1">
-                                            <div className="text-[8px] font-black uppercase tracking-[0.08em] text-gray-400 whitespace-nowrap">
-                                                {isDelivery ? (lang.startsWith('ko') ? '1회 기준' : 'Per trip') : (lang.startsWith('ko') ? '4시간 기준' : 'Base 4h')}
-                                            </div>
-                                            <div className="mt-1 text-[1.05rem] sm:text-[1.14rem] font-black leading-none text-bee-yellow whitespace-nowrap">
-                                                ₩{unitPrice.toLocaleString()}
+                                    
+                                    <div className="flex items-center justify-between mt-auto">
+                                        <div className="flex flex-col">
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-[18px] md:text-[22px] font-black text-bee-yellow font-montserrat leading-none">
+                                                    ₩{unitPrice.toLocaleString()}
+                                                </span>
+                                                <span className="text-[8px] md:text-[9px] font-bold text-gray-300 uppercase font-montserrat tracking-tighter">
+                                                    {isDelivery ? '/Trip' : '/4h'}
+                                                </span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-1 rounded-full bg-white px-1 py-1 shrink-0 shadow-sm">
+                                        <div className="flex items-center bg-gray-50 rounded-md p-0.5 border border-gray-100/50 shadow-inner">
                                             <button
-                                                title="Decrease"
                                                 onClick={() => onCountChange(category.id, -1)}
-                                                className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
+                                                className="w-6 h-6 md:w-7 md:h-7 flex items-center justify-center rounded-sm hover:bg-white text-gray-300 disabled:opacity-20 transition-all active:scale-90"
                                                 disabled={count === 0}
                                             >
-                                                <Minus className="h-3 w-3" />
+                                                <Minus size={12} />
                                             </button>
-                                            <span className="w-5 text-center text-[0.95rem] font-black text-bee-black">{count}</span>
+                                            <span className="w-5 md:w-6 text-center font-black text-[14px] md:text-[16px] text-gray-800 font-montserrat select-none">
+                                                {count}
+                                            </span>
                                             <button
-                                                title="Increase"
                                                 onClick={() => onCountChange(category.id, 1)}
-                                                className="flex h-7 w-7 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors hover:bg-gray-800 shadow-sm"
+                                                className="w-6 h-6 md:w-7 md:h-7 flex items-center justify-center rounded-sm bg-bee-black text-bee-yellow shadow-sm hover:scale-105 active:scale-90 transition-all"
                                             >
-                                                <Plus className="h-3 w-3" />
+                                                <Plus size={12} />
                                             </button>
                                         </div>
-                                    </div>
-
-                                    <div className="mt-1.5 text-[9px] font-bold leading-[1.35] text-gray-500 break-keep">
-                                        {isDelivery
-                                            ? (lang.startsWith('ko') ? '결제 즉시 반영됩니다.' : 'Added to the total instantly.')
-                                            : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, charges are added hourly.')}
                                     </div>
                                 </div>
                             </div>

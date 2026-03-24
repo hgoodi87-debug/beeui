@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T04:43:02.135Z",
+  "generatedAt": "2026-03-22T09:36:05.222Z",
   "mode": "DRY_RUN",
   "totalFirebaseDocs": 56,
   "totalAuthUsers": 53,
@@ -23,14 +23,6 @@
       "identifierValue": "HBO",
       "selectedDocId": "admin-branch-HBO-1773371032207",
       "authEmail": "hbo@bee-liber.com"
-    },
-    {
-      "docId": "LgJFfcaHJFgzBJsIAil982xWsCC2",
-      "name": "진호",
-      "identifierType": "loginId",
-      "identifierValue": "rlaxowl98",
-      "selectedDocId": "iXfS3Vl6Qxd35uk6NNkXvTkDBI93",
-      "authEmail": "rlaxowl98@gmail.con"
     },
     {
       "docId": "ZANWVVnq4TXN2NJ65gfdt32OgB53",
@@ -359,6 +351,14 @@
       "identifierValue": "YDO",
       "selectedDocId": "admin-branch-YDO-1773371042781",
       "authEmail": "ydo@bee-liber.com"
+    },
+    {
+      "docId": "eZEMUxHDHdhuMKVoPMRW0FYK5jp2",
+      "name": "진호",
+      "identifierType": "loginId",
+      "identifierValue": "rlaxowl98",
+      "selectedDocId": "eZEMUxHDHdhuMKVoPMRW0FYK5jp2",
+      "authEmail": "rlaxowl98@gmail.con"
     }
   ],
   "repairRows": [],

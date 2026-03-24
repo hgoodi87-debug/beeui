@@ -435,6 +435,11 @@ const confirmTossPaymentSession = async ({ admin, uid, secretKey, paymentKey, or
     });
 
     await db.collection('bookings').doc(confirmedBooking.id).set(confirmedBooking, { merge: true });
+    
+    // [스봉이] 메타 광고 트래킹: 서버 사이드 전환 전송 (CAPI) 💅✨
+    // 백그라운드에서 실행되도록 await 하지 않습니다.
+    sendMetaCAPI(confirmedBooking).catch(err => console.error('[스봉이] CAPI 에러 무시:', err));
+
     await sessionRef.set({
         status: 'CONFIRMED',
         paymentStatus: 'paid',
@@ -447,6 +452,48 @@ const confirmTossPaymentSession = async ({ admin, uid, secretKey, paymentKey, or
         booking: confirmedBooking,
         payment: paymentSummary,
     };
+};
+
+const sendMetaCAPI = async (booking) => {
+    const PIXEL_ID = process.env.META_PIXEL_ID || '2813327635677634';
+    const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN;
+
+    if (!ACCESS_TOKEN) {
+        console.warn('[스봉이 알림] Meta CAPI 액세스 토큰이 없어 서버 전송을 건너뜁니다. 💅');
+        return;
+    }
+
+    const hash = (val) => crypto.createHash('sha256').update(normalizeText(val).toLowerCase()).digest('hex');
+
+    const eventData = {
+        data: [{
+            event_name: 'Purchase',
+            event_time: Math.floor(Date.now() / 1000),
+            action_source: 'website',
+            event_id: booking.id || booking.reservationCode,
+            user_data: {
+                em: [hash(booking.userEmail)],
+                fn: [hash(booking.userName)]
+            },
+            custom_data: {
+                value: toNumber(booking.finalPrice),
+                currency: 'KRW',
+                content_ids: [booking.serviceType],
+                content_type: 'product'
+            }
+        }]
+    };
+
+    try {
+        await fetch(`https://graph.facebook.com/v17.0/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventData)
+        });
+        console.log(`[스봉이] Meta CAPI Purchase 이벤트 전송 완료! (ID: ${booking.id}) 💅✨`);
+    } catch (err) {
+        console.error('[스봉이 사고] Meta Capi 전송 중 에러 발생:', err);
+    }
 };
 
 module.exports = {

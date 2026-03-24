@@ -386,7 +386,8 @@ export const ja = {
         label_guide: '利用ガイド',
         label_facilities: '利用可能サービス',
         reservation_title: '予約する',
-        label_map_error: '地図の読み込み失敗'
+        label_map_error: '地図の読み込み失敗',
+        find_my_location_short: '現在地を探す'
     },
     manual: {
         title: 'ご利用ガイド', subtitle: 'How to use', desc: 'Beeliberで重い荷物のストレスから解放されましょう。',

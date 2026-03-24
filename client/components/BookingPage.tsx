@@ -98,6 +98,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
     const [storageTiers, setStorageTiers] = useState<StorageTier[]>([]);
 
+    // [스봉이] 메타 광고 트래킹: 예약 페이지 진입 (AddToCart) 💅✨
+    useEffect(() => {
+        import('../services/trackingService').then(({ TrackingService }) => {
+            TrackingService.addToCart();
+        });
+    }, []);
+
     // 💅 Coupon State
     const [couponInput, setCouponInput] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; amount: number; type: 'fixed' | 'percent' } | null>(null);
@@ -109,6 +116,30 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const parsed = new Date(`${dateStr}T${safeTime}:00+09:00`);
         return Number.isNaN(parsed.getTime()) ? null : parsed;
     }, []);
+
+    const pickupDateInputRef = React.useRef<HTMLInputElement | null>(null);
+    const deliveryDateInputRef = React.useRef<HTMLInputElement | null>(null);
+    const retrievalDateInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    const openDatePicker = React.useCallback((inputRef: React.RefObject<HTMLInputElement | null>) => {
+        const input = inputRef.current;
+        if (!input) return;
+
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+            return;
+        }
+
+        input.focus({ preventScroll: true });
+        input.click();
+    }, []);
+
+    const handleDateFieldKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLDivElement>, inputRef: React.RefObject<HTMLInputElement | null>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openDatePicker(inputRef);
+        }
+    }, [openDatePicker]);
 
     const handleApplyCoupon = () => {
         if (!couponInput) return;
@@ -496,7 +527,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
             const weekdayMap = ['일', '월', '화', '수', '목', '금', '토'];
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
-            return `${month}.${day} (${weekdayMap[date.getDay()]})`;
+            return `${month}.${day} ${weekdayMap[date.getDay()]}`;
         }
 
         return new Intl.DateTimeFormat(lang === 'ja' ? 'ja-JP' : 'en-US', {
@@ -682,22 +713,28 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                     <Calendar size={14} />
                                                     <span>{tBooking.pickup_schedule || 'Pickup Schedule'}</span>
                                                 </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.35fr)_108px] md:grid-cols-[minmax(0,1.55fr)_116px] gap-3">
-                                                    <div className="relative min-w-0">
+                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.85fr)_94px] md:grid-cols-[minmax(0,2.15fr)_98px] gap-3">
+                                                    <div
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={() => openDatePicker(pickupDateInputRef)}
+                                                        onKeyDown={(event) => handleDateFieldKeyDown(event, pickupDateInputRef)}
+                                                        className="relative min-w-0 cursor-pointer"
+                                                    >
                                                         <input
+                                                            ref={pickupDateInputRef}
                                                             type="date"
-                                                            title="Pickup Date"
                                                             aria-label="Pickup Date"
                                                             value={booking.pickupDate?.split(' ')[0]}
                                                             min={formatKSTDate()}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
-                                                            className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                                            className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                         />
-                                                        <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between gap-2 rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
-                                                            <span className="block min-w-0 flex-1 text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-tight whitespace-nowrap">
+                                                        <div className="pointer-events-none relative flex h-14 sm:h-[3.75rem] items-center rounded-[1.35rem] border border-white bg-white pl-4 pr-11 sm:pl-5 sm:pr-12 text-bee-black transition-all">
+                                                            <span className="block min-w-0 flex-1 whitespace-nowrap text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-[-0.02em]">
                                                                 {getCompactScheduleDate(booking.pickupDate || '')}
                                                             </span>
-                                                            <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
+                                                            <Calendar className="absolute right-4 top-1/2 h-4 w-4 shrink-0 -translate-y-1/2 text-gray-400" />
                                                         </div>
                                                     </div>
                                                     <div className="relative">
@@ -706,7 +743,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             aria-label="Pickup Time"
                                                             value={booking.pickupTime}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupTime: e.target.value }))}
-                                                            className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
+                                                            className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-4 pr-10 text-[0.92rem] sm:text-[0.96rem] md:text-[0.98rem] font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                         >
                                                             {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
                                                                 const isPast = isPastKSTTime(booking.pickupDate || '', h);
@@ -751,22 +788,28 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         <Calendar size={14} />
                                                         <span>{tBooking.delivery_schedule || 'Delivery Schedule'}</span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.35fr)_108px] md:grid-cols-[minmax(0,1.55fr)_116px] gap-3">
-                                                        <div className="relative min-w-0">
-                                                            <input
-                                                                type="date"
-                                                                title="Delivery Date"
-                                                                aria-label="Delivery Date"
-                                                                value={booking.dropoffDate}
-                                                                min={booking.pickupDate}
-                                                                onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
-                                                            />
-                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between gap-2 rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
-                                                                <span className="block min-w-0 flex-1 text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-tight whitespace-nowrap">
+                                                <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.85fr)_94px] md:grid-cols-[minmax(0,2.15fr)_98px] gap-3">
+                                                    <div
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={() => openDatePicker(deliveryDateInputRef)}
+                                                        onKeyDown={(event) => handleDateFieldKeyDown(event, deliveryDateInputRef)}
+                                                        className="relative min-w-0 cursor-pointer"
+                                                    >
+                                                        <input
+                                                            ref={deliveryDateInputRef}
+                                                            type="date"
+                                                            aria-label="Delivery Date"
+                                                            value={booking.dropoffDate}
+                                                            min={booking.pickupDate}
+                                                            onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
+                                                            className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                                        />
+                                                        <div className="pointer-events-none relative flex h-14 sm:h-[3.75rem] items-center rounded-[1.35rem] border border-white bg-white pl-4 pr-11 sm:pl-5 sm:pr-12 text-bee-black transition-all">
+                                                                <span className="block min-w-0 flex-1 whitespace-nowrap text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-[-0.02em]">
                                                                     {getCompactScheduleDate(booking.dropoffDate || '')}
                                                                 </span>
-                                                                <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
+                                                                <Calendar className="absolute right-4 top-1/2 h-4 w-4 shrink-0 -translate-y-1/2 text-gray-400" />
                                                             </div>
                                                         </div>
                                                         <div className="relative">
@@ -775,7 +818,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 aria-label="Delivery Time"
                                                                 value={booking.deliveryTime}
                                                                 onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
+                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-4 pr-10 text-[0.92rem] sm:text-[0.96rem] md:text-[0.98rem] font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                             >
                                                                 {generateTimeSlots(pickupLoc, 'DELIVERY').map(h => {
                                                                     const isPast = isPastKSTTime(booking.dropoffDate || '', h);
@@ -795,14 +838,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             </div>
                                         ) : (
                                             <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4">
-                                                <div className="rounded-[1.4rem] border border-dashed border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
-                                                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
-                                                        {lang.startsWith('ko') ? '보관 안내' : 'Storage Notice'}
-                                                    </p>
-                                                    <p className="mt-2 text-sm font-bold leading-5 text-bee-black">
-                                                        {lang.startsWith('ko')
-                                                            ? '맡기실 일정과 찾으실 일정을 차례대로 고르면 자동으로 보관 시간이 계산됩니다.'
-                                                            : 'Pick the start and return schedule, and storage time will be calculated automatically.'}
+                                                <div className="p-5 sm:p-6 bg-white rounded-[2rem] border-2 border-bee-yellow/20 shadow-xl shadow-bee-yellow/5 space-y-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-bee-yellow/10 rounded-2xl flex items-center justify-center">
+                                                            <Info className="text-bee-yellow" size={20} />
+                                                        </div>
+                                                        <h4 className="font-black italic uppercase tracking-wider text-gray-900">{tBooking.storage_notice_title || 'STORAGE NOTICE'}</h4>
+                                                    </div>
+                                                    <p className="text-xs sm:text-sm font-bold text-gray-500 leading-relaxed">
+                                                        {tBooking.storage_notice_desc || 'Pick the start and return schedule, and storage time will be calculated automatically.'}
                                                     </p>
                                                 </div>
                                                 <div className="rounded-[1.55rem] border border-gray-100 bg-gray-50/90 p-3.5 sm:p-4">
@@ -810,22 +854,28 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         <Calendar size={14} />
                                                         <span>{tBooking.dropoff_schedule || tBooking.return_schedule_label || 'Retrieval Schedule'}</span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.35fr)_108px] md:grid-cols-[minmax(0,1.55fr)_116px] gap-3">
-                                                        <div className="relative min-w-0">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.85fr)_94px] md:grid-cols-[minmax(0,2.15fr)_98px] gap-3">
+                                                        <div
+                                                            role="button"
+                                                            tabIndex={0}
+                                                            onClick={() => openDatePicker(retrievalDateInputRef)}
+                                                            onKeyDown={(event) => handleDateFieldKeyDown(event, retrievalDateInputRef)}
+                                                            className="relative min-w-0 cursor-pointer"
+                                                        >
                                                             <input
+                                                                ref={retrievalDateInputRef}
                                                                 type="date"
-                                                                title="Drop-off Date"
                                                                 aria-label="Drop-off Date"
                                                                 value={booking.dropoffDate?.split(' ')[0]}
                                                                 min={booking.pickupDate || formatKSTDate()}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                                                className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                             />
-                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between gap-2 rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
-                                                                <span className="block min-w-0 flex-1 text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-tight whitespace-nowrap">
+                                                            <div className="pointer-events-none relative flex h-14 sm:h-[3.75rem] items-center rounded-[1.35rem] border border-white bg-white pl-4 pr-11 sm:pl-5 sm:pr-12 text-bee-black transition-all">
+                                                                <span className="block min-w-0 flex-1 whitespace-nowrap text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-[-0.02em]">
                                                                     {getCompactScheduleDate(booking.dropoffDate || '')}
                                                                 </span>
-                                                                <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
+                                                                <Calendar className="absolute right-4 top-1/2 h-4 w-4 shrink-0 -translate-y-1/2 text-gray-400" />
                                                             </div>
                                                         </div>
                                                         <div className="relative">
@@ -834,7 +884,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 aria-label="Retrieval Time"
                                                                 value={booking.deliveryTime}
                                                                 onChange={e => setBooking(prev => ({ ...prev, deliveryTime: e.target.value }))}
-                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-5 pr-12 text-base font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
+                                                                className="h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] border border-white bg-white px-4 pr-10 text-[0.92rem] sm:text-[0.96rem] md:text-[0.98rem] font-black text-bee-black outline-none transition-all focus:border-bee-yellow focus:ring-2 focus:ring-bee-yellow/25 appearance-none cursor-pointer"
                                                             >
                                                                 {generateTimeSlots(pickupLoc, 'PICKUP').map(h => {
                                                                     const isRetrievalPast = isPastKSTTime(booking.dropoffDate || '', h);
@@ -903,14 +953,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     const description = getBagCategoryDescription(category.id, lang, booking.serviceType || ServiceType.STORAGE);
 
                                     return (
-                                        <div key={category.id} className="w-full min-w-0 overflow-hidden rounded-[1.7rem] border border-gray-100 bg-white shadow-[0_14px_42px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_20px_48px_rgba(15,23,42,0.1)]">
-                                            <div className="p-3.5 sm:p-4 space-y-2.5">
-                                                <div className="flex items-start justify-between gap-2.5">
+                                        <div key={category.id} className="h-full w-full min-w-0 overflow-hidden rounded-[1.7rem] border border-gray-100 bg-white shadow-[0_14px_42px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_20px_48px_rgba(15,23,42,0.1)]">
+                                            <div className="flex h-full flex-col gap-2.5 p-3 sm:p-3.5">
+                                                <div className="flex min-h-[5.6rem] items-start justify-between gap-2.5 sm:min-h-[6.2rem]">
                                                     <div className="min-w-0 flex-1">
                                                         <div className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400 whitespace-nowrap">
                                                             {isDelivery ? (lang.startsWith('ko') ? '배송 품목' : 'Delivery item') : (lang.startsWith('ko') ? '보관 품목' : 'Storage item')}
                                                         </div>
-                                                        <div className="mt-1 text-[1.5rem] sm:text-[1.8rem] font-black leading-tight text-bee-black break-keep">
+                                                        <div className="mt-1 text-[1.2rem] sm:text-[1.35rem] font-black leading-tight text-bee-black break-keep">
                                                             {label}
                                                         </div>
                                                     </div>
@@ -922,21 +972,21 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`flex h-[4.3rem] w-[4.3rem] shrink-0 items-center justify-center rounded-[1.1rem] bg-gradient-to-br ${visual.accentClassName}`}>
+                                                <div className="flex min-h-[4.8rem] items-center gap-2.5 sm:min-h-[5.1rem]">
+                                                    <div className={`flex h-[7.2rem] w-[7.2rem] shrink-0 items-center justify-center rounded-[1.2rem] bg-gradient-to-br ${visual.accentClassName}`}>
                                                         <img
                                                             src={visual.imageSrc}
                                                             alt={label}
-                                                            className="h-[3.25rem] w-[3.25rem] sm:h-[3.5rem] sm:w-[3.5rem] object-contain"
+                                                            className="h-[6.5rem] w-[6.5rem] sm:h-[6.7rem] sm:w-[6.7rem] object-contain"
                                                             loading="lazy"
                                                         />
                                                     </div>
 
                                                     <p
-                                                        className="min-w-0 flex-1 text-[11px] sm:text-[12px] font-semibold leading-[1.45] text-gray-500 break-keep"
+                                                        className="min-w-0 flex-1 text-[9.5px] sm:text-[10px] font-semibold leading-[1.35] text-gray-500 break-keep"
                                                         style={{
                                                             display: '-webkit-box',
-                                                            WebkitLineClamp: 2,
+                                                            WebkitLineClamp: 4,
                                                             WebkitBoxOrient: 'vertical',
                                                             overflow: 'hidden',
                                                         }}
@@ -945,9 +995,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                     </p>
                                                 </div>
 
-                                                <div className="rounded-[1.15rem] bg-gray-50/85 px-3 py-2.5">
-                                                    <div className="flex flex-wrap items-end gap-3">
-                                                        <div className="min-w-[8.5rem] flex-1">
+                                                <div className="mt-auto rounded-[1.15rem] bg-gray-50/85 px-2.5 py-2.5">
+                                                    <div className="flex flex-col gap-2.5">
+                                                        <div className="min-w-0">
                                                             <div className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.12em] text-gray-400 whitespace-nowrap">
                                                                 {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
                                                             </div>
@@ -961,7 +1011,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             </div>
                                                         </div>
 
-                                                        <div className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-white px-1.5 py-1.5 shadow-sm">
+                                                        <div className="flex items-center justify-center">
+                                                            <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-1.5 py-1.5 shadow-sm">
                                                             <button
                                                                 title="Decrease"
                                                                 aria-label="Decrease"
@@ -980,6 +1031,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             >
                                                                 <i className="fa-solid fa-plus text-[10px] sm:text-[11px]"></i>
                                                             </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1016,6 +1068,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             title="Your Name"
                                             aria-label="Your Name"
                                             value={booking.userName}
+                                            onFocus={() => {
+                                                if (!window._initiatedCheckout) {
+                                                    import('../services/trackingService').then(({ TrackingService }) => {
+                                                        TrackingService.initiateCheckout();
+                                                        window._initiatedCheckout = true;
+                                                    });
+                                                }
+                                            }}
                                             onChange={e => setBooking(prev => ({ ...prev, userName: e.target.value }))}
                                             placeholder={tBooking.name || "Your Name"}
                                             className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-bee-yellow/50 transition-all"
@@ -1028,6 +1088,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             title="Your Email"
                                             aria-label="Your Email"
                                             value={booking.userEmail}
+                                            onFocus={() => {
+                                                if (!window._initiatedCheckout) {
+                                                    import('../services/trackingService').then(({ TrackingService }) => {
+                                                        TrackingService.initiateCheckout();
+                                                        window._initiatedCheckout = true;
+                                                    });
+                                                }
+                                            }}
                                             onChange={e => setBooking(prev => ({ ...prev, userEmail: e.target.value }))}
                                             placeholder="email@example.com"
                                             className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-bee-yellow/50 transition-all"
@@ -1094,141 +1162,73 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     {/* Right Column: Summary & Checkout */}
                     <div className="lg:col-span-5">
                         <div className="sticky top-24 space-y-4">
-                            <div className="bg-bee-black text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-bee-yellow rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
+                            <div className="bg-bee-black text-white rounded-[2.8rem] p-7 md:p-9 shadow-2xl relative overflow-hidden ring-1 ring-white/10">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-bee-yellow/5 rounded-full blur-3xl -mr-16 -mt-16" />
+                                <h3 className="text-xl font-black italic uppercase tracking-tight mb-8 flex items-center gap-3">
+                                    <span className="w-2 h-2 bg-bee-yellow rounded-full animate-pulse" />
+                                    {tBooking.booking_summary || 'BOOKING SUMMARY'}
+                                </h3>
 
-                                <h3 className="text-xl font-black italic uppercase tracking-tight mb-8 relative z-10">{tBooking.summary || 'Booking Summary'}</h3>
-
-                                <div className="space-y-4 relative z-10">
-                                    <div className="flex justify-between items-center py-2 border-b border-white/10">
-                                        <span className="text-gray-400 font-bold text-xs uppercase">{tBooking.service_label || 'Service'}</span>
-                                        <span className="font-bold text-bee-yellow">{booking.serviceType === ServiceType.DELIVERY ? (tBooking.delivery || 'Delivery') : (tBooking.storage || 'Storage')}</span>
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-center group">
+                                        <span className="text-gray-400 text-xs font-bold uppercase tracking-widest group-hover:text-bee-yellow transition-colors">{tBooking.service_type || 'Service Type'}</span>
+                                        <span className="text-bee-yellow font-black italic uppercase tracking-wider bg-white/5 px-3 py-1 rounded-lg">
+                                            {booking.serviceType === ServiceType.DELIVERY ? (t.booking?.delivery || 'DELIVERY') : (t.booking?.storage || 'STORAGE')}
+                                        </span>
                                     </div>
-
-                                    {/* Detailed Bags Breakdown */}
-                                    <div className="py-2 border-b border-white/10 space-y-2">
-                                        <span className="text-gray-400 font-bold text-xs uppercase">{tBooking.bags_label || 'Bags'}</span>
-                                        <div className="space-y-1">
-                                            {visibleBagCategories.map((category) => {
-                                                const count = getBagCategoryCount(booking.bagSizes, category.id);
-                                                if (count === 0) return null;
-                                                const isDelivery = booking.serviceType === ServiceType.DELIVERY;
-                                                let itemPrice = 0;
-
-                                                if (isDelivery) {
-                                                    const unitPrice = getStoragePriceForCategory(deliveryPrices, category.id);
-                                                    itemPrice = unitPrice * count;
-                                                } else {
-                                                    // 💅 Recalculate accurate price for this bag type/count based on duration
-                                                    const pickupDateTime = parseKstDateTime(booking.pickupDate, booking.pickupTime);
-                                                    const retrievalDateTime = parseKstDateTime(booking.dropoffDate || booking.pickupDate, booking.deliveryTime, '23:59');
-                                                    if (pickupDateTime && retrievalDateTime) {
-                                                        const singleBagSizes = buildCategoryBagSizes(category.id, count);
-                                                        const res = calculateStoragePrice(
-                                                            pickupDateTime,
-                                                            retrievalDateTime,
-                                                            singleBagSizes,
-                                                            lang,
-                                                            { businessHours: pickupLoc?.businessHours }
-                                                        );
-                                                        itemPrice = res.total;
-
-                                                        // Min price guard (if 0, fallback to 4h)
-                                                        if (itemPrice === 0) {
-                                                            const rate = getStoragePriceForCategory(baseStoragePrices, category.id);
-                                                            itemPrice = rate * count;
-                                                        }
-                                                    }
-                                                }
-
-                                                return (
-                                                    <div key={category.id} className="flex justify-between items-center text-[11px]">
-                                                        <span className="text-white/70">{getBagCategoryLabel(category.id, lang)} x {count}</span>
-                                                        <span className="font-bold">₩{itemPrice.toLocaleString()}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                                    <div className="flex justify-between items-center group">
+                                        <span className="text-gray-400 text-xs font-bold uppercase tracking-widest group-hover:text-bee-yellow transition-colors">{tBooking.baggage_count || 'Baggage Count'}</span>
+                                        <span className="font-black text-lg">{booking.bags}</span>
                                     </div>
-
-                                    {/* Surcharges & Insurance */}
-                                    {(priceDetails.originSurcharge > 0 || priceDetails.destSurcharge > 0 || priceDetails.insuranceFee > 0 || priceDetails.discount > 0) && (
-                                        <div className="py-2 border-b border-white/10 space-y-2 text-[11px]">
-                                            {priceDetails.originSurcharge > 0 && (
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-white/70">{tBooking.origin_surcharge || 'Origin Surcharge'}</span>
-                                                    <span className="font-bold">+₩{priceDetails.originSurcharge.toLocaleString()}</span>
-                                                </div>
-                                            )}
-                                            {priceDetails.destSurcharge > 0 && (
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-white/70">{tBooking.dest_surcharge || 'Destination Surcharge'}</span>
-                                                    <span className="font-bold">+₩{priceDetails.destSurcharge.toLocaleString()}</span>
-                                                </div>
-                                            )}
-                                            {priceDetails.insuranceFee > 0 && (
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-bee-yellow">{tBooking.insurance_fee || 'Premium Insurance'}</span>
-                                                    <span className="font-bold text-bee-yellow">+₩{priceDetails.insuranceFee.toLocaleString()}</span>
-                                                </div>
-                                            )}
-                                            {priceDetails.discount > 0 && (
-                                                <div className="flex justify-between items-center text-bee-yellow">
-                                                    <span>{tBooking.discount || 'Discount'} ({appliedCoupon?.code})</span>
-                                                    <span className="font-bold">-₩{priceDetails.discount.toLocaleString()}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* 💅 Coupon Input */}
-                                    <div className="pt-2 pb-4 border-b border-white/10 space-y-2">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                title="Promo Code"
-                                                aria-label="Promo Code"
-                                                value={couponInput}
-                                                onChange={e => {
-                                                    setCouponInput(e.target.value.toUpperCase());
-                                                    if (couponMessage) setCouponMessage(null);
-                                                }}
-                                                placeholder={tBooking.enter_coupon || "Enter promo code"}
-                                                className="flex-1 bg-white/10 text-white placeholder-white/40 px-3 py-2 rounded-xl text-xs font-bold outline-none focus:ring-1 focus:ring-bee-yellow transition-all uppercase"
-                                            />
-                                            <button
-                                                title="Apply Promo Code"
-                                                onClick={handleApplyCoupon}
-                                                className="px-4 py-2 bg-white/20 hover:bg-bee-yellow hover:text-bee-black rounded-xl text-xs font-black transition-all whitespace-nowrap"
-                                            >
-                                                {tBooking.apply || 'Apply'}
-                                            </button>
-                                        </div>
-                                        <AnimatePresence>
-                                            {couponMessage && (
-                                                <motion.p
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    className={`text-[10px] font-bold px-1 ${couponMessage.type === 'error' ? 'text-red-400' : 'text-bee-yellow'}`}
-                                                >
-                                                    {couponMessage.text}
-                                                </motion.p>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-
-                                    <div className="flex justify-between items-center py-4">
-                                        <span className="text-gray-400 font-black text-sm uppercase">{tBooking.total_label || 'TOTAL'}</span>
+                                    <div className="h-px bg-white/10 my-2" />
+                                    <div className="flex justify-between items-end group">
+                                        <span className="text-gray-400 text-xs font-black uppercase tracking-[0.2em] group-hover:text-bee-yellow transition-colors">{tBooking.final_total || 'TOTAL'}</span>
                                         <div className="text-right">
-                                            <span className="block font-black text-3xl italic">₩{priceDetails.total.toLocaleString()}</span>
+                                            <div className="flex items-baseline gap-2 justify-end">
+                                                <span className="text-bee-yellow font-black italic text-3xl">₩</span>
+                                                <span className="text-4xl font-black italic tracking-tighter tabular-nums">{priceDetails.total.toLocaleString()}</span>
+                                            </div>
                                             {priceDetails.durationText && (
-                                                <span className="block text-xs text-bee-yellow font-bold mt-1">
-                                                    {priceDetails.durationText}
-                                                    {priceDetails.breakdown && <span className="block text-[10px] text-gray-400 font-normal">{priceDetails.breakdown}</span>}
-                                                </span>
+                                                <p className="text-[10px] font-black text-bee-yellow italic uppercase tracking-widest mt-1 opacity-80">{priceDetails.durationText}</p>
                                             )}
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* 💅 Coupon Input */}
+                                <div className="pt-2 pb-4 border-b border-white/10 space-y-2">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            title="Promo Code"
+                                            aria-label="Promo Code"
+                                            value={couponInput}
+                                            onChange={e => {
+                                                setCouponInput(e.target.value.toUpperCase());
+                                                if (couponMessage) setCouponMessage(null);
+                                            }}
+                                            placeholder={tBooking.enter_coupon || "Enter promo code"}
+                                            className="flex-1 bg-white/10 text-white placeholder-white/40 px-3 py-2 rounded-xl text-xs font-bold outline-none focus:ring-1 focus:ring-bee-yellow transition-all uppercase"
+                                        />
+                                        <button
+                                            title="Apply Promo Code"
+                                            onClick={handleApplyCoupon}
+                                            className="px-4 py-2 bg-white/20 hover:bg-bee-yellow hover:text-bee-black rounded-xl text-xs font-black transition-all whitespace-nowrap"
+                                        >
+                                            {tBooking.apply || 'Apply'}
+                                        </button>
+                                    </div>
+                                    <AnimatePresence>
+                                        {couponMessage && (
+                                            <motion.p
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className={`text-[10px] font-bold px-1 ${couponMessage.type === 'error' ? 'text-red-400' : 'text-bee-yellow'}`}
+                                            >
+                                                {couponMessage.text}
+                                            </motion.p>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10">
@@ -1244,56 +1244,83 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             </p>
                                         </div>
                                     )}
-                                    <label className="flex items-start gap-3 cursor-pointer group">
-                                        <input title="Agree to Terms" type="checkbox" checked={booking.agreedToTerms} onChange={e => setBooking(prev => ({ ...prev, agreedToTerms: e.target.checked }))} className="w-5 h-5 mt-0.5 accent-bee-yellow rounded" />
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-white/80 group-hover:text-white transition-colors">
-                                                {tBooking.agree_terms_simple || '[Required] Agree to Terms'}
-                                                <button onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }} className="ml-1 text-bee-yellow hover:underline font-bold">
-                                                    {tBooking.agree_terms_link || '[Link]'}
-                                                </button>
-                                            </span>
+                                    <label className="flex items-center gap-4 group cursor-pointer">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                checked={booking.agreedToTerms}
+                                                onChange={e => setBooking(prev => ({ ...prev, agreedToTerms: e.target.checked }))}
+                                                className="w-5 h-5 rounded-lg border-2 border-gray-200 checked:bg-bee-black transition-all appearance-none cursor-pointer"
+                                            />
+                                            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${booking.agreedToTerms ? 'text-bee-yellow' : 'hidden'}`}>
+                                                <CheckCircle2 size={12} strokeWidth={4} />
+                                            </div>
                                         </div>
+                                        <span className="text-gray-600">
+                                            {tBooking.terms_agree_1 || '[Req] Agree to Terms of Service'}
+                                            <button onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }} className="ml-2 text-bee-black font-black underline underline-offset-4 decoration-bee-yellow decoration-2">
+                                                {tBooking.terms_link || 'Link'}
+                                            </button>
+                                        </span>
                                     </label>
-                                    <label className="flex items-start gap-3 cursor-pointer group">
-                                        <input title="Agree to Privacy Policy" type="checkbox" checked={booking.agreedToPrivacy} onChange={e => setBooking(prev => ({ ...prev, agreedToPrivacy: e.target.checked }))} className="w-5 h-5 mt-0.5 accent-bee-yellow rounded" />
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-white/80 group-hover:text-white transition-colors">
-                                                {tBooking.agree_privacy_simple || '[Required] Agree to Privacy Policy'}
-                                                <button onClick={(e) => { e.preventDefault(); window.open('/privacy-policy', '_blank'); }} className="ml-1 text-bee-yellow hover:underline font-bold">
-                                                    {tBooking.agree_privacy_link || '[Link]'}
-                                                </button>
-                                            </span>
+
+                                    <label className="flex items-center gap-4 group cursor-pointer">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                checked={booking.agreedToPrivacy}
+                                                onChange={e => setBooking(prev => ({ ...prev, agreedToPrivacy: e.target.checked }))}
+                                                className="w-5 h-5 rounded-lg border-2 border-gray-200 checked:bg-bee-black transition-all appearance-none cursor-pointer"
+                                            />
+                                            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${booking.agreedToPrivacy ? 'text-bee-yellow' : 'hidden'}`}>
+                                                <CheckCircle2 size={12} strokeWidth={4} />
+                                            </div>
                                         </div>
+                                        <span className="text-gray-600">
+                                            {tBooking.terms_agree_2 || '[Req] Agree to Privacy Policy'}
+                                            <button onClick={(e) => { e.preventDefault(); window.open('/privacy-policy', '_blank'); }} className="ml-2 text-bee-black font-black underline underline-offset-4 decoration-bee-yellow decoration-2">
+                                                {tBooking.terms_link || 'Link'}
+                                            </button>
+                                        </span>
                                     </label>
-                                    <label className="flex items-start gap-3 cursor-pointer group">
-                                        <input title="Agree to High Value Item Policy" type="checkbox" checked={booking.agreedToHighValue} onChange={e => setBooking(prev => ({ ...prev, agreedToHighValue: e.target.checked }))} className="w-5 h-5 mt-0.5 accent-bee-yellow rounded" />
-                                        <span className="text-xs text-white/80 group-hover:text-white transition-colors">{tBooking.agree_high_value_simple || '[Required] High Value Item Policy'}</span>
+
+                                    <label className="flex items-center gap-4 group cursor-pointer">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                checked={booking.agreedToHighValue}
+                                                onChange={e => setBooking(prev => ({ ...prev, agreedToHighValue: e.target.checked }))}
+                                                className="w-5 h-5 rounded-lg border-2 border-gray-200 checked:bg-bee-black transition-all appearance-none cursor-pointer"
+                                            />
+                                            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${booking.agreedToHighValue ? 'text-bee-yellow' : 'hidden'}`}>
+                                                <CheckCircle2 size={12} strokeWidth={4} />
+                                            </div>
+                                        </div>
+                                        <span className="text-gray-600">{tBooking.terms_agree_3 || '[Req] Prohibited High-Value Items Policy'}</span>
                                     </label>
                                 </div>
 
-                                {/* Restricted Items Checklist */}
-                                <div className="mt-6 p-5 bg-white/5 rounded-2xl border border-white/10">
-                                    <h4 className="text-[10px] font-black text-bee-yellow uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <AlertCircle size={12} /> {tBooking.agree_premium_checklist || 'Restricted Items Checklist'}
-                                    </h4>
-                                    <ul className="space-y-2">
-                                        {tBooking.restricted_items?.map((item: string, idx: number) => (
-                                            <li key={idx} className="flex items-start gap-2 text-[10px] text-white/70 leading-tight">
-                                                <div className="w-1 h-1 bg-bee-yellow rounded-full mt-1.5 flex-shrink-0" />
-                                                {item}
-                                            </li>
-                                        ))}
+                                {/* Prohibited Items Warning */}
+                                <div className="mt-8 p-6 bg-gray-50 rounded-[2rem] border border-gray-100 italic">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <AlertCircle className="text-bee-yellow" size={16} />
+                                        <span className="text-xs font-black uppercase tracking-widest text-bee-black">{tBooking.prohibited_items_title || 'Prohibited Items & Liability Policy'}</span>
+                                    </div>
+                                    <ul className="space-y-2 text-[11px] font-bold text-gray-500">
+                                        <li>• {tBooking.prohibited_item_1 || 'Cash, Securities, Jewelry (Over ₩500k per item)'}</li>
+                                        <li>• {tBooking.prohibited_item_2 || 'Art, Antiques, Rare Collectibles'}</li>
+                                        <li>• {tBooking.prohibited_item_3 || 'Explosive/Flammable/Volatile materials'}</li>
+                                        <li>• {tBooking.prohibited_item_4 || 'Animals, Remains, Perishable goods, Waste'}</li>
+                                        <li>• {tBooking.prohibited_item_5 || 'Electronics & Precision Devices'}</li>
+                                        <li>• {tBooking.prohibited_item_6 || 'Illegal items, Weapons, Dangerous goods'}</li>
+                                        <li className="pt-2 text-bee-black font-black">{tBooking.prohibited_item_note || '* Items found may result in limited service or return.'}</li>
                                     </ul>
-                                    <p className="mt-3 text-[9px] text-white/50 italic">
-                                        {tBooking.restricted_items_note}
-                                    </p>
                                 </div>
 
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.02, y: -2 }}
+                                    whileTap={{ scale: 0.98 }}
                                     onClick={handleBook}
-                                    onMouseEnter={prefetchBookingSuccess}
-                                    onFocus={prefetchBookingSuccess}
                                     disabled={isSubmitting}
                                     className="w-full mt-8 py-4 bg-bee-yellow text-bee-black font-black text-lg rounded-2xl shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
@@ -1306,7 +1333,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 : (tBooking.book_now || 'COMPLETE BOOKING')} <ArrowRight size={20} />
                                         </>
                                     )}
-                                </button>
+                                </motion.button>
                             </div>
                         </div>
                     </div>

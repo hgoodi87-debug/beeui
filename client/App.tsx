@@ -29,7 +29,6 @@ const LocationsPage = lazy(() => import('./components/LocationsPage'));
 const MyPage = lazy(() => import('./components/MyPage'));
 const BranchAdminPage = lazy(loadBranchAdminPage);
 const QnaPage = lazy(() => import('./components/QnaPage'));
-const LocationLander = lazy(() => import('./components/LocationLander'));
 const VisionPage = lazy(() => import('./components/VisionPage'));
 const RefundPage = lazy(() => import('./components/RefundPage'));
 
@@ -555,9 +554,6 @@ const App: React.FC = () => {
                   <Route path="/refund" element={<AnimatedRoute><RefundPage onBack={() => navigate('/privacy')} t={t} /></AnimatedRoute>} />
                   <Route path="/qna" element={<AnimatedRoute><QnaPage onBack={() => navigate('/')} t={t} lang={lang} /></AnimatedRoute>} />
                   
-                  {/* PROGRAMMATIC SEO */}
-                  <Route path="/storage/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
-                  <Route path="/delivery/:slug" element={<AnimatedRoute><LocationLander t={t} lang={lang} /></AnimatedRoute>} />
                   <Route path="/vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
 
                   {/* ADMIN */}

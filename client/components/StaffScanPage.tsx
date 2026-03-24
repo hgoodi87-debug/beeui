@@ -288,14 +288,45 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     transition={{ delay: 0.2 }}
                 >
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">{scanText.update_status || "Update Status"}</p>
-                    <div className="grid grid-cols-2 gap-3">
+                    
+                    {/* [스봉이] 바로 보관 처리 버튼 (QR 스캔 퀵 액션) 💅✨ */}
+                    {booking.status !== BookingStatus.STORAGE && booking.status !== BookingStatus.COMPLETED && (
+                        <button
+                            onClick={() => handleStatusUpdate(BookingStatus.STORAGE)}
+                            disabled={isUpdating}
+                            className="w-full mb-4 py-4 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm shadow-xl active:scale-[0.98] transition-all border border-bee-yellow/20 flex flex-col items-center justify-center gap-1"
+                        >
+                            <div className="flex items-center text-base">
+                                <i className="fa-solid fa-box-archive mr-2"></i> {scanText.storage_quick_action || '바로 보관(STORAGE) 처리하기'}
+                            </div>
+                            <span className="text-[10px] opacity-75 font-bold tracking-tight">QR 스캔 즉시 보관 완료 처리</span>
+                        </button>
+                    )}
+
+                    {/* [스봉이] 바로 결제 금액 강조 (버튼 밑에 배치) 💅✨ */}
+                    <div className="w-full mb-6 bg-white border-2 border-bee-black/5 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <i className="fa-solid fa-won-sign"></i>
+                            {scanText.total_payment || '결제 금액'}
+                        </span>
+                        <div className="text-right">
+                            <span className="text-xl font-black text-blue-600">
+                                {(booking.finalPrice ?? booking.price ?? 0).toLocaleString()} <span className="text-sm text-blue-600/60 ml-0.5">KRW</span>
+                            </span>
+                            <div className="text-[9px] font-bold text-gray-400 mt-0.5 uppercase">
+                                {booking.paymentStatus === 'paid' ? '결제 완료' : '미결제 / 현장 결제'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
                         {canStartHandling && (
                             <button
                                 onClick={() => handleStatusUpdate(initialActionStatus)}
                                 disabled={isUpdating}
-                                className="col-span-2 py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-[0.98] transition-all"
+                                className="col-span-2 py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-[13px] shadow-lg active:scale-[0.98] transition-all"
                             >
-                                <i className="fa-solid fa-box-open mr-2"></i> {scanText.confirm_pickup_checkin || '픽업/입고 확인'}
+                                <i className="fa-solid fa-box-open mr-2"></i> {scanText.confirm_pickup_checkin || '픽업/입고 확인 (일반)'}
                             </button>
                         )}
 
@@ -304,14 +335,14 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                                 <button
                                     onClick={() => handleStatusUpdate(BookingStatus.STORAGE)}
                                     disabled={isUpdating}
-                                    className="py-4 bg-white border border-gray-200 text-bee-black rounded-2xl font-bold text-sm hover:border-bee-yellow transition-all"
+                                    className="py-4 bg-white border border-gray-200 text-bee-black rounded-2xl font-bold text-[13px] hover:border-bee-yellow transition-all"
                                 >
-                                    {scanText.storage_in_progress || '보관 중'}
+                                    {scanText.storage_in_progress || '보관 중 (일반)'}
                                 </button>
                                 <button
                                     onClick={() => handleStatusUpdate(BookingStatus.ARRIVED)}
                                     disabled={isUpdating}
-                                    className="py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-[0.98] transition-all"
+                                    className="py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-[13px] shadow-lg active:scale-[0.98] transition-all"
                                 >
                                     <i className="fa-solid fa-flag-checkered mr-2"></i> {scanText.delivery_arrival_complete || '배송/도착 완료'}
                                 </button>
@@ -322,7 +353,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                             <button
                                 onClick={() => handleStatusUpdate(BookingStatus.COMPLETED)}
                                 disabled={isUpdating}
-                                className="col-span-2 py-4 bg-green-500 text-white rounded-2xl font-black text-sm shadow-lg active:scale-[0.98] transition-all"
+                                className="col-span-2 py-4 bg-green-500 text-white rounded-2xl font-black text-[13px] shadow-lg active:scale-[0.98] transition-all"
                             >
                                 <i className="fa-solid fa-check mr-2"></i> {scanText.customer_pickup_complete || '고객 수령 (완료 처리)'}
                             </button>

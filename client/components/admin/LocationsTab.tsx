@@ -24,6 +24,36 @@ interface LocationsTabProps {
     t: any;
 }
 
+const preferLocationTranslation = (value?: string, fallback?: string) => {
+    const trimmedValue = value?.trim();
+    if (trimmedValue) return trimmedValue;
+    const trimmedFallback = fallback?.trim();
+    return trimmedFallback || '';
+};
+
+const normalizeLocationFormTranslations = (loc: LocationOption): LocationOption => {
+    const baseName = loc.name?.trim() || '';
+    const baseAddress = loc.address?.trim() || '';
+    const zhName = preferLocationTranslation(loc.name_zh, baseName);
+    const zhAddress = preferLocationTranslation(loc.address_zh, baseAddress);
+
+    return {
+        ...loc,
+        name: baseName || loc.name,
+        address: baseAddress || loc.address,
+        name_en: preferLocationTranslation(loc.name_en, baseName),
+        name_ja: preferLocationTranslation(loc.name_ja, baseName),
+        name_zh: zhName,
+        name_zh_tw: preferLocationTranslation(loc.name_zh_tw, zhName),
+        name_zh_hk: preferLocationTranslation(loc.name_zh_hk, zhName),
+        address_en: preferLocationTranslation(loc.address_en, baseAddress),
+        address_ja: preferLocationTranslation(loc.address_ja, baseAddress),
+        address_zh: zhAddress,
+        address_zh_tw: preferLocationTranslation(loc.address_zh_tw, zhAddress),
+        address_zh_hk: preferLocationTranslation(loc.address_zh_hk, zhAddress),
+    };
+};
+
 const LocationsTab: React.FC<LocationsTabProps> = ({
     locForm, setLocForm, LOCATION_TYPE_OPTIONS, findCoordinates, isGeocoding,
     handlePickupImageUpload, handleLocationImageUpload, isSaving, setIsSaving, addLocation,
@@ -41,7 +71,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
     // [스봉이] 수정/생성 폼 열기 제어 💅
     const handleOpenPanel = (loc?: LocationOption) => {
         if (loc) {
-            focusLocation(loc);
+            focusLocation(normalizeLocationFormTranslations(loc));
         } else {
             // New Draft
             setLocForm({ id: '', name: '', type: LocationType.PARTNER, isActive: false, supportsStorage: false, supportsDelivery: false });

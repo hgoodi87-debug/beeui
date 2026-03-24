@@ -412,6 +412,7 @@ export const zh = {
         btn_view_roadview: '街景模式',
         btn_reserve_delivery: '预订配送',
         btn_storage_only: '仅限寄存服务',
+        find_my_location_short: '查找我的位置',
         branch_label: '站点',
         view_details: '查看详情',
         found_units: '家可用站点',

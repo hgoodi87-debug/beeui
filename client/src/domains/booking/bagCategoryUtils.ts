@@ -51,7 +51,7 @@ const CATEGORY_LABELS = {
         ko: '쇼핑백, 손가방',
         en: 'Shopping Bag, Handbag',
         ja: 'ショッピングバッグ・ハンドバッグ',
-        zh: '购物袋、手提包',
+        zh: '購物袋、手提包',
     },
     CARRIER: {
         ko: '캐리어',
@@ -63,7 +63,7 @@ const CATEGORY_LABELS = {
         ko: '유모차, 자전거',
         en: 'Stroller, Bicycle',
         ja: 'ベビーカー・自転車',
-        zh: '婴儿车、自行车',
+        zh: '嬰兒車、自行車',
     },
 } as const;
 
@@ -82,8 +82,8 @@ const CATEGORY_DESCRIPTIONS = {
             delivery: 'スーツケースと一緒に預ける小型手荷物',
         },
         zh: {
-            storage: '购物袋、托特包、小型手提包寄存',
-            delivery: '需与至少一个行李箱一起配送的小件行李',
+            storage: '購物袋、托特包、小型手提包寄存',
+            delivery: '需與至少一個行李箱一起配送的小件行李',
         },
     },
     CARRIER: {
@@ -100,8 +100,8 @@ const CATEGORY_DESCRIPTIONS = {
             delivery: '空港・ホテル・拠点間配送に対応',
         },
         zh: {
-            storage: '支持登机箱与托运行李箱',
-            delivery: '支持机场、酒店与门店之间配送',
+            storage: '支援登機箱與託運行李箱',
+            delivery: '支援機場、酒店與門市之間配送',
         },
     },
     STROLLER_BICYCLE: {
@@ -114,29 +114,29 @@ const CATEGORY_DESCRIPTIONS = {
             delivery: 'Delivery is not available for this category',
         },
         ja: {
-            storage: 'ベビーカー・折りたたみ自転車・大型荷物',
-            delivery: '配送受付は行っていません',
+            storage: 'ベビーカー・折りたたみ自転車・大型荷물',
+            delivery: '配送受付은 行っていません',
         },
         zh: {
-            storage: '婴儿车、折叠自行车及大型特殊行李',
-            delivery: '此类别不支持配送',
+            storage: '嬰兒車、折疊自行車及大型特殊行李',
+            delivery: '此類別不支援配送',
         },
     },
 } as const;
 
 const CATEGORY_VISUALS: Record<BagCategoryId, BagCategoryVisualMeta> = {
     HAND_BAG: {
-        imageSrc: '/images/bags/hand-bag.svg',
+        imageSrc: '/images/bags/hand-bag-photo.png',
         accentClassName: 'from-amber-50 via-white to-orange-50',
         chipClassName: 'bg-amber-100 text-amber-700',
     },
     CARRIER: {
-        imageSrc: '/images/bags/carrier.svg',
+        imageSrc: '/images/bags/carrier-photo.png',
         accentClassName: 'from-slate-50 via-white to-zinc-100',
         chipClassName: 'bg-slate-100 text-slate-700',
     },
     STROLLER_BICYCLE: {
-        imageSrc: '/images/bags/stroller-bicycle.svg',
+        imageSrc: '/images/bags/stroller-bicycle-photo.png',
         accentClassName: 'from-emerald-50 via-white to-lime-50',
         chipClassName: 'bg-emerald-100 text-emerald-700',
     },

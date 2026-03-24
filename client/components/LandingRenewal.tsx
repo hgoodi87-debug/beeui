@@ -69,6 +69,12 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
             const priorityAreas = data.filter(a => a.is_priority_area);
             setTipsAreas(priorityAreas.length > 0 ? priorityAreas : data.slice(0, 4));
         });
+
+        // [스봉이] 메타 광고 트래킹: 랜딩 페이지 조회 💅✨
+        import('../services/trackingService').then(({ TrackingService }) => {
+            TrackingService.viewContent('Landing Page Renewal');
+        });
+
         return () => unsub();
     }, []);
 

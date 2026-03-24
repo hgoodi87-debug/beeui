@@ -129,6 +129,17 @@ export const ko = {
     reviews_section: {
         headline: "짐 없는 서울 여행이 얼마나 달콤한지,\n이미 수많은 여행자가 경험하고 있습니다. ✨",
         review1: "쇼핑하고 짐 맡긴 다음 성수동 카페 투어 신나게 했어요! - 민*지 ⭐️⭐️⭐️⭐️⭐️",
+        currently_closed: '현재 이 지점은 운영 종료 상태입니다.',
+        address_label: '주소',
+        hours_label: '운영시간',
+        nearby_pick: '주변 추천',
+        info_card_book: '지금 예약하기',
+        branch_info: '지점 정보',
+        storage_hub: '보관 허브',
+        open: '영업중',
+        close: '영업종료',
+        service_delivery: '배송',
+        service_storage: '보관',
         review2: "서울역에서 공항으로 짐 보내고 몸만 가볍게 이동했어요. 최고! - James, UK ⭐️⭐️⭐️⭐️⭐️",
         review3: "지하철 계단에서 캐리어 들고 사투 안 벌여도 되니까 너무 좋네요. - 이*한 ⭐️⭐️⭐️⭐️⭐️"
     },
@@ -278,7 +289,25 @@ export const ko = {
         agree_premium_checklist: "취급 제한 물품 확인 및 보상 정책 동의",
         restricted_items_note: "* 상기 물품이 포함된 경우 보상이 거절될 수 있습니다.",
         slot_past: "마감",
-        airport_late_notice: "공항 지점은 정해진 수령 시간에 맞춰 방문해 주셔야 합니다. 지관 미준수 시 별도의 추가 비용이 발생할 수 있습니다."
+        airport_late_notice: "공항 지점은 정해진 수령 시간에 맞춰 방문해 주셔야 합니다. 지관 미준수 시 별도의 추가 비용이 발생할 수 있습니다.",
+        booking_summary: "예약 요약",
+        service_type: "서비스 유형",
+        baggage_count: "짐 수량",
+        final_total: "총 결제 금액",
+        enter_coupon: "프로모션 코드 입력",
+        apply: "적용",
+        terms_agree_1: "[필수] 서비스 이용약관 동의",
+        terms_link: "보기",
+        terms_agree_2: "[필수] 개인정보 처리방침 동의",
+        terms_agree_3: "[필수] 고가 귀중품 보관 불가 방침 동의",
+        prohibited_items_title: "취급 금지 품목 및 배상 책임 안내",
+        prohibited_item_1: "현금, 유가증권, 귀금속 (개당 50만원 이상)",
+        prohibited_item_2: "예술품, 골동품, 희귀 수집품",
+        prohibited_item_3: "폭발성, 인화성, 휘발성 물질",
+        prohibited_item_4: "동물, 유해, 부패성 물품, 폐기물",
+        prohibited_item_5: "전자기기 및 정밀기기",
+        prohibited_item_6: "불법 물품, 무기류, 위험물",
+        prohibited_item_note: "* 해당 품목 발견 시 보관 거부 혹은 제한될 수 있습니다."
     },
     status_mapping: {
         '접수완료': '접수완료', '예약완료': '예약완료', '보관중': '보관중', '이동중': '이동중',
@@ -373,6 +402,16 @@ export const ko = {
         phone: '+82 010-2922-7731',
         back_to_top: "맨 위로"
     },
+    reviews_section: {
+        review_1: { name: "Sarah", location: "USA", text: "DDP는 정말 환상적이었어요! 짐을 맡긴 덕분에 가볍게 건축물을 감상할 수 있었죠. ✨" },
+        review_2: { name: "Yuki", location: "Japan", text: "경복궁에서 한복을 입고 사진 찍는 게 꿈이었는데, 빌리버 덕분에 짐 걱정 없이 즐겼어요! 🌸" },
+        review_3: { name: "Emma", location: "UK", text: "남산타워까지 올라가는 길이 짐이 없어서 정말 다행이었어요. 서울 야경이 최고예요! 🗼" },
+        review_4: { name: "Li-Wei", location: "Taiwan", text: "북촌 한옥마을의 좁은 골목길을 무거운 캐리어 없이 걸으니 정말 힐링되더라고요. 🏠" },
+        review_5: { name: "Min-Ji", location: "Korea", text: "성수동 카페 투어할 때 짐이 짐이었는데, 빌리버로 보내버리니 세상 편하네요! ☕" },
+        review_6: { name: "Chen", location: "China", text: "광화문 광장의 웅장함을 짐 없이 온전히 느낄 수 있어서 너무 좋았습니다. 🛡️" },
+        review_7: { name: "Hans", location: "Germany", text: "익선동의 아기자기한 상점들을 구경할 때 짐이 없으니 정말 자유로웠어요. 10/10! 🎁" },
+        review_8: { name: "Sofia", location: "Italy", text: "한강공원에서 피크닉 할 때 짐을 미리 호텔로 보내길 정말 잘한 것 같아요. 🧺" }
+    },
     locations_page: {
         title: '빌리버 거점 안내', sidebar_title: 'Seoul Hub Network', sidebar_subtitle: '서울 핵심 거점 안내',
         select_baggage_title: '가방 선택', bag_unit_4h: '/4시간~',
@@ -437,7 +476,8 @@ export const ko = {
         label_guide: '이용 가이드',
         label_facilities: '이용 가능 서비스',
         reservation_title: '예약하기',
-        label_map_error: '지도 로드 실패'
+        label_map_error: '지도 로드 실패',
+        find_my_location_short: '내 위치 찾기'
     },
     manual: {
         title: '서비스 이용 안내', subtitle: 'How to use Beeliber', desc: '빌리버와 함께라면 무거운 짐 걱정 없이 여행을 즐길 수 있습니다.',

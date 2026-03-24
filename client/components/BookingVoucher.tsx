@@ -17,6 +17,16 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
     const simpleQRRef = React.useRef<HTMLDivElement>(null);
     const voucherText = t.booking_voucher || {};
 
+    // [스봉이] 메타 광고 트래킹: 예약/구매 완료 (Purchase) 💅✨
+    React.useEffect(() => {
+        import('../services/trackingService').then(({ TrackingService }) => {
+            TrackingService.purchase(
+                booking.id || booking.reservationCode || 'unknown',
+                booking.finalPrice || 0
+            );
+        });
+    }, [booking.id, booking.reservationCode, booking.finalPrice]);
+
     // 폰트 깨짐 방지 및 언어별 폰트 설정
     const safeDate = (dateStr: string) => {
         if (!dateStr) return 'N/A';

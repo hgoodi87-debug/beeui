@@ -76,10 +76,10 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                 <div className="relative flex flex-col gap-3 pr-12 md:pr-16">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="px-3 py-1 bg-bee-black text-bee-yellow text-[9px] md:text-[11px] font-black italic uppercase tracking-[0.18em] rounded-full shadow-lg font-montserrat">
-                            {currentService !== 'STORAGE' ? 'Branch Info' : 'Storage Hub'}
+                            {currentService !== 'STORAGE' ? (t.locations_page?.branch_info || 'Branch Info') : (t.locations_page?.storage_hub || 'Storage Hub')}
                         </span>
                         <span className={`px-2.5 py-1 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.18em] border ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                            {isActive ? 'OPEN' : 'CLOSE'}
+                            {isActive ? (t.locations_page?.open || 'OPEN') : (t.locations_page?.close || 'CLOSE')}
                         </span>
                         {selectedBranch.supportsDelivery && (
                             <span className="px-2.5 py-1 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.14em] bg-bee-black text-bee-yellow">
@@ -140,7 +140,7 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                                 </div>
                                 <div className="min-w-0">
                                     <div className="text-[9px] md:text-[11px] font-black text-gray-300 uppercase tracking-[0.16em] font-montserrat">
-                                        {lang === 'ko' ? '주소' : 'Address'}
+                                        {t.locations_page?.address_label || 'Address'}
                                     </div>
                                     <div className="mt-1 text-[12px] md:text-[16px] font-bold text-gray-700 leading-snug break-words">
                                         {getAddress()}
@@ -154,7 +154,7 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                                 </div>
                                 <div className="min-w-0">
                                     <div className="text-[9px] md:text-[11px] font-black text-gray-300 uppercase tracking-[0.16em] font-montserrat">
-                                        {lang === 'ko' ? '운영시간' : 'Hours'}
+                                        {t.locations_page?.hours_label || 'Hours'}
                                     </div>
                                     <div className="mt-1 text-[12px] md:text-[16px] font-bold text-gray-700 leading-snug">
                                         {getHours()}
@@ -168,7 +168,7 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                                 <div className="flex items-center gap-2 mb-2">
                                     <Sparkles className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-bee-yellow fill-bee-yellow" />
                                     <span className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.16em] text-bee-black font-montserrat">
-                                        {lang === 'ko' ? '주변 추천' : 'Nearby Pick'}
+                                        {t.locations_page?.nearby_pick || 'Nearby Pick'}
                                     </span>
                                 </div>
                                 <div className="flex items-start gap-3">

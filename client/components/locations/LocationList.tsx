@@ -193,7 +193,7 @@ const LocationList: React.FC<LocationListProps> = ({
                         >
                             <Luggage className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeStep === 'BAGGAGE' ? 'text-bee-yellow' : 'text-gray-400'}`} />
                             <span className="text-[11px] md:text-[14px] font-[1000] italic tracking-tighter leading-none">
-                                {baggageCounts ? Object.values(baggageCounts as Record<string, number>).reduce((a, b) => (a || 0) + (b || 0), 0) : 0}
+                                {baggageCounts ? Object.values(baggageCounts as unknown as Record<string, number>).reduce((a, b) => (a || 0) + (b || 0), 0) : 0}
                             </span>
                         </button>
 
@@ -257,35 +257,38 @@ const LocationList: React.FC<LocationListProps> = ({
                     {/* Date/Time Accordion / Baggage Side Sheet 💅 */}
                     {activeStep === 'BAGGAGE' && typeof document !== 'undefined' && createPortal(
                         <motion.div
-                            key="baggage-sheet"
+                            key="baggage-sheet-portal"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            exit={{ opacity: 1 }}
-                            className="fixed inset-y-0 right-0 z-[90] flex justify-end pointer-events-none md:left-[420px]"
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[9999] flex justify-end pointer-events-none"
                         >
-                            <motion.div
-                                initial={{ x: "100%" }}
-                                animate={{ x: 0 }}
-                                exit={{ x: "100%" }}
-                                transition={{ type: "spring", stiffness: 320, damping: 32 }}
-                                className="pointer-events-auto relative h-full w-[min(19rem,calc(100vw-0.3rem))] overflow-y-auto border-l border-gray-100 bg-white/97 shadow-[0_24px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl md:my-4 md:mr-4 md:h-[calc(100vh-2rem)] md:w-[min(18.5rem,calc(100vw-480px))] md:rounded-[1.65rem] md:border md:border-white/60"
-                            >
-                                <div className="absolute left-0 top-1/2 hidden -translate-x-full -translate-y-1/2 md:flex">
+                                <motion.div
+                                    initial={{ x: "100%" }}
+                                    animate={{ x: 0 }}
+                                    exit={{ x: "100%" }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    className="pointer-events-auto relative h-full w-full max-w-[420px] overflow-y-auto bg-white shadow-[-12px_0_50px_rgba(0,0,0,0.12)] backdrop-blur-3xl border-l border-gray-100"
+                                >
+                                <div className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 hidden md:flex">
                                     <button
                                         title="닫기"
                                         onClick={() => setActiveStep(null)}
-                                        className="flex h-12 w-12 items-center justify-center rounded-l-[1.1rem] rounded-r-none border border-r-0 border-white/60 bg-white/90 text-gray-400 shadow-[0_12px_28px_rgba(15,23,42,0.12)] backdrop-blur-md transition-colors hover:text-gray-700"
+                                        className="group h-14 w-8 flex items-center justify-center rounded-l-2xl bg-white border border-r-0 border-gray-100 shadow-[-4px_0_12px_rgba(0,0,0,0.05)] text-gray-400 hover:text-bee-black transition-all"
                                     >
-                                        <ChevronRight className="h-5 w-5 rotate-180" />
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
                                 </div>
 
-                                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 px-3 py-2.5 backdrop-blur-md md:rounded-t-[1.65rem]">
-                                    <h3 className="text-[13px] font-black italic tracking-tighter text-gray-900">
-                                        {t.booking?.bags_selection_title || 'Select Baggage'}
-                                    </h3>
-                                    <button title="닫기" onClick={() => setActiveStep(null)}>
-                                        <X size={18} className="text-gray-400" />
+                                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur-md">
+                                    <div className="flex flex-col">
+                                        <h3 className="text-[16px] font-black italic tracking-tighter text-gray-900 uppercase font-montserrat">
+                                            {t.booking?.bags_selection_title || 'Select Baggage'}
+                                        </h3>
+                                        <p className="text-[9px] font-black text-bee-black/30 uppercase tracking-widest leading-none mt-1 font-montserrat">Premium Luggage Care</p>
+                                    </div>
+                                    <button title="닫기" onClick={() => setActiveStep(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                        <X size={20} className="text-gray-900" />
                                     </button>
                                 </div>
                                 <div className="p-2.5 sm:p-3">
@@ -399,13 +402,69 @@ const LocationList: React.FC<LocationListProps> = ({
                 </div>
             </motion.div>
 
+            <AnimatePresence>
+                {activeStep === 'BAGGAGE' && typeof document !== 'undefined' && createPortal(
+                    <motion.div
+                        key="baggage-sheet-portal"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] flex justify-end pointer-events-none"
+                    >
+                    <motion.div
+                        initial={{ x: "100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "100%" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="pointer-events-auto relative h-full w-full max-w-[420px] overflow-y-auto bg-white shadow-[-12px_0_50px_rgba(0,0,0,0.12)] backdrop-blur-3xl border-l border-gray-100 no-scrollbar"
+                    >
+                            <div className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 hidden md:flex">
+                                <button
+                                    title="닫기"
+                                    onClick={() => setActiveStep(null)}
+                                    className="group h-14 w-8 flex items-center justify-center rounded-l-2xl bg-white border border-r-0 border-gray-100 shadow-[-4px_0_12px_rgba(0,0,0,0.05)] text-gray-400 hover:text-bee-black transition-all"
+                                >
+                                    <ChevronRight className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur-md">
+                                <div className="flex flex-col">
+                                    <h3 className="text-[16px] font-black italic tracking-tighter text-gray-900 uppercase font-montserrat">
+                                        {t.booking?.bags_selection_title || 'Select Baggage'}
+                                    </h3>
+                                    <p className="text-[9px] font-black text-bee-black/30 uppercase tracking-widest leading-none mt-1 font-montserrat">Premium Luggage Care</p>
+                                </div>
+                                <button title="닫기" onClick={() => setActiveStep(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                    <X size={20} className="text-gray-900" />
+                                </button>
+                            </div>
+                            <div className="p-2.5 sm:p-3">
+                                <div className="rounded-[1.1rem] border border-gray-100 bg-gray-50/50 p-2 shadow-sm">
+                                    <BaggageCounter
+                                        t={t}
+                                        lang={lang}
+                                        baggageCounts={baggageCounts}
+                                        onCountChange={onBaggageChange}
+                                        onConfirm={() => setActiveStep('PICKUP_DATE')}
+                                        deliveryPrices={deliveryPrices}
+                                        currentService={currentService}
+                                    />
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>,
+                    document.body
+                )}
+            </AnimatePresence>
+
             {/* List Area - Horizontal Cards on Mobile, Vertical Scroll on PC 💅 */}
             <div className="flex-none md:flex-1 pointer-events-auto bg-transparent border-none mt-auto md:mt-0 h-auto md:h-full w-full max-w-full relative z-20 pb-6 md:pb-0 md:overflow-hidden">
                 <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto no-scrollbar snap-x snap-mandatory gap-3 md:gap-4 px-4 md:px-6 pt-2 md:pt-4 pb-4 md:h-full">
                     {visibleBranches.map((branch, index) => {
                         const isSelected = selectedBranch?.id === branch.id;
                         const isActive = branch.isActive !== false;
-                        
+
                         // [스봉이] 가장 가까운 지점 찾기 (정렬된 상태라면 index 0)
                         const isClosest = index === 0 && branch && branch.distance !== undefined && branch.distance < 5; // 5km 이내면 가깝다고 해줄게요 💅
 
@@ -425,12 +484,16 @@ const LocationList: React.FC<LocationListProps> = ({
                                 )}
 
                                 <div className="flex-1 flex flex-col items-start gap-1 md:gap-2.5 min-w-0">
-                                    {/* 지점명 - 폰트 강화 💅 */}
                                     <div className="text-[12px] md:text-[20px] font-black tracking-[-0.05em] whitespace-nowrap overflow-hidden text-ellipsis w-full text-gray-900 group-hover:text-bee-black transition-colors">
-                                        {lang === 'ko' ? branch.name : (branch[`name_${lang.replace('-', '_').toLowerCase()}`] || branch.name_en || branch.name)}
+                                        {(() => {
+                                            if (lang === 'ko') return branch.name;
+                                            const lk = lang.replace('-', '_').toLowerCase();
+                                            if (branch[`name_${lk}`]) return branch[`name_${lk}`];
+                                            if (lk.startsWith('zh') && branch.name_zh) return branch.name_zh;
+                                            return branch.name_en || branch.name;
+                                        })()}
                                     </div>
 
-                                    {/* 상태 뱃지 - 정밀하게 💅 */}
                                     <div className="flex items-center gap-1.5">
                                         <div className={`px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-wider w-fit border shadow-sm ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
                                             {isActive ? 'ACTIVE' : 'CLOSE'}
@@ -442,7 +505,6 @@ const LocationList: React.FC<LocationListProps> = ({
                                         )}
                                     </div>
 
-                                    {/* 서비스 태그들 - 몬세라트 💅 */}
                                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                         {branch.supportsDelivery && (
                                             <span className="px-1.5 py-0.5 rounded-full text-[7px] md:text-[11px] font-black uppercase tracking-tighter bg-bee-black text-bee-yellow shadow-md whitespace-nowrap font-montserrat italic">
@@ -455,18 +517,13 @@ const LocationList: React.FC<LocationListProps> = ({
                                             </span>
                                         )}
                                     </div>
-
                                 </div>
 
-                                {/* 우측 이미지 - 라운딩 강화 및 쉐도우 + 지연 로딩 최적화 💅 */}
                                 <div className="relative w-12 h-12 md:w-24 md:h-24 shrink-0 rounded-[1.2rem] md:rounded-[2rem] overflow-hidden shadow-2xl border-2 border-white/50 bg-gray-100/50 backdrop-blur-sm">
                                     {branch.imageUrl ? (
                                         <img
                                             src={branch.imageUrl}
                                             alt={branch.name}
-                                            loading={index < 4 ? 'eager' : 'lazy'}
-                                            fetchPriority={index < 2 ? 'high' : 'auto'}
-                                            decoding="async"
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
                                             onError={(e) => {
                                                 (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1580978640103-ba69fa7a9003?q=80&w=2670&auto=format&fit=crop';

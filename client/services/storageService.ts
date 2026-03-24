@@ -83,6 +83,36 @@ const normalizeBookingForDeliveryPolicy = (booking: BookingState): BookingState 
 const normalizeBookingsForDeliveryPolicy = (bookings: BookingState[]): BookingState[] =>
   bookings.map((booking) => normalizeBookingForDeliveryPolicy(booking));
 
+const preferTranslatedValue = (value?: string, fallback?: string) => {
+  const trimmedValue = value?.trim();
+  if (trimmedValue) return trimmedValue;
+  const trimmedFallback = fallback?.trim();
+  return trimmedFallback || undefined;
+};
+
+const normalizeLocationTranslations = (location: LocationOption): LocationOption => {
+  const baseName = location.name?.trim();
+  const baseAddress = location.address?.trim();
+  const zhName = preferTranslatedValue(location.name_zh, baseName);
+  const zhAddress = preferTranslatedValue(location.address_zh, baseAddress);
+
+  return {
+    ...location,
+    name: baseName || location.name,
+    address: baseAddress || location.address,
+    name_en: preferTranslatedValue(location.name_en, baseName),
+    name_ja: preferTranslatedValue(location.name_ja, baseName),
+    name_zh: zhName,
+    name_zh_tw: preferTranslatedValue(location.name_zh_tw, zhName),
+    name_zh_hk: preferTranslatedValue(location.name_zh_hk, zhName),
+    address_en: preferTranslatedValue(location.address_en, baseAddress),
+    address_ja: preferTranslatedValue(location.address_ja, baseAddress),
+    address_zh: zhAddress,
+    address_zh_tw: preferTranslatedValue(location.address_zh_tw, zhAddress),
+    address_zh_hk: preferTranslatedValue(location.address_zh_hk, zhAddress),
+  };
+};
+
 const canUseLocalAdminDataBridge = () => {
   if (typeof window === 'undefined') return false;
   if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) return false;
@@ -808,7 +838,7 @@ export const StorageService = {
   },
 
   saveLocation: async (location: LocationOption): Promise<void> => {
-    const sanitized = { ...location };
+    const sanitized = normalizeLocationTranslations({ ...location });
     // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 걸러내야죠 💅
     if (sanitized.lat === undefined || sanitized.lat === null || isNaN(Number(sanitized.lat))) {
       delete sanitized.lat;

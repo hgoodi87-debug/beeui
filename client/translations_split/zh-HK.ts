@@ -410,7 +410,8 @@ export const zhHK = {
         label_guide: '使用指南',
         label_facilities: '可用服務',
         reservation_title: '預訂',
-        label_map_error: '地圖載入失敗'
+        label_map_error: '地圖載入失敗',
+        find_my_location_short: '尋找我的位置'
     },
 
     manual: {

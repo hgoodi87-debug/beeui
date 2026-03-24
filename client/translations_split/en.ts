@@ -245,7 +245,25 @@ export const en = {
         agree_premium_checklist: "Confirm restricted items & compensation policy",
         restricted_items_note: "* Compensation may be denied for these items.",
         slot_past: "Sold out",
-        airport_late_notice: "Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual!"
+        airport_late_notice: "Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual!",
+        booking_summary: "Booking Summary",
+        service_type: "Service Type",
+        baggage_count: "Baggage Count",
+        final_total: "Total",
+        enter_coupon: "Enter promo code",
+        apply: "Apply",
+        terms_agree_1: "[Req] Agree to Terms of Service",
+        terms_link: "Link",
+        terms_agree_2: "[Req] Agree to Privacy Policy",
+        terms_agree_3: "[Req] Prohibited High-Value Items Policy",
+        prohibited_items_title: "Prohibited Items & Liability Policy",
+        prohibited_item_1: "Cash, Securities, Jewelry (Over ₩500k per item)",
+        prohibited_item_2: "Art, Antiques, Rare Collectibles",
+        prohibited_item_3: "Explosive/Flammable/Volatile materials",
+        prohibited_item_4: "Animals, Remains, Perishable goods, Waste",
+        prohibited_item_5: "Electronics & Precision Devices",
+        prohibited_item_6: "Illegal items, Weapons, Dangerous goods",
+        prohibited_item_note: "* Items found may result in limited service or return."
     },
     status_mapping: {
         '접수완료': 'Pending', '예약완료': 'Confirmed', '보관중': 'Storing', '이동중': 'In Transit',
@@ -394,7 +412,8 @@ export const en = {
         label_guide: 'Pick-up Guide',
         label_facilities: 'Available Facilities',
         reservation_title: 'Reservation',
-        label_map_error: 'Maps failed to load'
+        label_map_error: 'Maps failed to load',
+        find_my_location_short: 'Find Location'
     },
     manual: {
         title: 'User Guide', subtitle: 'How to use Beeliber', desc: 'Enjoy your trip without heavy luggage.',
@@ -413,6 +432,16 @@ export const en = {
             { title: 'SNS ID', desc: 'Enter ID and done!' }
         ],
         cta_title: 'Ready?', cta_desc: 'Experience freedom.', cta_btn: 'Book Now'
+    },
+    reviews_section: {
+        review_1: { name: "Sarah", location: "USA", text: "DDP was absolutely fantastic! Thanks to Beeliber, I could enjoy the architecture without luggage. ✨" },
+        review_2: { name: "Yuki", location: "Japan", text: "Wearing Hanbok at Gyeongbokgung was my dream, and it was so easy without heavy bags! 🌸" },
+        review_3: { name: "Emma", location: "UK", text: "So glad I didn't have to carry bags up to Namsan Tower. The night view was incredible! 🗼" },
+        review_4: { name: "Li-Wei", location: "Taiwan", text: "Walking through Bukchon's narrow alleys without a suitcase was so healing. 🏠" },
+        review_5: { name: "Min-Ji", location: "Korea", text: "Luggage was a burden during the Seongsu-dong cafe tour, but Beeliber solved everything! ☕" },
+        review_6: { name: "Chen", location: "China", text: "I could fully appreciate the grandeur of Gwanghwamun Square without any heavy bags. 🛡️" },
+        review_7: { name: "Hans", location: "Germany", text: "I felt so free browsing the cute shops in Ikseon-dong without my luggage. 10/10! 🎁" },
+        review_8: { name: "Sofia", location: "Italy", text: "Sending my bags to the hotel before the Han River picnic was the best decision ever! 🧺" }
     },
     services_page: {
         badge: "Smart Luggage Solution",

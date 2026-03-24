@@ -11,13 +11,18 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
     // 10~15개의 리뷰 목업 (기획안 기반)
     const reviews = [
         { name: t.reviews_section.review_1.name, location: t.reviews_section.review_1.location, text: t.reviews_section.review_1.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2Fddp.jpeg?alt=media&token=80e940bf-f6c6-4ec2-a356-18d3fec33cea" },
-        { name: t.reviews_section.review_2.name, location: t.reviews_section.review_2.location, text: t.reviews_section.review_2.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%80%E1%85%A7%E1%86%BC%E1%84%87%E1%85%A9%E1%86%BC%E1%84%80%E1%85%A5%E1%86%BC.jpeg?alt=media&token=83543c35-1a2b-478f-9918-6502e0802ccb" },
+        // Gyeongbokgung
+        { name: t.reviews_section.review_2.name, location: t.reviews_section.review_2.location, text: t.reviews_section.review_2.text, img: "https://images.unsplash.com/photo-1546874177-9e664107314e?q=80&w=800" },
         { name: t.reviews_section.review_3.name, location: t.reviews_section.review_3.location, text: t.reviews_section.review_3.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%82%E1%85%A1%E1%86%B7%E1%84%89%E1%85%A1%E1%86%AB.jpeg?alt=media&token=ea864bd8-3fbb-4e8f-a28d-30380cd8f329" },
-        { name: t.reviews_section.review_4.name, location: t.reviews_section.review_4.location, text: t.reviews_section.review_4.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%87%E1%85%AE%E1%86%A8%E1%84%8E%E1%85%A9%E1%86%AB%E1%84%92%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%A9%E1%86%A8.jpeg?alt=media&token=d532a9b0-7873-47d7-8649-63b526054276" },
+        // Gwanghwamun (Chen)
+        { name: t.reviews_section.review_4.name, location: t.reviews_section.review_4.location, text: t.reviews_section.review_4.text, img: "https://images.unsplash.com/photo-1588636906233-fd4d43501a4f?q=80&w=800" },
         { name: t.reviews_section.review_5.name, location: t.reviews_section.review_5.location, text: t.reviews_section.review_5.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%89%E1%85%A5%E1%86%BC%E1%84%89%E1%85%AE.jpeg?alt=media&token=090a577b-05c1-4006-8e0b-d912fe85845c" },
-        { name: t.reviews_section.review_6.name, location: t.reviews_section.review_6.location, text: t.reviews_section.review_6.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%80%E1%85%AA%E1%86%BC%E1%84%92%E1%85%AA%E1%86%86%E1%84%86%E1%85%AE%E1%86%AB.jpeg?alt=media&token=a5351946-4ffe-4735-b0fd-942d5f1da530" },
-        { name: t.reviews_section.review_7.name, location: t.reviews_section.review_7.location, text: t.reviews_section.review_7.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%8B%E1%85%B5%E1%86%A8%E1%84%89%E1%85%A5%E1%86%AB%E1%84%83%E1%85%A9%E1%86%BC1.jpeg?alt=media&token=21aacaa3-210b-4638-b33b-2f171f737908" },
-        { name: t.reviews_section.review_8.name, location: t.reviews_section.review_8.location, text: t.reviews_section.review_8.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A1%E1%86%BC%E1%84%80%E1%85%A9%E1%86%BC%E1%84%8B%E1%85%AF%E1%86%AB.jpeg?alt=media&token=ba196c34-32cb-4c77-8589-d4e1fad3a7d4" }
+        // Bukchon Hanok
+        { name: t.reviews_section.review_6.name, location: t.reviews_section.review_6.location, text: t.reviews_section.review_6.text, img: "https://images.unsplash.com/photo-1602120300958-fcd19f7fb0fc?q=80&w=800" },
+        // Ikseondong
+        { name: t.reviews_section.review_7.name, location: t.reviews_section.review_7.location, text: t.reviews_section.review_7.text, img: "https://images.unsplash.com/photo-1628741366114-1e0325bdf255?q=80&w=800" },
+        // Hangang Park
+        { name: t.reviews_section.review_8.name, location: t.reviews_section.review_8.location, text: t.reviews_section.review_8.text, img: "https://images.unsplash.com/photo-1563288277-3e1dc240dd0f?q=80&w=800" }
     ];
 
     return (

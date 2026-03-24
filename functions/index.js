@@ -602,7 +602,13 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}",
             if (booking.serviceType === 'STORAGE') {
                 const start = new Date(`${booking.pickupDate}T${booking.pickupTime || "00:00"}+09:00`);
                 const end = new Date(`${booking.dropoffDate || booking.pickupDate}T${booking.deliveryTime || "23:59"}+09:00`);
-                const serverPrice = calculateBookingStoragePrice(start, end, booking.bagSizes || {}, booking.language);
+                const serverPrice = calculateBookingStoragePrice(
+                    start,
+                    end,
+                    booking.bagSizes || {},
+                    booking.language,
+                    { businessHours: booking.pickupLoc?.businessHours || booking.returnLoc?.businessHours }
+                );
                 finalPrice = serverPrice.total;
             }
 

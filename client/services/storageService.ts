@@ -351,40 +351,50 @@ export const StorageService = {
 
       return new Promise((resolve, reject) => {
         let isResolved = false;
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+        let transientReadFailures = 0;
+
+        const finish = (handler: () => void) => {
+          if (isResolved) return;
+          isResolved = true;
+          clearTimeout(timeoutId);
+          if (pollTimer) clearInterval(pollTimer);
+          handler();
+        };
+
+        const inspectBookingStatus = async () => {
+          try {
+            const snap = await getDoc(docRef);
+            if (!snap.exists()) return;
+
+            const data = snap.data();
+            if (data.status === '접수완료') {
+              console.log("[StorageService] Backend validation successful! 🎉", data);
+              finish(() => resolve({ ...(data as BookingState), id: snap.id }));
+              return;
+            }
+
+            if (data.status === 'ERROR' || data.status === '예약실패') {
+              console.error("[StorageService] Backend validation failed! 🚨", data);
+              finish(() => reject(new Error(data.error || '예약 검증 중 오류가 발생했습니다.')));
+            }
+          } catch (err: any) {
+            const isPermissionRace = err?.code === 'permission-denied'
+              || err?.message?.includes('Missing or insufficient permissions');
+
+            if (isPermissionRace && transientReadFailures < 5) {
+              transientReadFailures += 1;
+              console.warn('[StorageService] Booking confirmation read raced auth propagation. Retrying...', transientReadFailures);
+              return;
+            }
+
+            finish(() => reject(err));
+          }
+        };
 
         const timeoutId = setTimeout(() => {
-          if (!isResolved) {
-            isResolved = true;
-            unsubscribe();
-            reject(new Error('예약 저장 확인이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'));
-          }
-        }, 20000);
-
-        const unsubscribe = onSnapshot(docRef, (snap) => {
-          if (!snap.exists()) return;
-          const data = snap.data();
-
-          if (data.status === '접수완료') {
-            isResolved = true;
-            clearTimeout(timeoutId);
-            unsubscribe();
-            console.log("[StorageService] Backend validation successful! 🎉", data);
-            resolve({ ...(data as BookingState), id: snap.id });
-          } else if (data.status === 'ERROR' || data.status === '예약실패') {
-            isResolved = true;
-            clearTimeout(timeoutId);
-            unsubscribe();
-            console.error("[StorageService] Backend validation failed! 🚨", data);
-            reject(new Error(data.error || 'Server validation failed.'));
-          }
-        }, (err) => {
-          if (!isResolved) {
-            isResolved = true;
-            clearTimeout(timeoutId);
-            unsubscribe();
-            reject(err);
-          }
-        });
+          finish(() => reject(new Error('예약 저장 확인이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.')));
+        }, 25000);
 
         // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 깨끗하게 씻겨서 보내야죠 💅
         const cleanData = (obj: any): any => {
@@ -407,13 +417,13 @@ export const StorageService = {
 
         // Write the request to trigger the backend Cloud Function
         setDoc(docRef, finalizedBooking).catch(err => {
-          if (!isResolved) {
-            isResolved = true;
-            clearTimeout(timeoutId);
-            unsubscribe();
-            reject(err);
-          }
+          finish(() => reject(err));
         });
+
+        pollTimer = setInterval(() => {
+          void inspectBookingStatus();
+        }, 700);
+        void inspectBookingStatus();
       });
 
     } catch (e: any) {

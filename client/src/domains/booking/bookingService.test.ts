@@ -37,7 +37,20 @@ describe('calculateBookingStoragePrice', () => {
         expect(result.total).toBe(STORAGE_RATES.strollerBicycle.day1);
     });
 
-    it('24시간 초과는 추가 일자 보관비를 누적한다', () => {
+    it('영업시간을 넘겨 다음날 찾는 보관 예약은 24시간 미만이어도 첫날 정액을 적용한다', () => {
+        const result = calculateBookingStoragePrice(
+            makeDate('2026-03-23T20:00'),
+            makeDate('2026-03-24T10:00'),
+            { handBag: 1, carrier: 0, strollerBicycle: 0 },
+            'ko',
+            { businessHours: '10:00 - 21:00' }
+        );
+
+        expect(result.total).toBe(STORAGE_RATES.handBag.day1);
+        expect(result.durationText).toBe('1일 0시간');
+    });
+
+    it('24시간 초과는 남은 시간을 1시간 단위로 추가한다', () => {
         const result = calculateBookingStoragePrice(
             makeDate('2026-03-23T09:00'),
             makeDate('2026-03-24T11:00'),
@@ -45,6 +58,7 @@ describe('calculateBookingStoragePrice', () => {
             'ko'
         );
 
-        expect(result.total).toBe(STORAGE_RATES.carrier.day1 + STORAGE_RATES.carrier.extraDay);
+        expect(result.total).toBe(STORAGE_RATES.carrier.day1 + (STORAGE_RATES.carrier.hourlyAfter4h * 2));
+        expect(result.durationText).toBe('1일 2시간');
     });
 });

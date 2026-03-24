@@ -103,6 +103,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; amount: number; type: 'fixed' | 'percent' } | null>(null);
     const [couponMessage, setCouponMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
+    const parseKstDateTime = React.useCallback((dateStr?: string, timeStr?: string, fallbackTime: string = '00:00') => {
+        if (!dateStr) return null;
+        const safeTime = (timeStr || fallbackTime || '00:00').slice(0, 5);
+        const parsed = new Date(`${dateStr}T${safeTime}:00+09:00`);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }, []);
+
     const handleApplyCoupon = () => {
         if (!couponInput) return;
         const code = couponInput.toUpperCase().trim();
@@ -419,11 +426,17 @@ const BookingPage: React.FC<BookingPageProps> = ({
             base = deliveryBase + storageFee;
         } else {
             // STORAGE: Dynamic Pricing
-            const pickupDateTime = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
-            const retrievalDateTime = new Date(`${booking.dropoffDate || booking.pickupDate}T${booking.deliveryTime || '23:59'}`);
+            const pickupDateTime = parseKstDateTime(booking.pickupDate, booking.pickupTime);
+            const retrievalDateTime = parseKstDateTime(booking.dropoffDate || booking.pickupDate, booking.deliveryTime, '23:59');
 
-            if (!isNaN(pickupDateTime.getTime()) && !isNaN(retrievalDateTime.getTime())) {
-                const result = calculateStoragePrice(pickupDateTime, retrievalDateTime, normalizedBagSizes, lang);
+            if (pickupDateTime && retrievalDateTime) {
+                const result = calculateStoragePrice(
+                    pickupDateTime,
+                    retrievalDateTime,
+                    normalizedBagSizes,
+                    lang,
+                    { businessHours: pickupLoc?.businessHours }
+                );
                 base = result.total;
                 breakdown = result.breakdown;
                 durationText = result.durationText;
@@ -467,7 +480,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
             breakdown,
             durationText
         };
-    }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, booking.serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime, lang, appliedCoupon]);
+    }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, booking.serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime, lang, appliedCoupon, parseKstDateTime]);
 
     const tBooking = t.booking || {};
     const getCompactScheduleDate = React.useCallback((dateStr: string) => {
@@ -678,13 +691,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             value={booking.pickupDate?.split(' ')[0]}
                                                             min={formatKSTDate()}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
-                                                            className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none"
+                                                            className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                         />
-                                                        <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
-                                                            <span className="min-w-0 text-[13px] sm:text-[14px] md:text-[15px] font-black whitespace-nowrap">
+                                                        <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between gap-2 rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
+                                                            <span className="block min-w-0 flex-1 text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-tight whitespace-nowrap">
                                                                 {getCompactScheduleDate(booking.pickupDate || '')}
                                                             </span>
-                                                            <Calendar className="ml-3 h-5 w-5 shrink-0 text-gray-400" />
+                                                            <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
                                                         </div>
                                                     </div>
                                                     <div className="relative">
@@ -747,13 +760,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate}
                                                                 min={booking.pickupDate}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none"
+                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                             />
-                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
-                                                                <span className="min-w-0 text-[13px] sm:text-[14px] md:text-[15px] font-black whitespace-nowrap">
+                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between gap-2 rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
+                                                                <span className="block min-w-0 flex-1 text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-tight whitespace-nowrap">
                                                                     {getCompactScheduleDate(booking.dropoffDate || '')}
                                                                 </span>
-                                                                <Calendar className="ml-3 h-5 w-5 shrink-0 text-gray-400" />
+                                                                <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
                                                             </div>
                                                         </div>
                                                         <div className="relative">
@@ -806,13 +819,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 value={booking.dropoffDate?.split(' ')[0]}
                                                                 min={booking.pickupDate || formatKSTDate()}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
-                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none"
+                                                                className="absolute inset-0 z-10 h-14 sm:h-[3.75rem] w-full cursor-pointer rounded-[1.35rem] opacity-0 outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                             />
-                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
-                                                                <span className="min-w-0 text-[13px] sm:text-[14px] md:text-[15px] font-black whitespace-nowrap">
+                                                            <div className="pointer-events-none flex h-14 sm:h-[3.75rem] items-center justify-between gap-2 rounded-[1.35rem] border border-white bg-white px-4 sm:px-5 text-bee-black transition-all">
+                                                                <span className="block min-w-0 flex-1 text-[12px] sm:text-[13px] md:text-[14px] font-black leading-none tracking-tight whitespace-nowrap">
                                                                     {getCompactScheduleDate(booking.dropoffDate || '')}
                                                                 </span>
-                                                                <Calendar className="ml-3 h-5 w-5 shrink-0 text-gray-400" />
+                                                                <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
                                                             </div>
                                                         </div>
                                                         <div className="relative">
@@ -890,74 +903,85 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     const description = getBagCategoryDescription(category.id, lang, booking.serviceType || ServiceType.STORAGE);
 
                                     return (
-                                        <div key={category.id} className="w-full min-w-0 overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)]">
-                                            <div className="p-4 sm:p-5 space-y-3">
-                                                <div className="flex items-start justify-between gap-3">
+                                        <div key={category.id} className="w-full min-w-0 overflow-hidden rounded-[1.7rem] border border-gray-100 bg-white shadow-[0_14px_42px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_20px_48px_rgba(15,23,42,0.1)]">
+                                            <div className="p-3.5 sm:p-4 space-y-2.5">
+                                                <div className="flex items-start justify-between gap-2.5">
                                                     <div className="min-w-0 flex-1">
-                                                        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 whitespace-nowrap">
+                                                        <div className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400 whitespace-nowrap">
                                                             {isDelivery ? (lang.startsWith('ko') ? '배송 품목' : 'Delivery item') : (lang.startsWith('ko') ? '보관 품목' : 'Storage item')}
                                                         </div>
-                                                        <div className="mt-1 text-xl sm:text-2xl font-black leading-tight text-bee-black break-keep">
+                                                        <div className="mt-1 text-[1.5rem] sm:text-[1.8rem] font-black leading-tight text-bee-black break-keep">
                                                             {label}
                                                         </div>
                                                     </div>
-                                                    <div className={`shrink-0 rounded-[1.25rem] px-3 py-2.5 text-center ${visual.chipClassName}`}>
-                                                        <div className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70 whitespace-nowrap">
+                                                    <div className={`shrink-0 rounded-[1.15rem] px-3 py-2 text-center min-w-[5.25rem] ${visual.chipClassName}`}>
+                                                        <div className="text-[9px] font-black uppercase tracking-[0.1em] opacity-70 whitespace-nowrap">
                                                             {lang.startsWith('ko') ? '선택 수량' : 'Selected'}
                                                         </div>
-                                                        <div className="mt-1 text-[2rem] font-black leading-none">{count}</div>
+                                                        <div className="mt-1 text-[1.8rem] font-black leading-none">{count}</div>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.45rem] bg-gradient-to-br ${visual.accentClassName}`}>
+                                                    <div className={`flex h-[4.3rem] w-[4.3rem] shrink-0 items-center justify-center rounded-[1.1rem] bg-gradient-to-br ${visual.accentClassName}`}>
                                                         <img
                                                             src={visual.imageSrc}
                                                             alt={label}
-                                                            className="h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 object-contain"
+                                                            className="h-[3.25rem] w-[3.25rem] sm:h-[3.5rem] sm:w-[3.5rem] object-contain"
                                                             loading="lazy"
                                                         />
                                                     </div>
 
-                                                    <p className="min-w-0 flex-1 text-xs sm:text-sm font-semibold leading-5 sm:leading-6 text-gray-500 break-keep">
+                                                    <p
+                                                        className="min-w-0 flex-1 text-[11px] sm:text-[12px] font-semibold leading-[1.45] text-gray-500 break-keep"
+                                                        style={{
+                                                            display: '-webkit-box',
+                                                            WebkitLineClamp: 2,
+                                                            WebkitBoxOrient: 'vertical',
+                                                            overflow: 'hidden',
+                                                        }}
+                                                    >
                                                         {description}
                                                     </p>
                                                 </div>
 
-                                                <div className="flex items-end justify-between gap-3">
-                                                    <div className="min-w-0">
-                                                        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 whitespace-nowrap">
+                                                <div className="rounded-[1.15rem] bg-gray-50/85 px-3 py-2.5">
+                                                    <div className="flex items-end justify-between gap-3">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400 whitespace-nowrap">
                                                             {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
+                                                            </div>
+                                                            <div className="mt-1 text-[1.28rem] sm:text-[1.45rem] font-black leading-none text-bee-yellow whitespace-nowrap">
+                                                                ₩{unitPrice.toLocaleString()}
+                                                            </div>
                                                         </div>
-                                                        <div className="mt-1 text-[1.45rem] sm:text-[1.7rem] font-black leading-none text-bee-yellow whitespace-nowrap">
-                                                            ₩{unitPrice.toLocaleString()}
-                                                        </div>
-                                                        <div className="mt-1 text-[11px] font-bold leading-5 text-gray-500 break-keep">
-                                                            {isDelivery
-                                                                ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
-                                                                : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
+
+                                                        <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-1.5 py-1.5 shadow-sm">
+                                                            <button
+                                                                title="Decrease"
+                                                                aria-label="Decrease"
+                                                                onClick={() => updateBagCount(category.id, -1)}
+                                                                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
+                                                                disabled={count === 0}
+                                                            >
+                                                                <i className="fa-solid fa-minus text-[11px]"></i>
+                                                            </button>
+                                                            <span className="w-7 text-center text-[1.65rem] font-black text-bee-black">{count}</span>
+                                                            <button
+                                                                title="Increase"
+                                                                aria-label="Increase"
+                                                                onClick={() => updateBagCount(category.id, 1)}
+                                                                className="flex h-10 w-10 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
+                                                            >
+                                                                <i className="fa-solid fa-plus text-[11px]"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex shrink-0 items-center gap-2 rounded-full bg-gray-50 px-2 py-2">
-                                                        <button
-                                                            title="Decrease"
-                                                            aria-label="Decrease"
-                                                            onClick={() => updateBagCount(category.id, -1)}
-                                                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
-                                                            disabled={count === 0}
-                                                        >
-                                                            <i className="fa-solid fa-minus text-xs"></i>
-                                                        </button>
-                                                        <span className="w-7 text-center text-lg sm:text-xl font-black text-bee-black">{count}</span>
-                                                        <button
-                                                            title="Increase"
-                                                            aria-label="Increase"
-                                                            onClick={() => updateBagCount(category.id, 1)}
-                                                            className="flex h-10 w-10 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
-                                                        >
-                                                            <i className="fa-solid fa-plus text-xs"></i>
-                                                        </button>
+                                                    <div className="mt-1.5 text-[10px] sm:text-[11px] font-bold leading-[1.45] text-gray-500 break-keep">
+                                                        {isDelivery
+                                                            ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
+                                                            : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1097,11 +1121,17 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                     itemPrice = unitPrice * count;
                                                 } else {
                                                     // 💅 Recalculate accurate price for this bag type/count based on duration
-                                                    const pickupDateTime = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
-                                                    const retrievalDateTime = new Date(`${booking.dropoffDate || booking.pickupDate}T${booking.deliveryTime || '23:59'}`);
-                                                    if (!isNaN(pickupDateTime.getTime()) && !isNaN(retrievalDateTime.getTime())) {
+                                                    const pickupDateTime = parseKstDateTime(booking.pickupDate, booking.pickupTime);
+                                                    const retrievalDateTime = parseKstDateTime(booking.dropoffDate || booking.pickupDate, booking.deliveryTime, '23:59');
+                                                    if (pickupDateTime && retrievalDateTime) {
                                                         const singleBagSizes = buildCategoryBagSizes(category.id, count);
-                                                        const res = calculateStoragePrice(pickupDateTime, retrievalDateTime, singleBagSizes, lang);
+                                                        const res = calculateStoragePrice(
+                                                            pickupDateTime,
+                                                            retrievalDateTime,
+                                                            singleBagSizes,
+                                                            lang,
+                                                            { businessHours: pickupLoc?.businessHours }
+                                                        );
                                                         itemPrice = res.total;
 
                                                         // Min price guard (if 0, fallback to 4h)

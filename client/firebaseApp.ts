@@ -40,6 +40,11 @@ export const ensureAuth = async (): Promise<any> => {
     // [스봉이] 이미 번듯하게 로그인되어 있다면 바로 보내주고요 💅
     if (auth.currentUser) {
         console.log("[Firebase] Existing user found:", auth.currentUser.uid);
+        try {
+            await auth.currentUser.getIdToken();
+        } catch (tokenError) {
+            console.warn("[Firebase] Existing user token refresh skipped:", tokenError);
+        }
         return auth.currentUser;
     }
 
@@ -48,8 +53,9 @@ export const ensureAuth = async (): Promise<any> => {
         const cred = await signInAnonymously(auth);
         console.log("[Firebase] Anonymous Auth Success! Welcome, UID:", cred.user.uid);
 
-        // [스봉이] 토큰이 준비될 때까지 아주 잠깐만 기다려 주는 센스! ✨
-        await new Promise(r => setTimeout(r, 500));
+        // [스봉이] 토큰이 준비되기 전에 Firestore를 두드리면 괜히 권한에 삐끗하거든요. 여기서 끝까지 받아옵니다. 💅
+        await cred.user.getIdToken(true);
+        await new Promise(r => setTimeout(r, 250));
         return cred.user;
     } catch (error: any) {
         console.error("[Firebase] Anonymous Authentication Failed! 🚨", error);

@@ -80,6 +80,12 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const tBooking = t.booking || {};
+  const parseKstDateTime = (dateStr?: string, timeStr?: string, fallbackTime: string = '00:00') => {
+    if (!dateStr) return null;
+    const safeTime = (timeStr || fallbackTime || '00:00').slice(0, 5);
+    const parsed = new Date(`${dateStr}T${safeTime}:00+09:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
 
   const isModification = !!initialBooking;
 
@@ -338,10 +344,10 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
         destSurcharge
       };
     } else {
-      const start = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
-      const end = new Date(`${booking.dropoffDate}T${booking.deliveryTime}`);
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) return { total: 0, discount: 0, durationText: '', breakdown: '' };
-      const result = calculateStoragePrice(start, end, booking.bagSizes, lang);
+      const start = parseKstDateTime(booking.pickupDate, booking.pickupTime);
+      const end = parseKstDateTime(booking.dropoffDate, booking.deliveryTime);
+      if (!start || !end) return { total: 0, discount: 0, durationText: '', breakdown: '' };
+      const result = calculateStoragePrice(start, end, booking.bagSizes, lang, { businessHours: selectedBranch?.businessHours });
       const discount = appliedCoupon ? appliedCoupon.amountPerBag * booking.bags : 0;
       return {
         total: Math.max(0, result.total - discount),
@@ -363,7 +369,18 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
       const recaptchaToken = (await RecaptchaService.execute('BOOKING')) || undefined;
       const sanitizedBagSizes = serviceType === ServiceType.DELIVERY ? sanitizeDeliveryBagSizes(booking.bagSizes) : sanitizeBagSizes(booking.bagSizes);
       const sanitizedBags = getTotalBags(sanitizedBagSizes);
-      const finalBooking = { ...booking, bagSizes: sanitizedBagSizes, bags: sanitizedBags, finalPrice: priceDetails.total, createdAt: new Date().toISOString(), recaptchaToken };
+      const finalBooking = {
+        ...booking,
+        pickupLoc: selectedBranch || undefined,
+        returnLoc: serviceType === ServiceType.DELIVERY
+          ? locations.find(l => l.id === booking.dropoffLocation) || undefined
+          : undefined,
+        bagSizes: sanitizedBagSizes,
+        bags: sanitizedBags,
+        finalPrice: priceDetails.total,
+        createdAt: new Date().toISOString(),
+        recaptchaToken
+      };
       if (isModification && initialBooking?.id) {
         await StorageService.updateBooking(initialBooking.id, finalBooking as any);
       } else {

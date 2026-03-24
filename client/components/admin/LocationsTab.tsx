@@ -250,38 +250,38 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <button onClick={handleBulkGeocode} disabled={isGeocoding} className="text-[10px] font-black text-amber-600 hover:underline disabled:opacity-50">
                                 [주소로 전 지점 좌표 연동]
                             </button>
-                            <button onClick={async () => {
-                                if (!confirm("MBX- 형식의 지점 ID를 3자리 약칭(AGS, DDP 등)으로 일괄 변경하시겠습니까?\n이 작업은 Firestore 데이터를 직접 수정하며 되돌릴 수 없습니다. 💅")) return;
-                                setIsBulkMapping(true);
-                                try {
-                                    const { StorageService } = await import('../../services/storageService');
-                                    const mapping: Record<string, string> = {
-                                        'MBX-001': 'AGS', 'MBX-002': 'DDP', 'MBX-003': 'JNO', 'MBX-004': 'CMR',
-                                        'MBX-005': 'SSU', 'MBX-006': 'GNS', 'MBX-007': 'MEC', 'MBX-008': 'YDO',
-                                        'MBX-009': 'MD2', 'MBX-010': 'IT2', 'MBX-011': 'SRK', 'MBX-012': 'GNM',
-                                        'MBX-013': 'NDM', 'MBX-014': 'ISD', 'MBX-015': 'HDA', 'MBX-016': 'MDD',
-                                        'MBX-017': 'PTK', 'MBX-018': 'SDO', 'MBX-019': 'SWN', 'MBX-020': 'USO',
-                                        'MBX-021': 'BPY', 'MBX-022': 'GPA', 'MBX-023': 'CWN', 'MBX-024': 'USS',
-                                        'MBX-025': 'GAL', 'MBX-026': 'BSN', 'MBX-027': 'DGU', 'MBX-028': 'GHE',
-                                        'MBX-029': 'NPO', 'MBX-030': 'HDE', 'MBX-031': 'JDM', 'MBX-032': 'JEJ',
-                                        'MBX-033': 'GJU'
-                                    };
-                                    const mbxLocations = locations.filter(l => l.id.startsWith('MBX-'));
-                                    if (mbxLocations.length === 0) { alert("변경할 MBX- 지점이 없습니다. 🙄"); return; }
-                                    for (const loc of mbxLocations) {
-                                        const newId = mapping[loc.id];
-                                        if (newId) {
-                                            await StorageService.deleteLocation(loc.id);
-                                            await StorageService.saveLocation({ ...loc, id: newId, shortCode: newId });
-                                    }
-                                }
-                                    alert(`총 ${mbxLocations.length}개의 지점 ID가 성공적으로 변경되었습니다! ✨`);
-                                    window.location.reload();
-                                } catch (e) { alert("ID 변경 중 오류가 발생했습니다. 🚨"); console.error(e); }
-                                finally { setIsBulkMapping(false); }
-                            }} disabled={isBulkMapping} className="text-[10px] font-black text-purple-600 hover:underline disabled:opacity-50">
-                                [MBX ID 약칭 변환]
-                            </button>
+                                <button onClick={async () => {
+                                    if (!confirm("MYN- 형식의 지점 ID를 3자리 약칭(AGS, DDP 등)으로 일괄 변경하시겠습니까?\n이 작업은 Firestore 데이터를 직접 수정하며 되돌릴 수 없습니다. 💅")) return;
+                                    setIsBulkMapping(true);
+                                    try {
+                                        const { StorageService } = await import('../../services/storageService');
+                                        const mapping: Record<string, string> = {
+                                            'MYN-001': 'AGS', 'MYN-002': 'DDP', 'MYN-003': 'JNO', 'MYN-004': 'CMR',
+                                            'MYN-005': 'SSU', 'MYN-006': 'GNS', 'MYN-007': 'MEC', 'MYN-008': 'YDO',
+                                            'MYN-009': 'MD2', 'MYN-010': 'IT2', 'MYN-011': 'SRK', 'MYN-012': 'GNM',
+                                            'MYN-013': 'NDM', 'MYN-014': 'ISD', 'MYN-015': 'HDA', 'MYN-016': 'MDD',
+                                            'MYN-017': 'PTK', 'MYN-018': 'SDO', 'MYN-019': 'SWN', 'MYN-020': 'USO',
+                                            'MYN-021': 'BPY', 'MYN-022': 'GPA', 'MYN-023': 'CWN', 'MYN-024': 'USS',
+                                            'MYN-025': 'GAL', 'MYN-026': 'BSN', 'MYN-027': 'DGU', 'MYN-028': 'GHE',
+                                            'MYN-029': 'NPO', 'MYN-030': 'HDE', 'MYN-031': 'JDM', 'MYN-032': 'JEJ',
+                                            'MYN-033': 'GJU'
+                                        };
+                                        const mynLocations = locations.filter(l => l.id.startsWith('MYN-'));
+                                        if (mynLocations.length === 0) { alert("변경할 MYN- 지점이 없습니다. 🙄"); return; }
+                                        for (const loc of mynLocations) {
+                                            const newId = mapping[loc.id];
+                                            if (newId) {
+                                                await StorageService.deleteLocation(loc.id);
+                                                await StorageService.saveLocation({ ...loc, id: newId, shortCode: newId });
+                                            }
+                                        }
+                                        alert(`총 ${mynLocations.length}개의 지점 ID가 성공적으로 변경되었습니다! ✨`);
+                                        window.location.reload();
+                                    } catch (e) { alert("ID 변경 중 오류가 발생했습니다. 🚨"); console.error(e); }
+                                    finally { setIsBulkMapping(false); }
+                                }} disabled={isBulkMapping} className="text-[10px] font-black text-purple-600 hover:underline disabled:opacity-50">
+                                    [MYN ID 약칭 변환]
+                                </button>
                             <button onClick={handleBulkTranslateAddresses} disabled={isBulkMapping} className="text-[10px] font-black text-rose-600 hover:underline disabled:opacity-50">
                                 [전지점 다국어 주소 일괄 보완]
                             </button>

@@ -10,19 +10,14 @@ interface LandingReviewsProps {
 const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
     // 10~15개의 리뷰 목업 (기획안 기반)
     const reviews = [
-        { name: t.reviews_section.review_1.name, location: t.reviews_section.review_1.location, text: t.reviews_section.review_1.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2Fddp.jpeg?alt=media&token=80e940bf-f6c6-4ec2-a356-18d3fec33cea" },
-        // Gyeongbokgung
-        { name: t.reviews_section.review_2.name, location: t.reviews_section.review_2.location, text: t.reviews_section.review_2.text, img: "https://images.unsplash.com/photo-1546874177-9e664107314e?q=80&w=800" },
-        { name: t.reviews_section.review_3.name, location: t.reviews_section.review_3.location, text: t.reviews_section.review_3.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%82%E1%85%A1%E1%86%B7%E1%84%89%E1%85%A1%E1%86%AB.jpeg?alt=media&token=ea864bd8-3fbb-4e8f-a28d-30380cd8f329" },
-        // Gwanghwamun (Chen)
-        { name: t.reviews_section.review_4.name, location: t.reviews_section.review_4.location, text: t.reviews_section.review_4.text, img: "https://images.unsplash.com/photo-1588636906233-fd4d43501a4f?q=80&w=800" },
-        { name: t.reviews_section.review_5.name, location: t.reviews_section.review_5.location, text: t.reviews_section.review_5.text, img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%89%E1%85%A5%E1%86%BC%E1%84%89%E1%85%AE.jpeg?alt=media&token=090a577b-05c1-4006-8e0b-d912fe85845c" },
-        // Bukchon Hanok
-        { name: t.reviews_section.review_6.name, location: t.reviews_section.review_6.location, text: t.reviews_section.review_6.text, img: "https://images.unsplash.com/photo-1602120300958-fcd19f7fb0fc?q=80&w=800" },
-        // Ikseondong
-        { name: t.reviews_section.review_7.name, location: t.reviews_section.review_7.location, text: t.reviews_section.review_7.text, img: "https://images.unsplash.com/photo-1628741366114-1e0325bdf255?q=80&w=800" },
-        // Hangang Park
-        { name: t.reviews_section.review_8.name, location: t.reviews_section.review_8.location, text: t.reviews_section.review_8.text, img: "https://images.unsplash.com/photo-1563288277-3e1dc240dd0f?q=80&w=800" }
+        { name: t.reviews_section.review_1.name, location: t.reviews_section.review_1.location, text: t.reviews_section.review_1.text, img: "/images/reviews/review1.png" },
+        { name: t.reviews_section.review_2.name, location: t.reviews_section.review_2.location, text: t.reviews_section.review_2.text, img: "/images/reviews/review2.png" },
+        { name: t.reviews_section.review_3.name, location: t.reviews_section.review_3.location, text: t.reviews_section.review_3.text, img: "/images/reviews/review3.png" },
+        { name: t.reviews_section.review_4.name, location: t.reviews_section.review_4.location, text: t.reviews_section.review_4.text, img: "/images/reviews/review4.png" },
+        { name: t.reviews_section.review_5.name, location: t.reviews_section.review_5.location, text: t.reviews_section.review_5.text, img: "/images/reviews/review5.png" },
+        { name: t.reviews_section.review_6.name, location: t.reviews_section.review_6.location, text: t.reviews_section.review_6.text, img: "/images/reviews/review6.png" },
+        { name: t.reviews_section.review_7.name, location: t.reviews_section.review_7.location, text: t.reviews_section.review_7.text, img: "/images/reviews/review7.png" },
+        { name: t.reviews_section.review_8.name, location: t.reviews_section.review_8.location, text: t.reviews_section.review_8.text, img: "/images/reviews/review8.png" }
     ];
 
     return (
@@ -57,6 +52,9 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                                 alt={review.name}
                                 loading="lazy"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s]"
+                                onError={(e) => {
+                                    e.currentTarget.src = "https://images.unsplash.com/photo-1578330132822-01966e3a5e3e?q=80&w=800";
+                                }}
                             />
                             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 md:p-10">
                                     <div className="flex items-center gap-3 mb-4">

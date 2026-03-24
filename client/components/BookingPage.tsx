@@ -946,42 +946,41 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 </div>
 
                                                 <div className="rounded-[1.15rem] bg-gray-50/85 px-3 py-2.5">
-                                                    <div className="flex items-end justify-between gap-3">
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400 whitespace-nowrap">
-                                                            {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
+                                                    <div className="flex flex-wrap items-end gap-3">
+                                                        <div className="min-w-[8.5rem] flex-1">
+                                                            <div className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.12em] text-gray-400 whitespace-nowrap">
+                                                                {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
                                                             </div>
-                                                            <div className="mt-1 text-[1.28rem] sm:text-[1.45rem] font-black leading-none text-bee-yellow whitespace-nowrap">
+                                                            <div className="mt-1 text-[1.15rem] sm:text-[1.35rem] font-black leading-none text-bee-yellow whitespace-nowrap">
                                                                 ₩{unitPrice.toLocaleString()}
+                                                            </div>
+                                                            <div className="mt-1.5 text-[9px] sm:text-[10px] font-bold leading-[1.45] text-gray-500 break-keep">
+                                                                {isDelivery
+                                                                    ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
+                                                                    : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-1.5 py-1.5 shadow-sm">
+                                                        <div className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-white px-1.5 py-1.5 shadow-sm">
                                                             <button
                                                                 title="Decrease"
                                                                 aria-label="Decrease"
                                                                 onClick={() => updateBagCount(category.id, -1)}
-                                                                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
+                                                                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-45"
                                                                 disabled={count === 0}
                                                             >
-                                                                <i className="fa-solid fa-minus text-[11px]"></i>
+                                                                <i className="fa-solid fa-minus text-[10px]"></i>
                                                             </button>
-                                                            <span className="w-7 text-center text-[1.65rem] font-black text-bee-black">{count}</span>
+                                                            <span className="w-6 sm:w-7 text-center text-[1.5rem] sm:text-[1.65rem] font-black text-bee-black">{count}</span>
                                                             <button
                                                                 title="Increase"
                                                                 aria-label="Increase"
                                                                 onClick={() => updateBagCount(category.id, 1)}
-                                                                className="flex h-10 w-10 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
+                                                                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-bee-black text-bee-yellow transition-colors shadow-sm hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
                                                             >
-                                                                <i className="fa-solid fa-plus text-[11px]"></i>
+                                                                <i className="fa-solid fa-plus text-[10px] sm:text-[11px]"></i>
                                                             </button>
                                                         </div>
-                                                    </div>
-
-                                                    <div className="mt-1.5 text-[10px] sm:text-[11px] font-bold leading-[1.45] text-gray-500 break-keep">
-                                                        {isDelivery
-                                                            ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
-                                                            : (lang.startsWith('ko') ? '4시간 이후부터는 1시간 단위로 추가 계산됩니다.' : 'After 4 hours, pricing adds in 1-hour increments.')}
                                                     </div>
                                                 </div>
                                             </div>

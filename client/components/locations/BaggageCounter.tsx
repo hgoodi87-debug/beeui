@@ -82,7 +82,7 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
                                         {description}
                                     </p>
                                     
-                                    <div className="flex items-center justify-between mt-auto">
+                                    <div className="flex flex-col items-start gap-2 mt-auto">
                                         <div className="flex flex-col">
                                             <div className="flex items-baseline gap-1">
                                                 <span className="text-[18px] md:text-[22px] font-black text-bee-yellow font-montserrat leading-none">

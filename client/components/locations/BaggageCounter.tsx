@@ -94,22 +94,22 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center bg-gray-50/80 rounded-md p-0.5 border border-gray-100 shadow-inner">
+                                        <div className="flex items-center bg-gray-50/80 rounded-md p-1 border border-gray-100 shadow-inner">
                                             <button
                                                 onClick={() => onCountChange(category.id, -1)}
-                                                className="w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-sm hover:bg-white text-gray-300 disabled:opacity-20 transition-all active:scale-90"
+                                                className="w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-sm hover:bg-white text-gray-300 disabled:opacity-20 transition-all active:scale-90"
                                                 disabled={count === 0}
                                             >
-                                                <Minus size={8} />
+                                                <Minus size={10} />
                                             </button>
-                                            <span className="w-4 md:w-5 text-center font-[1000] text-[10px] md:text-[12px] text-gray-800 font-montserrat select-none">
+                                            <span className="w-5 md:w-6 text-center font-[1000] text-[12px] md:text-[14px] text-gray-800 font-montserrat select-none">
                                                 {count}
                                             </span>
                                             <button
                                                 onClick={() => onCountChange(category.id, 1)}
-                                                className="w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-sm bg-bee-black text-bee-yellow shadow-sm hover:scale-105 active:scale-90 transition-all"
+                                                className="w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-sm bg-bee-black text-bee-yellow shadow-sm hover:scale-105 active:scale-90 transition-all"
                                             >
-                                                <Plus size={8} />
+                                                <Plus size={10} />
                                             </button>
                                         </div>
                                     </div>

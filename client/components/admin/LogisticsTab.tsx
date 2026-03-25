@@ -104,7 +104,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-2">
                 <div className="flex-1">
                     <h1 className="text-2xl md:text-4xl font-black tracking-tight text-bee-black">
-                        {activeTab === 'DELIVERY_BOOKINGS' ? '배송 예약 관리' : '보관 예약 관리'}
+                        {activeTab === 'DELIVERY_BOOKINGS' ? '여정(배송) 스마트 관리' : '여정(거치) 스마트 관리'}
                     </h1>
                 </div>
 
@@ -238,7 +238,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                 <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 센터' : '이동 노선'}</th>
                                 <th className="px-6 py-4">{activeTab === 'STORAGE_BOOKINGS' ? '보관 일정' : '집하 일자'}</th>
                                 <th className="px-6 py-4">금융/정산 상태</th>
-                                <th className="px-6 py-4">{t.admin?.logistics?.table?.status || '운영 관제'}</th>
+                                <th className="px-6 py-4">{t.admin?.logistics?.table?.status || '여정 관제 / 리얼타임'}</th>
                                 <th className="px-6 py-4 text-center">{t.admin?.logistics?.table?.actions || '작업'}</th>
                             </tr>
                         </thead>

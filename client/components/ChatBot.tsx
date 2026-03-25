@@ -176,7 +176,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
         // Attempt 2: Direct Webhook (Fallback - may hit CORS but good for mobile app-like environments)
         try {
             console.log('Attempting Direct Webhook Fallback...');
-            await fetch(directWebhook, {
+            await fetch(directWebhook || '', {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },

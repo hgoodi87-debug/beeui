@@ -27,16 +27,19 @@ const SEO: React.FC<SEOProps> = ({
     ogImage: customOgImage,
     ogType = 'website'
 }) => {
-    // 💅 [스봉이] 쿼리 파라미터가 섞이지 않도록 정규화된 Canonical URL 생성
-    const cleanPath = path.split('?')[0] || '/';
-    const canonicalUrl = `${SITE_URL}${cleanPath}`;
+    // 💅 [스봉이] 언어 접두사를 제거하여 순수 경로만 추출합니다. (e.g., /ko/services -> /services)
+    const rawPath = path.split('?')[0] || '/';
+    const langPattern = /^\/(ko|en|zh-tw|zh-hk|ja|zh)(\/|$)/i;
+    const cleanPath = rawPath.replace(langPattern, '/').replace(/\/$/, '') || '/';
+
+    const canonicalUrl = `${SITE_URL}${rawPath}`;
     const currentUrl = `${SITE_URL}${path}`;
     const routeDefault = STATIC_ROUTE_META[cleanPath];
 
     // Default values
     const defaultTitle = routeDefault?.title || '빌리버 | 서울 짐보관 · 인천공항 당일 짐배송';
-    const defaultDescription = routeDefault?.description || '서울 주요 거점 짐 보관부터 인천공항 당일 짐배송까지. 체크아웃 후 무거운 짐 없이 가볍게 여행하세요.';
-    const defaultKeywords = routeDefault?.keywords || '서울 짐보관, 홍대 짐보관, 서울역 짐보관, 명동 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 호텔 짐보내기, 체크아웃 후 짐보관';
+    const defaultDescription = routeDefault?.description || '서울 주요 거점 스마트 짐 거치부터 인천공항 당일 짐배송까지. 체크아웃 후 짐 걱정 없이 온전한 자유를 만끽하세요.';
+    const defaultKeywords = routeDefault?.keywords || '서울 짐보관, 홍대 짐보관, 서울역 짐보관, 명동 짐보관, 캐리어 배송, 인천공항 짐배송, 당일 짐배송, 체크아웃 후 자유여행, 서울 여행 필수 앱';
 
     const metaTitle = title || defaultTitle;
     const metaDescription = description || defaultDescription;
@@ -78,13 +81,13 @@ const SEO: React.FC<SEOProps> = ({
             )}
 
             {/* Alternate Language Links (Hreflang) */}
-            <link rel="alternate" hrefLang="ko-KR" href={`${SITE_URL}${cleanPath}`} />
-            <link rel="alternate" hrefLang="en" href={`${SITE_URL}${cleanPath}?lang=en`} />
-            <link rel="alternate" hrefLang="ja-JP" href={`${SITE_URL}${cleanPath}?lang=ja`} />
-            <link rel="alternate" hrefLang="zh-CN" href={`${SITE_URL}${cleanPath}?lang=zh`} />
-            <link rel="alternate" hrefLang="zh-TW" href={`${SITE_URL}${cleanPath}?lang=zh-TW`} />
-            <link rel="alternate" hrefLang="zh-HK" href={`${SITE_URL}${cleanPath}?lang=zh-HK`} />
-            <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}${cleanPath}`} />
+            <link rel="alternate" hrefLang="ko-KR" href={`${SITE_URL}/ko${cleanPath === '/' ? '' : cleanPath}`} />
+            <link rel="alternate" hrefLang="en" href={`${SITE_URL}/en${cleanPath === '/' ? '' : cleanPath}`} />
+            <link rel="alternate" hrefLang="ja-JP" href={`${SITE_URL}/ja${cleanPath === '/' ? '' : cleanPath}`} />
+            <link rel="alternate" hrefLang="zh-CN" href={`${SITE_URL}/zh${cleanPath === '/' ? '' : cleanPath}`} />
+            <link rel="alternate" hrefLang="zh-TW" href={`${SITE_URL}/zh-tw${cleanPath === '/' ? '' : cleanPath}`} />
+            <link rel="alternate" hrefLang="zh-HK" href={`${SITE_URL}/zh-hk${cleanPath === '/' ? '' : cleanPath}`} />
+            <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/zh-tw${cleanPath === '/' ? '' : cleanPath}`} />
         </Helmet>
     );
 };

@@ -25,10 +25,12 @@ service cloud.firestore {
              data.pickupDate is string;
     }
 
-    // Bookings: Public creation, Restricted read/update
+    // Bookings: Authenticated creation with validation, Restricted read/update
     match /bookings/{bookingId} {
-      allow create: if isValidBooking(); // 🛡️ Zero-Trust Security Applied
-      allow read, update, delete: if isAdmin() || (request.auth != null && (resource == null || resource.data.userId == request.auth.uid));
+      allow create: if request.auth != null && isValidBooking(); // 🛡️ 인증 + 데이터 검증
+      allow read: if isAdmin() || (request.auth != null && (resource == null || resource.data.userId == request.auth.uid));
+      allow update: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
     // Admins: ONLY Admins can see or list admins. No public leaks! 🛡️

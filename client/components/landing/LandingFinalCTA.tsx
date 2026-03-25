@@ -6,16 +6,17 @@ import { Plane, Navigation } from "lucide-react";
 interface LandingFinalCTAProps {
     t: any;
     onNavigate: (view: any) => void;
+    lang: string;
 }
 
-const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
+const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate, lang }) => {
     return (
-        <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
             {/* Background Image Container */}
             <div className="absolute inset-0">
                 <img
                     src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=2000" // 공항에서 손 흔들며 자유롭게 떠나는 뒷모습
-                    alt="Travel Freedom"
+                    alt="인천공항 짐배송 서비스를 이용해 두 손 가볍게 여행을 마무리하는 자유로운 모습"
                     loading="lazy"
                     className="w-full h-full object-cover brightness-[0.4]"
                 />
@@ -29,9 +30,9 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
-                    className="mb-16"
+                    className="mb-8"
                 >
-                    <div className="inline-flex items-center gap-4 text-bee-black mb-12">
+                    <div className="inline-flex items-center gap-4 text-bee-black mb-8">
                         <div className="w-12 h-12 rounded-full border-2 border-bee-black flex items-center justify-center">
                             <Plane className="w-6 h-6 animate-bounce" />
                         </div>
@@ -41,23 +42,29 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate }) => {
                         </div>
                     </div>
 
-                    <h2 className="text-4xl md:text-6xl lg:text-[6.5rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-16 break-keep whitespace-pre-line px-4">
+                    <h2 className="text-4xl md:text-6xl lg:text-[6.5rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-10 break-keep whitespace-pre-line px-4">
                         {t.final_cta.headline}
                     </h2>
 
                     <div className="flex flex-col md:flex-row gap-6 md:gap-10 justify-center">
-                        <button
-                            onClick={() => onNavigate('LOCATIONS')}
-                            className="px-12 py-5 md:px-20 md:py-8 bg-bee-black text-bee-yellow text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3"
+                        <motion.a
+                            href={`/${lang}/locations`}
+                            onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS'); }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-12 py-5 md:px-20 md:py-8 bg-bee-black text-bee-yellow text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl transition-all tracking-widest uppercase flex items-center justify-center gap-3 cursor-pointer"
                         >
                             {t.final_cta.btn_airport_hotel} ➔
-                        </button>
-                        <button
-                            onClick={() => onNavigate('LOCATIONS')}
-                            className="px-12 py-5 md:px-20 md:py-8 bg-white text-bee-black text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center justify-center gap-3 border-2 border-bee-black"
+                        </motion.a>
+                        <motion.a
+                            href={`/${lang}/locations`}
+                            onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS'); }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-12 py-5 md:px-20 md:py-8 bg-white text-bee-black text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl transition-all tracking-widest uppercase flex items-center justify-center gap-3 border-2 border-bee-black cursor-pointer"
                         >
                             {t.final_cta.btn_hotel_airport} ➔
-                        </button>
+                        </motion.a>
                     </div>
                 </motion.div>
             </div>

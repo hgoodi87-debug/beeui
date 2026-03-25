@@ -63,8 +63,8 @@ export const ko = {
         title2: '두 손 가볍게',
         subtitle: '수하물은 빌리버에게 맡기고,\n당신은 오직 서울의 설레는 매 순간에만 집중하세요.',
         btn_now: '지금 예약하기',
-        btn_store_now: '지금 보관 하기',
-        btn_deliver_now: '지금 배송 하기',
+        cta_storage: "[ 보관 ₩4,000~ 예약하기 ]",
+        cta_delivery: "[ 배송 ₩10,000~ 예약하기 ]",
         track_booking: '내 예약 확인',
         book_branch: '가까운 지점 예약',
         main_title_1: '가장 서울다운 여행,',
@@ -98,14 +98,14 @@ export const ko = {
         quote_good: "\"진작 쓸걸, 완전 신세계! ✨\""
     },
     howitworks: {
-        headline: "단 3단계, 서울 여행의 새로운 공식",
+        headline: "단 3단계,\n서울 여행의 새로운 공식",
         badge_label: "SERVICE PROCESS",
         step1: { title: "Drop (짐 맡기기)", desc: "홍대, 서울역 등 가까운 지점에\n당신의 무거운 짐을 가볍게 넘깁니다.", badge: "STEP 1. Drop" },
         step2: { title: "Tour (서울 즐기기)", desc: "두 손 자유로운 상태로 핫플레이스,\n맛집, 카페 투어를 마음껏 즐깁니다.", badge: "STEP 2. Tour" },
         step3: { title: "Meet (짐 찾기)", desc: "일정을 마치고 원하는 시간에\n가방과 기분 좋게 다시 만납니다.", badge: "STEP 3. Meet" }
     },
     trust: {
-        headline: "당신의 짐은, 우리에겐 VIP입니다.",
+        headline: "당신의 짐은,\n우리에겐 VIP입니다.",
         badge_label: "Safe & Trust Beeliber",
         tracking: { title: "실시간 위치 알림", desc: "내 짐의 보관/배송 상태를 실시간 이메일로 확인하세요.", accent: "STATUS UPDATE" },
         insurance: { title: "프리미엄 안심 보험", desc: "분실/파손 걱정 끝! 최대 50만 원까지 보장되는 든든한 보험.", accent: "SECURED" },
@@ -115,12 +115,12 @@ export const ko = {
         footer_label3: "이미 수만 명이 경험한 신뢰"
     },
     pricing: {
-        headline: "커피 몇 잔 값으로 즐기는,\n서울 여행의 완벽한\n자유",
+        headline: "커피 몇 잔 값으로 즐기는,\n서울 여행의 완벽한 자유",
         desc: "복잡한 크기 계산 없이\n합리적인 단일 요금을 제안합니다.",
         airport_hotel: "서울 거점 짐 보관 (Day)",
         extra_large: "인천공항 당일 배송",
-        price_standard: "₩5,000~",
-        price_extra: "₩20,000~",
+        price_standard: "₩4,000~",
+        price_extra: "₩25,000~",
         features_standard: ["서울 주요 거점 지점 보관", "4시간/1일 단위 유연한 선택", "안전한 실내 보관 및 보안", "기본 파손 보험 포함"],
         features_extra: ["서울 거점 ➔ 인천공항 당일 배송", "무거운 캐리어 전담 서비스", "배송 상태 실시간 알림", "기본 파손 보험 포함"],
         flat_rate_label: "정찰제 요금 💰",

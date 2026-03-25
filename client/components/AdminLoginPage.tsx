@@ -51,6 +51,36 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
 
       const admin = await loginAdmin(inputName, inputPass);
 
+      // [스봉이] 파이버베이스 모드일 때는 UID 매핑이 Firestore 전역에 퍼질 시간이 필요해요.
+      // 깍쟁이처럼 여기서 딱 검증하고 보내드릴게요. 💅
+      if (admin.provider === 'firebase' || !isSupabaseMode) {
+        setLoading(true); // 로딩 메시지 업데이트 유도
+        try {
+          const { db, auth } = await import('../firebaseApp');
+          const { doc, getDoc } = await import('firebase/firestore');
+          const uid = auth.currentUser?.uid;
+
+          if (uid) {
+            console.log(`[AdminLogin] 🛡️ 권한 전파 대기 중... (UID: ${uid})`);
+            let verified = false;
+            let attempts = 0;
+            while (!verified && attempts < 10) {
+              attempts++;
+              const adminDoc = await getDoc(doc(db, 'admins', uid));
+              if (adminDoc.exists() && adminDoc.data()?.role) {
+                console.log(`[AdminLogin] ✅ 권한 전파 확인! (${attempts}회 시도)`);
+                verified = true;
+              } else {
+                await new Promise(r => setTimeout(r, 400));
+              }
+            }
+            if (!verified) console.warn("[AdminLogin] 권한 전파 확인이 늦어지고 있지만, 일단 진입을 시도합니다.");
+          }
+        } catch (verifErr) {
+          console.warn("[AdminLogin] 권한 전파 확인 중 경미한 오류:", verifErr);
+        }
+      }
+
       console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}, provider: ${admin.provider}) 💅`);
       onLogin(admin.name, admin.jobTitle || 'Staff', admin.role, admin.email, admin.branchId);
 
@@ -111,10 +141,10 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
             <i className="fa-solid fa-shield-halved text-bee-black text-3xl font-black relative z-10 drop-shadow-sm group-hover:scale-110 transition-transform duration-300"></i>
           </div>
           <div className="flex items-center justify-center gap-1 mb-2 scale-110">
-            <span className="text-4xl font-black italic text-bee-yellow">bee</span>
-            <span className="text-4xl font-black text-white">liber</span>
+            <span className="text-4xl font-black text-white">bee</span>
+            <span className="text-4xl font-black italic text-bee-yellow">liber</span>
           </div>
-          <p className="text-bee-yellow font-black uppercase tracking-[0.3em] text-[10px] mt-3 drop-shadow-sm">물류 관제 포털</p>
+          <p className="text-bee-yellow font-black uppercase tracking-[0.3em] text-[10px] mt-3 drop-shadow-sm">스마트 여정 관제 포털</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white/5 backdrop-blur-2xl p-10 rounded-[40px] border border-white/10 shadow-2xl space-y-6 hover:shadow-bee-yellow/5 transition-all duration-500">

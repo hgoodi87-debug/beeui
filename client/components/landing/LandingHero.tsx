@@ -6,13 +6,14 @@ import { Branch } from "../../types";
 
 interface LandingHeroProps {
     t: any;
+    lang: string;
     onNavigate: (view: any) => void;
     onTrackClick: () => void;
     branchCode?: string;
     branchData?: Branch;
 }
 
-const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, branchCode, branchData }) => {
+const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackClick, branchCode, branchData }) => {
     const { scrollY } = useScroll();
 
     // Parallax effects for typography
@@ -20,18 +21,24 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
     const opacity = useTransform(scrollY, [0, 300], [1, 0]);
 
     return (
-        <section className="relative h-[100dvh] flex items-center justify-center overflow-hidden bg-black">
+        <section className="relative h-[85dvh] min-h-[600px] flex items-center justify-center overflow-hidden bg-black">
 
             {/* 1. LAYER: Cinematic Background (High-Performance Image) */}
             <div className="absolute inset-0 z-0 overflow-hidden bg-black">
                 <img
                     src="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b"
-                    alt="Cinematic Seoul Background"
+                    alt="빌리버의 프리미엄 짐보관 및 배송 서비스가 이루어지는 아름다운 서울의 전경"
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-80 brightness-[0.7] contrast-[1.1] scale-105"
                     loading="eager"
-                    data-priority="high"
+                    fetchPriority="high"
+                    decoding="async"
+                    style={{ color: 'transparent' }}
                     onError={(e) => {
-                        e.currentTarget.src = "/hero_main.jpg";
+                        const target = e.currentTarget;
+                        if (target.src !== window.location.origin + "/hero_main.jpg") {
+                            console.log("Hero background failed, falling back to local image");
+                            target.src = "/hero_main.jpg";
+                        }
                     }}
                 />
 
@@ -82,86 +89,81 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                         </span>
                     </motion.div>
 
-                    <div className="overflow-hidden pb-2 mb-2">
-                        <motion.h1
-                            variants={{
-                                hidden: { y: "100%", opacity: 0 },
-                                visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
-                            }}
-                            className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
-                        >
-                            {t.hero.main_title_1 || t.hero.title1} {t.hero.main_title_bags && t.hero.main_title_bags.trim() !== "" && (
-                                <span className="text-bee-yellow">{t.hero.main_title_bags}</span>
-                            )}
-                        </motion.h1>
-                    </div>
-                    <div className="overflow-hidden pb-4">
-                        <motion.div
-                            variants={{
-                                hidden: { y: "100%", opacity: 0 },
-                                visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
-                            }}
-                            className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
-                        >
-                            {t.hero.main_title_2 || t.hero.title2} {t.hero.main_title_city && t.hero.main_title_city.trim() !== "" && (
-                                <span>{t.hero.main_title_city}</span>
-                            )}
-                        </motion.div>
-                    </div>
+                    <motion.h1 
+                        className="flex flex-col items-center"
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        <div className="overflow-hidden pb-2 mb-2">
+                            <motion.span
+                                variants={{
+                                    hidden: { y: "100%", opacity: 0 },
+                                    visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+                                }}
+                                className="macro-type block text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
+                            >
+                                {t.hero.main_title_1 || t.hero.title1} {t.hero.main_title_bags && t.hero.main_title_bags.trim() !== "" && (
+                                    <span className="text-bee-yellow">{t.hero.main_title_bags}</span>
+                                )}
+                            </motion.span>
+                        </div>
+                        <div className="overflow-hidden pb-4">
+                            <motion.span
+                                variants={{
+                                    hidden: { y: "100%", opacity: 0 },
+                                    visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 } }
+                                }}
+                                className="macro-type block text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
+                            >
+                                {t.hero.main_title_2 || t.hero.title2} {t.hero.main_title_city && t.hero.main_title_city.trim() !== "" && (
+                                    <span>{t.hero.main_title_city}</span>
+                                )}
+                            </motion.span>
+                        </div>
+                    </motion.h1>
 
                     <motion.p
                         variants={{
                             hidden: { opacity: 0, y: 20, filter: 'blur(5px)' },
                             visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: "easeOut" } }
                         }}
-                        className="text-white/90 text-base md:text-xl font-medium mt-6 md:mt-10 max-w-2xl mx-auto break-keep leading-relaxed drop-shadow-lg whitespace-pre-line px-4"
+                        className="text-white/90 text-base md:text-xl font-medium mt-2 md:mt-4 max-w-2xl mx-auto break-keep leading-relaxed drop-shadow-lg whitespace-pre-line px-4"
                     >
                         {t.hero.subtitle}
                     </motion.p>
                 </motion.div>
             </div>
 
-            {/* 3. LAYER: Bento Grid Widgets (The Micro-Trust) - REMOVED per user request */}
-
             {/* 4. CTA: Apple-style 심플 버튼 & Micro-interaction */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute bottom-12 md:bottom-20 inset-x-0 z-40 flex flex-col xl:flex-row items-center justify-center gap-3 md:gap-4 px-6 w-full max-w-5xl mx-auto"
+                className="absolute bottom-24 md:bottom-36 inset-x-0 z-40 flex items-center justify-center px-6 w-full max-w-5xl mx-auto"
             >
-                <div className="flex flex-row w-full xl:w-auto gap-2 md:gap-4">
-                    <motion.button
+                <div className="flex flex-row w-full sm:w-auto gap-3 md:gap-4 justify-center pointer-events-auto">
+                    <motion.a
                         whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
                         whileTap={{ scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onClick={() => onNavigate('LOCATIONS_STORE')}
-                        className="flex-1 xl:w-[220px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-[17px] flex items-center justify-center shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden whitespace-nowrap px-1"
+                        href={`/${lang}/locations`}
+                        onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS_STORE'); }}
+                        className="flex-1 sm:w-[220px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-[17px] flex items-center justify-center shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden whitespace-nowrap px-1"
                     >
-                        <span className="relative z-10">{t.hero.btn_store_now || "STORE"}</span>
-                    </motion.button>
+                        <span className="relative z-10">{t.hero.cta_storage || "STORE"}</span>
+                    </motion.a>
 
-                    <motion.button
+                    <motion.a
                         whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
                         whileTap={{ scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onClick={() => onNavigate('LOCATIONS_DELIVER')}
-                        className="flex-1 xl:w-[220px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-[17px] flex items-center justify-center shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden whitespace-nowrap px-1"
+                        href={`/${lang}/locations`}
+                        onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS_DELIVER'); }}
+                        className="flex-1 sm:w-[220px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-[17px] flex items-center justify-center shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden whitespace-nowrap px-1"
                     >
-                        <span className="relative z-10">{t.hero.btn_deliver_now || "DELIVER"}</span>
-                    </motion.button>
+                        <span className="relative z-10">{t.hero.cta_delivery || "DELIVER"}</span>
+                    </motion.a>
                 </div>
-
-                <motion.button
-                    whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.15)" }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={onTrackClick}
-                    className="w-full xl:w-[200px] group py-4 md:py-5 bg-white/5 text-white font-black rounded-full text-sm md:text-base flex items-center justify-center gap-2 border border-white/10 backdrop-blur-xl shadow-xl whitespace-nowrap"
-                >
-                    <Smartphone className="w-4 h-4 text-bee-yellow group-hover:scale-110 transition-transform" />
-                    <span>{t.hero.track_booking}</span>
-                </motion.button>
             </motion.div>
 
             {/* Bottom Gradient Fade */}

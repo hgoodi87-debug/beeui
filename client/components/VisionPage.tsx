@@ -15,23 +15,25 @@ import {
     ArrowRight
 } from 'lucide-react';
 import SEO from './SEO';
+import { useAppStore } from '../src/store/appStore';
 
 const LogoLink = () => (
     <div className="flex items-center gap-1">
-        <span className="text-xl font-black italic">bee</span>
+        <span className="text-xl font-black">bee</span>
         <span className="text-xl font-black italic text-bee-yellow">liber</span>
     </div>
 );
 
 const VisionPage: React.FC = () => {
     const navigate = useNavigate();
+    const { lang } = useAppStore();
 
     const phases = [
         {
             id: 1,
             title: "Phase 1: Foundation (Current)",
             subtitle: "The Hands-free Revolution",
-            desc: "서울 내 주요 거점(홍대, 명동, 성수 등) 기반의 스마트 상점 연계 짐 보관 및 체계적인 당일 배송망을 완벽하게 구축했습니다. 💅",
+            desc: "서울 내 주요 거점(홍대, 명동, 성수 등) 기반의 스마트 상점 연계로 당신의 여행에 온전한 자유를 배달합니다. 💅",
             icon: <Smartphone className="text-bee-yellow" />,
             items: ["Smart QR Booking System", "Location-based Tourism Curation", "Hands-free Branding Integration"]
         },
@@ -41,7 +43,7 @@ const VisionPage: React.FC = () => {
             subtitle: "AI-Powered Concierge",
             desc: "단순 보관을 넘어, 인공지능 기반의 개인 맞춤형 여행 큐레이션과 자동화된 고객 상담 시스템을 도입하여 서비스의 질을 한 차원 높입니다. ✨",
             icon: <Cpu className="text-purple-400" />,
-            items: ["AI Chatbot CS Automation", "Personalized Itinerary Engine", "Real-time Fleet Optimization"]
+            items: ["스마트한 여행 파트너 (AI Chatbot)", "Personalized Itinerary Engine", "Real-time Fleet Optimization"]
         },
         {
             id: 3,
@@ -55,7 +57,7 @@ const VisionPage: React.FC = () => {
             id: 4,
             title: "Phase 4: Hyper-Gap (Evolution)",
             subtitle: "The Future of Travel",
-            desc: "Travel Technology의 정점. 무인 자동화 물류 시스템과 데이터 기반의 예측 모델을 통해 세상에서 가장 가벼운 여행 경험을 전 세계에 전파합니다. 🛰️💅",
+            desc: "Travel Technology의 정점. 무인 자동화 연계 시스템과 데이터 기반의 예측 모델을 통해 세상에서 가장 가벼운 여행 경험을 전 세계에 전파합니다. 🛰️💅",
             icon: <Rocket className="text-bee-yellow" />,
             items: ["Autonomous Logistics Center", "Global Standard Protocol", "Ultimate Travel Intelligence"]
         }
@@ -85,13 +87,13 @@ const VisionPage: React.FC = () => {
             {/* Navigation */}
             <nav className="fixed top-0 inset-x-0 z-[100] px-4 py-4">
                 <div className="max-w-4xl mx-auto flex justify-between items-center backdrop-blur-xl bg-white/5 border border-white/10 rounded-full px-6 py-2 shadow-2xl">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2 group">
+                    <button onClick={() => navigate(`/${lang}`)} className="flex items-center gap-2 group">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-bee-yellow group-hover:text-bee-black transition-all">
                             <ChevronLeft size={18} />
                         </div>
                         <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Back to Home</span>
                     </button>
-                    <div className="flex items-center gap-1 cursor-pointer" onClick={() => navigate('/')}>
+                    <div className="flex items-center gap-1 cursor-pointer" onClick={() => navigate(`/${lang}`)}>
                         <LogoLink />
                     </div>
                     <div className="px-5 py-2 bg-bee-yellow/10 text-bee-yellow text-[10px] font-black uppercase tracking-wider rounded-full border border-bee-yellow/20">
@@ -123,8 +125,8 @@ const VisionPage: React.FC = () => {
                     transition={{ delay: 0.3 }}
                     className="text-white/40 font-bold text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
                 >
-                    비리버는 단순한 짐 보관 서비스를 넘어, 인류가 이동하는 방식을 혁신하고<br className="hidden md:block" />
-                    가장 가볍고 완벽한 여행 경험의 표준을 만듭니다. 💅✨
+                    비리버는 단순한 짐 거치 서비스를 넘어, 인류가 이동하는 방식을 혁신하고<br className="hidden md:block" />
+                    가장 가벼운 여행이자 온전한 자유의 표준을 만듭니다. 💅✨
                 </motion.p>
             </header>
 
@@ -188,7 +190,7 @@ const VisionPage: React.FC = () => {
                         </h2>
                         <p className="text-xl font-bold mb-12 opacity-70">비리버와 함께 가장 가벼운 여행을 시작할 준비가 되셨나요?</p>
                         <button 
-                            onClick={() => navigate('/booking')}
+                            onClick={() => navigate(`/${lang}/booking`)}
                             className="inline-flex items-center gap-4 px-12 py-6 bg-bee-black text-bee-yellow rounded-full font-black uppercase tracking-widest text-sm hover:scale-105 transition-transform"
                         >
                             Experience Beeliber <ArrowRight />

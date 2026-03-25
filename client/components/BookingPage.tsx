@@ -149,10 +149,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
             setCouponMessage({ type: 'success', text: '프로모션 코드가 적용되었습니다. 💅✨' });
         } else if (code === 'WELCOME5000') {
             setAppliedCoupon({ code, amount: 5000, type: 'fixed' });
-            setCouponMessage({ type: 'success', text: '웰컴 할인이 적용되었습니다. 🎉' });
+            setCouponMessage({ type: 'success', text: '웰컴 혜택이 적용되었습니다. 🎉' });
         } else if (code === 'BEE10') {
             setAppliedCoupon({ code, amount: 10, type: 'percent' });
-            setCouponMessage({ type: 'success', text: '10% 할인이 적용되었습니다. 🐝' });
+            setCouponMessage({ type: 'success', text: '10% 보너스 혜택이 적용되었습니다. 🐝' });
         } else {
             setAppliedCoupon(null);
             setCouponMessage({ type: 'error', text: '유효하지 않거나 만료된 코드입니다. 🙄' });

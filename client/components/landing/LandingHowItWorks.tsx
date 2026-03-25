@@ -33,14 +33,14 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
     ];
 
     return (
-        <section className="py-32 md:py-64 bg-bee-light/30 overflow-hidden relative">
+        <section className="py-16 md:py-24 bg-bee-light/30 overflow-hidden relative">
             {/* Connection Vector Path (Background) */}
             <svg className="absolute top-1/2 left-0 w-full h-24 hidden lg:block opacity-10 pointer-events-none" viewBox="0 0 1200 100">
                 <path d="M0,50 Q300,0 600,50 T1200,50" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="10 10" className="text-bee-black" />
             </svg>
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
-                <div className="text-center mb-24 md:mb-40">
+                <div className="text-center mb-12 md:mb-20">
                     <motion.span
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -49,7 +49,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                     >
                         {t.howitworks?.badge_label || "MAGIC PROCESS"}
                     </motion.span>
-                    <h2 className="text-4xl md:text-7xl font-display font-black tracking-tighter text-bee-black leading-[1.1] mb-10 break-keep px-4">
+                    <h2 className="text-4xl md:text-7xl font-display font-black tracking-tighter text-bee-black leading-[1.1] mb-10 break-keep px-4 whitespace-pre-line">
                         {t.howitworks.headline}
                     </h2>
                 </div>
@@ -68,7 +68,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                             <div className="relative w-full aspect-[4/5] rounded-[3rem] overflow-hidden mb-12 shadow-2xl">
                                 <img
                                     src={step.img}
-                                    alt={step.title}
+                                    alt="서울 짐보관 지점에서 캐리어를 안전하게 맡기는 과정"
                                     loading="lazy"
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s]"
                                 />

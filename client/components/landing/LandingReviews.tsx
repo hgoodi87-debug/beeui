@@ -10,20 +10,20 @@ interface LandingReviewsProps {
 const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
     // 10~15개의 리뷰 목업 (기획안 기반)
     const reviews = [
-        { name: t.reviews_section.review_1.name, location: t.reviews_section.review_1.location, text: t.reviews_section.review_1.text, img: "/images/reviews/review1.png" },
-        { name: t.reviews_section.review_2.name, location: t.reviews_section.review_2.location, text: t.reviews_section.review_2.text, img: "/images/reviews/review2.png" },
-        { name: t.reviews_section.review_3.name, location: t.reviews_section.review_3.location, text: t.reviews_section.review_3.text, img: "/images/reviews/review3.png" },
-        { name: t.reviews_section.review_4.name, location: t.reviews_section.review_4.location, text: t.reviews_section.review_4.text, img: "/images/reviews/review4.png" },
-        { name: t.reviews_section.review_5.name, location: t.reviews_section.review_5.location, text: t.reviews_section.review_5.text, img: "/images/reviews/review5.png" },
-        { name: t.reviews_section.review_6.name, location: t.reviews_section.review_6.location, text: t.reviews_section.review_6.text, img: "/images/reviews/review6.png" },
-        { name: t.reviews_section.review_7.name, location: t.reviews_section.review_7.location, text: t.reviews_section.review_7.text, img: "/images/reviews/review7.png" },
-        { name: t.reviews_section.review_8.name, location: t.reviews_section.review_8.location, text: t.reviews_section.review_8.text, img: "/images/reviews/review8.png" }
+        { name: t.reviews_section.review_1.name, location: t.reviews_section.review_1.location, text: t.reviews_section.review_1.text, img: "/images/reviews/sarah_ddp.png" },
+        { name: t.reviews_section.review_2.name, location: t.reviews_section.review_2.location, text: t.reviews_section.review_2.text, img: "/images/reviews/yuki_gyeongbok.png" },
+        { name: t.reviews_section.review_3.name, location: t.reviews_section.review_3.location, text: t.reviews_section.review_3.text, img: "/images/reviews/emma_namsan.png" },
+        { name: t.reviews_section.review_4.name, location: t.reviews_section.review_4.location, text: t.reviews_section.review_4.text, img: "/images/reviews/real_op_1.jpg" },
+        { name: t.reviews_section.review_5.name, location: t.reviews_section.review_5.location, text: t.reviews_section.review_5.text, img: "/images/reviews/real_op_2.jpg" },
+        { name: t.reviews_section.review_6.name, location: t.reviews_section.review_6.location, text: t.reviews_section.review_6.text, img: "/images/reviews/real_op_3.jpg" },
+        { name: t.reviews_section.review_7.name, location: t.reviews_section.review_7.location, text: t.reviews_section.review_7.text, img: "/images/reviews/real_op_4.jpg" },
+        { name: t.reviews_section.review_8.name, location: t.reviews_section.review_8.location, text: t.reviews_section.review_8.text, img: "/images/reviews/real_op_5.jpg" }
     ];
 
     return (
-        <section className="py-32 md:py-64 bg-bee-light/10 overflow-hidden relative">
+        <section className="py-16 md:py-24 bg-bee-light/10 overflow-hidden relative">
             <div className="max-w-7xl mx-auto px-6 relative z-10">
-                <div className="text-center mb-24 md:mb-40">
+                <div className="text-center mb-12 md:mb-20">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         whileInView={{ opacity: 1, scale: 1 }}
@@ -32,7 +32,7 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                         <Instagram className="w-5 h-5 text-pink-500" />
                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-bee-black/40 font-outfit">#beeliber_seoul</span>
                     </motion.div>
-                    <h2 className="text-3xl md:text-6xl font-display font-black text-bee-black leading-tight tracking-tighter break-keep px-4">
+                    <h2 className="text-3xl md:text-6xl font-display font-black text-bee-black leading-tight tracking-tighter break-keep px-4 whitespace-pre-line">
                         {t.reviews_section.headline}
                     </h2>
                 </div>
@@ -49,11 +49,11 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                         >
                             <img
                                 src={review.img}
-                                alt={review.name}
+                                alt={`${review.name || "빌리버 사용자"}의 서울 짐보관 여행 서비스 이용 후기 이미지`}
                                 loading="lazy"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s]"
                                 onError={(e) => {
-                                    e.currentTarget.src = "https://images.unsplash.com/photo-1578330132822-01966e3a5e3e?q=80&w=800";
+                                    e.currentTarget.src = "/images/operations/real_ops_01.jpg";
                                 }}
                             />
                             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 md:p-10">
@@ -75,7 +75,7 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                 </div>
 
                 {/* Proof Ticker */}
-                <div className="mt-24 md:mt-32 overflow-hidden flex whitespace-nowrap gap-12 opacity-20 hover:opacity-100 transition-opacity duration-1000 border-y border-bee-black/5 py-8">
+                <div className="mt-12 md:mt-16 overflow-hidden flex whitespace-nowrap gap-12 opacity-20 hover:opacity-100 transition-opacity duration-1000 border-y border-bee-black/5 py-8">
                     <div className="flex gap-16 animate-infinite-scroll w-max">
                         {[1, 2, 3, 4].map(ticker => (
                             <div key={ticker} className="flex gap-16 items-center font-display font-black text-xl md:text-5xl tracking-tighter italic text-bee-black uppercase">

@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, MapPin, Lock, CheckCircle2 } from "lucide-react";
+import AggregateRatingSchema from "../../src/domains/shared/ui/FAQ/AggregateRatingSchema";
 
 interface LandingTrustBadgeProps {
     t: any;
@@ -30,12 +31,13 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
     ];
 
     return (
-        <section className="py-32 md:py-64 bg-bee-black overflow-hidden relative">
+        <section className="py-16 md:py-24 bg-bee-black overflow-hidden relative">
+            <AggregateRatingSchema />
             {/* Background Visual Depth */}
             <div className="absolute inset-0">
                 <img
                     src="https://images.unsplash.com/photo-1557597774-9d2739f85a76?auto=format&fit=crop&q=80&w=2000" // 세련된 보안 시스템/네트워크 느낌
-                    alt="Security Infrastructure"
+                    alt="빌리버의 스마트 보안 시스템과 실시간 배송 추적이 이루어지는 안전한 인프라"
                     className="w-full h-full object-cover opacity-10 grayscale"
                 />
             </div>
@@ -46,7 +48,7 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
             <div className="absolute inset-0 bg-gradient-to-b from-bee-black via-transparent to-bee-black" />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
-                <div className="text-center mb-24 md:mb-40">
+                <div className="text-center mb-12 md:mb-20">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         whileInView={{ opacity: 1, scale: 1 }}
@@ -57,7 +59,7 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                             {t.trust?.badge_label || "VIP Bee-Keeper Trust"}
                         </span>
                     </motion.div>
-                    <h2 className="text-3xl md:text-6xl font-display font-black text-white leading-tight tracking-tighter break-keep px-4">
+                    <h2 className="text-3xl md:text-6xl font-display font-black text-white leading-tight tracking-tighter break-keep px-4 whitespace-pre-line">
                         {t.trust.headline}
                     </h2>
                 </div>
@@ -83,7 +85,7 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                 </div>
 
                 {/* Assurance Indicator */}
-                <div className="mt-32 pt-20 border-t border-white/10 flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-1000">
+                <div className="mt-16 pt-10 border-t border-white/10 flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-1000">
                     <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-6 h-6 text-bee-yellow" />
                         <span className="text-white font-black tracking-widest text-sm uppercase">{t.trust?.footer_label1 || "24/7 Monitoring"}</span>

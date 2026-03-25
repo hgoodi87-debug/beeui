@@ -2031,7 +2031,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           <div className="space-y-4">
             <div className="flex items-center gap-2 px-2">
               <span className="w-1 h-3 bg-bee-yellow rounded-full"></span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Operations & Logistics</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Operations & Experience</span>
             </div>
             <nav className="space-y-1">
               {[

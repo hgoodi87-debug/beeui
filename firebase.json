@@ -6,6 +6,8 @@
             "**/.*",
             "**/node_modules/**"
         ],
+        "cleanUrls": true,
+        "trailingSlash": false,
         "rewrites": [
             {
                 "source": "/api/verify-admin",
@@ -19,7 +21,7 @@
             },
             {
                 "source": "**",
-                "destination": "/__spa-fallback.html"
+                "destination": "/index.html"
             }
         ],
         "headers": [

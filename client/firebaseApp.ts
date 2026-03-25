@@ -36,16 +36,37 @@ console.log("[Firebase] Initializing with Bucket:", firebaseConfig.storageBucket
  * Guarantees that the user is authenticated (anonymously) before proceeding.
  * Returns a promise that resolves once auth is ready.
  */
+let _authReady: Promise<any> | null = null;
+const waitForAuthInit = async (): Promise<any> => {
+    if (_authReady) return _authReady;
+    _authReady = (async () => {
+        const { onAuthStateChanged } = await import('firebase/auth');
+        return new Promise((resolve) => {
+            const unsubscribe = onAuthStateChanged(auth, (user: any) => {
+                unsubscribe();
+                resolve(user);
+            });
+            // [스봉이] 2초 안에 안 오면 null로 진행 — 무한 대기 방지 💅
+            setTimeout(() => resolve(null), 2000);
+        });
+    })();
+    return _authReady;
+};
+
 export const ensureAuth = async (): Promise<any> => {
-    // [스봉이] 이미 번듯하게 로그인되어 있다면 바로 보내주고요 💅
-    if (auth.currentUser) {
-        console.log("[Firebase] Existing user found:", auth.currentUser.uid);
+    // [스봉이] auth 초기화가 끝날 때까지 기다려야 기존 세션을 놓치지 않아요 💅
+    const existingUser = await waitForAuthInit();
+
+    // 이미 번듯하게 로그인되어 있다면 바로 보내주고요 💅
+    const current = auth.currentUser || existingUser;
+    if (current) {
+        console.log("[Firebase] Existing user found:", current.uid);
         try {
-            await auth.currentUser.getIdToken();
+            await current.getIdToken();
         } catch (tokenError) {
             console.warn("[Firebase] Existing user token refresh skipped:", tokenError);
         }
-        return auth.currentUser;
+        return current;
     }
 
     try {
@@ -55,12 +76,12 @@ export const ensureAuth = async (): Promise<any> => {
 
         // [스봉이] 토큰이 준비되기 전에 Firestore를 두드리면 괜히 권한에 삐끗하거든요. 여기서 끝까지 받아옵니다. 💅
         await cred.user.getIdToken(true);
-        await new Promise(r => setTimeout(r, 250));
+        await new Promise(r => setTimeout(r, 500));
         return cred.user;
     } catch (error: any) {
         console.error("[Firebase] Anonymous Authentication Failed! 🚨", error);
         if (error.code === 'auth/operation-not-allowed') {
-            throw new Error("파이버베이스 콘솔에서 '익명 로그인(Anonymous Auth)'을 활성화해야 합니다! 💅");
+            throw new Error("파이어베이스 콘솔에서 '익명 로그인(Anonymous Auth)'을 활성화해야 합니다! 💅");
         }
         throw error;
     }

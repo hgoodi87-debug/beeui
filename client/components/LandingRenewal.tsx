@@ -22,12 +22,16 @@ import { TipAreaInfo } from "../src/domains/shared/types";
 
 import TrackingWidget from "./TrackingWidget";
 import LandingHero from "./landing/LandingHero";
-import LandingPainSection from "./landing/LandingPainSection";
-import LandingHowItWorks from "./landing/LandingHowItWorks";
-import LandingTrustBadge from "./landing/LandingTrustBadge";
-import LandingPricing from "./landing/LandingPricing";
-import LandingReviews from "./landing/LandingReviews";
-import LandingFinalCTA from "./landing/LandingFinalCTA";
+import LandingOperationsMarquee from "./landing/LandingOperationsMarquee";
+
+// [스봉이] 아래 섹션들은 스크롤 할 때만 불러오도록 지능적으로 세팅했어요. 💅✨
+const LandingPainSection = React.lazy(() => import("./landing/LandingPainSection"));
+const LandingHowItWorks = React.lazy(() => import("./landing/LandingHowItWorks"));
+const LandingTrustBadge = React.lazy(() => import("./landing/LandingTrustBadge"));
+const LandingPricing = React.lazy(() => import("./landing/LandingPricing"));
+const LandingReviews = React.lazy(() => import("./landing/LandingReviews"));
+const LandingFAQ = React.lazy(() => import("./landing/LandingFAQ"));
+const LandingFinalCTA = React.lazy(() => import("./landing/LandingFinalCTA"));
 import Logo from "./Logo";
 
 
@@ -84,14 +88,29 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
             {/* Global Navigation */}
             <nav className="fixed top-0 inset-x-0 z-[100] px-4 py-4 transition-all duration-300">
                 <div className="max-w-[1200px] mx-auto flex justify-between items-center backdrop-blur-xl bg-black/40 border border-white/10 rounded-full px-6 py-2 shadow-2xl">
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center gap-3 group cursor-pointer"
-                        onClick={() => onNavigate('HOME')}
-                    >
-                        <Logo size="sm" />
-                    </motion.div>
+                    <div className="flex items-center gap-3">
+                        <motion.a
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            href={`/${lang}`}
+                            className="flex items-center group cursor-pointer"
+                            onClick={(e) => { e.preventDefault(); onNavigate('HOME'); }}
+                        >
+                            <Logo size="sm" />
+                        </motion.a>
+
+                        <motion.a
+                            href={`/${lang}/tracking`}
+                            onClick={(e) => { e.preventDefault(); setShowTracking(true); }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-white text-[11px] font-black tracking-wider transition-all shadow-lg ml-2 cursor-pointer"
+                        >
+                            <Smartphone className="w-3.5 h-3.5 text-bee-yellow" />
+                            <span className="hidden sm:inline">{t.hero?.track_booking || "TRACK"}</span>
+                            <span className="sm:hidden">예약확인</span>
+                        </motion.a>
+                    </div>
 
                     <div className="flex items-center gap-3">
                         {/* Language Picker */}
@@ -170,19 +189,21 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     >
                         <div className="flex flex-col gap-8 text-center">
                             {[
-                                { id: 'SERVICES', label: t.nav.services },
-                                { id: 'LOCATIONS', label: t.nav.locations },
-                                { id: 'VISION', label: 'Brand Vision' },
-                                { id: 'PARTNERSHIP', label: t.nav.partners },
-                                { id: 'QNA', label: 'Q&A' },
-                                { id: 'MYPAGE', label: user && !user.isAnonymous ? t.nav.mypage : t.nav.login }
+                                { id: 'SERVICES', label: t.nav.services, path: 'services' },
+                                { id: 'LOCATIONS', label: t.nav.locations, path: 'locations' },
+                                { id: 'VISION', label: 'Brand Vision', path: 'vision' },
+                                { id: 'PARTNERSHIP', label: t.nav.partners, path: 'partnership' },
+                                { id: 'QNA', label: 'Q&A', path: 'qna' },
+                                { id: 'MYPAGE', label: user && !user.isAnonymous ? t.nav.mypage : t.nav.login, path: 'mypage' }
                             ].map((item, i) => (
-                                <motion.button
+                                <motion.a
                                     key={item.id}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.1 }}
-                                    onClick={() => {
+                                    href={`/${lang}/${item.path}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
                                         if (item.id === 'MYPAGE') {
                                             if (user && !user.isAnonymous) onMyPageClick();
                                             else onLoginClick();
@@ -191,10 +212,10 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                         }
                                         setIsMenuOpen(false);
                                     }}
-                                    className="text-2xl md:text-5xl font-display font-black text-white hover:text-bee-yellow transition-colors tracking-tighter uppercase"
+                                    className="text-2xl md:text-5xl font-display font-black text-white hover:text-bee-yellow transition-colors tracking-tighter uppercase cursor-pointer"
                                 >
                                     {item.label}
-                                </motion.button>
+                                </motion.a>
                             ))}
                         </div>
                     </motion.div>
@@ -205,24 +226,29 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
             <main>
                 <LandingHero
                     t={t}
+                    lang={lang}
                     onNavigate={onNavigate}
                     onTrackClick={() => setShowTracking(true)}
                     branchCode={branchCode}
                     branchData={branchData}
                 />
 
+                <LandingOperationsMarquee t={t} />
+
                 {/* 💅 THE SEOUL HUB 섹션 - 비활성화됨 (숨김 처리) */}
                 {/* <section className="py-24 bg-white border-y border-gray-100">
                     ... THE SEOUL HUB section hidden ...
                 </section> */}
 
-                <LandingPainSection t={t} />
-                <LandingHowItWorks t={t} />
-                <LandingTrustBadge t={t} />
-                <LandingPricing t={t} onNavigate={onNavigate} />
-                <LandingReviews t={t} />
-
-                <LandingFinalCTA t={t} onNavigate={onNavigate} />
+                <React.Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse" />}>
+                    <LandingPainSection t={t} />
+                    <LandingHowItWorks t={t} />
+                    <LandingTrustBadge t={t} />
+                    <LandingPricing t={t} onNavigate={onNavigate} lang={lang} />
+                    <LandingReviews t={t} />
+                    <LandingFAQ t={t} />
+                    <LandingFinalCTA t={t} onNavigate={onNavigate} lang={lang} />
+                </React.Suspense>
             </main>
 
             <AnimatePresence>

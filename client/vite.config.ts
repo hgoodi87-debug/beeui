@@ -13,13 +13,12 @@ export default defineConfig({
             return;
           }
 
-          if (id.includes('/firebase/')) {
-            return 'vendor-firebase';
-          }
-
-          if (id.includes('/@tanstack/')) {
-            return 'vendor-query';
-          }
+          if (id.includes('/firebase/')) return 'vendor-firebase';
+          if (id.includes('/@tanstack/')) return 'vendor-query';
+          if (id.includes('/framer-motion/')) return 'vendor-motion';
+          if (id.includes('/lucide-react/')) return 'vendor-icons';
+          if (id.includes('/react-dom/')) return 'vendor-react-dom';
+          if (id.includes('/@supabase/')) return 'vendor-supabase';
         }
       }
     }

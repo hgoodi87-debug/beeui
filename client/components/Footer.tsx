@@ -25,13 +25,13 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
               {t.footer?.desc || "Experience the freedom of travel without baggage."}
             </p>
             <div className="flex gap-4 justify-center md:justify-start">
-              <a href="#" title="Instagram" aria-label="Instagram" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
+              <a href="https://www.instagram.com/beeliber_official" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
                 <Instagram size={18} className="text-white hover:text-bee-black" />
               </a>
-              <a href="#" title="Facebook" aria-label="Facebook" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
+              <a href="https://www.facebook.com/beeliber" target="_blank" rel="noopener noreferrer" title="Facebook" aria-label="Facebook" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
                 <Facebook size={18} className="text-white hover:text-bee-black" />
               </a>
-              <a href="#" title="Twitter" aria-label="Twitter" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
+              <a href="https://twitter.com/beeliber" target="_blank" rel="noopener noreferrer" title="Twitter" aria-label="Twitter" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
                 <Twitter size={18} className="text-white hover:text-bee-black" />
               </a>
             </div>
@@ -43,12 +43,12 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.service || "Service"}</h3>
               <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('USER'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('TIPS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('VISION'); }} className="hover:text-bee-yellow transition-colors">Brand Vision</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">Q&A</button></li>
+                <li><a href="/" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
+                <li><a href="/locations" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
+                <li><a href="/pricing" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
+                <li><a href="/tips" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TIPS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
+                <li><a href="/vision" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="hover:text-bee-yellow transition-colors">Brand Vision</a></li>
+                <li><a href="/qna" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">Q&A</a></li>
               </ul>
             </div>
 
@@ -56,9 +56,9 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.legal || "Legal"}</h3>
               <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('PRIVACY'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('TERMS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</button></li>
-                <li><button onClick={() => { scrollToTop(); onNavigate?.('REFUND'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</button></li>
+                <li><a href="/privacy" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('PRIVACY'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</a></li>
+                <li><a href="/terms" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TERMS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</a></li>
+                <li><a href="/refund" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('REFUND'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</a></li>
               </ul>
             </div>
 

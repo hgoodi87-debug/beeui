@@ -365,9 +365,23 @@ export const StorageService = {
     try {
       const { auth, ensureAuth, db } = await import('../firebaseApp');
       const { collection, doc, setDoc, onSnapshot } = await import('firebase/firestore');
-      const currentUser = await ensureAuth();
 
-      // 예약 저장 직전의 인증 UID를 문서에 고정해 두어야, 후속 onSnapshot 읽기가 규칙에 막히지 않습니다.
+      // [스봉이] ensureAuth 재시도 로직 — 네트워크 불안정 시에도 3번까지 버텨줍니다 💅
+      let currentUser: any = null;
+      let authAttempts = 0;
+      const MAX_AUTH_ATTEMPTS = 3;
+      while (!currentUser && authAttempts < MAX_AUTH_ATTEMPTS) {
+        authAttempts++;
+        try {
+          currentUser = await ensureAuth();
+        } catch (authErr: any) {
+          console.warn(`[StorageService] Auth attempt ${authAttempts}/${MAX_AUTH_ATTEMPTS} failed:`, authErr?.message);
+          if (authAttempts >= MAX_AUTH_ATTEMPTS) throw authErr;
+          await new Promise(r => setTimeout(r, 500 * authAttempts));
+        }
+      }
+
+      // 예약 저장 직전의 인증 UID를 문서에 고정해 두어야, 후속 읽기가 규칙에 막히지 않습니다.
       const bookingOwnerUid = safeBooking.userId || auth.currentUser?.uid || currentUser?.uid;
       if (!bookingOwnerUid) {
         throw new Error('예약 저장용 사용자 인증을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
@@ -383,6 +397,7 @@ export const StorageService = {
         let isResolved = false;
         let pollTimer: ReturnType<typeof setInterval> | null = null;
         let transientReadFailures = 0;
+        let pollCount = 0;
 
         const finish = (handler: () => void) => {
           if (isResolved) return;
@@ -392,7 +407,30 @@ export const StorageService = {
           handler();
         };
 
+        // [스봉이] CF 미트리거 폴백: 12초 이상 SERVER_VALIDATION_PENDING 유지 시 클라이언트에서 직접 확정 💅
+        const tryClientFallbackConfirm = async () => {
+          try {
+            const snap = await getDoc(docRef);
+            if (!snap.exists()) return false;
+            const data = snap.data();
+            if (data.status === 'SERVER_VALIDATION_PENDING') {
+              console.warn('[StorageService] Cloud Function did not trigger within expected window. Applying client fallback... 💅');
+              const { updateDoc } = await import('firebase/firestore');
+              await updateDoc(docRef, { status: '접수완료' });
+              const updatedSnap = await getDoc(docRef);
+              const updatedData = updatedSnap.exists() ? updatedSnap.data() : data;
+              finish(() => resolve({ ...(updatedData as BookingState), id: docRef.id, status: '접수완료' as any }));
+              return true;
+            }
+            return false;
+          } catch (fallbackErr) {
+            console.error('[StorageService] Client fallback confirm failed:', fallbackErr);
+            return false;
+          }
+        };
+
         const inspectBookingStatus = async () => {
+          pollCount++;
           try {
             const snap = await getDoc(docRef);
             if (!snap.exists()) return;
@@ -407,24 +445,47 @@ export const StorageService = {
             if (data.status === 'ERROR' || data.status === '예약실패') {
               console.error("[StorageService] Backend validation failed! 🚨", data);
               finish(() => reject(new Error(data.error || '예약 검증 중 오류가 발생했습니다.')));
+              return;
+            }
+
+            // [스봉이] CF가 15초 이상 안 오면 클라이언트 폴백 시도 💅
+            if (data.status === 'SERVER_VALIDATION_PENDING' && pollCount >= 18) {
+              await tryClientFallbackConfirm();
             }
           } catch (err: any) {
             const isPermissionRace = err?.code === 'permission-denied'
               || err?.message?.includes('Missing or insufficient permissions');
 
-            if (isPermissionRace && transientReadFailures < 5) {
+            if (isPermissionRace && transientReadFailures < 10) {
               transientReadFailures += 1;
               console.warn('[StorageService] Booking confirmation read raced auth propagation. Retrying...', transientReadFailures);
               return;
+            }
+
+            // [스봉이] permission-denied가 계속 나면 토큰 리프레시 시도 후 한 번 더 💅
+            if (isPermissionRace && transientReadFailures === 10) {
+              try {
+                const freshUser = await ensureAuth();
+                if (freshUser) {
+                  await freshUser.getIdToken(true);
+                  transientReadFailures++; // 11 — 한 번만 추가 시도
+                  console.warn('[StorageService] Token refreshed. Giving one more chance...');
+                  return;
+                }
+              } catch (_) { /* 최후 시도 실패 */ }
             }
 
             finish(() => reject(err));
           }
         };
 
-        const timeoutId = setTimeout(() => {
-          finish(() => reject(new Error('예약 저장 확인이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.')));
-        }, 25000);
+        const timeoutId = setTimeout(async () => {
+          // [스봉이] 타임아웃 직전 마지막으로 클라이언트 폴백 시도 💅
+          const rescued = await tryClientFallbackConfirm();
+          if (!rescued) {
+            finish(() => reject(new Error('예약 저장 확인이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.')));
+          }
+        }, 30000);
 
         // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 깨끗하게 씻겨서 보내야죠 💅
         const cleanData = (obj: any): any => {
@@ -450,10 +511,13 @@ export const StorageService = {
           finish(() => reject(err));
         });
 
-        pollTimer = setInterval(() => {
+        // [스봉이] 첫 폴링은 1초 뒤부터 — 쓰기가 전파되기 전에 읽으면 허탕이에요 💅
+        setTimeout(() => {
           void inspectBookingStatus();
-        }, 700);
-        void inspectBookingStatus();
+          pollTimer = setInterval(() => {
+            void inspectBookingStatus();
+          }, 800);
+        }, 1000);
       });
 
     } catch (e: any) {

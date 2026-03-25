@@ -9,9 +9,9 @@ export interface StorageRate {
 }
 
 export const STORAGE_RATES: Record<keyof BagSizes, StorageRate> = {
-    handBag: { hours4: 4000, hourlyAfter4h: 200, day1: 8000, extraDay: 6000, day7: 44000 },
-    carrier: { hours4: 5000, hourlyAfter4h: 250, day1: 10000, extraDay: 8000, day7: 58000 },
-    strollerBicycle: { hours4: 10000, hourlyAfter4h: 200, day1: 14000, extraDay: 10000, day7: 74000 },
+    handBag: { hours4: 2000, hourlyAfter4h: 200, day1: 6000, extraDay: 4000, day7: 30000 },
+    carrier: { hours4: 3000, hourlyAfter4h: 250, day1: 8000, extraDay: 6000, day7: 44000 },
+    strollerBicycle: { hours4: 5000, hourlyAfter4h: 200, day1: 10000, extraDay: 8000, day7: 58000 },
 };
 
 export interface PriceResult {

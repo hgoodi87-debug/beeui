@@ -38,6 +38,8 @@ export const zhHK = {
         title2: '更自由。',
         subtitle: '將重行李交俾 Beeliber，\n輕鬆享受旅遊嘅每一刻。',
         btn_now: '立即減負 ➔',
+        btn_store_now: '立即寄存 ➔',
+        btn_deliver_now: '立即配送 ➔',
         track_booking: '查詢配送詳情',
         book_branch: '立即預訂',
         main_title_1: '旅行，免行李',

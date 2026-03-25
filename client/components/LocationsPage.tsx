@@ -26,6 +26,7 @@ interface LocationsPageProps {
   onLangChange: (lang: string) => void;
   user: any;
   initialLocationId?: string;
+  initialServiceType?: string;
 }
 
 const LocationsPage: React.FC<LocationsPageProps> = ({
@@ -34,12 +35,15 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   t,
   lang,
   user,
-  initialLocationId
+  initialLocationId,
+  initialServiceType
 }) => {
   const { data: rawLocations = [] } = useLocations();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState<LocationOption | null>(null);
-  const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>('STORAGE');
+  const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>(
+    initialServiceType === 'DELIVERY' || initialServiceType === 'SAME_DAY' ? 'SAME_DAY' : 'STORAGE'
+  );
   const [bookingDate, setBookingDate] = useState(formatKSTDate());
   const [bookingTime, setBookingTime] = useState('09:00');
   const [returnDate, setReturnDate] = useState(formatKSTDate());

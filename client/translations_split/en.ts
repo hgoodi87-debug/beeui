@@ -43,6 +43,8 @@ export const en = {
         title2: 'from your luggage.',
         subtitle: 'From hotel to airport, leave your heavy bags to Beeliber and enjoy every moment of your trip with a light heart.',
         btn_now: 'Book Now',
+        btn_store_now: 'Store Now',
+        btn_deliver_now: 'Deliver Now',
         track_booking: 'Track Booking',
         book_branch: 'Book Now',
         main_title_1: 'Liberate yourself',

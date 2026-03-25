@@ -43,6 +43,8 @@ export const zhTW = {
         title2: '開啟自由旅行。',
         subtitle: '從酒店到機場，沈重的行李交給 Beeliber，\n輕便享受在韓國的每一刻。',
         btn_now: '立即減負 ➔',
+        btn_store_now: '立即寄存 ➔',
+        btn_deliver_now: '立即配送 ➔',
         track_booking: '查詢配送詳情',
         book_branch: '立即預訂',
         main_title_1: '放下行李，',

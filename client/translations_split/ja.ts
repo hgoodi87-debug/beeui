@@ -43,6 +43,8 @@ export const ja = {
         title2: '自由になろう。',
         subtitle: 'ホテルから空港まで、重い荷物は Beeliber に預けて、\n身軽に旅行のすべての瞬間を楽しんでください。',
         btn_now: '今すぐ身軽になる ➔',
+        btn_store_now: '今すぐ保管する ➔',
+        btn_deliver_now: '今すぐ配送する ➔',
         track_booking: '予約と配送を確認',
         book_branch: '今すぐ予約',
         main_title_1: '荷物から、',

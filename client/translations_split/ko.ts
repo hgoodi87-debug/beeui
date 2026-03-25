@@ -63,6 +63,8 @@ export const ko = {
         title2: '두 손 가볍게',
         subtitle: '수하물은 빌리버에게 맡기고,\n당신은 오직 서울의 설레는 매 순간에만 집중하세요.',
         btn_now: '지금 예약하기',
+        btn_store_now: '지금 보관 하기',
+        btn_deliver_now: '지금 배송 하기',
         track_booking: '내 예약 확인',
         book_branch: '가까운 지점 예약',
         main_title_1: '가장 서울다운 여행,',

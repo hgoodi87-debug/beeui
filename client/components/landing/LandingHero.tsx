@@ -128,27 +128,38 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute bottom-12 md:bottom-20 inset-x-0 z-40 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-5 px-6"
+                className="absolute bottom-12 md:bottom-20 inset-x-0 z-40 flex flex-col xl:flex-row items-center justify-center gap-3 md:gap-4 px-6 w-full max-w-5xl mx-auto"
             >
-                <motion.button
-                    whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={() => onNavigate('LOCATIONS')}
-                    className="w-full sm:w-[280px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-xl flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden"
-                >
-                    <span className="relative z-10">{t.hero.btn_now || "BOOK NOW & FREE YOUR HANDS"}</span>
-                    <ChevronRight className="relative z-10 w-4 h-4 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
-                </motion.button>
+                <div className="flex flex-row w-full xl:w-auto gap-2 md:gap-4">
+                    <motion.button
+                        whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        onClick={() => onNavigate('LOCATIONS_STORE')}
+                        className="flex-1 xl:w-[220px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-[17px] flex items-center justify-center shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden whitespace-nowrap px-1"
+                    >
+                        <span className="relative z-10">{t.hero.btn_store_now || "STORE"}</span>
+                    </motion.button>
+
+                    <motion.button
+                        whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        onClick={() => onNavigate('LOCATIONS_DELIVER')}
+                        className="flex-1 xl:w-[220px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-[17px] flex items-center justify-center shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden whitespace-nowrap px-1"
+                    >
+                        <span className="relative z-10">{t.hero.btn_deliver_now || "DELIVER"}</span>
+                    </motion.button>
+                </div>
 
                 <motion.button
                     whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.15)" }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     onClick={onTrackClick}
-                    className="w-full sm:w-[280px] group py-4 md:py-5 bg-white/5 text-white font-black rounded-full text-sm md:text-xl flex items-center justify-center gap-3 border border-white/10 backdrop-blur-xl shadow-xl"
+                    className="w-full xl:w-[200px] group py-4 md:py-5 bg-white/5 text-white font-black rounded-full text-sm md:text-base flex items-center justify-center gap-2 border border-white/10 backdrop-blur-xl shadow-xl whitespace-nowrap"
                 >
-                    <Smartphone className="w-4 h-4 md:w-6 md:h-6 text-bee-yellow group-hover:scale-110 transition-transform" />
+                    <Smartphone className="w-4 h-4 text-bee-yellow group-hover:scale-110 transition-transform" />
                     <span>{t.hero.track_booking}</span>
                 </motion.button>
             </motion.div>

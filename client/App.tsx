@@ -367,6 +367,12 @@ const App: React.FC = () => {
       case 'MYPAGE': return navigate('/mypage');
       case 'BOOKING': return navigate('/booking');
       case 'LOCATIONS': return navigate('/locations');
+      case 'LOCATIONS_STORE':
+        setPreSelectedBooking({ ...(preSelectedBooking || {}), serviceType: ServiceType.STORAGE } as any);
+        return navigate('/locations');
+      case 'LOCATIONS_DELIVER':
+        setPreSelectedBooking({ ...(preSelectedBooking || {}), serviceType: ServiceType.DELIVERY } as any);
+        return navigate('/locations');
       case 'BRANCH_ADMIN':
         if (adminInfo.branchId) return navigate(`/admin/branch/${adminInfo.branchId}`);
         return navigate('/admin');
@@ -541,7 +547,7 @@ const App: React.FC = () => {
 
                   {/* OTHER */}
                   <Route path="/services" element={<AnimatedRoute><ServicesPage onBack={() => navigate('/')} t={t.services_page} landingT={t.landing_renewal} /></AnimatedRoute>} />
-                  <Route path="/locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate('/')} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={setLang} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} /></AnimatedRoute>} />
+                  <Route path="/locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate('/')} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={setLang} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as string | undefined} /></AnimatedRoute>} />
                   <Route path="/booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate('/locations')} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
                   <Route path="/payments/toss/success" element={<AnimatedRoute fade><TossPaymentSuccessPage lang={lang} onBookingReady={handlePaidBookingReady} onBackToBooking={() => navigate('/booking', { replace: true })} /></AnimatedRoute>} />
                   <Route path="/payments/toss/fail" element={<AnimatedRoute fade><TossPaymentFailPage lang={lang} onBackToBooking={() => navigate('/booking', { replace: true })} /></AnimatedRoute>} />

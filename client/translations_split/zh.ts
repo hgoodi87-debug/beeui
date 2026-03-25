@@ -37,6 +37,8 @@ export const zh = {
         title2: '开启自由旅行。',
         subtitle: '从酒店到机场，沉重的行李交给 Beeliber，\n轻便享受在韩国的每一刻。',
         btn_now: '立即减负 ➔',
+        btn_store_now: '立即寄存 ➔',
+        btn_deliver_now: '立即配送 ➔',
         track_booking: '查询配送详情',
         book_branch: '立即预订',
         main_title_1: '放下行李，',

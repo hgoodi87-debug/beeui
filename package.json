@@ -20,5 +20,8 @@
     "supabase:export-login-inventory": "node scripts/supabase/exportPhase1LoginInventory.mjs",
     "supabase:repair-admin-login-health": "node scripts/supabase/repairAdminLoginHealth.mjs",
     "audit:delivery-special-cargo": "node scripts/reportDeliverySpecialCargoBookings.mjs"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.11.0"
   }
 }

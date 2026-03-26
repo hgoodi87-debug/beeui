@@ -508,7 +508,44 @@ export const StorageService = {
         });
 
         // Write the request to trigger the backend Cloud Function
-        setDoc(docRef, finalizedBooking).catch(err => {
+        setDoc(docRef, finalizedBooking).then(() => {
+          // Supabase 듀얼 라이트 — Firebase 쓰기 성공 후 비동기로 Supabase에도 저장
+          if (isSupabaseDataEnabled()) {
+            supabaseMutate('booking_details', 'POST', {
+              reservation_code: finalizedBooking.reservationCode || finalizedBooking.id,
+              sns_channel: finalizedBooking.snsChannel || null,
+              sns_id: finalizedBooking.snsId || null,
+              country: finalizedBooking.country || null,
+              pickup_address: finalizedBooking.pickupAddress || null,
+              pickup_address_detail: finalizedBooking.pickupAddressDetail || null,
+              pickup_date: finalizedBooking.pickupDate || null,
+              pickup_time: finalizedBooking.pickupTime || null,
+              dropoff_address: finalizedBooking.dropoffAddress || null,
+              dropoff_address_detail: finalizedBooking.dropoffAddressDetail || null,
+              dropoff_date: finalizedBooking.dropoffDate || null,
+              delivery_time: finalizedBooking.deliveryTime || null,
+              return_date: finalizedBooking.returnDate || null,
+              return_time: finalizedBooking.returnTime || null,
+              insurance_level: finalizedBooking.insuranceLevel || null,
+              insurance_bag_count: finalizedBooking.insuranceBagCount || null,
+              use_insurance: finalizedBooking.useInsurance || false,
+              base_price: finalizedBooking.price || 0,
+              final_price: finalizedBooking.finalPrice || 0,
+              promo_code: finalizedBooking.promoCode || null,
+              discount_amount: finalizedBooking.discountAmount || 0,
+              payment_method: finalizedBooking.paymentMethod || null,
+              payment_provider: finalizedBooking.paymentProvider || null,
+              agreed_to_terms: finalizedBooking.agreedToTerms || false,
+              agreed_to_privacy: finalizedBooking.agreedToPrivacy || false,
+              language: finalizedBooking.language || 'en',
+              image_url: finalizedBooking.imageUrl || null,
+            }).then(() => {
+              console.log("[StorageService] Booking synced to Supabase ✅");
+            }).catch(e => {
+              console.warn("[StorageService] Supabase booking sync failed (non-blocking):", e);
+            });
+          }
+        }).catch(err => {
           finish(() => reject(err));
         });
 

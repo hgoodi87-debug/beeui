@@ -54,7 +54,11 @@ const COLLECTION_MAP: Record<string, string> = {
   'tips_areas': 'cms_areas',
   'tips_themes': 'cms_themes',
   'tips_contents': 'cms_contents',
+  'settings': 'app_settings',
 };
+
+// settings 컬렉션은 key 기반 조회 (id가 아님)
+const KEY_BASED_TABLES = new Set(['app_settings']);
 
 const _mapTable = (col: string): string => COLLECTION_MAP[col] || col;
 
@@ -122,10 +126,17 @@ const getDocs = async (ref: CollRef | QueryRef): Promise<QuerySnap> => {
 
 const getDoc = async (ref: DocRef): Promise<{ exists: () => boolean; data: () => any; id: string }> => {
   try {
+    // key 기반 테이블 (app_settings) → key 컬럼으로 조회
+    const isKeyBased = KEY_BASED_TABLES.has(ref._table);
+    const filterCol = isKeyBased ? 'key' : 'id';
     const rows = await _sbGet<Array<Record<string, unknown>>>(
-      `${ref._table}?select=*&id=eq.${ref._id}&limit=1`
+      `${ref._table}?select=*&${filterCol}=eq.${encodeURIComponent(ref._id)}&limit=1`
     );
     if (rows?.[0]) {
+      // app_settings는 value jsonb를 바로 반환
+      if (isKeyBased && rows[0].value && typeof rows[0].value === 'object') {
+        return { exists: () => true, data: () => rows[0].value, id: String(rows[0].key || ref._id) };
+      }
       return { exists: () => true, data: () => snakeToCamel(rows[0]), id: String(rows[0].id) };
     }
   } catch (e) { console.warn(`[Adapter] getDoc ${ref._table} failed:`, e); }
@@ -134,10 +145,15 @@ const getDoc = async (ref: DocRef): Promise<{ exists: () => boolean; data: () =>
 
 const setDoc = async (ref: DocRef, data: any, options?: any) => {
   try {
-    const snakeData = camelToSnake(JSON.parse(JSON.stringify(data)));
-    if (ref._id) {
+    const isKeyBased = KEY_BASED_TABLES.has(ref._table);
+    if (isKeyBased && ref._id) {
+      // app_settings → key 기반 upsert, value에 jsonb 저장
+      await _sbMutate(`${ref._table}?key=eq.${encodeURIComponent(ref._id)}`, 'PATCH', { value: data });
+    } else if (ref._id) {
+      const snakeData = camelToSnake(JSON.parse(JSON.stringify(data)));
       await _sbMutate(`${ref._table}?id=eq.${ref._id}`, 'PATCH', snakeData);
     } else {
+      const snakeData = camelToSnake(JSON.parse(JSON.stringify(data)));
       await _sbMutate(ref._table, 'POST', snakeData);
     }
   } catch (e) { console.warn(`[Adapter] setDoc ${ref._table} failed:`, e); }
@@ -170,8 +186,31 @@ const deleteDoc = async (ref: DocRef) => {
 
 const onSnapshot = (ref: any, callback: any, errorCb?: any): (() => void) => {
   // Supabase polling으로 대체
-  const table = ref._table || ref._table;
+  const table = ref._table;
   const qr = ref as QueryRef;
+
+  // DocRef인 경우 (단일 문서 구독 — heroConfig 등)
+  if (ref._id) {
+    let active = true;
+    const isKeyBased = KEY_BASED_TABLES.has(table);
+    const filterCol = isKeyBased ? 'key' : 'id';
+    const pollDoc = async () => {
+      if (!active) return;
+      try {
+        const rows = await _sbGet<Array<Record<string, unknown>>>(
+          `${table}?select=*&${filterCol}=eq.${encodeURIComponent(ref._id)}&limit=1`
+        );
+        if (active && rows?.[0]) {
+          const docData = isKeyBased && rows[0].value ? rows[0].value : snakeToCamel(rows[0]);
+          callback({ exists: () => true, data: () => docData, id: ref._id });
+        }
+      } catch (e) { if (errorCb) errorCb(e); }
+    };
+    pollDoc();
+    const timer = setInterval(pollDoc, 10000);
+    return () => { active = false; clearInterval(timer); };
+  }
+
   const path = `${table}?select=*${qr._filters || ''}&order=${qr._orderBy || 'created_at.desc'}&limit=${qr._limit || 500}`;
 
   let active = true;

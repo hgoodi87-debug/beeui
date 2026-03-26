@@ -19,7 +19,9 @@
     "supabase:phase1-run": "node scripts/supabase/runPhase1Migration.mjs",
     "supabase:export-login-inventory": "node scripts/supabase/exportPhase1LoginInventory.mjs",
     "supabase:repair-admin-login-health": "node scripts/supabase/repairAdminLoginHealth.mjs",
-    "audit:delivery-special-cargo": "node scripts/reportDeliverySpecialCargoBookings.mjs"
+    "audit:delivery-special-cargo": "node scripts/reportDeliverySpecialCargoBookings.mjs",
+    "supabase:migrate-data": "node scripts/supabase/migrateFirebaseData.mjs",
+    "supabase:migrate-data:apply": "SUPABASE_APPLY=true node scripts/supabase/migrateFirebaseData.mjs"
   },
   "devDependencies": {
     "firebase-tools": "^15.11.0"

@@ -166,8 +166,8 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
                 </div>
             </motion.div>
 
-            {/* Bottom Gradient Fade */}
-            <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-black to-transparent z-[5]" />
+            {/* Bottom Gradient Fade — 짧게 잘라서 마퀴 카드가 보이게 */}
+            <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/60 to-transparent z-[5]" />
 
         </section>
     );

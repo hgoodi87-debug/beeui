@@ -28,11 +28,11 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                 <div className="hidden">
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch h-[450px] md:h-[600px]">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
                     {/* Left Side: Pleasure (Color) - Swapped to Left */}
                     <motion.div
                         style={{ x: leftX, opacity: leftOpacity }}
-                        className="relative rounded-[3rem] shadow-2xl"
+                        className="relative rounded-[3rem] shadow-2xl aspect-[4/3] md:aspect-[3/2]"
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-yellow/10 group">
                             <img
@@ -46,7 +46,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                     {/* Right Side: Pain (Originally Black & White) - Swapped to Right */}
                     <motion.div
                         style={{ x: rightX, opacity: rightOpacity }}
-                        className="relative rounded-[3rem] shadow-2xl"
+                        className="relative rounded-[3rem] shadow-2xl aspect-[4/3] md:aspect-[3/2]"
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-black group">
                             <img

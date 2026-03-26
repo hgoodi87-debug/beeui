@@ -107,6 +107,10 @@ const mapSupabaseRoleToLegacyRole = (roleCode?: string) => {
       return 'driver';
     case 'ops_staff':
       return 'staff';
+    case 'marketing':
+      return 'hq';
+    case 'content_manager':
+      return 'hq';
     default:
       return normalizeRole(normalized);
   }

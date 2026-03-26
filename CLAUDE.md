@@ -39,6 +39,9 @@
     beeliber_pricing/    # 가격 정책 + 계산 로직 기준
     beeliber_stitch_qa/  # Stitch UI/UX 수정 후 전 직원 QA 프로토콜
     beeliber_ui_map/     # 전체 사용자 화면 구조 + 화면별 연동 포인트 맵
+    beeliber_operations/ # Layer 3 운영 하네스 (상태머신·SLA·기사배정·이슈)
+    beeliber_ai_harness/ # Layer 4 AI 하네스 (생성·검사·승인·배포 통제)
+    beeliber_eval/       # Layer 6 성과 측정 (KPI·실패분석·회고)
   rules/
     brand_guide_v2.md    # 브랜드 가이드 v4 최우선 적용 규칙 (파일명 유지, 내용 v4)
     blueprint.md         # 설계/기획 모드 트리거
@@ -70,6 +73,29 @@
 추가 금지 (v4): **24시간 이용 가능, Instagram 콘텐츠 작성 (현재 중단), Phase 2 미래 서비스 언급, 거점 수 1위 표현, 보험 완전·무한정 보상**
 
 채널 현황: 샤오홍슈·Threads·X 이용 중 / Instagram 중단 / 샤오홍슈 본문 마지막 `🐝 bee-liber.com` 필수
+
+## 하네스 엔지니어링 6-Layer 구조
+
+> 원문: `docs/beeliber_harness_engineering_v1.md`
+
+| Layer | 이름 | 담당 스킬 | 핵심 |
+|-------|------|---------|------|
+| **1** | Brand | `beeliber_master` | 금지어, 서비스 범위, 브랜드 톤 |
+| **2** | Commerce | `beeliber_pricing` + `beeliber_payments` | 예약 검증, 가격, 결제, 환불 |
+| **3** | Operations | `beeliber_operations` | 상태머신, SLA, 기사배정, 이슈 |
+| **4** | AI | `beeliber_ai_harness` | AI 생성·검사·승인·배포 통제 |
+| **5** | Admin | `beeliber_ui_map` + `beeliber_stitch_qa` | 검토함, 운영보드, 규칙관리 |
+| **6** | Eval | `beeliber_eval` | KPI, 실패원인, 성과측정 |
+
+## 개발 로드맵
+
+| 차수 | 핵심 작업 |
+|------|---------|
+| **1차** | 테이블 구축 + validate API + 상태머신 + 예약 검토함 |
+| **2차** | 결제 연동 + 운영 상태 + 증빙 + 이슈센터 + 알림 |
+| **3차** | 실시간 운영보드 + SLA + 감사로그 + 규칙관리 |
+| **4차** | AI 흐름 + AI 검수함 + KPI 대시보드 |
+| **5차** | 재배차 추천 + ETA 예측 + 이상탐지 |
 
 ## 현재 진행 중인 주요 이니셔티브
 

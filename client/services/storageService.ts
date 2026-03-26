@@ -5,6 +5,7 @@ import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, o
 import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 import { isSupabaseAdminAuthEnabled } from './adminAuthService';
+import { isSupabaseDataEnabled, supabaseGet, snakeToCamel } from './supabaseClient';
 import {
   DEFAULT_DELIVERY_PRICES as PRICING_DEFAULT_DELIVERY_PRICES,
   DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS,
@@ -530,6 +531,8 @@ export const StorageService = {
   },
 
   getBookings: async (): Promise<BookingState[]> => {
+    // Supabase 우선 — bookings는 아직 Firebase 기반이므로 Firebase 우선 유지
+    // (reservations 테이블은 하네스 v2에서 전환 예정)
     if (canUseLocalAdminDataBridge()) {
       try {
         return normalizeBookingsForDeliveryPolicy(await fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings'));
@@ -802,6 +805,38 @@ export const StorageService = {
   },
 
   getLocations: async (): Promise<LocationOption[]> => {
+    // Supabase 우선 조회
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>(
+          'locations?select=*&is_active=eq.true&order=name'
+        );
+        if (rows && rows.length > 0) {
+          const mapped = rows.map((row) => {
+            const loc = snakeToCamel(row) as unknown as LocationOption;
+            // short_code → id 매핑 (Firebase 호환)
+            if (!loc.id && (row.short_code || row.id)) {
+              (loc as any).id = String(row.short_code || row.id);
+            }
+            const initialLoc = INITIAL_LOCATIONS.find(l => l.id === loc.id);
+            if (initialLoc) {
+              Object.keys(initialLoc).forEach((key) => {
+                const k = key as keyof LocationOption;
+                if ((loc as any)[k] === undefined || (loc as any)[k] === null || (loc as any)[k] === '') {
+                  (loc as any)[k] = initialLoc[k];
+                }
+              });
+            }
+            return loc;
+          });
+          console.log("[Storage] Loaded", mapped.length, "locations from Supabase ✅");
+          return mapped;
+        }
+      } catch (e) {
+        console.warn("[Storage] Supabase locations failed, falling back to Firebase:", e);
+      }
+    }
+
     if (canUseLocalAdminDataBridge()) {
       try {
         const items = await fetchLocalAdminBridge<LocationOption[]>('/api/collections/locations');
@@ -940,6 +975,21 @@ export const StorageService = {
 
   // --- Storage Tiers ---
   getStorageTiers: async (): Promise<StorageTier[] | null> => {
+    // Supabase 우선: app_settings에서 storage_tiers 조회
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>(
+          'app_settings?select=value&key=eq.storage_tiers&limit=1'
+        );
+        if (rows?.[0]?.value?.tiers) {
+          console.log("[Storage] Loaded storage tiers from Supabase ✅");
+          return normalizeStorageTiers(rows[0].value.tiers);
+        }
+      } catch (e) {
+        console.warn("[Storage] Supabase storage tiers failed, falling back:", e);
+      }
+    }
+
     if (canUseLocalAdminDataBridge()) {
       try {
         return normalizeStorageTiers(await fetchLocalAdminBridge<StorageTier[] | null>('/api/settings/storage_tiers'));
@@ -974,6 +1024,21 @@ export const StorageService = {
 
   // --- Hero Config ---
   getHeroConfig: async (): Promise<HeroConfig | null> => {
+    // Supabase 우선
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>(
+          'app_settings?select=value&key=eq.hero&limit=1'
+        );
+        if (rows?.[0]?.value) {
+          console.log("[Storage] Loaded hero config from Supabase ✅");
+          return rows[0].value as HeroConfig;
+        }
+      } catch (e) {
+        console.warn("[Storage] Supabase hero config failed, falling back:", e);
+      }
+    }
+
     if (canUseLocalAdminDataBridge()) {
       try {
         return await fetchLocalAdminBridge<HeroConfig | null>('/api/settings/hero');
@@ -990,6 +1055,21 @@ export const StorageService = {
 
   // --- Price Settings ---
   getDeliveryPrices: async (): Promise<PriceSettings | null> => {
+    // Supabase 우선: app_settings에서 delivery_prices 조회
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>(
+          'app_settings?select=value&key=eq.delivery_prices&limit=1'
+        );
+        if (rows?.[0]?.value) {
+          console.log("[Storage] Loaded delivery prices from Supabase ✅");
+          return normalizeDeliveryPrices(rows[0].value as PriceSettings);
+        }
+      } catch (e) {
+        console.warn("[Storage] Supabase delivery prices failed, falling back:", e);
+      }
+    }
+
     if (canUseLocalAdminDataBridge()) {
       try {
         return normalizeDeliveryPrices(await fetchLocalAdminBridge<PriceSettings | null>('/api/settings/delivery_prices'));
@@ -1054,14 +1134,20 @@ export const StorageService = {
 
   // --- Inquiries ---
   getInquiries: async (): Promise<PartnershipInquiry[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('partnership_inquiries?select=*&order=created_at.desc');
+        if (rows) {
+          console.log("[Storage] Loaded", rows.length, "inquiries from Supabase ✅");
+          return rows.map(r => snakeToCamel(r) as unknown as PartnershipInquiry);
+        }
+      } catch (e) { console.warn("[Storage] Supabase inquiries failed:", e); }
+    }
     if (canUseLocalAdminDataBridge()) {
       try {
         return await fetchLocalAdminBridge<PartnershipInquiry[]>('/api/collections/inquiries');
-      } catch {
-        return [];
-      }
+      } catch { return []; }
     }
-
     try {
       const querySnapshot = await getDocs(collection(db, "inquiries"));
       return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
@@ -1111,6 +1197,12 @@ export const StorageService = {
 
   // --- Privacy & Terms ---
   getPrivacyPolicy: async (): Promise<PrivacyPolicyData | null> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>('app_settings?select=value&key=eq.privacy_policy&limit=1');
+        if (rows?.[0]?.value) return rows[0].value as PrivacyPolicyData;
+      } catch (e) { console.warn("[Storage] Supabase privacy failed:", e); }
+    }
     try {
       const snap = await getDoc(doc(db, "settings", "privacy_policy"));
       return snap.exists() ? snap.data() as PrivacyPolicyData : null;
@@ -1122,6 +1214,12 @@ export const StorageService = {
   },
 
   getTermsPolicy: async (): Promise<TermsPolicyData | null> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>('app_settings?select=value&key=eq.terms_policy&limit=1');
+        if (rows?.[0]?.value) return rows[0].value as TermsPolicyData;
+      } catch (e) { console.warn("[Storage] Supabase terms failed:", e); }
+    }
     try {
       const snap = await getDoc(doc(db, "settings", "terms_policy"));
       return snap.exists() ? snap.data() as TermsPolicyData : null;
@@ -1133,6 +1231,12 @@ export const StorageService = {
   },
 
   getQnaPolicy: async (): Promise<QnaData | null> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>('app_settings?select=value&key=eq.qna_policy&limit=1');
+        if (rows?.[0]?.value) return rows[0].value as QnaData;
+      } catch (e) { console.warn("[Storage] Supabase qna failed:", e); }
+    }
     try {
       const snap = await getDoc(doc(db, "settings", "qna_policy"));
       return snap.exists() ? snap.data() as QnaData : null;
@@ -1165,6 +1269,15 @@ export const StorageService = {
   },
 
   getCashClosings: async (): Promise<CashClosing[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('daily_closings?select=*&order=date.desc&limit=500');
+        if (rows) {
+          console.log("[Storage] Loaded", rows.length, "cash closings from Supabase ✅");
+          return rows.map(r => snakeToCamel(r) as unknown as CashClosing);
+        }
+      } catch (e) { console.warn("[Storage] Supabase closings failed:", e); }
+    }
     if (canUseLocalAdminDataBridge()) {
       try {
         return await fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
@@ -1173,7 +1286,6 @@ export const StorageService = {
         return [];
       }
     }
-
     try {
       const q = query(collection(db, "daily_closings"), orderBy("date", "desc"), limit(500));
       const snap = await getDocs(q);
@@ -1241,6 +1353,15 @@ export const StorageService = {
   },
 
   getExpenditures: async (): Promise<Expenditure[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('expenditures?select=*&order=date.desc&limit=1000');
+        if (rows) {
+          console.log("[Storage] Loaded", rows.length, "expenditures from Supabase ✅");
+          return rows.map(r => snakeToCamel(r) as unknown as Expenditure);
+        }
+      } catch (e) { console.warn("[Storage] Supabase expenditures failed:", e); }
+    }
     if (canUseLocalAdminDataBridge()) {
       try {
         return await fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
@@ -1249,7 +1370,6 @@ export const StorageService = {
         return [];
       }
     }
-
     try {
       const q = query(collection(db, "expenditures"), orderBy("date", "desc"), limit(1000));
       const snap = await getDocs(q);
@@ -1312,6 +1432,25 @@ export const StorageService = {
   },
 
   getAdmins: async (): Promise<AdminUser[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('employees?select=id,name,email,job_title,employment_status,org_type,phone,memo,created_at,updated_at');
+        if (rows && rows.length > 0) {
+          console.log("[Storage] Loaded", rows.length, "admins from Supabase ✅");
+          return rows.map(r => ({
+            id: String(r.id),
+            name: String(r.name || ''),
+            jobTitle: String(r.job_title || ''),
+            email: String(r.email || ''),
+            phone: String(r.phone || ''),
+            orgType: String(r.org_type || ''),
+            status: String(r.employment_status || 'active'),
+            memo: String(r.memo || ''),
+            createdAt: String(r.created_at || ''),
+          })) as AdminUser[];
+        }
+      } catch (e) { console.warn("[Storage] Supabase admins failed:", e); }
+    }
     if (canUseLocalAdminDataBridge()) {
       try {
         const items = await fetchLocalAdminBridge<AdminUser[]>('/api/collections/admins');
@@ -1321,7 +1460,6 @@ export const StorageService = {
         return [];
       }
     }
-
     try {
       const snap = await getDocs(collection(db, "admins"));
       const admins = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
@@ -1475,6 +1613,16 @@ export const StorageService = {
 
   // --- User Coupons ---
   getUserCoupons: async (uid: string): Promise<UserCoupon[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>(
+          `user_coupons?select=*&user_id=eq.${encodeURIComponent(uid)}&is_used=eq.false`
+        );
+        if (rows) {
+          return rows.map(r => snakeToCamel(r) as unknown as UserCoupon);
+        }
+      } catch (e) { console.warn("[Storage] Supabase coupons failed:", e); }
+    }
     try {
       const q = query(collection(db, "userCoupons"), where("uid", "==", uid), where("isUsed", "==", false));
       const querySnapshot = await getDocs(q);
@@ -1706,6 +1854,28 @@ export const StorageService = {
 
   // --- Discount Codes ---
   getDiscountCodes: async (): Promise<DiscountCode[]> => {
+    // Supabase 우선
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>(
+          'discount_codes?select=*&is_active=eq.true'
+        );
+        if (rows && rows.length > 0) {
+          console.log("[Storage] Loaded", rows.length, "discount codes from Supabase ✅");
+          return rows.map(r => ({
+            id: String(r.id),
+            code: String(r.code || ''),
+            amountPerBag: Number(r.amount_per_bag || 0),
+            description: String(r.description || ''),
+            isActive: r.is_active !== false,
+            allowedService: String(r.allowed_service || 'ALL'),
+          })) as DiscountCode[];
+        }
+      } catch (e) {
+        console.warn("[Storage] Supabase discount codes failed, falling back:", e);
+      }
+    }
+
     try {
       const snap = await getDocs(collection(db, "promo_codes"));
       return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as DiscountCode));
@@ -1760,6 +1930,16 @@ export const StorageService = {
   },
 
   validateDiscountCode: async (codeStr: string): Promise<DiscountCode | null> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>(
+          `discount_codes?select=*&code=eq.${encodeURIComponent(codeStr.toUpperCase())}&is_active=eq.true&limit=1`
+        );
+        if (rows?.[0]) {
+          return { id: String(rows[0].id), code: String(rows[0].code), amountPerBag: Number(rows[0].amount_per_bag || 0), description: String(rows[0].description || ''), isActive: true, allowedService: String(rows[0].allowed_service || 'ALL') } as DiscountCode;
+        }
+      } catch (e) { console.warn("[Storage] Supabase validate code failed:", e); }
+    }
     try {
       const q = query(collection(db, "promo_codes"), where("code", "==", codeStr.toUpperCase()), where("isActive", "==", true));
       const snap = await getDocs(q);
@@ -1773,12 +1953,30 @@ export const StorageService = {
 
   // --- Branches ---
   getBranches: async (): Promise<any[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('branches?select=*&is_active=eq.true&order=name');
+        if (rows) {
+          console.log("[Storage] Loaded", rows.length, "branches from Supabase ✅");
+          return rows.map(r => snakeToCamel(r));
+        }
+      } catch (e) { console.warn("[Storage] Supabase branches failed:", e); }
+    }
     try {
       const snap = await getDocs(collection(db, "branches"));
       return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (e) { console.error(e); return []; }
   },
   getBranchByCode: async (code: string): Promise<any | null> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        if (!code) return null;
+        const rows = await supabaseGet<Array<Record<string, unknown>>>(
+          `branches?select=*&branch_code=eq.${encodeURIComponent(code)}&is_active=eq.true&limit=1`
+        );
+        if (rows?.[0]) return snakeToCamel(rows[0]);
+      } catch (e) { console.warn("[Storage] Supabase branch by code failed:", e); }
+    }
     try {
       if (!code) return null;
       const branchQuery = query(collection(db, "branches"), where("branchCode", "==", code), limit(1));
@@ -1818,6 +2016,15 @@ export const StorageService = {
 
   // --- Branch Prospects (Expansion Scouts) ---
   getBranchProspects: async (): Promise<BranchProspect[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('branch_prospects?select=*&order=created_at.desc');
+        if (rows) {
+          console.log("[Storage] Loaded", rows.length, "prospects from Supabase ✅");
+          return rows.map(r => snakeToCamel(r) as unknown as BranchProspect);
+        }
+      } catch (e) { console.warn("[Storage] Supabase prospects failed:", e); }
+    }
     try {
       const snap = await getDocs(collection(db, "branch_prospects"));
       return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as BranchProspect));
@@ -1912,6 +2119,15 @@ export const StorageService = {
 
   // --- TIPS CMS ---
   getTipsAreas: async (): Promise<any[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('cms_areas?select=*&order=sort_order');
+        if (rows) {
+          console.log("[Storage] Loaded", rows.length, "CMS areas from Supabase ✅");
+          return rows.map(r => snakeToCamel(r));
+        }
+      } catch (e) { console.warn("[Storage] Supabase CMS areas failed:", e); }
+    }
     try {
       const snap = await getDocs(collection(db, "tips_areas"));
       return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1951,6 +2167,15 @@ export const StorageService = {
   },
 
   getTipsThemes: async (): Promise<any[]> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>('cms_themes?select=*&order=sort_order');
+        if (rows) {
+          console.log("[Storage] Loaded", rows.length, "CMS themes from Supabase ✅");
+          return rows.map(r => snakeToCamel(r));
+        }
+      } catch (e) { console.warn("[Storage] Supabase CMS themes failed:", e); }
+    }
     try {
       const snap = await getDocs(collection(db, "tips_themes"));
       return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));

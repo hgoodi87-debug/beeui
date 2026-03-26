@@ -197,6 +197,10 @@ const mapLegacyRoleToSupabaseRole = (admin, resolvedBranchType) => {
       return 'cs_staff';
     case 'driver':
       return 'driver';
+    case 'marketing':
+      return 'marketing';
+    case 'content':
+      return 'content_manager';
     case 'partner':
       return 'partner_manager';
     case 'branch':

@@ -95,7 +95,9 @@ export const ko = {
         badge_without: "Beeliber 없이 무겁게",
         badge_with: "Beeliber로 가볍게",
         quote_bad: "\"서울 다신 안 와...\"",
-        quote_good: "\"진작 쓸걸, 완전 신세계! ✨\""
+        quote_good: "\"진작 쓸걸, 완전 신세계! ✨\"",
+        after_caption: "짐은 빌리버에게. 지금 이 자유, ₩4,000부터.",
+        before_caption: "캐리어 끌고 계단·지하철·관광지를… 정말요?"
     },
     howitworks: {
         headline: "단 3단계,\n서울 여행의 새로운 공식",
@@ -117,8 +119,8 @@ export const ko = {
     pricing: {
         headline: "가장 투명한 가격,\n숨은 비용 없이",
         desc: "역 코인락커와 다릅니다.\n사이즈 제한 없이, 보험 포함, 공항 배송까지.",
-        airport_hotel: "짐 보관",
-        extra_large: "인천공항 당일 배송",
+        airport_hotel: "짐 보관 (M/L Size)",
+        extra_large: "인천공항 당일 배송 (XL Size)",
         price_standard: "₩4,000",
         price_extra: "₩25,000",
         features_standard: ["4시간 기본 ₩4,000 / 1일 ₩8,000", "사이즈 제한 없음 (유모차도 OK)", "전 지점 보험 기본 포함", "예약·취소·변경 수수료 없음"],
@@ -126,7 +128,15 @@ export const ko = {
         flat_rate_label: "투명한 요금표 💰",
         most_popular_label: "인기",
         per_bag_label: "/ 1개",
-        choose_service_btn: "예약하러 가기"
+        choose_service_btn: "예약하러 가기",
+        badges: {
+            hour_day: "4H / 1DAY",
+            spots: "40+ 거점",
+            all_sizes: "모든 사이즈",
+            same_day: "당일 도착",
+            icn: "인천공항",
+            insured: "보험 적용"
+        }
     },
     reviews_section: {
         headline: "짐 없는 서울 여행이 얼마나 달콤한지,\n이미 수많은 여행자가 경험하고 있습니다. ✨",

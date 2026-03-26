@@ -75,7 +75,9 @@ export const ja = {
         badge_without: "Beeliberなしで",
         badge_with: "Beeliberと一緒に 💅",
         quote_bad: "\"階段は地獄だ\"",
-        quote_good: "\"雲の上を歩く気分\""
+        quote_good: "\"雲の上を歩く気分\"",
+        after_caption: "荷物はBeeliberへ。この自由、₩4,000から。",
+        before_caption: "スーツケース을引いて階段…本当に大丈夫？"
     },
     howitworks: {
         headline: "たった3回のタッチ、魔法のように消える荷物",
@@ -106,7 +108,15 @@ export const ja = {
         flat_rate_label: "一律料金 💰",
         most_popular_label: "一番人気",
         per_bag_label: "/ 個",
-        choose_service_btn: "サービスを選択"
+        choose_service_btn: "サービスを選択",
+        badges: {
+            hour_day: "4H / 1DAY",
+            spots: "40+ 拠点",
+            all_sizes: "全てのサイズ",
+            same_day: "当日配送",
+            icn: "仁川空港",
+            insured: "保険適用"
+        }
     },
     reviews_section: {
         headline: "荷物なしで歩くソウルがいかに美しいか、彼らが証明します。",

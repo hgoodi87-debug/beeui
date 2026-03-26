@@ -16,14 +16,26 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
             title: t.pricing.airport_hotel,
             price: t.pricing.price_standard,
             features: t.pricing.features_standard || ["All sizes up to 28\"", "Airport ↔ Hotel Delivery", "Real-time Tracking", "Basic Insurance"],
-            popular: true
+            popular: true,
+            serviceBadge: null,
+            serviceBadges: [
+                { label: t.pricing?.badges?.hour_day || "4H / 1DAY", color: "bg-bee-yellow text-bee-black" },
+                { label: t.pricing?.badges?.spots || "40+ SPOTS", color: "bg-bee-black text-white" },
+                { label: t.pricing?.badges?.all_sizes || "ALL SIZES", color: "bg-white text-bee-black border border-bee-black/10" },
+            ]
         },
         {
             icon: <Package className="w-8 h-8" />,
             title: t.pricing.extra_large,
             price: t.pricing.price_extra,
             features: t.pricing.features_extra || ["Over 28\", Golf Bags, etc.", "Heavy Duty Handling", "Same-day Delivery", "Global Insurance"],
-            popular: false
+            popular: false,
+            serviceBadge: null,
+            serviceBadges: [
+                { label: t.pricing?.badges?.same_day || "SAME-DAY", color: "bg-bee-yellow text-bee-black" },
+                { label: t.pricing?.badges?.icn || "ICN AIRPORT", color: "bg-bee-black text-white" },
+                { label: t.pricing?.badges?.insured || "INSURED", color: "bg-white text-bee-black border border-bee-black/10" },
+            ]
         }
     ];
 
@@ -62,11 +74,22 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
                             className={`relative p-8 md:p-14 rounded-[3.5rem] border-2 transition-all duration-500 overflow-hidden shrink-0 flex flex-col ${item.popular ? 'border-bee-yellow bg-bee-light/30 shadow-2xl scale-105 z-10' : 'border-bee-yellow bg-white'
                                 }`}
                         >
-                            {item.popular && (
-                                <div className="absolute top-8 right-8 px-4 py-1.5 bg-bee-yellow text-bee-black font-black text-[10px] tracking-widest rounded-full shadow-lg">
-                                    {t.pricing?.most_popular_label || "BEST SELLER"}
-                                </div>
-                            )}
+                            {/* 서비스 배지 영역 */}
+                            <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-wrap gap-1.5 md:gap-2 justify-end max-w-[60%]">
+                                {item.popular && (
+                                    <span className="px-3 py-1 md:px-4 md:py-1.5 bg-bee-yellow text-bee-black font-black text-[9px] md:text-[10px] tracking-wider rounded-full shadow-lg uppercase whitespace-nowrap">
+                                        {t.pricing?.most_popular_label || "BEST"}
+                                    </span>
+                                )}
+                                {item.serviceBadges?.map((badge: { label: string; color: string }, idx: number) => (
+                                    <span
+                                        key={idx}
+                                        className={`px-3 py-1 md:px-4 md:py-1.5 font-black text-[9px] md:text-[10px] tracking-wider rounded-full shadow-sm uppercase whitespace-nowrap ${badge.color}`}
+                                    >
+                                        {badge.label}
+                                    </span>
+                                ))}
+                            </div>
 
                             <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center mb-8 md:mb-10 ${item.popular ? 'bg-bee-black text-bee-yellow' : 'bg-bee-light text-bee-black'}`}>
                                 {item.icon}
@@ -94,7 +117,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
                                 onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS'); }}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                                className={`w-full py-5 md:py-8 rounded-[1.5rem] md:rounded-[2rem] font-black text-lg md:text-2xl tracking-[0.1em] transition-all shadow-2xl flex items-center justify-center gap-3 cursor-pointer ${item.popular ? 'bg-bee-black text-bee-yellow hover:bg-bee-yellow hover:text-bee-black' : 'bg-bee-yellow text-bee-black hover:bg-bee-black hover:text-bee-yellow'
+                                className={`w-full py-6 md:py-8 rounded-[1.5rem] md:rounded-[2rem] font-black text-lg md:text-2xl tracking-[0.1em] transition-all shadow-2xl flex items-center justify-center gap-3 cursor-pointer ${item.popular ? 'bg-bee-black text-bee-yellow hover:bg-bee-yellow hover:text-bee-black' : 'bg-bee-yellow text-bee-black hover:bg-bee-black hover:text-bee-yellow'
                                     }`}
                             >
                                 {t.pricing?.choose_service_btn || "BOOK NOW"} <span className="text-xl md:text-3xl">➔</span>

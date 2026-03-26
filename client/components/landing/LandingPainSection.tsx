@@ -44,7 +44,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
                                 <span className="inline-block px-3 py-1 bg-bee-yellow text-bee-black text-[10px] md:text-xs font-black rounded-full mb-2">AFTER</span>
                                 <p className="text-white font-bold text-sm md:text-lg leading-snug break-keep">
-                                    {t.pain?.after_caption || "짐은 빌리버에게. 지금 이 자유, ₩4,000부터."}
+                                    {t.pain?.after_caption}
                                 </p>
                             </div>
                         </div>
@@ -65,7 +65,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
                                 <span className="inline-block px-3 py-1 bg-white/20 text-white text-[10px] md:text-xs font-black rounded-full mb-2 backdrop-blur-sm">BEFORE</span>
                                 <p className="text-white/80 font-bold text-sm md:text-lg leading-snug break-keep">
-                                    {t.pain?.before_caption || "캐리어 끌고 계단·지하철·관광지를… 정말요?"}
+                                    {t.pain?.before_caption}
                                 </p>
                             </div>
                         </div>

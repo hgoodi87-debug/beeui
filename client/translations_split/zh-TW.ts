@@ -75,7 +75,9 @@ export const zhTW = {
         badge_without: "沒有 Beeliber",
         badge_with: "有 Beeliber 💅",
         quote_bad: "\"樓梯就是地獄\"",
-        quote_good: "\"踩在雲端的感覺\""
+        quote_good: "\"踩在雲端的感覺\"",
+        after_caption: "行李交給 Beeliber。自由從 ₩4,000 起。",
+        before_caption: "拖著行李擠地鐵...你認真的嗎？"
     },
     howitworks: {
         headline: "只需點擊3次，行李宛如隱形",
@@ -106,7 +108,15 @@ export const zhTW = {
         flat_rate_label: "統一費用 💰",
         most_popular_label: "人氣服務",
         per_bag_label: "/ 件",
-        choose_service_btn: "選擇服務"
+        choose_service_btn: "選擇服務",
+        badges: {
+            hour_day: "4小時 / 1天",
+            spots: "40+ 據點",
+            all_sizes: "所有尺寸",
+            same_day: "當日送達",
+            icn: "仁川機場",
+            insured: "含保險"
+        }
     },
     reviews_section: {
         headline: "Beeliber將證明，沒有行李的旅程有多美。",

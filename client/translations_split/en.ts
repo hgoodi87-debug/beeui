@@ -75,7 +75,9 @@ export const en = {
         badge_without: "Without Beeliber",
         badge_with: "With Beeliber",
         quote_bad: "\"STAIRS ARE HELL\"",
-        quote_good: "\"WALKING ON CLOUDS\""
+        quote_good: "\"WALKING ON CLOUDS\"",
+        after_caption: "Bags to Beeliber. Freedom from ₩4,000.",
+        before_caption: "Stairs, subways, and bags? Really?"
     },
     howitworks: {
         headline: "3 Clicks, Your Bags Vanish",
@@ -107,7 +109,15 @@ export const en = {
         flat_rate_label: "FLAT RATE",
         most_popular_label: "MOST POPULAR",
         per_bag_label: "/ Bag",
-        choose_service_btn: "CHOOSE SERVICE"
+        choose_service_btn: "CHOOSE SERVICE",
+        badges: {
+            hour_day: "4H / 1DAY",
+            spots: "40+ SPOTS",
+            all_sizes: "ALL SIZES",
+            same_day: "SAME-DAY",
+            icn: "ICN AIRPORT",
+            insured: "INSURED"
+        }
     },
     reviews_section: {
         headline: "They prove how beautiful your journey is when walking without luggage with Beeliber.",

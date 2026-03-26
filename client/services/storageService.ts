@@ -808,8 +808,23 @@ export const StorageService = {
   },
 
   getBookings: async (): Promise<BookingState[]> => {
-    // Supabase 우선 — bookings는 아직 Firebase 기반이므로 Firebase 우선 유지
-    // (reservations 테이블은 하네스 v2에서 전환 예정)
+    // [스봉이] Supabase 우선 조회 — booking_details 테이블 기준 💅
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<Record<string, unknown>>>(
+          'booking_details?select=*&order=created_at.desc&limit=500'
+        );
+        if (rows && rows.length > 0) {
+          const mapped = rows.map(r => snakeToCamel(r) as unknown as BookingState);
+          console.log(`[Storage] Loaded ${mapped.length} bookings from Supabase ✅`);
+          return sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(mapped));
+        }
+        console.log('[Storage] Supabase booking_details returned 0 rows, trying fallback...');
+      } catch (e) {
+        console.warn("[Storage] Supabase bookings fetch failed, falling back:", e);
+      }
+    }
+
     if (canUseLocalAdminDataBridge()) {
       try {
         return normalizeBookingsForDeliveryPolicy(await fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings'));
@@ -964,15 +979,18 @@ export const StorageService = {
   },
 
   updateBooking: async (id: string, updates: Partial<BookingState>): Promise<void> => {
-    // Supabase 듀얼 라이트 (booking_details에 해당 필드 동기화)
+    // [스봉이] Supabase 우선 업데이트 — booking_details 테이블 직접 PATCH 💅
     if (isSupabaseDataEnabled()) {
       try {
         const supabaseUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
-        // booking_details는 reservation_id로 연결되지만, 현재는 Firebase bookings.id 기준
-        // 향후 reservation 전환 시 여기서 매핑
-        console.log("[Storage] Booking update will sync to Supabase in Phase 2");
-      } catch (e) { console.warn("[Storage] Supabase booking update prep failed:", e); }
+        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', supabaseUpdates);
+        console.log(`[Storage] Booking ${id} updated in Supabase ✅`);
+        return; // Supabase 성공 시 Firebase 건너뜀
+      } catch (e) {
+        console.warn("[Storage] Supabase booking update failed, falling back to Firebase:", e);
+      }
     }
+    // Firebase fallback
     const safeUpdates = JSON.parse(JSON.stringify(updates));
     const bookingRef = doc(db, "bookings", id);
     await updateDoc(bookingRef, safeUpdates);

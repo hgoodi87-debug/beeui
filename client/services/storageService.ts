@@ -1013,8 +1013,15 @@ export const StorageService = {
   },
 
   saveStorageTiers: async (tiers: StorageTier[]): Promise<void> => {
+    const normalizedTiers = tiers.map((tier) => ({ ...tier, prices: normalizeStorageTierPrices(tier.prices) }));
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('app_settings?key=eq.storage_tiers', 'PATCH', { value: { tiers: normalizedTiers } });
+        console.log("[Storage] Storage tiers saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase tiers save failed:", e); }
+    }
     try {
-      const normalizedTiers = tiers.map((tier) => ({ ...tier, prices: normalizeStorageTierPrices(tier.prices) }));
       await setDoc(doc(db, "settings", "storage_tiers"), { tiers: normalizedTiers });
     } catch (e) {
       console.error("Failed to save storage tiers", e);
@@ -1092,8 +1099,16 @@ export const StorageService = {
   },
 
   saveDeliveryPrices: async (prices: PriceSettings): Promise<void> => {
+    const normalized = normalizeDeliveryPrices(prices);
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('app_settings?key=eq.delivery_prices', 'PATCH', { value: normalized });
+        console.log("[Storage] Delivery prices saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase prices save failed:", e); }
+    }
     try {
-      await setDoc(doc(db, "settings", "delivery_prices"), normalizeDeliveryPrices(prices));
+      await setDoc(doc(db, "settings", "delivery_prices"), normalized);
     } catch (e) {
       console.error("Failed to save delivery prices", e);
       throw e;
@@ -1101,6 +1116,12 @@ export const StorageService = {
   },
 
   saveHeroConfig: async (config: HeroConfig) => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('app_settings?key=eq.hero', 'PATCH', { value: config });
+      } catch (e) { console.warn("[Storage] Supabase hero save failed:", e); }
+    }
     try {
       await setDoc(doc(db, "settings", "hero"), config);
     } catch (e) { console.error("Hero save failed", e); }
@@ -1177,6 +1198,13 @@ export const StorageService = {
 
   saveInquiry: async (inquiry: PartnershipInquiry): Promise<void> => {
     const safeInquiry = JSON.parse(JSON.stringify(inquiry));
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('partnership_inquiries', 'POST', camelToSnake(safeInquiry));
+        console.log("[Storage] Inquiry saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase inquiry save failed:", e); }
+    }
     try {
       if (inquiry.id) {
         await setDoc(doc(db, "inquiries", inquiry.id), safeInquiry);
@@ -1210,6 +1238,12 @@ export const StorageService = {
   },
 
   savePrivacyPolicy: async (data: PrivacyPolicyData): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('app_settings?key=eq.privacy_policy', 'PATCH', { value: data });
+      } catch (e) { console.warn("[Storage] Supabase privacy save failed:", e); }
+    }
     await setDoc(doc(db, "settings", "privacy_policy"), data);
   },
 
@@ -1227,6 +1261,12 @@ export const StorageService = {
   },
 
   saveTermsPolicy: async (data: TermsPolicyData): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('app_settings?key=eq.terms_policy', 'PATCH', { value: data });
+      } catch (e) { console.warn("[Storage] Supabase terms save failed:", e); }
+    }
     await setDoc(doc(db, "settings", "terms_policy"), data);
   },
 
@@ -1244,6 +1284,12 @@ export const StorageService = {
   },
 
   saveQnaPolicy: async (data: QnaData): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('app_settings?key=eq.qna_policy', 'PATCH', { value: data });
+      } catch (e) { console.warn("[Storage] Supabase qna save failed:", e); }
+    }
     await setDoc(doc(db, "settings", "qna_policy"), data);
   },
 
@@ -1256,6 +1302,15 @@ export const StorageService = {
   // --- Accounting / Cash Closing ---
   saveCashClosing: async (closing: CashClosing): Promise<void> => {
     const safeClosing = JSON.parse(JSON.stringify(closing));
+    // Supabase 듀얼 라이트
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { camelToSnake } = await import('./supabaseClient');
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('daily_closings', 'POST', camelToSnake(safeClosing));
+        console.log("[Storage] Cash closing saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase cash closing save failed:", e); }
+    }
     try {
       if (closing.id) {
         await setDoc(doc(db, "daily_closings", closing.id), safeClosing);
@@ -1340,6 +1395,13 @@ export const StorageService = {
   // --- Expenditures ---
   saveExpenditure: async (expenditure: Expenditure): Promise<void> => {
     const safeExp = JSON.parse(JSON.stringify(expenditure));
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('expenditures', 'POST', camelToSnake(safeExp));
+        console.log("[Storage] Expenditure saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase expenditure save failed:", e); }
+    }
     try {
       if (expenditure.id) {
         await setDoc(doc(db, "expenditures", expenditure.id), safeExp);
@@ -1887,6 +1949,17 @@ export const StorageService = {
 
   saveDiscountCode: async (code: DiscountCode): Promise<void> => {
     const safeData = JSON.parse(JSON.stringify(code));
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('discount_codes', 'POST', {
+          code: safeData.code, amount_per_bag: safeData.amountPerBag || 0,
+          description: safeData.description || '', is_active: safeData.isActive !== false,
+          allowed_service: safeData.allowedService || 'ALL',
+        });
+        console.log("[Storage] Discount code saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase discount save failed:", e); }
+    }
     try {
       if (code.id) {
         await setDoc(doc(db, "promo_codes", code.id), safeData);
@@ -2037,10 +2110,16 @@ export const StorageService = {
     });
   },
   saveBranchProspect: async (prospect: BranchProspect): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
+        await supabaseMutate('branch_prospects', 'POST', camelToSnake({ ...prospect }));
+        console.log("[Storage] Branch prospect saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase prospect save failed:", e); }
+    }
     try {
       const safeData = { ...prospect, updatedAt: new Date().toISOString() };
       if (!safeData.id || safeData.id.startsWith('PROSPECT-TEMP-')) {
-        // New prospect or unsaved temp id
         if (safeData.id) delete (safeData as any).id;
         safeData.createdAt = new Date().toISOString();
         await addDoc(collection(db, "branch_prospects"), safeData);

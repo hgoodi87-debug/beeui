@@ -80,3 +80,36 @@ export function camelToSnake(obj: Record<string, unknown>): Record<string, unkno
   }
   return result;
 }
+
+/**
+ * Supabase polling subscribe — Realtime 대체
+ * 주기적으로 GET 요청 후 콜백 호출, unsubscribe 함수 반환
+ */
+export function supabasePollingSubscribe<T>(
+  path: string,
+  callback: (data: T[]) => void,
+  transform: (row: Record<string, unknown>) => T,
+  intervalMs = 10000
+): () => void {
+  let active = true;
+
+  const poll = async () => {
+    if (!active) return;
+    try {
+      const rows = await supabaseGet<Array<Record<string, unknown>>>(path);
+      if (active && rows) {
+        callback(rows.map(transform));
+      }
+    } catch (e) {
+      console.warn(`[Supabase Poll] ${path} failed:`, e);
+    }
+  };
+
+  poll(); // 즉시 1회
+  const timer = setInterval(poll, intervalMs);
+
+  return () => {
+    active = false;
+    clearInterval(timer);
+  };
+}

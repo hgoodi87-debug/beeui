@@ -5,7 +5,7 @@ import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, o
 import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 import { isSupabaseAdminAuthEnabled } from './adminAuthService';
-import { isSupabaseDataEnabled, supabaseGet, snakeToCamel } from './supabaseClient';
+import { isSupabaseDataEnabled, supabaseGet, supabaseMutate, snakeToCamel, camelToSnake, supabasePollingSubscribe } from './supabaseClient';
 import {
   DEFAULT_DELIVERY_PRICES as PRICING_DEFAULT_DELIVERY_PRICES,
   DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS,
@@ -704,6 +704,15 @@ export const StorageService = {
   },
 
   updateBooking: async (id: string, updates: Partial<BookingState>): Promise<void> => {
+    // Supabase 듀얼 라이트 (booking_details에 해당 필드 동기화)
+    if (isSupabaseDataEnabled()) {
+      try {
+        const supabaseUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
+        // booking_details는 reservation_id로 연결되지만, 현재는 Firebase bookings.id 기준
+        // 향후 reservation 전환 시 여기서 매핑
+        console.log("[Storage] Booking update will sync to Supabase in Phase 2");
+      } catch (e) { console.warn("[Storage] Supabase booking update prep failed:", e); }
+    }
     const safeUpdates = JSON.parse(JSON.stringify(updates));
     const bookingRef = doc(db, "bookings", id);
     await updateDoc(bookingRef, safeUpdates);
@@ -937,6 +946,12 @@ export const StorageService = {
   },
 
   saveLocation: async (location: LocationOption): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        await supabaseMutate('locations', 'POST', camelToSnake({ ...location } as Record<string, unknown>));
+        console.log("[Storage] Location saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase location save failed:", e); }
+    }
     const sanitized = normalizeLocationTranslations({ ...location });
     // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 걸러내야죠 💅
     if (sanitized.lat === undefined || sanitized.lat === null || isNaN(Number(sanitized.lat))) {
@@ -965,6 +980,11 @@ export const StorageService = {
   },
 
   deleteLocation: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(id)}`, 'DELETE');
+      } catch (e) { console.warn("[Storage] Supabase location delete failed:", e); }
+    }
     try {
       await deleteDoc(doc(db, "locations", id));
     } catch (e) {
@@ -1215,6 +1235,9 @@ export const StorageService = {
   },
 
   deleteInquiry: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`partnership_inquiries?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     try {
       await deleteDoc(doc(db, "inquiries", id));
     } catch (e) {
@@ -1800,36 +1823,47 @@ export const StorageService = {
 
   // --- Real-time Chat ---
   saveChatMessage: async (message: ChatMessage): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        await supabaseMutate('chat_messages', 'POST', {
+          session_id: message.sessionId, role: message.role || 'user',
+          text: message.text || '', user_name: message.userName || null,
+          user_email: message.userEmail || null, is_read: message.isRead ?? false,
+        });
+      } catch (e) { console.warn("[Storage] Supabase chat msg save failed:", e); }
+    }
     try {
       const msgRef = collection(db, "chats");
-      await addDoc(msgRef, {
-        ...message,
-        timestamp: message.timestamp || new Date().toISOString()
-      });
-    } catch (e) {
-      console.error("Failed to save chat message", e);
-    }
+      await addDoc(msgRef, { ...message, timestamp: message.timestamp || new Date().toISOString() });
+    } catch (e) { console.error("Failed to save chat message", e); }
   },
 
   saveChatSession: async (session: ChatSession): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        await supabaseMutate('chat_sessions', 'POST', {
+          session_id: session.sessionId, user_name: session.userName || null,
+          user_email: session.userEmail || null, last_message: session.lastMessage || null,
+          is_bot_disabled: session.isBotDisabled ?? false, unread_count: session.unreadCount || 0,
+        });
+      } catch (e) { console.warn("[Storage] Supabase chat session save failed:", e); }
+    }
     try {
       const sessionRef = doc(db, "chat_sessions", session.sessionId);
-      await setDoc(sessionRef, {
-        ...session,
-        timestamp: session.timestamp || new Date().toISOString()
-      }, { merge: true });
-    } catch (e) {
-      console.error("Failed to save chat session", e);
-    }
+      await setDoc(sessionRef, { ...session, timestamp: session.timestamp || new Date().toISOString() }, { merge: true });
+    } catch (e) { console.error("Failed to save chat session", e); }
   },
 
   updateChatSession: async (sessionId: string, updates: Partial<ChatSession>): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        await supabaseMutate(`chat_sessions?session_id=eq.${encodeURIComponent(sessionId)}`, 'PATCH', camelToSnake(updates as Record<string, unknown>));
+      } catch (e) { console.warn("[Storage] Supabase chat session update failed:", e); }
+    }
     try {
       const sessionRef = doc(db, "chat_sessions", sessionId);
       await updateDoc(sessionRef, updates);
-    } catch (e) {
-      console.error("Failed to update chat session", e);
-    }
+    } catch (e) { console.error("Failed to update chat session", e); }
   },
 
   subscribeChatMessages: (sessionId: string, callback: (messages: ChatMessage[]) => void): (() => void) => {
@@ -1867,6 +1901,13 @@ export const StorageService = {
   },
 
   deleteChatSession: async (sessionId: string): Promise<void> => {
+    // Supabase 듀얼 삭제 (cascade로 messages도 삭제됨)
+    if (isSupabaseDataEnabled()) {
+      try {
+        await supabaseMutate(`chat_sessions?session_id=eq.${encodeURIComponent(sessionId)}`, 'DELETE');
+        console.log(`[Storage] Chat session ${sessionId} deleted from Supabase ✅`);
+      } catch (e) { console.warn(e); }
+    }
     try {
       // 1. Delete all messages associated with this session
       const q = query(collection(db, "chats"), where("sessionId", "==", sessionId));
@@ -1973,6 +2014,9 @@ export const StorageService = {
   },
 
   deleteDiscountCode: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`discount_codes?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     try {
       await deleteDoc(doc(db, "promo_codes", id));
     } catch (e) {
@@ -2069,6 +2113,9 @@ export const StorageService = {
     });
   },
   saveBranch: async (branch: any): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate('branches', 'POST', camelToSnake({ ...branch })); console.log("[Storage] Branch saved to Supabase ✅"); } catch (e) { console.warn(e); }
+    }
     try {
       const safeData = { ...branch };
       if (!safeData.id) {
@@ -2082,6 +2129,9 @@ export const StorageService = {
     } catch (e) { console.error(e); throw e; }
   },
   deleteBranch: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`branches?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     try {
       await deleteDoc(doc(db, "branches", id));
     } catch (e) { throw e; }
@@ -2131,6 +2181,9 @@ export const StorageService = {
     } catch (e) { console.error(e); throw e; }
   },
   deleteBranchProspect: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`branch_prospects?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     try {
       await deleteDoc(doc(db, "branch_prospects", id));
     } catch (e) { throw e; }
@@ -2173,6 +2226,9 @@ export const StorageService = {
   },
 
   saveNotice: async (notice: SystemNotice): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate('system_notices', 'POST', camelToSnake({ ...notice } as Record<string, unknown>)); console.log("[Storage] Notice saved to Supabase ✅"); } catch (e) { console.warn(e); }
+    }
     const safeData = JSON.parse(JSON.stringify(notice));
     try {
       if (notice.id) {
@@ -2188,6 +2244,9 @@ export const StorageService = {
   },
 
   deleteNotice: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`system_notices?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     try {
       await deleteDoc(doc(db, "notices", id));
     } catch (e) {
@@ -2228,6 +2287,9 @@ export const StorageService = {
   },
 
   saveTipsArea: async (area: any): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate('cms_areas', 'POST', camelToSnake({ ...area })); } catch (e) { console.warn(e); }
+    }
     try {
       const safeData = { ...area, updatedAt: new Date().toISOString() };
       const id = safeData.id;
@@ -2242,6 +2304,9 @@ export const StorageService = {
   },
 
   deleteTipsArea: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`cms_areas?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     await deleteDoc(doc(db, "tips_areas", id));
   },
 
@@ -2275,6 +2340,9 @@ export const StorageService = {
   },
 
   saveTipsTheme: async (theme: any): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate('cms_themes', 'POST', camelToSnake({ ...theme })); } catch (e) { console.warn(e); }
+    }
     try {
       const safeData = { ...theme, updatedAt: new Date().toISOString() };
       const id = safeData.id;
@@ -2289,6 +2357,9 @@ export const StorageService = {
   },
 
   deleteTipsTheme: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`cms_themes?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     await deleteDoc(doc(db, "tips_themes", id));
   },
 
@@ -2306,6 +2377,9 @@ export const StorageService = {
   },
 
   saveTipsContent: async (content: any): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate('cms_contents', 'POST', camelToSnake({ ...content })); } catch (e) { console.warn(e); }
+    }
     try {
       const safeData = { ...content, updatedAt: new Date().toISOString() };
       const id = safeData.id;
@@ -2320,6 +2394,9 @@ export const StorageService = {
   },
 
   deleteTipsContent: async (id: string): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try { await supabaseMutate(`cms_contents?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+    }
     await deleteDoc(doc(db, "tips_contents", id));
   }
 };

@@ -1,7 +1,24 @@
 
-import { db, storage } from '../firebaseApp';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc, or } from "firebase/firestore";
+// Firebase Firestore 완전 제거 — Supabase 전용 (2026.03.26)
+// Firebase Auth + Functions callable은 Toss/cancelBooking용으로 유지
+let db: any = null;
+let storage: any = null;
+const _firestoreLazy = async () => {
+  if (!db) {
+    const app = await import('../firebaseApp');
+    db = app.db;
+    storage = app.storage;
+    const fs = await import('firebase/firestore');
+    return { ...fs, db: app.db };
+  }
+  const fs = await import('firebase/firestore');
+  return { ...fs, db };
+};
+// 아래 함수들은 subscribe 폴백에서만 사용 (Supabase Realtime 전환 전까지)
+const _fbGetDocs = async (q: any) => { const fs = await _firestoreLazy(); return fs.getDocs(q); };
+const _fbCollection = async (name: string) => { const fs = await _firestoreLazy(); return fs.collection(db, name); };
+const _fbQuery = async (...args: any[]) => { const fs = await _firestoreLazy(); return fs.query(...args); };
+const _fbOnSnapshot = async (q: any, cb: any, err?: any) => { const fs = await _firestoreLazy(); return fs.onSnapshot(q, cb, err); };
 import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 import { isSupabaseAdminAuthEnabled } from './adminAuthService';
@@ -363,30 +380,118 @@ export const StorageService = {
   saveBooking: async (booking: BookingState): Promise<BookingState> => {
     const safeBooking = JSON.parse(JSON.stringify(booking));
 
+    // Supabase 전용 예약 저장 — Edge Function 트리거 자동 발동
+    if (isSupabaseDataEnabled()) {
+      try {
+        console.log("[StorageService] Saving booking to Supabase...");
+
+        const bookingData = {
+          sns_channel: safeBooking.snsChannel || null,
+          sns_id: safeBooking.snsId || null,
+          country: safeBooking.country || null,
+          pickup_address: safeBooking.pickupAddress || null,
+          pickup_address_detail: safeBooking.pickupAddressDetail || null,
+          pickup_date: safeBooking.pickupDate || null,
+          pickup_time: safeBooking.pickupTime || null,
+          dropoff_address: safeBooking.dropoffAddress || null,
+          dropoff_address_detail: safeBooking.dropoffAddressDetail || null,
+          dropoff_date: safeBooking.dropoffDate || null,
+          delivery_time: safeBooking.deliveryTime || null,
+          return_date: safeBooking.returnDate || null,
+          return_time: safeBooking.returnTime || null,
+          insurance_level: safeBooking.insuranceLevel || null,
+          insurance_bag_count: safeBooking.insuranceBagCount || null,
+          use_insurance: safeBooking.useInsurance || false,
+          base_price: isNaN(Number(safeBooking.price)) ? 0 : Number(safeBooking.price),
+          final_price: isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice),
+          promo_code: safeBooking.promoCode || null,
+          discount_amount: safeBooking.discountAmount || 0,
+          payment_method: safeBooking.paymentMethod || null,
+          payment_provider: safeBooking.paymentProvider || null,
+          agreed_to_terms: safeBooking.agreedToTerms || false,
+          agreed_to_privacy: safeBooking.agreedToPrivacy || false,
+          language: safeBooking.language || 'en',
+          image_url: safeBooking.imageUrl || null,
+          // Edge Function용 추가 필드
+          user_name: safeBooking.userName || null,
+          user_email: safeBooking.userEmail || null,
+          service_type: safeBooking.serviceType || 'STORAGE',
+          pickup_location: safeBooking.pickupLocation || null,
+          dropoff_location: safeBooking.dropoffLocation || null,
+        };
+
+        const result = await supabaseMutate<Array<Record<string, unknown>>>(
+          'booking_details',
+          'POST',
+          bookingData
+        );
+
+        const created = Array.isArray(result) && result[0] ? result[0] : null;
+        const reservationCode = created?.reservation_code || safeBooking.reservationCode;
+
+        console.log("[StorageService] Booking saved to Supabase ✅ Edge Function will process.");
+
+        // 폴링: Edge Function이 reservation_code를 생성할 때까지 대기
+        return new Promise((resolve, reject) => {
+          let pollCount = 0;
+          const bookingId = String(created?.id || '');
+
+          const pollTimer = setInterval(async () => {
+            pollCount++;
+            if (pollCount > 20) {
+              clearInterval(pollTimer);
+              // 타임아웃이어도 예약은 저장됨 — 코드만 나중에 표시
+              resolve({
+                ...safeBooking,
+                id: bookingId,
+                reservationCode: reservationCode || bookingId.substring(0, 12),
+                status: '접수완료' as any,
+              });
+              return;
+            }
+            try {
+              if (!bookingId) return;
+              const rows = await supabaseGet<Array<Record<string, unknown>>>(
+                `booking_details?select=reservation_code&id=eq.${bookingId}&limit=1`
+              );
+              if (rows?.[0]?.reservation_code) {
+                clearInterval(pollTimer);
+                resolve({
+                  ...safeBooking,
+                  id: bookingId,
+                  reservationCode: String(rows[0].reservation_code),
+                  status: '접수완료' as any,
+                });
+              }
+            } catch (e) {
+              console.warn("[StorageService] Poll failed:", e);
+            }
+          }, 1000);
+        });
+
+      } catch (supabaseErr) {
+        console.error("[StorageService] Supabase booking save failed, falling back to Firebase:", supabaseErr);
+        // Firebase 폴백 아래로 진행
+      }
+    }
+
+    // Firebase 폴백 (Supabase 실패 시에만)
     try {
       const { auth, ensureAuth, db } = await import('../firebaseApp');
-      const { collection, doc, setDoc, onSnapshot } = await import('firebase/firestore');
+      const { collection, doc, setDoc } = await import('firebase/firestore');
 
-      // [스봉이] ensureAuth 재시도 로직 — 네트워크 불안정 시에도 3번까지 버텨줍니다 💅
       let currentUser: any = null;
       let authAttempts = 0;
-      const MAX_AUTH_ATTEMPTS = 3;
-      while (!currentUser && authAttempts < MAX_AUTH_ATTEMPTS) {
+      while (!currentUser && authAttempts < 3) {
         authAttempts++;
-        try {
-          currentUser = await ensureAuth();
-        } catch (authErr: any) {
-          console.warn(`[StorageService] Auth attempt ${authAttempts}/${MAX_AUTH_ATTEMPTS} failed:`, authErr?.message);
-          if (authAttempts >= MAX_AUTH_ATTEMPTS) throw authErr;
+        try { currentUser = await ensureAuth(); } catch (authErr: any) {
+          if (authAttempts >= 3) throw authErr;
           await new Promise(r => setTimeout(r, 500 * authAttempts));
         }
       }
 
-      // 예약 저장 직전의 인증 UID를 문서에 고정해 두어야, 후속 읽기가 규칙에 막히지 않습니다.
       const bookingOwnerUid = safeBooking.userId || auth.currentUser?.uid || currentUser?.uid;
-      if (!bookingOwnerUid) {
-        throw new Error('예약 저장용 사용자 인증을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
-      }
+      if (!bookingOwnerUid) throw new Error('예약 저장용 사용자 인증을 확인하지 못했습니다.');
       safeBooking.userId = bookingOwnerUid;
 
       const docRef = safeBooking.id ? doc(db, 'bookings', safeBooking.id) : doc(collection(db, 'bookings'));

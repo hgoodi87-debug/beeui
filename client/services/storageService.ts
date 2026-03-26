@@ -826,15 +826,16 @@ export const StorageService = {
       }
     }
 
-    // 2. Firebase 조회 (과거 데이터용) ☕
+    // 2. Firebase 조회 (과거 데이터용 — Supabase 비활성 또는 로컬 브릿지만) ☕
     try {
       if (canUseLocalAdminDataBridge()) {
         firebaseBookings = await fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings');
-      } else {
+      } else if (!isSupabaseDataEnabled()) {
+        // Supabase 활성 시 Firebase 직접 조회 스킵 (Auth 에러 방지)
         const querySnapshot = await getDocs(collection(db, "bookings"));
         firebaseBookings = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
       }
-      console.log(`[Storage] Loaded ${firebaseBookings.length} bookings from Firebase ✅`);
+      if (firebaseBookings.length > 0) console.log(`[Storage] Loaded ${firebaseBookings.length} bookings from Firebase ✅`);
     } catch (e) {
       console.error("[Storage] Firebase fetch failed", e);
     }
@@ -1163,12 +1164,12 @@ export const StorageService = {
       }
     }
 
-    // 2. Firebase 조회 (과거 데이터용)
+    // 2. Firebase 조회 (로컬 브릿지 또는 Supabase 비활성 시만)
     try {
       if (canUseLocalAdminDataBridge()) {
         const items = await fetchLocalAdminBridge<LocationOption[]>('/api/collections/locations');
         firebaseLocs = items.map(enrichLoc);
-      } else {
+      } else if (!isSupabaseDataEnabled()) {
         const querySnapshot = await getDocs(collection(db, 'locations'));
         if (!querySnapshot.empty) {
           firebaseLocs = querySnapshot.docs.map(doc => {
@@ -1177,7 +1178,7 @@ export const StorageService = {
           });
         }
       }
-      console.log('[Storage] Loaded', firebaseLocs.length, 'locations from Firebase ✅');
+      if (firebaseLocs.length > 0) console.log('[Storage] Loaded', firebaseLocs.length, 'locations from Firebase ✅');
     } catch (e) {
       console.error('[Storage] Firebase locations failed:', e);
     }
@@ -1472,11 +1473,11 @@ export const StorageService = {
     try {
       if (canUseLocalAdminDataBridge()) {
         firebaseData = await fetchLocalAdminBridge<PartnershipInquiry[]>('/api/collections/inquiries');
-      } else {
+      } else if (!isSupabaseDataEnabled()) {
         const querySnapshot = await getDocs(collection(db, 'inquiries'));
         firebaseData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
       }
-      console.log('[Storage] Loaded', firebaseData.length, 'inquiries from Firebase \u2705');
+      if (firebaseData.length > 0) console.log('[Storage] Loaded', firebaseData.length, 'inquiries from Firebase ✅');
     } catch (e) { console.error('[Storage] Firebase inquiries failed:', e); }
 
     const supabaseIds = new Set(supabaseData.map(i => i.id));
@@ -1663,12 +1664,12 @@ export const StorageService = {
     try {
       if (canUseLocalAdminDataBridge()) {
         firebaseData = await fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
-      } else {
+      } else if (!isSupabaseDataEnabled()) {
         const q = query(collection(db, 'daily_closings'), orderBy('date', 'desc'), limit(500));
         const snap = await getDocs(q);
         firebaseData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CashClosing));
       }
-      console.log('[Storage] Loaded', firebaseData.length, 'cash closings from Firebase \u2705');
+      if (firebaseData.length > 0) console.log('[Storage] Loaded', firebaseData.length, 'cash closings from Firebase ✅');
     } catch (e) { console.error('[Storage] Firebase closings failed:', e); }
 
     const supabaseIds = new Set(supabaseData.map(c => c.id));
@@ -1767,12 +1768,12 @@ export const StorageService = {
     try {
       if (canUseLocalAdminDataBridge()) {
         firebaseData = await fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
-      } else {
+      } else if (!isSupabaseDataEnabled()) {
         const q = query(collection(db, 'expenditures'), orderBy('date', 'desc'), limit(1000));
         const snap = await getDocs(q);
         firebaseData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Expenditure));
       }
-      console.log('[Storage] Loaded', firebaseData.length, 'expenditures from Firebase \u2705');
+      if (firebaseData.length > 0) console.log('[Storage] Loaded', firebaseData.length, 'expenditures from Firebase ✅');
     } catch (e) { console.error('[Storage] Firebase expenditures failed:', e); }
 
     const supabaseIds = new Set(supabaseData.map(x => x.id));
@@ -1870,11 +1871,11 @@ export const StorageService = {
       if (canUseLocalAdminDataBridge()) {
         const items = await fetchLocalAdminBridge<AdminUser[]>('/api/collections/admins');
         firebaseData = collapseAdminDirectoryEntries(items);
-      } else {
+      } else if (!isSupabaseDataEnabled()) {
         const snap = await getDocs(collection(db, 'admins'));
         firebaseData = collapseAdminDirectoryEntries(snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser)));
       }
-      console.log('[Storage] Loaded', firebaseData.length, 'admins from Firebase \u2705');
+      if (firebaseData.length > 0) console.log('[Storage] Loaded', firebaseData.length, 'admins from Firebase ✅');
     } catch (e) { console.error('[Storage] Firebase admins failed:', e); }
 
     const supabaseIds = new Set(supabaseData.map(a => a.id));

@@ -58,17 +58,17 @@ export const ko = {
         ]
     },
     hero: {
-        badge: '서울 여행 핸즈프리(Hands-free) 파트너 ✨',
-        title1: '가장 서울다운 여행,',
-        title2: '두 손 가볍게',
-        subtitle: '수하물은 빌리버에게 맡기고,\n당신은 오직 서울의 설레는 매 순간에만 집중하세요.',
+        badge: '서울 여행 짐보관·공항배송 파트너 🐝',
+        title1: '서울 어디서든,',
+        title2: '짐은 맡기고 여행만',
+        subtitle: '홍대·명동·서울역 등 40+ 거점 보관 ₩4,000~\n인천공항 당일 배송 ₩25,000~',
         btn_now: '지금 예약하기',
-        cta_storage: "보관 예약하기",
-        cta_delivery: "배송 예약하기",
+        cta_storage: "가까운 보관소 찾기",
+        cta_delivery: "공항 배송 예약",
         track_booking: '내 예약 확인',
         book_branch: '가까운 지점 예약',
-        main_title_1: '가장 서울다운 여행,',
-        main_title_2: '두 손 가볍게',
+        main_title_1: '서울 어디서든,',
+        main_title_2: '짐은 맡기고 여행만',
         main_title_bags: '',
         main_title_city: '',
         live_label: '실시간 배송 피드',
@@ -115,17 +115,17 @@ export const ko = {
         footer_label3: "이미 수만 명이 경험한 신뢰"
     },
     pricing: {
-        headline: "커피 몇 잔 값으로 즐기는,\n서울 여행의 완벽한 자유",
-        desc: "복잡한 크기 계산 없이\n합리적인 단일 요금을 제안합니다.",
-        airport_hotel: "서울 거점 짐 보관 (Day)",
+        headline: "가장 투명한 가격,\n숨은 비용 없이",
+        desc: "역 코인락커와 다릅니다.\n사이즈 제한 없이, 보험 포함, 공항 배송까지.",
+        airport_hotel: "짐 보관",
         extra_large: "인천공항 당일 배송",
-        price_standard: "₩4,000~",
-        price_extra: "₩25,000~",
-        features_standard: ["서울 주요 거점 지점 보관", "4시간/1일 단위 유연한 선택", "안전한 실내 보관 및 보안", "기본 파손 보험 포함"],
-        features_extra: ["서울 거점 ➔ 인천공항 당일 배송", "무거운 캐리어 전담 서비스", "배송 상태 실시간 알림", "기본 파손 보험 포함"],
-        flat_rate_label: "정찰제 요금 💰",
-        most_popular_label: "인기 서비스",
-        per_bag_label: "/ 1개 기준",
+        price_standard: "₩4,000",
+        price_extra: "₩25,000",
+        features_standard: ["4시간 기본 ₩4,000 / 1일 ₩8,000", "사이즈 제한 없음 (유모차도 OK)", "전 지점 보험 기본 포함", "예약·취소·변경 수수료 없음"],
+        features_extra: ["캐리어 1개 ₩25,000 / 핸드백 ₩10,000", "오전 맡기면 오후 공항 수령", "실시간 배송 상태 알림", "보험 포함 · 파손 최대 50만원 보상"],
+        flat_rate_label: "투명한 요금표 💰",
+        most_popular_label: "인기",
+        per_bag_label: "/ 1개",
         choose_service_btn: "예약하러 가기"
     },
     reviews_section: {
@@ -140,8 +140,9 @@ export const ko = {
         review_8: { name: "Sofia", location: "Italy", text: "한강공원에서 피크닉 할 때 짐을 미리 호텔로 보내길 정말 잘한 것 같아요. 🧺" }
     },
     final_cta: {
-        headline: "아직도 무거운 짐을 들고 계신가요?\n지금 바로 서울의 자유를 예약하세요.",
-        btn_airport_hotel: "짐 보관 지점 찾기",
+        headline: "아직도 캐리어 끌고 다니세요?\n지금 맡기고 자유롭게 여행하세요.",
+        sub: "예약 취소·변경 무료 · 선결제 없이 현장 결제 가능",
+        btn_airport_hotel: "가까운 보관소 찾기",
         btn_hotel_airport: "공항 배송 예약하기"
     },
     partnership: {

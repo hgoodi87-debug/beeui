@@ -42,9 +42,15 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate, lang }
                         </div>
                     </div>
 
-                    <h2 className="text-4xl md:text-6xl lg:text-[6.5rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-10 break-keep whitespace-pre-line px-4">
+                    <h2 className="text-4xl md:text-6xl lg:text-[6.5rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-6 break-keep whitespace-pre-line px-4">
                         {t.final_cta.headline}
                     </h2>
+
+                    {t.final_cta.sub && (
+                        <p className="text-white/60 text-sm md:text-base mb-10 font-medium">
+                            {t.final_cta.sub}
+                        </p>
+                    )}
 
                     <div className="flex flex-col md:flex-row gap-6 md:gap-10 justify-center">
                         <motion.a

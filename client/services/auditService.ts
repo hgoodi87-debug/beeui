@@ -1,10 +1,9 @@
-import { db } from '../firebaseApp';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-
 /**
- * [스봉이] 감사 로그 액션 타입 정의
- * 보안 및 운영상의 중요 이벤트를 분류합니다.
+ * [스봉이] 감사 로그 서비스 — Supabase 전용 💅
+ * Firebase Firestore 완전 제거, Supabase REST API 사용
  */
+import { isSupabaseDataEnabled, supabaseMutate } from './supabaseClient';
+
 export type AuditActionType = 
     | 'LOGIN' 
     | 'REFUND' 
@@ -22,18 +21,17 @@ export interface AuditLogData {
     actorName: string;
     actorEmail?: string;
     actionType: AuditActionType;
-    targetId?: string;      // 예약 ID, 관리자 ID 등
-    targetType?: string;    // 'BOOKING', 'ADMIN', 'SYSTEM' 등
-    details?: any;          // 변경 전/후 데이터 등
+    targetId?: string;
+    targetType?: string;
+    details?: any;
     ip?: string;
     userAgent?: string;
-    timestamp: any;
+    timestamp: string;
 }
 
 export const AuditService = {
     /**
-     * [스봉이] 핵심 감사 로그 기록 함수
-     * 어떤 관리자가 어떤 중요한 작업을 수행했는지 영구히 기록합니다. 🛡️
+     * [스봉이] 핵심 감사 로그 기록 함수 — Supabase audit_logs 테이블 직접 저장 🛡️
      */
     async logAction(
         actor: { id: string; name: string; email?: string },
@@ -42,19 +40,22 @@ export const AuditService = {
         details: any = {}
     ) {
         try {
-            const logData: AuditLogData = {
-                actorId: actor.id,
-                actorName: actor.name,
-                actorEmail: actor.email,
-                actionType,
-                targetId: target?.id,
-                targetType: target?.type,
-                details,
-                timestamp: serverTimestamp(),
-                userAgent: navigator.userAgent
+            const logData = {
+                entity_type: target?.type || 'SYSTEM',
+                entity_id: target?.id || '',
+                action: actionType,
+                actor: `${actor.name}${actor.email ? ` (${actor.email})` : ''} [${actor.id}]`,
+                before_data: null,
+                after_data: details ? JSON.stringify(details) : null,
             };
 
-            await addDoc(collection(db, 'audit_logs'), logData);
+            if (isSupabaseDataEnabled()) {
+                await supabaseMutate('audit_logs', 'POST', logData);
+            } else {
+                // Supabase 미설정 시 콘솔에만 기록
+                console.warn('[AuditLog] Supabase not configured, logging to console only:', logData);
+            }
+
             console.log(`[AuditLog] ${actionType} recorded successfully. 💅`);
         } catch (e) {
             console.error('[AuditLog] Failed to record action:', e);

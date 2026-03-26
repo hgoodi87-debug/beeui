@@ -23,6 +23,7 @@ import { TipAreaInfo } from "../src/domains/shared/types";
 import TrackingWidget from "./TrackingWidget";
 import LandingHero from "./landing/LandingHero";
 import LandingOperationsMarquee from "./landing/LandingOperationsMarquee";
+import LandingGoogleReviewsStrip from "./landing/LandingGoogleReviewsStrip";
 
 // [스봉이] 아래 섹션들은 스크롤 할 때만 불러오도록 지능적으로 세팅했어요. 💅✨
 const LandingPainSection = React.lazy(() => import("./landing/LandingPainSection"));
@@ -232,6 +233,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                 {/* <section className="py-24 bg-white border-y border-gray-100">
                     ... THE SEOUL HUB section hidden ...
                 </section> */}
+
+                <LandingGoogleReviewsStrip />
 
                 <React.Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse" />}>
                     <LandingPainSection t={t} />

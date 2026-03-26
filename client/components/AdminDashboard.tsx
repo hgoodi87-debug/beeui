@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db } from '../firebaseApp';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+// Firebase import 제거 — Supabase 어댑터 사용
+import { supabaseMutate, isSupabaseDataEnabled } from '../services/supabaseClient';
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, PriceSettings, StorageTier, AdminUser, SystemNotice, HeroConfig, GoogleCloudConfig, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
 import { StorageService } from '../services/storageService';
@@ -266,17 +266,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     discountAmount: 0
   });
 
-  // Function to handle email resend
+  // Function to handle email resend — Supabase Edge Function 경로
   const handleResendEmail = async (booking: BookingState) => {
     if (!booking.id) return;
     if (!confirm(`${booking.userName} (${booking.userEmail}) 고객님께 바우처 이메일을 재발행해 드릴까요? 💅`)) return;
 
     setSendingEmailId(booking.id);
     try {
-      const { httpsCallable } = await import('firebase/functions');
-      const { functions } = await import('../firebaseApp');
-      const resendVoucher = httpsCallable(functions, 'resendBookingVoucher');
-      await resendVoucher({ bookingId: booking.id });
+      if (isSupabaseDataEnabled()) {
+        const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+        const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+          body: JSON.stringify({ type: 'INSERT', table: 'booking_details', record: { id: booking.id, reservation_code: booking.reservationCode, user_name: booking.userName, user_email: booking.userEmail, service_type: booking.serviceType, pickup_date: booking.pickupDate, pickup_time: booking.pickupTime, pickup_location: booking.pickupLocation, final_price: booking.finalPrice } }),
+        });
+        if (!res.ok) throw new Error(`Edge Function 호출 실패 [${res.status}]`);
+      } else {
+        const { httpsCallable } = await import('firebase/functions');
+        const { functions } = await import('../firebaseApp');
+        const resendVoucher = httpsCallable(functions, 'resendBookingVoucher');
+        await resendVoucher({ bookingId: booking.id });
+      }
       alert('바우처 이메일 발송이 깔끔하게 끝났어요. ✨');
     } catch (error: any) {
       console.error("Failed to send email:", error);
@@ -286,21 +297,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
-  // Function to handle Refund
+  // Function to handle Refund — Supabase 어댑터 경로
   const handleRefund = async (booking: BookingState) => {
     if (!booking.id) return;
-    // Final Confirmation Popup
     if (!confirm(`[최종 확인]\n\n예약번호: ${booking.id}\n고객명: ${booking.userName}\n\n정말로 반품(환불) 처리하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
 
     setRefundingId(booking.id);
     try {
-      const { httpsCallable } = await import('firebase/functions');
-      const { functions } = await import('../firebaseApp');
-      const processRefund = httpsCallable(functions, 'processBookingRefund');
-      await processRefund({ bookingId: booking.id });
+      if (isSupabaseDataEnabled()) {
+        await supabaseMutate(`booking_details?id=eq.${booking.id}`, 'PATCH', {
+          settlement_status: 'refunded',
+        });
+      } else {
+        const { httpsCallable } = await import('firebase/functions');
+        const { functions } = await import('../firebaseApp');
+        const processRefund = httpsCallable(functions, 'processBookingRefund');
+        await processRefund({ bookingId: booking.id });
+      }
       await AuditService.logAction(currentActor, 'REFUND', { id: booking.id, type: 'BOOKING' }, { userName: booking.userName });
       alert('반품(환불) 처리가 완료되었습니다.');
-      // Update local state to reflect change immediately (optional, or rely on snapshot)
     } catch (error: any) {
       console.error("Failed to process refund:", error);
       alert(`반품 처리 실패: ${error.message}`);
@@ -491,7 +506,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const deleteExpenditure = async (id: string) => {
     if (!confirm('지출 내역을 삭제하시겠습니까?')) return;
     try {
-      await deleteDoc(doc(db, 'expenditures', id));
+      if (isSupabaseDataEnabled()) {
+        await supabaseMutate(`expenditures?id=eq.${id}`, 'DELETE');
+      } else {
+        // Firebase 폴백
+        const { db: fbDb } = await import('../firebaseApp');
+        const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
+        await fbDeleteDoc(fbDoc(fbDb, 'expenditures', id));
+      }
     } catch (e) {
       console.error(e);
       alert('삭제 실패');
@@ -1303,8 +1325,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setIsBatchUpdating(true);
     try {
-      const promises = selectedBookingIds.map(id => updateDoc(doc(db, 'bookings', id), { status }));
-      await Promise.all(promises);
+      if (isSupabaseDataEnabled()) {
+        const promises = selectedBookingIds.map(id =>
+          supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', { settlement_status: status })
+        );
+        await Promise.all(promises);
+      } else {
+        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
+        const { db: fbDb } = await import('../firebaseApp');
+        const promises = selectedBookingIds.map(id => fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { status }));
+        await Promise.all(promises);
+      }
       setSelectedBookingIds([]);
       alert(`성공적으로 ${selectedBookingIds.length}건을 처리했습니다. 💅`);
     } catch (error) {
@@ -1317,13 +1348,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const updateStatus = async (id: string, status: BookingStatus, auditNote?: string) => {
     try {
-      const { doc, updateDoc } = await import('firebase/firestore');
-      const bookingRef = doc(db, 'bookings', id);
-      await updateDoc(bookingRef, { 
-        status,
-        ...(auditNote && { auditNote }),
-        updatedAt: new Date().toISOString()
-      });
+      if (isSupabaseDataEnabled()) {
+        const updateData: Record<string, unknown> = { settlement_status: status };
+        if (auditNote) (updateData as any).notes = auditNote;
+        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', updateData);
+      } else {
+        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
+        const { db: fbDb } = await import('../firebaseApp');
+        await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { status, ...(auditNote && { auditNote }), updatedAt: new Date().toISOString() });
+      }
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id, type: 'BOOKING' }, { status, detail: auditNote });
     } catch (e) { console.error(e); }
   };
@@ -1445,8 +1478,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleSoftDelete = async (id: string) => {
     if (!confirm('예약 내역을 휴지통으로 이동하시겠습니까?')) return;
     try {
-      const { doc, updateDoc } = await import('firebase/firestore');
-      await updateDoc(doc(db, 'bookings', id), { isDeleted: true, updatedAt: new Date().toISOString() });
+      if (isSupabaseDataEnabled()) {
+        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', { settlement_status: 'deleted' });
+      } else {
+        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
+        const { db: fbDb } = await import('../firebaseApp');
+        await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { isDeleted: true, updatedAt: new Date().toISOString() });
+      }
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'SOFT_DELETE' });
     } catch (e) {
       console.error(e);
@@ -1486,16 +1524,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setIsBatchUpdating(true);
     try {
-      const { doc, writeBatch } = await import('firebase/firestore');
-      const updatedAt = new Date().toISOString();
       const candidateIds = new Set(targetBookings.map(booking => booking.id!));
 
-      for (let i = 0; i < targetBookings.length; i += 400) {
-        const batch = writeBatch(db);
-        targetBookings.slice(i, i + 400).forEach((booking) => {
-          batch.update(doc(db, 'bookings', booking.id!), { isDeleted: true, updatedAt });
-        });
-        await batch.commit();
+      if (isSupabaseDataEnabled()) {
+        const promises = targetBookings.map(booking =>
+          supabaseMutate(`booking_details?id=eq.${booking.id!}`, 'PATCH', { settlement_status: 'deleted' })
+        );
+        await Promise.allSettled(promises);
+      } else {
+        const { doc: fbDoc, writeBatch: fbWriteBatch } = await import('firebase/firestore');
+        const { db: fbDb } = await import('../firebaseApp');
+        const updatedAt = new Date().toISOString();
+        for (let i = 0; i < targetBookings.length; i += 400) {
+          const batch = fbWriteBatch(fbDb);
+          targetBookings.slice(i, i + 400).forEach((booking) => {
+            batch.update(fbDoc(fbDb, 'bookings', booking.id!), { isDeleted: true, updatedAt });
+          });
+          await batch.commit();
+        }
       }
 
       setSelectedBookingIds(prev => prev.filter(id => !candidateIds.has(id)));
@@ -1523,8 +1569,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleRestore = async (id: string) => {
     if (!confirm('예약 내역을 복구하시겠습니까?')) return;
     try {
-      const { doc, updateDoc } = await import('firebase/firestore');
-      await updateDoc(doc(db, 'bookings', id), { isDeleted: false, updatedAt: new Date().toISOString() });
+      if (isSupabaseDataEnabled()) {
+        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', { settlement_status: null });
+      } else {
+        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
+        const { db: fbDb } = await import('../firebaseApp');
+        await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { isDeleted: false, updatedAt: new Date().toISOString() });
+      }
       await AuditService.logAction(currentActor, 'RESTORE', { id, type: 'BOOKING' }, { method: 'RESTORE' });
     } catch (e) {
       console.error(e);
@@ -1535,8 +1586,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handlePermanentDelete = async (id: string) => {
     if (!confirm('정말로 영구 삭제하시겠습니까? 복구할 수 없습니다.')) return;
     try {
-      const { doc, deleteDoc } = await import('firebase/firestore');
-      await deleteDoc(doc(db, 'bookings', id));
+      if (isSupabaseDataEnabled()) {
+        await supabaseMutate(`booking_details?id=eq.${id}`, 'DELETE');
+      } else {
+        const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
+        const { db: fbDb } = await import('../firebaseApp');
+        await fbDeleteDoc(fbDoc(fbDb, 'bookings', id));
+      }
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'PERMANENT_DELETE' });
     } catch (e) {
       console.error(e);
@@ -1753,9 +1809,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!selectedBooking || !selectedBooking.id) return;
     setIsSaving(true);
     try {
-      const { doc, updateDoc } = await import('firebase/firestore');
-      const bookingRef = doc(db, 'bookings', selectedBooking.id);
-      await updateDoc(bookingRef, { ...selectedBooking, updatedAt: new Date().toISOString() });
+      await StorageService.updateBooking(selectedBooking.id!, { ...selectedBooking, updatedAt: new Date().toISOString() });
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id: selectedBooking.id!, type: 'BOOKING' }, { status: selectedBooking.status, detail: 'Manual Full Update' });
       alert('예약 정보가 성공적으로 업데이트되었습니다. 💅');
       setSelectedBooking(null);

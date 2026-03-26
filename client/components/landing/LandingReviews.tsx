@@ -56,17 +56,18 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                                     e.currentTarget.src = "/images/operations/real_ops_01.jpg";
                                 }}
                             />
-                            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 md:p-10">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center font-bold text-black border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            {/* 하단 그라데이션 + 리뷰 (항상 표시) */}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-16 md:pt-24 p-4 md:p-6 flex flex-col justify-end">
+                                    <div className="flex items-center gap-2 md:gap-3 mb-1.5 md:mb-2">
+                                        <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-yellow-400 flex items-center justify-center font-bold text-black text-xs md:text-sm border border-black/20 shadow-sm flex-shrink-0">
                                             {(review.name || "U")[0]}
                                         </div>
-                                        <div>
-                                            <h4 className="font-bold text-black">{review.name || "Beeliber User"}</h4>
-                                            <p className="text-xs text-black/60">{review.location || "Global Travel"}</p>
+                                        <div className="min-w-0">
+                                            <h4 className="font-bold text-white text-xs md:text-sm truncate">{review.name || "Beeliber User"}</h4>
+                                            <p className="text-[10px] md:text-xs text-white/70 truncate">{review.location || "Global Travel"}</p>
                                         </div>
                                     </div>
-                                    <p className="text-black leading-relaxed italic">
+                                    <p className="text-white/90 text-[11px] md:text-sm leading-snug line-clamp-2 md:line-clamp-3 italic">
                                         "{review.text}"
                                     </p>
                             </div>

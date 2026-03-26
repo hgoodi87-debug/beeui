@@ -127,6 +127,7 @@ export type AdminTab =
     | 'CHATS' 
     | 'TIPS_CMS'
     | 'DAILY_SETTLEMENT'
+    | 'FINANCIAL_COMPARISON'
     | 'ACCOUNTING'
     | 'MONTHLY_SETTLEMENT'
     | 'REPORTS'

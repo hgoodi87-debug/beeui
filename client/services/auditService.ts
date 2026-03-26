@@ -14,6 +14,7 @@ export type AuditActionType =
     | 'RESTORE' 
     | 'CONFIG_CHANGE' 
     | 'MANUAL_BOOKING' 
+    | 'SETTLEMENT_CONFIRM'
     | 'DELETE';
 
 export interface AuditLogData {

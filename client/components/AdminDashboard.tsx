@@ -100,6 +100,7 @@ const TipsCMSTab = lazy(() => import('./admin/TipsCMSTab').then((module) => ({ d
 const RoadmapTab = lazy(() => import('./admin/RoadmapTab'));
 const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
+const FinancialComparisonTab = lazy(() => import('./admin/FinancialComparisonTab'));
 
 const AdminTabFallback: React.FC = () => (
   <div className="rounded-[32px] border border-dashed border-gray-200 bg-white/80 px-6 py-10 text-center text-sm font-bold text-gray-400 shadow-sm">
@@ -2062,6 +2063,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             <nav className="space-y-1">
               {[
                 { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
+                { id: 'FINANCIAL_COMPARISON', label: '미정산 건 금융 대조', icon: 'fa-coins' },
                 { id: 'ACCOUNTING', label: '통합 매출 결산', icon: 'fa-receipt' },
                 { id: 'REPORTS', label: '분석 리포트', icon: 'fa-chart-line' },
               ].map(item => (
@@ -2218,6 +2220,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'DELIVERY_BOOKINGS', label: t.admin?.sidebar?.logistics || '배송 예약 관리', icon: 'fa-truck-fast' },
                         { id: 'STORAGE_BOOKINGS', label: t.admin?.sidebar?.logistics || '보관 예약 관리', icon: 'fa-warehouse' },
                         { id: 'DAILY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '일일 시재 정산', icon: 'fa-calendar-check' },
+                        { id: 'FINANCIAL_COMPARISON', label: '미정산 건 금융 대조', icon: 'fa-coins' },
                         { id: 'ACCOUNTING', label: t.admin?.sidebar?.accounting || '매출 결산 보고', icon: 'fa-receipt' },
                         { id: 'MONTHLY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '월 정산 통제판', icon: 'fa-vault' },
                         { id: 'LOCATIONS', label: t.admin?.sidebar?.locations || '전 지점 마스터 관리', icon: 'fa-location-dot' },
@@ -2390,6 +2393,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           )}
 
 
+
           {activeTab === 'DAILY_SETTLEMENT' && (
             <DailySettlementTab
               revenueEndDate={revenueEndDate}
@@ -2409,6 +2413,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               deleteExpenditure={deleteExpenditure}
               setSelectedBooking={setSelectedBooking}
               t={t}
+            />
+          )}
+
+          {activeTab === 'FINANCIAL_COMPARISON' && (
+            <FinancialComparisonTab
+              bookings={bookings}
+              locations={locations}
+              t={t}
+              currentActor={currentActor}
             />
           )}
 

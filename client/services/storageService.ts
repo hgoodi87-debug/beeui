@@ -808,39 +808,46 @@ export const StorageService = {
   },
 
   getBookings: async (): Promise<BookingState[]> => {
-    // [스봉이] Supabase 우선 조회 — booking_details 테이블 기준 💅
+    let supabaseBookings: BookingState[] = [];
+    let firebaseBookings: BookingState[] = [];
+
+    // 1. Supabase 조회 💅
     if (isSupabaseDataEnabled()) {
       try {
         const rows = await supabaseGet<Array<Record<string, unknown>>>(
           'booking_details?select=*&order=created_at.desc&limit=500'
         );
         if (rows && rows.length > 0) {
-          const mapped = rows.map(r => snakeToCamel(r) as unknown as BookingState);
-          console.log(`[Storage] Loaded ${mapped.length} bookings from Supabase ✅`);
-          return sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(mapped));
+          supabaseBookings = rows.map(r => snakeToCamel(r) as unknown as BookingState);
+          console.log(`[Storage] Loaded ${supabaseBookings.length} bookings from Supabase ✅`);
         }
-        console.log('[Storage] Supabase booking_details returned 0 rows, trying fallback...');
       } catch (e) {
-        console.warn("[Storage] Supabase bookings fetch failed, falling back:", e);
+        console.warn("[Storage] Supabase fetch failed", e);
       }
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return normalizeBookingsForDeliveryPolicy(await fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings'));
-      } catch (e) {
-        console.error("Error fetching bookings from local admin bridge", e);
-        return [];
-      }
-    }
-
+    // 2. Firebase 조회 (과거 데이터용) ☕
     try {
-      const querySnapshot = await getDocs(collection(db, "bookings"));
-      return normalizeBookingsForDeliveryPolicy(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
+      if (canUseLocalAdminDataBridge()) {
+        firebaseBookings = await fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings');
+      } else {
+        const querySnapshot = await getDocs(collection(db, "bookings"));
+        firebaseBookings = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      }
+      console.log(`[Storage] Loaded ${firebaseBookings.length} bookings from Firebase ✅`);
     } catch (e) {
-      console.error("Error fetching bookings from cloud", e);
-      return [];
+      console.error("[Storage] Firebase fetch failed", e);
     }
+
+    // 3. 스마트 병합 (Supabase 우선, 중복 제거) 💅
+    const supabaseIds = new Set(supabaseBookings.map(b => b.id));
+    const merged = [
+      ...supabaseBookings,
+      ...firebaseBookings.filter(fb => !supabaseIds.has(fb.id))
+    ];
+
+    console.log(`[Storage] Merged result: ${merged.length} total bookings 💅`);
+    return sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(merged));
   },
 
   getBookingsByDate: async (date: string): Promise<BookingState[]> => {

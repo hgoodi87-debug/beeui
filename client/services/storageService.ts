@@ -1,24 +1,8 @@
 
-// Firebase Firestore 완전 제거 — Supabase 전용 (2026.03.26)
-// Firebase Auth + Functions callable은 Toss/cancelBooking용으로 유지
-let db: any = null;
-let storage: any = null;
-const _firestoreLazy = async () => {
-  if (!db) {
-    const app = await import('../firebaseApp');
-    db = app.db;
-    storage = app.storage;
-    const fs = await import('firebase/firestore');
-    return { ...fs, db: app.db };
-  }
-  const fs = await import('firebase/firestore');
-  return { ...fs, db };
-};
-// 아래 함수들은 subscribe 폴백에서만 사용 (Supabase Realtime 전환 전까지)
-const _fbGetDocs = async (q: any) => { const fs = await _firestoreLazy(); return fs.getDocs(q); };
-const _fbCollection = async (name: string) => { const fs = await _firestoreLazy(); return fs.collection(db, name); };
-const _fbQuery = async (...args: any[]) => { const fs = await _firestoreLazy(); return fs.query(...args); };
-const _fbOnSnapshot = async (q: any, cb: any, err?: any) => { const fs = await _firestoreLazy(); return fs.onSnapshot(q, cb, err); };
+// Supabase 우선 + Firebase 폴백 (subscribe/기존 코드 호환)
+import { db, storage } from '../firebaseApp';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, onSnapshot, setDoc, writeBatch, orderBy, limit, getDoc, or } from "firebase/firestore";
 import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 import { isSupabaseAdminAuthEnabled } from './adminAuthService';

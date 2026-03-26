@@ -3,8 +3,33 @@
 // Supabase 전용 storageService (Firebase Firestore 완전 제거)
 // Firebase → Supabase 어댑터 레이어로 기존 147개 호출 호환
 // ============================================================
-import { storage } from '../firebaseApp';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+// Firebase Storage 완전 제거 — Supabase Storage 사용
+// storage, ref, uploadBytes, getDownloadURL 모두 Supabase 어댑터로 대체
+const storage = {} as any; // 더미
+const ref = (_s: any, path: string) => ({ _path: path });
+const uploadBytes = async (storageRef: any, file: Blob | ArrayBuffer, _metadata?: any) => {
+  // Supabase Storage signed upload
+  const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+  const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+  const bucket = 'brand-public';
+  const path = storageRef._path;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': (file as File).type || 'application/octet-stream',
+    },
+    body: file,
+  });
+  if (!res.ok) throw new Error(`Supabase Storage upload failed [${res.status}]`);
+  return res;
+};
+const getDownloadURL = async (storageRef: any): Promise<string> => {
+  const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+  const bucket = 'brand-public';
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${storageRef._path}`;
+};
 
 // Firebase Firestore 어댑터 — 기존 코드의 147개 호출을 Supabase로 라우팅
 import { isSupabaseDataEnabled as _sbEnabled, supabaseGet as _sbGet, supabaseMutate as _sbMutate, snakeToCamel, camelToSnake } from './supabaseClient';
@@ -481,29 +506,11 @@ export const StorageService = {
 
   uploadFile: async (file: File | Blob, path: string): Promise<string> => {
     try {
-      console.log("[Storage] Starting upload to:", path);
-      // Ensure we have some level of auth context (Anonymous or regular)
-      const { ensureAuth } = await import('../firebaseApp');
-      await ensureAuth();
-
-      const { auth } = await import('../firebaseApp');
-      console.log("[Storage] Current User before upload:", auth.currentUser?.uid || "NULL");
-
-      // [스봉이] 가끔 서버가 느리면 인증 정보가 바로 안 넘어갈 때가 있더라고요. 0.5초만 기다려 볼까요? 💅
-      if (!auth.currentUser) {
-        console.warn("[Storage] User is still NULL after ensureAuth! Retrying sign-in... 🙄");
-        const { signInAnonymously } = await import('firebase/auth');
-        await signInAnonymously(auth);
-      }
+      console.log("[Storage] Starting Supabase upload to:", path);
 
       const storageRef = ref(storage, path);
-      console.log("[Storage] Uploading bytes (Size:", file.size, ")...");
-      const metadata = {
-        contentType: (file as File).type || 'application/octet-stream',
-      };
-
-      await uploadBytes(storageRef, file, metadata);
-      console.log("[Storage] Upload success, getting URL...");
+      await uploadBytes(storageRef, file);
+      console.log("[Storage] Supabase upload success ✅");
       return await getDownloadURL(storageRef);
     } catch (err: unknown) {
       const e = err as any; // Cast for specific properties access

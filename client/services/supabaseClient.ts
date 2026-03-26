@@ -4,7 +4,12 @@
  */
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
-const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+// anon key 우선, publishable key 폴백
+const SUPABASE_KEY = (
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  ''
+).trim();
 
 export const isSupabaseDataEnabled = (): boolean =>
   Boolean(SUPABASE_URL) && Boolean(SUPABASE_KEY);

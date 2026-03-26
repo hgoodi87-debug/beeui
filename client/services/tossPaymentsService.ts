@@ -1,4 +1,6 @@
-import { auth, ensureAuth, functions } from '../firebaseApp';
+// Firebase 완전 제거 — Supabase Edge Function 사용
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
 import { BookingState } from '../types';
 
 const tossClientKey = import.meta.env.VITE_TOSS_PAYMENTS_CLIENT_KEY?.trim() || '';
@@ -57,31 +59,7 @@ export interface TossPaymentConfirmResult {
 
 let tossSdkPromise: Promise<NonNullable<Window['TossPayments']>> | null = null;
 
-const waitForExistingAuthUser = async (timeoutMs: number = 2500) => {
-    if (auth.currentUser) {
-        return auth.currentUser;
-    }
-
-    return new Promise<typeof auth.currentUser>((resolve) => {
-        let settled = false;
-
-        const finish = (user: typeof auth.currentUser) => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timeoutId);
-            unsubscribe();
-            resolve(user);
-        };
-
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                finish(user);
-            }
-        });
-
-        const timeoutId = window.setTimeout(() => finish(auth.currentUser), timeoutMs);
-    });
-};
+// Auth 대기 불필요 — Supabase Edge Function은 JWT 검증 없이 동작
 
 const loadTossPaymentsSdk = async () => {
     if (typeof window === 'undefined') {
@@ -222,13 +200,15 @@ export const createTossPaymentSession = async (booking: BookingState): Promise<T
         return session;
     }
 
-    await waitForExistingAuthUser();
-    await ensureAuth();
-
-    const { httpsCallable } = await import('firebase/functions');
-    const createSession = httpsCallable(functions, 'createTossPaymentSession');
-    const response = await createSession({ booking });
-    return response.data as TossPaymentSessionResult;
+    // Supabase Edge Function 호출
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/toss-payments/create-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ booking }),
+    });
+    if (!res.ok) throw new Error(`Toss session failed [${res.status}]`);
+    const json = await res.json();
+    return json.data as TossPaymentSessionResult;
 };
 
 export const confirmTossPayment = async (params: {
@@ -265,13 +245,15 @@ export const confirmTossPayment = async (params: {
         };
     }
 
-    await waitForExistingAuthUser();
-    await ensureAuth();
-
-    const { httpsCallable } = await import('firebase/functions');
-    const confirmPayment = httpsCallable(functions, 'confirmTossPayment');
-    const response = await confirmPayment(params);
-    return response.data as TossPaymentConfirmResult;
+    // Supabase Edge Function 호출
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/toss-payments/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify(params),
+    });
+    if (!res.ok) throw new Error(`Toss confirm failed [${res.status}]`);
+    const json = await res.json();
+    return json.data as TossPaymentConfirmResult;
 };
 
 export const requestTossCardPayment = async (params: {

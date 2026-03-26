@@ -749,6 +749,8 @@ export const StorageService = {
   },
 
   subscribeBookings: (callback: (data: BookingState[]) => void): (() => void) => {
+    // Supabase polling — bookings는 아직 booking_details 기반
+    // Firebase 예약 데이터는 병행 기간 동안 localAdminBridge로 조회
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<BookingState[]>(
         '/api/collections/bookings',
@@ -758,32 +760,13 @@ export const StorageService = {
         'Bookings local bridge'
       );
     }
-
-    try {
-      const q = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(1000));
-      return onSnapshot(q, (snapshot) => {
-        const bookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
-        // Sort in memory to be safe against index issues
-        bookings.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-        callback(bookings);
-      }, (error) => {
-        console.error("Booking subscription error:", error);
-        const simpleQ = query(collection(db, "bookings"), limit(1000));
-        void runSnapshotFallback({
-          sourceQuery: simpleQ,
-          parser: (snap) => {
-            const fallbackBookings = normalizeBookingsForDeliveryPolicy(snap.docs.map((d: any) => ({ ...d.data(), id: d.id } as BookingState)));
-            fallbackBookings.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-            return fallbackBookings;
-          },
-          callback,
-          label: "Booking subscription"
-        });
-      });
-    } catch (e) {
-      console.error("Failed to subscribe bookings", e);
-      return () => { };
-    }
+    // Supabase polling fallback
+    return supabasePollingSubscribe<BookingState>(
+      'booking_details?select=*&order=created_at.desc&limit=500',
+      callback,
+      (r) => snakeToCamel(r) as unknown as BookingState,
+      8000
+    );
   },
 
   subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
@@ -887,16 +870,19 @@ export const StorageService = {
   },
 
   cancelBooking: async (id: string): Promise<void> => {
+    // Supabase Edge Function 호출
     try {
-      const { ensureAuth, functions } = await import('../firebaseApp');
-      const { httpsCallable } = await import('firebase/functions');
-      await ensureAuth();
-
-      // [Phase 2] Call backend API for cancellation rules and status change
-      const cancelBookingApi = httpsCallable(functions, 'cancelBooking');
-      await cancelBookingApi({ bookingId: id });
+      const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+      const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-booking`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ bookingId: id }),
+      });
+      if (!res.ok) throw new Error(`Cancel failed [${res.status}]`);
+      console.log("[Storage] Booking cancelled via Supabase Edge Function ✅");
     } catch (e) {
-      console.error("Cancel error (via API):", e);
+      console.error("Cancel error:", e);
       throw e;
     }
   },

@@ -99,17 +99,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                             <Logo size="sm" />
                         </motion.a>
 
-                        <motion.a
-                            href={`/${lang}/tracking`}
-                            onClick={(e) => { e.preventDefault(); setShowTracking(true); }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-white text-[11px] font-black tracking-wider transition-all shadow-lg ml-2 cursor-pointer"
-                        >
-                            <Smartphone className="w-3.5 h-3.5 text-bee-yellow" />
-                            <span className="hidden sm:inline">{t.hero?.track_booking || "TRACK"}</span>
-                            <span className="sm:hidden">예약확인</span>
-                        </motion.a>
+
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -194,6 +184,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                 { id: 'VISION', label: 'Brand Vision', path: 'vision' },
                                 { id: 'PARTNERSHIP', label: t.nav.partners, path: 'partnership' },
                                 { id: 'QNA', label: 'Q&A', path: 'qna' },
+                                { id: 'TRACKING', label: t.hero?.track_booking || '예약 조회', path: 'tracking' },
                                 { id: 'MYPAGE', label: user && !user.isAnonymous ? t.nav.mypage : t.nav.login, path: 'mypage' }
                             ].map((item, i) => (
                                 <motion.a
@@ -207,6 +198,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                                         if (item.id === 'MYPAGE') {
                                             if (user && !user.isAnonymous) onMyPageClick();
                                             else onLoginClick();
+                                        } else if (item.id === 'TRACKING') {
+                                            setShowTracking(true);
                                         } else {
                                             onNavigate(item.id);
                                         }

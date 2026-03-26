@@ -59,8 +59,8 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                             {t.trust?.badge_label || "VIP Bee-Keeper Trust"}
                         </span>
                     </motion.div>
-                    <h2 className="text-2xl md:text-6xl font-display font-black text-white leading-tight tracking-tighter break-keep px-4 whitespace-pre-line">
-                        {t.trust?.headline}
+                    <h2 className="text-3xl md:text-6xl font-display font-black text-white leading-tight tracking-tighter break-keep px-4 whitespace-pre-line">
+                        {t.trust.headline}
                     </h2>
                 </div>
 
@@ -72,14 +72,14 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-white/5 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border border-white/10 hover:border-bee-yellow/40 hover:bg-white/[0.08] transition-all duration-500 group flex flex-col items-center text-center shadow-2xl backdrop-blur-md"
+                            className="bg-white/5 p-12 rounded-[3.5rem] border border-white/10 hover:border-bee-yellow/40 hover:bg-white/[0.08] transition-all duration-500 group flex flex-col items-center text-center shadow-2xl backdrop-blur-md"
                         >
-                            <div className="w-14 h-14 md:w-20 md:h-20 bg-bee-yellow rounded-2xl md:rounded-3xl flex items-center justify-center text-bee-black mb-6 md:mb-10 shadow-[0_20px_40px_rgba(255,203,5,0.2)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                                {React.cloneElement(feature.icon as React.ReactElement<any>, { className: "w-6 h-6 md:w-8 md:h-8" })}
+                            <div className="w-20 h-20 bg-bee-yellow rounded-3xl flex items-center justify-center text-bee-black mb-10 shadow-[0_20px_40px_rgba(255,203,5,0.2)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                                {feature.icon}
                             </div>
-                            <div className="text-bee-yellow text-[9px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.3em] uppercase mb-3 md:mb-4 opacity-70 group-hover:opacity-100">{feature.accent}</div>
-                            <h3 className="text-xl md:text-3xl font-display font-black text-white mb-4 md:mb-6 tracking-tight">{feature.title}</h3>
-                            <p className="text-sm md:text-lg font-bold text-white/80 font-outfit leading-relaxed break-keep group-hover:text-white transition-colors whitespace-pre-line">{feature.desc}</p>
+                            <div className="text-bee-yellow text-[10px] font-black tracking-[0.3em] uppercase mb-4 opacity-70 group-hover:opacity-100">{feature.accent}</div>
+                            <h3 className="text-2xl md:text-3xl font-display font-black text-white mb-6 tracking-tight">{feature.title}</h3>
+                            <p className="text-lg font-bold text-white/80 font-outfit leading-relaxed break-keep group-hover:text-white transition-colors whitespace-pre-line">{feature.desc}</p>
                         </motion.div>
                     ))}
                 </div>

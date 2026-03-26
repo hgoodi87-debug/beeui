@@ -296,7 +296,7 @@ const App: React.FC = () => {
       returnDate,
       bagCounts
     });
-    navigate('/booking');
+    navigate(`/${lang}/booking`);
   };
 
   const changeLanguage = (newLang: string) => {

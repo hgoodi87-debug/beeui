@@ -217,6 +217,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
 
             {/* 7-Step Main Sections */}
             <main>
+
                 <LandingHero
                     t={t}
                     lang={lang}
@@ -226,7 +227,6 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     branchData={branchData}
                 />
 
-                <LandingOperationsMarquee t={t} />
 
                 {/* 💅 THE SEOUL HUB 섹션 - 비활성화됨 (숨김 처리) */}
                 {/* <section className="py-24 bg-white border-y border-gray-100">

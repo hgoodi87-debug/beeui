@@ -1049,6 +1049,34 @@ export const StorageService = {
 
   // --- Locations ---
   subscribeLocations: (callback: (data: LocationOption[]) => void): (() => void) => {
+    // [스봉이] Supabase 폴링 우선 💅
+    if (isSupabaseDataEnabled()) {
+      const enrichLocation = (loc: LocationOption): LocationOption => {
+        const initialLoc = INITIAL_LOCATIONS.find(l => l.id === loc.id);
+        if (!initialLoc) return loc;
+        const enriched = { ...loc };
+        Object.keys(initialLoc).forEach((key) => {
+          const k = key as keyof LocationOption;
+          if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
+            (enriched as Record<string, any>)[k] = initialLoc[k];
+          }
+        });
+        return enriched;
+      };
+      return supabasePollingSubscribe<LocationOption>(
+        'locations?select=*&is_active=eq.true&order=name',
+        (items) => callback(items.map(enrichLocation)),
+        (r) => {
+          const loc = snakeToCamel(r) as unknown as LocationOption;
+          if (!loc.id && (r.short_code || r.id)) {
+            (loc as any).id = String(r.short_code || r.id);
+          }
+          return loc;
+        },
+        10000
+      );
+    }
+
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<LocationOption[]>(
         '/api/collections/locations',
@@ -1057,11 +1085,10 @@ export const StorageService = {
         (items) => items.map((cloudLoc) => {
           const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
           if (!initialLoc) return cloudLoc;
-
           const enriched = { ...cloudLoc };
           Object.keys(initialLoc).forEach((key) => {
             const k = key as keyof LocationOption;
-            if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
+            if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
               (enriched as Record<string, any>)[k] = initialLoc[k];
             }
           });
@@ -1072,20 +1099,17 @@ export const StorageService = {
     }
 
     try {
-      console.log("[Storage] Subscribing to locations real-time...");
-      return onSnapshot(collection(db, "locations"), (snap) => {
-        if (snap.empty) {
-          callback([]);
-          return;
-        }
-        const mergedLocations = snap.docs.map(doc => {
+      console.log('[Storage] Subscribing to locations real-time (Firebase)...');
+      return onSnapshot(collection(db, 'locations'), (snap: any) => {
+        if (snap.empty) { callback([]); return; }
+        const mergedLocations = snap.docs.map((doc: any) => {
           const cloudLoc = { ...doc.data(), id: doc.id } as unknown as LocationOption;
           const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
           if (initialLoc) {
             const enriched = { ...cloudLoc };
             Object.keys(initialLoc).forEach((key) => {
               const k = key as keyof LocationOption;
-              if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
+              if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
                 (enriched as Record<string, any>)[k] = initialLoc[k];
               }
             });
@@ -1096,107 +1120,76 @@ export const StorageService = {
         callback(mergedLocations);
       });
     } catch (e) {
-      console.error("Failed to subscribe locations", e);
+      console.error('Failed to subscribe locations', e);
       return () => { };
     }
   },
 
   getLocations: async (): Promise<LocationOption[]> => {
-    // Supabase 우선 조회
+    let supabaseLocs: LocationOption[] = [];
+    let firebaseLocs: LocationOption[] = [];
+
+    const enrichLoc = (loc: LocationOption): LocationOption => {
+      const initialLoc = INITIAL_LOCATIONS.find(l => l.id === loc.id);
+      if (!initialLoc) return loc;
+      const enriched = { ...loc };
+      Object.keys(initialLoc).forEach((key) => {
+        const k = key as keyof LocationOption;
+        if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
+          (enriched as Record<string, any>)[k] = initialLoc[k];
+        }
+      });
+      return enriched;
+    };
+
+    // 1. Supabase 조회
     if (isSupabaseDataEnabled()) {
       try {
         const rows = await supabaseGet<Array<Record<string, unknown>>>(
           'locations?select=*&is_active=eq.true&order=name'
         );
         if (rows && rows.length > 0) {
-          const mapped = rows.map((row) => {
+          supabaseLocs = rows.map((row) => {
             const loc = snakeToCamel(row) as unknown as LocationOption;
-            // short_code → id 매핑 (Firebase 호환)
             if (!loc.id && (row.short_code || row.id)) {
               (loc as any).id = String(row.short_code || row.id);
             }
-            const initialLoc = INITIAL_LOCATIONS.find(l => l.id === loc.id);
-            if (initialLoc) {
-              Object.keys(initialLoc).forEach((key) => {
-                const k = key as keyof LocationOption;
-                if ((loc as any)[k] === undefined || (loc as any)[k] === null || (loc as any)[k] === '') {
-                  (loc as any)[k] = initialLoc[k];
-                }
-              });
-            }
-            return loc;
+            return enrichLoc(loc);
           });
-          console.log("[Storage] Loaded", mapped.length, "locations from Supabase ✅");
-          return mapped;
+          console.log('[Storage] Loaded', supabaseLocs.length, 'locations from Supabase ✅');
         }
       } catch (e) {
-        console.warn("[Storage] Supabase locations failed, falling back to Firebase:", e);
+        console.warn('[Storage] Supabase locations failed:', e);
       }
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        const items = await fetchLocalAdminBridge<LocationOption[]>('/api/collections/locations');
-        return items.map((cloudLoc) => {
-          const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
-          if (!initialLoc) return cloudLoc;
-
-          const enriched = { ...cloudLoc };
-          Object.keys(initialLoc).forEach((key) => {
-            const k = key as keyof LocationOption;
-            if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
-              (enriched as Record<string, any>)[k] = initialLoc[k];
-            }
-          });
-          return enriched;
-        });
-      } catch (e) {
-        console.error("Error fetching locations from local admin bridge", e);
-        return [];
-      }
-    }
-
+    // 2. Firebase 조회 (과거 데이터용)
     try {
-      const querySnapshot = await getDocs(collection(db, "locations"));
-
-      // Sync Logic: Only use locations that exist in the database.
-      // "Ghost" locations (in code but not in DB) will NOT be shown.
-      if (querySnapshot.empty) {
-        console.log("[Storage] Cloud locations empty. Returning empty list per sync policy.");
-        return [];
-      }
-
-      const mergedLocations = querySnapshot.docs.map(doc => {
-        const cloudLoc = { ...doc.data(), id: doc.id } as unknown as LocationOption;
-        const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
-
-        if (initialLoc) {
-          // Enrich DB data with local data (translations, static info)
-          // Priority: Cloud Data -> Initial Data (Fallback for empty strings)
-          // We iterate keys of initialLoc to fill in gaps if cloudLoc has empty/undefined values.
-          const enriched = { ...cloudLoc };
-
-          Object.keys(initialLoc).forEach((key) => {
-            const k = key as keyof LocationOption;
-            // If cloud data is missing or empty string, use initial data
-            if (enriched[k] === undefined || enriched[k] === "" || enriched[k] === null) {
-              (enriched as Record<string, any>)[k] = initialLoc[k];
-            }
+      if (canUseLocalAdminDataBridge()) {
+        const items = await fetchLocalAdminBridge<LocationOption[]>('/api/collections/locations');
+        firebaseLocs = items.map(enrichLoc);
+      } else {
+        const querySnapshot = await getDocs(collection(db, 'locations'));
+        if (!querySnapshot.empty) {
+          firebaseLocs = querySnapshot.docs.map(doc => {
+            const cloudLoc = { ...doc.data(), id: doc.id } as unknown as LocationOption;
+            return enrichLoc(cloudLoc);
           });
-
-          return enriched;
         }
-        return cloudLoc;
-      });
-
-      console.log("[Storage] Loaded & Synced", mergedLocations.length, "locations from cloud.");
-      return mergedLocations;
+      }
+      console.log('[Storage] Loaded', firebaseLocs.length, 'locations from Firebase ✅');
     } catch (e) {
-      console.error("Error fetching locations from cloud", e);
-      // On error, we might want to return empty or fallback. 
-      // But for resilience, let's return [] to avoid confusing UI.
-      return [];
+      console.error('[Storage] Firebase locations failed:', e);
     }
+
+    // 3. 스마트 병합 (Supabase 우선)
+    const supabaseIds = new Set(supabaseLocs.map(l => l.id));
+    const merged = [
+      ...supabaseLocs,
+      ...firebaseLocs.filter(fl => !supabaseIds.has(fl.id))
+    ];
+    console.log(`[Storage] Merged ${merged.length} locations 💅`);
+    return merged;
   },
 
   syncLocationsWithConstants: async (): Promise<void> => {
@@ -1463,44 +1456,63 @@ export const StorageService = {
 
   // --- Inquiries ---
   getInquiries: async (): Promise<PartnershipInquiry[]> => {
+    let supabaseData: PartnershipInquiry[] = [];
+    let firebaseData: PartnershipInquiry[] = [];
+
     if (isSupabaseDataEnabled()) {
       try {
         const rows = await supabaseGet<Array<Record<string, unknown>>>('partnership_inquiries?select=*&order=created_at.desc');
         if (rows) {
-          console.log("[Storage] Loaded", rows.length, "inquiries from Supabase ✅");
-          return rows.map(r => snakeToCamel(r) as unknown as PartnershipInquiry);
+          supabaseData = rows.map(r => snakeToCamel(r) as unknown as PartnershipInquiry);
+          console.log('[Storage] Loaded', supabaseData.length, 'inquiries from Supabase \u2705');
         }
-      } catch (e) { console.warn("[Storage] Supabase inquiries failed:", e); }
+      } catch (e) { console.warn('[Storage] Supabase inquiries failed:', e); }
     }
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return await fetchLocalAdminBridge<PartnershipInquiry[]>('/api/collections/inquiries');
-      } catch { return []; }
-    }
+
     try {
-      const querySnapshot = await getDocs(collection(db, "inquiries"));
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
-    } catch (e) { return []; }
+      if (canUseLocalAdminDataBridge()) {
+        firebaseData = await fetchLocalAdminBridge<PartnershipInquiry[]>('/api/collections/inquiries');
+      } else {
+        const querySnapshot = await getDocs(collection(db, 'inquiries'));
+        firebaseData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
+      }
+      console.log('[Storage] Loaded', firebaseData.length, 'inquiries from Firebase \u2705');
+    } catch (e) { console.error('[Storage] Firebase inquiries failed:', e); }
+
+    const supabaseIds = new Set(supabaseData.map(i => i.id));
+    const merged = [...supabaseData, ...firebaseData.filter(fi => !supabaseIds.has(fi.id))];
+    console.log(`[Storage] Merged ${merged.length} inquiries \ud83d\udc85`);
+    return merged;
   },
 
   subscribeInquiries: (callback: (data: PartnershipInquiry[]) => void): (() => void) => {
+    // [스봉이] Supabase 폴링 우선 💅
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<PartnershipInquiry>(
+        'partnership_inquiries?select=*&order=created_at.desc',
+        (items) => callback(items),
+        (r) => snakeToCamel(r) as unknown as PartnershipInquiry,
+        10000
+      );
+    }
+
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<PartnershipInquiry[]>(
         '/api/collections/inquiries',
         callback,
         [],
-        (items) => [...items].sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()),
+        (items) => [...items].sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()),
         'Inquiries local bridge'
       );
     }
 
     try {
-      const q = query(collection(db, "inquiries"));
-      return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
-        items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+      const q = query(collection(db, 'inquiries'));
+      return onSnapshot(q, (snapshot: any) => {
+        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
+        items.sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
         callback(items);
-      }, (error) => console.error(error));
+      }, (error: any) => console.error(error));
     } catch (e) { return () => { }; }
   },
 
@@ -1635,34 +1647,47 @@ export const StorageService = {
   },
 
   getCashClosings: async (): Promise<CashClosing[]> => {
+    let supabaseData: CashClosing[] = [];
+    let firebaseData: CashClosing[] = [];
+
     if (isSupabaseDataEnabled()) {
       try {
         const rows = await supabaseGet<Array<Record<string, unknown>>>('daily_closings?select=*&order=date.desc&limit=500');
         if (rows) {
-          console.log("[Storage] Loaded", rows.length, "cash closings from Supabase ✅");
-          return rows.map(r => snakeToCamel(r) as unknown as CashClosing);
+          supabaseData = rows.map(r => snakeToCamel(r) as unknown as CashClosing);
+          console.log('[Storage] Loaded', supabaseData.length, 'cash closings from Supabase \u2705');
         }
-      } catch (e) { console.warn("[Storage] Supabase closings failed:", e); }
+      } catch (e) { console.warn('[Storage] Supabase closings failed:', e); }
     }
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return await fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
-      } catch (e) {
-        console.error("Failed to get closings from local admin bridge", e);
-        return [];
-      }
-    }
+
     try {
-      const q = query(collection(db, "daily_closings"), orderBy("date", "desc"), limit(500));
-      const snap = await getDocs(q);
-      return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CashClosing));
-    } catch (e) {
-      console.error("Failed to get closings", e);
-      return [];
-    }
+      if (canUseLocalAdminDataBridge()) {
+        firebaseData = await fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
+      } else {
+        const q = query(collection(db, 'daily_closings'), orderBy('date', 'desc'), limit(500));
+        const snap = await getDocs(q);
+        firebaseData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CashClosing));
+      }
+      console.log('[Storage] Loaded', firebaseData.length, 'cash closings from Firebase \u2705');
+    } catch (e) { console.error('[Storage] Firebase closings failed:', e); }
+
+    const supabaseIds = new Set(supabaseData.map(c => c.id));
+    const merged = [...supabaseData, ...firebaseData.filter(fc => !supabaseIds.has(fc.id))];
+    console.log(`[Storage] Merged ${merged.length} cash closings \ud83d\udc85`);
+    return merged;
   },
 
   subscribeCashClosings: (callback: (data: CashClosing[]) => void): (() => void) => {
+    // [스봉이] Supabase 폴링 우선 💅
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<CashClosing>(
+        'daily_closings?select=*&order=date.desc&limit=500',
+        callback,
+        (r) => snakeToCamel(r) as unknown as CashClosing,
+        10000
+      );
+    }
+
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<CashClosing[]>(
         '/api/collections/daily_closings',
@@ -1674,11 +1699,11 @@ export const StorageService = {
     }
 
     try {
-      const q = query(collection(db, "daily_closings"), orderBy("date", "desc"), limit(500));
-      return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CashClosing));
+      const q = query(collection(db, 'daily_closings'), orderBy('date', 'desc'), limit(500));
+      return onSnapshot(q, (snapshot: any) => {
+        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as CashClosing));
         callback(items);
-      }, (error) => console.error("Closings sub error", error));
+      }, (error: any) => console.error('Closings sub error', error));
     } catch (e) {
       return () => { };
     }
@@ -1726,34 +1751,47 @@ export const StorageService = {
   },
 
   getExpenditures: async (): Promise<Expenditure[]> => {
+    let supabaseData: Expenditure[] = [];
+    let firebaseData: Expenditure[] = [];
+
     if (isSupabaseDataEnabled()) {
       try {
         const rows = await supabaseGet<Array<Record<string, unknown>>>('expenditures?select=*&order=date.desc&limit=1000');
         if (rows) {
-          console.log("[Storage] Loaded", rows.length, "expenditures from Supabase ✅");
-          return rows.map(r => snakeToCamel(r) as unknown as Expenditure);
+          supabaseData = rows.map(r => snakeToCamel(r) as unknown as Expenditure);
+          console.log('[Storage] Loaded', supabaseData.length, 'expenditures from Supabase \u2705');
         }
-      } catch (e) { console.warn("[Storage] Supabase expenditures failed:", e); }
+      } catch (e) { console.warn('[Storage] Supabase expenditures failed:', e); }
     }
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return await fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
-      } catch (e) {
-        console.error("Failed to get expenditures from local admin bridge", e);
-        return [];
-      }
-    }
+
     try {
-      const q = query(collection(db, "expenditures"), orderBy("date", "desc"), limit(1000));
-      const snap = await getDocs(q);
-      return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Expenditure));
-    } catch (e) {
-      console.error("Failed to get expenditures", e);
-      return [];
-    }
+      if (canUseLocalAdminDataBridge()) {
+        firebaseData = await fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
+      } else {
+        const q = query(collection(db, 'expenditures'), orderBy('date', 'desc'), limit(1000));
+        const snap = await getDocs(q);
+        firebaseData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Expenditure));
+      }
+      console.log('[Storage] Loaded', firebaseData.length, 'expenditures from Firebase \u2705');
+    } catch (e) { console.error('[Storage] Firebase expenditures failed:', e); }
+
+    const supabaseIds = new Set(supabaseData.map(x => x.id));
+    const merged = [...supabaseData, ...firebaseData.filter(fx => !supabaseIds.has(fx.id))];
+    console.log(`[Storage] Merged ${merged.length} expenditures \ud83d\udc85`);
+    return merged;
   },
 
   subscribeExpenditures: (callback: (data: Expenditure[]) => void): (() => void) => {
+    // [스봉이] Supabase 폴링 우선 💅
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<Expenditure>(
+        'expenditures?select=*&order=date.desc&limit=1000',
+        callback,
+        (r) => snakeToCamel(r) as unknown as Expenditure,
+        10000
+      );
+    }
+
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<Expenditure[]>(
         '/api/collections/expenditures',
@@ -1765,11 +1803,11 @@ export const StorageService = {
     }
 
     try {
-      const q = query(collection(db, "expenditures"), orderBy("date", "desc"), limit(1000));
-      return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Expenditure));
+      const q = query(collection(db, 'expenditures'), orderBy('date', 'desc'), limit(1000));
+      return onSnapshot(q, (snapshot: any) => {
+        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as Expenditure));
         callback(items);
-      }, (error) => console.error("Expenditure sub error", error));
+      }, (error: any) => console.error('Expenditure sub error', error));
     } catch (e) {
       return () => { };
     }
@@ -1805,12 +1843,14 @@ export const StorageService = {
   },
 
   getAdmins: async (): Promise<AdminUser[]> => {
+    let supabaseData: AdminUser[] = [];
+    let firebaseData: AdminUser[] = [];
+
     if (isSupabaseDataEnabled()) {
       try {
         const rows = await supabaseGet<Array<Record<string, unknown>>>('employees?select=id,name,email,job_title,employment_status,org_type,phone,memo,created_at,updated_at');
         if (rows && rows.length > 0) {
-          console.log("[Storage] Loaded", rows.length, "admins from Supabase ✅");
-          return rows.map(r => ({
+          supabaseData = rows.map(r => ({
             id: String(r.id),
             name: String(r.name || ''),
             jobTitle: String(r.job_title || ''),
@@ -1821,26 +1861,26 @@ export const StorageService = {
             memo: String(r.memo || ''),
             createdAt: String(r.created_at || ''),
           })) as AdminUser[];
+          console.log('[Storage] Loaded', supabaseData.length, 'admins from Supabase \u2705');
         }
-      } catch (e) { console.warn("[Storage] Supabase admins failed:", e); }
+      } catch (e) { console.warn('[Storage] Supabase admins failed:', e); }
     }
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        const items = await fetchLocalAdminBridge<AdminUser[]>('/api/collections/admins');
-        return collapseAdminDirectoryEntries(items);
-      } catch (e) {
-        console.error("Failed to get admins from local admin bridge", e);
-        return [];
-      }
-    }
+
     try {
-      const snap = await getDocs(collection(db, "admins"));
-      const admins = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
-      return collapseAdminDirectoryEntries(admins);
-    } catch (e) {
-      console.error("Failed to get admins", e);
-      return [];
-    }
+      if (canUseLocalAdminDataBridge()) {
+        const items = await fetchLocalAdminBridge<AdminUser[]>('/api/collections/admins');
+        firebaseData = collapseAdminDirectoryEntries(items);
+      } else {
+        const snap = await getDocs(collection(db, 'admins'));
+        firebaseData = collapseAdminDirectoryEntries(snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser)));
+      }
+      console.log('[Storage] Loaded', firebaseData.length, 'admins from Firebase \u2705');
+    } catch (e) { console.error('[Storage] Firebase admins failed:', e); }
+
+    const supabaseIds = new Set(supabaseData.map(a => a.id));
+    const merged = [...supabaseData, ...firebaseData.filter(fa => !supabaseIds.has(fa.id))];
+    console.log(`[Storage] Merged ${merged.length} admins \ud83d\udc85`);
+    return merged;
   },
 
   deleteAdmin: async (id: string): Promise<void> => {
@@ -2030,6 +2070,26 @@ export const StorageService = {
   },
 
   subscribeAdmins: (callback: (data: AdminUser[]) => void): (() => void) => {
+    // [스봉이] Supabase 폴링 우선 💅
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<AdminUser>(
+        'employees?select=id,name,email,job_title,employment_status,org_type,phone,memo,created_at,updated_at',
+        callback,
+        (r) => ({
+          id: String(r.id),
+          name: String(r.name || ''),
+          jobTitle: String(r.job_title || ''),
+          email: String(r.email || ''),
+          phone: String(r.phone || ''),
+          orgType: String(r.org_type || ''),
+          status: String(r.employment_status || 'active'),
+          memo: String(r.memo || ''),
+          createdAt: String(r.created_at || ''),
+        }) as unknown as AdminUser,
+        10000
+      );
+    }
+
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<AdminUser[]>(
         '/api/collections/admins',
@@ -2041,27 +2101,27 @@ export const StorageService = {
     }
 
     try {
-      const dbRef = collection(db, "admins");
-      const q = query(dbRef, orderBy("createdAt", "desc"));
-      return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
+      const dbRef = collection(db, 'admins');
+      const q = query(dbRef, orderBy('createdAt', 'desc'));
+      return onSnapshot(q, (snapshot: any) => {
+        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
         const normalizedItems = collapseAdminDirectoryEntries(items);
         callback(normalizedItems);
-      }, (error) => {
-        console.error("Admins subscription error (likely index missing):", error);
+      }, (error: any) => {
+        console.error('Admins subscription error (likely index missing):', error);
         const simpleQ = query(dbRef, limit(100));
         void runSnapshotFallback({
           sourceQuery: simpleQ,
-          parser: (snap) => {
+          parser: (snap: any) => {
             const items = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
             return collapseAdminDirectoryEntries(items);
           },
           callback,
-          label: "Admins subscription"
+          label: 'Admins subscription'
         });
       });
     } catch (e) {
-      console.error("Admins subscription critical failure:", e);
+      console.error('Admins subscription critical failure:', e);
       return () => { };
     }
   },
@@ -2442,10 +2502,25 @@ export const StorageService = {
     } catch (e) { console.error(e); return []; }
   },
   subscribeBranchProspects: (callback: (data: BranchProspect[]) => void) => {
-    const q = query(collection(db, "branch_prospects"), orderBy("createdAt", "desc"));
-    return onSnapshot(q, (snapshot) => {
-      callback(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BranchProspect)));
-    });
+    // [스봉이] Supabase 폴링 우선 💅
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<BranchProspect>(
+        'branch_prospects?select=*&order=created_at.desc',
+        callback,
+        (r) => snakeToCamel(r) as unknown as BranchProspect,
+        10000
+      );
+    }
+
+    try {
+      const q = query(collection(db, 'branch_prospects'), orderBy('createdAt', 'desc'));
+      return onSnapshot(q, (snapshot: any) => {
+        callback(snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BranchProspect)));
+      });
+    } catch (e) {
+      console.error('BranchProspects sub error', e);
+      return () => {};
+    }
   },
   saveBranchProspect: async (prospect: BranchProspect): Promise<void> => {
     if (isSupabaseDataEnabled()) {

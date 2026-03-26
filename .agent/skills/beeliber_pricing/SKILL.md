@@ -5,9 +5,6 @@ description: 빌리버 가격 정책 기준표, 계산 로직 공식, 프론트 
 
 # 💰 Beeliber 가격 정책 기준서
 
-상세 원문: `docs/BEELIBER_PRICING_POLICY_STRUCTURE.md`
-숫자 원본: `Beeliber_요금표_최종.xlsx`
-
 ## 📦 서비스 카테고리
 
 | 카테고리 | 보관 | 배송 |

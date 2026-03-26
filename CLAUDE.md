@@ -37,6 +37,7 @@
     beeliber_seo/        # 다국어 SEO 전략 (zh-TW 우선)
     beeliber_payments/   # Toss Payments 실배포 가이드
     beeliber_pricing/    # 가격 정책 + 계산 로직 기준
+    beeliber_stitch_qa/  # Stitch UI/UX 수정 후 전 직원 QA 프로토콜
   rules/
     brand_guide_v2.md    # 브랜드 가이드 v4 최우선 적용 규칙 (파일명 유지, 내용 v4)
     blueprint.md         # 설계/기획 모드 트리거

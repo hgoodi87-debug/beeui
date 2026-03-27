@@ -27,14 +27,27 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
     const [googleReviews, setGoogleReviews] = useState<GoogleReview[]>([]);
     const [summary, setSummary] = useState<ReviewSummary | null>(null);
 
-    // Google 리뷰 로드 (Supabase 캐시에서)
+    // Google 리뷰 로드 — sessionStorage 캐시 우선, 없으면 네트워크
     useEffect(() => {
         if (!isSupabaseDataEnabled()) return;
+        // Strip 컴포넌트가 이미 캐시했으면 재사용
+        try {
+            const raw = sessionStorage.getItem('beeliber_google_reviews_cache');
+            if (raw) {
+                const cached = JSON.parse(raw);
+                if (Date.now() - cached.ts < 10 * 60 * 1000 && cached.data?.reviews?.length) {
+                    setGoogleReviews(cached.data.reviews);
+                    if (cached.data.summary) setSummary(cached.data.summary);
+                    return;
+                }
+            }
+        } catch { /* ignore */ }
+        // 캐시 없으면 네트워크
         (async () => {
             try {
                 const [reviews, summaries] = await Promise.all([
-                    supabaseGet<GoogleReview[]>('google_reviews?select=*&is_visible=eq.true&order=rating.desc&limit=8'),
-                    supabaseGet<ReviewSummary[]>('google_review_summary?select=*&limit=1'),
+                    supabaseGet<GoogleReview[]>('google_reviews?select=id,author_name,author_photo_url,rating,text,relative_time&is_visible=eq.true&order=rating.desc&limit=8'),
+                    supabaseGet<ReviewSummary[]>('google_review_summary?select=average_rating,total_reviews&limit=1'),
                 ]);
                 if (reviews?.length) setGoogleReviews(reviews);
                 if (summaries?.[0]) setSummary(summaries[0]);

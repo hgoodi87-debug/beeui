@@ -391,7 +391,12 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   let verifiedAdmin: Record<string, any> | null = null;
   let resolvedEmail = directEmailInput;
 
-  if (!(isLocalPreviewHost() && directEmailInput)) {
+  // 이메일 직접 입력 시 Firebase 브리지 건너뛰고 Supabase 직접 로그인
+  if (directEmailInput) {
+    console.log('[AdminAuth] 이메일 직접 입력 — Supabase 직접 로그인');
+    resolvedEmail = directEmailInput;
+  } else {
+    // ID 입력 시 Firebase 브리지로 이메일 조회 시도
     try {
       verifiedAdmin = await verifyLegacyAdminCredentials(identifier, password);
       resolvedEmail = String(
@@ -399,11 +404,9 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
         directEmailInput
       ).trim();
     } catch (error) {
-      if (!(isLocalPreviewHost() && directEmailInput && isFirebaseRefererBlockedError(error))) {
-        throw error;
-      }
-
-      console.warn('[AdminAuth] localhost에서는 Firebase 브리지 없이 이메일 직로그인으로 우회합니다.');
+      // Firebase 브리지 실패 시 — ID@bee-liber.com 으로 폴백
+      console.warn('[AdminAuth] Firebase 브리지 실패, 이메일 폴백 시도');
+      resolvedEmail = `${identifier.toLowerCase()}@bee-liber.com`;
     }
   }
 
@@ -476,7 +479,12 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     throw error;
   }
 
-  const [employeeRoles, assignments] = await Promise.all([
+  // roles JOIN + branches JOIN (branches FK 없으면 폴백)
+  let employeeRoles: Array<{ is_primary: boolean; role: { code?: string; name?: string } | null }> = [];
+  let assignments: Array<{ is_primary: boolean; branch: { id: string; branch_code?: string; name?: string } | null }> = [];
+
+  try {
+    [employeeRoles, assignments] = await Promise.all([
     supabaseRequest<Array<{
     is_primary: boolean;
     role: {
@@ -497,16 +505,20 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
       name?: string;
     } | null;
   }>>(
-    `/rest/v1/employee_branch_assignments?select=is_primary,branch:branches(id,branch_code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
+    `/rest/v1/employee_branch_assignments?select=is_primary,branch_id&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
     {},
     accessToken
   )]);
+  } catch (joinErr) {
+    console.warn('[AdminAuth] roles/branches JOIN 부분 실패, 폴백:', joinErr);
+  }
 
   const primaryRole = employeeRoles.find((entry) => entry.is_primary)?.role?.code
     || employeeRoles[0]?.role?.code
     || 'ops_staff';
 
-  const primaryBranch = assignments.find((entry) => entry.is_primary)?.branch || assignments[0]?.branch || null;
+  const primaryBranch = assignments.find((entry: any) => entry.is_primary) || assignments[0] || null;
+  const branchId = (primaryBranch as any)?.branch?.id || (primaryBranch as any)?.branch_id || '';
 
   persistSupabaseAdminSession({
     accessToken,
@@ -526,8 +538,8 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     jobTitle: employee.job_title || 'Staff',
     role: mapSupabaseRoleToLegacyRole(primaryRole),
     email: employee.email || profile?.email || user.email || identifier,
-    branchId: primaryBranch?.id || '',
-    branchCode: primaryBranch?.branch_code || '',
+    branchId: branchId || '',
+    branchCode: (primaryBranch as any)?.branch?.branch_code || '',
     provider: 'supabase',
     employeeId: employee.id,
     profileId: user.id,

@@ -167,6 +167,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
                 placeholder={isSupabaseMode ? '지점ID / 로그인ID / 이메일' : '관리자 이름'}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white font-bold placeholder-gray-600 focus:outline-none focus:border-bee-yellow focus:bg-white/10 transition-all shadow-inner"
                 autoFocus
+                autoComplete="username"
               />
             </div>
 
@@ -179,6 +180,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
                 onChange={handleChange}
                 placeholder="비밀번호"
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white font-black tracking-widest placeholder-gray-600 focus:outline-none focus:border-bee-yellow focus:bg-white/10 transition-all shadow-inner"
+                autoComplete="current-password"
               />
               <button
                 type="button"

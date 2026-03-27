@@ -21,12 +21,41 @@ const OpsDriverHrTab: React.FC<OpsDriverHrTabProps> = ({
     const [filterBranch, setFilterBranch] = useState<string>('ALL');
     const [searchQ, setSearchQ] = useState('');
     const [activeCategory, setActiveCategory] = useState<string>(onlyDrivers ? 'DRIVER' : 'SUPER'); // 운영 콘솔이면 기사 먼저 💅
+    const selectedBranchLocationId = React.useMemo(() => {
+        if (!adminForm.branchId && !adminForm.branchCode) return '';
+
+        const directMatch = locations.find((location) => location.id === adminForm.branchId);
+        if (directMatch) return directMatch.id;
+
+        const branchToken = String(adminForm.branchCode || adminForm.branchId || '').trim().toLowerCase();
+        if (!branchToken) return '';
+
+        return locations.find((location) =>
+            String(location.branchCode || '').trim().toLowerCase() === branchToken
+            || String(location.shortCode || '').trim().toLowerCase() === branchToken
+        )?.id || '';
+    }, [adminForm.branchCode, adminForm.branchId, locations]);
+
+    const resolveBranchLabel = React.useCallback((admin: AdminUser) => {
+        if (admin.branchName) return admin.branchName;
+
+        const branchToken = String(admin.branchCode || admin.branchId || '').trim().toLowerCase();
+        if (!branchToken) return '슈퍼관리자';
+
+        const matchedLocation = locations.find((location) =>
+            location.id === admin.branchId
+            || String(location.branchCode || '').trim().toLowerCase() === branchToken
+            || String(location.shortCode || '').trim().toLowerCase() === branchToken
+        );
+
+        return matchedLocation?.name || (admin.branchCode ? `${admin.branchCode} 지점` : '지점 정보 없음');
+    }, [locations]);
 
     // 데이터 중복 완전 박멸: 복합 키(이름+직책+지점)를 사용한 "트리플 스캔" 🛡️ 💅
     const uniqueAdmins = Array.from(
         new Map(
             admins.map(admin => {
-                const compositeKey = `${admin.name}-${admin.jobTitle}-${admin.branchId || 'SUPER'}`;
+                const compositeKey = `${admin.name}-${admin.jobTitle}-${admin.branchId || admin.branchCode || 'SUPER'}`;
                 return [compositeKey, admin];
             })
         ).values()
@@ -36,12 +65,12 @@ const OpsDriverHrTab: React.FC<OpsDriverHrTabProps> = ({
     const sortedAdmins = uniqueAdmins.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
 
     const categories = [
-        { id: 'SUPER', label: '슈퍼관리자', icon: 'fa-crown', filter: (a: AdminUser) => !a.branchId },
-        { id: 'HOTEL', label: '호텔', icon: 'fa-hotel', filter: (a: AdminUser) => a.branchId && (a.jobTitle?.includes('호텔') || a.jobTitle?.toLowerCase().includes('hotel')) },
-        { id: 'AIRBNB', label: '에어비엔비', icon: 'fa-house-user', filter: (a: AdminUser) => a.branchId && (a.jobTitle?.includes('에어비엔비') || a.jobTitle?.toLowerCase().includes('airbnb')) },
-        { id: 'DRIVER', label: '배송기사', icon: 'fa-truck-fast', filter: (a: AdminUser) => a.branchId && (a.jobTitle?.includes('기사') || a.jobTitle?.includes('드라이버') || a.jobTitle?.toLowerCase().includes('driver')) },
+        { id: 'SUPER', label: '슈퍼관리자', icon: 'fa-crown', filter: (a: AdminUser) => !(a.branchId || a.branchCode) },
+        { id: 'HOTEL', label: '호텔', icon: 'fa-hotel', filter: (a: AdminUser) => (a.branchId || a.branchCode) && (a.jobTitle?.includes('호텔') || a.jobTitle?.toLowerCase().includes('hotel')) },
+        { id: 'AIRBNB', label: '에어비엔비', icon: 'fa-house-user', filter: (a: AdminUser) => (a.branchId || a.branchCode) && (a.jobTitle?.includes('에어비엔비') || a.jobTitle?.toLowerCase().includes('airbnb')) },
+        { id: 'DRIVER', label: '배송기사', icon: 'fa-truck-fast', filter: (a: AdminUser) => (a.branchId || a.branchCode) && (a.jobTitle?.includes('기사') || a.jobTitle?.includes('드라이버') || a.jobTitle?.toLowerCase().includes('driver')) },
         { id: 'PARTNER', label: '브랜치', icon: 'fa-handshake', filter: (a: AdminUser) => {
-            if (!a.branchId) return false;
+            if (!(a.branchId || a.branchCode)) return false;
             // 지점 소속이지만 기사/호텔 등 특정 역할이 아니면 '브랜치(매니저)'로 자동 분류 🧠
             const isSpecificType = (a.jobTitle?.includes('호텔') || a.jobTitle?.toLowerCase().includes('hotel')) ||
                                  (a.jobTitle?.includes('에어비엔비') || a.jobTitle?.toLowerCase().includes('airbnb')) ||
@@ -49,11 +78,12 @@ const OpsDriverHrTab: React.FC<OpsDriverHrTabProps> = ({
             return !isSpecificType;
         }},
         { id: 'OTHER', label: '기타 직원', icon: 'fa-user-tag', filter: (a: AdminUser) => {
-            const isHandled = !a.branchId || 
-                             (a.branchId && (a.jobTitle?.includes('호텔') || a.jobTitle?.toLowerCase().includes('hotel'))) ||
-                             (a.branchId && (a.jobTitle?.includes('에어비엔비') || a.jobTitle?.toLowerCase().includes('airbnb'))) ||
-                             (a.branchId && (a.jobTitle?.includes('기사') || a.jobTitle?.includes('드라이버') || a.jobTitle?.toLowerCase().includes('driver'))) ||
-                             (a.branchId);
+            const hasBranch = Boolean(a.branchId || a.branchCode);
+            const isHandled = !hasBranch || 
+                             (hasBranch && (a.jobTitle?.includes('호텔') || a.jobTitle?.toLowerCase().includes('hotel'))) ||
+                             (hasBranch && (a.jobTitle?.includes('에어비엔비') || a.jobTitle?.toLowerCase().includes('airbnb'))) ||
+                             (hasBranch && (a.jobTitle?.includes('기사') || a.jobTitle?.includes('드라이버') || a.jobTitle?.toLowerCase().includes('driver'))) ||
+                             hasBranch;
             return !isHandled;
         }},
     ];
@@ -121,7 +151,14 @@ const OpsDriverHrTab: React.FC<OpsDriverHrTabProps> = ({
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">담당 거점 (Hub)</label>
-                                <select value={adminForm.branchId || ''} onChange={e => setAdminForm({ ...adminForm, branchId: e.target.value })} className="w-full bg-white/5 p-3 rounded-xl font-bold border border-white/10 focus:border-bee-yellow outline-none text-xs text-white" title="담당 거점 선택">
+                                <select value={selectedBranchLocationId} onChange={e => {
+                                    const nextLocation = locations.find((location) => location.id === e.target.value);
+                                    setAdminForm({
+                                        ...adminForm,
+                                        branchId: nextLocation?.id || '',
+                                        branchCode: nextLocation?.branchCode || nextLocation?.shortCode || '',
+                                    });
+                                }} className="w-full bg-white/5 p-3 rounded-xl font-bold border border-white/10 focus:border-bee-yellow outline-none text-xs text-white" title="담당 거점 선택">
                                     <option value="" className="bg-bee-black text-white">거점 미지정</option>
                                     {locations.filter(l => l.isActive).map(loc => <option key={loc.id} value={loc.id} className="bg-bee-black text-white">{loc.name}</option>)}
                                 </select>
@@ -194,7 +231,7 @@ const OpsDriverHrTab: React.FC<OpsDriverHrTabProps> = ({
                                                         <div className="flex items-center gap-3 mt-1">
                                                             <span className="text-[9px] font-bold text-gray-400 truncate">ID: {admin.id}</span>
                                                             <span className="text-[8px] md:text-[10px] font-black text-bee-black px-1.5 py-0.5 bg-bee-yellow/20 rounded-lg truncate">
-                                                                {locations.find(l => l.id === admin.branchId)?.name || (admin.branchId ? '지점 정보 없음' : '슈퍼관리자')}
+                                                                {resolveBranchLabel(admin)}
                                                             </span>
                                                         </div>
                                                     </div>

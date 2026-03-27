@@ -12,9 +12,285 @@ const { upsertAdminAccount, deleteAdminAccount } = require("./src/domains/admin/
 
 admin.initializeApp();
 
-const ADMIN_ROLES = new Set(['super', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs']);
+const ADMIN_ROLES = new Set(['super', 'hq', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs']);
 const MAILER_SECRETS = ['SMTP_PASS'];
 const NOTIFICATION_SECRETS = ['SMTP_PASS', 'GOOGLE_CHAT_WEBHOOK_URL'];
+const SUPABASE_ROLE_TO_LEGACY_ROLE = {
+    super_admin: 'super',
+    hq_admin: 'hq',
+    hub_manager: 'branch',
+    partner_manager: 'partner',
+    finance_staff: 'finance',
+    cs_staff: 'cs',
+    driver: 'driver',
+    ops_staff: 'staff',
+    marketing: 'hq',
+    content_manager: 'hq',
+};
+
+const normalizeText = (value) => String(value || '').trim();
+const normalizeLower = (value) => normalizeText(value).toLowerCase();
+
+const createHttpRequestError = (status, message, logMessage) => {
+    const error = new Error(message);
+    error.status = status;
+    error.logMessage = logMessage || message;
+    return error;
+};
+
+const parseJsonResponse = async (response) => {
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : null;
+    } catch {
+        return text;
+    }
+};
+
+const resolveSupabaseRuntimeConfig = () => {
+    const supabaseUrl = normalizeText(process.env.SUPABASE_URL);
+    const serviceRoleKey = normalizeText(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY);
+
+    if (!supabaseUrl || !serviceRoleKey) {
+        throw createHttpRequestError(
+            503,
+            'Supabase 서버 설정이 아직 준비되지 않았습니다.',
+            'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.'
+        );
+    }
+
+    return { supabaseUrl, serviceRoleKey };
+};
+
+const fetchSupabaseJson = async ({ path, accessToken, fallbackMessage }) => {
+    const { supabaseUrl, serviceRoleKey } = resolveSupabaseRuntimeConfig();
+    const response = await fetch(`${supabaseUrl}${path}`, {
+        headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${accessToken || serviceRoleKey}`,
+            'Content-Type': 'application/json',
+        },
+    });
+    const body = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        const detail =
+            typeof body === 'object' && body && 'message' in body
+                ? String(body.message)
+                : typeof body === 'object' && body && 'msg' in body
+                    ? String(body.msg)
+                    : typeof body === 'object' && body && 'error_description' in body
+                        ? String(body.error_description)
+                        : typeof body === 'object' && body && 'error' in body
+                            ? String(body.error)
+                            : typeof body === 'string' && body
+                                ? body
+                                : fallbackMessage;
+
+        throw createHttpRequestError(
+            response.status === 401 ? 401 : response.status === 403 ? 403 : 502,
+            response.status === 401
+                ? '관리자 인증이 만료되었거나 올바르지 않습니다.'
+                : fallbackMessage,
+            `${fallbackMessage}: ${detail}`
+        );
+    }
+
+    return body;
+};
+
+const fetchSupabaseTable = async (table, query) =>
+    fetchSupabaseJson({
+        path: `/rest/v1/${table}?${query}`,
+        fallbackMessage: `${table} 조회에 실패했습니다.`,
+    });
+
+const mapSupabaseRoleToLegacyRole = (roleCode) => {
+    const normalized = normalizeLower(roleCode);
+    return SUPABASE_ROLE_TO_LEGACY_ROLE[normalized] || normalized || 'staff';
+};
+
+const parseBearerToken = (req) => {
+    const authHeader = normalizeText(req.headers.authorization);
+    if (!authHeader.startsWith('Bearer ')) {
+        throw createHttpRequestError(401, '관리자 인증이 필요합니다.', 'Missing bearer token.');
+    }
+
+    const token = normalizeText(authHeader.slice(7));
+    if (!token) {
+        throw createHttpRequestError(401, '관리자 인증이 필요합니다.', 'Empty bearer token.');
+    }
+
+    return token;
+};
+
+const resolveLegacyBranchId = async ({ branchId, branchCode }) => {
+    const normalizedBranchId = normalizeText(branchId);
+    const normalizedBranchCode = normalizeText(branchCode);
+    const db = admin.firestore();
+
+    for (const candidate of [normalizedBranchId, normalizedBranchCode]) {
+        if (!candidate) continue;
+
+        const [locationSnap, branchSnap] = await Promise.all([
+            db.collection('locations').doc(candidate).get(),
+            db.collection('branches').doc(candidate).get(),
+        ]);
+
+        if (locationSnap.exists) {
+            return locationSnap.id;
+        }
+        if (branchSnap.exists) {
+            return branchSnap.id;
+        }
+    }
+
+    if (normalizedBranchCode) {
+        const querySnapshots = await Promise.all([
+            db.collection('locations').where('shortCode', '==', normalizedBranchCode).limit(1).get(),
+            db.collection('locations').where('branchCode', '==', normalizedBranchCode).limit(1).get(),
+            db.collection('branches').where('branchCode', '==', normalizedBranchCode).limit(1).get(),
+            db.collection('branches').where('branch_code', '==', normalizedBranchCode).limit(1).get(),
+        ]);
+
+        for (const snapshot of querySnapshots) {
+            if (!snapshot.empty) {
+                return snapshot.docs[0].id;
+            }
+        }
+    }
+
+    return normalizedBranchId || normalizedBranchCode;
+};
+
+const loadSupabaseAdminContextFromAccessToken = async (accessToken) => {
+    const user = await fetchSupabaseJson({
+        path: '/auth/v1/user',
+        accessToken,
+        fallbackMessage: 'Supabase 관리자 인증 조회에 실패했습니다.',
+    });
+    const userId = normalizeText(user?.id);
+
+    if (!userId) {
+        throw createHttpRequestError(401, '관리자 인증이 만료되었거나 올바르지 않습니다.', 'Supabase auth user response is missing id.');
+    }
+
+    const employees = await fetchSupabaseTable(
+        'employees',
+        `select=id,name,email,job_title,employment_status,employee_code,profile_id&profile_id=eq.${encodeURIComponent(userId)}&limit=1`
+    );
+    const employee = Array.isArray(employees) ? employees[0] : null;
+
+    if (!employee?.id) {
+        throw createHttpRequestError(403, '관리자 권한이 필요합니다.', `Missing employee row for profile ${userId}.`);
+    }
+
+    if (normalizeLower(employee.employment_status) && normalizeLower(employee.employment_status) !== 'active') {
+        throw createHttpRequestError(403, '비활성화된 관리자 계정입니다.', `Inactive employee attempted access: ${employee.id}`);
+    }
+
+    const [employeeRoles, assignments] = await Promise.all([
+        fetchSupabaseTable(
+            'employee_roles',
+            `select=role_id,is_primary&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=20`
+        ),
+        fetchSupabaseTable(
+            'employee_branch_assignments',
+            `select=branch_id,is_primary&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=20`
+        ),
+    ]);
+
+    const roleIds = Array.from(new Set(
+        (Array.isArray(employeeRoles) ? employeeRoles : [])
+            .map((entry) => normalizeText(entry?.role_id))
+            .filter(Boolean)
+    ));
+    const branchIds = Array.from(new Set(
+        (Array.isArray(assignments) ? assignments : [])
+            .map((entry) => normalizeText(entry?.branch_id))
+            .filter(Boolean)
+    ));
+
+    const [roles, branches] = await Promise.all([
+        roleIds.length > 0
+            ? fetchSupabaseTable(
+                'roles',
+                `select=id,code,name&id=in.(${roleIds.map((id) => encodeURIComponent(id)).join(',')})`
+            )
+            : [],
+        branchIds.length > 0
+            ? fetchSupabaseTable(
+                'branches',
+                `select=id,branch_code,name&id=in.(${branchIds.map((id) => encodeURIComponent(id)).join(',')})`
+            )
+            : [],
+    ]);
+
+    const roleMap = new Map((Array.isArray(roles) ? roles : []).map((role) => [normalizeText(role.id), role]));
+    const branchMap = new Map((Array.isArray(branches) ? branches : []).map((branch) => [normalizeText(branch.id), branch]));
+    const primaryRoleLink = (Array.isArray(employeeRoles) ? employeeRoles : []).find((entry) => entry?.is_primary) || (Array.isArray(employeeRoles) ? employeeRoles[0] : null);
+    const primaryBranchLink = (Array.isArray(assignments) ? assignments : []).find((entry) => entry?.is_primary) || (Array.isArray(assignments) ? assignments[0] : null);
+    const primaryRole = roleMap.get(normalizeText(primaryRoleLink?.role_id));
+    const primaryBranch = branchMap.get(normalizeText(primaryBranchLink?.branch_id));
+    const legacyRole = mapSupabaseRoleToLegacyRole(primaryRole?.code);
+    const branchCode = normalizeText(primaryBranch?.branch_code);
+    const legacyBranchId = await resolveLegacyBranchId({
+        branchId: primaryBranch?.id,
+        branchCode,
+    });
+
+    if (!ADMIN_ROLES.has(legacyRole)) {
+        throw createHttpRequestError(403, '관리자 권한이 필요합니다.', `Role ${legacyRole || 'unknown'} is not allowed.`);
+    }
+
+    return {
+        uid: userId,
+        provider: 'supabase',
+        adminContext: {
+            id: employee.id,
+            name: normalizeText(employee.name) || normalizeText(user?.email),
+            email: normalizeText(employee.email) || normalizeText(user?.email),
+            loginId: normalizeText(employee.employee_code) || normalizeText(employee.email) || normalizeText(user?.email),
+            role: legacyRole,
+            branchId: legacyBranchId,
+            branchCode,
+            employeeId: employee.id,
+            profileId: userId,
+        },
+    };
+};
+
+const authenticateHttpAdminRequest = async (req) => {
+    const provider = normalizeLower(req.headers['x-admin-auth-provider']);
+    const supabaseAccessToken = normalizeText(req.headers['x-supabase-access-token']);
+
+    if (supabaseAccessToken || provider === 'supabase') {
+        if (!supabaseAccessToken) {
+            throw createHttpRequestError(401, '관리자 인증이 필요합니다.', 'Missing Supabase access token.');
+        }
+        return loadSupabaseAdminContextFromAccessToken(supabaseAccessToken);
+    }
+
+    const bearerToken = parseBearerToken(req);
+    let decodedToken;
+
+    try {
+        decodedToken = await admin.auth().verifyIdToken(bearerToken);
+    } catch (error) {
+        throw createHttpRequestError(401, '관리자 인증이 만료되었거나 올바르지 않습니다.', `Firebase token verification failed: ${error.message}`);
+    }
+
+    const adminContext = await getAdminContext(decodedToken.uid);
+    if (!adminContext) {
+        throw createHttpRequestError(403, '관리자 권한이 필요합니다.', `Missing adminContext for uid ${decodedToken.uid}`);
+    }
+
+    return {
+        uid: decodedToken.uid,
+        provider: 'firebase',
+        adminContext,
+    };
+};
 
 const assertAuthenticated = (request) => {
     const uid = request.auth && request.auth.uid;
@@ -571,8 +847,7 @@ exports.issueSupabaseSignedUpload = onRequest(async (req, res) => {
     try {
         const response = await handleSignedUploadRequest({
             req,
-            admin,
-            getAdminContext
+            authenticateAdminRequest: authenticateHttpAdminRequest
         });
         return res.status(200).json(response);
     } catch (error) {
@@ -583,6 +858,72 @@ exports.issueSupabaseSignedUpload = onRequest(async (req, res) => {
 
         console.error('[issueSupabaseSignedUpload] unexpected error:', error);
         return res.status(500).json({ message: 'signed upload URL 발급에 실패했습니다.' });
+    }
+});
+
+exports.syncSupabaseAdminAccount = onRequest(async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Supabase-Access-Token, X-Admin-Auth-Provider');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(204).send('');
+    }
+
+    if (!['POST', 'DELETE'].includes(req.method)) {
+        return res.status(405).json({ message: 'POST 또는 DELETE 요청만 허용됩니다.' });
+    }
+
+    try {
+        const { uid, adminContext } = await authenticateHttpAdminRequest(req);
+        const actor = {
+            uid,
+            role: adminContext.role,
+            name: adminContext.name || '',
+            email: adminContext.email || '',
+            loginId: adminContext.loginId || '',
+            branchId: adminContext.branchId || '',
+            branchCode: adminContext.branchCode || '',
+        };
+
+        if (req.method === 'POST') {
+            const adminInput = req.body && typeof req.body === 'object' ? req.body.admin : null;
+            if (!adminInput || typeof adminInput !== 'object') {
+                return res.status(400).json({ message: 'admin payload is required.' });
+            }
+
+            const result = await upsertAdminAccount({
+                firestore: admin.firestore(),
+                actor,
+                input: adminInput,
+            });
+            return res.status(200).json(result);
+        }
+
+        const adminId = normalizeText(req.body?.adminId || req.query?.adminId);
+        if (!adminId) {
+            return res.status(400).json({ message: 'adminId is required.' });
+        }
+
+        const result = await deleteAdminAccount({
+            firestore: admin.firestore(),
+            actor,
+            adminId,
+        });
+        return res.status(200).json(result);
+    } catch (error) {
+        const status = Number(error?.status || 0);
+        const message = typeof error?.message === 'string'
+            ? error.message
+            : '관리자 계정 동기화에 실패했습니다.';
+
+        if ([400, 401, 403, 404, 503].includes(status)) {
+            console.warn('[syncSupabaseAdminAccount]', error?.logMessage || message);
+            return res.status(status).json({ message });
+        }
+
+        console.error('[syncSupabaseAdminAccount] unexpected error:', error);
+        return res.status(500).json({ message: '관리자 계정 동기화에 실패했습니다.' });
     }
 });
 

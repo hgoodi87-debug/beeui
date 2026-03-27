@@ -10,7 +10,25 @@ export const ja = {
         qna_title: 'よくある質問 | Beeliber',
         qna_desc: '予約、キャンセル・払い戻し、荷物の安全、拠点利用方法についてよくある質問を確認してください。'
     },
-    nav: { services: 'サービス紹介', locations: '拠点案内', tracking: '配送追跡', partners: '提携お問い合わせ', book: '今すぐ予約', terms_label: '利用規約', admin_portal: 'ポータル', login: 'ログイン', mypage: 'マイページ' },
+    nav: {
+        services: 'サービス紹介',
+        locations: '拠点案内',
+        tracking: '配送追跡',
+        partners: '提携お問い合わせ',
+        community: 'コミュニティ',
+        about: 'ブランドストーリー',
+        support_policy: 'サポート＆運営ポリシー',
+        terms: '利用規約',
+        privacy: '個人情報保護方針',
+        help_center: 'ヘルプセンター',
+        dashboard: 'ダッシュボード',
+        contact: 'お問い合わせ',
+        book: '今すぐ予約',
+        terms_label: '利用規約',
+        admin_portal: 'ポータル',
+        login: 'ログイン',
+        mypage: 'マイページ'
+    },
     terms_page: {
         title: 'サービス利用規約',
         last_updated: '最終更新: 2025年 1月 1日',
@@ -39,16 +57,14 @@ export const ja = {
     },
     hero: {
         badge: 'ソウル荷物預かり・空港配送 🐝',
-        title1: 'ソウルのどこでも、',
-        title2: '荷物は預けて旅行だけ',
+        main_title_1: 'チェックアウト後、',
+        main_title_2: '身軽にソウル旅行を完成',
         subtitle: '弘大・明洞・ソウル駅など40+拠点 ₩4,000~\n仁川空港当日配送 ₩25,000~',
         btn_now: '今すぐ予約 ➔',
         cta_storage: "近くの預かり所を探す",
         cta_delivery: "空港配送予約",
         track_booking: '予約確認',
         book_branch: '今すぐ予約',
-        main_title_1: 'ソウルのどこでも、',
-        main_title_2: '荷物は預けて旅行だけ',
         main_title_bags: '',
         main_title_city: '',
         live_label: 'リアルタイム状態フィード',
@@ -80,11 +96,16 @@ export const ja = {
         before_caption: "スーツケース을引いて階段…本当に大丈夫？"
     },
     howitworks: {
-        headline: "たった3回のタッチ、魔法のように消える荷物",
-        badge_label: "MAGIC PROCESS ✨",
-        step1: { title: "Drop (預ける)", desc: "空港（またはホテル）の Beeliber デスク/パートナーに\nあなたの重い荷物を渡します。", badge: "STEP 1. Drop" },
-        step2: { title: "Enjoy (楽しむ)", desc: "両手が自由な状態で、すぐに\n観光地、レストラン、ショッピングを楽しみます。", badge: "STEP 2. Enjoy" },
-        step3: { title: "Meet (出会う)", desc: "日程を終えてホテルの部屋に到着すると,\n荷物が先にあなたを待っています。", badge: "STEP 3. Meet" }
+        headline: "手荷物から解放された、\n真のソウル旅行の始まり。",
+        badge_label: "SERVICE PROCESS",
+        step1: { title: "ハブで荷物を預ける", desc: "入国後、6つのハブ拠点(09:00-13:00)のいずれかを訪問してください。荷物を預けてすぐにツアーを開始できます。", badge: "STEP 01" },
+        step2: { title: "リアルタイム追跡", desc: "追跡リンクを受け取ります。コーヒーを楽しみながら、荷物が街を安全に移動する様子を確認できます。", badge: "STEP 02" },
+        step3: { title: "空港で荷物を受け取る", desc: "荷物は仁川空港(16:00-21:00)に到着しています。身軽な状態で空港へ向かい、スタッフから荷物を受け取って出発しましょう。", badge: "STEP 03" }
+    },
+    freedom: {
+        badge: "AFTER",
+        headline: "手荷物はビルリバーに。<br /><span class=\"text-bee-yellow\">今この自由、</span> ₩4,000から。",
+        sub_copy: "重い荷物なしで身軽に、ソウルのロマンを楽しんでください。 💅✨"
     },
     trust: {
         headline: "あなたの荷物は、VIP 待遇を受けます。",
@@ -119,7 +140,12 @@ export const ja = {
         }
     },
     reviews_section: {
-        headline: "荷物なしで歩くソウルがいかに美しいか、彼らが証明します。",
+        headline: "ソウルを訪れた旅行者たちの\nリアルな声をご確認ください。",
+        verified_google: "検証済み Google フィードバック",
+        people_experienced: "名が体験済み",
+        reviews_count: "+ 件のレビュー",
+        google_rating: "Google 評価",
+        safe_handling: "安全な手荷物管理を保証",
         review_1: { name: "Sarah", location: "USA", text: "DDPは本当に幻想的でした！手荷물配送のおかげで、身軽に建築物を鑑賞することができました。 ✨" },
         review_2: { name: "Yuki", location: "Japan", text: "景福宮で韓服を着て写真を撮るのが夢でしたが、Beeliberのおかげで荷物の心配なく楽しい時間を過ごせました！ 🌸" },
         review_3: { name: "Emma", location: "UK", text: "南山タワーまで重い荷物を持って上がらなくて済んで、本当によかったです。ソウルの夜景は最高です！ 🗼" },
@@ -130,9 +156,11 @@ export const ja = {
         review_8: { name: "Sofia", location: "Italy", text: "漢江公園でピクニックを楽しむ前に、ホテルに荷物をあらかじめ送っておいたのは最高の選択でした。 🧺" }
     },
     final_cta: {
-        headline: "飛行機から降りますか？ それとももうすぐ出発ですか？",
-        btn_airport_hotel: "空港 ➔ ホテル配送を予約する",
-        btn_hotel_airport: "ホテル ➔ 空港配送を予約する"
+        headline: "ソウルでの最後の日、\n完璧に締めくくりましょう。",
+        sub: "荷物のない旅、新しいスタンダードを体験してください。",
+        btn_airport_hotel: "空港 ➔ 受付拠点",
+        btn_hotel_airport: "拠点 ➔ 空港受取",
+        copyright: "© 2026 BEELIBER GLOBAL LOGISTICS | 多くの旅行者に信頼されています"
     },
     notice: {
         title: 'お知らせ',
@@ -707,8 +735,9 @@ export const ja = {
         error_msg: 'しばらくしてからもう一度お試しください。'
     },
     qna: {
-        title: "よくある質問",
-        subtitle: "Beeliberのプレミアムなサービスに関するガイドです。",
+        title: "ご不明な点はありますか？",
+        subtitle: "Beeliber があなたの疑問を完璧に解決します。 💅",
+        view_all: "すべての質問を見る",
         categories: {
             general: "サービス全般",
             booking: "予約・利用",

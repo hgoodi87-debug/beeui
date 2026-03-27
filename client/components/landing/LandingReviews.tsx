@@ -106,7 +106,7 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                         </svg>
                         {summary ? (
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-bee-black/60">
-                                Google {summary.average_rating}★ · {summary.total_reviews.toLocaleString()} reviews
+                                {t.reviews_section.verified_google} · {summary.average_rating}★ · {summary.total_reviews.toLocaleString()} {t.reviews_section.reviews_count}
                             </span>
                         ) : (
                             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-bee-black/40 font-outfit">#beeliber_seoul</span>

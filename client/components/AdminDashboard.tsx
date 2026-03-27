@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabaseMutate, isSupabaseDataEnabled } from '../services/supabaseClient';
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, PriceSettings, StorageTier, AdminUser, SystemNotice, HeroConfig, GoogleCloudConfig, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
-import { StorageService } from '../services/storageService';
+import { StorageService, canUseLocalLegacyReadBridge } from '../services/storageService';
 import { AuditService } from '../services/auditService';
 import { uploadBranchManagedAsset, uploadHeroManagedAsset, uploadNoticeManagedAsset } from '../services/supabaseStorageUploadService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
@@ -15,6 +15,8 @@ import { useAdmins } from '../src/domains/admin/hooks/useAdmins';
 import { useInquiries } from '../src/domains/admin/hooks/useInquiries';
 import { useCashClosings } from '../src/domains/admin/hooks/useCashClosings';
 import { useExpenditures } from '../src/domains/admin/hooks/useExpenditures';
+import { useAdminRevenueDailySummaries } from '../src/domains/admin/hooks/useAdminRevenueDailySummaries';
+import { useAdminRevenueMonthlySummaries } from '../src/domains/admin/hooks/useAdminRevenueMonthlySummaries';
 import { sendMessageToGemini } from '../services/geminiService';
 import DailyDetailModal from './admin/DailyDetailModal';
 import BookingSidePanel from './admin/BookingSidePanel';
@@ -108,6 +110,22 @@ const AdminTabFallback: React.FC = () => (
   </div>
 );
 
+const normalizeScopeToken = (value?: string | null) =>
+  String(value || '').trim().toLowerCase();
+
+const buildLocationScopeTokens = (location?: LocationOption | null, fallbackToken?: string) =>
+  new Set(
+    [
+      fallbackToken,
+      location?.id,
+      location?.branchId,
+      location?.branchCode,
+      location?.shortCode,
+    ]
+      .map((value) => normalizeScopeToken(value))
+      .filter(Boolean)
+  );
+
 interface AdminDashboardProps {
   onBack: () => void;
   onStaffMode?: () => void;
@@ -159,18 +177,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
 
   const queryClient = useQueryClient();
+  const { data: locations = [] } = useLocations();
   const { data: allBookings = [] } = useBookings();
+  const shouldUseSqlRevenueSummaries = needsSettlementData && !canUseLocalLegacyReadBridge();
+  const { data: revenueDailySummaries = [] } = useAdminRevenueDailySummaries({ enabled: shouldUseSqlRevenueSummaries });
+  const { data: revenueMonthlySummaries = [] } = useAdminRevenueMonthlySummaries({ enabled: shouldUseSqlRevenueSummaries });
+
+  const selectedOperationalLocation = useMemo(
+    () => (globalBranchFilter === 'ALL' ? null : locations.find((location) => location.id === globalBranchFilter) || null),
+    [globalBranchFilter, locations]
+  );
+  const selectedScopeTokens = useMemo(
+    () => buildLocationScopeTokens(selectedOperationalLocation, globalBranchFilter === 'ALL' ? undefined : globalBranchFilter),
+    [globalBranchFilter, selectedOperationalLocation]
+  );
+  const matchesSelectedScope = (value?: string | null) =>
+    globalBranchFilter === 'ALL' || selectedScopeTokens.has(normalizeScopeToken(value));
 
   const bookings = useMemo(() => {
     if (globalBranchFilter === 'ALL') return allBookings;
     return allBookings.filter(b =>
-      b.branchId === globalBranchFilter ||
-      b.pickupLocation === globalBranchFilter ||
-      b.dropoffLocation === globalBranchFilter
+      matchesSelectedScope(b.branchId) ||
+      matchesSelectedScope(b.branchCode) ||
+      matchesSelectedScope(b.pickupLocation) ||
+      matchesSelectedScope(b.dropoffLocation)
     );
-  }, [allBookings, globalBranchFilter]);
+  }, [allBookings, globalBranchFilter, selectedScopeTokens]);
 
-  const { data: locations = [] } = useLocations();
   const { data: admins = [] } = useAdmins({ enabled: needsAdminDirectory });
   const { data: inquiries = [] } = useInquiries({ enabled: needsInquiryData });
   const { data: closings = [] } = useCashClosings({ enabled: needsSettlementData });
@@ -425,12 +458,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     description: ''
   });
 
+  const scopedExpenditures = useMemo(
+    () => (globalBranchFilter === 'ALL' ? expenditures : expenditures.filter((item) => matchesSelectedScope(item.branchId))),
+    [expenditures, globalBranchFilter, selectedScopeTokens]
+  );
+  const scopedClosings = useMemo(
+    () => (globalBranchFilter === 'ALL' ? closings : closings.filter((item) => matchesSelectedScope(item.branchId))),
+    [closings, globalBranchFilter, selectedScopeTokens]
+  );
+  const scopedRevenueDailySummaries = useMemo(
+    () => (
+      globalBranchFilter === 'ALL'
+        ? revenueDailySummaries
+        : revenueDailySummaries.filter((item) => matchesSelectedScope(item.branchId) || matchesSelectedScope(item.branchCode))
+    ),
+    [globalBranchFilter, revenueDailySummaries, selectedScopeTokens]
+  );
+  const scopedRevenueMonthlySummaries = useMemo(
+    () => (
+      globalBranchFilter === 'ALL'
+        ? revenueMonthlySummaries
+        : revenueMonthlySummaries.filter((item) => matchesSelectedScope(item.branchId) || matchesSelectedScope(item.branchCode))
+    ),
+    [globalBranchFilter, revenueMonthlySummaries, selectedScopeTokens]
+  );
+
   const { revenueStats, dailySettlementStats, accountingDailyStats, accountingMonthlyStats, monthlyControlStats } = useAdminStats({
     bookings,
-    expenditures: globalBranchFilter === 'ALL' ? expenditures : expenditures.filter(e => e.branchId === globalBranchFilter),
+    expenditures: scopedExpenditures,
     revenueStartDate,
     revenueEndDate,
-    closings: globalBranchFilter === 'ALL' ? closings : closings.filter(c => c.branchId === globalBranchFilter)
+    closings: scopedClosings,
+    revenueDailySummaries: scopedRevenueDailySummaries,
+    revenueMonthlySummaries: scopedRevenueMonthlySummaries,
   });
 
   const filteredExpenditures = useMemo(() => {
@@ -438,11 +498,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const end = new Date(revenueEndDate);
     end.setHours(23, 59, 59, 999);
 
-    return expenditures.filter((e: Expenditure) => {
+    return scopedExpenditures.filter((e: Expenditure) => {
       const d = new Date(e.date);
       return d >= start && d <= end;
     }).sort((a: Expenditure, b: Expenditure) => b.date.localeCompare(a.date));
-  }, [expenditures, revenueStartDate, revenueEndDate]);
+  }, [revenueEndDate, revenueStartDate, scopedExpenditures]);
 
   const handleCashClose = async () => {
     if (!confirm('마감 처리 하시겠습니까?')) return;
@@ -602,6 +662,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         queryClient.invalidateQueries({ queryKey: ['inquiries'] }),
         queryClient.invalidateQueries({ queryKey: ['cashClosings'] }),
         queryClient.invalidateQueries({ queryKey: ['expenditures'] }),
+        queryClient.invalidateQueries({ queryKey: ['adminRevenueDailySummaries'] }),
+        queryClient.invalidateQueries({ queryKey: ['adminRevenueMonthlySummaries'] }),
       ]);
 
       // Sync local storage items using safe parse
@@ -1236,7 +1298,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
    */
   const saveAdmin = async (data?: Partial<AdminUser>) => {
     const targetForm = data || adminForm;
-    const normalizedLoginId = targetForm.loginId?.trim() || targetForm.branchId?.trim() || '';
+    const selectedLocation = locations.find((location) => location.id === targetForm.branchId);
+    const normalizedBranchCode =
+      targetForm.branchCode?.trim()
+      || selectedLocation?.branchCode?.trim()
+      || selectedLocation?.shortCode?.trim()
+      || '';
+    const normalizedLoginId = targetForm.loginId?.trim() || normalizedBranchCode || '';
 
     // [스봉이] 신규 등록 시에는 이름, 직책, 비밀번호가 모두 필수지만, 수정 시에는 비밀번호를 비워둘 수 있어요! 💅✨
     const isNew = !targetForm.id;
@@ -1263,6 +1331,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         name: targetForm.name?.trim() || '',
         jobTitle: targetForm.jobTitle?.trim() || '',
         loginId: normalizedLoginId || undefined,
+        branchCode: normalizedBranchCode || undefined,
         password: targetForm.password?.trim() || '',
         createdAt: targetForm.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -2325,13 +2394,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             <select
               value={globalBranchFilter}
               onChange={(e) => setGlobalBranchFilter(e.target.value)}
-              title="지점 필터"
-              aria-label="지점 필터"
+              title="운영 거점 필터"
+              aria-label="운영 거점 필터"
               className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-bee-black focus:border-bee-yellow hover:border-gray-300 outline-none cursor-pointer transition-colors"
             >
-              <option value="ALL">전체 지점 현황 조회</option>
+              <option value="ALL">전체 운영 거점 조회</option>
               {locations.map(loc => (
-                <option key={loc.id} value={loc.id}>{loc.name} - 지점</option>
+                <option key={loc.id} value={loc.id}>{loc.name} - 운영 거점</option>
               ))}
             </select>
             <button

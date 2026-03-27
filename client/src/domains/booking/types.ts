@@ -81,6 +81,10 @@ export interface BookingState {
     pickupImageUrl?: string;
     reservationCode?: string;
     branchId?: string;
+    branchCode?: string;
+    branchName?: string;
+    pickupLocationName?: string;
+    dropoffLocationName?: string;
     branchCommissionRates?: {
         delivery: number;
         storage: number;

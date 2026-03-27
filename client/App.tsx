@@ -111,6 +111,11 @@ const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // [스봉이] 페이지 바뀔 때마다 얌전하게 맨 위로 올려다 드릴게요. 💅✨
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const {
     lang,
     setLang,
@@ -600,7 +605,7 @@ const App: React.FC = () => {
           <ErrorBoundary>
             <Suspense fallback={<LoaderOverlay show={true} />}>
               <AnimatePresence mode="wait" initial={false}>
-                <Routes location={location} key={location.pathname.split('/')[2] || 'root'}>
+                <Routes location={location} key={location.pathname}>
                   {/* USER ROUTES WITH LANG PREFIX */}
                   <Route path="/:urlLang" element={<LangRouteLayout setLang={setLang} lang={lang} />}>
                     <Route index element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />

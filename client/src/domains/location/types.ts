@@ -12,6 +12,7 @@ export enum LocationType {
 export interface LocationOption {
     id: string;
     shortCode: string;
+    branchId?: string;
     name: string;
     type: LocationType;
     address?: string;

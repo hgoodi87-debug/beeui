@@ -10,7 +10,25 @@ export const zhTW = {
         qna_title: '常見問題 | Beeliber',
         qna_desc: '查看有關預約、取消退款、行李安全與分店使用方式的常見問題。'
     },
-    nav: { services: '服務介紹', locations: '分店指南', tracking: '配送查詢', partners: '加盟諮詢', book: '立即預訂', terms_label: '配送業務委託及第三方(運輸公司)信息提供同意書', admin_portal: '管理員門戶', login: '登錄', mypage: '個人中心' },
+    nav: {
+        services: '服務介紹',
+        locations: '分店指南',
+        tracking: '配送查詢',
+        partners: '加盟諮詢',
+        community: '社群',
+        about: '品牌故事',
+        support_policy: '支援與營運政策',
+        terms: '使用條款',
+        privacy: '隱私權政策',
+        help_center: '幫助中心',
+        dashboard: '儀表板',
+        contact: '聯繫我們',
+        book: '立即預訂',
+        terms_label: '配送業務委託及第三方(運輸公司)信息提供同意書',
+        admin_portal: '管理員門戶',
+        login: '登錄',
+        mypage: '個人中心'
+    },
     terms_page: {
         title: '服務使用條款',
         last_updated: '最後更新: 2025年 1月 1日',
@@ -39,16 +57,14 @@ export const zhTW = {
     },
     hero: {
         badge: '首爾行李寄放·機場配送夥伴 🐝',
-        title1: '首爾任何地方，',
-        title2: '行李交給我們就好',
+        main_title_1: '在首爾任何地方，',
+        main_title_2: '放下行李，輕裝上陣',
         subtitle: '弘大·明洞·首爾站等40+據點寄放 ₩4,000起\n仁川機場當日配送 ₩25,000起',
         btn_now: '立即預訂 ➔',
         cta_storage: "找最近寄放點",
         cta_delivery: "機場配送預訂",
         track_booking: '查詢配送詳情',
         book_branch: '立即預訂',
-        main_title_1: '首爾任何地方，',
-        main_title_2: '行李交給我們就好',
         main_title_bags: '',
         main_title_city: '',
         live_label: '實時狀態反饋',
@@ -80,11 +96,16 @@ export const zhTW = {
         before_caption: "拖著行李擠地鐵...你認真的嗎？"
     },
     howitworks: {
-        headline: "只需點擊3次，行李宛如隱形",
-        badge_label: "MAGIC PROCESS ✨",
-        step1: { title: "Drop (寄放)", desc: "在機場（或酒店）的 Beeliber 櫃檯或合作夥伴處寄放行李。", badge: "STEP 1. Drop" },
-        step2: { title: "Enjoy (享受)", desc: "兩手空空，立即開啟您的觀光、探店和購物之旅。", badge: "STEP 2. Enjoy" },
-        step3: { title: "Meet (提取)", desc: "結束行程回到機場，您的行李已在那裏靜候您的光臨。", badge: "STEP 3. Meet" }
+        headline: "解開束縛，\n開啟真正的首爾輕便之旅。",
+        badge_label: "SERVICE PROCESS",
+        step1: { title: "在樞紐地寄存", desc: "抵達後前往 6 個樞紐點 (09:00-13:00) 之一。交付行李，立即開啟您的旅程。", badge: "STEP 01" },
+        step2: { title: "實時位置追蹤", desc: "接收追蹤連結。在您愜意享受咖啡時，隨時查看行李在城中的移動狀態。", badge: "STEP 02" },
+        step3: { title: "在機場領取", desc: "行李已抵達仁川機場 (16:00-21:00)。與工作人員會面，無行李狀態直接前往登機。", badge: "STEP 03" }
+    },
+    freedom: {
+        badge: "AFTER",
+        headline: "行李交給 Beeliber。<br /><span class=\"text-bee-yellow\">此刻的自由，</span> ₩4,000 起。",
+        sub_copy: "無需沈重行李，輕便地享受首爾的浪漫氛圍。 💅✨"
     },
     trust: {
         headline: "您的行李，將享受 VIP 待遇。",
@@ -119,10 +140,12 @@ export const zhTW = {
         }
     },
     reviews_section: {
-        headline: "Beeliber將證明，沒有行李的旅程有多美。",
-        review1: "寄了行李直接去景福宮了。這是我旅行中最棒的決定！ - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
-        review2: "去機場前寄了行李，輕鬆逛了一整天！ - 李某 ⭐️⭐️⭐️⭐️⭐️",
-        review3: "實時追踪功能太好用了，強烈推薦！ - 金某 ⭐️⭐️⭐️⭐️⭐️",
+        headline: "看看訪問過首爾的\n旅行者們最真實的評價。",
+        verified_google: "經驗證的 Google 回饋",
+        people_experienced: "名使用者已體驗",
+        reviews_count: "+ 則評論",
+        google_rating: "Google 評分",
+        safe_handling: "保障行李安全處理",
         review_1: { name: "Sarah", location: "USA", text: "DDP 真是太神奇了！多虧了我托運的行李，我才能在輕裝上陣的情況下欣賞建築。 ✨" },
         review_2: { name: "Yuki", location: "Japan", text: "在景福宮穿韓服拍照是我的夢想，多虧了 Beeliber，我不用擔心行李問題，玩得很開心！ 🌸" },
         review_3: { name: "Emma", location: "UK", text: "很高興不用提著行李上南山塔。首爾的夜景是最棒的！ 🗼" },
@@ -133,9 +156,11 @@ export const zhTW = {
         review_8: { name: "Sofia", location: "Italy", text: "在漢江公園野餐前提前把行李送到酒店真是太明智了。 🧺" }
     },
     final_cta: {
-        headline: "是剛下飛機，還是準備出發？",
-        btn_airport_hotel: "預訂 機場 ➔ 酒店 配送",
-        btn_hotel_airport: "預訂 酒店 ➔ 機場 配送"
+        headline: "在首爾的最後一天，\n體驗最完美的收尾。",
+        sub: "告別沉重行李，開啟旅行新標準。",
+        btn_airport_hotel: "機場 ➔ 樞紐站點",
+        btn_hotel_airport: "樞紐站點 ➔ 機場",
+        copyright: "© 2026 BEELIBER GLOBAL LOGISTICS | 萬千旅者的信賴首選"
     },
     notice: {
         title: '公告',
@@ -510,8 +535,9 @@ export const zhTW = {
         error_msg: '請稍後再試。'
     },
     qna: {
-        title: "常見問題",
-        subtitle: "為您揭秘關於 Beeliber 服務的尊享指南。",
+        title: "有任何疑問嗎？",
+        subtitle: "Beeliber 將為您完美解答。 💅",
+        view_all: "查看所有問題",
         categories: {
             general: "服務常規",
             booking: "預約與使用",

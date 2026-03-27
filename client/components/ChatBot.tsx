@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { sendMessageToGemini, translateText } from '../services/geminiService';
 import { StorageService } from '../services/storageService';
 import { ChatMessage, ChatSession } from '../types';
@@ -10,8 +11,10 @@ interface ChatBotProps {
 }
 
 const INACTIVITY_LIMIT = 300000; // 5 minutes (300,000ms)
+const SUPPORTED_URL_LANGS = new Set(['ko', 'en', 'zh', 'zh-tw', 'zh-hk', 'ja']);
 
 const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
+    const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -43,6 +46,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
     const [sessionMeta, setSessionMeta] = useState<ChatSession | null>(null);
 
     const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
+    const firstSegment = location.pathname.split('/').filter(Boolean)[0]?.toLowerCase() || '';
+    const isPublicLangRoute = SUPPORTED_URL_LANGS.has(firstSegment);
 
     // 관리자 메시지 실시간 번역 로직
     useEffect(() => {
@@ -295,6 +300,10 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
         setIsOpen(false);
         window.location.hash = '#booking';
     };
+
+    if (!isPublicLangRoute) {
+        return null;
+    }
 
     return (
         <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end font-sans">

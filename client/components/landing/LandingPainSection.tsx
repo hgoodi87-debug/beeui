@@ -36,15 +36,15 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-yellow/10 group">
                             <img
-                                src="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%8B%E1%85%AE%E1%84%8E%E1%85%B3%E1%86%A81.jpeg?alt=media&token=5e01a01d-4f5e-401b-808b-d744e972f6d1"
-                                alt="인천공항 당일 짐배송 서비스를 이용해 가벼운 몸으로 여행을 마무리하는 뒷모습"
+                                src="/images/landing/after.jpg"
+                                alt="빌리버 서비스를 이용해 짐 없이 가볍게 한강을 산책하는 자유로운 모습"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s]"
                             />
                             {/* After 캡션 */}
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
                                 <span className="inline-block px-3 py-1 bg-bee-yellow text-bee-black text-[10px] md:text-xs font-black rounded-full mb-2">AFTER</span>
                                 <p className="text-white font-bold text-sm md:text-lg leading-snug break-keep">
-                                    {t.pain?.after_caption}
+                                    {t.pain?.after_caption || "무거운 짐은 빌리버에게 맡기고,\n당신은 자유로운 여행만 즐기세요."}
                                 </p>
                             </div>
                         </div>
@@ -57,15 +57,15 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-black group">
                             <img
-                                src="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/%EB%9E%9C%EB%94%A9%2F%E1%84%8C%E1%85%AA%E1%84%8E%E1%85%B3%E1%86%A8.jpeg?alt=media&token=d0d1055b-cafd-40af-8127-4ea24532ee84"
-                                alt="무거운 캐리어와 짐 때문에 서울 지하철 계단에서 고생하는 여행자의 모습"
+                                src="/images/landing/before.jpg"
+                                alt="무거운 캐리어와 짐 때문에 지하철 계단과 인파 속에서 고생하는 힘든 모습"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s] grayscale group-hover:grayscale-0"
                             />
                             {/* Before 캡션 */}
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
                                 <span className="inline-block px-3 py-1 bg-white/20 text-white text-[10px] md:text-xs font-black rounded-full mb-2 backdrop-blur-sm">BEFORE</span>
                                 <p className="text-white/80 font-bold text-sm md:text-lg leading-snug break-keep">
-                                    {t.pain?.before_caption}
+                                    {t.pain?.before_caption || "여행의 설렘은 사라지고,\n무거운 짐과의 사투만 남으시겠습니까?"}
                                 </p>
                             </div>
                         </div>

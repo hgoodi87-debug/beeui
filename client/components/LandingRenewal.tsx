@@ -17,17 +17,17 @@ import {
     Sparkles
 } from "lucide-react";
 import { Branch } from "../types";
-import { StorageService } from "../services/storageService";
-import { TipAreaInfo } from "../src/domains/shared/types";
 
 import TrackingWidget from "./TrackingWidget";
 import LandingHero from "./landing/LandingHero";
 import LandingOperationsMarquee from "./landing/LandingOperationsMarquee";
-import LandingGoogleReviewsStrip from "./landing/LandingGoogleReviewsStrip";
+import Navbar from "./Navbar";
 
 // [스봉이] 아래 섹션들은 스크롤 할 때만 불러오도록 지능적으로 세팅했어요. 💅✨
 const LandingPainSection = React.lazy(() => import("./landing/LandingPainSection"));
 const LandingHowItWorks = React.lazy(() => import("./landing/LandingHowItWorks"));
+const LandingFreedomSection = React.lazy(() => import("./landing/LandingFreedomSection"));
+const LandingVIPSafety = React.lazy(() => import("./landing/LandingVIPSafety"));
 const LandingTrustBadge = React.lazy(() => import("./landing/LandingTrustBadge"));
 const LandingPricing = React.lazy(() => import("./landing/LandingPricing"));
 const LandingReviews = React.lazy(() => import("./landing/LandingReviews"));
@@ -65,153 +65,97 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
 }) => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const [showTracking, setShowTracking] = React.useState(false);
-    const [tipsAreas, setTipsAreas] = React.useState<any[]>([]);
 
     React.useEffect(() => {
-        // [스봉이] 팁스 지역 데이터를 실시간으로 공수해옵니다! 🛰️✨
-        const unsub = StorageService.subscribeTipsAreas((data: TipAreaInfo[]) => {
-            // [스봉이] 우선순위가 높은(is_priority_area) 지역들만 예쁘게 골라내요 💅
-            const priorityAreas = data.filter(a => a.is_priority_area);
-            setTipsAreas(priorityAreas.length > 0 ? priorityAreas : data.slice(0, 4));
-        });
-
         // [스봉이] 메타 광고 트래킹: 랜딩 페이지 조회 💅✨
         import('../services/trackingService').then(({ TrackingService }) => {
             TrackingService.viewContent('Landing Page Renewal');
         });
-
-        return () => unsub();
     }, []);
 
     return (
         <div className="w-full bg-white selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden">
 
-            {/* Global Navigation */}
-            <nav className="fixed top-0 inset-x-0 z-[100] px-4 py-4 transition-all duration-300">
-                <div className="max-w-[1200px] mx-auto flex justify-between items-center backdrop-blur-xl bg-black/40 border border-white/10 rounded-full px-6 py-2 shadow-2xl">
-                    <div className="flex items-center gap-3">
-                        <motion.a
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            href={`/${lang}`}
-                            className="flex items-center group cursor-pointer"
-                            onClick={(e) => { e.preventDefault(); onNavigate('HOME'); }}
-                        >
-                            <Logo size="sm" />
-                        </motion.a>
+            {/* [스봉이] 프리미엄 블랙 글래스모피즘 내비게이션 바 적용 💅✨ */}
+            <Navbar
+                user={user}
+                currentLang={lang}
+                onLangChange={onLangChange}
+                onLoginClick={onLoginClick}
+                onMyPageClick={onMyPageClick}
+                onAdminClick={onAdminClick}
+                onMenuClick={() => setIsMenuOpen(!isMenuOpen)}
+                onServicesClick={() => onNavigate('SERVICES')}
+                onLocationsClick={() => onNavigate('LOCATIONS_STORE')}
+                onPartnersClick={() => onNavigate('PARTNERSHIP')}
+                t={t}
+            />
 
-
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* Language Picker */}
-                        <div className="relative group">
-                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full text-white text-[11px] font-black tracking-wider hover:bg-white/20 transition-all uppercase shadow-lg">
-                                <img
-                                    src={`https://flagcdn.com/w40/${lang === 'ko' ? 'kr' : lang === 'en' ? 'us' : lang === 'ja' ? 'jp' : lang === 'zh' ? 'cn' : lang === 'zh-TW' ? 'tw' : 'hk'}.png`}
-                                    alt={lang}
-                                    className="w-4 h-auto rounded-sm shadow-sm"
-                                />
-                                <span className="opacity-90">
-                                    {lang === 'ko' ? 'KR' : lang === 'en' ? 'EN' : lang === 'ja' ? 'JP' : lang === 'zh' ? 'CN' : lang === 'zh-TW' ? 'TW' : 'HK'}
-                                </span>
-                            </button>
-                            <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[101]">
-                                <div className="bg-white rounded-2xl shadow-2xl p-2 min-w-[150px] border border-black/5">
-                                    {[
-                                        { id: 'ko', name: '한국어', flag: 'kr' },
-                                        { id: 'en', name: 'English', flag: 'us' },
-                                        { id: 'ja', name: '日本語', flag: 'jp' },
-                                        { id: 'zh', name: '中文(简)', flag: 'cn' },
-                                        { id: 'zh-TW', name: '繁體中文', flag: 'tw' },
-                                        { id: 'zh-HK', name: '廣東話', flag: 'hk' }
-                                    ].map(item => (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => onLangChange(item.id)}
-                                            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${lang === item.id ? 'bg-bee-black text-bee-yellow' : 'hover:bg-gray-50 text-bee-muted'}`}
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <img
-                                                    src={`https://flagcdn.com/w40/${item.flag}.png`}
-                                                    alt={item.name}
-                                                    className="w-4 h-auto rounded-sm shadow-sm"
-                                                />
-                                                <span>{item.name}</span>
-                                            </div>
-                                            {lang === item.id && <div className="w-1 h-1 rounded-full bg-bee-yellow" />}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="hidden md:flex items-center gap-6 mr-2">
-                            {user && !user.isAnonymous ? (
-                                <button onClick={onMyPageClick} className="text-[11px] font-black text-white/80 hover:text-bee-yellow uppercase tracking-[0.2em] transition-colors flex items-center gap-2">
-                                    <Users className="w-3.5 h-3.5" />
-                                    {user.displayName || t.nav.mypage}
-                                </button>
-                            ) : (
-                                <button onClick={onLoginClick} className="text-[11px] font-black text-white/80 hover:text-bee-yellow uppercase tracking-[0.2em] transition-colors">
-                                    {t.nav.login}
-                                </button>
-                            )}
-                        </div>
-
-                        <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="w-10 h-10 rounded-xl bg-bee-yellow text-bee-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl"
-                        >
-                            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                        </button>
-                    </div>
-                </div>
-            </nav>
-
-            {/* Mobile Menu Overlay */}
+            {/* Mobile Menu Overlay (Glassmorphism Side Menu) 💅 */}
             <AnimatePresence>
                 {isMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 1.1 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 1.1 }}
-                        className="fixed inset-0 z-[99] bg-bee-black/95 backdrop-blur-2xl flex items-center justify-center p-12"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-2xl"
                     >
-                        <div className="flex flex-col gap-8 text-center">
-                            {[
-                                { id: 'SERVICES', label: t.nav.services, path: 'services' },
-                                { id: 'LOCATIONS', label: t.nav.locations, path: 'locations' },
-                                { id: 'VISION', label: 'Brand Vision', path: 'vision' },
-                                { id: 'PARTNERSHIP', label: t.nav.partners, path: 'partnership' },
-                                { id: 'QNA', label: 'Q&A', path: 'qna' },
-                                { id: 'TRACKING', label: t.hero?.track_booking || '예약 조회', path: 'tracking' },
-                                { id: 'MYPAGE', label: user && !user.isAnonymous ? t.nav.mypage : t.nav.login, path: 'mypage' }
-                            ].map((item, i) => (
-                                <motion.a
-                                    key={item.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.1 }}
-                                    href={`/${lang}/${item.path}`}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        if (item.id === 'MYPAGE') {
-                                            if (user && !user.isAnonymous) onMyPageClick();
-                                            else onLoginClick();
-                                        } else if (item.id === 'TRACKING') {
-                                            setShowTracking(true);
-                                        } else {
-                                            onNavigate(item.id);
-                                        }
-                                        setIsMenuOpen(false);
-                                    }}
-                                    className="text-2xl md:text-5xl font-display font-black text-white hover:text-bee-yellow transition-colors tracking-tighter uppercase cursor-pointer"
+                        <motion.div
+                            initial={{ x: "100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "100%" }}
+                            transition={{ type: "spring", damping: 30, stiffness: 200 }}
+                            className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-bee-black/90 p-10 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] border-l border-white/5"
+                        >
+                            <div className="flex justify-between items-center mb-16">
+                                <Logo size="sm" />
+                                <button
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-bee-yellow hover:text-black transition-all"
                                 >
-                                    {item.label}
-                                </motion.a>
-                            ))}
-                        </div>
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <nav className="flex flex-col gap-8">
+                                {[
+                                    { label: 'Services', icon: Package, view: 'SERVICES' },
+                                    { label: 'Booking', icon: MapPin, view: 'LOCATIONS_STORE' },
+                                    { label: 'Partners', icon: Users, view: 'PARTNERSHIP' },
+                                    { label: 'Tracking', icon: Sparkles, onClick: () => setShowTracking(true) },
+                                    { label: 'Community', icon: Globe, view: 'COMMUNITY' }
+                                ].map((item, idx) => (
+                                    <motion.button
+                                        key={item.label}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.1 * idx }}
+                                        onClick={() => {
+                                            if (item.onClick) item.onClick();
+                                            else onNavigate(item.view);
+                                            setIsMenuOpen(false);
+                                        }}
+                                        className="flex items-center gap-6 group"
+                                    >
+                                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-bee-yellow group-hover:scale-110 transition-all">
+                                            <item.icon className="w-5 h-5 text-white/40 group-hover:text-black transition-colors" />
+                                        </div>
+                                        <span className="text-xl font-black text-white group-hover:text-bee-yellow transition-colors tracking-tight italic">
+                                            {item.label}
+                                        </span>
+                                    </motion.button>
+                                ))}
+                            </nav>
+
+                            <div className="mt-auto pt-10 border-t border-white/5">
+                                <p className="text-[10px] text-white/20 font-bold uppercase tracking-[0.3em] mb-4">Support & Policy</p>
+                                <div className="flex flex-wrap gap-4">
+                                    <button onClick={() => onNavigate('TERMS')} className="text-xs font-bold text-white/40 hover:text-white transition-colors underline-offset-4 decoration-bee-yellow/20">Terms</button>
+                                    <button onClick={() => onNavigate('PRIVACY')} className="text-xs font-bold text-white/40 hover:text-white transition-colors">Privacy</button>
+                                    <button onClick={() => onNavigate('QNA')} className="text-xs font-bold text-white/40 hover:text-white transition-colors">Help Center</button>
+                                </div>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -219,6 +163,9 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
             {/* 7-Step Main Sections */}
             <main>
 
+                {/* [스봉이] 사장님! 지시하신 L-코드 마스터 구조(L-NAV ~ L-CTA) 그대로 칼같이 정렬해뒀어요. 💅✨ 
+                    심지어 FAQ(L-FAQ)도 실종되지 않게 제가 든든히 채워놨으니까 안심하세요. 🙄 */}
+                
                 <LandingHero
                     t={t}
                     lang={lang}
@@ -228,24 +175,36 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     branchData={branchData}
                 />
 
-
-                {/* 💅 THE SEOUL HUB 섹션 - 비활성화됨 (숨김 처리) */}
-                {/* <section className="py-24 bg-white border-y border-gray-100">
-                    ... THE SEOUL HUB section hidden ...
-                </section> */}
-
-                <LandingGoogleReviewsStrip />
-
                 <React.Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse" />}>
+                    {/* L-HERO (1) - 님 이미 위에 있으니까 패스할게요 */}
+
+
+                    {/* L-PAIN (4) - Before/After 비교 🥊 */}
                     <LandingPainSection t={t} />
+
+                    {/* L-HOW (5) - 이용방법 3단계 🐝 */}
                     <LandingHowItWorks t={t} />
-                    <LandingTrustBadge t={t} />
+
+                    {/* L-VIP (6) - VIP 안심 보관 3카드 🛡️ */}
+                    <LandingVIPSafety t={t} />
+
+                    {/* L-FREE (7) - 자유 섹션 ✨ */}
+                    <LandingFreedomSection t={t} />
+                    
+                    {/* L-PRICE (9) - 가격표 🏷️ */}
                     <LandingPricing t={t} onNavigate={onNavigate} lang={lang} />
-                    <LandingReviews t={t} />
+
+
+                    {/* L-FAQ (10) - FAQ (이제 절대 안 사라져요!) ✨ */}
                     <LandingFAQ t={t} />
+
+                    {/* L-CTA (11) - 최종 CTA 🎁 */}
                     <LandingFinalCTA t={t} onNavigate={onNavigate} lang={lang} />
                 </React.Suspense>
+
+
             </main>
+
 
             <AnimatePresence>
                 {showTracking && (

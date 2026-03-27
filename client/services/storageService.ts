@@ -32,7 +32,18 @@ const getDownloadURL = async (storageRef: any): Promise<string> => {
 };
 
 // Firebase Firestore 어댑터 — 기존 코드의 147개 호출을 Supabase로 라우팅
-import { isSupabaseDataEnabled as _sbEnabled, supabaseGet as _sbGet, supabaseMutate as _sbMutate, snakeToCamel, camelToSnake } from './supabaseClient';
+import { 
+  isSupabaseDataEnabled as _sbEnabled, 
+  supabaseGet as _sbGet, 
+  supabaseMutate as _sbMutate, 
+  snakeToCamel, 
+  camelToSnake,
+  isSupabaseDataEnabled,
+  supabaseGet,
+  supabaseMutate,
+  supabasePollingSubscribe
+} from './supabaseClient';
+import { getActiveAdminRequestHeaders, isSupabaseAdminAuthEnabled } from './adminAuthService';
 
 // Firestore 컬렉션 → Supabase 테이블 매핑
 const COLLECTION_MAP: Record<string, string> = {
@@ -184,7 +195,7 @@ const deleteDoc = async (ref: DocRef) => {
   } catch (e) { console.warn(`[Adapter] deleteDoc ${ref._table} failed:`, e); }
 };
 
-const onSnapshot = (ref: any, callback: any, errorCb?: any): (() => void) => {
+const onSnapshot = (ref: any, callback: (snap: any) => void, errorCb?: (err: any) => void): (() => void) => {
   // Supabase polling으로 대체
   const table = ref._table;
   const qr = ref as QueryRef;
@@ -244,10 +255,9 @@ const writeBatch = (_db: any) => {
     commit: async () => { await Promise.allSettled(ops.map(op => op())); },
   };
 };
-import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice } from "../types";
+import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice, AdminRevenueDailySummary, AdminRevenueMonthlySummary } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
-import { isSupabaseAdminAuthEnabled } from './adminAuthService';
-import { isSupabaseDataEnabled, supabaseGet, supabaseMutate, snakeToCamel, camelToSnake, supabasePollingSubscribe } from './supabaseClient';
+// (Duplicate imports removed successfully 💅)
 import {
   DEFAULT_DELIVERY_PRICES as PRICING_DEFAULT_DELIVERY_PRICES,
   DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS,
@@ -278,6 +288,10 @@ const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
 
 const LOCAL_ADMIN_DATA_BRIDGE_URL = import.meta.env.VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?.trim() || '';
 const LOCAL_ADMIN_DATA_BRIDGE_POLL_MS = 10000;
+const SUPABASE_RUNTIME_URL = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
+const ADMIN_ACCOUNT_SYNC_ENDPOINT = import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT?.trim()
+  || (SUPABASE_RUNTIME_URL ? `${SUPABASE_RUNTIME_URL}/functions/v1/admin-account-sync` : '');
+let localAdminDataBridgeDisabled = false;
 const DEFAULT_DELIVERY_PRICES: PriceSettings = PRICING_DEFAULT_DELIVERY_PRICES;
 const DEFAULT_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
 
@@ -356,11 +370,30 @@ const normalizeLocationTranslations = (location: LocationOption): LocationOption
   };
 };
 
-const canUseLocalAdminDataBridge = () => {
+export const canUseLocalLegacyReadBridge = () => {
   if (typeof window === 'undefined') return false;
   if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) return false;
+  if (localAdminDataBridgeDisabled) return false;
   const hostname = window.location.hostname;
   return Boolean(LOCAL_ADMIN_DATA_BRIDGE_URL) && (hostname === 'localhost' || hostname === '127.0.0.1');
+};
+
+const canUseLocalAdminDataBridge = () => {
+  if (!canUseLocalLegacyReadBridge()) return false;
+  if (isSupabaseAdminAuthEnabled()) return false;
+  return true;
+};
+
+const shouldDisableLocalAdminDataBridge = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error || '');
+  const normalized = message.toLowerCase();
+
+  return (
+    normalized.includes('failed to fetch')
+    || normalized.includes('networkerror')
+    || normalized.includes('err_connection_refused')
+    || normalized.includes('fetch failed')
+  );
 };
 
 const canUseSupabaseAdminAccountSync = () =>
@@ -369,13 +402,62 @@ const canUseSupabaseAdminAccountSync = () =>
   import.meta.env.MODE !== 'test' &&
   !import.meta.env.VITEST;
 
-const fetchLocalAdminBridge = async <T>(path: string): Promise<T> => {
-  const response = await fetch(`${LOCAL_ADMIN_DATA_BRIDGE_URL}${path}`, {
+const parseHttpJson = async (response: Response) => {
+  const text = await response.text();
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return text;
+  }
+};
+
+const syncSupabaseAdminAccount = async (
+  method: 'POST' | 'DELETE',
+  payload: Record<string, unknown>
+) => {
+  if (!ADMIN_ACCOUNT_SYNC_ENDPOINT) {
+    throw new Error('Supabase admin account sync endpoint is not configured.');
+  }
+  const authHeaders = await getActiveAdminRequestHeaders();
+  const response = await fetch(ADMIN_ACCOUNT_SYNC_ENDPOINT, {
+    method,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
     },
-    cache: 'no-store',
+    body: JSON.stringify(payload),
   });
+
+  const body = await parseHttpJson(response);
+  if (!response.ok) {
+    const message =
+      typeof body === 'object' && body && 'message' in body
+        ? String((body as { message?: string }).message)
+        : typeof body === 'object' && body && 'error' in body
+          ? String((body as { error?: string }).error)
+        : '관리자 계정 동기화 요청에 실패했습니다.';
+    throw new Error(message);
+  }
+
+  return body;
+};
+
+const fetchLocalAdminBridge = async <T>(path: string): Promise<T> => {
+  let response: Response;
+  try {
+    response = await fetch(`${LOCAL_ADMIN_DATA_BRIDGE_URL}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+  } catch (error) {
+    if (shouldDisableLocalAdminDataBridge(error)) {
+      localAdminDataBridgeDisabled = true;
+      console.warn('[StorageService] Local admin data bridge is unreachable. Disabling bridge for this session.');
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     throw new Error(`Local admin data bridge request failed (${response.status})`);
@@ -386,6 +468,171 @@ const fetchLocalAdminBridge = async <T>(path: string): Promise<T> => {
 
 const sortBookingsByPickupDateDesc = (items: BookingState[]) =>
   [...items].sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+
+const mergeRecordsById = <T extends { id?: string }>(preferred: T[], fallback: T[]): T[] => {
+  const preferredIds = new Set(
+    preferred
+      .map((item) => String(item.id || '').trim())
+      .filter(Boolean)
+  );
+
+  return [
+    ...preferred,
+    ...fallback.filter((item) => {
+      const itemId = String(item.id || '').trim();
+      return !itemId || !preferredIds.has(itemId);
+    }),
+  ];
+};
+
+const subscribeMergedAdminCollection = <T extends { id?: string }>({
+  loadSupabase,
+  loadLegacy,
+  merge,
+  callback,
+  label,
+  intervalMs = 8000,
+}: {
+  loadSupabase: () => Promise<T[]>;
+  loadLegacy: () => Promise<T[]>;
+  merge: (supabaseData: T[], legacyData: T[]) => T[];
+  callback: (data: T[]) => void;
+  label: string;
+  intervalMs?: number;
+}) => {
+  let active = true;
+
+  const run = async () => {
+    let supabaseData: T[] = [];
+    let legacyData: T[] = [];
+
+    try {
+      supabaseData = await loadSupabase();
+    } catch (error) {
+      console.warn(`[StorageService] ${label} Supabase poll failed:`, error);
+    }
+
+    try {
+      legacyData = await loadLegacy();
+    } catch (error) {
+      console.warn(`[StorageService] ${label} legacy poll failed:`, error);
+    }
+
+    if (!active) return;
+    callback(merge(supabaseData, legacyData));
+  };
+
+  void run();
+  const timer = window.setInterval(() => void run(), intervalMs);
+
+  return () => {
+    active = false;
+    window.clearInterval(timer);
+  };
+};
+
+const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
+  if (!isSupabaseDataEnabled()) return [];
+
+  try {
+    const rows = await supabaseGet<Array<Record<string, unknown>>>(
+      'admin_booking_list_v1?select=*&order=created_at.desc&limit=500'
+    );
+    return (rows || []).map((row) => snakeToCamel(row) as unknown as BookingState);
+  } catch (error) {
+    console.warn('[Storage] admin_booking_list_v1 unavailable, falling back to booking_details:', error);
+    const rows = await supabaseGet<Array<Record<string, unknown>>>(
+      'booking_details?select=*&order=created_at.desc&limit=500'
+    );
+    return (rows || []).map((row) => snakeToCamel(row) as unknown as BookingState);
+  }
+};
+
+const loadLegacyAdminBookings = async (): Promise<BookingState[]> => {
+  if (canUseLocalLegacyReadBridge()) {
+    return fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings');
+  }
+
+  if (!isSupabaseDataEnabled()) {
+    const querySnapshot = await getDocs(collection(db, "bookings"));
+    return querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id } as BookingState));
+  }
+
+  return [];
+};
+
+const mergeBookingSources = (supabaseBookings: BookingState[], legacyBookings: BookingState[]) =>
+  sortBookingsByPickupDateDesc(
+    normalizeBookingsForDeliveryPolicy(mergeRecordsById(supabaseBookings, legacyBookings))
+  );
+
+const loadSupabaseCashClosings = async (): Promise<CashClosing[]> => {
+  if (!isSupabaseDataEnabled()) return [];
+
+  const rows = await supabaseGet<Array<Record<string, unknown>>>('daily_closings?select=*&order=date.desc&limit=500');
+  return (rows || []).map((row) => snakeToCamel(row) as unknown as CashClosing);
+};
+
+const loadLegacyCashClosings = async (): Promise<CashClosing[]> => {
+  if (canUseLocalLegacyReadBridge()) {
+    return fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
+  }
+
+  if (!isSupabaseDataEnabled()) {
+    const q = query(collection(db, 'daily_closings'), orderBy('date', 'desc'), limit(500));
+    const snap = await getDocs(q);
+    return snap.docs.map((doc) => ({ ...doc.data(), id: doc.id } as CashClosing));
+  }
+
+  return [];
+};
+
+const mergeCashClosingSources = (supabaseData: CashClosing[], legacyData: CashClosing[]) =>
+  mergeRecordsById(supabaseData, legacyData);
+
+const loadSupabaseExpenditures = async (): Promise<Expenditure[]> => {
+  if (!isSupabaseDataEnabled()) return [];
+
+  const rows = await supabaseGet<Array<Record<string, unknown>>>('expenditures?select=*&order=date.desc&limit=1000');
+  return (rows || []).map((row) => snakeToCamel(row) as unknown as Expenditure);
+};
+
+const loadLegacyExpenditures = async (): Promise<Expenditure[]> => {
+  if (canUseLocalLegacyReadBridge()) {
+    return fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
+  }
+
+  if (!isSupabaseDataEnabled()) {
+    const q = query(collection(db, 'expenditures'), orderBy('date', 'desc'), limit(1000));
+    const snap = await getDocs(q);
+    return snap.docs.map((doc) => ({ ...doc.data(), id: doc.id } as Expenditure));
+  }
+
+  return [];
+};
+
+const mergeExpenditureSources = (supabaseData: Expenditure[], legacyData: Expenditure[]) =>
+  mergeRecordsById(supabaseData, legacyData);
+
+const loadSupabaseAdminRevenueDailySummaries = async (): Promise<AdminRevenueDailySummary[]> => {
+  if (!isSupabaseDataEnabled()) return [];
+
+  const rows = await supabaseGet<Array<Record<string, unknown>>>(
+    'admin_revenue_daily_v1?select=*&order=date.desc&limit=1000'
+  );
+
+  return (rows || []).map((row) => snakeToCamel(row) as unknown as AdminRevenueDailySummary);
+};
+
+const loadSupabaseAdminRevenueMonthlySummaries = async (): Promise<AdminRevenueMonthlySummary[]> => {
+  if (!isSupabaseDataEnabled()) return [];
+
+  const rows = await supabaseGet<Array<Record<string, unknown>>>(
+    'admin_revenue_monthly_v1?select=*&order=month.desc&limit=120'
+  );
+
+  return (rows || []).map((row) => snakeToCamel(row) as unknown as AdminRevenueMonthlySummary);
+};
 
 const subscribeLocalAdminBridge = <T>(
   path: string,
@@ -445,6 +692,34 @@ const runSnapshotFallback = async <T>({
 };
 
 const normalizeAdminField = (value?: string) => value?.trim().toLowerCase() || '';
+
+const normalizeBranchLookupToken = (value?: string) => value?.trim().toLowerCase() || '';
+
+const mapSupabaseRoleCodeToLegacyRole = (roleCode?: string): AdminUser['role'] => {
+  switch ((roleCode || '').trim().toLowerCase()) {
+    case 'super_admin':
+      return 'super';
+    case 'hq_admin':
+      return 'hq';
+    case 'hub_manager':
+      return 'branch';
+    case 'partner_manager':
+      return 'partner';
+    case 'finance_staff':
+      return 'finance';
+    case 'cs_staff':
+      return 'cs';
+    case 'driver':
+      return 'driver';
+    case 'marketing':
+    case 'content_manager':
+      return 'hq';
+    case 'ops_staff':
+      return 'staff';
+    default:
+      return ((roleCode || '').trim().toLowerCase() as AdminUser['role']) || 'staff';
+  }
+};
 
 const getAdminDirectoryFreshness = (admin: AdminUser) =>
   new Date(
@@ -730,7 +1005,7 @@ export const StorageService = {
               console.warn('[StorageService] Cloud Function did not trigger within expected window. Applying client fallback... 💅');
               const { updateDoc } = await import('firebase/firestore');
               await updateDoc(docRef, { status: '접수완료' });
-              const updatedSnap = await getDoc(docRef);
+              const updatedSnap = await getDoc(docRef as any);
               const updatedData = updatedSnap.exists() ? updatedSnap.data() : data;
               finish(() => resolve({ ...(updatedData as BookingState), id: docRef.id, status: '접수완료' as any }));
               return true;
@@ -745,7 +1020,7 @@ export const StorageService = {
         const inspectBookingStatus = async () => {
           pollCount++;
           try {
-            const snap = await getDoc(docRef);
+            const snap = await getDoc(docRef as any);
             if (!snap.exists()) return;
 
             const data = snap.data();
@@ -848,46 +1123,29 @@ export const StorageService = {
 
   getBookings: async (): Promise<BookingState[]> => {
     let supabaseBookings: BookingState[] = [];
-    let firebaseBookings: BookingState[] = [];
+    let legacyBookings: BookingState[] = [];
 
-    // 1. Supabase 조회 💅
-    if (isSupabaseDataEnabled()) {
-      try {
-        const rows = await supabaseGet<Array<Record<string, unknown>>>(
-          'booking_details?select=*&order=created_at.desc&limit=500'
-        );
-        if (rows && rows.length > 0) {
-          supabaseBookings = rows.map(r => snakeToCamel(r) as unknown as BookingState);
-          console.log(`[Storage] Loaded ${supabaseBookings.length} bookings from Supabase ✅`);
-        }
-      } catch (e) {
-        console.warn("[Storage] Supabase fetch failed", e);
-      }
-    }
-
-    // 2. Firebase 조회 (과거 데이터용 — Supabase 비활성 또는 로컬 브릿지만) ☕
     try {
-      if (canUseLocalAdminDataBridge()) {
-        firebaseBookings = await fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings');
-      } else if (!isSupabaseDataEnabled()) {
-        // Supabase 활성 시 Firebase 직접 조회 스킵 (Auth 에러 방지)
-        const querySnapshot = await getDocs(collection(db, "bookings"));
-        firebaseBookings = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState));
+      supabaseBookings = await loadSupabaseAdminBookings();
+      if (supabaseBookings.length > 0) {
+        console.log(`[Storage] Loaded ${supabaseBookings.length} bookings from Supabase admin view ✅`);
       }
-      if (firebaseBookings.length > 0) console.log(`[Storage] Loaded ${firebaseBookings.length} bookings from Firebase ✅`);
     } catch (e) {
-      console.error("[Storage] Firebase fetch failed", e);
+      console.warn("[Storage] Supabase booking view fetch failed", e);
     }
 
-    // 3. 스마트 병합 (Supabase 우선, 중복 제거) 💅
-    const supabaseIds = new Set(supabaseBookings.map(b => b.id));
-    const merged = [
-      ...supabaseBookings,
-      ...firebaseBookings.filter(fb => !supabaseIds.has(fb.id))
-    ];
+    try {
+      legacyBookings = await loadLegacyAdminBookings();
+      if (legacyBookings.length > 0) {
+        console.log(`[Storage] Loaded ${legacyBookings.length} legacy bookings ✅`);
+      }
+    } catch (e) {
+      console.error("[Storage] Legacy booking fetch failed", e);
+    }
 
+    const merged = mergeBookingSources(supabaseBookings, legacyBookings);
     console.log(`[Storage] Merged result: ${merged.length} total bookings 💅`);
-    return sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(merged));
+    return merged;
   },
 
   getBookingsByDate: async (date: string): Promise<BookingState[]> => {
@@ -925,6 +1183,26 @@ export const StorageService = {
   getBooking: async (id: string): Promise<BookingState | null> => {
     try {
       if (!id) return null;
+      if (isSupabaseDataEnabled()) {
+        try {
+          const byId = await supabaseGet<Array<Record<string, unknown>>>(
+            `admin_booking_list_v1?select=*&id=eq.${encodeURIComponent(id)}&limit=1`
+          );
+          if (byId?.[0]) {
+            return normalizeBookingForDeliveryPolicy(snakeToCamel(byId[0]) as unknown as BookingState);
+          }
+
+          const byReservationCode = await supabaseGet<Array<Record<string, unknown>>>(
+            `admin_booking_list_v1?select=*&reservation_code=eq.${encodeURIComponent(id)}&limit=1`
+          );
+          if (byReservationCode?.[0]) {
+            return normalizeBookingForDeliveryPolicy(snakeToCamel(byReservationCode[0]) as unknown as BookingState);
+          }
+        } catch (viewError) {
+          console.warn('[Storage] admin_booking_list_v1 single fetch failed, falling back to booking_details:', viewError);
+        }
+      }
+
       const snap = await getDoc(doc(db, "bookings", id));
       if (snap.exists()) {
         return normalizeBookingForDeliveryPolicy({ ...snap.data(), id: snap.id } as BookingState);
@@ -946,42 +1224,43 @@ export const StorageService = {
   },
 
   subscribeBookings: (callback: (data: BookingState[]) => void): (() => void) => {
-    // Supabase polling — bookings는 아직 booking_details 기반
-    // Firebase 예약 데이터는 병행 기간 동안 localAdminBridge로 조회
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<BookingState[]>(
-        '/api/collections/bookings',
+    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+      return subscribeMergedAdminCollection<BookingState>({
+        loadSupabase: loadSupabaseAdminBookings,
+        loadLegacy: loadLegacyAdminBookings,
+        merge: mergeBookingSources,
         callback,
-        [],
-        (items) => sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(items)),
-        'Bookings local bridge'
-      );
+        label: 'Bookings',
+        intervalMs: 8000,
+      });
     }
-    // Supabase polling fallback
-    return supabasePollingSubscribe<BookingState>(
-      'booking_details?select=*&order=created_at.desc&limit=500',
-      callback,
-      (r) => snakeToCamel(r) as unknown as BookingState,
-      8000
-    );
+
+    const q = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(500));
+    return onSnapshot(q, (snapshot: any) => {
+      const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState));
+      callback(sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(items)));
+    }, (error: any) => console.error('Bookings sub error', error));
   },
 
   subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<BookingState[]>(
-        '/api/collections/bookings',
-        callback,
-        [],
-        (items) => {
-          const filtered = normalizeBookingsForDeliveryPolicy(items).filter((booking) =>
-            booking.pickupLocation === locationId ||
-            booking.dropoffLocation === locationId ||
-            booking.branchId === locationId
-          );
-          return sortBookingsByPickupDateDesc(filtered);
-        },
-        `Location booking local bridge (${locationId})`
+    const filterLocationBookings = (items: BookingState[]) =>
+      sortBookingsByPickupDateDesc(
+        normalizeBookingsForDeliveryPolicy(items).filter((booking) =>
+          booking.pickupLocation === locationId ||
+          booking.dropoffLocation === locationId ||
+          booking.branchId === locationId
+        )
       );
+
+    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+      return subscribeMergedAdminCollection<BookingState>({
+        loadSupabase: loadSupabaseAdminBookings,
+        loadLegacy: loadLegacyAdminBookings,
+        merge: (supabaseData, legacyData) => filterLocationBookings(mergeBookingSources(supabaseData, legacyData)),
+        callback,
+        label: `Location bookings (${locationId})`,
+        intervalMs: 8000,
+      });
     }
 
     try {
@@ -998,8 +1277,8 @@ export const StorageService = {
         limit(500)
       );
 
-      return onSnapshot(q, (snapshot) => {
-        const bookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as BookingState)));
+      return onSnapshot(q, (snapshot: any) => {
+        const bookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState)));
         // Ensure strictly sorted and filtered in memory as back-up
         const filtered = bookings.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
         filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
@@ -1009,10 +1288,10 @@ export const StorageService = {
         const simpleQ = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(1000));
         void runSnapshotFallback({
           sourceQuery: simpleQ,
-          parser: (snapshot) => {
+          parser: (snapshot: any) => {
             const fallbackBookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState)));
             const filtered = fallbackBookings.filter((b: BookingState) => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
-            filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
+            filtered.sort((a: any, b: any) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
             return filtered;
           },
           callback,
@@ -1549,9 +1828,9 @@ export const StorageService = {
     try {
       const q = query(collection(db, 'inquiries'));
       return onSnapshot(q, (snapshot: any) => {
-        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
-        items.sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-        callback(items);
+        const list = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
+        list.sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+        callback(list);
       }, (error: any) => console.error(error));
     } catch (e) { return () => { }; }
   },
@@ -1688,54 +1967,33 @@ export const StorageService = {
 
   getCashClosings: async (): Promise<CashClosing[]> => {
     let supabaseData: CashClosing[] = [];
-    let firebaseData: CashClosing[] = [];
-
-    if (isSupabaseDataEnabled()) {
-      try {
-        const rows = await supabaseGet<Array<Record<string, unknown>>>('daily_closings?select=*&order=date.desc&limit=500');
-        if (rows) {
-          supabaseData = rows.map(r => snakeToCamel(r) as unknown as CashClosing);
-          console.log('[Storage] Loaded', supabaseData.length, 'cash closings from Supabase \u2705');
-        }
-      } catch (e) { console.warn('[Storage] Supabase closings failed:', e); }
-    }
+    let legacyData: CashClosing[] = [];
 
     try {
-      if (canUseLocalAdminDataBridge()) {
-        firebaseData = await fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
-      } else if (!isSupabaseDataEnabled()) {
-        const q = query(collection(db, 'daily_closings'), orderBy('date', 'desc'), limit(500));
-        const snap = await getDocs(q);
-        firebaseData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as CashClosing));
-      }
-      if (firebaseData.length > 0) console.log('[Storage] Loaded', firebaseData.length, 'cash closings from Firebase ✅');
-    } catch (e) { console.error('[Storage] Firebase closings failed:', e); }
+      supabaseData = await loadSupabaseCashClosings();
+      console.log('[Storage] Loaded', supabaseData.length, 'cash closings from Supabase ✅');
+    } catch (e) { console.warn('[Storage] Supabase closings failed:', e); }
 
-    const supabaseIds = new Set(supabaseData.map(c => c.id));
-    const merged = [...supabaseData, ...firebaseData.filter(fc => !supabaseIds.has(fc.id))];
+    try {
+      legacyData = await loadLegacyCashClosings();
+      if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'cash closings from legacy source ✅');
+    } catch (e) { console.error('[Storage] Legacy closings failed:', e); }
+
+    const merged = mergeCashClosingSources(supabaseData, legacyData);
     console.log(`[Storage] Merged ${merged.length} cash closings \ud83d\udc85`);
     return merged;
   },
 
   subscribeCashClosings: (callback: (data: CashClosing[]) => void): (() => void) => {
-    // [스봉이] Supabase 폴링 우선 💅
-    if (isSupabaseDataEnabled()) {
-      return supabasePollingSubscribe<CashClosing>(
-        'daily_closings?select=*&order=date.desc&limit=500',
+    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+      return subscribeMergedAdminCollection<CashClosing>({
+        loadSupabase: loadSupabaseCashClosings,
+        loadLegacy: loadLegacyCashClosings,
+        merge: mergeCashClosingSources,
         callback,
-        (r) => snakeToCamel(r) as unknown as CashClosing,
-        10000
-      );
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<CashClosing[]>(
-        '/api/collections/daily_closings',
-        callback,
-        [],
-        undefined,
-        'Cash closings local bridge'
-      );
+        label: 'Cash closings',
+        intervalMs: 10000,
+      });
     }
 
     try {
@@ -1792,54 +2050,33 @@ export const StorageService = {
 
   getExpenditures: async (): Promise<Expenditure[]> => {
     let supabaseData: Expenditure[] = [];
-    let firebaseData: Expenditure[] = [];
-
-    if (isSupabaseDataEnabled()) {
-      try {
-        const rows = await supabaseGet<Array<Record<string, unknown>>>('expenditures?select=*&order=date.desc&limit=1000');
-        if (rows) {
-          supabaseData = rows.map(r => snakeToCamel(r) as unknown as Expenditure);
-          console.log('[Storage] Loaded', supabaseData.length, 'expenditures from Supabase \u2705');
-        }
-      } catch (e) { console.warn('[Storage] Supabase expenditures failed:', e); }
-    }
+    let legacyData: Expenditure[] = [];
 
     try {
-      if (canUseLocalAdminDataBridge()) {
-        firebaseData = await fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
-      } else if (!isSupabaseDataEnabled()) {
-        const q = query(collection(db, 'expenditures'), orderBy('date', 'desc'), limit(1000));
-        const snap = await getDocs(q);
-        firebaseData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Expenditure));
-      }
-      if (firebaseData.length > 0) console.log('[Storage] Loaded', firebaseData.length, 'expenditures from Firebase ✅');
-    } catch (e) { console.error('[Storage] Firebase expenditures failed:', e); }
+      supabaseData = await loadSupabaseExpenditures();
+      console.log('[Storage] Loaded', supabaseData.length, 'expenditures from Supabase ✅');
+    } catch (e) { console.warn('[Storage] Supabase expenditures failed:', e); }
 
-    const supabaseIds = new Set(supabaseData.map(x => x.id));
-    const merged = [...supabaseData, ...firebaseData.filter(fx => !supabaseIds.has(fx.id))];
+    try {
+      legacyData = await loadLegacyExpenditures();
+      if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'expenditures from legacy source ✅');
+    } catch (e) { console.error('[Storage] Legacy expenditures failed:', e); }
+
+    const merged = mergeExpenditureSources(supabaseData, legacyData);
     console.log(`[Storage] Merged ${merged.length} expenditures \ud83d\udc85`);
     return merged;
   },
 
   subscribeExpenditures: (callback: (data: Expenditure[]) => void): (() => void) => {
-    // [스봉이] Supabase 폴링 우선 💅
-    if (isSupabaseDataEnabled()) {
-      return supabasePollingSubscribe<Expenditure>(
-        'expenditures?select=*&order=date.desc&limit=1000',
+    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+      return subscribeMergedAdminCollection<Expenditure>({
+        loadSupabase: loadSupabaseExpenditures,
+        loadLegacy: loadLegacyExpenditures,
+        merge: mergeExpenditureSources,
         callback,
-        (r) => snakeToCamel(r) as unknown as Expenditure,
-        10000
-      );
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<Expenditure[]>(
-        '/api/collections/expenditures',
-        callback,
-        [],
-        undefined,
-        'Expenditures local bridge'
-      );
+        label: 'Expenditures',
+        intervalMs: 10000,
+      });
     }
 
     try {
@@ -1853,17 +2090,58 @@ export const StorageService = {
     }
   },
 
+  getAdminRevenueDailySummaries: async (): Promise<AdminRevenueDailySummary[]> => {
+    try {
+      return await loadSupabaseAdminRevenueDailySummaries();
+    } catch (error) {
+      console.warn('[Storage] admin_revenue_daily_v1 fetch failed:', error);
+      return [];
+    }
+  },
+
+  subscribeAdminRevenueDailySummaries: (callback: (data: AdminRevenueDailySummary[]) => void): (() => void) => {
+    if (!isSupabaseDataEnabled()) {
+      callback([]);
+      return () => { };
+    }
+
+    return supabasePollingSubscribe<AdminRevenueDailySummary>(
+      'admin_revenue_daily_v1?select=*&order=date.desc&limit=1000',
+      callback,
+      (row) => snakeToCamel(row) as unknown as AdminRevenueDailySummary,
+      10000
+    );
+  },
+
+  getAdminRevenueMonthlySummaries: async (): Promise<AdminRevenueMonthlySummary[]> => {
+    try {
+      return await loadSupabaseAdminRevenueMonthlySummaries();
+    } catch (error) {
+      console.warn('[Storage] admin_revenue_monthly_v1 fetch failed:', error);
+      return [];
+    }
+  },
+
+  subscribeAdminRevenueMonthlySummaries: (callback: (data: AdminRevenueMonthlySummary[]) => void): (() => void) => {
+    if (!isSupabaseDataEnabled()) {
+      callback([]);
+      return () => { };
+    }
+
+    return supabasePollingSubscribe<AdminRevenueMonthlySummary>(
+      'admin_revenue_monthly_v1?select=*&order=month.desc&limit=120',
+      callback,
+      (row) => snakeToCamel(row) as unknown as AdminRevenueMonthlySummary,
+      10000
+    );
+  },
+
   // --- Admins (HR) ---
   saveAdmin: async (admin: AdminUser): Promise<void> => {
     const safeAdmin = JSON.parse(JSON.stringify(admin));
     try {
       if (canUseSupabaseAdminAccountSync()) {
-        const { ensureAuth, functions } = await import('../firebaseApp');
-        const { httpsCallable } = await import('firebase/functions');
-
-        await ensureAuth();
-        const upsertAdminAccount = httpsCallable(functions, 'upsertAdminAccount');
-        await upsertAdminAccount({ admin: safeAdmin });
+        await syncSupabaseAdminAccount('POST', { admin: safeAdmin });
         return;
       }
 
@@ -1888,19 +2166,99 @@ export const StorageService = {
 
     if (isSupabaseDataEnabled()) {
       try {
-        const rows = await supabaseGet<Array<Record<string, unknown>>>('employees?select=id,name,email,job_title,employment_status,org_type,phone,memo,created_at,updated_at');
+        const [rows, locationRows, branchRows] = await Promise.all([
+          supabaseGet<Array<Record<string, unknown>>>(
+            'employees?select=id,profile_id,legacy_admin_doc_id,name,email,job_title,employment_status,org_type,phone,memo,security,login_id,created_at,updated_at,employee_roles(is_primary,role:roles(code,name)),employee_branch_assignments(is_primary,branch_id)&order=name.asc&limit=500'
+          ),
+          supabaseGet<Array<Record<string, unknown>>>(
+            'locations?select=id,name,short_code,branch_code&is_active=eq.true&limit=500'
+          ),
+          supabaseGet<Array<Record<string, unknown>>>(
+            'branches?select=id,branch_code,name&limit=500'
+          ),
+        ]);
         if (rows && rows.length > 0) {
-          supabaseData = rows.map(r => ({
-            id: String(r.id),
-            name: String(r.name || ''),
-            jobTitle: String(r.job_title || ''),
-            email: String(r.email || ''),
-            phone: String(r.phone || ''),
-            orgType: String(r.org_type || ''),
-            status: String(r.employment_status || 'active'),
-            memo: String(r.memo || ''),
-            createdAt: String(r.created_at || ''),
-          })) as AdminUser[];
+          const locationByBranchToken = new Map<string, { id: string; name?: string; branchCode?: string }>();
+          const branchById = new Map<string, { id: string; branchCode?: string; name?: string }>();
+          locationRows.forEach((row) => {
+            const id = String(row.id || '').trim();
+            if (!id) return;
+
+            const locationEntry = {
+              id,
+              name: String(row.name || '').trim() || undefined,
+              branchCode: String(row.branch_code || row.short_code || '').trim() || undefined,
+            };
+            const branchCodeToken = normalizeBranchLookupToken(String(row.branch_code || ''));
+            const shortCodeToken = normalizeBranchLookupToken(String(row.short_code || ''));
+            if (branchCodeToken) locationByBranchToken.set(branchCodeToken, locationEntry);
+            if (shortCodeToken) locationByBranchToken.set(shortCodeToken, locationEntry);
+          });
+          branchRows.forEach((row) => {
+            const id = String(row.id || '').trim();
+            if (!id) return;
+
+            branchById.set(id, {
+              id,
+              branchCode: String(row.branch_code || '').trim() || undefined,
+              name: String(row.name || '').trim() || undefined,
+            });
+          });
+
+          supabaseData = rows.map((row) => {
+            const employeeRoles = Array.isArray(row.employee_roles) ? row.employee_roles as Array<Record<string, any>> : [];
+            const branchAssignments = Array.isArray(row.employee_branch_assignments) ? row.employee_branch_assignments as Array<Record<string, any>> : [];
+            const primaryRole = employeeRoles.find((entry) => entry?.is_primary) || employeeRoles[0] || null;
+            const primaryBranch = branchAssignments.find((entry) => entry?.is_primary) || branchAssignments[0] || null;
+            const roleCode = String(primaryRole?.role?.code || '').trim();
+            const assignedBranchId = String(primaryBranch?.branch_id || '').trim();
+            const assignedBranch = branchById.get(assignedBranchId);
+            const branchCode = String(assignedBranch?.branchCode || '').trim();
+            const matchedLocation = locationByBranchToken.get(normalizeBranchLookupToken(branchCode));
+            const employeeId = String(row.id || '').trim();
+            const profileId = String(row.profile_id || '').trim();
+            const legacyAdminDocId = String(row.legacy_admin_doc_id || '').trim();
+            const authEmail = String(row.email || '').trim();
+            const loginId = String(row.login_id || '').trim();
+            const security = row.security && typeof row.security === 'object'
+              ? snakeToCamel(row.security as Record<string, unknown>)
+              : undefined;
+
+            return {
+              id: legacyAdminDocId || employeeId,
+              uid: profileId || undefined,
+              employeeId: employeeId || undefined,
+              profileId: profileId || undefined,
+              legacyAdminDocId: legacyAdminDocId || undefined,
+              name: String(row.name || '').trim(),
+              jobTitle: String(row.job_title || '').trim(),
+              email: authEmail || undefined,
+              phone: String(row.phone || '').trim() || undefined,
+              loginId: loginId || undefined,
+              role: mapSupabaseRoleCodeToLegacyRole(roleCode),
+              roleCode: roleCode || undefined,
+              roleName: String(primaryRole?.role?.name || '').trim() || undefined,
+              branchId: matchedLocation?.id || assignedBranchId || undefined,
+              branchCode: branchCode || matchedLocation?.branchCode || undefined,
+              branchName: matchedLocation?.name || assignedBranch?.name || undefined,
+              orgType: String(row.org_type || '').trim() as AdminUser['orgType'],
+              status: String(row.employment_status || 'active').trim() as AdminUser['status'],
+              security: security as AdminUser['security'],
+              memo: String(row.memo || '').trim() || undefined,
+              syncStatus: {
+                provider: 'supabase',
+                status: profileId && employeeId ? 'synced' : (authEmail || loginId ? 'pending' : 'error'),
+                syncedAt: String(row.updated_at || row.created_at || '').trim() || undefined,
+                profileId: profileId || undefined,
+                employeeId: employeeId || undefined,
+                authEmail: authEmail || undefined,
+                branchCode: branchCode || matchedLocation?.branchCode || undefined,
+                syntheticEmail: Boolean((row.security as Record<string, unknown> | undefined)?.synthetic_email),
+              },
+              createdAt: String(row.created_at || '').trim(),
+              updatedAt: String(row.updated_at || '').trim() || undefined,
+            } satisfies AdminUser;
+          });
           console.log('[Storage] Loaded', supabaseData.length, 'admins from Supabase \u2705');
         }
       } catch (e) { console.warn('[Storage] Supabase admins failed:', e); }
@@ -1912,13 +2270,37 @@ export const StorageService = {
         firebaseData = collapseAdminDirectoryEntries(items);
       } else if (!isSupabaseDataEnabled()) {
         const snap = await getDocs(collection(db, 'admins'));
-        firebaseData = collapseAdminDirectoryEntries(snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser)));
+        firebaseData = collapseAdminDirectoryEntries(snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser)));
       }
       if (firebaseData.length > 0) console.log('[Storage] Loaded', firebaseData.length, 'admins from Firebase ✅');
     } catch (e) { console.error('[Storage] Firebase admins failed:', e); }
 
-    const supabaseIds = new Set(supabaseData.map(a => a.id));
-    const merged = [...supabaseData, ...firebaseData.filter(fa => !supabaseIds.has(fa.id))];
+    const mergedById = new Map<string, AdminUser>();
+    firebaseData.forEach((admin) => {
+      mergedById.set(admin.id, admin);
+    });
+
+    supabaseData.forEach((admin) => {
+      const existing = mergedById.get(admin.id);
+      mergedById.set(
+        admin.id,
+        existing
+          ? {
+              ...existing,
+              ...admin,
+              security: {
+                ...(existing.security || {}),
+                ...(admin.security || {}),
+              },
+              syncStatus: admin.syncStatus || existing.syncStatus,
+            }
+          : admin
+      );
+    });
+
+    const merged = Array.from(mergedById.values()).sort((left, right) =>
+      getAdminDirectoryFreshness(right) - getAdminDirectoryFreshness(left)
+    );
     console.log(`[Storage] Merged ${merged.length} admins \ud83d\udc85`);
     return merged;
   },
@@ -1926,12 +2308,7 @@ export const StorageService = {
   deleteAdmin: async (id: string): Promise<void> => {
     try {
       if (canUseSupabaseAdminAccountSync()) {
-        const { ensureAuth, functions } = await import('../firebaseApp');
-        const { httpsCallable } = await import('firebase/functions');
-
-        await ensureAuth();
-        const deleteAdminAccount = httpsCallable(functions, 'deleteAdminAccount');
-        await deleteAdminAccount({ adminId: id });
+        await syncSupabaseAdminAccount('DELETE', { adminId: id });
         return;
       }
 
@@ -1949,7 +2326,7 @@ export const StorageService = {
   deduplicateAdmins: async (): Promise<{ total: number, removed: number }> => {
     try {
       const snap = await getDocs(collection(db, "admins"));
-      const admins = snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as AdminUser));
+      const admins = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
 
       const normalize = (value?: string) => value?.trim().toLowerCase() || '';
       const getFreshness = (admin: AdminUser) => new Date(admin.updatedAt || admin.createdAt || 0).getTime();
@@ -2079,7 +2456,7 @@ export const StorageService = {
     try {
       const q = query(collection(db, "userCoupons"), where("uid", "==", uid), where("isUsed", "==", false));
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as UserCoupon));
+      return querySnapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as UserCoupon));
     } catch (err) {
       console.error("[Storage] Error getting user coupons:", err);
       return [];
@@ -2112,22 +2489,26 @@ export const StorageService = {
   subscribeAdmins: (callback: (data: AdminUser[]) => void): (() => void) => {
     // [스봉이] Supabase 폴링 우선 💅
     if (isSupabaseDataEnabled()) {
-      return supabasePollingSubscribe<AdminUser>(
-        'employees?select=id,name,email,job_title,employment_status,org_type,phone,memo,created_at,updated_at',
-        callback,
-        (r) => ({
-          id: String(r.id),
-          name: String(r.name || ''),
-          jobTitle: String(r.job_title || ''),
-          email: String(r.email || ''),
-          phone: String(r.phone || ''),
-          orgType: String(r.org_type || ''),
-          status: String(r.employment_status || 'active'),
-          memo: String(r.memo || ''),
-          createdAt: String(r.created_at || ''),
-        }) as unknown as AdminUser,
-        10000
-      );
+      let active = true;
+
+      const run = async () => {
+        try {
+          const items = await StorageService.getAdmins();
+          if (!active) return;
+          callback(items);
+        } catch (error) {
+          console.error('Supabase admins polling failed:', error);
+          if (!active) return;
+          callback([]);
+        }
+      };
+
+      void run();
+      const timer = window.setInterval(() => void run(), 10000);
+      return () => {
+        active = false;
+        window.clearInterval(timer);
+      };
     }
 
     if (canUseLocalAdminDataBridge()) {
@@ -2260,10 +2641,10 @@ export const StorageService = {
         collection(db, "chats"),
         where("sessionId", "==", sessionId)
       );
-      return onSnapshot(q, (snapshot) => {
-        const msgs = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ChatMessage));
+      return onSnapshot(q, (snapshot: any) => {
+        const msgs = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as ChatMessage));
         // Client-side sort to avoid composite index requirement
-        msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        msgs.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         callback(msgs);
       });
     } catch (e) {
@@ -2276,10 +2657,10 @@ export const StorageService = {
   subscribeChatSessions: (callback: (sessions: ChatSession[]) => void): (() => void) => {
     try {
       const q = query(collection(db, "chat_sessions"), limit(100));
-      return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ChatSession));
+      return onSnapshot(q, (snapshot: any) => {
+        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as ChatSession));
         // Sort by timestamp descending in memory
-        items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        items.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         callback(items);
       });
     } catch (e) {
@@ -2301,7 +2682,7 @@ export const StorageService = {
       const q = query(collection(db, "chats"), where("sessionId", "==", sessionId));
       const snapshot = await getDocs(q);
       const batch = writeBatch(db);
-      snapshot.docs.forEach((doc) => {
+      snapshot.docs.forEach((doc: any) => {
         batch.delete(doc.ref);
       });
       await batch.commit();
@@ -2319,11 +2700,11 @@ export const StorageService = {
   subscribeActiveChatSessions: (callback: (sessions: { sessionId: string; userName: string; userEmail: string; lastMessage: string; timestamp: string }[]) => void): (() => void) => {
     try {
       const q = query(collection(db, "chats"), orderBy("timestamp", "desc"), limit(500));
-      return onSnapshot(q, (snapshot) => {
-        const msgs = snapshot.docs.map(doc => doc.data() as ChatMessage);
+      return onSnapshot(q, (snapshot: any) => {
+        const msgs = snapshot.docs.map((doc: any) => doc.data() as ChatMessage);
         const sessionMap = new Map();
 
-        msgs.forEach(m => {
+        msgs.forEach((m: any) => {
           if (!sessionMap.has(m.sessionId)) {
             sessionMap.set(m.sessionId, {
               sessionId: m.sessionId,
@@ -2335,7 +2716,7 @@ export const StorageService = {
           }
         });
 
-        callback(Array.from(sessionMap.values()));
+        callback(Array.from(sessionMap.values()).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
       });
     } catch (e) {
       console.error("Active sessions sub error", e);
@@ -2369,7 +2750,7 @@ export const StorageService = {
 
     try {
       const snap = await getDocs(collection(db, "promo_codes"));
-      return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as DiscountCode));
+      return snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as DiscountCode));
     } catch (e) {
       console.error("Failed to get discount codes", e);
       return [];
@@ -2416,8 +2797,8 @@ export const StorageService = {
   subscribeDiscountCodes: (callback: (data: DiscountCode[]) => void): (() => void) => {
     try {
       const q = query(collection(db, "promo_codes"), orderBy("code", "asc"));
-      return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as DiscountCode));
+      return onSnapshot(q, (snapshot: any) => {
+        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as DiscountCode));
         callback(items);
       }, (error) => {
         console.error("Discount codes sub error", error);
@@ -2469,7 +2850,7 @@ export const StorageService = {
     }
     try {
       const snap = await getDocs(collection(db, "branches"));
-      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (e) { console.error(e); return []; }
   },
   getBranchByCode: async (code: string): Promise<any | null> => {
@@ -2496,8 +2877,8 @@ export const StorageService = {
   },
   subscribeBranches: (callback: (data: any[]) => void) => {
     const q = query(collection(db, "branches"), orderBy("createdAt", "desc"));
-    return onSnapshot(q, (snapshot) => {
-      callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    return onSnapshot(q, (snapshot: any) => {
+      callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
     });
   },
   saveBranch: async (branch: any): Promise<void> => {
@@ -2538,7 +2919,7 @@ export const StorageService = {
     }
     try {
       const snap = await getDocs(collection(db, "branch_prospects"));
-      return snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as BranchProspect));
+      return snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BranchProspect));
     } catch (e) { console.error(e); return []; }
   },
   subscribeBranchProspects: (callback: (data: BranchProspect[]) => void) => {
@@ -2599,15 +2980,15 @@ export const StorageService = {
         '/api/collections/notices',
         callback,
         [],
-        (items) => [...items].sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()),
+        (items: any[]) => items.sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || '')),
         'Notices local bridge'
       );
     }
 
     try {
       const q = query(collection(db, "notices"), orderBy("createdAt", "desc"));
-      return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as SystemNotice));
+      return onSnapshot(q, (snapshot: any) => {
+        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as SystemNotice));
         callback(items);
       }, (error) => {
         console.error("Notices sub error", error);
@@ -2671,18 +3052,18 @@ export const StorageService = {
     }
     try {
       const snap = await getDocs(collection(db, "tips_areas"));
-      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (e) { console.error(e); return []; }
   },
 
   subscribeTipsAreas: (callback: (data: any[]) => void) => {
     const q = query(collection(db, "tips_areas"), orderBy("order", "asc"));
-    return onSnapshot(q, (snapshot) => {
-      callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    return onSnapshot(q, (snapshot: any) => {
+      callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
     }, (error) => {
       console.warn("Tips areas sub fallback (index?):", error);
-      onSnapshot(collection(db, "tips_areas"), (snap) => {
-        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      onSnapshot(collection(db, "tips_areas"), (snap: any) => {
+        const items = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
         items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
         callback(items);
       });
@@ -2725,14 +3106,14 @@ export const StorageService = {
     }
     try {
       const snap = await getDocs(collection(db, "tips_themes"));
-      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (e) { console.error(e); return []; }
   },
 
   subscribeTipsThemes: (callback: (data: any[]) => void) => {
     const q = query(collection(db, "tips_themes"), orderBy("order", "asc"));
-    return onSnapshot(q, (snapshot) => {
-      callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    return onSnapshot(q, (snapshot: any) => {
+      callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
     }, (error) => {
       onSnapshot(collection(db, "tips_themes"), (snap) => {
         const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -2772,8 +3153,8 @@ export const StorageService = {
     if (filters.theme_tag) q = query(q, where("theme_tags", "array-contains", filters.theme_tag));
     if (filters.slug) q = query(q, where("slug", "==", filters.slug));
     
-    return onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return onSnapshot(q, (snapshot: any) => {
+      const items = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       items.sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       callback(items);
     });

@@ -41,6 +41,9 @@ Supabase 전환 시 “어느 화면이 어느 테이블을 먼저 필요로 하
 - `bookings`
 - `locations`
 
+현재 `bookings` 조회 기준은 `booking_details` 단독 테이블이 아니라
+`admin_booking_list_v1 (reservations + booking_details + payments)`로 보는 것이 맞다.
+
 관련 파일:
 
 - [client/components/AdminDashboard.tsx](/Users/cm/Desktop/beeliber/beeliber-main/client/components/AdminDashboard.tsx)
@@ -134,6 +137,11 @@ Supabase 전환 우선순위:
 - `daily_closings`
 - `expenditures`
 - `locations`
+
+집계 기준:
+
+- 일별 집계 view: `admin_revenue_daily_v1`
+- 월별 집계 view: `admin_revenue_monthly_v1`
 
 계산 특징:
 
@@ -247,4 +255,3 @@ Supabase 절체는 아래 순서가 맞다.
 - 실시간 구독 범위가 넓음
 
 즉, Supabase에서는 단순 이관보다 “역할 분리”가 먼저다.
-

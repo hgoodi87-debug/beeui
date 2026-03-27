@@ -10,7 +10,25 @@ export const en = {
         qna_title: 'FAQ | Beeliber',
         qna_desc: 'Check frequently asked questions about booking, refunds, luggage safety, and branch use.'
     },
-    nav: { services: 'Services', locations: 'Locations', tracking: 'Tracking', partners: 'Partners', book: 'Book Now', terms_label: 'Terms of Service', admin_portal: 'Portal', login: 'Login', mypage: 'My Page' },
+    nav: {
+        services: 'Services',
+        locations: 'Locations',
+        tracking: 'Tracking',
+        partners: 'Partners',
+        community: 'Community',
+        about: 'About Us',
+        support_policy: 'Support & Policy',
+        terms: 'Terms',
+        privacy: 'Privacy',
+        help_center: 'Help Center',
+        dashboard: 'Dashboard',
+        contact: 'Contact',
+        book: 'Book Now',
+        terms_label: 'Terms & Conditions',
+        admin_portal: 'Admin',
+        login: 'Login',
+        mypage: 'My Page'
+    },
     terms_page: {
         title: 'Terms of Service',
         last_updated: 'Last Updated: 2025.01.01',
@@ -39,16 +57,14 @@ export const en = {
     },
     hero: {
         badge: 'Seoul Luggage Storage & Airport Delivery 🐝',
-        title1: 'Drop your bags,',
-        title2: 'explore Seoul freely',
+        main_title_1: 'Drop your bags,',
+        main_title_2: 'Explore Seoul freely',
         subtitle: '40+ storage spots across Seoul from ₩4,000\nSame-day Incheon Airport delivery ₩25,000',
         btn_now: 'Book Now',
         cta_storage: "Find Nearest Storage",
         cta_delivery: "Airport Delivery",
         track_booking: 'Track Booking',
         book_branch: 'Book Now',
-        main_title_1: 'Drop your bags,',
-        main_title_2: 'explore Seoul freely',
         main_title_bags: '',
         main_title_city: '',
         live_label: 'Live Status Feed',
@@ -63,8 +79,8 @@ export const en = {
         status_3: 'Moving',
         status_4: 'Arrived',
         status_5: 'Completed',
-        noResult: 'No booking record found.',
-        check_info: 'Please check your information again.'
+        noResult: 'No booking found.',
+        check_info: 'Please check your information.'
     },
     pain: {
         headline: "Leave the weight of 28 inches to Beeliber,\nand keep only excitement in your hands.",
@@ -80,11 +96,16 @@ export const en = {
         before_caption: "Stairs, subways, and bags? Really?"
     },
     howitworks: {
-        headline: "3 Clicks, Your Bags Vanish",
+        headline: "Your luggage journey liberated.",
         badge_label: "SERVICE PROCESS",
-        step1: { title: "Drop", desc: "Hand off your heavy bags to Beeliber desks or partners at airports or hotels.", badge: "STEP 1. Drop" },
-        step2: { title: "Enjoy", desc: "Immediately start your sightseeing, dining, and shopping with both hands free.", badge: "STEP 2. Enjoy" },
-        step3: { title: "Meet", desc: "When you arrive at your hotel room after your day, your bags are already waiting for you.", badge: "STEP 3. Meet" }
+        step1: { title: "Drop at our Hub", desc: "Visit one of our 6 Hubs (09:00-13:00) after landing. Hand over your bags and start your tour immediately.", badge: "STEP 01" },
+        step2: { title: "Real-time Tracking", desc: "Receive a tracking link. Watch your luggage safely traverse the city while you're enjoying your coffee.", badge: "STEP 02" },
+        step3: { title: "Pick up at Airport", desc: "Your bags arrive at Incheon Airport (16:00-21:00). Meet our staff and head straight to your flight, luggage-free.", badge: "STEP 03" }
+    },
+    freedom: {
+        badge: "AFTER",
+        headline: "Bags to Beeliber.<br /><span class=\"text-bee-yellow\">This freedom,</span> from ₩4,000.",
+        sub_copy: "Enjoy the romance of Seoul lightly, without heavy luggage. 💅✨"
     },
     trust: {
         headline: "Your Bags, VIP Treatment.",
@@ -120,7 +141,12 @@ export const en = {
         }
     },
     reviews_section: {
-        headline: "They prove how beautiful your journey is when walking without luggage with Beeliber.",
+        headline: "Check out the vivid voices\nof travelers who visited Seoul.",
+        verified_google: "Verified Google Feedback",
+        people_experienced: "Experienced users",
+        reviews_count: "+ Reviews",
+        google_rating: "Google Rating",
+        safe_handling: "Safe Handling Guaranteed",
         review1: "I dropped my bags and went straight to Gyeongbokgung. Best decision of my life! - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
         review2: "Stored bags before airport and traveled light! - Kim T. ⭐️⭐️⭐️⭐️⭐️",
         review3: "Real-time tracking is awesome. Highly recommended! - Lee J. ⭐️⭐️⭐️⭐️⭐️",
@@ -757,8 +783,9 @@ export const en = {
         ai_refund_prompt: 'Please explain the cancellation and refund policy in detail.'
     },
     qna: {
-        title: "Frequently Asked Questions",
-        subtitle: "The premium guide to everything you need to know about Beeliber.",
+        title: "Do you have any questions?",
+        subtitle: "Beeliber will clear your doubts perfectly. 💅",
+        view_all: "View All Questions",
         categories: {
             general: "General",
             booking: "Booking & Usage",

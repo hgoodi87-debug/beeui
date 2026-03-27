@@ -10,7 +10,25 @@ export const ko = {
         qna_title: '자주 묻는 질문 | 빌리버',
         qna_desc: '예약, 취소·환불, 보관 안전, 지점 이용 방법까지 빌리버 FAQ를 확인하세요.'
     },
-    nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털', login: '로그인', mypage: '마이페이지' },
+    nav: {
+        services: '서비스 소개',
+        locations: '지점 안내',
+        tracking: '배송 조회',
+        partners: '제휴 문의',
+        community: '커뮤니티',
+        about: '브랜드 스토리',
+        support_policy: '지원 및 운영정책',
+        terms: '이용약관',
+        privacy: '개인정보 처리방침',
+        help_center: '고객센터',
+        dashboard: '대시보드',
+        contact: '문의하기',
+        book: '지금 예약하기',
+        terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서',
+        admin_portal: '관리자 포털',
+        login: '로그인',
+        mypage: '마이페이지'
+    },
     terms_page: {
         title: 'Beeliber 이용약관 v1.0',
         last_updated: '시행일: 2026년 3월 17일',
@@ -59,16 +77,14 @@ export const ko = {
     },
     hero: {
         badge: '서울 여행 짐보관·공항배송 파트너 🐝',
-        title1: '서울 어디서든,',
-        title2: '짐은 맡기고 여행만',
+        main_title_1: '체크아웃 후, 홀가분한',
+        main_title_2: '서울 여행의 완성',
         subtitle: '홍대·명동·강남 등 40+ 거점 보관 ₩4,000~\n인천공항 당일 배송 ₩25,000~',
         btn_now: '지금 예약하기',
         cta_storage: "가까운 보관소 찾기",
         cta_delivery: "공항 배송 예약",
         track_booking: '내 예약 확인',
         book_branch: '가까운 지점 예약',
-        main_title_1: '서울 어디서든,',
-        main_title_2: '짐은 맡기고 여행만',
         main_title_bags: '',
         main_title_city: '',
         live_label: '실시간 배송 피드',
@@ -100,14 +116,19 @@ export const ko = {
         before_caption: "캐리어 끌고 계단·지하철·관광지를… 정말요?"
     },
     howitworks: {
-        headline: "단 3단계,\n서울 여행의 새로운 공식",
+        headline: "수하물로부터 해방된,\n진정한 서울 여행의 시작.",
         badge_label: "SERVICE PROCESS",
-        step1: { title: "Drop (짐 맡기기)", desc: "홍대, 서울역 등 가까운 지점에\n당신의 무거운 짐을 가볍게 넘깁니다.", badge: "STEP 1. Drop" },
-        step2: { title: "Tour (서울 즐기기)", desc: "두 손 자유로운 상태로 핫플레이스,\n맛집, 카페 투어를 마음껏 즐깁니다.", badge: "STEP 2. Tour" },
-        step3: { title: "Meet (짐 찾기)", desc: "일정을 마치고 원하는 시간에\n가방과 기분 좋게 다시 만납니다.", badge: "STEP 3. Meet" }
+        step1: { title: "허브에서 짐 맡기기", desc: "입국 후 6개 허브 지점(09:00-13:00) 중 한 곳을 방문하세요. 짐을 맡기고 바로 투어를 시작하세요.", badge: "STEP 01" },
+        step2: { title: "실시간 위치 확인", desc: "배송 추적 링크를 받아보세요. 커피 한 잔의 여유를 즐기는 동안 당신의 짐은 안전하게 이동합니다.", badge: "STEP 02" },
+        step3: { title: "공항에서 짐 찾기", desc: "짐은 인천공항(16:00-21:00)에 미리 도착해 있습니다. 가벼운 몸으로 공항에서 짐을 받아 바로 출국하세요.", badge: "STEP 03" }
+    },
+    freedom: {
+        badge: "AFTER",
+        headline: "짐은 빌리버에게.<br /><span class=\"text-bee-yellow\">지금 이 자유,</span> ₩4,000부터.",
+        sub_copy: "무거운 짐 없이 가볍게, 서울의 낭만을 즐기세요. 💅✨"
     },
     trust: {
-        headline: "당신의 짐은,\n우리에겐 VIP입니다.",
+        headline: "당신의 짐은,<br class=\"md:hidden\" /> 우리에겐 <span class=\"text-bee-yellow italic\">VIP</span>입니다.",
         badge_label: "Safe & Trust Beeliber",
         tracking: { title: "실시간 위치 알림", desc: "내 짐의 보관/배송 상태를 실시간 이메일로 확인하세요.", accent: "STATUS UPDATE" },
         insurance: { title: "프리미엄 안심 보험", desc: "분실/파손 걱정 끝! 최대 50만 원까지 보장되는 든든한 보험.", accent: "SECURED" },
@@ -139,7 +160,12 @@ export const ko = {
         }
     },
     reviews_section: {
-        headline: "짐 없는 서울 여행이 얼마나 달콤한지,\n이미 수많은 여행자가 경험하고 있습니다. ✨",
+        headline: "서울을 다녀간 여행자들의\n생생한 목소리를 확인하세요.",
+        verified_google: "검증된 구글 피드백",
+        people_experienced: "명의 사용자가 경험함",
+        reviews_count: "+개의 리뷰",
+        google_rating: "구글 평점",
+        safe_handling: "안전한 수하물 관리 보장",
         review_1: { name: "Sarah", location: "USA", text: "DDP는 정말 환상적이었어요! 짐을 맡긴 덕분에 가볍게 건축물을 감상할 수 있었죠. ✨" },
         review_2: { name: "Yuki", location: "Japan", text: "경복궁에서 한복을 입고 사진 찍는 게 꿈이었는데, 빌리버 덕분에 짐 걱정 없이 즐겼어요! 🌸" },
         review_3: { name: "Emma", location: "UK", text: "남산타워까지 올라가는 길이 짐이 없어서 정말 다행이었어요. 서울 야경이 최고예요! 🗼" },
@@ -504,7 +530,7 @@ export const ko = {
         cta_title: '여행을 시작할까요?', cta_desc: '짐 없는 자유로운 여행을 경험하세요.', cta_btn: '예약하러 가기'
     },
     chatbot: {
-        header: 'Beeliber Bot', online: '온라인', welcome: '안녕하세요. 비리버 고객센터입니다. 무엇을 도와드릴까요?',
+        header: 'Beeliber Bot', online: '온라인', welcome: '안녕하세요. 빌리버 고객센터입니다. 무엇을 도와드릴까요?',
         placeholder: '문의 사항을 입력하세요.', tooltip: '도움말',
         quick_book: '지금 예약하기', quick_price: '요금 안내',
         start_chat: '상담 시작하기', name: '이름', email: '이메일',
@@ -809,7 +835,7 @@ export const ko = {
     },
     qna: {
         title: "자주 묻는 질문 (FAQ)",
-        subtitle: "비리버가 당신의 궁금증을 완벽하게 해결해 드립니다. 💅",
+        subtitle: "빌리버가 당신의 궁금증을 완벽하게 해결해 드립니다. 💅",
         categories: {
             general: "서비스 일반",
             booking: "예약 및 결제",
@@ -819,13 +845,13 @@ export const ko = {
         items: [
             {
                 category: "general",
-                question: "비리버(Beeliber)는 어떤 서비스인가요?",
-                answer: "비리버는 서울을 여행하는 분들을 위해 '짐 없는 자유'를 제공하는 전문 서비스입니다. 홍대, 서울역 등 주요 거점에 짐을 보관하거나, 보관한 짐을 인천공항으로 당일 배송해 드려요. 전국구 배송보다는 서울 중심의 짐 보관에 특화되어 있습니다. ✨"
+                question: "빌리버(Beeliber)는 어떤 서비스인가요?",
+                answer: "빌리버는 서울을 여행하는 분들을 위해 '짐 없는 자유'를 제공하는 전문 서비스입니다. 홍대, 서울역 등 주요 거점에 짐을 보관하거나, 보관한 짐을 인천공항으로 당일 배송해 드려요. 전국구 배송보다는 서울 중심의 짐 보관에 특화되어 있습니다. ✨"
             },
             {
                 category: "general",
                 question: "호텔에서 호텔로 배송도 되나요?",
-                answer: "현재 비리버는 '지점 중심'의 서비스를 제공하고 있습니다. 호텔 픽업보다는 가까운 비리버 지점(홍대, 서울역 등)에 짐을 맡기시거나 찾는 방식을 권장드려요. 지점에서 공항으로의 배송은 아주 완벽하게 지원합니다! 💅"
+                answer: "현재 빌리버는 '지점 중심'의 서비스를 제공하고 있습니다. 호텔 픽업보다는 가까운 빌리버 지점(홍대, 서울역 등)에 짐을 맡기시거나 찾는 방식을 권장드려요. 지점에서 공항으로의 배송은 아주 완벽하게 지원합니다! 💅"
             },
             {
                 category: "booking",
@@ -835,16 +861,16 @@ export const ko = {
             {
                 category: "safety",
                 question: "내 짐이 안전한지 어떻게 믿을 수 있나요?",
-                answer: "비리버는 검증된 전문 파트너 지점과만 협업합니다. 모든 보관 구역은 CCTV로 상시 모니터링되며, 배송 시에는 짐의 상태를 사진 찍어 이메일로 보내 드려요. 또한 모든 수하물은 기본적으로 보상 보험에 가입되어 있어 안심하셔도 됩니다. ✨"
+                answer: "빌리버는 검증된 전문 파트너 지점과만 협업합니다. 모든 보관 구역은 CCTV로 상시 모니터링되며, 배송 시에는 짐의 상태를 사진 찍어 이메일로 보내 드려요. 또한 모든 수하물은 기본적으로 보상 보험에 가입되어 있어 안심하셔도 됩니다. ✨"
             },
             {
                 category: "safety",
                 question: "파손이나 분실 시 보상은 어떻게 되나요?",
-                answer: "비리버는 모든 고객님께 기본 최대 50만 원의 보상 한도를 제공합니다. 고가 물품의 경우 예약 시 안심 보장 옵션을 선택하시면 최대 300만 원까지 보장 한도를 높일 수 있어요. 💅"
+                answer: "빌리버는 모든 고객님께 기본 최대 50만 원의 보상 한도를 제공합니다. 고가 물품의 경우 예약 시 안심 보장 옵션을 선택하시면 최대 300만 원까지 보장 한도를 높일 수 있어요. 💅"
             },
             {
                 category: "locations",
-                question: "비리버 지점은 어디에 있나요?",
+                question: "빌리버 지점은 어디에 있나요?",
                 answer: "현재 서울의 가장 핫한 지역인 홍대입구역(연남), 서울역, 명동, 인사동, 용산, 강남역 등 주요 거점에서 만나보실 수 있습니다. 자세한 위치는 '지점 안내' 페이지의 지도를 확인해 주세요! 📍"
             }
         ]

@@ -17,9 +17,17 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
     const loadFaq = async () => {
       try {
         const data = await StorageService.getQnaPolicy();
-        if (data && data.items) {
-          // [스봉이] 랜딩 페이지에는 가장 중요한 5개만 선별해서 보여드릴게요 💅
+        if (data && data.items && data.items.length > 0) {
           setFaqItems(data.items.slice(0, 5));
+        } else {
+          // [스봉이] 서버에 데이터가 없으면 제가 준비한 특급 FAQ 5개를 보여드릴게요. 💅✨
+          setFaqItems([
+            { question: "짐 보관은 어디서 하나요?", answer: "홍대입구역, 서울역 등 주요 역사 근처의 '빌리버 허브' 거점에서 전문가들이 안전하게 보관합니다. 예약 후 안내되는 위치를 확인하세요!" },
+            { question: "공항 배송 서비스를 이용하고 싶어요. 언제까지 맡겨야 하나요?", answer: "당일 배송을 위해 오전 11시(일부 지점 13시)까지는 짐을 맡겨주셔야 합니다. 그래야 오후 4시 이후 인천공항에서 바로 찾으실 수 있거든요. ✨" },
+            { question: "영업 시간이 어떻게 되나요?", answer: "각 허브 지점별로 상이하나, 보통 오전 9시부터 저녁 7시까지 운영됩니다. 예약 페이지에서 지점별 상세 운영 시간을 확인해 주세요." },
+            { question: "예약을 취소하면 환불이 되나요?", answer: "서비스 이용 전일 24:00 전까지 취소하시면 100% 환불해 드립니다. 당일 취소는 아쉽게도 환불이 어려우니 미리 말씀해 주세요! 💅" },
+            { question: "짐 크기나 무게 제한이 있나요?", answer: "일반적인 여행용 캐리어(기내용부터 특대형까지)는 모두 가능합니다. 골프백이나 유모차 같은 대형 수하물은 사전 문의 부탁드려요." }
+          ]);
         }
       } catch (e) {
         console.error("Failed to load FAQ for landing:", e);
@@ -40,23 +48,24 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
 
       <div className="max-w-[1000px] mx-auto px-6 relative z-10">
         <div className="text-center mb-8 md:mb-12">
-          <motion.span 
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-block px-4 py-1.5 rounded-full bg-bee-yellow/10 text-bee-black text-[10px] font-black uppercase tracking-[0.2em] mb-4"
-          >
-            FAQ
-          </motion.span>
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-black tracking-tighter"
+            className="text-2xl md:text-5xl font-display font-black text-bee-black mb-4 tracking-tighter"
           >
-            궁금한 점이 있으신가요?
+            {t.qna.title}
           </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-gray-500 text-sm md:text-lg font-medium"
+          >
+            {t.qna.subtitle}
+          </motion.p>
         </div>
 
         <div className="space-y-4">
@@ -119,7 +128,7 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
                 onClick={() => window.dispatchEvent(new CustomEvent('NAVIGATE', { detail: 'QNA' }))}
                 className="inline-flex items-center gap-2 group px-8 py-4 bg-bee-black text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-bee-yellow hover:text-bee-black transition-all shadow-xl hover:shadow-bee-yellow/20"
             >
-                전체 질문 보러가기
+                {t.qna.view_all}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
         </div>

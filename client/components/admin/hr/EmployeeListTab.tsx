@@ -18,13 +18,28 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
   const [selectedSubFilter, setSelectedSubFilter] = React.useState<string>('ALL');
   const [searchQ, setSearchQ] = React.useState('');
 
+  const resolveLocation = React.useCallback((admin: AdminUser) => {
+    if (admin.branchId) {
+      const directMatch = locations.find((location) => location.id === admin.branchId);
+      if (directMatch) return directMatch;
+    }
+
+    const branchToken = String(admin.branchCode || admin.branchId || '').trim().toLowerCase();
+    if (!branchToken) return null;
+
+    return locations.find((location) =>
+      String(location.branchCode || '').trim().toLowerCase() === branchToken
+      || String(location.shortCode || '').trim().toLowerCase() === branchToken
+    ) || null;
+  }, [locations]);
+
   // 직책 목록 및 지점 목록 추출 (HQ 직원 위주로 추출하여 필터 혼란 방지) 💅
   const jobTitles = React.useMemo(() => {
     // 슈퍼 관리자가 아니면서 지점 소속이 없는(HQ) 직원들의 직책만 추출
     const hqAdmins = admins.filter(admin => {
         const isSuperName = admin.name === '천명' || admin.name === 'admin';
         const isSuper = admin.role === 'super' || isSuperName;
-        return !isSuper && !admin.branchId;
+        return !isSuper && !admin.branchId && !admin.branchCode;
     });
     const titles = Array.from(new Set(hqAdmins.map(a => a.jobTitle).filter(Boolean)));
     return titles.sort();
@@ -32,9 +47,11 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
 
   const filteredAdmins = React.useMemo(() => {
     return admins.filter(admin => {
+      const matchedLocation = resolveLocation(admin);
       // 1. 카테고리 필터
       const isSuperName = admin.name === '천명' || admin.name === 'admin';
       const isSuper = admin.role === 'super' || isSuperName;
+      const hasBranch = Boolean(admin.branchId || admin.branchCode || matchedLocation);
 
       if (activeCategory === 'SUPER') {
         if (!isSuper) return false;
@@ -42,12 +59,12 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
         // [스봉이] 전체 명부는 괜히 숨기지 말고 그대로 다 보여줘야 덜 놀라죠, 참나.
       } else if (activeCategory === 'TITLE') {
         // 슈퍼 관리자가 아니면서 지점 정보가 없는(HQ) 직원이어야 함
-        if (isSuper || admin.branchId) return false;
+        if (isSuper || hasBranch) return false;
         if (selectedSubFilter !== 'ALL' && admin.jobTitle !== selectedSubFilter) return false;
       } else if (activeCategory === 'BRANCH') {
         // 슈퍼 관리자가 아니면서 지점 정보가 있는 직원이어야 함
-        if (isSuper || !admin.branchId) return false;
-        if (selectedSubFilter !== 'ALL' && admin.branchId !== selectedSubFilter) return false;
+        if (isSuper || !hasBranch) return false;
+        if (selectedSubFilter !== 'ALL' && matchedLocation?.id !== selectedSubFilter) return false;
       }
 
       // 2. 검색 필터
@@ -59,7 +76,7 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
       }
       return true;
     }).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
-  }, [admins, activeCategory, selectedSubFilter, searchQ]);
+  }, [admins, activeCategory, resolveLocation, selectedSubFilter, searchQ]);
 
   const getSyncBadge = (admin: AdminUser) => {
     if (admin.syncStatus?.status === 'error') {
@@ -191,7 +208,8 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
           filteredAdmins.map(admin => {
             const isSuperName = admin.name === '천명' || admin.name === 'admin';
             // [스봉이] 지점 소속이면 우선적으로 'branch' 역할을 부여해서 '브랜치' 배지가 나오게 합니다. 💅
-            const adminRole = isSuperName ? 'super' : (admin.role || (admin.branchId ? 'branch' : 'staff'));
+            const matchedLocation = resolveLocation(admin);
+            const adminRole = isSuperName ? 'super' : (admin.role || ((admin.branchId || admin.branchCode || matchedLocation?.id) ? 'branch' : 'staff'));
             const statusConfig = (HR_STATUS_CONFIG as Record<string, HRStatusConfig>)[admin.status || 'active'] || HR_STATUS_CONFIG.active;
             const roleConfig = HR_ROLES.find((r: HRRole) => r.id === adminRole) || HR_ROLES.find(r => r.id === 'staff') || HR_ROLES[0];
             const syncBadge = getSyncBadge(admin);
@@ -222,7 +240,7 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
                       <span className="text-[10px] font-bold text-gray-400">{admin.jobTitle}</span>
                       <span className="w-1 h-1 rounded-full bg-gray-200"></span>
                       <span className="text-[10px] font-black text-bee-black/30 group-hover:text-bee-black transition-colors">
-                        {locations.find(l => l.id === admin.branchId)?.name || 'HQ / 본사'}
+                        {admin.branchName || matchedLocation?.name || 'HQ / 본사'}
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">

@@ -4,6 +4,8 @@ import { StorageService } from '../../services/storageService';
 import { AuditService } from '../../services/auditService';
 import { useQueryClient } from '@tanstack/react-query';
 
+import { useAdminStore } from '../../src/store/adminStore';
+
 interface FinancialComparisonTabProps {
     bookings: BookingState[];
     locations: LocationOption[];
@@ -18,20 +20,35 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
     currentActor
 }) => {
     const queryClient = useQueryClient();
+    const { activeStatusTab } = useAdminStore();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [filterStatus, setFilterStatus] = useState<'ALL' | 'UNSETTLED' | 'SETTLED'>('UNSETTLED');
 
-    // [스봉이] 완료된 건들만 모아서 정산 대상으로 삼아요. 💅
-    const completedBookings = useMemo(() => {
-        return bookings.filter(b => b.status === BookingStatus.COMPLETED && !b.isDeleted);
-    }, [bookings]);
+    // [스봉이] 정산 대상 건들(완료/이슈)을 대시보드 상태에 맞춰 필터링해요. 💅
+    const settlementTargets = useMemo(() => {
+        let base = bookings.filter(b => !b.isDeleted);
+        
+        // 대시보드에서 특정 상태('COMPLETED' 등)를 눌러서 넘어온 경우
+        if (activeStatusTab !== 'ALL') {
+            if (activeStatusTab === 'COMPLETED') {
+                base = base.filter(b => b.status === BookingStatus.COMPLETED);
+            } else if (activeStatusTab === 'ISSUE') {
+                base = base.filter(b => b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || !!b.auditNote);
+            }
+        } else {
+            // 기본은 '완료' 건만 보여주되, 정산 안 된 건들 위주로
+            base = base.filter(b => b.status === BookingStatus.COMPLETED);
+        }
+        
+        return base;
+    }, [bookings, activeStatusTab]);
 
     const filteredBookings = useMemo(() => {
-        if (filterStatus === 'ALL') return completedBookings;
-        if (filterStatus === 'UNSETTLED') return completedBookings.filter(b => b.settlementStatus !== 'CONFIRMED');
-        return completedBookings.filter(b => b.settlementStatus === 'CONFIRMED');
-    }, [completedBookings, filterStatus]);
+        if (filterStatus === 'ALL') return settlementTargets;
+        if (filterStatus === 'UNSETTLED') return settlementTargets.filter(b => b.settlementStatus !== 'CONFIRMED');
+        return settlementTargets.filter(b => b.settlementStatus === 'CONFIRMED');
+    }, [settlementTargets, filterStatus]);
 
     const totalSelectedAmount = useMemo(() => {
         return filteredBookings
@@ -120,7 +137,7 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                             onClick={() => setFilterStatus(s)}
                             className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${filterStatus === s ? 'bg-bee-black text-bee-yellow shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                         >
-                            {s === 'ALL' ? '전체' : s === 'UNSETTLED' ? `미정산 (${completedBookings.filter(b => b.settlementStatus !== 'CONFIRMED').length})` : '정산완료'}
+                            {s === 'ALL' ? '전체' : s === 'UNSETTLED' ? `미정산 (${settlementTargets.filter(b => b.settlementStatus !== 'CONFIRMED').length})` : '정산완료'}
                         </button>
                     ))}
                 </div>

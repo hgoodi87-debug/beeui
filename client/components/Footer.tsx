@@ -1,12 +1,25 @@
 import React from 'react';
 import { Instagram, Facebook, Twitter, MapPin, Mail, Phone, ArrowUp } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 interface FooterProps {
   t: any;
   onNavigate?: (view: any) => void;
 }
 
+const SUPPORTED_URL_LANGS = new Set(['ko', 'en', 'zh', 'zh-tw', 'zh-hk', 'ja']);
+
 const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
+  const location = useLocation();
+  const firstSegment = location.pathname.split('/').filter(Boolean)[0]?.toLowerCase() || '';
+  const currentLang = SUPPORTED_URL_LANGS.has(firstSegment) ? firstSegment : '';
+
+  if (!currentLang) {
+    return null;
+  }
+
+  const buildHref = (suffix = '') => `/${currentLang}${suffix}`;
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -43,12 +56,12 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.service || "Service"}</h3>
               <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
-                <li><a href="/" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
-                <li><a href="/locations" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
-                <li><a href="/pricing" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
-                <li><a href="/tips" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TIPS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
-                <li><a href="/vision" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="hover:text-bee-yellow transition-colors">Brand Vision</a></li>
-                <li><a href="/qna" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">Q&A</a></li>
+                <li><a href={buildHref()} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
+                <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
+                <li><a href={buildHref('/services')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
+                <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
+                <li><a href={buildHref('/vision')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="hover:text-bee-yellow transition-colors">Brand Vision</a></li>
+                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">Q&A</a></li>
               </ul>
             </div>
 
@@ -56,9 +69,9 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.legal || "Legal"}</h3>
               <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
-                <li><a href="/privacy" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('PRIVACY'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</a></li>
-                <li><a href="/terms" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TERMS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</a></li>
-                <li><a href="/refund" onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('REFUND'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</a></li>
+                <li><a href={buildHref('/privacy')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('PRIVACY'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</a></li>
+                <li><a href={buildHref('/terms')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TERMS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</a></li>
+                <li><a href={buildHref('/refund')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('REFUND'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</a></li>
               </ul>
             </div>
 

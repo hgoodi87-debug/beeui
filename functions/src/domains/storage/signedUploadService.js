@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 
 const SUPPORTED_BUCKETS = new Set(['brand-public', 'branch-public', 'backoffice-private']);
-const HQ_WRITE_ROLES = new Set(['super', 'staff', 'finance', 'cs']);
+const HQ_WRITE_ROLES = new Set(['super', 'hq', 'staff', 'finance', 'cs']);
 const BRANCH_SCOPED_ROLES = new Set(['branch', 'partner']);
 const PUBLIC_BUCKETS = new Set(['brand-public', 'branch-public']);
 
@@ -81,20 +81,6 @@ const encodeObjectPath = (objectPath) =>
     .map((segment) => encodeURIComponent(segment))
     .join('/');
 
-const parseBearerToken = (req) => {
-  const authHeader = normalizeText(req.headers.authorization);
-  if (!authHeader.startsWith('Bearer ')) {
-    throw new SignedUploadHttpError(401, '관리자 인증이 필요합니다.', 'Missing bearer token.');
-  }
-
-  const token = normalizeText(authHeader.slice(7));
-  if (!token) {
-    throw new SignedUploadHttpError(401, '관리자 인증이 필요합니다.', 'Empty bearer token.');
-  }
-
-  return token;
-};
-
 const validateFileSignature = ({ bucketKind, fileExtension, contentType }) => {
   const normalizedExtension = normalizeLower(fileExtension).replace(/^\./, '');
   const normalizedContentType = normalizeLower(contentType);
@@ -131,7 +117,7 @@ const assertUploadScope = ({ request, adminContext }) => {
     }
 
     const requestedBranchCode = normalizeUpper(request.branchCode);
-    const adminBranchCode = normalizeUpper(adminContext.branchId);
+    const adminBranchCode = normalizeUpper(adminContext.branchCode || adminContext.branchId);
 
     if (!requestedBranchCode || !adminBranchCode || requestedBranchCode !== adminBranchCode) {
       throw new SignedUploadHttpError(403, '본인 지점 자산만 업로드할 수 있습니다.', `Scoped role ${role} attempted branch-public write for ${requestedBranchCode} with admin branch ${adminBranchCode}.`);
@@ -238,7 +224,7 @@ const validateRequest = (body) => {
   return request;
 };
 
-const buildStorageAssetRow = ({ request, objectPath, uid }) => {
+const buildStorageAssetRow = ({ request, objectPath, uid, authBridge }) => {
   const metadata = {
     ...request.metadata,
     bucket_kind: request.bucketKind,
@@ -246,7 +232,7 @@ const buildStorageAssetRow = ({ request, objectPath, uid }) => {
     branch_code: request.branchCode || null,
     asset_category: request.assetCategory || null,
     upload_status: 'pending',
-    auth_bridge: 'firebase-admin-session',
+    auth_bridge: normalizeText(authBridge) || 'admin-session',
   };
 
   return {
@@ -373,34 +359,57 @@ const assertConfigured = () => {
   return { supabaseUrl, serviceRoleKey };
 };
 
-const authenticateAdmin = async ({ req, admin, getAdminContext }) => {
-  const bearerToken = parseBearerToken(req);
-  let decodedToken;
-
-  try {
-    decodedToken = await admin.auth().verifyIdToken(bearerToken);
-  } catch (error) {
-    throw new SignedUploadHttpError(401, '관리자 인증이 만료되었거나 올바르지 않습니다.', `Firebase token verification failed: ${error.message}`);
+const toSignedUploadAuthError = (error) => {
+  if (error instanceof SignedUploadHttpError) {
+    return error;
   }
 
-  const adminContext = await getAdminContext(decodedToken.uid);
-  if (!adminContext) {
-    throw new SignedUploadHttpError(403, '관리자 권한이 필요합니다.', `Missing adminContext for uid ${decodedToken.uid}`);
+  const status = Number(error?.status || 0);
+  if (status === 401) {
+    return new SignedUploadHttpError(
+      401,
+      '관리자 인증이 만료되었거나 올바르지 않습니다.',
+      error?.logMessage || error?.message || 'Admin authentication failed.'
+    );
   }
 
-  return {
-    uid: decodedToken.uid,
-    adminContext,
-  };
+  if (status === 403) {
+    return new SignedUploadHttpError(
+      403,
+      '관리자 권한이 필요합니다.',
+      error?.logMessage || error?.message || 'Admin authorization failed.'
+    );
+  }
+
+  if (status === 503) {
+    return new SignedUploadHttpError(
+      503,
+      'signed upload 서버 설정이 아직 준비되지 않았습니다.',
+      error?.logMessage || error?.message || 'Signed upload runtime is not configured.'
+    );
+  }
+
+  return new SignedUploadHttpError(
+    500,
+    'signed upload URL 발급 중 인증 검증에 실패했습니다.',
+    error?.logMessage || error?.message || 'Signed upload authentication bridge failed.'
+  );
 };
 
-const handleSignedUploadRequest = async ({ req, admin, getAdminContext }) => {
+const handleSignedUploadRequest = async ({ req, authenticateAdminRequest }) => {
   if (req.method !== 'POST') {
     throw new SignedUploadHttpError(405, 'POST 요청만 허용됩니다.');
   }
 
   const { supabaseUrl, serviceRoleKey } = assertConfigured();
-  const { uid, adminContext } = await authenticateAdmin({ req, admin, getAdminContext });
+  let authContext;
+  try {
+    authContext = await authenticateAdminRequest(req);
+  } catch (error) {
+    throw toSignedUploadAuthError(error);
+  }
+
+  const { uid, adminContext, provider } = authContext;
   const request = validateRequest(req.body);
 
   assertUploadScope({ request, adminContext });
@@ -420,6 +429,7 @@ const handleSignedUploadRequest = async ({ req, admin, getAdminContext }) => {
       request,
       objectPath: signedUpload.objectPath,
       uid,
+      authBridge: provider ? `${provider}-admin-session` : 'admin-session',
     }),
   });
 

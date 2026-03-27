@@ -332,9 +332,9 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                 {b.paymentStatus === 'paid' ? '결제완료' : '미결제'}
                                             </div>
                                             {/* Tier 2: Settlement */}
-                                            <div className={`text-[9px] font-black px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 border ${b.settlementStatus === '정산확정' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
+                                            <div className={`text-[9px] font-black px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 border ${['정산확정', 'CONFIRMED'].includes(b.settlementStatus as string) ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
                                                 <i className="fa-solid fa-coins text-[8px]"></i>
-                                                {b.settlementStatus || '정산미정'}
+                                                {b.settlementStatus === 'CONFIRMED' ? '정산확정' : (b.settlementStatus || '정산미정')}
                                             </div>
                                             {/* Tier 3: Issue */}
                                             {b.auditNote ? (

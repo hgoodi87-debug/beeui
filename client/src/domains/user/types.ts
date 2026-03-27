@@ -46,6 +46,9 @@ export interface AdminSyncStatus {
 export interface AdminUser {
     id: string;
     uid?: string;
+    employeeId?: string;
+    profileId?: string;
+    legacyAdminDocId?: string;
     name: string;
     jobTitle: string;
     email?: string;
@@ -55,6 +58,10 @@ export interface AdminUser {
     lastLogin?: string;
     role?: 'super' | 'hq' | 'branch' | 'staff' | 'partner' | 'driver' | 'finance' | 'cs';
     branchId?: string;
+    branchCode?: string;
+    branchName?: string;
+    roleCode?: string;
+    roleName?: string;
     status?: AdminStatus;
     permissions?: string[];
     orgType?: 'HQ' | 'HUB' | 'PARTNER' | 'DRIVER_GROUP';

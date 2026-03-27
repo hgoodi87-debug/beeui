@@ -673,6 +673,7 @@ const assertCanManageAdminAccount = ({ actor, targetAdmin, isDelete = false }) =
   const actorRole = normalizeLower(actor?.role);
   const targetRole = inferLegacyRole(targetAdmin);
   const actorBranchId = normalizeText(actor?.branchId);
+  const actorBranchCode = normalizeText(actor?.branchCode);
   const targetBranchId = normalizeText(targetAdmin?.branchId);
 
   if (isDelete && isSelfMutation(actor, targetAdmin)) {
@@ -694,7 +695,15 @@ const assertCanManageAdminAccount = ({ actor, targetAdmin, isDelete = false }) =
     if (targetRole !== 'staff') {
       throw new Error('지점 계정에서는 일반 스태프만 관리할 수 있습니다.');
     }
-    if (!actorBranchId || !targetBranchId || actorBranchId !== targetBranchId) {
+    const sameBranch = Boolean(
+      targetBranchId &&
+      (
+        (actorBranchId && actorBranchId === targetBranchId) ||
+        (actorBranchCode && actorBranchCode === targetBranchId)
+      )
+    );
+
+    if (!sameBranch) {
       throw new Error('다른 지점 직원은 관리할 수 없습니다.');
     }
     return;

@@ -5,7 +5,9 @@ interface ImportMetaEnv {
   readonly VITE_NAVER_MAP_CLIENT_ID?: string;
   readonly VITE_RECAPTCHA_SITE_KEY?: string;
   readonly VITE_GOOGLE_CHAT_WEBHOOK_URL?: string;
+  readonly VITE_CLAUDE_API_KEY?: string;
   readonly VITE_GEMINI_API_KEY?: string;
+  readonly VITE_GA4_MEASUREMENT_ID?: string;
   readonly VITE_TOSS_PAYMENTS_ENABLED?: 'true' | 'false';
   readonly VITE_TOSS_PAYMENTS_CLIENT_KEY?: string;
   readonly VITE_TOSS_PAYMENTS_MOCK_MODE?: 'true' | 'false';
@@ -16,6 +18,7 @@ interface ImportMetaEnv {
   readonly VITE_ADMIN_AUTH_PROVIDER?: 'firebase' | 'supabase';
   readonly VITE_STORAGE_UPLOAD_PROVIDER?: 'firebase' | 'supabase';
   readonly VITE_SUPABASE_STORAGE_SIGNED_UPLOAD_ENDPOINT?: string;
+  readonly VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT?: string;
 }
 
 interface ImportMeta {

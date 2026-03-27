@@ -6,6 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
+  <!-- Performance Optimization: Preconnect to critical origins -->
+  <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
+  <link rel="preconnect" href="https://flagcdn.com" />
+  <link rel="preconnect" href="https://www.googletagmanager.com" />
+  <link rel="preconnect" href="https://connect.facebook.net" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
   <!-- SEO Meta Tags -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>빌리버 | 서울 짐보관 · 인천공항 당일 짐배송</title>
@@ -18,15 +26,17 @@
   <link rel="canonical" href="https://bee-liber.com" />
 
   <!-- Multi-language Support (SEO) -->
-  <link rel="alternate" hreflang="ko-KR" href="https://bee-liber.com?lang=ko" />
-  <link rel="alternate" hreflang="en" href="https://bee-liber.com?lang=en" />
-  <link rel="alternate" hreflang="ja-JP" href="https://bee-liber.com?lang=ja" />
-  <link rel="alternate" hreflang="zh-CN" href="https://bee-liber.com?lang=zh" />
-  <link rel="alternate" hreflang="zh-TW" href="https://bee-liber.com?lang=zh-TW" />
-  <link rel="alternate" hreflang="zh-HK" href="https://bee-liber.com?lang=zh-HK" />
+  <link rel="alternate" hreflang="ko-KR" href="https://bee-liber.com" />
+  <link rel="alternate" hreflang="en" href="https://bee-liber.com/en" />
+  <link rel="alternate" hreflang="ja-JP" href="https://bee-liber.com/ja" />
+  <link rel="alternate" hreflang="zh-CN" href="https://bee-liber.com/zh" />
+  <link rel="alternate" hreflang="zh-TW" href="https://bee-liber.com/zh-tw" />
+  <link rel="alternate" hreflang="zh-HK" href="https://bee-liber.com/zh-hk" />
   <link rel="alternate" hreflang="x-default" href="https://bee-liber.com" />
 
   <meta name="naver-site-verification" content="27b3efc19cfcc972a2ec5b219dc20454c3ec4ea3" />
+  <meta name="msvalidate.01" content="9E83A560CF3A42D430E45966271F7AF3" />
+  <meta name="y_key" content="9E83A560CF3A42D430E45966271F7AF3" />
 
   <!-- GEO (AI Search Optimization / Gemini Scraping) -->
   <script type="application/ld+json">
@@ -62,7 +72,38 @@
       "@type": "Country",
       "name": "South Korea"
     },
-    "description": "서울 주요 거점 짐 보관과 인천공항 당일 짐배송을 제공하는 빌리버 서비스."
+    "description": "서울 주요 거점 짐 보관과 인천공항 당일 짐배송 서비스를 제공하는 빌리버.",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "1280"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://bee-liber.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Locations",
+        "item": "https://bee-liber.com/locations"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Services",
+        "item": "https://bee-liber.com/services"
+      }
+    ]
   }
   </script>
   <script type="application/ld+json">
@@ -294,11 +335,11 @@
       setPropertyMeta('og:image', ogImage);
       setLink('canonical', canonicalUrl);
       setLink('alternate', canonicalUrl, 'ko-KR');
-      setLink('alternate', canonicalUrl + '?lang=en', 'en');
-      setLink('alternate', canonicalUrl + '?lang=ja', 'ja-JP');
-      setLink('alternate', canonicalUrl + '?lang=zh', 'zh-CN');
-      setLink('alternate', canonicalUrl + '?lang=zh-TW', 'zh-TW');
-      setLink('alternate', canonicalUrl + '?lang=zh-HK', 'zh-HK');
+      setLink('alternate', siteUrl + '/en' + (path === '/' ? '' : path), 'en');
+      setLink('alternate', siteUrl + '/ja' + (path === '/' ? '' : path), 'ja-JP');
+      setLink('alternate', siteUrl + '/zh' + (path === '/' ? '' : path), 'zh-CN');
+      setLink('alternate', siteUrl + '/zh-tw' + (path === '/' ? '' : path), 'zh-TW');
+      setLink('alternate', siteUrl + '/zh-hk' + (path === '/' ? '' : path), 'zh-HK');
       setLink('alternate', canonicalUrl, 'x-default');
     })();
 
@@ -317,10 +358,12 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-QvfFZvvu.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/vendor-query-BnCmuCcb.js">
-  <link rel="modulepreload" crossorigin href="/assets/vendor-firebase-EPACGnX2.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-B2WUC_DY.css">
+  <script type="module" crossorigin src="/assets/index-DFi41Y--.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor-react-dom-B-4pjoWT.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-motion-BUt1lcWJ.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-firebase-Dr1pvcxI.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-query-N1jjWJFK.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-Bv7cQApj.css">
 </head>
 
 <body class="antialiased">
@@ -330,6 +373,19 @@
          src="https://www.facebook.com/tr?id=2813327635677634&ev=PageView&noscript=1"/>
   </noscript>
   <div id="root"></div>
+  
+  <!-- Naver Analytics (wcs_do) 🌲 -->
+  <script type="text/javascript" src="https://wcs.naver.net/wcslog.js"></script>
+  <script type="text/javascript">
+    if(!window.wcs) var wcs = {};
+    if(!window.wcs_add) window.wcs_add = {};
+    window.wcs_add["wa"] = "19236166ab9bc90";
+    if (window.wcs) {
+      window.wcs_do();
+      console.log("%c🌲 [스봉이 리포트] 네이버 애널리틱스 수집 중... 💅", "color: #2DB400; font-weight: bold;");
+    }
+  </script>
+
 </body>
 
 </html>

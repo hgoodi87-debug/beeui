@@ -64,7 +64,7 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                     </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+                <div className="grid grid-cols-3 gap-3 md:gap-12">
                     {trustFeatures.map((feature, i) => (
                         <motion.div
                             key={i}
@@ -72,14 +72,17 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.1 }}
-                            className="bg-white/5 p-12 rounded-[3.5rem] border border-white/10 hover:border-bee-yellow/40 hover:bg-white/[0.08] transition-all duration-500 group flex flex-col items-center text-center shadow-2xl backdrop-blur-md"
+                            className="bg-white/5 p-4 md:p-12 rounded-3xl md:rounded-[3.5rem] border border-white/10 hover:border-bee-yellow/40 hover:bg-white/[0.08] transition-all duration-500 group flex flex-col items-center text-center shadow-2xl backdrop-blur-md"
                         >
-                            <div className="w-20 h-20 bg-bee-yellow rounded-3xl flex items-center justify-center text-bee-black mb-10 shadow-[0_20px_40px_rgba(255,203,5,0.2)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                                {feature.icon}
+                            <div className="w-10 h-10 md:w-20 md:h-20 bg-bee-yellow rounded-xl md:rounded-3xl flex items-center justify-center text-bee-black mb-4 md:mb-10 shadow-[0_10px_20px_rgba(255,203,5,0.15)] md:shadow-[0_20px_40px_rgba(255,203,5,0.2)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                                <div className="scale-75 md:scale-100">
+                                    {feature.icon}
+                                </div>
                             </div>
-                            <div className="text-bee-yellow text-[10px] font-black tracking-[0.3em] uppercase mb-4 opacity-70 group-hover:opacity-100">{feature.accent}</div>
-                            <h3 className="text-2xl md:text-3xl font-display font-black text-white mb-6 tracking-tight">{feature.title}</h3>
-                            <p className="text-lg font-bold text-white/80 font-outfit leading-relaxed break-keep group-hover:text-white transition-colors whitespace-pre-line">{feature.desc}</p>
+                            <div className="text-bee-yellow text-[7px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.3em] uppercase mb-1 md:mb-4 opacity-70 group-hover:opacity-100">{feature.accent}</div>
+                            <h3 className="text-[10px] md:text-2xl font-display font-black text-white mb-2 md:mb-6 tracking-tight leading-tight">{feature.title}</h3>
+                            <p className="hidden md:block text-base font-bold text-white/80 font-outfit leading-relaxed break-keep group-hover:text-white transition-colors whitespace-pre-line">{feature.desc}</p>
+                            <p className="md:hidden text-[8px] font-bold text-white/60 font-outfit leading-tight break-keep">{feature.desc.split('.')[0]}</p>
                         </motion.div>
                     ))}
                 </div>

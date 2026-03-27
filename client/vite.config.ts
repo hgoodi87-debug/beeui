@@ -25,7 +25,14 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173
+    port: 5173,
+    proxy: {
+      '/supabase': {
+        target: 'https://xpnfjolqiffduedwtxey.supabase.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/supabase/, '')
+      }
+    }
   },
   // @ts-ignore - Vitest types might be missing in some environments
   test: {

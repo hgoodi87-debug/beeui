@@ -1,5 +1,13 @@
 import { useMemo } from 'react';
-import { BookingState, BookingStatus, ServiceType, Expenditure, CashClosing } from '../../../../types';
+import {
+    BookingState,
+    BookingStatus,
+    ServiceType,
+    Expenditure,
+    CashClosing,
+    AdminRevenueDailySummary,
+    AdminRevenueMonthlySummary,
+} from '../../../../types';
 import { sanitizeBagSizes } from '../../booking/bagCategoryUtils';
 
 interface StatisticsParams {
@@ -8,20 +16,89 @@ interface StatisticsParams {
     revenueStartDate: string;
     revenueEndDate: string;
     closings: CashClosing[];
+    revenueDailySummaries?: AdminRevenueDailySummary[];
+    revenueMonthlySummaries?: AdminRevenueMonthlySummary[];
 }
+
+const toSafeNumber = (value: unknown): number => Number(value || 0) || 0;
+
+const sumSummaryField = <
+    T extends AdminRevenueDailySummary | AdminRevenueMonthlySummary,
+    K extends keyof T
+>(items: T[], key: K): number =>
+    items.reduce((sum, item) => sum + toSafeNumber(item[key]), 0);
 
 export const useAdminStats = ({
     bookings,
     expenditures,
     revenueStartDate,
     revenueEndDate,
-    closings
+    closings,
+    revenueDailySummaries = [],
+    revenueMonthlySummaries = [],
 }: StatisticsParams) => {
+
+    const dailySummaryContext = useMemo(() => {
+        const start = new Date(revenueStartDate);
+        const end = new Date(revenueEndDate);
+        end.setHours(23, 59, 59, 999);
+
+        const hasSqlSummaries = revenueDailySummaries.length > 0;
+        const filteredDailySummaries = revenueDailySummaries.filter((summary) => {
+            const summaryDate = new Date(summary.date);
+            return summaryDate >= start && summaryDate <= end;
+        });
+
+        const firstDayOfMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+        const monthToDateSummaries = revenueDailySummaries.filter((summary) => {
+            const summaryDate = new Date(summary.date);
+            return summaryDate >= firstDayOfMonth && summaryDate <= end;
+        });
+
+        return {
+            hasSqlSummaries,
+            filteredDailySummaries,
+            monthToDateSummaries,
+        };
+    }, [revenueDailySummaries, revenueStartDate, revenueEndDate]);
 
     const revenueStats = useMemo(() => {
         const start = new Date(revenueStartDate);
         const end = new Date(revenueEndDate);
         end.setHours(23, 59, 59, 999);
+
+        const targetExps = expenditures.filter((e: Expenditure) => {
+            const d = new Date(e.date);
+            return d >= start && d <= end;
+        });
+        const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
+
+        if (dailySummaryContext.hasSqlSummaries) {
+            const totalRevenue = sumSummaryField(dailySummaryContext.filteredDailySummaries, 'totalRevenue');
+            const mtdRevenue = sumSummaryField(dailySummaryContext.monthToDateSummaries, 'totalRevenue');
+            const lifetimeRevenue = sumSummaryField(revenueDailySummaries, 'totalRevenue');
+            const lifetimeCount = sumSummaryField(revenueDailySummaries, 'activeBookingCount');
+
+            return {
+                total: totalRevenue,
+                cash: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'cashRevenue'),
+                card: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'cardRevenue'),
+                apple: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'appleRevenue'),
+                samsung: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'samsungRevenue'),
+                wechat: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'wechatRevenue'),
+                alipay: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'alipayRevenue'),
+                naver: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'naverRevenue'),
+                kakao: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'kakaoRevenue'),
+                paypal: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'paypalRevenue'),
+                count: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'activeBookingCount'),
+                expenditure: totalExp,
+                netTotal: totalRevenue - totalExp,
+                vat: Math.round(totalRevenue / 11),
+                mtdRevenue,
+                lifetimeRevenue,
+                lifetimeCount,
+            };
+        }
 
         const targetBookings = bookings.filter((b: BookingState) => {
             const dStr = (b.pickupDate || '').trim();
@@ -31,11 +108,6 @@ export const useAdminStats = ({
                 !b.isDeleted &&
                 b.status !== BookingStatus.CANCELLED &&
                 b.status !== BookingStatus.REFUNDED;
-        });
-
-        const targetExps = expenditures.filter((e: Expenditure) => {
-            const d = new Date(e.date);
-            return d >= start && d <= end;
         });
 
         const firstDayOfMonth = new Date(end.getFullYear(), end.getMonth(), 1);
@@ -49,8 +121,6 @@ export const useAdminStats = ({
         const lifetimeRevenue = lifetimeBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
 
         const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
-        const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
-
         const filterMethod = (method: string) => targetBookings.filter((b: BookingState) => b.paymentMethod === method).reduce((sum: number, b: BookingState) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
 
         return {
@@ -72,21 +142,83 @@ export const useAdminStats = ({
             lifetimeRevenue,
             lifetimeCount: lifetimeBookings.length
         };
-    }, [bookings, expenditures, revenueStartDate, revenueEndDate]);
+    }, [bookings, dailySummaryContext, expenditures, revenueDailySummaries, revenueEndDate, revenueStartDate]);
 
     const dailySettlementStats = useMemo(() => {
         const start = new Date(revenueStartDate);
         const end = new Date(revenueEndDate);
         end.setHours(23, 59, 59, 999);
 
-        const targetBookings = bookings.filter((b: BookingState) => {
-            const d = new Date(b.pickupDate || '');
-            return d >= start && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
-        });
-
         const targetExps = expenditures.filter((e: Expenditure) => {
             const d = new Date(e.date);
             return d >= start && d <= end;
+        });
+
+        const expByCategory: Record<string, number> = {};
+        targetExps.forEach((e: Expenditure) => {
+            const cat = e.category || '기타';
+            expByCategory[cat] = (expByCategory[cat] || 0) + (e.amount || 0);
+        });
+
+        const prevDate = new Date(end);
+        prevDate.setDate(prevDate.getDate() - 1);
+        const prevDateStr = prevDate.toISOString().split('T')[0];
+        const prevClosing = (closings || []).find((c: CashClosing) => c.date === prevDateStr);
+        const openingCash = prevClosing ? prevClosing.actualCashOnHand : 0;
+        const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
+
+        const discountCodeCounts: Record<string, number> = {};
+        bookings.forEach((b) => {
+            if (!b.discountCode) return;
+            const d = new Date(b.pickupDate || '');
+            if (d < start || d > end || b.isDeleted || b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) return;
+            discountCodeCounts[b.discountCode] = (discountCodeCounts[b.discountCode] || 0) + 1;
+        });
+
+        if (dailySummaryContext.hasSqlSummaries) {
+            const targetSummaries = dailySummaryContext.filteredDailySummaries;
+            const totalRevenue = sumSummaryField(targetSummaries, 'totalRevenue');
+
+            return {
+                totalRevenue,
+                totalExp,
+                netProfit: totalRevenue - totalExp,
+                vat: Math.round(totalRevenue / 11),
+                deliveryCount: sumSummaryField(targetSummaries, 'deliveryCount'),
+                storageCount: sumSummaryField(targetSummaries, 'storageCount'),
+                bagSizes: {
+                    handBag: sumSummaryField(targetSummaries, 'handBagCount'),
+                    carrier: sumSummaryField(targetSummaries, 'carrierCount'),
+                    strollerBicycle: sumSummaryField(targetSummaries, 'strollerBicycleCount'),
+                },
+                revenueByMethod: {
+                    card: sumSummaryField(targetSummaries, 'cardRevenue'),
+                    cash: sumSummaryField(targetSummaries, 'cashRevenue'),
+                    apple: sumSummaryField(targetSummaries, 'appleRevenue'),
+                    samsung: sumSummaryField(targetSummaries, 'samsungRevenue'),
+                    wechat: sumSummaryField(targetSummaries, 'wechatRevenue'),
+                    alipay: sumSummaryField(targetSummaries, 'alipayRevenue'),
+                    naver: sumSummaryField(targetSummaries, 'naverRevenue'),
+                    kakao: sumSummaryField(targetSummaries, 'kakaoRevenue'),
+                    paypal: sumSummaryField(targetSummaries, 'paypalRevenue'),
+                },
+                expByCategory,
+                mtdRevenue: sumSummaryField(dailySummaryContext.monthToDateSummaries, 'totalRevenue'),
+                openingCash,
+                discountCodeCounts,
+                cancelledCount: sumSummaryField(targetSummaries, 'cancelledCount'),
+                refundedCount: sumSummaryField(targetSummaries, 'refundedCount'),
+                cancelledTotal: sumSummaryField(targetSummaries, 'cancelledTotal'),
+                refundedTotal: sumSummaryField(targetSummaries, 'refundedTotal'),
+                confirmedAmount: sumSummaryField(targetSummaries, 'confirmedAmount'),
+                unconfirmedAmount: sumSummaryField(targetSummaries, 'unconfirmedAmount'),
+                partnerPayoutTotal: sumSummaryField(targetSummaries, 'partnerPayoutTotal'),
+            };
+        }
+
+        const targetBookings = bookings.filter((b: BookingState) => {
+            const d = new Date(b.pickupDate || '');
+            return d >= start && d <= end && !b.isDeleted && b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED;
         });
 
         const firstDayOfMonth = new Date(end.getFullYear(), end.getMonth(), 1);
@@ -116,19 +248,6 @@ export const useAdminStats = ({
         });
 
         const totalRevenue = targetBookings.reduce((sum: number, b: BookingState) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
-        const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
-
-        const expByCategory: Record<string, number> = {};
-        targetExps.forEach((e: Expenditure) => {
-            const cat = e.category || '기타';
-            expByCategory[cat] = (expByCategory[cat] || 0) + (e.amount || 0);
-        });
-
-        const prevDate = new Date(end);
-        prevDate.setDate(prevDate.getDate() - 1);
-        const prevDateStr = prevDate.toISOString().split('T')[0];
-        const prevClosing = (closings || []).find((c: CashClosing) => c.date === prevDateStr);
-        const openingCash = prevClosing ? prevClosing.actualCashOnHand : 0;
 
         const cancelledBookings = bookings.filter(b => {
             const d = new Date(b.pickupDate || '');
@@ -141,12 +260,11 @@ export const useAdminStats = ({
 
         const cancelledTotal = cancelledBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
         const refundedTotal = refundedBookings.reduce((sum, b) => sum + (b.settlementHardCopyAmount ?? b.finalPrice ?? 0), 0);
-        
-        // [스봉이] 마감판 전용 디테일 KPI 계산 다시 심어드려요 💅✨
+
         let confirmedAmount = 0;
         let unconfirmedAmount = 0;
         let partnerPayoutTotal = 0;
-        
+
         targetBookings.forEach(b => {
             const amount = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
             if (b.settlementStatus === 'CONFIRMED') {
@@ -156,13 +274,6 @@ export const useAdminStats = ({
             }
             if (b.branchSettlementAmount) {
                 partnerPayoutTotal += b.branchSettlementAmount;
-            }
-        });
-
-        const discountCodeCounts: Record<string, number> = {};
-        targetBookings.forEach(b => {
-            if (b.discountCode) {
-                discountCodeCounts[b.discountCode] = (discountCodeCounts[b.discountCode] || 0) + 1;
             }
         });
 
@@ -187,9 +298,55 @@ export const useAdminStats = ({
             unconfirmedAmount,
             partnerPayoutTotal,
         };
-    }, [bookings, expenditures, revenueStartDate, revenueEndDate, closings]);
+    }, [bookings, closings, dailySummaryContext, expenditures, revenueEndDate, revenueStartDate]);
 
     const accountingStats = useMemo(() => {
+        if (dailySummaryContext.hasSqlSummaries && revenueMonthlySummaries.length > 0) {
+            const start = new Date(revenueStartDate);
+            const end = new Date(revenueEndDate);
+            end.setHours(23, 59, 59, 999);
+
+            const filteredMonthlySummaries = revenueMonthlySummaries.filter((summary) => {
+                const summaryMonth = new Date(summary.month);
+                return summaryMonth <= end && summaryMonth >= new Date(start.getFullYear(), start.getMonth(), 1);
+            });
+
+            const sortedDaily = [...dailySummaryContext.filteredDailySummaries]
+                .sort((a, b) => a.date.localeCompare(b.date))
+                .map((summary) => ({
+                    date: summary.date,
+                    count: summary.activeBookingCount,
+                    total: summary.totalRevenue,
+                    cumulative: 0,
+                }));
+
+            let dailyAcc = 0;
+            sortedDaily.forEach((summary) => {
+                dailyAcc += summary.total;
+                summary.cumulative = dailyAcc;
+            });
+
+            const sortedMonthly = [...filteredMonthlySummaries]
+                .sort((a, b) => a.month.localeCompare(b.month))
+                .map((summary) => ({
+                    month: summary.month,
+                    count: summary.activeBookingCount,
+                    total: summary.totalRevenue,
+                    cumulative: 0,
+                }));
+
+            let monthlyAcc = 0;
+            sortedMonthly.forEach((summary) => {
+                monthlyAcc += summary.total;
+                summary.cumulative = monthlyAcc;
+            });
+
+            return {
+                daily: sortedDaily.reverse(),
+                monthly: sortedMonthly.reverse(),
+            };
+        }
+
         const statsMap: Record<string, { date: string, count: number, total: number, cumulative: number }> = {};
         const monthMap: Record<string, { month: string, count: number, total: number, cumulative: number }> = {};
         const start = new Date(revenueStartDate);
@@ -227,14 +384,13 @@ export const useAdminStats = ({
             daily: sortedDaily.reverse(),
             monthly: sortedMonthly.reverse()
         };
-    }, [bookings, revenueStartDate, revenueEndDate]);
+    }, [bookings, dailySummaryContext, revenueEndDate, revenueMonthlySummaries, revenueStartDate]);
 
     return {
         revenueStats,
         dailySettlementStats,
         accountingDailyStats: accountingStats.daily,
         accountingMonthlyStats: accountingStats.monthly,
-        // [스봉이] 월 정산 통제판(Control Tower)을 위한 고성능 집계 데이터 추가 💅✨
         monthlyControlStats: {
             gross: dailySettlementStats.totalRevenue,
             confirmed: dailySettlementStats.confirmedAmount,

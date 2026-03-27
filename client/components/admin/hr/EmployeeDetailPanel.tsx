@@ -81,6 +81,21 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
     };
   }, [formData]);
 
+  const selectedBranchLocationId = React.useMemo(() => {
+    if (!formData.branchId && !formData.branchCode) return '';
+
+    const directMatch = locations.find((location) => location.id === formData.branchId);
+    if (directMatch) return directMatch.id;
+
+    const branchToken = String(formData.branchCode || formData.branchId || '').trim().toLowerCase();
+    if (!branchToken) return '';
+
+    return locations.find((location) =>
+      String(location.branchCode || '').trim().toLowerCase() === branchToken
+      || String(location.shortCode || '').trim().toLowerCase() === branchToken
+    )?.id || '';
+  }, [formData.branchCode, formData.branchId, locations]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -187,7 +202,7 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
                         value={formData.loginId || ''} 
                         onChange={e => setFormData({ ...formData, loginId: e.target.value })}
                         className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all" 
-                        placeholder={formData.branchId ? `${formData.branchId}` : '직접 입력'}
+                        placeholder={formData.branchCode || formData.branchId || '직접 입력'}
                         title="로그인 ID 입력"
                       />
                     </div>
@@ -222,8 +237,15 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 ml-1">소속 지점</label>
                       <select 
-                        value={formData.branchId || ''} 
-                        onChange={e => setFormData({ ...formData, branchId: e.target.value })}
+                        value={selectedBranchLocationId} 
+                        onChange={e => {
+                          const nextLocation = locations.find((location) => location.id === e.target.value);
+                          setFormData({
+                            ...formData,
+                            branchId: nextLocation?.id || '',
+                            branchCode: nextLocation?.branchCode || nextLocation?.shortCode || '',
+                          });
+                        }}
                         title="소속 지점 선택"
                         className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none"
                       >

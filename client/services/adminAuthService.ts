@@ -31,6 +31,7 @@ const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
 const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const ACCESS_TOKEN_FALLBACK_TTL_MS = 55 * 60 * 1000;
 const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+const SUPABASE_DATA_SCHEMA = 'public';
 
 const clearStoredSupabaseAdminSession = () => {
   localStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
@@ -116,6 +117,43 @@ const mapSupabaseRoleToLegacyRole = (roleCode?: string) => {
   }
 };
 
+const resolveLegacyLocationId = async (
+  accessToken: string,
+  branchCode?: string,
+  fallbackBranchId?: string,
+  preferredLocationId?: string
+) => {
+  const normalizedPreferredLocationId = String(preferredLocationId || '').trim();
+  if (normalizedPreferredLocationId) {
+    return normalizedPreferredLocationId;
+  }
+
+  const normalizedBranchCode = String(branchCode || '').trim();
+  if (!normalizedBranchCode) {
+    return '';
+  }
+
+  try {
+    const [byBranchCode, byShortCode] = await Promise.all([
+      supabaseRequest<Array<{ id: string }>>(
+        `/rest/v1/locations?select=id&branch_code=eq.${encodeURIComponent(normalizedBranchCode)}&is_active=eq.true&limit=1`,
+        {},
+        accessToken
+      ),
+      supabaseRequest<Array<{ id: string }>>(
+        `/rest/v1/locations?select=id&short_code=eq.${encodeURIComponent(normalizedBranchCode)}&is_active=eq.true&limit=1`,
+        {},
+        accessToken
+      ),
+    ]);
+
+    return String(byBranchCode[0]?.id || byShortCode[0]?.id || fallbackBranchId || '').trim();
+  } catch (error) {
+    console.warn('[AdminAuth] legacy location id lookup failed:', error);
+    return String(fallbackBranchId || '').trim();
+  }
+};
+
 export const getAdminAuthProvider = (): AdminAuthProvider => {
   if (configuredProvider === 'supabase' && supabaseUrl && supabasePublishableKey) {
     return 'supabase';
@@ -126,6 +164,10 @@ export const getAdminAuthProvider = (): AdminAuthProvider => {
 export const isSupabaseAdminAuthEnabled = () => getAdminAuthProvider() === 'supabase';
 
 export const warmAdminAuth = async () => {
+  if (isSupabaseAdminAuthEnabled()) {
+    return;
+  }
+
   await Promise.allSettled([
     ensureAuth(),
     import('../firebaseApp'),
@@ -253,7 +295,9 @@ export const getActiveAdminRequestHeaders = async (): Promise<Record<string, str
 
   const supabaseAccessToken = (await ensureActiveAdminSession())?.accessToken || getActiveAdminAccessToken();
   if (supabaseAccessToken) {
+    headers.Authorization = `Bearer ${supabaseAccessToken}`;
     headers['X-Supabase-Access-Token'] = supabaseAccessToken;
+    return headers;
   }
 
   try {
@@ -307,12 +351,17 @@ const supabaseRequest = async <T>(
   options: RequestInit = {},
   accessToken?: string
 ): Promise<T> => {
+  const isRestRequest = path.startsWith('/rest/v1/');
   const response = await fetch(`${supabaseUrl}${path}`, {
     ...options,
     headers: {
       apikey: supabasePublishableKey,
       Authorization: `Bearer ${accessToken || supabasePublishableKey}`,
       'Content-Type': 'application/json',
+      ...(isRestRequest ? {
+        'Accept-Profile': SUPABASE_DATA_SCHEMA,
+        'Content-Profile': SUPABASE_DATA_SCHEMA,
+      } : {}),
       ...(options.headers || {}),
     },
   });
@@ -518,7 +567,13 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     || 'ops_staff';
 
   const primaryBranch = assignments.find((entry: any) => entry.is_primary) || assignments[0] || null;
-  const branchId = (primaryBranch as any)?.branch?.id || (primaryBranch as any)?.branch_id || '';
+  const branchCode = (primaryBranch as any)?.branch?.branch_code || '';
+  const branchId = await resolveLegacyLocationId(
+    accessToken,
+    branchCode,
+    '',
+    verifiedAdmin?.branchId ? String(verifiedAdmin.branchId) : ''
+  );
 
   persistSupabaseAdminSession({
     accessToken,
@@ -539,7 +594,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     role: mapSupabaseRoleToLegacyRole(primaryRole),
     email: employee.email || profile?.email || user.email || identifier,
     branchId: branchId || '',
-    branchCode: (primaryBranch as any)?.branch?.branch_code || '',
+    branchCode: branchCode || '',
     provider: 'supabase',
     employeeId: employee.id,
     profileId: user.id,

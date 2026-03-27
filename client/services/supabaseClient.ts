@@ -10,19 +10,47 @@ const SUPABASE_KEY = (
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   ''
 ).trim();
+const SUPABASE_DATA_SCHEMA = 'public';
 
 export const isSupabaseDataEnabled = (): boolean =>
   Boolean(SUPABASE_URL) && Boolean(SUPABASE_KEY);
+
+const resolveAccessToken = async (accessToken?: string) => {
+  const explicitToken = (accessToken || '').trim();
+  if (explicitToken) {
+    return explicitToken;
+  }
+
+  try {
+    const {
+      isSupabaseAdminAuthEnabled,
+      ensureActiveAdminSession,
+      getActiveAdminAccessToken,
+    } = await import('./adminAuthService');
+
+    if (!isSupabaseAdminAuthEnabled()) {
+      return '';
+    }
+
+    const activeSession = await ensureActiveAdminSession();
+    return activeSession?.accessToken || getActiveAdminAccessToken();
+  } catch (error) {
+    console.warn('[SupabaseClient] 관리자 세션 토큰 확인 실패:', error);
+    return '';
+  }
+};
 
 /**
  * Supabase REST API GET 요청
  * snake_case 응답을 그대로 반환 (호출측에서 변환)
  */
 export async function supabaseGet<T>(path: string, accessToken?: string): Promise<T> {
+  const resolvedAccessToken = await resolveAccessToken(accessToken);
   const headers: Record<string, string> = {
     'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${accessToken || SUPABASE_KEY}`,
+    'Authorization': `Bearer ${resolvedAccessToken || SUPABASE_KEY}`,
     'Accept': 'application/json',
+    'Accept-Profile': SUPABASE_DATA_SCHEMA,
   };
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers });
@@ -41,10 +69,13 @@ export async function supabaseMutate<T>(
   body?: unknown,
   accessToken?: string
 ): Promise<T | null> {
+  const resolvedAccessToken = await resolveAccessToken(accessToken);
   const headers: Record<string, string> = {
     'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${accessToken || SUPABASE_KEY}`,
+    'Authorization': `Bearer ${resolvedAccessToken || SUPABASE_KEY}`,
     'Content-Type': 'application/json',
+    'Accept-Profile': SUPABASE_DATA_SCHEMA,
+    'Content-Profile': SUPABASE_DATA_SCHEMA,
     'Prefer': 'return=representation',
   };
 

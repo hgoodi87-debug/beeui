@@ -258,3 +258,69 @@ export interface Expenditure {
     createdBy: string;
     createdAt: string;
 }
+
+export interface AdminRevenueDailySummary {
+    date: string;
+    branchId?: string;
+    branchCode?: string;
+    branchName?: string;
+    bookingCount: number;
+    activeBookingCount: number;
+    deliveryCount: number;
+    storageCount: number;
+    bagCount: number;
+    handBagCount: number;
+    carrierCount: number;
+    strollerBicycleCount: number;
+    completedCount: number;
+    cancelledCount: number;
+    refundedCount: number;
+    totalRevenue: number;
+    cancelledTotal: number;
+    refundedTotal: number;
+    cashRevenue: number;
+    cardRevenue: number;
+    appleRevenue: number;
+    samsungRevenue: number;
+    wechatRevenue: number;
+    alipayRevenue: number;
+    naverRevenue: number;
+    kakaoRevenue: number;
+    paypalRevenue: number;
+    confirmedAmount: number;
+    unconfirmedAmount: number;
+    partnerPayoutTotal: number;
+}
+
+export interface AdminRevenueMonthlySummary {
+    month: string;
+    branchId?: string;
+    branchCode?: string;
+    branchName?: string;
+    bookingCount: number;
+    activeBookingCount: number;
+    deliveryCount: number;
+    storageCount: number;
+    bagCount: number;
+    handBagCount: number;
+    carrierCount: number;
+    strollerBicycleCount: number;
+    completedCount: number;
+    cancelledCount: number;
+    refundedCount: number;
+    totalRevenue: number;
+    cancelledTotal: number;
+    refundedTotal: number;
+    cashRevenue: number;
+    cardRevenue: number;
+    appleRevenue: number;
+    samsungRevenue: number;
+    wechatRevenue: number;
+    alipayRevenue: number;
+    naverRevenue: number;
+    kakaoRevenue: number;
+    paypalRevenue: number;
+    confirmedAmount: number;
+    unconfirmedAmount: number;
+    partnerPayoutTotal: number;
+}

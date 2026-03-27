@@ -1,5 +1,5 @@
 # Beeliber Database Migration Changelog
-> 최종 업데이트: 2026.03.27 | 안티그래비티 공유용
+> 최종 업데이트: 2026.03.28 | 안티그래비티 공유용
 
 ---
 
@@ -12,8 +12,10 @@
 | 2026.03.26 | 하네스 v1 마이그레이션 | 39개 테이블 + RLS + 인덱스 + 시드 |
 | 2026.03.26 | Firebase 데이터 이전 | locations 41건, expenditures 29건 등 |
 | 2026.03.26 | Firebase Firestore 제거 | Supabase 어댑터 레이어로 전환 |
-| 2026.03.27 | **새 프로젝트로 전환** | `xpnfjolqiffduedwtxey` (ap-southeast-1) |
+| 2026.03.27 | **새 프로젝트로 전환** | `xpnfjolqiffduedwtxey` (ap-northeast-1) |
 | 2026.03.27 | 데이터 복사 완료 | 9개 테이블 247건 + 시드 데이터 |
+| 2026.03.28 | Storage 런타임 브리지 적용 | `storage_assets` 테이블 + 5개 Storage 버킷 생성/정렬 |
+| 2026.03.28 | Admin Reporting View 추가 | `admin_booking_list_v1`, `admin_revenue_daily_v1`, `admin_revenue_monthly_v1` |
 
 ---
 
@@ -22,7 +24,7 @@
 ```
 프로젝트: xpnfjolqiffduedwtxey
 URL: https://xpnfjolqiffduedwtxey.supabase.co
-리전: ap-southeast-1
+리전: ap-northeast-1
 ```
 
 ### 이전 프로젝트 (비활성)
@@ -169,8 +171,16 @@ supabase/migrations/
 ├── 003_rls.sql
 ├── 004_seed_data.sql
 ├── 005_firebase_bridge_tables.sql
+├── 20260327065330_remote_baseline.sql
+├── 20260328000100_storage_runtime_bridge.sql
+├── 20260328000200_admin_reporting_views.sql
 └── FULL_MIGRATION_FOR_NEW_PROJECT.sql ← 통합본 (deprecated)
 ```
+
+### 적용 주의
+
+- `20260322_000002_storage_bucket_rls_draft.sql`은 현재 운영 프로젝트에 직접 적용하지 않는다.
+- Storage 실운영 브리지는 `20260328000100_storage_runtime_bridge.sql`이 기준이다.
 
 ---
 

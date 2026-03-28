@@ -1635,7 +1635,10 @@ export const StorageService = {
         }
 
         console.log("[Storage] Location saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase location save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase location save failed, falling back to Firebase:", e);
+      }
     }
 
     try {
@@ -1653,7 +1656,10 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(id)}`, 'DELETE');
-      } catch (e) { console.warn("[Storage] Supabase location delete failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase location delete failed, falling back to Firebase:", e);
+      }
     }
     try {
       await deleteDoc(doc(db, "locations", id));
@@ -1709,7 +1715,10 @@ export const StorageService = {
         const { supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('app_settings?key=eq.storage_tiers', 'PATCH', { value: { tiers: normalizedTiers } });
         console.log("[Storage] Storage tiers saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase tiers save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase tiers save failed, falling back to Firebase:", e);
+      }
     }
     try {
       await setDoc(doc(db, "settings", "storage_tiers"), { tiers: normalizedTiers });
@@ -1795,7 +1804,10 @@ export const StorageService = {
         const { supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('app_settings?key=eq.delivery_prices', 'PATCH', { value: normalized });
         console.log("[Storage] Delivery prices saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase prices save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase prices save failed, falling back to Firebase:", e);
+      }
     }
     try {
       await setDoc(doc(db, "settings", "delivery_prices"), normalized);
@@ -1810,7 +1822,11 @@ export const StorageService = {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('app_settings?key=eq.hero', 'PATCH', { value: config });
-      } catch (e) { console.warn("[Storage] Supabase hero save failed:", e); }
+        console.log("[Storage] Hero config saved to Supabase ✅");
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase hero save failed, falling back to Firebase:", e);
+      }
     }
     try {
       await setDoc(doc(db, "settings", "hero"), config);
@@ -1910,9 +1926,17 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('partnership_inquiries', 'POST', camelToSnake(safeInquiry));
+        const payload = camelToSnake(safeInquiry);
+        if (inquiry.id) {
+          await supabaseMutate(`partnership_inquiries?id=eq.${encodeURIComponent(inquiry.id)}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('partnership_inquiries', 'POST', payload);
+        }
         console.log("[Storage] Inquiry saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase inquiry save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase inquiry save failed, falling back to Firebase:", e);
+      }
     }
     try {
       if (inquiry.id) {
@@ -1925,7 +1949,12 @@ export const StorageService = {
 
   deleteInquiry: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate(`partnership_inquiries?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+      try {
+        await supabaseMutate(`partnership_inquiries?id=eq.${id}`, 'DELETE');
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase inquiry delete failed, falling back to Firebase:', e);
+      }
     }
     try {
       await deleteDoc(doc(db, "inquiries", id));
@@ -1954,7 +1983,10 @@ export const StorageService = {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('app_settings?key=eq.privacy_policy', 'PATCH', { value: data });
-      } catch (e) { console.warn("[Storage] Supabase privacy save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase privacy save failed, falling back to Firebase:", e);
+      }
     }
     await setDoc(doc(db, "settings", "privacy_policy"), data);
   },
@@ -1977,7 +2009,10 @@ export const StorageService = {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('app_settings?key=eq.terms_policy', 'PATCH', { value: data });
-      } catch (e) { console.warn("[Storage] Supabase terms save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase terms save failed, falling back to Firebase:", e);
+      }
     }
     await setDoc(doc(db, "settings", "terms_policy"), data);
   },
@@ -2000,7 +2035,10 @@ export const StorageService = {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('app_settings?key=eq.qna_policy', 'PATCH', { value: data });
-      } catch (e) { console.warn("[Storage] Supabase qna save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase qna save failed, falling back to Firebase:", e);
+      }
     }
     await setDoc(doc(db, "settings", "qna_policy"), data);
   },
@@ -2014,14 +2052,16 @@ export const StorageService = {
   // --- Accounting / Cash Closing ---
   saveCashClosing: async (closing: CashClosing): Promise<void> => {
     const safeClosing = JSON.parse(JSON.stringify(closing));
-    // Supabase 듀얼 라이트
     if (isSupabaseDataEnabled()) {
       try {
         const { camelToSnake } = await import('./supabaseClient');
         const { supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('daily_closings', 'POST', camelToSnake(safeClosing));
         console.log("[Storage] Cash closing saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase cash closing save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase cash closing save failed, falling back to Firebase:", e);
+      }
     }
     try {
       if (closing.id) {
@@ -2078,6 +2118,16 @@ export const StorageService = {
   },
 
   clearCashClosings: async (): Promise<void> => {
+    if (isSupabaseDataEnabled()) {
+      try {
+        await supabaseMutate('daily_closings?id=not.is.null', 'DELETE');
+        console.log('[Storage] Cash closings cleared from Supabase ✅');
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase clear cash closings failed, falling back to Firebase:', e);
+      }
+    }
+
     try {
       const snap = await getDocs(collection(db, "daily_closings"));
       const batch = writeBatch(db);
@@ -2104,7 +2154,10 @@ export const StorageService = {
         const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
         await supabaseMutate('expenditures', 'POST', camelToSnake(safeExp));
         console.log("[Storage] Expenditure saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase expenditure save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase expenditure save failed, falling back to Firebase:", e);
+      }
     }
     try {
       if (expenditure.id) {
@@ -2395,9 +2448,6 @@ export const StorageService = {
    */
   deduplicateAdmins: async (): Promise<{ total: number, removed: number }> => {
     try {
-      const snap = await getDocs(collection(db, "admins"));
-      const admins = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
-
       const normalize = (value?: string) => value?.trim().toLowerCase() || '';
       const getFreshness = (admin: AdminUser) => new Date(admin.updatedAt || admin.createdAt || 0).getTime();
       const hasPassword = (admin: AdminUser) => String(admin.password || '').trim().length > 0;
@@ -2414,6 +2464,13 @@ export const StorageService = {
         admin.updatedAt,
         Array.isArray(admin.permissions) && admin.permissions.length > 0 ? 'permissions' : ''
       ].filter(Boolean).length);
+
+      const admins = isSupabaseDataEnabled()
+        ? await StorageService.getAdmins()
+        : (() => {
+            const snapPromise = getDocs(collection(db, "admins"));
+            return snapPromise.then((snap) => snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser)));
+          })();
 
       const uniqueGroups: Record<string, AdminUser[]> = {};
       admins.forEach(admin => {
@@ -2471,13 +2528,19 @@ export const StorageService = {
         return { total: admins.length, removed: 0 };
       }
 
-      const batchSize = 450;
-      for (let i = 0; i < idsToRemove.length; i += batchSize) {
-        const currentBatch = writeBatch(db);
-        idsToRemove.slice(i, i + batchSize).forEach((id) => {
-          currentBatch.delete(doc(db, "admins", id));
-        });
-        await currentBatch.commit();
+      if (isSupabaseDataEnabled()) {
+        for (const id of idsToRemove) {
+          await StorageService.deleteAdmin(id);
+        }
+      } else {
+        const batchSize = 450;
+        for (let i = 0; i < idsToRemove.length; i += batchSize) {
+          const currentBatch = writeBatch(db);
+          idsToRemove.slice(i, i + batchSize).forEach((id) => {
+            currentBatch.delete(doc(db, "admins", id));
+          });
+          await currentBatch.commit();
+        }
       }
 
       return { total: admins.length, removed: idsToRemove.length };
@@ -3017,9 +3080,17 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('branch_prospects', 'POST', camelToSnake({ ...prospect }));
+        const payload = camelToSnake({ ...prospect });
+        if (prospect.id && !String(prospect.id).startsWith('PROSPECT-TEMP-')) {
+          await supabaseMutate(`branch_prospects?id=eq.${encodeURIComponent(String(prospect.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('branch_prospects', 'POST', payload);
+        }
         console.log("[Storage] Branch prospect saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase prospect save failed:", e); }
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase prospect save failed, falling back to Firebase:", e);
+      }
     }
     try {
       const safeData = { ...prospect, updatedAt: new Date().toISOString() };
@@ -3036,7 +3107,12 @@ export const StorageService = {
   },
   deleteBranchProspect: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate(`branch_prospects?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+      try {
+        await supabaseMutate(`branch_prospects?id=eq.${id}`, 'DELETE');
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase branch prospect delete failed, falling back to Firebase:', e);
+      }
     }
     try {
       await deleteDoc(doc(db, "branch_prospects", id));
@@ -3045,6 +3121,15 @@ export const StorageService = {
 
   // --- Notices ---
   subscribeNotices: (callback: (data: SystemNotice[]) => void): (() => void) => {
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<SystemNotice>(
+        'system_notices?select=*&order=created_at.desc',
+        callback,
+        (row) => snakeToCamel(row) as unknown as SystemNotice,
+        10000
+      );
+    }
+
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<SystemNotice[]>(
         '/api/collections/notices',
@@ -3081,7 +3166,18 @@ export const StorageService = {
 
   saveNotice: async (notice: SystemNotice): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate('system_notices', 'POST', camelToSnake({ ...notice } as Record<string, unknown>)); console.log("[Storage] Notice saved to Supabase ✅"); } catch (e) { console.warn(e); }
+      try {
+        const payload = camelToSnake({ ...notice } as Record<string, unknown>);
+        if (notice.id) {
+          await supabaseMutate(`system_notices?id=eq.${encodeURIComponent(String(notice.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('system_notices', 'POST', payload);
+        }
+        console.log("[Storage] Notice saved to Supabase ✅");
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase notice save failed, falling back to Firebase:", e);
+      }
     }
     const safeData = JSON.parse(JSON.stringify(notice));
     try {
@@ -3099,7 +3195,12 @@ export const StorageService = {
 
   deleteNotice: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate(`system_notices?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+      try {
+        await supabaseMutate(`system_notices?id=eq.${id}`, 'DELETE');
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase notice delete failed, falling back to Firebase:', e);
+      }
     }
     try {
       await deleteDoc(doc(db, "notices", id));
@@ -3127,6 +3228,15 @@ export const StorageService = {
   },
 
   subscribeTipsAreas: (callback: (data: any[]) => void) => {
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<any>(
+        'cms_areas?select=*&order=sort_order',
+        callback,
+        (row) => snakeToCamel(row),
+        10000
+      );
+    }
+
     const q = query(collection(db, "tips_areas"), orderBy("order", "asc"));
     return onSnapshot(q, (snapshot: any) => {
       callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
@@ -3142,7 +3252,17 @@ export const StorageService = {
 
   saveTipsArea: async (area: any): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate('cms_areas', 'POST', camelToSnake({ ...area })); } catch (e) { console.warn(e); }
+      try {
+        const payload = camelToSnake({ ...area });
+        if (area.id) {
+          await supabaseMutate(`cms_areas?id=eq.${encodeURIComponent(String(area.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('cms_areas', 'POST', payload);
+        }
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase tips area save failed, falling back to Firebase:', e);
+      }
     }
     try {
       const safeData = { ...area, updatedAt: new Date().toISOString() };
@@ -3159,7 +3279,12 @@ export const StorageService = {
 
   deleteTipsArea: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate(`cms_areas?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+      try {
+        await supabaseMutate(`cms_areas?id=eq.${id}`, 'DELETE');
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase tips area delete failed, falling back to Firebase:', e);
+      }
     }
     await deleteDoc(doc(db, "tips_areas", id));
   },
@@ -3181,6 +3306,15 @@ export const StorageService = {
   },
 
   subscribeTipsThemes: (callback: (data: any[]) => void) => {
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<any>(
+        'cms_themes?select=*&order=sort_order',
+        callback,
+        (row) => snakeToCamel(row),
+        10000
+      );
+    }
+
     const q = query(collection(db, "tips_themes"), orderBy("order", "asc"));
     return onSnapshot(q, (snapshot: any) => {
       callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
@@ -3195,7 +3329,17 @@ export const StorageService = {
 
   saveTipsTheme: async (theme: any): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate('cms_themes', 'POST', camelToSnake({ ...theme })); } catch (e) { console.warn(e); }
+      try {
+        const payload = camelToSnake({ ...theme });
+        if (theme.id) {
+          await supabaseMutate(`cms_themes?id=eq.${encodeURIComponent(String(theme.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('cms_themes', 'POST', payload);
+        }
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase tips theme save failed, falling back to Firebase:', e);
+      }
     }
     try {
       const safeData = { ...theme, updatedAt: new Date().toISOString() };
@@ -3212,12 +3356,33 @@ export const StorageService = {
 
   deleteTipsTheme: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate(`cms_themes?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+      try {
+        await supabaseMutate(`cms_themes?id=eq.${id}`, 'DELETE');
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase tips theme delete failed, falling back to Firebase:', e);
+      }
     }
     await deleteDoc(doc(db, "tips_themes", id));
   },
 
   subscribeTipsContents: (filters: { area_slug?: string, theme_tag?: string, slug?: string }, callback: (data: any[]) => void) => {
+    if (isSupabaseDataEnabled()) {
+      const params = new URLSearchParams();
+      params.set('select', '*');
+      params.set('order', 'created_at.desc');
+      if (filters.area_slug) params.set('area_slug', `eq.${filters.area_slug}`);
+      if (filters.theme_tag) params.set('theme_tags', `cs.{${filters.theme_tag}}`);
+      if (filters.slug) params.set('slug', `eq.${filters.slug}`);
+
+      return supabasePollingSubscribe<any>(
+        `cms_contents?${params.toString()}`,
+        callback,
+        (row) => snakeToCamel(row),
+        10000
+      );
+    }
+
     let q = query(collection(db, "tips_contents"));
     if (filters.area_slug) q = query(q, where("area_slug", "==", filters.area_slug));
     if (filters.theme_tag) q = query(q, where("theme_tags", "array-contains", filters.theme_tag));
@@ -3232,7 +3397,17 @@ export const StorageService = {
 
   saveTipsContent: async (content: any): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate('cms_contents', 'POST', camelToSnake({ ...content })); } catch (e) { console.warn(e); }
+      try {
+        const payload = camelToSnake({ ...content });
+        if (content.id) {
+          await supabaseMutate(`cms_contents?id=eq.${encodeURIComponent(String(content.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('cms_contents', 'POST', payload);
+        }
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase tips content save failed, falling back to Firebase:', e);
+      }
     }
     try {
       const safeData = { ...content, updatedAt: new Date().toISOString() };
@@ -3249,7 +3424,12 @@ export const StorageService = {
 
   deleteTipsContent: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate(`cms_contents?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+      try {
+        await supabaseMutate(`cms_contents?id=eq.${id}`, 'DELETE');
+        return;
+      } catch (e) {
+        console.warn('[Storage] Supabase tips content delete failed, falling back to Firebase:', e);
+      }
     }
     await deleteDoc(doc(db, "tips_contents", id));
   }

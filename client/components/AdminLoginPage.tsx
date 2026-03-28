@@ -99,12 +99,23 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       console.error("Login Error Details:", err);
       const errCode = err.code || "unknown";
       const errMsg = err.message || "Unknown error";
+      const normalizedCode = String(errCode).toLowerCase();
+      const normalizedMessage = String(errMsg).toLowerCase();
 
       if (errCode === 'invalid-identifier') {
         setError('로그인 ID 형식이 올바르지 않습니다.');
       } else if (errCode === 'supabase/local-email-login-required') {
         setError('로컬 프리뷰에서는 이메일 형식으로 로그인해 주세요. 로그인ID/지점ID는 Firebase localhost 허용 후에 붙습니다.');
-      } else if (errCode === 'unauthenticated' || errCode === 'functions/unauthenticated' || errCode === 'supabase/400' || errCode === 'invalid_credentials') {
+      } else if (
+        errCode === 'unauthenticated'
+        || errCode === 'functions/unauthenticated'
+        || errCode === 'supabase/400'
+        || errCode === 'supabase/401'
+        || errCode === 'invalid_credentials'
+        || normalizedCode === '400'
+        || normalizedCode === '401'
+        || normalizedMessage.includes('invalid login credentials')
+      ) {
         setError(isSupabaseMode ? '로그인 ID 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.' : '이름 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.');
       } else if (errCode === 'permission-denied' || errCode === 'functions/permission-denied') {
         setError('해당 관리자 계정의 접근 권한이 거부되었습니다.');

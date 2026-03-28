@@ -33,6 +33,111 @@ const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const ACCESS_TOKEN_FALLBACK_TTL_MS = 55 * 60 * 1000;
 const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 const SUPABASE_DATA_SCHEMA = 'public';
+const SUPABASE_PUBLIC_ADMIN_DIRECTORY_SELECT = 'select=id,name,email,login_id,employee_code,employment_status';
+
+const ADMIN_IDENTIFIER_EMAIL_FALLBACKS: Record<string, string> = {
+  'admin': 'ceo@bee-liber.com',
+  'ags': 'ags@bee-liber.com',
+  'bpy': 'bpy@bee-liber.com',
+  'bsn': 'bsn@bee-liber.com',
+  'cmr': 'cmr@bee-liber.com',
+  'cwn': 'cwn@bee-liber.com',
+  'dbcjsaud': 'dbcjsaud@gmail.com',
+  'ddp': 'ddp@bee-liber.com',
+  'dgu': 'dgu@bee-liber.com',
+  'gal': 'gal@bee-liber.com',
+  'ghe': 'ghe@bee-liber.com',
+  'gju': 'gju@bee-liber.com',
+  'gmp': 'gmp@bee-liber.com',
+  'hbo': 'hbo@bee-liber.com',
+  'hda': 'hda@bee-liber.com',
+  'hde': 'hde@bee-liber.com',
+  'in1t': 'in1t@bee-liber.com',
+  'in2t': 'in2t@bee-liber.com',
+  'isd': 'isd@bee-liber.com',
+  'jdm': 'jdm@bee-liber.com',
+  'jej': 'jej@bee-liber.com',
+  'jno': 'jno@bee-liber.com',
+  'md2': 'md2@bee-liber.com',
+  'mdd': 'mdd@bee-liber.com',
+  'mdm': 'mdm@bee-liber.com',
+  'mec': 'mec@bee-liber.com',
+  'mgh': 'mgh@bee-liber.com',
+  'mgn': 'mgn@bee-liber.com',
+  'miw': 'miw@bee-liber.com',
+  'mmp': 'mmp@bee-liber.com',
+  'msis': 'msis@bee-liber.com',
+  'msus': 'msus@bee-liber.com',
+  'mys': 'mys@bee-liber.com',
+  'ndm': 'ndm@bee-liber.com',
+  'npo': 'npo@bee-liber.com',
+  'ptk': 'ptk@bee-liber.com',
+  'rlaxowl98': 'rlaxowl98@gmail.con',
+  'sdo': 'sdo@bee-liber.com',
+  'srk': 'srk@bee-liber.com',
+  'swn': 'swn@bee-liber.com',
+  'uso': 'uso@bee-liber.com',
+  'uss': 'uss@bee-liber.com',
+  'ydo': 'ydo@bee-liber.com',
+  'yoo': 'yoo0912345@gmail.com',
+  '강남 신사점': 'msis@bee-liber.com',
+  '강남역점': 'mgn@bee-liber.com',
+  '광안리지점': 'gal@bee-liber.com',
+  '광장시장점': 'mgh@bee-liber.com',
+  '광주지점': 'gju@bee-liber.com',
+  '김포공항': 'gmp@bee-liber.com',
+  '김해공항지점': 'ghe@bee-liber.com',
+  '남대문지점': 'ndm@bee-liber.com',
+  '남포지점': 'npo@bee-liber.com',
+  '대구지점': 'dgu@bee-liber.com',
+  '동대문': 'mdd@bee-liber.com',
+  '동대문ddp점': 'ddp@bee-liber.com',
+  '동대문지점': 'mdm@bee-liber.com',
+  '마포지점': 'mmp@bee-liber.com',
+  '머니박스제일환전센터': 'mec@bee-liber.com',
+  '명동2호점': 'md2@bee-liber.com',
+  '바오': 'hbo@bee-liber.com',
+  '부산역지점': 'bsn@bee-liber.com',
+  '부평지점': 'bpy@bee-liber.com',
+  '서울역지점': 'srk@bee-liber.com',
+  '성수역점': 'msus@bee-liber.com',
+  '송도지점': 'sdo@bee-liber.com',
+  '수원지점': 'swn@bee-liber.com',
+  '안국역지점': 'ags@bee-liber.com',
+  '여의도지점': 'ydo@bee-liber.com',
+  '용산': 'mys@bee-liber.com',
+  '운서역지점': 'uso@bee-liber.com',
+  '울산삼산지점': 'uss@bee-liber.com',
+  '이태원지점': 'miw@bee-liber.com',
+  '인사동지점': 'isd@bee-liber.com',
+  '인천공항 t1': 'in1t@bee-liber.com',
+  '인천공항 t2': 'in2t@bee-liber.com',
+  '제주동문시장점': 'jdm@bee-liber.com',
+  '제주지점': 'jej@bee-liber.com',
+  '종로지점': 'jno@bee-liber.com',
+  '진호': 'rlaxowl98@gmail.con',
+  '창원지점': 'cwn@bee-liber.com',
+  '천명': 'dbcjsaud@gmail.com',
+  '충무로지점': 'cmr@bee-liber.com',
+  '평택지점': 'ptk@bee-liber.com',
+  '해운대지점': 'hde@bee-liber.com',
+  '현정': 'yoo0912345@gmail.com',
+  '홍대지점': 'hda@bee-liber.com',
+};
+
+type PublicAdminDirectoryRow = {
+  id: string;
+  name?: string;
+  email?: string;
+  login_id?: string;
+  employee_code?: string;
+  employment_status?: string;
+};
+
+type RankedAdminDirectoryCandidate = {
+  row: PublicAdminDirectoryRow;
+  rank: number;
+};
 
 const clearStoredSupabaseAdminSession = () => {
   localStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
@@ -67,6 +172,26 @@ const normalizeRole = (role?: string) => {
   const candidate = (role || '').trim().toLowerCase();
   if (!candidate) return 'staff';
   return candidate;
+};
+
+const normalizeAdminIdentifier = (value: unknown) => String(value || '').trim().normalize('NFC');
+const normalizeAdminIdentifierLower = (value: unknown) => normalizeAdminIdentifier(value).toLowerCase();
+const isSyntheticAdminEmail = (value?: string) => normalizeAdminIdentifierLower(value).endsWith('@staff.bee-liber.invalid');
+
+const preferAdminEmail = (...emails: Array<string | undefined>) => {
+  const candidates = emails
+    .map((email) => normalizeAdminIdentifier(email))
+    .filter(Boolean);
+
+  if (!candidates.length) return '';
+
+  candidates.sort((left, right) => {
+    const syntheticDiff = Number(isSyntheticAdminEmail(left)) - Number(isSyntheticAdminEmail(right));
+    if (syntheticDiff !== 0) return syntheticDiff;
+    return 0;
+  });
+
+  return candidates[0] || '';
 };
 
 const isLocalPreviewHost = () => {
@@ -389,6 +514,88 @@ const supabaseRequest = async <T>(
   return body as T;
 };
 
+const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
+  const normalizedIdentifier = normalizeAdminIdentifier(identifier);
+  if (!normalizedIdentifier) return '';
+
+  const normalizedLowerIdentifier = normalizeAdminIdentifierLower(identifier);
+  const normalizedUpperIdentifier = normalizedIdentifier.toUpperCase();
+
+  const lookups: Array<{ rank: number; path: string }> = [
+    {
+      rank: 0,
+      path: `/rest/v1/employees?${SUPABASE_PUBLIC_ADMIN_DIRECTORY_SELECT}&login_id=eq.${encodeURIComponent(normalizedIdentifier)}&limit=10`,
+    },
+    {
+      rank: 0,
+      path: `/rest/v1/employees?${SUPABASE_PUBLIC_ADMIN_DIRECTORY_SELECT}&login_id=eq.${encodeURIComponent(normalizedLowerIdentifier)}&limit=10`,
+    },
+    {
+      rank: 1,
+      path: `/rest/v1/employees?${SUPABASE_PUBLIC_ADMIN_DIRECTORY_SELECT}&name=eq.${encodeURIComponent(normalizedIdentifier)}&limit=10`,
+    },
+    {
+      rank: 2,
+      path: `/rest/v1/employees?${SUPABASE_PUBLIC_ADMIN_DIRECTORY_SELECT}&employee_code=eq.${encodeURIComponent(normalizedUpperIdentifier)}&limit=10`,
+    },
+  ];
+
+  const settled = await Promise.allSettled(
+    lookups.map(({ path }) => supabaseRequest<Array<PublicAdminDirectoryRow>>(path))
+  );
+
+  const candidates: RankedAdminDirectoryCandidate[] = [];
+  settled.forEach((result, index) => {
+    if (result.status !== 'fulfilled') return;
+    const rank = lookups[index]?.rank ?? 99;
+    result.value.forEach((row) => {
+      if (!normalizeAdminIdentifier(row.email)) return;
+      candidates.push({ row, rank });
+    });
+  });
+
+  if (!candidates.length) {
+    return '';
+  }
+
+  candidates.sort((left, right) => {
+    if (left.rank !== right.rank) return left.rank - right.rank;
+
+    const activeDiff =
+      Number(normalizeAdminIdentifierLower(right.row.employment_status) === 'active')
+      - Number(normalizeAdminIdentifierLower(left.row.employment_status) === 'active');
+    if (activeDiff !== 0) return activeDiff;
+
+    const syntheticDiff =
+      Number(isSyntheticAdminEmail(left.row.email))
+      - Number(isSyntheticAdminEmail(right.row.email));
+    if (syntheticDiff !== 0) return syntheticDiff;
+
+    return 0;
+  });
+
+  return normalizeAdminIdentifier(candidates[0]?.row.email);
+};
+
+const resolveSupabaseLoginEmail = async (identifier: string) => {
+  const normalizedIdentifier = normalizeAdminIdentifier(identifier);
+  if (!normalizedIdentifier) return '';
+
+  if (normalizedIdentifier.includes('@')) {
+    return normalizedIdentifier;
+  }
+
+  const fallbackEmail = ADMIN_IDENTIFIER_EMAIL_FALLBACKS[normalizeAdminIdentifierLower(normalizedIdentifier)] || '';
+
+  try {
+    const directoryEmail = await resolveAdminEmailFromPublicDirectory(normalizedIdentifier);
+    return preferAdminEmail(directoryEmail, fallbackEmail);
+  } catch (error) {
+    console.warn('[AdminAuth] 공개 직원 디렉터리 조회 실패:', error);
+    return fallbackEmail;
+  }
+};
+
 const verifyLegacyAdminCredentials = async (identifier: string, password: string) => {
   try {
     const [, firebaseFunctionsModule, firebaseAppModule] = await Promise.all([
@@ -441,12 +648,13 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   let verifiedAdmin: Record<string, any> | null = null;
   let resolvedEmail = directEmailInput;
 
-  // 이메일 직접 입력 시 Firebase 브리지 건너뛰고 Supabase 직접 로그인
   if (directEmailInput) {
     console.log('[AdminAuth] 이메일 직접 입력 — Supabase 직접 로그인');
-    resolvedEmail = directEmailInput;
   } else {
-    // ID 입력 시 Firebase 브리지로 이메일 조회 시도
+    resolvedEmail = await resolveSupabaseLoginEmail(identifier);
+  }
+
+  if (!resolvedEmail && !directEmailInput) {
     try {
       verifiedAdmin = await verifyLegacyAdminCredentials(identifier, password);
       resolvedEmail = String(
@@ -454,8 +662,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
         directEmailInput
       ).trim();
     } catch (error) {
-      // Firebase 브리지 실패 시 — ID@bee-liber.com 으로 폴백
-      console.warn('[AdminAuth] Firebase 브리지 실패, 이메일 폴백 시도');
+      console.warn('[AdminAuth] Firebase 브리지 실패, branch 이메일 폴백 시도');
       resolvedEmail = `${identifier.toLowerCase()}@bee-liber.com`;
     }
   }

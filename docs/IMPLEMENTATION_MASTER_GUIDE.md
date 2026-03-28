@@ -186,6 +186,7 @@ customers.id (= auth.uid())
 ### 프론트
 
 - `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLIC_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_ADMIN_AUTH_PROVIDER=supabase`
@@ -202,6 +203,8 @@ customers.id (= auth.uid())
 - 프론트는 `VITE_SUPABASE_*`
 - 서버/스크립트는 `SUPABASE_*`
 - 새 코드는 시크릿 하드코딩 금지
+- 로컬 개발에서 `VITE_SUPABASE_URL=/supabase` 를 쓰더라도, 배포 런타임은 실제 Supabase 호스트로 해석되어야 한다
+- 정적 호스팅 배포에서는 `/supabase` 프록시 URL을 그대로 쓰면 안 된다
 
 상세 매핑은 [ENV_CONNECTION_MAP.md](/Users/cm/Desktop/beeliber/beeliber-main/docs/ENV_CONNECTION_MAP.md) 를 본다.
 
@@ -258,6 +261,53 @@ customers.id (= auth.uid())
 2. `public` 스키마 기준인지 확인
 3. 예약은 `reservations` 중심 계약인지 확인
 4. 관리자 조회는 raw table 대신 view/RPC 우선 적용
+
+---
+
+## 10. 남아 있는 레거시 브리지 요약
+
+### 아직 남아 있는 Firebase / legacy 읽기 브리지
+
+- `bookings`
+  - 관리자 예약 목록에서 local legacy read bridge 병합 가능
+- `daily_closings`
+  - 정산 화면에서 legacy 병합 가능
+- `expenditures`
+  - 회계 화면에서 legacy 병합 가능
+- `locations`
+  - Supabase 실패 시 로컬 브리지 또는 Firebase fallback 존재
+- `admins`
+  - HR 화면 일부 fallback 존재
+
+### Supabase-only 전환 우선순위
+
+1. `locations`, `booking_details`, `app_settings`
+   - 공개 페이지와 예약 플로우가 직접 영향
+2. `daily_closings`, `expenditures`
+   - 정산 / 회계 집계 일관성 영향
+3. `employees`, `branches`, `admin account sync`
+   - HR / 관리자 권한 영향
+4. notices / CMS / chats / discounts
+   - 운영 보조 기능
+
+### 관리자 탭 기준 남은 병합 구간
+
+- `OVERVIEW`
+  - Supabase view 우선, 일부 bookings / expenditures / closings legacy 병합 가능
+- `DELIVERY_BOOKINGS`, `STORAGE_BOOKINGS`
+  - `admin_booking_list_v1` 우선, legacy bookings 병합 가능
+- `DAILY_SETTLEMENT`, `ACCOUNTING`, `MONTHLY_SETTLEMENT`, `REPORTS`
+  - `admin_revenue_*` view 우선, expenditures / closings / 일부 bookings 병합 가능
+- `LOCATIONS`
+  - Supabase `locations` 우선, 실패 시 bridge/fallback 영향 가능
+- `HR`
+  - Supabase `employees` 우선, 일부 legacy admin fallback 존재
+
+원칙:
+
+- 새 쓰기는 Supabase only
+- legacy 병합은 과거 데이터 조회와 로컬 복구용으로만 축소
+- 배포 서버 공개 페이지는 legacy bridge에 의존하지 않도록 유지
 5. `branches`와 `locations`를 섞어 쓰지 않는지 확인
 6. 과거 매출이 필요한 화면이면 legacy read bridge 영향 확인
 7. 운영 마이그레이션과 충돌하지 않는지 확인

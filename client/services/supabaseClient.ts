@@ -2,8 +2,9 @@
  * Supabase REST 클라이언트 유틸
  * storageService.ts에서 Firebase 폴백과 함께 사용
  */
+import { getSupabaseBaseUrl } from './supabaseRuntime';
 
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_URL = getSupabaseBaseUrl();
 // anon key 우선, publishable key 폴백
 const SUPABASE_KEY = (
   import.meta.env.VITE_SUPABASE_ANON_KEY ||

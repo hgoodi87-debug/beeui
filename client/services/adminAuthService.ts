@@ -1,4 +1,5 @@
 import { ensureAuth } from '../firebaseApp';
+import { getSupabaseBaseUrl } from './supabaseRuntime';
 
 export type AdminAuthProvider = 'firebase' | 'supabase';
 
@@ -24,7 +25,7 @@ interface SupabaseAdminSession {
   expiresAt?: number;
 }
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
+const supabaseUrl = getSupabaseBaseUrl();
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || '';
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';

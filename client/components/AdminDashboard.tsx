@@ -9,6 +9,7 @@ import { AuditService } from '../services/auditService';
 import { uploadBranchManagedAsset, uploadHeroManagedAsset, uploadNoticeManagedAsset } from '../services/supabaseStorageUploadService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
+import { getSupabaseBaseUrl } from '../services/supabaseRuntime';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminStore } from '../src/store/adminStore';
 import { useAdmins } from '../src/domains/admin/hooks/useAdmins';
@@ -307,7 +308,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     setSendingEmailId(booking.id);
     try {
       if (isSupabaseDataEnabled()) {
-        const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+        const SUPABASE_URL = getSupabaseBaseUrl();
         const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
         const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
           method: 'POST',

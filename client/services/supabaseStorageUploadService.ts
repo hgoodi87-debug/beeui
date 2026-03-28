@@ -1,5 +1,6 @@
 import { getActiveAdminRequestHeaders } from './adminAuthService';
 import { StorageService } from './storageService';
+import { getSupabaseBaseUrl, resolveSupabaseEndpoint } from './supabaseRuntime';
 
 export type StorageUploadProvider = 'firebase' | 'supabase';
 
@@ -63,9 +64,10 @@ interface ManagedUploadOptions {
 const STORAGE_UPLOAD_PROVIDER =
   import.meta.env.VITE_STORAGE_UPLOAD_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
+const SUPABASE_URL = getSupabaseBaseUrl();
 const SIGNED_UPLOAD_ENDPOINT = import.meta.env.VITE_SUPABASE_STORAGE_SIGNED_UPLOAD_ENDPOINT?.trim()
-  || (SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/signed-upload` : '');
+  ? resolveSupabaseEndpoint(import.meta.env.VITE_SUPABASE_STORAGE_SIGNED_UPLOAD_ENDPOINT, '/functions/v1/signed-upload')
+  : (SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/signed-upload` : '');
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || '';
 
 const ALLOWED_PUBLIC_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp', 'svg']);

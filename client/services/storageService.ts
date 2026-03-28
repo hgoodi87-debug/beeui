@@ -3,17 +3,18 @@
 // Supabase 전용 storageService (Firebase Firestore 완전 제거)
 // Firebase → Supabase 어댑터 레이어로 기존 147개 호출 호환
 // ============================================================
+import { getSupabaseBaseUrl, resolveSupabaseEndpoint, resolveSupabaseUrl } from './supabaseRuntime';
+
 // Firebase Storage 완전 제거 — Supabase Storage 사용
 // storage, ref, uploadBytes, getDownloadURL 모두 Supabase 어댑터로 대체
 const storage = {} as any; // 더미
 const ref = (_s: any, path: string) => ({ _path: path });
 const uploadBytes = async (storageRef: any, file: Blob | ArrayBuffer, _metadata?: any) => {
   // Supabase Storage signed upload
-  const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
   const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
   const bucket = 'brand-public';
   const path = storageRef._path;
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`, {
+  const res = await fetch(resolveSupabaseUrl(`/storage/v1/object/${bucket}/${path}`), {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_KEY,
@@ -26,9 +27,8 @@ const uploadBytes = async (storageRef: any, file: Blob | ArrayBuffer, _metadata?
   return res;
 };
 const getDownloadURL = async (storageRef: any): Promise<string> => {
-  const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
   const bucket = 'brand-public';
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${storageRef._path}`;
+  return resolveSupabaseUrl(`/storage/v1/object/public/${bucket}/${storageRef._path}`);
 };
 
 // Firebase Firestore 어댑터 — 기존 코드의 147개 호출을 Supabase로 라우팅
@@ -288,9 +288,10 @@ const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
 
 const LOCAL_ADMIN_DATA_BRIDGE_URL = import.meta.env.VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?.trim() || '';
 const LOCAL_ADMIN_DATA_BRIDGE_POLL_MS = 10000;
-const SUPABASE_RUNTIME_URL = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
+const SUPABASE_RUNTIME_URL = getSupabaseBaseUrl();
 const ADMIN_ACCOUNT_SYNC_ENDPOINT = import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT?.trim()
-  || (SUPABASE_RUNTIME_URL ? `${SUPABASE_RUNTIME_URL}/functions/v1/admin-account-sync` : '');
+  ? resolveSupabaseEndpoint(import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT, '/functions/v1/admin-account-sync')
+  : (SUPABASE_RUNTIME_URL ? `${SUPABASE_RUNTIME_URL}/functions/v1/admin-account-sync` : '');
 let localAdminDataBridgeDisabled = false;
 const DEFAULT_DELIVERY_PRICES: PriceSettings = PRICING_DEFAULT_DELIVERY_PRICES;
 const DEFAULT_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
@@ -1351,7 +1352,7 @@ export const StorageService = {
   cancelBooking: async (id: string): Promise<void> => {
     // Supabase Edge Function 호출
     try {
-      const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+      const SUPABASE_URL = getSupabaseBaseUrl();
       const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
       const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-booking`, {
         method: 'POST',
@@ -1546,12 +1547,6 @@ export const StorageService = {
   },
 
   saveLocation: async (location: LocationOption): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate('locations', 'POST', camelToSnake({ ...location } as Record<string, unknown>));
-        console.log("[Storage] Location saved to Supabase ✅");
-      } catch (e) { console.warn("[Storage] Supabase location save failed:", e); }
-    }
     const sanitized = normalizeLocationTranslations({ ...location });
     // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 걸러내야죠 💅
     if (sanitized.lat === undefined || sanitized.lat === null || isNaN(Number(sanitized.lat))) {
@@ -1567,6 +1562,27 @@ export const StorageService = {
     }
 
     const safeLocation = JSON.parse(JSON.stringify(sanitized));
+
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { id, ...payload } = camelToSnake({ ...safeLocation } as Record<string, unknown>);
+        const shortCode = String(payload.short_code || '').trim();
+        let mutatedRows: unknown = null;
+
+        if (id) {
+          mutatedRows = await supabaseMutate(`locations?id=eq.${encodeURIComponent(String(id))}`, 'PATCH', payload);
+        } else if (shortCode) {
+          mutatedRows = await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(shortCode)}`, 'PATCH', payload);
+        }
+
+        const didUpdateExisting = Array.isArray(mutatedRows) ? mutatedRows.length > 0 : Boolean(mutatedRows);
+        if (!didUpdateExisting) {
+          await supabaseMutate('locations', 'POST', payload);
+        }
+
+        console.log("[Storage] Location saved to Supabase ✅");
+      } catch (e) { console.warn("[Storage] Supabase location save failed:", e); }
+    }
 
     try {
       // Allow saving with custom ID if provided, else it's a new doc if no ID? 

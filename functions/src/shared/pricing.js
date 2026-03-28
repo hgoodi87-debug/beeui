@@ -93,15 +93,15 @@ const getSingleBagStoragePrice = (hours, rate) => {
         return rate.hours4;
     }
 
-    if (roundedHours < 24) {
+    if (roundedHours <= 24) {
+        // [Logic] 4h ~ 24h: Base + Hourly
         return rate.hours4 + ((roundedHours - 4) * rate.hourlyAfter4h);
     }
 
-    if (roundedHours === 24) {
-        return rate.day1;
-    }
-
-    return rate.day1 + ((roundedHours - 24) * rate.hourlyAfter4h);
+    // [Logic] After 24h: Day 1 + Extra Days (flat per 24h block)
+    const extraHours = roundedHours - 24;
+    const extraDays = Math.ceil(extraHours / 24);
+    return rate.day1 + (extraDays * rate.extraDay);
 };
 
 const getSingleBagBreakdown = (hours, t) => {
@@ -111,15 +111,13 @@ const getSingleBagBreakdown = (hours, t) => {
         return `4${t.h}`;
     }
 
-    if (roundedHours < 24) {
-        return `4${t.h} + ${roundedHours - 4}${t.h}`;
+    if (roundedHours <= 24) {
+        const extraH = roundedHours - 4;
+        return extraH === 0 ? `4${t.h}` : `4${t.h} + ${extraH}${t.h}`;
     }
 
-    if (roundedHours === 24) {
-        return `1${t.d}`;
-    }
-
-    return `1${t.d} + ${roundedHours - 24}${t.h}`;
+    const extraDays = Math.ceil((roundedHours - 24) / 24);
+    return `1${t.d} + ${extraDays}${t.d}`;
 };
 
 const calculateBookingStoragePrice = (startDate, endDate, bags, lang = 'ko', options = {}) => {

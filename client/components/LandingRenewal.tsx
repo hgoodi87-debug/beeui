@@ -188,12 +188,14 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     {/* L-VIP (6) - VIP 안심 보관 3카드 🛡️ */}
                     <LandingVIPSafety t={t} />
 
+                    {/* L-REVIEW (8) - 구글 리뷰 (더 잘 보이게 위로 올렸어요!) 💅 */}
+                    <LandingReviews t={t} />
+
                     {/* L-FREE (7) - 자유 섹션 ✨ */}
                     <LandingFreedomSection t={t} />
                     
                     {/* L-PRICE (9) - 가격표 🏷️ */}
                     <LandingPricing t={t} onNavigate={onNavigate} lang={lang} />
-
 
                     {/* L-FAQ (10) - FAQ (이제 절대 안 사라져요!) ✨ */}
                     <LandingFAQ t={t} />

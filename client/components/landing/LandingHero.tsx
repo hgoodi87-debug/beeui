@@ -37,7 +37,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
             </div>
 
             {/* 2. LAYER: Content */}
-            <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 pointer-events-none -mt-32 md:-mt-40">
+            <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 pointer-events-none -mt-48 md:-mt-56">
                 <motion.div
                     style={{ y: y1, opacity }}
                     className="flex flex-col items-center text-center"
@@ -61,10 +61,10 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
                     </motion.div>
 
                     <h1 className="flex flex-col items-center">
-                        <span className="macro-type block text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal drop-shadow-2xl">
+                        <span className="macro-type block text-[clamp(1.5rem,6vw,3.5rem)] font-black text-white leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal drop-shadow-2xl">
                             {t.hero.main_title_1}
                         </span>
-                        <span className="macro-type block text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white leading-[1.1] md:leading-[1.2] tracking-tighter mt-2 break-keep whitespace-normal drop-shadow-2xl">
+                        <span className="macro-type block text-[clamp(1.5rem,6vw,3.5rem)] font-black text-white leading-[1.1] md:leading-[1.2] tracking-tighter mt-2 break-keep whitespace-normal drop-shadow-2xl">
                             {t.hero.main_title_2}
                         </span>
                     </h1>
@@ -76,7 +76,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
             </div>
 
             {/* 3. CTA Area */}
-            <div className="absolute bottom-60 md:bottom-72 inset-x-0 z-40 flex items-center justify-center px-6 pointer-events-none">
+            <div className="absolute bottom-52 md:bottom-64 inset-x-0 z-40 flex items-center justify-center px-6 pointer-events-none">
                 <div className="flex flex-row gap-4 pointer-events-auto">
                     <motion.button
                         whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}

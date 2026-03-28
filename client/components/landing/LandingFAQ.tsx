@@ -14,27 +14,11 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
   const [faqItems, setFaqItems] = useState<any[]>([]);
 
   useEffect(() => {
-    const loadFaq = async () => {
-      try {
-        const data = await StorageService.getQnaPolicy();
-        if (data && data.items && data.items.length > 0) {
-          setFaqItems(data.items.slice(0, 5));
-        } else {
-          // [스봉이] 서버에 데이터가 없으면 제가 준비한 특급 FAQ 5개를 보여드릴게요. 💅✨
-          setFaqItems([
-            { question: "짐 보관은 어디서 하나요?", answer: "홍대입구역, 서울역 등 주요 역사 근처의 '빌리버 허브' 거점에서 전문가들이 안전하게 보관합니다. 예약 후 안내되는 위치를 확인하세요!" },
-            { question: "공항 배송 서비스를 이용하고 싶어요. 언제까지 맡겨야 하나요?", answer: "당일 배송을 위해 오전 11시(일부 지점 13시)까지는 짐을 맡겨주셔야 합니다. 그래야 오후 4시 이후 인천공항에서 바로 찾으실 수 있거든요. ✨" },
-            { question: "영업 시간이 어떻게 되나요?", answer: "각 허브 지점별로 상이하나, 보통 오전 9시부터 저녁 7시까지 운영됩니다. 예약 페이지에서 지점별 상세 운영 시간을 확인해 주세요." },
-            { question: "예약을 취소하면 환불이 되나요?", answer: "서비스 이용 전일 24:00 전까지 취소하시면 100% 환불해 드립니다. 당일 취소는 아쉽게도 환불이 어려우니 미리 말씀해 주세요! 💅" },
-            { question: "짐 크기나 무게 제한이 있나요?", answer: "일반적인 여행용 캐리어(기내용부터 특대형까지)는 모두 가능합니다. 골프백이나 유모차 같은 대형 수하물은 사전 문의 부탁드려요." }
-          ]);
-        }
-      } catch (e) {
-        console.error("Failed to load FAQ for landing:", e);
-      }
-    };
-    loadFaq();
-  }, []);
+    // [스봉이] 서버 데이터 기다릴 시간 없어요. 번역 파일에 정성껏 준비해둔 데이터를 바로 꽂아넣을게요. 💅✨
+    if (t && t.qna && t.qna.items) {
+      setFaqItems(t.qna.items.slice(0, 5));
+    }
+  }, [t]);
 
   if (faqItems.length === 0) return null;
 

@@ -78,6 +78,11 @@ export const zh = {
         step2: { title: "Enjoy (享受)", desc: "两手空空，立即开启您的观光、探店和购物之旅。", badge: "STEP 2. Enjoy" },
         step3: { title: "Meet (提取)", desc: "结束行程回到机场，您的行李已在那里静候您的光临。", badge: "STEP 3. Meet" }
     },
+    freedom: {
+        badge: "AFTER",
+        headline: "行李交给 Beeliber。<br /><span class=\"text-bee-yellow\">此刻的自由，</span> ₩4,000起。",
+        sub_copy: "无需沉重行李，轻便地享受首尔的浪漫氛围。 💅✨"
+    },
     trust: {
         headline: "您的行李，将享受 VIP 待遇。",
         badge_label: "VIP Bee-Keeper Trust",

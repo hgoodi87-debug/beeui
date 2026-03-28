@@ -6,3 +6,9 @@ export {
     type StorageRate,
     type PriceResult
 } from '../src/domains/booking/bookingService';
+
+export {
+    calculateDeliveryStoragePrice,
+    getDeliveryStorageDays,
+    type DeliveryStoragePriceResult
+} from '../src/domains/booking/deliveryStoragePricing';

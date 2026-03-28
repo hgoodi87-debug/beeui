@@ -1,6 +1,7 @@
 const crypto = require('node:crypto');
 const { HttpsError } = require('firebase-functions/v2/https');
-const { STORAGE_RATES, calculateBookingStoragePrice } = require('../../shared/pricing');
+const { calculateBookingStoragePrice } = require('../../shared/pricing');
+const { calculateDeliveryStoragePrice } = require('../../shared/deliveryStoragePricing');
 
 const DEFAULT_DELIVERY_PRICES = { handBag: 10000, carrier: 25000, strollerBicycle: 0 };
 const PAYMENT_SESSION_COLLECTION = 'payment_sessions';
@@ -205,31 +206,17 @@ const calculateInsuranceFee = (booking) => {
     return 5000 * Math.max(1, booking.insuranceLevel || 1) * Math.max(1, booking.bags);
 };
 
-const getCalendarDiffDays = (startDate, endDate) => {
-    const start = Date.parse(`${startDate}T00:00:00+09:00`);
-    const end = Date.parse(`${endDate}T00:00:00+09:00`);
-
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
-        return 0;
-    }
-
-    return Math.max(0, Math.floor((end - start) / (24 * 60 * 60 * 1000)));
-};
-
 const calculateDeliveryPrice = ({ booking, pickupLoc, dropoffLoc, deliveryPrices }) => {
     const bagSizes = booking.bagSizes;
     const deliveryBase =
         (bagSizes.handBag * deliveryPrices.handBag) +
         (bagSizes.carrier * deliveryPrices.carrier);
-
-    const diffDays = getCalendarDiffDays(booking.pickupDate, booking.dropoffDate || booking.pickupDate);
-    const overnightStorage =
-        diffDays > 0
-            ? (
-                bagSizes.handBag * STORAGE_RATES.handBag.extraDay +
-                bagSizes.carrier * STORAGE_RATES.carrier.extraDay
-            ) * diffDays
-            : 0;
+    const overnightStorage = calculateDeliveryStoragePrice(
+        booking.pickupDate,
+        booking.dropoffDate || booking.pickupDate,
+        bagSizes,
+        booking.language || 'ko'
+    ).total;
 
     return {
         basePrice: deliveryBase + overnightStorage,

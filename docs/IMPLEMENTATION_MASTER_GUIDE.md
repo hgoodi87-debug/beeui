@@ -179,6 +179,15 @@ customers.id (= auth.uid())
 
 요약 쿼리 기준은 [ADMIN_QUERY_MAP.md](/Users/cm/Desktop/beeliber/beeliber-main/docs/ADMIN_QUERY_MAP.md) 를 본다.
 
+### 배송 선보관 가격 규칙
+
+- `DELIVERY` 예약에서 `pickupDate < dropoffDate` 이면 선보관 보관비를 붙인다.
+- 보관비는 시간제가 아니라 `일일 단가`를 쓴다.
+- 배송일 당일은 보관비에서 제외한다.
+- 계산식은 `1일차 = day1`, 이후는 `extraDay` 추가다.
+
+상세 기준은 [DELIVERY_PRE_STORAGE_PRICING_RULE.md](/Users/cm/Desktop/beeliber/beeliber-main/docs/DELIVERY_PRE_STORAGE_PRICING_RULE.md) 를 본다.
+
 ---
 
 ## 6. env / 연결 기준

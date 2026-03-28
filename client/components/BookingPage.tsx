@@ -20,7 +20,7 @@ import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus,
 import { StorageService } from '../services/storageService';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
 import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
-import { STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
+import { calculateDeliveryStoragePrice, STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 import {
     BagCategoryId,
     DEFAULT_DELIVERY_PRICES,
@@ -437,23 +437,24 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const destSurcharge = isDelivery ? (dropoffLoc?.destinationSurcharge || 0) : 0;
 
         let base = 0;
+        let storageFee = 0;
         let breakdown = '';
         let durationText = '';
 
         if (isDelivery) {
             const deliveryBase = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * deliveryPrices.carrier);
-
-            // Overnight Storage Fee calculation
-            const pickupD = new Date(booking.pickupDate || '');
-            const deliveryD = new Date(booking.dropoffDate || booking.pickupDate || '');
-            const diffDays = Math.max(0, Math.floor((deliveryD.getTime() - pickupD.getTime()) / (1000 * 60 * 60 * 24)));
-
-            let storageFee = 0;
-            if (diffDays > 0) {
-                storageFee = (handBag * STORAGE_RATES.handBag.extraDay) + (carrier * STORAGE_RATES.carrier.extraDay);
-                storageFee *= diffDays;
-                durationText = lang.startsWith('ko') ? `${diffDays}일 보관 포함` : `${diffDays}d storage incl.`;
-                breakdown = lang.startsWith('ko') ? `기본배송 + ${diffDays}일 보관료` : `Base delivery + ${diffDays}d storage`;
+            const deliveryStorage = calculateDeliveryStoragePrice(
+                booking.pickupDate || '',
+                booking.dropoffDate || booking.pickupDate || '',
+                normalizedBagSizes,
+                lang
+            );
+            storageFee = deliveryStorage.total;
+            if (deliveryStorage.storageDays > 0) {
+                durationText = deliveryStorage.durationText;
+                breakdown = lang.startsWith('ko')
+                    ? `기본배송 + 선보관 ${deliveryStorage.storageDays}일`
+                    : `Base delivery + ${deliveryStorage.storageDays}d pre-delivery storage`;
             }
 
             base = deliveryBase + storageFee;

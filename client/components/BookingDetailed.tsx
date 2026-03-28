@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { LocationOption, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, DiscountCode } from '../types';
 import { StorageService } from '../services/storageService';
-import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, generateTimeSlots, calculateDaysDifference } from '../utils/dateUtils';
-import { calculateStoragePrice, STORAGE_RATES } from '../utils/pricing';
+import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, generateTimeSlots } from '../utils/dateUtils';
+import { calculateDeliveryStoragePrice, calculateStoragePrice } from '../utils/pricing';
 import { DEFAULT_DELIVERY_PRICES, getTotalBags, sanitizeBagSizes, sanitizeDeliveryBagSizes } from '../src/domains/booking/bagCategoryUtils';
 
 interface BookingDetailedProps {
@@ -233,15 +233,12 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
         let storageFee = 0;
         if (serviceType === ServiceType.DELIVERY) {
             base = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * deliveryPrices.carrier);
-
-            // [스봉이 수지타산 로직] 배송인데 날짜가 다르면 보관료 추가 💰💅
-            const daysDiff = calculateDaysDifference(booking.pickupDate || '', booking.dropoffDate || booking.pickupDate || '');
-            if (daysDiff > 0) {
-                storageFee = daysDiff * (
-                    (handBag * STORAGE_RATES.handBag.extraDay) +
-                    (carrier * STORAGE_RATES.carrier.extraDay)
-                );
-            }
+            storageFee = calculateDeliveryStoragePrice(
+                booking.pickupDate || '',
+                booking.dropoffDate || booking.pickupDate || '',
+                normalizedBagSizes,
+                lang
+            ).total;
         } else {
             const start = new Date(`${booking.pickupDate}T${booking.pickupTime}`);
             const end = new Date(`${booking.dropoffDate || booking.pickupDate}T${booking.deliveryTime}`);

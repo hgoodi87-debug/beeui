@@ -15,6 +15,8 @@
   - 구조 연결 요약
 - `ADMIN_QUERY_MAP.md`
   - 관리자 화면 데이터 계약 요약
+- `DELIVERY_PRE_STORAGE_PRICING_RULE.md`
+  - 배송 예약 선보관 보관비 규칙
 - `BRANCH_LOCATION_CONTRACT.md`
   - branch / location 분리 기준 요약
 - `ENV_CONNECTION_MAP.md`

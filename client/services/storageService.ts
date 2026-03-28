@@ -63,6 +63,18 @@ const generateSupabaseReservationCode = (booking: Partial<BookingState>): string
   return `${pickupCode}-${destinationSource}-${random}`;
 };
 
+const getBookingLocationLabel = (
+  location: Partial<LocationOption> | undefined,
+  fallbackName: unknown,
+  fallbackId: unknown,
+) => {
+  const name = String(fallbackName || location?.name || location?.name_en || '').trim();
+  if (name) return name;
+
+  const identifier = String(fallbackId || location?.id || '').trim();
+  return identifier || null;
+};
+
 const fireSupabaseBookingCreatedWebhook = async (record: Record<string, unknown>) => {
   const endpoint = resolveSupabaseEndpoint(undefined, '/functions/v1/on-booking-created');
   const response = await fetch(endpoint, {
@@ -954,8 +966,16 @@ export const StorageService = {
           user_name: safeBooking.userName || null,
           user_email: safeBooking.userEmail || null,
           service_type: safeBooking.serviceType || 'STORAGE',
-          pickup_location: safeBooking.pickupLocation || null,
-          dropoff_location: safeBooking.dropoffLocation || null,
+          pickup_location: getBookingLocationLabel(
+            safeBooking.pickupLoc,
+            safeBooking.pickupLocationName,
+            safeBooking.pickupLocation,
+          ),
+          dropoff_location: getBookingLocationLabel(
+            safeBooking.returnLoc,
+            safeBooking.dropoffLocationName,
+            safeBooking.dropoffLocation,
+          ),
         };
 
         const result = await supabaseMutate<Array<Record<string, unknown>>>(

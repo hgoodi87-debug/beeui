@@ -31,6 +31,24 @@ async function getShortCode(locationId: string | null): Promise<string> {
   return data?.short_code || locationId.substring(0, 3).toUpperCase();
 }
 
+async function getLocationLabel(locationId: string | null, fallbackValue: unknown): Promise<string> {
+  const fallback = String(fallbackValue || "").trim();
+  const lookupValue = String(locationId || fallbackValue || "").trim();
+
+  if (!lookupValue || lookupValue === "custom") {
+    return fallback || "주소 직접 입력";
+  }
+
+  const { data } = await supabase
+    .from("locations")
+    .select("id, short_code, name, name_en")
+    .or(`id.eq.${lookupValue},short_code.eq.${lookupValue}`)
+    .limit(1)
+    .maybeSingle();
+
+  return data?.name || data?.name_en || fallback || lookupValue;
+}
+
 // 바우처 이메일 발송 (Gmail SMTP via Deno)
 async function sendVoucherEmail(booking: Record<string, unknown>) {
   const email = booking.user_email as string;
@@ -41,10 +59,19 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
 
   const reservationCode = booking.reservation_code || booking.id;
   const subject = `[Beeliber] 예약 확인 | Booking Confirmed - ${reservationCode}`;
+  const pickupLabel = await getLocationLabel(
+    booking.pickup_location_id as string | null,
+    booking.pickup_location,
+  );
+  const dropoffLabel = booking.service_type === "DELIVERY"
+    ? await getLocationLabel(booking.dropoff_location_id as string | null, booking.dropoff_location)
+    : pickupLabel;
   const body = `
     <h2>🐝 Beeliber 예약이 확인되었습니다!</h2>
     <p><strong>예약코드:</strong> ${reservationCode}</p>
     <p><strong>서비스:</strong> ${booking.service_type === "DELIVERY" ? "배송" : "보관"}</p>
+    <p><strong>픽업 지점:</strong> ${pickupLabel}</p>
+    ${booking.service_type === "DELIVERY" ? `<p><strong>도착 지점:</strong> ${dropoffLabel}</p>` : ""}
     <p><strong>날짜:</strong> ${booking.pickup_date} ${booking.pickup_time}</p>
     <p><strong>금액:</strong> ₩${Number(booking.final_price || 0).toLocaleString()}</p>
     <br>
@@ -76,9 +103,16 @@ async function notifyGoogleChat(booking: Record<string, unknown>) {
 
   const code = booking.reservation_code || booking.id;
   const isDelivery = booking.service_type === "DELIVERY";
+  const pickupLabel = await getLocationLabel(
+    booking.pickup_location_id as string | null,
+    booking.pickup_location,
+  );
+  const dropoffLabel = isDelivery
+    ? await getLocationLabel(booking.dropoff_location_id as string | null, booking.dropoff_location)
+    : pickupLabel;
   const text = isDelivery
-    ? `*🚨 신규 배송 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🚚 *서비스*: 배송\n📍 *픽업*: ${booking.pickup_location} (${booking.pickup_time})\n💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`
-    : `*🚨 신규 보관 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🏦 *서비스*: 보관\n📥 *보관*: ${booking.pickup_location} (${booking.pickup_date} ${booking.pickup_time})\n💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`;
+    ? `*🚨 신규 배송 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🚚 *서비스*: 배송\n📍 *픽업*: ${pickupLabel} (${booking.pickup_time})\n🎯 *도착*: ${dropoffLabel} (${booking.dropoff_date || ""} ${booking.delivery_time || ""})\n💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`
+    : `*🚨 신규 보관 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🏦 *서비스*: 보관\n📥 *보관*: ${pickupLabel} (${booking.pickup_date} ${booking.pickup_time})\n💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`;
 
   try {
     await fetch(GOOGLE_CHAT_WEBHOOK_URL, {

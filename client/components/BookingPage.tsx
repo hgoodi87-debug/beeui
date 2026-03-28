@@ -71,6 +71,7 @@ const COUNTRY_NAMES: Record<string, string> = {
     'ETC': 'Other 🌏'
 };
 
+const TEMP_DIRECT_BOOKING_MODE = true;
 
 const BookingPage: React.FC<BookingPageProps> = ({
     t,
@@ -87,8 +88,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
     customerBranchId,
     customerBranchRates
 }) => {
-    const isTossPaymentFlowEnabled = isTossPaymentsFlowEnabled();
+    const isTossPaymentFlowEnabled = !TEMP_DIRECT_BOOKING_MODE && isTossPaymentsFlowEnabled();
     const isMockPaymentMode = isTossPaymentFlowEnabled && isTossPaymentsMockMode();
+    const isDirectBookingMode = !isTossPaymentFlowEnabled;
     const isMember = !!user && !user.isAnonymous;
     const defaultDate = formatKSTDate();
     const normalizedInitialBagSizes = initialServiceType === ServiceType.DELIVERY
@@ -576,8 +578,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
             language: lang,
             branchId: customerBranchId,
             branchCommissionRates: customerBranchRates,
-            paymentMethod: 'card',
-            paymentStatus: priceDetails.total > 0 ? 'pending' : 'paid'
+            paymentMethod: isDirectBookingMode ? 'cash' : 'card',
+            paymentStatus: priceDetails.total > 0 ? 'pending' : 'paid',
+            paymentProvider: isDirectBookingMode ? 'manual' : 'toss'
         };
 
         const channelMap: Record<string, any> = {
@@ -1232,15 +1235,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10">
-                                    {isMockPaymentMode && (
+                                    {isDirectBookingMode && (
                                         <div className="rounded-2xl border border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
                                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-bee-yellow mb-1">
-                                                Local Mock Payment
+                                                Reservation First
                                             </p>
                                             <p className="text-[11px] font-bold text-white/80 leading-relaxed">
                                                 {lang === 'ko'
-                                                    ? '지금은 로컬 토스 mock 모드예요. 실제 카드 결제 없이 성공 페이지 흐름만 확인합니다.'
-                                                    : 'Local Toss mock mode is enabled. This simulates the success flow without charging a real card.'}
+                                                    ? '지금은 온라인 결제를 잠시 숨겨두었어요. 예약은 바로 접수되고 결제는 현장 또는 별도 안내로 이어집니다.'
+                                                    : 'Online payment is temporarily hidden. Your booking will be confirmed first, and payment will be handled offline.'}
                                             </p>
                                         </div>
                                     )}
@@ -1330,7 +1333,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         <>
                                             {isMockPaymentMode
                                                 ? (lang === 'ko' ? '결제 흐름 테스트하기' : 'TEST PAYMENT FLOW')
-                                                : (tBooking.book_now || 'COMPLETE BOOKING')} <ArrowRight size={20} />
+                                                : (lang === 'ko' ? '예약 바로 확정하기' : (tBooking.book_now || 'COMPLETE BOOKING'))} <ArrowRight size={20} />
                                         </>
                                     )}
                                 </motion.button>

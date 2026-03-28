@@ -66,13 +66,30 @@ const LandingGoogleReviewsStrip: React.FC = () => {
         })();
     }, []);
 
-    if (reviews.length === 0) return null;
-
     const renderStars = (rating: number) => (
         <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map(i => (
                 <Star key={i} size={10} className={i <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-600"} />
             ))}
+        </div>
+    );
+
+    const renderPlaceholderCard = (index: number) => (
+        <div
+            key={`placeholder-${index}`}
+            className="w-[300px] md:w-[350px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 backdrop-blur-xl"
+        >
+            <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
+                <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-3 w-24 rounded-full bg-white/10 animate-pulse" />
+                    <div className="h-2.5 w-16 rounded-full bg-white/10 animate-pulse" />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <div className="h-3 rounded-full bg-white/10 animate-pulse" />
+                <div className="h-3 w-5/6 rounded-full bg-white/10 animate-pulse" />
+            </div>
         </div>
     );
 
@@ -121,8 +138,19 @@ const LandingGoogleReviewsStrip: React.FC = () => {
             )}
             <div className="flex w-full">
                 <div className="flex shrink-0 gap-4 md:gap-6 animate-marquee-slide will-change-transform" style={{ animationDuration: "40s" }}>
-                    {reviews.map((r, i) => renderCard(r, i))}
-                    {reviews.map((r, i) => renderCard(r, reviews.length + i))}
+                    {reviews.length > 0
+                        ? (
+                            <>
+                                {reviews.map((r, i) => renderCard(r, i))}
+                                {reviews.map((r, i) => renderCard(r, reviews.length + i))}
+                            </>
+                        )
+                        : (
+                            <>
+                                {[0, 1, 2].map(renderPlaceholderCard)}
+                                {[3, 4, 5].map(renderPlaceholderCard)}
+                            </>
+                        )}
                 </div>
             </div>
         </section>

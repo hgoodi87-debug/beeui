@@ -9,6 +9,8 @@ const isTossCheckoutFeatureEnabled = import.meta.env.VITE_TOSS_PAYMENTS_ENABLED 
 const TOSS_SDK_URL = 'https://js.tosspayments.com/v2/standard';
 const MOCK_PAYMENT_SESSION_PREFIX = 'beeliber_toss_mock_session:';
 const MOCK_PAYMENT_SESSION_LATEST_KEY = 'beeliber_toss_mock_session_latest';
+const MOCK_PAYMENT_CONFIRM_PREFIX = 'beeliber_toss_mock_confirm:';
+const SUPPORTED_URL_LANGS = new Set(['ko', 'en', 'ja', 'zh', 'zh-tw', 'zh-hk']);
 
 declare global {
     interface Window {
@@ -112,6 +114,14 @@ const getWindowTarget = (): 'self' | 'iframe' => {
     return window.innerWidth < 1024 ? 'self' : 'iframe';
 };
 
+const buildLocalizedReturnUrl = (path: string) => {
+    const origin = window.location.origin;
+    const firstSegment = window.location.pathname.split('/').filter(Boolean)[0]?.toLowerCase() || '';
+    const localizedPath = SUPPORTED_URL_LANGS.has(firstSegment) ? `/${firstSegment}${path}` : path;
+
+    return new URL(localizedPath, origin).toString();
+};
+
 export const isTossPaymentsFlowEnabled = () => isTossCheckoutFeatureEnabled;
 export const isTossPaymentsEnabled = () => isTossCheckoutFeatureEnabled && Boolean(tossClientKey);
 export const isTossPaymentsMockMode = () => isLocalMockMode;
@@ -160,6 +170,33 @@ const readMockSession = (orderId: string): TossPaymentSessionResult | null => {
         return parsed;
     } catch (error) {
         console.warn('[TossMock] 결제 세션 파싱 실패:', error);
+        return null;
+    }
+};
+
+const getMockConfirmKey = (orderId: string) => `${MOCK_PAYMENT_CONFIRM_PREFIX}${orderId}`;
+
+const persistMockConfirmResult = (orderId: string, result: TossPaymentConfirmResult) => {
+    const storage = getMockStorage();
+    if (!storage) return;
+
+    storage.session.setItem(getMockConfirmKey(orderId), JSON.stringify(result));
+    storage.local.setItem(getMockConfirmKey(orderId), JSON.stringify(result));
+};
+
+const readMockConfirmResult = (orderId: string): TossPaymentConfirmResult | null => {
+    const storage = getMockStorage();
+    if (!storage) return null;
+
+    const raw =
+        storage.session.getItem(getMockConfirmKey(orderId))
+        || storage.local.getItem(getMockConfirmKey(orderId));
+    if (!raw) return null;
+
+    try {
+        return JSON.parse(raw) as TossPaymentConfirmResult;
+    } catch (error) {
+        console.warn('[TossMock] 결제 확인 결과 파싱 실패:', error);
         return null;
     }
 };
@@ -219,12 +256,15 @@ export const confirmTossPayment = async (params: {
     if (isLocalMockMode) {
         const mockSession = readMockSession(params.orderId);
         if (!mockSession) {
+            const confirmedResult = readMockConfirmResult(params.orderId);
+            if (confirmedResult) {
+                return confirmedResult;
+            }
+
             throw new Error('로컬 토스 mock 세션을 찾지 못했습니다. 예약하기부터 다시 진행해 주세요.');
         }
 
-        clearMockSession(params.orderId);
-
-        return {
+        const result: TossPaymentConfirmResult = {
             booking: {
                 ...mockSession.booking,
                 paymentMethod: 'card',
@@ -233,16 +273,21 @@ export const confirmTossPayment = async (params: {
                 paymentOrderId: params.orderId,
                 paymentKey: params.paymentKey,
                 paymentApprovedAt: new Date().toISOString(),
-                paymentReceiptUrl: `${window.location.origin}/payments/toss/success?mock-receipt=${encodeURIComponent(params.orderId)}`,
+                paymentReceiptUrl: `${buildLocalizedReturnUrl('/payments/toss/success')}?mock-receipt=${encodeURIComponent(params.orderId)}`,
             },
             payment: {
                 paymentKey: params.paymentKey,
                 orderId: params.orderId,
                 approvedAt: new Date().toISOString(),
-                receiptUrl: `${window.location.origin}/payments/toss/success?mock-receipt=${encodeURIComponent(params.orderId)}`,
+                receiptUrl: `${buildLocalizedReturnUrl('/payments/toss/success')}?mock-receipt=${encodeURIComponent(params.orderId)}`,
                 method: 'CARD',
             },
         };
+
+        persistMockConfirmResult(params.orderId, result);
+        clearMockSession(params.orderId);
+
+        return result;
     }
 
     // Supabase Edge Function 호출
@@ -265,8 +310,7 @@ export const requestTossCardPayment = async (params: {
     customerEmail?: string;
 }) => {
     if (isLocalMockMode) {
-        const origin = window.location.origin;
-        const url = new URL('/payments/toss/success', origin);
+        const url = new URL(buildLocalizedReturnUrl('/payments/toss/success'));
         url.searchParams.set('paymentKey', `mock_payment_${params.orderId}`);
         url.searchParams.set('orderId', params.orderId);
         url.searchParams.set('amount', String(params.amount));
@@ -281,8 +325,6 @@ export const requestTossCardPayment = async (params: {
     const TossPayments = await loadTossPaymentsSdk();
     const tossPayments = TossPayments(tossClientKey);
     const payment = tossPayments.payment({ customerKey: params.customerKey });
-    const origin = window.location.origin;
-
     await payment.requestPayment({
         method: 'CARD',
         amount: {
@@ -293,8 +335,8 @@ export const requestTossCardPayment = async (params: {
         orderName: params.orderName,
         customerName: params.customerName,
         customerEmail: params.customerEmail,
-        successUrl: `${origin}/payments/toss/success`,
-        failUrl: `${origin}/payments/toss/fail`,
+        successUrl: buildLocalizedReturnUrl('/payments/toss/success'),
+        failUrl: buildLocalizedReturnUrl('/payments/toss/fail'),
         windowTarget: getWindowTarget(),
         metadata: {
             source: 'beeliber-booking',

@@ -167,9 +167,8 @@ const App: React.FC = () => {
   const { data: currentUser } = useCurrentUser();
   const adminHomePath = getAdminHomePath(adminInfo.role, adminInfo.jobTitle, adminInfo.branchId);
   const shouldLoadBookingLocations =
-    location.pathname === '/booking' ||
-    location.pathname === '/booking-success' ||
-    /^\/admin\/branch\/[^/]+\/booking$/.test(location.pathname);
+    location.pathname.endsWith('/booking') ||
+    location.pathname.endsWith('/booking-success');
   const { data: bookingLocations = [] } = useLocations({ enabled: shouldLoadBookingLocations });
 
   const [t, setT] = useState<any>(null);
@@ -340,7 +339,7 @@ const App: React.FC = () => {
       };
 
       setLastBooking(confirmedBooking);
-      navigate('/booking-success');
+      navigate(`/${lang}/booking-success`);
       console.log("[App] Booking saved to Firestore successfully.", confirmedBooking);
     } catch (saveError: any) {
       console.error("[App] Booking Save failed:", saveError);
@@ -392,7 +391,7 @@ const App: React.FC = () => {
 
   const handlePaidBookingReady = (booking: BookingState) => {
     setLastBooking(booking);
-    navigate('/booking-success', { replace: true });
+    navigate(`/${lang}/booking-success`, { replace: true });
   };
 
   const handleAdminLogout = () => {

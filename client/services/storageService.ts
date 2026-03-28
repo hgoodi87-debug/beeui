@@ -31,6 +31,56 @@ const getDownloadURL = async (storageRef: any): Promise<string> => {
   return resolveSupabaseUrl(`/storage/v1/object/public/${bucket}/${storageRef._path}`);
 };
 
+const generateSupabaseReservationCode = (booking: Partial<BookingState>): string => {
+  const toCode = (value: unknown, fallback = 'UNK') => {
+    const normalized = String(value || '').trim();
+    if (!normalized) return fallback;
+    const isUuidLike = /^[0-9a-f]{8}-/i.test(normalized);
+    if (isUuidLike) {
+      return normalized.slice(0, 3).toUpperCase();
+    }
+    return normalized.includes('-') ? normalized.toUpperCase() : normalized.slice(0, 3).toUpperCase();
+  };
+
+  const pickupCode = toCode(
+    booking.pickupLoc?.shortCode ||
+    booking.pickupLoc?.id ||
+    booking.pickupLocation,
+    'UNK'
+  );
+
+  const destinationSource = booking.serviceType === 'DELIVERY'
+    ? 'ADDR'
+    : toCode(
+      booking.returnLoc?.shortCode ||
+      booking.returnLoc?.id ||
+      booking.dropoffLocation ||
+      booking.pickupLocation,
+      'UNK'
+    );
+
+  const random = Math.floor(1000 + Math.random() * 9000);
+  return `${pickupCode}-${destinationSource}-${random}`;
+};
+
+const fireSupabaseBookingCreatedWebhook = async (record: Record<string, unknown>) => {
+  const endpoint = resolveSupabaseEndpoint(undefined, '/functions/v1/on-booking-created');
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'INSERT',
+      table: 'booking_details',
+      record,
+    }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => '');
+    throw new Error(message || `on-booking-created failed with ${response.status}`);
+  }
+};
+
 // Firebase Firestore 어댑터 — 기존 코드의 147개 호출을 Supabase로 라우팅
 import { 
   isSupabaseDataEnabled as _sbEnabled, 
@@ -862,6 +912,8 @@ export const StorageService = {
   // --- Bookings ---
   saveBooking: async (booking: BookingState): Promise<BookingState> => {
     const safeBooking = JSON.parse(JSON.stringify(booking));
+    const reservationCode = safeBooking.reservationCode || generateSupabaseReservationCode(safeBooking);
+    safeBooking.reservationCode = reservationCode;
 
     // Supabase 전용 예약 저장 — Edge Function 트리거 자동 발동
     if (isSupabaseDataEnabled()) {
@@ -876,10 +928,12 @@ export const StorageService = {
           pickup_address_detail: safeBooking.pickupAddressDetail || null,
           pickup_date: safeBooking.pickupDate || null,
           pickup_time: safeBooking.pickupTime || null,
+          pickup_location_id: safeBooking.pickupLocation || null,
           dropoff_address: safeBooking.dropoffAddress || null,
           dropoff_address_detail: safeBooking.dropoffAddressDetail || null,
           dropoff_date: safeBooking.dropoffDate || null,
           delivery_time: safeBooking.deliveryTime || null,
+          dropoff_location_id: safeBooking.dropoffLocation || null,
           return_date: safeBooking.returnDate || null,
           return_time: safeBooking.returnTime || null,
           insurance_level: safeBooking.insuranceLevel || null,
@@ -893,6 +947,7 @@ export const StorageService = {
           payment_provider: safeBooking.paymentProvider || null,
           agreed_to_terms: safeBooking.agreedToTerms || false,
           agreed_to_privacy: safeBooking.agreedToPrivacy || false,
+          reservation_code: reservationCode,
           language: safeBooking.language || 'en',
           image_url: safeBooking.imageUrl || null,
           // Edge Function용 추가 필드
@@ -910,47 +965,26 @@ export const StorageService = {
         );
 
         const created = Array.isArray(result) && result[0] ? result[0] : null;
-        const reservationCode = created?.reservation_code || safeBooking.reservationCode;
+        const bookingId = String(created?.id || '');
 
-        console.log("[StorageService] Booking saved to Supabase ✅ Edge Function will process.");
+        console.log("[StorageService] Booking saved to Supabase ✅");
 
-        // 폴링: Edge Function이 reservation_code를 생성할 때까지 대기
-        return new Promise((resolve, reject) => {
-          let pollCount = 0;
-          const bookingId = String(created?.id || '');
+        if (bookingId) {
+          const webhookRecord = {
+            ...bookingData,
+            id: bookingId,
+          };
+          void fireSupabaseBookingCreatedWebhook(webhookRecord).catch((error) => {
+            console.error("[StorageService] on-booking-created bridge failed:", error);
+          });
+        }
 
-          const pollTimer = setInterval(async () => {
-            pollCount++;
-            if (pollCount > 20) {
-              clearInterval(pollTimer);
-              // 타임아웃이어도 예약은 저장됨 — 코드만 나중에 표시
-              resolve({
-                ...safeBooking,
-                id: bookingId,
-                reservationCode: reservationCode || bookingId.substring(0, 12),
-                status: '접수완료' as any,
-              });
-              return;
-            }
-            try {
-              if (!bookingId) return;
-              const rows = await supabaseGet<Array<Record<string, unknown>>>(
-                `booking_details?select=reservation_code&id=eq.${bookingId}&limit=1`
-              );
-              if (rows?.[0]?.reservation_code) {
-                clearInterval(pollTimer);
-                resolve({
-                  ...safeBooking,
-                  id: bookingId,
-                  reservationCode: String(rows[0].reservation_code),
-                  status: '접수완료' as any,
-                });
-              }
-            } catch (e) {
-              console.warn("[StorageService] Poll failed:", e);
-            }
-          }, 1000);
-        });
+        return {
+          ...safeBooking,
+          id: bookingId || safeBooking.id,
+          reservationCode,
+          status: '접수완료' as any,
+        };
 
       } catch (supabaseErr) {
         console.error("[StorageService] Supabase booking save failed, falling back to Firebase:", supabaseErr);

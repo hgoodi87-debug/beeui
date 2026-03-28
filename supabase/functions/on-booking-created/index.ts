@@ -24,8 +24,8 @@ async function getShortCode(locationId: string | null): Promise<string> {
   if (!locationId || locationId === "custom") return "ADDR";
   const { data } = await supabase
     .from("locations")
-    .select("short_code, name")
-    .eq("short_code", locationId)
+    .select("id, short_code, name")
+    .or(`id.eq.${locationId},short_code.eq.${locationId}`)
     .limit(1)
     .single();
   return data?.short_code || locationId.substring(0, 3).toUpperCase();

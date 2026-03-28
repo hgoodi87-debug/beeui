@@ -1655,7 +1655,7 @@ export const StorageService = {
   deleteLocation: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
       try {
-        await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(id)}`, 'DELETE');
+        await supabaseMutate(`locations?id=eq.${encodeURIComponent(id)}`, 'DELETE');
         return;
       } catch (e) {
         console.warn("[Storage] Supabase location delete failed, falling back to Firebase:", e);
@@ -1950,7 +1950,7 @@ export const StorageService = {
   deleteInquiry: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
       try {
-        await supabaseMutate(`partnership_inquiries?id=eq.${id}`, 'DELETE');
+        await supabaseMutate(`partnership_inquiries?id=eq.${encodeURIComponent(id)}`, 'DELETE');
         return;
       } catch (e) {
         console.warn('[Storage] Supabase inquiry delete failed, falling back to Firebase:', e);
@@ -2056,7 +2056,12 @@ export const StorageService = {
       try {
         const { camelToSnake } = await import('./supabaseClient');
         const { supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('daily_closings', 'POST', camelToSnake(safeClosing));
+        const payload = camelToSnake(safeClosing);
+        if (closing.id) {
+          await supabaseMutate(`daily_closings?id=eq.${encodeURIComponent(String(closing.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('daily_closings', 'POST', payload);
+        }
         console.log("[Storage] Cash closing saved to Supabase ✅");
         return;
       } catch (e) {
@@ -2152,7 +2157,12 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('expenditures', 'POST', camelToSnake(safeExp));
+        const payload = camelToSnake(safeExp);
+        if (expenditure.id) {
+          await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(String(expenditure.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('expenditures', 'POST', payload);
+        }
         console.log("[Storage] Expenditure saved to Supabase ✅");
         return;
       } catch (e) {
@@ -3009,6 +3019,15 @@ export const StorageService = {
     }
   },
   subscribeBranches: (callback: (data: any[]) => void) => {
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<any>(
+        'branches?select=*&order=created_at.desc',
+        callback,
+        (row) => snakeToCamel(row),
+        10000
+      );
+    }
+
     const q = query(collection(db, "branches"), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snapshot: any) => {
       callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
@@ -3016,7 +3035,16 @@ export const StorageService = {
   },
   saveBranch: async (branch: any): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate('branches', 'POST', camelToSnake({ ...branch })); console.log("[Storage] Branch saved to Supabase ✅"); } catch (e) { console.warn(e); }
+      try {
+        const payload = camelToSnake({ ...branch });
+        if (branch.id) {
+          await supabaseMutate(`branches?id=eq.${encodeURIComponent(String(branch.id))}`, 'PATCH', payload);
+        } else {
+          await supabaseMutate('branches', 'POST', payload);
+        }
+        console.log("[Storage] Branch saved to Supabase ✅");
+        return;
+      } catch (e) { console.warn(e); }
     }
     try {
       const safeData = { ...branch };
@@ -3032,7 +3060,10 @@ export const StorageService = {
   },
   deleteBranch: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
-      try { await supabaseMutate(`branches?id=eq.${id}`, 'DELETE'); } catch (e) { console.warn(e); }
+      try {
+        await supabaseMutate(`branches?id=eq.${encodeURIComponent(id)}`, 'DELETE');
+        return;
+      } catch (e) { console.warn(e); }
     }
     try {
       await deleteDoc(doc(db, "branches", id));

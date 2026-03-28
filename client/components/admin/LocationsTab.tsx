@@ -215,6 +215,41 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         setSelectedIds([]);
     };
 
+    // [스봉이] 커미션 정산 퍼센트 일괄 조절 💅✨
+    const handleBulkCommissionUpdate = () => {
+        if (!selectedIds.length) {
+            alert("사장님, 지점을 골라야 일을 하죠! 제 시간 귀한 거 아시죠? 🙄");
+            return;
+        }
+
+        const res = window.prompt(
+            `[스봉이 정산 마법사] 💅✨\n선택된 ${selectedIds.length}개 지점의 커미션 비율을 일괄 변경합니다.\n\n"배송,보관" 형식으로 입력해 주세요.\n예: 70,60 (배송 70%, 보관 60%)`, 
+            "70,60"
+        );
+
+        if (!res) return;
+
+        const parts = res.split(',').map(s => s.trim());
+        if (parts.length !== 2) {
+            alert("사장님, 쉼표 하나 찍어서 '배송,보관' 형식으로 똑바로 입력해 보세요. 휴... 🙄");
+            return;
+        }
+
+        const delivery = parseFloat(parts[0]);
+        const storage = parseFloat(parts[1]);
+
+        if (isNaN(delivery) || isNaN(storage)) {
+            alert("사장님, 숫자를 제대로 입력하셔야 제가 일을 하죠. ☕");
+            return;
+        }
+
+        // 일괄 업데이트 실행
+        handleBulkUpdateLocations(selectedIds, {
+            commissionRates: { delivery, storage }
+        });
+        setSelectedIds([]);
+    };
+
     const TYPE_FILTERS = [
         { id: 'ALL', label: '전체', icon: 'fa-th' },
         { id: LocationType.AIRPORT, label: '공항', icon: 'fa-plane' },
@@ -397,6 +432,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                     <i className={`fa-solid ${btn.icon} text-[8px]`}></i>{btn.label}
                                 </button>
                             ))}
+                            <button onClick={handleBulkCommissionUpdate} title="선택된 지점의 커미션 일괄 조절" className="px-2 py-1.5 bg-bee-black text-bee-yellow border border-bee-black rounded-lg text-[9px] font-black hover:scale-105 transition-all shadow-md flex items-center gap-1.5 ml-auto">
+                                <i className="fa-solid fa-percent text-[8px]"></i> 커미션 일괄 변경 💅
+                            </button>
                         </div>
                         <div className="text-[10px] font-black text-gray-400">{filteredLocations.length}개 표시 중 / 전체 {locations.length}개</div>
                     </div>

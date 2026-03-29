@@ -11,8 +11,7 @@ import {
     ChevronRight,
     Gift
 } from "lucide-react";
-import { auth, db } from "../firebaseApp";
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { auth } from "../firebaseApp";
 import { UserProfile } from "../types";
 import { StorageService } from "../services/storageService";
 import BookingHistoryTab from "./BookingHistoryTab";

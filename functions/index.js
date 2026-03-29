@@ -821,8 +821,10 @@ exports.notifyGoogleChat = onRequest({ secrets: ['GOOGLE_CHAT_WEBHOOK_URL'] }, a
 
     const { text, sessionId, senderName, senderEmail, role } = req.body;
     try {
-        const configSnap = await admin.firestore().collection('settings').doc('cloud_config').get();
-        const webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : process.env.GOOGLE_CHAT_WEBHOOK_URL;
+        const webhook = String(process.env.GOOGLE_CHAT_WEBHOOK_URL || '').trim();
+        if (!webhook) {
+            return res.status(503).send('GOOGLE_CHAT_WEBHOOK_URL is not configured');
+        }
 
         const displayRole = role === 'user' ? `👤 ${senderName || 'Guest'}` : '🐝 BeeBot';
         const payload = { text: `*${displayRole}*: ${text}`, thread: { threadKey: sessionId } };
@@ -997,8 +999,11 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}",
 
     // 3. Google Chat Notification (사장님 커스텀 로직 적용 💅✨)
     try {
-        const configSnap = await admin.firestore().collection('settings').doc('cloud_config').get();
-        const webhook = configSnap.exists ? configSnap.data().googleChatWebhookUrl : process.env.GOOGLE_CHAT_WEBHOOK_URL;
+        const webhook = String(process.env.GOOGLE_CHAT_WEBHOOK_URL || '').trim();
+        if (!webhook) {
+            console.warn('[onBookingCreated] GOOGLE_CHAT_WEBHOOK_URL is not configured.');
+            return;
+        }
 
         const displayedCode = booking.reservationCode || bookingId;
         const bagDetails = Object.entries(booking.bagSizes || {})

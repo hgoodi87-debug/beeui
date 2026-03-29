@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, db } from '../firebaseApp';
+import { auth } from '../firebaseApp';
 import {
     createUserWithEmailAndPassword,
     updateProfile,
     signInWithPopup,
     GoogleAuthProvider
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { StorageService } from '../services/storageService';
+import { UserProfile } from '../types';
 
 interface SignupModalProps {
     isOpen: boolean;
@@ -33,14 +34,16 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSignupSucc
             const userCredential = await signInWithPopup(auth, provider);
             const user = userCredential.user;
 
-            // Save to Firestore if new user
-            await setDoc(doc(db, "users", user.uid), {
-                nickname: user.displayName || 'Traveler',
-                email: user.email,
-                createdAt: serverTimestamp(),
-                role: 'user',
+            const nextProfile: UserProfile = {
+                uid: user.uid,
+                email: user.email || '',
+                displayName: user.displayName || 'Traveler',
+                createdAt: new Date().toISOString(),
+                level: 'BRONZE',
                 points: 2000
-            }, { merge: true });
+            };
+            await StorageService.updateUserProfile(user.uid, nextProfile);
+            await StorageService.issueWelcomeCoupon(user.uid);
 
             onSignupSuccess?.();
             onClose();
@@ -62,13 +65,16 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSignupSucc
 
             await updateProfile(user, { displayName: nickname });
 
-            await setDoc(doc(db, "users", user.uid), {
-                nickname,
+            const nextProfile: UserProfile = {
+                uid: user.uid,
                 email,
-                createdAt: serverTimestamp(),
-                role: 'user',
+                displayName: nickname,
+                createdAt: new Date().toISOString(),
+                level: 'BRONZE',
                 points: 2000
-            });
+            };
+            await StorageService.updateUserProfile(user.uid, nextProfile);
+            await StorageService.issueWelcomeCoupon(user.uid);
 
             onSignupSuccess?.();
             onClose();

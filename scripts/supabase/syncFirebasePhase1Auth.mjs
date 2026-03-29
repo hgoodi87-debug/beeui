@@ -153,12 +153,17 @@ const parseJsonResponse = async (response) => {
 };
 
 const supabaseRequest = async (path, options = {}) => {
+  const isRestRequest = path.startsWith('/rest/v1/');
   const response = await fetch(`${config.supabaseUrl}${path}`, {
     ...options,
     headers: {
       apikey: config.supabaseSecretKey,
       Authorization: `Bearer ${config.supabaseSecretKey}`,
       'Content-Type': 'application/json',
+      ...(isRestRequest ? {
+        'Accept-Profile': 'public',
+        'Content-Profile': 'public',
+      } : {}),
       ...(options.headers || {})
     }
   });

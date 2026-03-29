@@ -33,35 +33,34 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
     const isFinancialDeleted = (booking?: BookingState | null) =>
         Boolean(booking?.isDeleted) || String(booking?.settlementStatus || '').toLowerCase() === 'deleted';
 
+    const resolveBookingDetailId = async (booking: BookingState): Promise<string> => {
+        if (booking.id && isSupabaseBookingDetailId(booking.id)) {
+            return booking.id;
+        }
+
+        const resolved = await StorageService.getBooking(booking.reservationCode || booking.id || '');
+        if (resolved?.id && isSupabaseBookingDetailId(resolved.id)) {
+            return resolved.id;
+        }
+
+        throw new Error(`Supabase booking_details row not found for booking identifier: ${booking.id || booking.reservationCode}`);
+    };
+
     const mutateFinancialBooking = async (
         booking: BookingState,
         options: {
             supabaseMethod: 'PATCH' | 'DELETE';
             supabaseBody?: Record<string, unknown>;
-            legacyUpdates?: Record<string, unknown>;
-            legacyDelete?: boolean;
         }
     ) => {
         if (!booking.id) return;
 
-        if (isSupabaseDataEnabled() && isSupabaseBookingDetailId(booking.id)) {
-            await supabaseMutate(`booking_details?id=eq.${booking.id}`, options.supabaseMethod, options.supabaseBody);
-            return;
+        if (!isSupabaseDataEnabled()) {
+            throw new Error('Supabase booking API is not configured');
         }
 
-        if (options.legacyDelete) {
-            const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
-            const { db: fbDb } = await import('../../firebaseApp');
-            await fbDeleteDoc(fbDoc(fbDb, 'bookings', booking.id));
-            return;
-        }
-
-        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
-        const { db: fbDb } = await import('../../firebaseApp');
-        await fbUpdateDoc(fbDoc(fbDb, 'bookings', booking.id), {
-            ...(options.legacyUpdates || {}),
-            updatedAt: new Date().toISOString()
-        });
+        const bookingDetailId = await resolveBookingDetailId(booking);
+        await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);
     };
 
     // [스봉이] 금융 대조는 "정산 대상 완료 예약"만 다뤄요.
@@ -125,11 +124,6 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                     settlement_status: 'CONFIRMED',
                     settled_at: new Date().toISOString(),
                     settled_by: currentActor.name
-                },
-                legacyUpdates: {
-                    settlementStatus: 'CONFIRMED',
-                    settledAt: new Date().toISOString(),
-                    settledBy: currentActor.name
                 }
             });
             await AuditService.logAction(currentActor, 'SETTLEMENT_CONFIRM', { id: booking.id, type: 'BOOKING' }, { method: 'INDIVIDUAL' });
@@ -159,11 +153,6 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                             settlement_status: 'CONFIRMED',
                             settled_at: settledAt,
                             settled_by: currentActor.name
-                        },
-                        legacyUpdates: {
-                            settlementStatus: 'CONFIRMED',
-                            settledAt,
-                            settledBy: currentActor.name
                         }
                     })
                 )
@@ -206,7 +195,6 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                     mutateFinancialBooking(booking, {
                         supabaseMethod: 'PATCH',
                         supabaseBody: { settlement_status: 'deleted' },
-                        legacyUpdates: { isDeleted: true }
                     })
                 )
             );
@@ -390,7 +378,6 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                                                                     await mutateFinancialBooking(b, {
                                                                         supabaseMethod: 'PATCH',
                                                                         supabaseBody: { settlement_status: 'deleted' },
-                                                                        legacyUpdates: { isDeleted: true }
                                                                     });
                                                                     await AuditService.logAction(currentActor, 'DELETE', { id: b.id, type: 'BOOKING' }, { method: 'INDIVIDUAL_SOFT_DELETE_UNSETTLED' });
                                                                     await queryClient.invalidateQueries({ queryKey: ['bookings'] });

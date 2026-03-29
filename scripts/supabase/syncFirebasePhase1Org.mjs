@@ -173,12 +173,17 @@ const parseJsonResponse = async (response) => {
 };
 
 const supabaseRequest = async (path, options = {}) => {
+  const isRestRequest = path.startsWith('/rest/v1/');
   const response = await fetch(`${config.supabaseUrl}${path}`, {
     ...options,
     headers: {
       apikey: config.supabaseSecretKey,
       Authorization: `Bearer ${config.supabaseSecretKey}`,
       'Content-Type': 'application/json',
+      ...(isRestRequest ? {
+        'Accept-Profile': 'public',
+        'Content-Profile': 'public',
+      } : {}),
       ...(options.headers || {})
     }
   });
@@ -233,6 +238,16 @@ const insertTableRow = async (table, payload) => {
     },
     body: JSON.stringify(sanitizeJson(payload))
   });
+};
+
+const fetchSingleEmployeeByCode = async (employeeCode) => {
+  if (!normalizeText(employeeCode)) return null;
+
+  const rows = await supabaseRequest(
+    `/rest/v1/employees?select=id,profile_id,legacy_admin_doc_id,email,name,employee_code,login_id&employee_code=eq.${encodeURIComponent(employeeCode)}&limit=1`
+  );
+
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
 };
 
 const canonicalizeAdmins = (admins) => {
@@ -522,6 +537,49 @@ const makeEmployeeCode = (admin, resolvedBranchCode, index) => {
   return `EMP-${baseBranch}-${String(index + 1).padStart(4, '0')}`;
 };
 
+const buildEmployeeLookups = (employees) => {
+  const byProfileId = new Map();
+  const byLegacyAdminDocId = new Map();
+  const byEmail = new Map();
+  const byLoginId = new Map();
+  const byEmployeeCode = new Map();
+
+  const register = (employee) => {
+    if (!employee || !employee.id) return;
+
+    const profileId = normalizeText(employee.profile_id);
+    const legacyAdminDocId = normalizeText(employee.legacy_admin_doc_id);
+    const email = normalizeEmail(employee.email);
+    const loginId = normalizeLower(employee.login_id);
+    const employeeCode = normalizeLower(employee.employee_code);
+
+    if (profileId) byProfileId.set(profileId, employee);
+    if (legacyAdminDocId) byLegacyAdminDocId.set(legacyAdminDocId, employee);
+    if (email) byEmail.set(email, employee);
+    if (loginId) byLoginId.set(loginId, employee);
+    if (employeeCode) byEmployeeCode.set(employeeCode, employee);
+  };
+
+  employees.forEach(register);
+
+  return {
+    byProfileId,
+    byLegacyAdminDocId,
+    byEmail,
+    byLoginId,
+    byEmployeeCode,
+    register
+  };
+};
+
+const resolveExistingEmployee = ({ authUserId, email, adminId, loginId, employeeCode }, lookups) =>
+  lookups.byProfileId.get(normalizeText(authUserId))
+  || lookups.byLegacyAdminDocId.get(normalizeText(adminId))
+  || lookups.byEmail.get(normalizeEmail(email))
+  || lookups.byLoginId.get(normalizeLower(loginId))
+  || lookups.byEmployeeCode.get(normalizeLower(employeeCode))
+  || null;
+
 const resolveBranchCodeForAdmin = (admin, branchLookup) => {
   const legacyBranchId = normalizeText(admin.branchId);
 
@@ -572,7 +630,7 @@ const main = async () => {
   const roles = await fetchTable('roles', 'id,code,name');
   const existingBranches = await fetchTable('branches', 'id,branch_code,name,branch_type,status,is_active');
   const existingProfiles = await fetchTable('profiles', 'id,email,display_name,is_active');
-  const existingEmployees = await fetchTable('employees', 'id,profile_id,legacy_admin_doc_id,email,name');
+  const existingEmployees = await fetchTable('employees', 'id,profile_id,legacy_admin_doc_id,email,name,employee_code,login_id');
   const existingEmployeeRoles = await fetchTable('employee_roles', 'employee_id,is_primary,role:roles(code)');
 
   if (!Array.isArray(roles) || !roles.length) {
@@ -596,7 +654,7 @@ const main = async () => {
     existingBranches.map((branch) => [normalizeLower(branch.branch_code), branch])
   );
   const profilesById = new Map(existingProfiles.map((profile) => [profile.id, profile]));
-  const employeesByProfileId = new Map(existingEmployees.map((employee) => [employee.profile_id, employee]));
+  const employeeLookups = buildEmployeeLookups(existingEmployees);
   const preferredRoleCodeByEmployeeId = new Map();
   existingEmployeeRoles
     .filter((entry) => entry?.employee_id && entry?.role?.code)
@@ -623,7 +681,16 @@ const main = async () => {
     const resolvedBranchType = resolvedBranchCode
       ? branchLookup.branchCandidates.find((branch) => normalizeLower(branch.branch_code) === normalizeLower(resolvedBranchCode))?.branch_type
       : '';
-    const existingEmployee = email ? authUsersByEmail.get(email) ? employeesByProfileId.get(authUsersByEmail.get(email).id) : null : null;
+    const existingEmployee = resolveExistingEmployee(
+      {
+        authUserId: authUsersByEmail.get(email)?.id,
+        email,
+        adminId: admin.id,
+        loginId: admin.loginId,
+        employeeCode: makeEmployeeCode(admin, resolvedBranchCode, index)
+      },
+      employeeLookups
+    );
     const preservedRoleCode = existingEmployee ? preferredRoleCodeByEmployeeId.get(existingEmployee.id) : '';
     const roleCode =
       !normalizeText(admin.role) && preservedRoleCode
@@ -754,13 +821,24 @@ const main = async () => {
       }
     }
 
+    const existingEmployee = resolveExistingEmployee(
+      {
+        authUserId: item.authUser.id,
+        email: item.email,
+        adminId: item.admin.id,
+        loginId: item.admin.loginId,
+        employeeCode: item.employeeCode
+      },
+      employeeLookups
+    );
+
     const employeePayload = {
       profile_id: item.authUser.id,
-      employee_code: item.employeeCode,
-      legacy_admin_doc_id: item.admin.id,
+      employee_code: normalizeText(existingEmployee?.employee_code) || item.employeeCode,
+      legacy_admin_doc_id: normalizeText(existingEmployee?.legacy_admin_doc_id) || item.admin.id,
       name: item.admin.name || item.email,
       email: item.email,
-      login_id: normalizeText(item.admin.loginId) || null,
+      login_id: normalizeText(item.admin.loginId) || normalizeText(existingEmployee?.login_id) || null,
       phone: normalizeText(item.admin.phone) || null,
       job_title: normalizeText(item.admin.jobTitle) || null,
       org_type: resolveOrgType(item.admin, item.resolvedBranchType),
@@ -772,15 +850,40 @@ const main = async () => {
       memo: normalizeText(item.admin.memo) || null
     };
 
-    let employeeId = employeesByProfileId.get(item.authUser.id)?.id;
+    let employeeId = existingEmployee?.id;
     if (employeeId) {
-      const updatedEmployees = await patchTableRow('employees', `profile_id=eq.${item.authUser.id}`, employeePayload);
-      employeeId = updatedEmployees[0]?.id || employeeId;
+      const updatedEmployees = await patchTableRow('employees', `id=eq.${employeeId}`, employeePayload);
+      const updatedEmployee = updatedEmployees[0] || existingEmployee;
+      employeeId = updatedEmployee?.id || employeeId;
+      if (updatedEmployee) {
+        employeeLookups.register(updatedEmployee);
+      }
     } else {
-      const [insertedEmployee] = await insertTableRow('employees', employeePayload);
-      employeeId = insertedEmployee?.id;
-      if (insertedEmployee) {
-        employeesByProfileId.set(insertedEmployee.profile_id, insertedEmployee);
+      try {
+        const [insertedEmployee] = await insertTableRow('employees', employeePayload);
+        employeeId = insertedEmployee?.id;
+        if (insertedEmployee) {
+          employeeLookups.register(insertedEmployee);
+        }
+      } catch (error) {
+        const isDuplicateEmployeeCode =
+          error?.status === 409 ||
+          error?.body?.code === '23505' ||
+          String(error?.message || '').includes('employees_code_lower_idx');
+
+        if (!isDuplicateEmployeeCode) {
+          throw error;
+        }
+
+        const conflictedEmployee = await fetchSingleEmployeeByCode(item.employeeCode);
+        if (!conflictedEmployee?.id) {
+          throw error;
+        }
+
+        const updatedEmployees = await patchTableRow('employees', `id=eq.${conflictedEmployee.id}`, employeePayload);
+        const updatedEmployee = updatedEmployees[0] || conflictedEmployee;
+        employeeId = updatedEmployee?.id || conflictedEmployee.id;
+        employeeLookups.register(updatedEmployee);
       }
     }
 

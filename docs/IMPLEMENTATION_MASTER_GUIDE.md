@@ -11,6 +11,7 @@
 3. 관리자 화면 데이터 계약
 4. env / Edge Function / 코드 연결 지점
 5. 현재 운영 마이그레이션 기준
+6. SEO / CTR / 이탈율 기획 기준
 
 새 반영 작업을 시작할 때는 이 문서를 먼저 본다.
 
@@ -240,6 +241,17 @@ customers.id (= auth.uid())
 
 ---
 
+## 8. SEO / 유입 최적화 기준
+
+- SEO 구조, CTR, 이탈율 개선 실행안은 [SEO_CTR_BOUNCE_PLAN.md](/Users/cm/Desktop/beeliber/beeliber-main/docs/SEO_CTR_BOUNCE_PLAN.md) 를 본다.
+- 핵심 원칙:
+  - 색인 URL 체계는 하나로 통일한다
+  - 실제 배포 HTML에 page별 title / description / canonical 이 반영되어야 한다
+  - sitemap / prerender / live route 는 같은 URL 집합을 바라봐야 한다
+  - SEO lander 는 검색 의도와 첫 화면 메시지가 일치해야 한다
+
+---
+
 ## 8. 마이그레이션 기준
 
 ### 현재 운영 기준
@@ -273,50 +285,27 @@ customers.id (= auth.uid())
 
 ---
 
-## 10. 남아 있는 레거시 브리지 요약
+## 10. Firebase DB Retired 상태
 
-### 아직 남아 있는 Firebase / legacy 읽기 브리지
+### 현재 기준
 
-- `bookings`
-  - 관리자 예약 목록에서 local legacy read bridge 병합 가능
-- `daily_closings`
-  - 정산 화면에서 legacy 병합 가능
-- `expenditures`
-  - 회계 화면에서 legacy 병합 가능
-- `locations`
-  - Supabase 실패 시 로컬 브리지 또는 Firebase fallback 존재
-- `admins`
-  - HR 화면 일부 fallback 존재
+- 운영 웹과 관리자 웹은 Firebase Firestore를 더 이상 런타임 데이터베이스로 사용하지 않는다
+- 예약, 지점, 정산, 회계, HR, 공지, 할인코드, 설정 저장은 Supabase REST / view / Edge Function 기준이다
+- `client/firebaseApp.ts`의 `db`는 더미 객체이며, Firestore 초기화는 하지 않는다
+- `storageService.ts` 내부의 `doc/getDoc/getDocs/setDoc` 명칭은 기존 코드 호환을 위한 Supabase 어댑터 이름일 뿐 실제 Firebase DB 호출이 아니다
 
-### Supabase-only 전환 우선순위
+### 과거 데이터 기준
 
-1. `locations`, `booking_details`, `app_settings`
-   - 공개 페이지와 예약 플로우가 직접 영향
-2. `daily_closings`, `expenditures`
-   - 정산 / 회계 집계 일관성 영향
-3. `employees`, `branches`, `admin account sync`
-   - HR / 관리자 권한 영향
-4. notices / CMS / chats / discounts
-   - 운영 보조 기능
+- 과거 예약은 `scripts/supabase/migrateFirebaseBookings.mjs`로 `customers + reservations + booking_details + reservation_items + payments`에 적재한다
+- Firebase Admin/Org 데이터는 `scripts/supabase/syncFirebasePhase1Auth.mjs`, `scripts/supabase/syncFirebasePhase1Org.mjs` 기준으로 Supabase `profiles + employees + employee_roles + employee_branch_assignments`에 동기화한다
+- Firebase DB는 운영 조회 브리지로 쓰지 않고, 필요 시 일회성 마이그레이션 입력원으로만 취급한다
 
-### 관리자 탭 기준 남은 병합 구간
+### 운영 원칙
 
-- `OVERVIEW`
-  - Supabase view 우선, 일부 bookings / expenditures / closings legacy 병합 가능
-- `DELIVERY_BOOKINGS`, `STORAGE_BOOKINGS`
-  - `admin_booking_list_v1` 우선, legacy bookings 병합 가능
-- `DAILY_SETTLEMENT`, `ACCOUNTING`, `MONTHLY_SETTLEMENT`, `REPORTS`
-  - `admin_revenue_*` view 우선, expenditures / closings / 일부 bookings 병합 가능
-- `LOCATIONS`
-  - Supabase `locations` 우선, 실패 시 bridge/fallback 영향 가능
-- `HR`
-  - Supabase `employees` 우선, 일부 legacy admin fallback 존재
-
-원칙:
-
-- 새 쓰기는 Supabase only
-- legacy 병합은 과거 데이터 조회와 로컬 복구용으로만 축소
-- 배포 서버 공개 페이지는 legacy bridge에 의존하지 않도록 유지
+- 새 읽기/쓰기는 Supabase only
+- 로컬 bridge / Firebase fallback을 전제로 기능을 만들지 않는다
+- 과거 데이터가 필요하면 bridge보다 먼저 Supabase 적재를 수행한다
+- 배포 서버 공개 페이지와 관리자 페이지는 Firebase DB 가용성에 의존하지 않는다
 5. `branches`와 `locations`를 섞어 쓰지 않는지 확인
 6. 과거 매출이 필요한 화면이면 legacy read bridge 영향 확인
 7. 운영 마이그레이션과 충돌하지 않는지 확인

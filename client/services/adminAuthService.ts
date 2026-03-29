@@ -282,26 +282,16 @@ const resolveLegacyLocationId = async (
 };
 
 export const getAdminAuthProvider = (): AdminAuthProvider => {
-  if (configuredProvider === 'supabase' && supabaseUrl && supabasePublishableKey) {
-    return 'supabase';
+  if (!supabaseUrl || !supabasePublishableKey) {
+    console.warn('[AdminAuth] Supabase 관리자 인증 설정이 누락되어 있습니다.');
   }
-  return 'firebase';
+  return 'supabase';
 };
 
 export const isSupabaseAdminAuthEnabled = () => getAdminAuthProvider() === 'supabase';
 
 export const warmAdminAuth = async () => {
-  if (isSupabaseAdminAuthEnabled()) {
-    return;
-  }
-
-  const firebaseAppModulePromise = getFirebaseAppModule();
-
-  await Promise.allSettled([
-    firebaseAppModulePromise.then(({ ensureAuth }) => ensureAuth()),
-    firebaseAppModulePromise,
-    import('firebase/functions'),
-  ]);
+  return;
 };
 
 const readSupabaseAdminSession = (): SupabaseAdminSession | null => {
@@ -426,19 +416,6 @@ export const getActiveAdminRequestHeaders = async (): Promise<Record<string, str
   if (supabaseAccessToken) {
     headers.Authorization = `Bearer ${supabaseAccessToken}`;
     headers['X-Supabase-Access-Token'] = supabaseAccessToken;
-    return headers;
-  }
-
-  try {
-    const { auth, ensureAuth } = await getFirebaseAppModule();
-    const currentUser = auth.currentUser || await ensureAuth();
-    const firebaseIdToken = await currentUser?.getIdToken?.();
-
-    if (firebaseIdToken) {
-      headers.Authorization = `Bearer ${firebaseIdToken}`;
-    }
-  } catch (error) {
-    console.warn('[AdminAuth] Firebase 요청 토큰 확보 실패:', error);
   }
 
   return headers;
@@ -599,57 +576,8 @@ const resolveSupabaseLoginEmail = async (identifier: string) => {
   }
 };
 
-const verifyLegacyAdminCredentials = async (identifier: string, password: string) => {
-  try {
-    const firebaseAppModulePromise = getFirebaseAppModule();
-    const [, firebaseFunctionsModule, firebaseAppModule] = await Promise.all([
-      firebaseAppModulePromise.then(({ ensureAuth }) => ensureAuth()),
-      import('firebase/functions'),
-      firebaseAppModulePromise,
-    ]);
-    const { httpsCallable } = firebaseFunctionsModule;
-    const { functions } = firebaseAppModule;
-    const verifyAdmin = httpsCallable(functions, 'verifyAdmin');
-    const result = await verifyAdmin({ name: identifier, password });
-    return (result.data || null) as Record<string, any> | null;
-  } catch (error) {
-    const wrapped = new Error('Firebase 관리자 권한 연결에 실패했습니다.') as Error & {
-      code?: string;
-      cause?: unknown;
-    };
-    wrapped.code = isFirebaseRefererBlockedError(error)
-      ? 'auth/unauthorized-domain'
-      : 'supabase/firebase-bridge-failed';
-    wrapped.message = error instanceof Error && error.message
-      ? error.message
-      : 'Firebase 관리자 권한 연결에 실패했습니다.';
-    wrapped.cause = error;
-    throw wrapped;
-  }
-};
-
-const loginWithFirebase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
-  const admin = await verifyLegacyAdminCredentials(identifier, password);
-
-  if (!admin) {
-    const error = new Error('이름 또는 비밀번호가 올바르지 않습니다.') as Error & { code?: string };
-    error.code = 'functions/unauthenticated';
-    throw error;
-  }
-
-  return {
-    name: String(admin.name || identifier),
-    jobTitle: String(admin.jobTitle || 'Staff'),
-    role: normalizeRole(String(admin.role || 'staff')),
-    email: admin.email ? String(admin.email) : '',
-    branchId: admin.branchId ? String(admin.branchId) : '',
-    provider: 'firebase',
-  };
-};
-
 const loginWithSupabase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
   const directEmailInput = identifier.includes('@') ? identifier.trim() : '';
-  let verifiedAdmin: Record<string, any> | null = null;
   let resolvedEmail = directEmailInput;
 
   if (directEmailInput) {
@@ -659,16 +587,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   }
 
   if (!resolvedEmail && !directEmailInput) {
-    try {
-      verifiedAdmin = await verifyLegacyAdminCredentials(identifier, password);
-      resolvedEmail = String(
-        verifiedAdmin?.email ||
-        directEmailInput
-      ).trim();
-    } catch (error) {
-      console.warn('[AdminAuth] Firebase 브리지 실패, branch 이메일 폴백 시도');
-      resolvedEmail = `${identifier.toLowerCase()}@bee-liber.com`;
-    }
+    resolvedEmail = `${identifier.toLowerCase()}@bee-liber.com`;
   }
 
   if (!resolvedEmail) {
@@ -783,8 +702,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   const branchId = await resolveLegacyLocationId(
     accessToken,
     branchCode,
-    '',
-    verifiedAdmin?.branchId ? String(verifiedAdmin.branchId) : ''
+    ''
   );
 
   persistSupabaseAdminSession({
@@ -814,8 +732,5 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
 };
 
 export const loginAdmin = async (identifier: string, password: string): Promise<AdminAuthResult> => {
-  if (getAdminAuthProvider() === 'supabase') {
-    return loginWithSupabase(identifier, password);
-  }
-  return loginWithFirebase(identifier, password);
+  return loginWithSupabase(identifier, password);
 };

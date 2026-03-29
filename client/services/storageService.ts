@@ -360,6 +360,29 @@ const KEYS = {
   CLOUD_CONFIG: 'beeliber_cloud_config',
 };
 
+const USER_PROFILE_CACHE_KEY = (uid: string) => `beeliber_user_profile:${uid}`;
+const USER_COUPON_CACHE_KEY = (uid: string) => `beeliber_user_coupons:${uid}`;
+
+const readLocalJson = <T>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) as T : fallback;
+  } catch (error) {
+    console.warn(`[Storage] local cache read failed (${key})`, error);
+    return fallback;
+  }
+};
+
+const writeLocalJson = (key: string, value: unknown) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`[Storage] local cache write failed (${key})`, error);
+  }
+};
+
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
   apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
   authDomain: "beeliber-main.firebaseapp.com",
@@ -461,18 +484,11 @@ const normalizeLocationTranslations = (location: LocationOption): LocationOption
 };
 
 export const canUseLocalLegacyReadBridge = () => {
-  if (typeof window === 'undefined') return false;
-  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) return false;
-  if (localAdminDataBridgeDisabled) return false;
-  if (!LOCAL_LEGACY_READ_BRIDGE_ENABLED) return false;
-  const hostname = window.location.hostname;
-  return Boolean(LOCAL_ADMIN_DATA_BRIDGE_URL) && (hostname === 'localhost' || hostname === '127.0.0.1');
+  return false;
 };
 
 const canUseLocalAdminDataBridge = () => {
-  if (!canUseLocalLegacyReadBridge()) return false;
-  if (isSupabaseAdminAuthEnabled()) return false;
-  return true;
+  return false;
 };
 
 const shouldDisableLocalAdminDataBridge = (error: unknown) => {
@@ -586,15 +602,6 @@ const normalizeAdminBranchReference = (value?: string | null): string | undefine
   return isUuidLike(trimmed) ? trimmed : undefined;
 };
 
-const getNativeFirestoreDeps = async () => {
-  const [{ db: nativeDb }, firestore] = await Promise.all([
-    import('../firebaseApp'),
-    import('firebase/firestore'),
-  ]);
-
-  return { nativeDb, ...firestore };
-};
-
 interface LocationQueryOptions {
   includeInactive?: boolean;
 }
@@ -681,15 +688,6 @@ const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
 };
 
 const loadLegacyAdminBookings = async (): Promise<BookingState[]> => {
-  if (canUseLocalLegacyReadBridge()) {
-    return fetchLocalAdminBridge<BookingState[]>('/api/collections/bookings');
-  }
-
-  if (!isSupabaseDataEnabled()) {
-    const querySnapshot = await getDocs(collection(db, "bookings"));
-    return querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id } as BookingState));
-  }
-
   return [];
 };
 
@@ -706,16 +704,6 @@ const loadSupabaseCashClosings = async (): Promise<CashClosing[]> => {
 };
 
 const loadLegacyCashClosings = async (): Promise<CashClosing[]> => {
-  if (canUseLocalLegacyReadBridge()) {
-    return fetchLocalAdminBridge<CashClosing[]>('/api/collections/daily_closings');
-  }
-
-  if (!isSupabaseDataEnabled()) {
-    const q = query(collection(db, 'daily_closings'), orderBy('date', 'desc'), limit(500));
-    const snap = await getDocs(q);
-    return snap.docs.map((doc) => ({ ...doc.data(), id: doc.id } as CashClosing));
-  }
-
   return [];
 };
 
@@ -730,16 +718,6 @@ const loadSupabaseExpenditures = async (): Promise<Expenditure[]> => {
 };
 
 const loadLegacyExpenditures = async (): Promise<Expenditure[]> => {
-  if (canUseLocalLegacyReadBridge()) {
-    return fetchLocalAdminBridge<Expenditure[]>('/api/collections/expenditures');
-  }
-
-  if (!isSupabaseDataEnabled()) {
-    const q = query(collection(db, 'expenditures'), orderBy('date', 'desc'), limit(1000));
-    const snap = await getDocs(q);
-    return snap.docs.map((doc) => ({ ...doc.data(), id: doc.id } as Expenditure));
-  }
-
   return [];
 };
 
@@ -995,253 +973,88 @@ export const StorageService = {
     const safeBooking = JSON.parse(JSON.stringify(booking));
     const reservationCode = safeBooking.reservationCode || generateSupabaseReservationCode(safeBooking);
     safeBooking.reservationCode = reservationCode;
-
-    // Supabase 전용 예약 저장 — Edge Function 트리거 자동 발동
-    if (isSupabaseDataEnabled()) {
-      try {
-        console.log("[StorageService] Saving booking to Supabase...");
-
-        const bookingData = {
-          sns_channel: safeBooking.snsChannel || null,
-          sns_id: safeBooking.snsId || null,
-          country: safeBooking.country || null,
-          pickup_address: safeBooking.pickupAddress || null,
-          pickup_address_detail: safeBooking.pickupAddressDetail || null,
-          pickup_date: safeBooking.pickupDate || null,
-          pickup_time: safeBooking.pickupTime || null,
-          pickup_location_id: safeBooking.pickupLocation || null,
-          dropoff_address: safeBooking.dropoffAddress || null,
-          dropoff_address_detail: safeBooking.dropoffAddressDetail || null,
-          dropoff_date: safeBooking.dropoffDate || null,
-          delivery_time: safeBooking.deliveryTime || null,
-          dropoff_location_id: safeBooking.dropoffLocation || null,
-          return_date: safeBooking.returnDate || null,
-          return_time: safeBooking.returnTime || null,
-          insurance_level: safeBooking.insuranceLevel || null,
-          insurance_bag_count: safeBooking.insuranceBagCount || null,
-          use_insurance: safeBooking.useInsurance || false,
-          base_price: isNaN(Number(safeBooking.price)) ? 0 : Number(safeBooking.price),
-          final_price: isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice),
-          promo_code: safeBooking.promoCode || null,
-          discount_amount: safeBooking.discountAmount || 0,
-          payment_method: safeBooking.paymentMethod || null,
-          payment_provider: safeBooking.paymentProvider || null,
-          agreed_to_terms: safeBooking.agreedToTerms || false,
-          agreed_to_privacy: safeBooking.agreedToPrivacy || false,
-          reservation_code: reservationCode,
-          language: safeBooking.language || 'en',
-          image_url: safeBooking.imageUrl || null,
-          // Edge Function용 추가 필드
-          user_name: safeBooking.userName || null,
-          user_email: safeBooking.userEmail || null,
-          service_type: safeBooking.serviceType || 'STORAGE',
-          pickup_location: getBookingLocationLabel(
-            safeBooking.pickupLoc,
-            safeBooking.pickupLocationName,
-            safeBooking.pickupLocation,
-          ),
-          dropoff_location: getBookingLocationLabel(
-            safeBooking.returnLoc,
-            safeBooking.dropoffLocationName,
-            safeBooking.dropoffLocation,
-          ),
-        };
-
-        const result = await supabaseMutate<Array<Record<string, unknown>>>(
-          'booking_details',
-          'POST',
-          bookingData
-        );
-
-        const created = Array.isArray(result) && result[0] ? result[0] : null;
-        const bookingId = String(created?.id || '');
-
-        console.log("[StorageService] Booking saved to Supabase ✅");
-
-        if (bookingId) {
-          const webhookRecord = {
-            ...bookingData,
-            id: bookingId,
-          };
-          void fireSupabaseBookingCreatedWebhook(webhookRecord).catch((error) => {
-            console.error("[StorageService] on-booking-created bridge failed:", error);
-          });
-        }
-
-        return {
-          ...safeBooking,
-          id: bookingId || safeBooking.id,
-          reservationCode,
-          status: '접수완료' as any,
-        };
-
-      } catch (supabaseErr) {
-        console.error("[StorageService] Supabase booking save failed, falling back to Firebase:", supabaseErr);
-        // Firebase 폴백 아래로 진행
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error('Supabase booking storage is not configured.');
     }
 
-    // Firebase 폴백 (Supabase 실패 시에만)
     try {
-      const { auth, ensureAuth, db } = await import('../firebaseApp');
-      const { collection, doc, setDoc } = await import('firebase/firestore');
+      console.log("[StorageService] Saving booking to Supabase...");
 
-      let currentUser: any = null;
-      let authAttempts = 0;
-      while (!currentUser && authAttempts < 3) {
-        authAttempts++;
-        try { currentUser = await ensureAuth(); } catch (authErr: any) {
-          if (authAttempts >= 3) throw authErr;
-          await new Promise(r => setTimeout(r, 500 * authAttempts));
-        }
+      const bookingData = {
+        sns_channel: safeBooking.snsChannel || null,
+        sns_id: safeBooking.snsId || null,
+        country: safeBooking.country || null,
+        pickup_address: safeBooking.pickupAddress || null,
+        pickup_address_detail: safeBooking.pickupAddressDetail || null,
+        pickup_date: safeBooking.pickupDate || null,
+        pickup_time: safeBooking.pickupTime || null,
+        pickup_location_id: safeBooking.pickupLocation || null,
+        dropoff_address: safeBooking.dropoffAddress || null,
+        dropoff_address_detail: safeBooking.dropoffAddressDetail || null,
+        dropoff_date: safeBooking.dropoffDate || null,
+        delivery_time: safeBooking.deliveryTime || null,
+        dropoff_location_id: safeBooking.dropoffLocation || null,
+        return_date: safeBooking.returnDate || null,
+        return_time: safeBooking.returnTime || null,
+        insurance_level: safeBooking.insuranceLevel || null,
+        insurance_bag_count: safeBooking.insuranceBagCount || null,
+        use_insurance: safeBooking.useInsurance || false,
+        base_price: isNaN(Number(safeBooking.price)) ? 0 : Number(safeBooking.price),
+        final_price: isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice),
+        promo_code: safeBooking.promoCode || null,
+        discount_amount: safeBooking.discountAmount || 0,
+        payment_method: safeBooking.paymentMethod || null,
+        payment_provider: safeBooking.paymentProvider || null,
+        agreed_to_terms: safeBooking.agreedToTerms || false,
+        agreed_to_privacy: safeBooking.agreedToPrivacy || false,
+        reservation_code: reservationCode,
+        language: safeBooking.language || 'en',
+        image_url: safeBooking.imageUrl || null,
+        user_name: safeBooking.userName || null,
+        user_email: safeBooking.userEmail || null,
+        service_type: safeBooking.serviceType || 'STORAGE',
+        pickup_location: getBookingLocationLabel(
+          safeBooking.pickupLoc,
+          safeBooking.pickupLocationName,
+          safeBooking.pickupLocation,
+        ),
+        dropoff_location: getBookingLocationLabel(
+          safeBooking.returnLoc,
+          safeBooking.dropoffLocationName,
+          safeBooking.dropoffLocation,
+        ),
+      };
+
+      const result = await supabaseMutate<Array<Record<string, unknown>>>(
+        'booking_details',
+        'POST',
+        bookingData
+      );
+
+      const created = Array.isArray(result) && result[0] ? result[0] : null;
+      const bookingId = String(created?.id || '');
+
+      console.log("[StorageService] Booking saved to Supabase ✅");
+
+      if (bookingId) {
+        const webhookRecord = {
+          ...bookingData,
+          id: bookingId,
+        };
+        void fireSupabaseBookingCreatedWebhook(webhookRecord).catch((error) => {
+          console.error("[StorageService] on-booking-created bridge failed:", error);
+        });
       }
 
-      const bookingOwnerUid = safeBooking.userId || auth.currentUser?.uid || currentUser?.uid;
-      if (!bookingOwnerUid) throw new Error('예약 저장용 사용자 인증을 확인하지 못했습니다.');
-      safeBooking.userId = bookingOwnerUid;
-
-      const docRef = safeBooking.id ? doc(db, 'bookings', safeBooking.id) : doc(collection(db, 'bookings'));
-      safeBooking.id = docRef.id;
-
-      console.log("[StorageService] Initiating Event-Driven Booking flow... docId:", docRef.id);
-
-      return new Promise((resolve, reject) => {
-        let isResolved = false;
-        let pollTimer: ReturnType<typeof setInterval> | null = null;
-        let transientReadFailures = 0;
-        let pollCount = 0;
-
-        const finish = (handler: () => void) => {
-          if (isResolved) return;
-          isResolved = true;
-          clearTimeout(timeoutId);
-          if (pollTimer) clearInterval(pollTimer);
-          handler();
-        };
-
-        // [스봉이] CF 미트리거 폴백: 12초 이상 SERVER_VALIDATION_PENDING 유지 시 클라이언트에서 직접 확정 💅
-        const tryClientFallbackConfirm = async () => {
-          try {
-            const snap = await getDoc(docRef);
-            if (!snap.exists()) return false;
-            const data = snap.data();
-            if (data.status === 'SERVER_VALIDATION_PENDING') {
-              console.warn('[StorageService] Cloud Function did not trigger within expected window. Applying client fallback... 💅');
-              const { updateDoc } = await import('firebase/firestore');
-              await updateDoc(docRef, { status: '접수완료' });
-              const updatedSnap = await getDoc(docRef as any);
-              const updatedData = updatedSnap.exists() ? updatedSnap.data() : data;
-              finish(() => resolve({ ...(updatedData as BookingState), id: docRef.id, status: '접수완료' as any }));
-              return true;
-            }
-            return false;
-          } catch (fallbackErr) {
-            console.error('[StorageService] Client fallback confirm failed:', fallbackErr);
-            return false;
-          }
-        };
-
-        const inspectBookingStatus = async () => {
-          pollCount++;
-          try {
-            const snap = await getDoc(docRef as any);
-            if (!snap.exists()) return;
-
-            const data = snap.data();
-            if (data.status === '접수완료') {
-              console.log("[StorageService] Backend validation successful! 🎉", data);
-              finish(() => resolve({ ...(data as BookingState), id: snap.id }));
-              return;
-            }
-
-            if (data.status === 'ERROR' || data.status === '예약실패') {
-              console.error("[StorageService] Backend validation failed! 🚨", data);
-              finish(() => reject(new Error(data.error || '예약 검증 중 오류가 발생했습니다.')));
-              return;
-            }
-
-            // [스봉이] CF가 15초 이상 안 오면 클라이언트 폴백 시도 💅
-            if (data.status === 'SERVER_VALIDATION_PENDING' && pollCount >= 18) {
-              await tryClientFallbackConfirm();
-            }
-          } catch (err: any) {
-            const isPermissionRace = err?.code === 'permission-denied'
-              || err?.message?.includes('Missing or insufficient permissions');
-
-            if (isPermissionRace && transientReadFailures < 10) {
-              transientReadFailures += 1;
-              console.warn('[StorageService] Booking confirmation read raced auth propagation. Retrying...', transientReadFailures);
-              return;
-            }
-
-            // [스봉이] permission-denied가 계속 나면 토큰 리프레시 시도 후 한 번 더 💅
-            if (isPermissionRace && transientReadFailures === 10) {
-              try {
-                const freshUser = await ensureAuth();
-                if (freshUser) {
-                  await freshUser.getIdToken(true);
-                  transientReadFailures++; // 11 — 한 번만 추가 시도
-                  console.warn('[StorageService] Token refreshed. Giving one more chance...');
-                  return;
-                }
-              } catch (_) { /* 최후 시도 실패 */ }
-            }
-
-            finish(() => reject(err));
-          }
-        };
-
-        const timeoutId = setTimeout(async () => {
-          // [스봉이] 타임아웃 직전 마지막으로 클라이언트 폴백 시도 💅
-          const rescued = await tryClientFallbackConfirm();
-          if (!rescued) {
-            finish(() => reject(new Error('예약 저장 확인이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.')));
-          }
-        }, 30000);
-
-        // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 깨끗하게 씻겨서 보내야죠 💅
-        const cleanData = (obj: any): any => {
-          const newObj = { ...obj };
-          Object.keys(newObj).forEach(key => {
-            if (newObj[key] === undefined) delete newObj[key];
-            else if (typeof newObj[key] === 'number' && isNaN(newObj[key])) newObj[key] = 0;
-            else if (newObj[key] !== null && typeof newObj[key] === 'object') newObj[key] = cleanData(newObj[key]);
-          });
-          return newObj;
-        };
-
-        const finalizedBooking = cleanData({
-          ...safeBooking,
-          status: 'SERVER_VALIDATION_PENDING',
-          price: isNaN(Number(safeBooking.price)) ? 0 : Number(safeBooking.price),
-          finalPrice: isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice),
-          createdAt: new Date().toISOString()
-        });
-
-        // Write the request to trigger the backend Cloud Function
-        // [스봉이] 듀얼 라이트 제거! 이 Firebase 폴백 경로는 Supabase 실패 시에만 도달하므로,
-        // 또다시 Supabase에 쓰면 중복 Edge Function 트리거(바우처 2번 발송)가 됩니다. 💅
-        setDoc(docRef, finalizedBooking).then(() => {
-          console.log("[StorageService] Firebase booking saved. Supabase dual-write disabled to prevent duplicate vouchers.");
-        }).catch(err => {
-          finish(() => reject(err));
-        });
-
-        // [스봉이] 첫 폴링은 1초 뒤부터 — 쓰기가 전파되기 전에 읽으면 허탕이에요 💅
-        setTimeout(() => {
-          void inspectBookingStatus();
-          pollTimer = setInterval(() => {
-            void inspectBookingStatus();
-          }, 800);
-        }, 1000);
-      });
-
-    } catch (e: any) {
-      console.error("Cloud Save Failed (Booking via API):", e);
-      // Log more details if it's a Firebase error
-      if (e.code) console.error("Firebase Error Code:", e.code);
-      if (e.details) console.error("Firebase Error Details:", e.details);
-      throw e;
+      return {
+        ...safeBooking,
+        id: bookingId || safeBooking.id,
+        reservationCode,
+        status: '접수완료' as any,
+      };
+    } catch (error) {
+      console.error("[StorageService] Supabase booking save failed:", error);
+      throw error;
     }
   },
 
@@ -1429,21 +1242,25 @@ export const StorageService = {
   },
 
   updateBooking: async (id: string, updates: Partial<BookingState>): Promise<void> => {
-    // [스봉이] Supabase 우선 업데이트 — booking_details 테이블 직접 PATCH 💅
-    if (isSupabaseDataEnabled()) {
-      try {
-        const supabaseUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
-        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', supabaseUpdates);
-        console.log(`[Storage] Booking ${id} updated in Supabase ✅`);
-        return; // Supabase 성공 시 Firebase 건너뜀
-      } catch (e) {
-        console.warn("[Storage] Supabase booking update failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error('Supabase booking storage is not configured.');
     }
-    // Firebase fallback
-    const safeUpdates = JSON.parse(JSON.stringify(updates));
-    const bookingRef = doc(db, "bookings", id);
-    await updateDoc(bookingRef, safeUpdates);
+
+    const normalizedId = String(id || '').trim();
+    let bookingDetailId = normalizedId;
+
+    if (!isUuidLike(normalizedId)) {
+      const booking = await StorageService.getBooking(normalizedId);
+      const resolvedId = String(booking?.id || '').trim();
+      if (!isUuidLike(resolvedId)) {
+        throw new Error(`Supabase booking_details id를 찾을 수 없습니다: ${normalizedId}`);
+      }
+      bookingDetailId = resolvedId;
+    }
+
+    const supabaseUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
+    await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, 'PATCH', supabaseUpdates);
+    console.log(`[Storage] Booking ${bookingDetailId} updated in Supabase ✅`);
   },
 
   searchBookingsByEmail: async (email: string): Promise<BookingState[]> => {
@@ -1702,51 +1519,51 @@ export const StorageService = {
 
     const safeLocation = JSON.parse(JSON.stringify(sanitized));
 
-    if (isSupabaseDataEnabled()) {
-      try {
-        const recordId = String(safeLocation.supabaseId || '').trim()
-          || (isUuidLike(safeLocation.id) ? String(safeLocation.id).trim() : '');
-        const locationCode = String(
-          safeLocation.shortCode ||
-          safeLocation.branchCode ||
-          (!recordId ? safeLocation.id : '')
-        ).trim();
-        const { commissionRates, ...locationWithoutCommissionObject } = safeLocation as LocationOption & Record<string, unknown>;
-        const { id, supabase_id, ...payload } = camelToSnake({
-          ...locationWithoutCommissionObject,
-          commissionRateDelivery: commissionRates?.delivery ?? 0,
-          commissionRateStorage: commissionRates?.storage ?? 0,
-          id: recordId || undefined,
-          shortCode: locationCode || safeLocation.shortCode,
-          branchCode: safeLocation.branchCode || locationCode,
-        } as Record<string, unknown>);
-        const shortCode = String(payload.short_code || '').trim();
-        let mutatedRows: unknown = null;
-
-        if (recordId) {
-          mutatedRows = await supabaseMutate(`locations?id=eq.${encodeURIComponent(recordId)}`, 'PATCH', payload);
-        } else if (shortCode) {
-          mutatedRows = await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(shortCode)}`, 'PATCH', payload);
-        }
-
-        const didUpdateExisting = Array.isArray(mutatedRows) ? mutatedRows.length > 0 : Boolean(mutatedRows);
-        if (!didUpdateExisting) {
-          await supabaseMutate('locations', 'POST', payload);
-        }
-
-        console.log("[Storage] Location saved to Supabase ✅");
-        return;
-      } catch (e) {
-        console.warn("[Storage] Supabase location save failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase locations API is not configured");
     }
 
     try {
-      // Allow saving with custom ID if provided, else it's a new doc if no ID? 
-      // AdminDashboard usually provides ID.
-      if (!safeLocation.id) throw new Error("Location ID required");
-      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc } = await getNativeFirestoreDeps();
-      await nativeSetDoc(nativeDoc(nativeDb, "locations", safeLocation.id), safeLocation);
+      const recordId = String(safeLocation.supabaseId || '').trim()
+        || (isUuidLike(safeLocation.id) ? String(safeLocation.id).trim() : '');
+      const locationCode = String(
+        safeLocation.shortCode ||
+        safeLocation.branchCode ||
+        (!recordId ? safeLocation.id : '')
+      ).trim();
+      const {
+        commissionRates,
+        commission_rates,
+        commissionRateDelivery,
+        commissionRateStorage,
+        commission_rate_delivery,
+        commission_rate_storage,
+        ...locationWithoutCommissionObject
+      } = safeLocation as LocationOption & Record<string, unknown>;
+      const { id, supabase_id, ...payload } = camelToSnake({
+        ...locationWithoutCommissionObject,
+        commissionRateDelivery: commissionRates?.delivery ?? 0,
+        commissionRateStorage: commissionRates?.storage ?? 0,
+        id: recordId || undefined,
+        shortCode: locationCode || safeLocation.shortCode,
+        branchCode: safeLocation.branchCode || locationCode,
+      } as Record<string, unknown>);
+      delete (payload as Record<string, unknown>).commission_rates;
+      const shortCode = String(payload.short_code || '').trim();
+      let mutatedRows: unknown = null;
+
+      if (recordId) {
+        mutatedRows = await supabaseMutate(`locations?id=eq.${encodeURIComponent(recordId)}`, 'PATCH', payload);
+      } else if (shortCode) {
+        mutatedRows = await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(shortCode)}`, 'PATCH', payload);
+      }
+
+      const didUpdateExisting = Array.isArray(mutatedRows) ? mutatedRows.length > 0 : Boolean(mutatedRows);
+      if (!didUpdateExisting) {
+        await supabaseMutate('locations', 'POST', payload);
+      }
+
+      console.log("[Storage] Location saved to Supabase ✅");
     } catch (e) {
       console.error("Cloud Save Failed (Location):", e);
       throw e;
@@ -1754,21 +1571,15 @@ export const StorageService = {
   },
 
   deleteLocation: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        if (isUuidLike(id)) {
-          await supabaseMutate(`locations?id=eq.${encodeURIComponent(id)}`, 'DELETE');
-        } else {
-          await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(id)}`, 'DELETE');
-        }
-        return;
-      } catch (e) {
-        console.warn("[Storage] Supabase location delete failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase locations API is not configured");
     }
     try {
-      const { nativeDb, doc: nativeDoc, deleteDoc: nativeDeleteDoc } = await getNativeFirestoreDeps();
-      await nativeDeleteDoc(nativeDoc(nativeDb, "locations", id));
+      if (isUuidLike(id)) {
+        await supabaseMutate(`locations?id=eq.${encodeURIComponent(id)}`, 'DELETE');
+      } else {
+        await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(id)}`, 'DELETE');
+      }
     } catch (e) {
       console.error("Cloud Delete Failed:", e);
       throw e;
@@ -2158,38 +1969,27 @@ export const StorageService = {
   // --- Accounting / Cash Closing ---
   saveCashClosing: async (closing: CashClosing): Promise<CashClosing> => {
     const safeClosing = JSON.parse(JSON.stringify(closing));
-    if (isSupabaseDataEnabled()) {
-      try {
-        const { camelToSnake } = await import('./supabaseClient');
-        const { supabaseMutate } = await import('./supabaseClient');
-        const payload = camelToSnake({
-          ...safeClosing,
-          branchId: normalizeAdminBranchReference(safeClosing.branchId),
-        });
-        let persistedRows: unknown = null;
-        if (closing.id) {
-          persistedRows = await supabaseMutate(`daily_closings?id=eq.${encodeURIComponent(String(closing.id))}`, 'PATCH', payload);
-        } else {
-          persistedRows = await supabaseMutate('daily_closings', 'POST', payload);
-        }
-        console.log("[Storage] Cash closing saved to Supabase ✅");
-        const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
-        return persisted
-          ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as CashClosing)
-          : closing;
-      } catch (e) {
-        console.warn("[Storage] Supabase cash closing save failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error('Supabase cash closing API is not configured.');
     }
     try {
-      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc, collection: nativeCollection, addDoc: nativeAddDoc } = await getNativeFirestoreDeps();
+      const { camelToSnake } = await import('./supabaseClient');
+      const { supabaseMutate } = await import('./supabaseClient');
+      const payload = camelToSnake({
+        ...safeClosing,
+        branchId: normalizeAdminBranchReference(safeClosing.branchId),
+      });
+      let persistedRows: unknown = null;
       if (closing.id) {
-        await nativeSetDoc(nativeDoc(nativeDb, "daily_closings", closing.id), safeClosing);
-        return safeClosing as CashClosing;
+        persistedRows = await supabaseMutate(`daily_closings?id=eq.${encodeURIComponent(String(closing.id))}`, 'PATCH', payload);
       } else {
-        const docRef = await nativeAddDoc(nativeCollection(nativeDb, "daily_closings"), safeClosing);
-        return { ...safeClosing, id: docRef.id } as CashClosing;
+        persistedRows = await supabaseMutate('daily_closings', 'POST', payload);
       }
+      console.log("[Storage] Cash closing saved to Supabase ✅");
+      const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
+      return persisted
+        ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as CashClosing)
+        : closing;
     } catch (e) {
       console.error("Failed to save cash closing", e);
       throw e;
@@ -2243,22 +2043,12 @@ export const StorageService = {
   },
 
   clearCashClosings: async (): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate('daily_closings?id=not.is.null', 'DELETE');
-        console.log('[Storage] Cash closings cleared from Supabase ✅');
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase clear cash closings failed, falling back to Firebase:', e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error('Supabase cash closing API is not configured.');
     }
-
     try {
-      const { nativeDb, collection: nativeCollection, getDocs: nativeGetDocs, writeBatch: nativeWriteBatch } = await getNativeFirestoreDeps();
-      const snap = await nativeGetDocs(nativeCollection(nativeDb, "daily_closings"));
-      const batch = nativeWriteBatch(nativeDb);
-      snap.docs.forEach((d) => batch.delete(d.ref));
-      await batch.commit();
+      await supabaseMutate('daily_closings?id=not.is.null', 'DELETE');
+      console.log('[Storage] Cash closings cleared from Supabase ✅');
     } catch (e) {
       console.error("Failed to clear cash closings", e);
       throw e;
@@ -2275,37 +2065,26 @@ export const StorageService = {
   // --- Expenditures ---
   saveExpenditure: async (expenditure: Expenditure): Promise<Expenditure> => {
     const safeExp = JSON.parse(JSON.stringify(expenditure));
-    if (isSupabaseDataEnabled()) {
-      try {
-        const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
-        const payload = camelToSnake({
-          ...safeExp,
-          branchId: normalizeAdminBranchReference(safeExp.branchId),
-        });
-        let persistedRows: unknown = null;
-        if (expenditure.id) {
-          persistedRows = await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(String(expenditure.id))}`, 'PATCH', payload);
-        } else {
-          persistedRows = await supabaseMutate('expenditures', 'POST', payload);
-        }
-        console.log("[Storage] Expenditure saved to Supabase ✅");
-        const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
-        return persisted
-          ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as Expenditure)
-          : expenditure;
-      } catch (e) {
-        console.warn("[Storage] Supabase expenditure save failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error('Supabase expenditures API is not configured.');
     }
     try {
-      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc, collection: nativeCollection, addDoc: nativeAddDoc } = await getNativeFirestoreDeps();
+      const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
+      const payload = camelToSnake({
+        ...safeExp,
+        branchId: normalizeAdminBranchReference(safeExp.branchId),
+      });
+      let persistedRows: unknown = null;
       if (expenditure.id) {
-        await nativeSetDoc(nativeDoc(nativeDb, "expenditures", expenditure.id), safeExp);
-        return safeExp as Expenditure;
+        persistedRows = await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(String(expenditure.id))}`, 'PATCH', payload);
       } else {
-        const docRef = await nativeAddDoc(nativeCollection(nativeDb, "expenditures"), safeExp);
-        return { ...safeExp, id: docRef.id } as Expenditure;
+        persistedRows = await supabaseMutate('expenditures', 'POST', payload);
       }
+      console.log("[Storage] Expenditure saved to Supabase ✅");
+      const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
+      return persisted
+        ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as Expenditure)
+        : expenditure;
     } catch (e) {
       console.error("Failed to save expenditure", e);
       throw e;
@@ -2318,18 +2097,12 @@ export const StorageService = {
       throw new Error("Expenditure ID is required");
     }
 
-    if (isSupabaseDataEnabled() && isUuidLike(normalizedId)) {
-      try {
-        await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(normalizedId)}`, 'DELETE');
-        return;
-      } catch (e) {
-        console.warn("[Storage] Supabase expenditure delete failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled() || !isUuidLike(normalizedId)) {
+      throw new Error("Supabase expenditure deletion requires a valid UUID id");
     }
 
     try {
-      const { nativeDb, doc: nativeDoc, deleteDoc: nativeDeleteDoc } = await getNativeFirestoreDeps();
-      await nativeDeleteDoc(nativeDoc(nativeDb, "expenditures", normalizedId));
+      await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(normalizedId)}`, 'DELETE');
     } catch (e) {
       console.error("Failed to delete expenditure", e);
       throw e;
@@ -2721,23 +2494,21 @@ export const StorageService = {
 
   // --- User Profiles ---
   getUserProfile: async (uid: string): Promise<UserProfile | null> => {
-    try {
-      const docRef = doc(db, "users", uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return docSnap.data() as UserProfile;
-      }
-      return null;
-    } catch (err) {
-      console.error("[Storage] Error getting user profile:", err);
-      return null;
-    }
+    return readLocalJson<UserProfile | null>(USER_PROFILE_CACHE_KEY(uid), null);
   },
 
   updateUserProfile: async (uid: string, updates: Partial<UserProfile>): Promise<void> => {
     try {
-      const docRef = doc(db, "users", uid);
-      await setDoc(docRef, updates, { merge: true });
+      const current = readLocalJson<UserProfile | null>(USER_PROFILE_CACHE_KEY(uid), null);
+      const nextProfile: UserProfile = {
+        uid,
+        email: updates.email || current?.email || '',
+        displayName: updates.displayName ?? current?.displayName,
+        points: Number(updates.points ?? current?.points ?? 0),
+        level: (updates.level || current?.level || 'BRONZE') as UserProfile['level'],
+        createdAt: updates.createdAt || current?.createdAt || new Date().toISOString(),
+      };
+      writeLocalJson(USER_PROFILE_CACHE_KEY(uid), nextProfile);
     } catch (err) {
       console.error("[Storage] Error updating user profile:", err);
     }
@@ -2745,44 +2516,50 @@ export const StorageService = {
 
   // --- User Coupons ---
   getUserCoupons: async (uid: string): Promise<UserCoupon[]> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const rows = await supabaseGet<Array<Record<string, unknown>>>(
-          `user_coupons?select=*&user_id=eq.${encodeURIComponent(uid)}&is_used=eq.false`
-        );
-        if (rows) {
-          return rows.map(r => snakeToCamel(r) as unknown as UserCoupon);
-        }
-      } catch (e) { console.warn("[Storage] Supabase coupons failed:", e); }
-    }
-    try {
-      const q = query(collection(db, "userCoupons"), where("uid", "==", uid), where("isUsed", "==", false));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as UserCoupon));
-    } catch (err) {
-      console.error("[Storage] Error getting user coupons:", err);
-      return [];
-    }
+    return readLocalJson<UserCoupon[]>(USER_COUPON_CACHE_KEY(uid), []);
   },
 
   issueWelcomeCoupon: async (uid: string): Promise<void> => {
     try {
-      const q = query(collection(db, "discountCodes"), where("code", "==", "WELCOME"), where("isActive", "==", true));
-      const snap = await getDocs(q);
-      if (snap.empty) return;
+      const existingCoupons = readLocalJson<UserCoupon[]>(USER_COUPON_CACHE_KEY(uid), []);
+      if (existingCoupons.some((coupon) => coupon.code === 'WELCOME' && !coupon.isUsed)) {
+        return;
+      }
 
-      const discount = snap.docs[0].data() as DiscountCode;
-      const coupon: Omit<UserCoupon, 'id'> = {
+      let discount: DiscountCode = {
+        id: 'welcome-local',
+        code: 'WELCOME',
+        amountPerBag: 2000,
+        description: '신규 가입 웰컴 쿠폰',
+        isActive: true,
+      };
+
+      if (isSupabaseDataEnabled()) {
+        try {
+          const rows = await supabaseGet<Array<Record<string, unknown>>>(
+            'discount_codes?select=*&code=eq.WELCOME&is_active=eq.true&limit=1'
+          );
+          if (rows?.[0]) {
+            discount = snakeToCamel(rows[0]) as unknown as DiscountCode;
+          }
+        } catch (error) {
+          console.warn("[Storage] Welcome discount lookup failed, using local default:", error);
+        }
+      }
+
+      const coupon: UserCoupon = {
+        id: `welcome-${uid}`,
         uid,
-        codeId: snap.docs[0].id || '',
+        codeId: String(discount.id || 'welcome-local'),
         code: discount.code,
-        amountPerBag: discount.amountPerBag,
+        amountPerBag: Number(discount.amountPerBag || 2000),
         description: discount.description,
         isUsed: false,
         issuedAt: new Date().toISOString(),
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       };
-      await addDoc(collection(db, "userCoupons"), coupon);
+
+      writeLocalJson(USER_COUPON_CACHE_KEY(uid), [coupon, ...existingCoupons]);
     } catch (err) {
       console.error("[Storage] Error issuing welcome coupon:", err);
     }
@@ -3199,39 +2976,39 @@ export const StorageService = {
     });
   },
   saveBranch: async (branch: any): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const payload = camelToSnake({ ...branch });
-        if (branch.id) {
-          await supabaseMutate(`branches?id=eq.${encodeURIComponent(String(branch.id))}`, 'PATCH', payload);
-        } else {
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase branches API is not configured");
+    }
+
+    try {
+      const payload = camelToSnake({ ...branch });
+      const branchId = String(branch?.id || '').trim();
+      const branchCode = String(branch?.branchCode || branch?.branch_code || '').trim();
+
+      if (branchId && isUuidLike(branchId)) {
+        await supabaseMutate(`branches?id=eq.${encodeURIComponent(branchId)}`, 'PATCH', payload);
+      } else if (branchCode) {
+        const updated = await supabaseMutate(`branches?branch_code=eq.${encodeURIComponent(branchCode)}`, 'PATCH', payload);
+        const didUpdate = Array.isArray(updated) ? updated.length > 0 : Boolean(updated);
+        if (!didUpdate) {
           await supabaseMutate('branches', 'POST', payload);
         }
-        console.log("[Storage] Branch saved to Supabase ✅");
-        return;
-      } catch (e) { console.warn(e); }
-    }
-    try {
-      const safeData = { ...branch };
-      if (!safeData.id) {
-        safeData.createdAt = new Date().toISOString();
-        await addDoc(collection(db, "branches"), safeData);
       } else {
-        const id = safeData.id;
-        delete safeData.id;
-        await updateDoc(doc(db, "branches", id), safeData);
+        await supabaseMutate('branches', 'POST', payload);
       }
+      console.log("[Storage] Branch saved to Supabase ✅");
     } catch (e) { console.error(e); throw e; }
   },
   deleteBranch: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate(`branches?id=eq.${encodeURIComponent(id)}`, 'DELETE');
-        return;
-      } catch (e) { console.warn(e); }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase branches API is not configured");
     }
     try {
-      await deleteDoc(doc(db, "branches", id));
+      if (isUuidLike(id)) {
+        await supabaseMutate(`branches?id=eq.${encodeURIComponent(id)}`, 'DELETE');
+      } else {
+        await supabaseMutate(`branches?branch_code=eq.${encodeURIComponent(id)}`, 'DELETE');
+      }
     } catch (e) { throw e; }
   },
 
@@ -3273,45 +3050,25 @@ export const StorageService = {
     }
   },
   saveBranchProspect: async (prospect: BranchProspect): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
-        const payload = camelToSnake({ ...prospect });
-        if (prospect.id && !String(prospect.id).startsWith('PROSPECT-TEMP-')) {
-          await supabaseMutate(`branch_prospects?id=eq.${encodeURIComponent(String(prospect.id))}`, 'PATCH', payload);
-        } else {
-          await supabaseMutate('branch_prospects', 'POST', payload);
-        }
-        console.log("[Storage] Branch prospect saved to Supabase ✅");
-        return;
-      } catch (e) {
-        console.warn("[Storage] Supabase prospect save failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase branch prospects API is not configured");
     }
     try {
-      const safeData = { ...prospect, updatedAt: new Date().toISOString() };
-      if (!safeData.id || safeData.id.startsWith('PROSPECT-TEMP-')) {
-        if (safeData.id) delete (safeData as any).id;
-        safeData.createdAt = new Date().toISOString();
-        await addDoc(collection(db, "branch_prospects"), safeData);
+      const payload = camelToSnake({ ...prospect, updatedAt: new Date().toISOString() });
+      if (prospect.id && !String(prospect.id).startsWith('PROSPECT-TEMP-')) {
+        await supabaseMutate(`branch_prospects?id=eq.${encodeURIComponent(String(prospect.id))}`, 'PATCH', payload);
       } else {
-        const id = safeData.id;
-        delete (safeData as any).id;
-        await updateDoc(doc(db, "branch_prospects", id), safeData);
+        await supabaseMutate('branch_prospects', 'POST', payload);
       }
+      console.log("[Storage] Branch prospect saved to Supabase ✅");
     } catch (e) { console.error(e); throw e; }
   },
   deleteBranchProspect: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate(`branch_prospects?id=eq.${id}`, 'DELETE');
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase branch prospect delete failed, falling back to Firebase:', e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase branch prospects API is not configured");
     }
     try {
-      await deleteDoc(doc(db, "branch_prospects", id));
+      await supabaseMutate(`branch_prospects?id=eq.${encodeURIComponent(id)}`, 'DELETE');
     } catch (e) { throw e; }
   },
 
@@ -3361,35 +3118,22 @@ export const StorageService = {
   },
 
   saveNotice: async (notice: SystemNotice): Promise<SystemNotice> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const payload = camelToSnake({ ...notice } as Record<string, unknown>);
-        let persistedRows: unknown = null;
-        if (notice.id) {
-          persistedRows = await supabaseMutate(`system_notices?id=eq.${encodeURIComponent(String(notice.id))}`, 'PATCH', payload);
-        } else {
-          persistedRows = await supabaseMutate('system_notices', 'POST', payload);
-        }
-        console.log("[Storage] Notice saved to Supabase ✅");
-        const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
-        return persisted
-          ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as SystemNotice)
-          : notice;
-      } catch (e) {
-        console.warn("[Storage] Supabase notice save failed, falling back to Firebase:", e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase notices API is not configured");
     }
-    const safeData = JSON.parse(JSON.stringify(notice));
     try {
-      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc, collection: nativeCollection, addDoc: nativeAddDoc } = await getNativeFirestoreDeps();
+      const payload = camelToSnake({ ...notice } as Record<string, unknown>);
+      let persistedRows: unknown = null;
       if (notice.id) {
-        await nativeSetDoc(nativeDoc(nativeDb, "notices", notice.id), safeData);
-        return safeData as SystemNotice;
+        persistedRows = await supabaseMutate(`system_notices?id=eq.${encodeURIComponent(String(notice.id))}`, 'PATCH', payload);
       } else {
-        safeData.createdAt = new Date().toISOString();
-        const docRef = await nativeAddDoc(nativeCollection(nativeDb, "notices"), safeData);
-        return { ...safeData, id: docRef.id } as SystemNotice;
+        persistedRows = await supabaseMutate('system_notices', 'POST', payload);
       }
+      console.log("[Storage] Notice saved to Supabase ✅");
+      const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
+      return persisted
+        ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as SystemNotice)
+        : notice;
     } catch (e) {
       console.error("Failed to save notice", e);
       throw e;
@@ -3397,17 +3141,11 @@ export const StorageService = {
   },
 
   deleteNotice: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled() && isUuidLike(id)) {
-      try {
-        await supabaseMutate(`system_notices?id=eq.${id}`, 'DELETE');
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase notice delete failed, falling back to Firebase:', e);
-      }
+    if (!isSupabaseDataEnabled()) {
+      throw new Error("Supabase notices API is not configured");
     }
     try {
-      const { nativeDb, doc: nativeDoc, deleteDoc: nativeDeleteDoc } = await getNativeFirestoreDeps();
-      await nativeDeleteDoc(nativeDoc(nativeDb, "notices", id));
+      await supabaseMutate(`system_notices?id=eq.${encodeURIComponent(id)}`, 'DELETE');
     } catch (e) {
       console.error("Failed to delete notice", e);
       throw e;

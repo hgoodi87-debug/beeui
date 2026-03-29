@@ -1,8 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { getFunctions } from "firebase/functions";
 
 const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "beeliber-main.firebasestorage.app";
 
@@ -21,10 +19,9 @@ if (typeof window !== 'undefined') {
 }
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = {} as any; // Firebase Firestore retired: runtime에서는 더 이상 DB를 초기화하지 않아요.
 const storage = getStorage(app);
 const auth = getAuth(app);
-const functions = getFunctions(app, "us-central1"); // Keep region consistent with backend
 
 // Enable persistence so users don't have to log in every time
 setPersistence(auth, browserLocalPersistence).catch(console.error);
@@ -74,7 +71,7 @@ export const ensureAuth = async (): Promise<any> => {
         const cred = await signInAnonymously(auth);
         console.log("[Firebase] Anonymous Auth Success! Welcome, UID:", cred.user.uid);
 
-        // [스봉이] 토큰이 준비되기 전에 Firestore를 두드리면 괜히 권한에 삐끗하거든요. 여기서 끝까지 받아옵니다. 💅
+        // [스봉이] 토큰이 준비되기 전에 후속 요청을 보내면 괜히 권한에 삐끗하거든요. 여기서 끝까지 받아옵니다. 💅
         await cred.user.getIdToken(true);
         await new Promise(r => setTimeout(r, 500));
         return cred.user;
@@ -94,4 +91,4 @@ export const ensureAuth = async (): Promise<any> => {
 //     console.error("Firebase Anonymous Auth Failed:", error);
 // });
 
-export { app, db, storage, auth, functions };
+export { app, db, storage, auth };

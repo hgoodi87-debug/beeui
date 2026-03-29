@@ -12,6 +12,7 @@
 
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 // ─── Config ──────────────────────────────────────────────────────
@@ -50,12 +51,17 @@ async function initFirebase() {
 // ─── Supabase REST Helper ────────────────────────────────────────
 async function supabaseUpsert(table, rows, onConflict) {
   if (!rows.length) return { count: 0 };
-  const url = `${config.supabaseUrl}/rest/v1/${table}`;
+  const url = new URL(`${config.supabaseUrl}/rest/v1/${table}`);
+  if (onConflict) {
+    url.searchParams.set('on_conflict', onConflict);
+  }
   const headers = {
     'Content-Type': 'application/json',
     'apikey': config.supabaseSecretKey,
     'Authorization': `Bearer ${config.supabaseSecretKey}`,
-    'Prefer': onConflict ? `resolution=merge-duplicates` : 'return=minimal',
+    'Accept-Profile': 'public',
+    'Content-Profile': 'public',
+    'Prefer': 'resolution=merge-duplicates,return=minimal',
   };
   // 50개씩 배치
   let total = 0;
@@ -75,6 +81,25 @@ async function supabaseUpsert(table, rows, onConflict) {
 async function readCollection(db, name) {
   const snap = await db.collection(name).get();
   return snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+}
+
+function stableUuid(value) {
+  const hex = createHash('sha1').update(String(value)).digest('hex').slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
+function toIsoString(value) {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') {
+    return value.toDate().toISOString();
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function sanitizeJson(value) {
+  return JSON.parse(JSON.stringify(value));
 }
 
 // ─── 변환 함수들 ──────────────────────────────────────────────
@@ -118,6 +143,7 @@ function transformLocations(docs) {
 
 function transformDailyClosings(docs) {
   return docs.map(d => ({
+    id: stableUuid(`daily_closings:${d._docId}`),
     date: d.date,
     total_revenue: d.totalRevenue || 0,
     cash_revenue: d.cashRevenue || 0, card_revenue: d.cardRevenue || 0,
@@ -134,6 +160,7 @@ function transformDailyClosings(docs) {
 
 function transformExpenditures(docs) {
   return docs.map(d => ({
+    id: stableUuid(`expenditures:${d._docId}`),
     date: d.date,
     category: d.category || 'etc',
     amount: d.amount || 0,
@@ -144,6 +171,7 @@ function transformExpenditures(docs) {
 
 function transformInquiries(docs) {
   return docs.map(d => ({
+    id: stableUuid(`inquiries:${d._docId}`),
     company_name: d.companyName || d.location || 'Unknown',
     contact_name: d.contactName || null,
     position: d.position || null,
@@ -160,6 +188,7 @@ function transformInquiries(docs) {
 
 function transformBranchProspects(docs) {
   return docs.map(d => ({
+    id: stableUuid(`branch_prospects:${d._docId}`),
     name: d.name || 'Unknown',
     address: d.address || null,
     lat: d.lat || null, lng: d.lng || null,
@@ -174,6 +203,7 @@ function transformBranchProspects(docs) {
 
 function transformNotices(docs) {
   return docs.map(d => ({
+    id: stableUuid(`notices:${d._docId}`),
     title: d.title || 'Untitled',
     category: d.category || 'NOTICE',
     is_active: d.isActive ?? true,
@@ -208,75 +238,13 @@ function transformChatSessions(docs) {
 
 function transformChatMessages(docs) {
   return docs.map(d => ({
+    id: stableUuid(`chats:${d._docId}`),
     session_id: d.sessionId || 'unknown',
     role: d.role || 'user',
     text: d.text || '',
     user_name: d.userName || null,
     user_email: d.userEmail || null,
     is_read: d.isRead ?? false,
-  }));
-}
-
-function transformTipsAreas(docs) {
-  return docs.map(d => ({
-    area_slug: d.area_slug || d._docId,
-    area_name_ko: d.area_name?.ko || null,
-    area_name_en: d.area_name?.en || null,
-    area_name_ja: d.area_name?.ja || null,
-    area_name_zh: d.area_name?.zh || null,
-    headline_ko: d.headline?.ko || null,
-    headline_en: d.headline?.en || null,
-    intro_text_ko: d.intro_text?.ko || null,
-    intro_text_en: d.intro_text?.en || null,
-    cover_image_url: d.cover_image_url || null,
-    is_priority_area: d.is_priority_area ?? false,
-    sort_order: d.order || 0,
-  }));
-}
-
-function transformTipsThemes(docs) {
-  return docs.map(d => ({
-    theme_slug: d.theme_slug || d._docId,
-    theme_name_ko: d.theme_name?.ko || null,
-    theme_name_en: d.theme_name?.en || null,
-    description_ko: d.description?.ko || null,
-    description_en: d.description?.en || null,
-    icon: d.icon || null,
-    sort_order: d.order || 0,
-    is_active: d.is_active ?? true,
-  }));
-}
-
-function transformTipsContents(docs) {
-  return docs.map(d => ({
-    slug: d.slug || d._docId,
-    title_ko: d.title?.ko || null,
-    title_en: d.title?.en || null,
-    title_ja: d.title?.ja || null,
-    title_zh: d.title?.zh || null,
-    summary_ko: d.summary?.ko || null,
-    summary_en: d.summary?.en || null,
-    body_ko: d.body?.ko || null,
-    body_en: d.body?.en || null,
-    body_ja: d.body?.ja || null,
-    body_zh: d.body?.zh || null,
-    content_type: d.content_type || 'landmark',
-    area_slug: d.area_slug || null,
-    cover_image_url: d.cover_image_url || null,
-    recommended_time: d.recommended_time || null,
-    audience_tags: d.audience_tags || [],
-    theme_tags: d.theme_tags || [],
-    official_url: d.official_url || null,
-    source_name: d.source_name || null,
-    start_date: d.start_date || null,
-    end_date: d.end_date || null,
-    publish_status: d.publish_status || 'draft',
-    language_available: d.language_available || ['ko', 'en'],
-    author_id: d.author_id || null,
-    reviewer_id: d.reviewer_id || null,
-    quality_score: d.quality_score || null,
-    priority_score: d.priority_score || null,
-    is_foreigner_friendly: d.is_foreigner_friendly ?? true,
   }));
 }
 
@@ -290,21 +258,66 @@ function transformSettings(docs) {
   }));
 }
 
+function transformAuditLogs(docs) {
+  return docs.map((d) => ({
+    id: stableUuid(`audit_logs:${d._docId}`),
+    entity_type: d.targetType || 'UNKNOWN',
+    entity_id: d.targetId || d._docId,
+    action: d.actionType || 'UNKNOWN',
+    actor: d.actorEmail || d.actorName || d.actorId || 'unknown',
+    before_data: null,
+    after_data: sanitizeJson({
+      details: d.details || null,
+      actorId: d.actorId || null,
+      actorName: d.actorName || null,
+      actorEmail: d.actorEmail || null,
+      userAgent: d.userAgent || null,
+      sourceCollection: 'audit_logs',
+      legacyDocId: d._docId,
+    }),
+    created_at: toIsoString(d.timestamp) || new Date().toISOString(),
+  }));
+}
+
+function archiveCollectionToAppSetting(collectionName, docs) {
+  return [{
+    key: `legacy_${collectionName}`,
+    value: sanitizeJson({
+      source: 'firebase',
+      collection: collectionName,
+      count: docs.length,
+      migratedAt: new Date().toISOString(),
+      documents: docs.map((doc) => {
+        const { _docId, ...rest } = doc;
+        return {
+          legacyDocId: _docId,
+          ...rest,
+        };
+      }),
+    }),
+  }];
+}
+
 // ─── 마이그레이션 작업 정의 ──────────────────────────────────────
 const MIGRATIONS = [
-  { name: 'locations',       firebase: 'locations',       table: 'locations',              transform: transformLocations },
-  { name: 'daily_closings',  firebase: 'daily_closings',  table: 'daily_closings',         transform: transformDailyClosings },
-  { name: 'expenditures',    firebase: 'expenditures',    table: 'expenditures',           transform: transformExpenditures },
-  { name: 'inquiries',       firebase: 'inquiries',       table: 'partnership_inquiries',   transform: transformInquiries },
-  { name: 'prospects',       firebase: 'branch_prospects', table: 'branch_prospects',       transform: transformBranchProspects },
-  { name: 'notices',         firebase: 'notices',         table: 'system_notices',          transform: transformNotices },
-  { name: 'promo_codes',     firebase: 'promo_codes',     table: 'discount_codes',          transform: transformPromoCodes },
-  { name: 'chat_sessions',   firebase: 'chat_sessions',   table: 'chat_sessions',          transform: transformChatSessions },
-  { name: 'chats',           firebase: 'chats',           table: 'chat_messages',           transform: transformChatMessages },
-  { name: 'tips_areas',      firebase: 'tips_areas',      table: 'cms_areas',              transform: transformTipsAreas },
-  { name: 'tips_themes',     firebase: 'tips_themes',     table: 'cms_themes',             transform: transformTipsThemes },
-  { name: 'tips_contents',   firebase: 'tips_contents',   table: 'cms_contents',           transform: transformTipsContents },
-  { name: 'settings',        firebase: 'settings',        table: 'app_settings',           transform: transformSettings },
+  { name: 'locations',       firebase: 'locations',                table: 'locations',               transform: transformLocations, onConflict: 'short_code' },
+  { name: 'daily_closings',  firebase: 'daily_closings',           table: 'daily_closings',          transform: transformDailyClosings, onConflict: 'id' },
+  { name: 'expenditures',    firebase: 'expenditures',             table: 'expenditures',            transform: transformExpenditures, onConflict: 'id' },
+  { name: 'inquiries',       firebase: 'inquiries',                table: 'partnership_inquiries',   transform: transformInquiries, onConflict: 'id' },
+  { name: 'prospects',       firebase: 'branch_prospects',         table: 'branch_prospects',        transform: transformBranchProspects, onConflict: 'id' },
+  { name: 'notices',         firebase: 'notices',                  table: 'system_notices',          transform: transformNotices, onConflict: 'id' },
+  { name: 'promo_codes',     firebase: 'promo_codes',              table: 'discount_codes',          transform: transformPromoCodes, onConflict: 'code' },
+  { name: 'chat_sessions',   firebase: 'chat_sessions',            table: 'chat_sessions',           transform: transformChatSessions, onConflict: 'session_id' },
+  { name: 'chats',           firebase: 'chats',                    table: 'chat_messages',           transform: transformChatMessages, onConflict: 'id' },
+  { name: 'settings',        firebase: 'settings',                 table: 'app_settings',            transform: transformSettings, onConflict: 'key' },
+  { name: 'audit_logs',      firebase: 'audit_logs',               table: 'audit_logs',              transform: transformAuditLogs, onConflict: 'id' },
+  { name: 'admin_sessions',  firebase: 'admin_sessions',           table: 'app_settings',            transform: (docs) => archiveCollectionToAppSetting('admin_sessions', docs), onConflict: 'key' },
+  { name: 'driver_hubs',     firebase: 'driver_mvp_hubs',          table: 'app_settings',            transform: (docs) => archiveCollectionToAppSetting('driver_mvp_hubs', docs), onConflict: 'key' },
+  { name: 'driver_users',    firebase: 'driver_mvp_users',         table: 'app_settings',            transform: (docs) => archiveCollectionToAppSetting('driver_mvp_users', docs), onConflict: 'key' },
+  { name: 'driver_bookings', firebase: 'driver_mvp_bookings',      table: 'app_settings',            transform: (docs) => archiveCollectionToAppSetting('driver_mvp_bookings', docs), onConflict: 'key' },
+  { name: 'driver_jobs',     firebase: 'driver_mvp_delivery_jobs', table: 'app_settings',            transform: (docs) => archiveCollectionToAppSetting('driver_mvp_delivery_jobs', docs), onConflict: 'key' },
+  { name: 'driver_luggage',  firebase: 'driver_mvp_luggage_items', table: 'app_settings',            transform: (docs) => archiveCollectionToAppSetting('driver_mvp_luggage_items', docs), onConflict: 'key' },
+  { name: 'driver_logs',     firebase: 'driver_mvp_status_logs',   table: 'app_settings',            transform: (docs) => archiveCollectionToAppSetting('driver_mvp_status_logs', docs), onConflict: 'key' },
 ];
 
 // ─── 메인 실행 ───────────────────────────────────────────────────
@@ -340,7 +353,7 @@ async function main() {
       }
 
       if (config.apply) {
-        const res = await supabaseUpsert(mig.table, rows);
+        const res = await supabaseUpsert(mig.table, rows, mig.onConflict);
         console.log(`   ✅ Supabase '${mig.table}'에 ${res.count}건 삽입 완료`);
         results.push({ name: mig.name, read: docs.length, written: res.count, status: 'OK' });
       } else {

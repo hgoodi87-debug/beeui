@@ -1,5 +1,5 @@
 # Beeliber Database Migration Changelog
-> 최종 업데이트: 2026.03.28 | 안티그래비티 공유용
+> 최종 업데이트: 2026.03.29 | 안티그래비티 공유용
 
 ---
 
@@ -16,6 +16,9 @@
 | 2026.03.27 | 데이터 복사 완료 | 9개 테이블 247건 + 시드 데이터 |
 | 2026.03.28 | Storage 런타임 브리지 적용 | `storage_assets` 테이블 + 5개 Storage 버킷 생성/정렬 |
 | 2026.03.28 | Admin Reporting View 추가 | `admin_booking_list_v1`, `admin_revenue_daily_v1`, `admin_revenue_monthly_v1` |
+| 2026.03.29 | Admin Booking View legacy bridge 보정 | `booking_details` 단독 레코드도 관리자 view에 포함 |
+| 2026.03.29 | Firebase bookings 이관 | `bookings` 58건 -> `customers`, `reservations`, `booking_details`, `reservation_items`, `payments` |
+| 2026.03.29 | Firebase runtime DB retired | 운영 웹/관리자 웹에서 Firestore 초기화 및 직접 사용 제거 |
 
 ---
 
@@ -58,11 +61,11 @@ URL: https://fzvfyeskdivulazjjpgr.supabase.co
 | services | 2 | STORAGE/HUB_TO_AIRPORT |
 | baggage_types | 4 | 쇼핑백/기내용/대형/특수짐 |
 | service_rules | 24 | Phase 1 baseline 규칙 |
-| customers | 0 | 고객 (auth.uid FK) |
-| reservations | 0 | 예약 본체 |
-| reservation_items | 0 | 예약 짐 항목 |
-| payments | 0 | 결제 |
-| booking_details | 0 | 예약 확장 필드 (Firebase 호환) |
+| customers | 48 | 고객 (legacy booking bridge 포함) |
+| reservations | 58 | 예약 본체 |
+| reservation_items | 56 | 예약 짐 항목 |
+| payments | 58 | 결제 |
+| booking_details | 60 | 예약 확장 필드 (Firebase 호환 + live insert 2건 포함) |
 
 ### Layer 3: Operations
 | 테이블 | 행 | 설명 |
@@ -91,14 +94,11 @@ URL: https://fzvfyeskdivulazjjpgr.supabase.co
 | partnership_inquiries | 0 | 제휴 문의 |
 | branch_prospects | 0 | 지점 확장 후보 |
 
-### Layer 6: CMS/커뮤니케이션
+### Layer 6: 커뮤니케이션/문서
 | 테이블 | 행 | 설명 |
 |--------|---:|------|
 | chat_sessions | 123 | 챗봇 세션 |
 | chat_messages | 0 | 챗봇 메시지 |
-| cms_areas | 0 | CMS 지역 |
-| cms_themes | 0 | CMS 테마 |
-| cms_contents | 0 | CMS 콘텐츠 |
 | legal_documents | 0 | 약관/개인정보 |
 | storage_tiers | 0 | 보관 가격 티어 |
 
@@ -192,24 +192,19 @@ supabase/migrations/
   VITE_SUPABASE_ANON_KEY=eyJ...
 
 storageService.ts:
-  Firebase Firestore 어댑터 → Supabase REST 자동 라우팅
-  147개 Firestore 호출 → Supabase 투명 변환
+  Firestore 스타일 어댑터 명칭 유지 → Supabase REST 자동 라우팅
+  운영 런타임은 Firebase DB를 직접 초기화하거나 호출하지 않음
 ```
 
 ---
 
 ## 다음 작업 필요
 
-1. **Auth 동기화**: Firebase admins → 새 Supabase auth.users + profiles + employees
-   ```bash
-   SUPABASE_URL=https://xpnfjolqiffduedwtxey.supabase.co \
-   SUPABASE_SECRET_KEY=sb_secret_... \
-   npm run supabase:sync-phase1-auth
-   ```
+1. **운영 검증**: 관리자 HR / 예약 / 정산 탭의 Supabase-only 흐름 스모크 테스트 유지
 
-2. **Edge Functions 배포**: 새 프로젝트에 5개 Edge Function 배포
+2. **Edge Functions 운영 검증**: 새 프로젝트에 배포된 함수의 알림/결제 분기 재점검
 
-3. **service_rules 재생성**: branch_type UUID가 새 프로젝트에서 다르므로 재생성 필요
+3. **service_rules 재생성 여부 점검**: branch_type UUID 변경과 실제 운영 규칙 차이 재확인
 
 ---
 

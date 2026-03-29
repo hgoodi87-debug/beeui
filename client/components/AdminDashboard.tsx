@@ -319,19 +319,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     });
   }, [queryClient]);
 
-  const updateLegacyBookingRecord = async (id: string, updates: Record<string, unknown>) => {
-    const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
-    const { db: fbDb } = await import('../firebaseApp');
-    await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), {
-      ...updates,
-      updatedAt: new Date().toISOString()
-    });
-  };
+  const resolveBookingDetailId = async (id: string): Promise<string> => {
+    if (isSupabaseBookingDetailId(id)) {
+      return id;
+    }
 
-  const deleteLegacyBookingRecord = async (id: string) => {
-    const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
-    const { db: fbDb } = await import('../firebaseApp');
-    await fbDeleteDoc(fbDoc(fbDb, 'bookings', id));
+    const booking = await StorageService.getBooking(id);
+    if (booking?.id && isSupabaseBookingDetailId(booking.id)) {
+      return booking.id;
+    }
+
+    throw new Error(`Supabase booking_details row not found for booking identifier: ${id}`);
   };
 
   const mutateBookingRecord = async (
@@ -339,21 +337,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     options: {
       supabaseMethod: 'PATCH' | 'DELETE';
       supabaseBody?: Record<string, unknown>;
-      legacyUpdates?: Record<string, unknown>;
-      legacyDelete?: boolean;
     }
   ) => {
-    if (isSupabaseDataEnabled() && isSupabaseBookingDetailId(id)) {
-      await supabaseMutate(`booking_details?id=eq.${id}`, options.supabaseMethod, options.supabaseBody);
-      return;
+    if (!isSupabaseDataEnabled()) {
+      throw new Error('Supabase booking API is not configured');
     }
 
-    if (options.legacyDelete) {
-      await deleteLegacyBookingRecord(id);
-      return;
-    }
-
-    await updateLegacyBookingRecord(id, options.legacyUpdates || {});
+    const bookingDetailId = await resolveBookingDetailId(id);
+    await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);
   };
 
   // Detail Modal & Edit State
@@ -391,21 +382,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setSendingEmailId(booking.id);
     try {
-      if (isSupabaseDataEnabled()) {
-        const SUPABASE_URL = getSupabaseBaseUrl();
-        const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
-          body: JSON.stringify({ type: 'INSERT', table: 'booking_details', record: { id: booking.id, reservation_code: booking.reservationCode, user_name: booking.userName, user_email: booking.userEmail, service_type: booking.serviceType, pickup_date: booking.pickupDate, pickup_time: booking.pickupTime, pickup_location: booking.pickupLocation, final_price: booking.finalPrice } }),
-        });
-        if (!res.ok) throw new Error(`Edge Function 호출 실패 [${res.status}]`);
-      } else {
-        const { httpsCallable } = await import('firebase/functions');
-        const { functions } = await import('../firebaseApp');
-        const resendVoucher = httpsCallable(functions, 'resendBookingVoucher');
-        await resendVoucher({ bookingId: booking.id });
+      if (!isSupabaseDataEnabled()) {
+        throw new Error('Supabase booking notification endpoint is not configured.');
       }
+
+      const bookingDetailId = await resolveBookingDetailId(booking.id);
+      const SUPABASE_URL = getSupabaseBaseUrl();
+      const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ type: 'INSERT', table: 'booking_details', record: { id: bookingDetailId, reservation_code: booking.reservationCode, user_name: booking.userName, user_email: booking.userEmail, service_type: booking.serviceType, pickup_date: booking.pickupDate, pickup_time: booking.pickupTime, pickup_location: booking.pickupLocation, final_price: booking.finalPrice } }),
+      });
+      if (!res.ok) throw new Error(`Edge Function 호출 실패 [${res.status}]`);
+
       alert('바우처 이메일 발송이 깔끔하게 끝났어요. ✨');
     } catch (error: any) {
       console.error("Failed to send email:", error);
@@ -422,16 +412,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setRefundingId(booking.id);
     try {
-      if (isSupabaseDataEnabled() && isSupabaseBookingDetailId(booking.id)) {
-        await supabaseMutate(`booking_details?id=eq.${booking.id}`, 'PATCH', {
+      await mutateBookingRecord(booking.id, {
+        supabaseMethod: 'PATCH',
+        supabaseBody: {
           settlement_status: 'refunded',
-        });
-      } else {
-        const { httpsCallable } = await import('firebase/functions');
-        const { functions } = await import('../firebaseApp');
-        const processRefund = httpsCallable(functions, 'processBookingRefund');
-        await processRefund({ bookingId: booking.id });
-      }
+        },
+      });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'REFUND', { id: booking.id, type: 'BOOKING' }, { userName: booking.userName });
       alert('반품(환불) 처리가 완료되었습니다.');
@@ -973,7 +959,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     });
     setDeliveryPrices(newPrices);
     localStorage.setItem('beeliber_delivery_prices', JSON.stringify(newPrices));
-    // Also save to Firestore
+    // Keep Supabase settings in sync
     StorageService.saveDeliveryPrices(newPrices).catch(console.error);
   };
 
@@ -986,7 +972,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     });
     setStorageTiers(updated);
     localStorage.setItem('beeliber_storage_tiers', JSON.stringify(updated));
-    // Also save to Firestore
+    // Keep Supabase settings in sync
     StorageService.saveStorageTiers(updated).catch(console.error);
   };
 
@@ -1489,7 +1475,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           mutateBookingRecord(id, {
             supabaseMethod: 'PATCH',
             supabaseBody: { settlement_status: status },
-            legacyUpdates: { status }
           })
         )
       );
@@ -1515,7 +1500,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
         supabaseBody: updateData,
-        legacyUpdates: { status, ...(auditNote && { auditNote }) }
       });
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id, type: 'BOOKING' }, { status, detail: auditNote });
     } catch (e) { console.error(e); }
@@ -1641,7 +1625,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
         supabaseBody: { settlement_status: 'deleted' },
-        legacyUpdates: { isDeleted: true }
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'SOFT_DELETE' });
@@ -1689,7 +1672,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           mutateBookingRecord(booking.id!, {
             supabaseMethod: 'PATCH',
             supabaseBody: { settlement_status: 'deleted' },
-            legacyUpdates: { isDeleted: true }
           })
         )
       );
@@ -1726,7 +1708,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
         supabaseBody: { settlement_status: null },
-        legacyUpdates: { isDeleted: false }
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'RESTORE', { id, type: 'BOOKING' }, { method: 'RESTORE' });
@@ -1741,7 +1722,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     try {
       await mutateBookingRecord(id, {
         supabaseMethod: 'DELETE',
-        legacyDelete: true
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'PERMANENT_DELETE' });
@@ -2009,10 +1989,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       if (e.code === 'permission-denied' || e.message?.includes('permission') || e.message?.includes('Missing or insufficient permissions')) {
         alert(
           "🚨 권한 오류 (Permission Denied)\n\n" +
-          "Firestore 데이터베이스에 쓸 권한이 없습니다.\n" +
-          "Firebase Console > Firestore Database > 규칙(Rules) 탭에서\n" +
-          "규칙을 'allow read, write: if true;' 로 변경해주세요.\n\n" +
-          "(자세한 코드는 Cloud 탭의 도움말을 참고하세요)"
+          "Supabase 데이터 저장 권한이 없습니다.\n" +
+          "관리자 세션 또는 RLS 정책을 확인해주세요.\n\n" +
+          "(필요하면 Cloud 탭의 운영 가이드를 함께 확인해주세요)"
         );
       } else {
         alert(`마이그레이션 실패: ${e.message}`);

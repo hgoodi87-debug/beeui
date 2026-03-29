@@ -4,9 +4,9 @@ import { StorageService } from '../services/storageService';
 import { BookingState, BookingStatus, LocationOption, ServiceType, StorageTier } from '../types';
 import BranchManualBookingModal from './BranchManualBookingModal';
 import BookingDetailModal from './admin/BookingDetailModal';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../firebaseApp';
 import { DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS } from '../src/domains/booking/bagCategoryUtils';
+import { getSupabaseBaseUrl } from '../services/supabaseRuntime';
+import { isSupabaseDataEnabled, supabaseMutate } from '../services/supabaseClient';
 
 interface BranchAdminPageProps {
     branchId: string;
@@ -17,6 +17,9 @@ interface BranchAdminPageProps {
 }
 
 const INITIAL_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
+const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isSupabaseBookingDetailId = (value?: string | null) =>
+    BOOKING_DETAIL_UUID_PATTERN.test(String(value || '').trim());
 
 const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranchId, adminRole = 'staff', lang, t, onBack }) => {
     const navigate = useNavigate();
@@ -209,9 +212,26 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
 
         setSendingEmailId(booking.id);
         try {
-            const functions = getFunctions(app, 'us-central1');
-            const resendVoucher = httpsCallable(functions, 'resendBookingVoucher');
-            await resendVoucher({ bookingId: booking.id });
+            if (!isSupabaseDataEnabled()) {
+                throw new Error('Supabase booking notification endpoint is not configured.');
+            }
+
+            const bookingDetailId = isSupabaseBookingDetailId(booking.id)
+                ? booking.id
+                : String((await StorageService.getBooking(booking.id))?.id || '').trim();
+
+            if (!isSupabaseBookingDetailId(bookingDetailId)) {
+                throw new Error('Supabase booking_details id를 찾을 수 없습니다.');
+            }
+
+            const SUPABASE_URL = getSupabaseBaseUrl();
+            const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+                body: JSON.stringify({ type: 'INSERT', table: 'booking_details', record: { id: bookingDetailId, reservation_code: booking.reservationCode, user_name: booking.userName, user_email: booking.userEmail, service_type: booking.serviceType, pickup_date: booking.pickupDate, pickup_time: booking.pickupTime, pickup_location: booking.pickupLocation, final_price: booking.finalPrice } }),
+            });
+            if (!res.ok) throw new Error(`Edge Function 호출 실패 [${res.status}]`);
             alert('Email sent successfully!');
         } catch (error: any) {
             console.error("Failed to send email:", error);
@@ -227,9 +247,21 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
 
         setRefundingId(booking.id);
         try {
-            const functions = getFunctions(app, 'us-central1');
-            const processRefund = httpsCallable(functions, 'processBookingRefund');
-            await processRefund({ bookingId: booking.id });
+            if (!isSupabaseDataEnabled()) {
+                throw new Error('Supabase booking storage is not configured.');
+            }
+
+            const bookingDetailId = isSupabaseBookingDetailId(booking.id)
+                ? booking.id
+                : String((await StorageService.getBooking(booking.id))?.id || '').trim();
+
+            if (!isSupabaseBookingDetailId(bookingDetailId)) {
+                throw new Error('Supabase booking_details id를 찾을 수 없습니다.');
+            }
+
+            await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, 'PATCH', {
+                settlement_status: 'refunded',
+            });
             alert('반품(환불) 처리가 완료되었습니다.');
         } catch (error: any) {
             console.error("Failed to process refund:", error);

@@ -8,6 +8,8 @@ let auditLogWriteDisabledForSession = false;
 let auditLogPermissionWarningShown = false;
 const shouldSkipDevAuditLogs =
     import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_AUDIT_LOGS !== 'true';
+const isClientAuditLoggingEnabled =
+    import.meta.env.VITE_ENABLE_CLIENT_AUDIT_LOGS === 'true';
 
 export type AuditActionType = 
     | 'LOGIN' 
@@ -44,6 +46,10 @@ export const AuditService = {
         target?: { id: string; type: string },
         details: any = {}
     ) {
+        if (!isClientAuditLoggingEnabled) {
+            return;
+        }
+
         if (shouldSkipDevAuditLogs) {
             return;
         }

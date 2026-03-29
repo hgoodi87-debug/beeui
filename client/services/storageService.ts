@@ -75,6 +75,35 @@ const getBookingLocationLabel = (
   return identifier || null;
 };
 
+const toFiniteLocationNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeLocationCommissionRates = (location: LocationOption): LocationOption => {
+  const raw = location as LocationOption & Record<string, unknown>;
+  const delivery = toFiniteLocationNumber(
+    raw.commissionRates?.delivery ??
+    raw.commissionRateDelivery ??
+    raw.commission_rate_delivery,
+    0,
+  );
+  const storage = toFiniteLocationNumber(
+    raw.commissionRates?.storage ??
+    raw.commissionRateStorage ??
+    raw.commission_rate_storage,
+    0,
+  );
+
+  return {
+    ...location,
+    commissionRates: {
+      delivery,
+      storage,
+    },
+  };
+};
+
 const fireSupabaseBookingCreatedWebhook = async (record: Record<string, unknown>) => {
   const endpoint = resolveSupabaseEndpoint(undefined, '/functions/v1/on-booking-created');
   const response = await fetch(endpoint, {
@@ -1470,9 +1499,10 @@ export const StorageService = {
     // [스봉이] Supabase 폴링 우선 💅
     if (isSupabaseDataEnabled()) {
       const enrichLocation = (loc: LocationOption): LocationOption => {
+        const normalized = normalizeLocationCommissionRates(loc);
         const initialLoc = INITIAL_LOCATIONS.find(l => l.id === loc.id);
-        if (!initialLoc) return loc;
-        const enriched = { ...loc };
+        if (!initialLoc) return normalized;
+        const enriched = { ...normalized };
         Object.keys(initialLoc).forEach((key) => {
           const k = key as keyof LocationOption;
           if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
@@ -1552,9 +1582,10 @@ export const StorageService = {
     let firebaseLocs: LocationOption[] = [];
 
     const enrichLoc = (loc: LocationOption): LocationOption => {
+      const normalized = normalizeLocationCommissionRates(loc);
       const initialLoc = INITIAL_LOCATIONS.find(l => l.id === loc.id);
-      if (!initialLoc) return loc;
-      const enriched = { ...loc };
+      if (!initialLoc) return normalized;
+      const enriched = { ...normalized };
       Object.keys(initialLoc).forEach((key) => {
         const k = key as keyof LocationOption;
         if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
@@ -1653,7 +1684,9 @@ export const StorageService = {
   },
 
   saveLocation: async (location: LocationOption): Promise<void> => {
-    const sanitized = normalizeLocationTranslations({ ...location });
+    const sanitized = normalizeLocationCommissionRates(
+      normalizeLocationTranslations({ ...location })
+    );
     // [스봉이] Firestore는 NaN을 보면 화를 내요. 깍쟁이처럼 걸러내야죠 💅
     if (sanitized.lat === undefined || sanitized.lat === null || isNaN(Number(sanitized.lat))) {
       delete sanitized.lat;
@@ -1678,8 +1711,11 @@ export const StorageService = {
           safeLocation.branchCode ||
           (!recordId ? safeLocation.id : '')
         ).trim();
+        const { commissionRates, ...locationWithoutCommissionObject } = safeLocation as LocationOption & Record<string, unknown>;
         const { id, supabase_id, ...payload } = camelToSnake({
-          ...safeLocation,
+          ...locationWithoutCommissionObject,
+          commissionRateDelivery: commissionRates?.delivery ?? 0,
+          commissionRateStorage: commissionRates?.storage ?? 0,
           id: recordId || undefined,
           shortCode: locationCode || safeLocation.shortCode,
           branchCode: safeLocation.branchCode || locationCode,

@@ -4,6 +4,11 @@
  */
 import { isSupabaseDataEnabled, supabaseMutate } from './supabaseClient';
 
+let auditLogWriteDisabledForSession = false;
+let auditLogPermissionWarningShown = false;
+const shouldSkipDevAuditLogs =
+    import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_AUDIT_LOGS !== 'true';
+
 export type AuditActionType = 
     | 'LOGIN' 
     | 'REFUND' 
@@ -39,6 +44,14 @@ export const AuditService = {
         target?: { id: string; type: string },
         details: any = {}
     ) {
+        if (shouldSkipDevAuditLogs) {
+            return;
+        }
+
+        if (auditLogWriteDisabledForSession) {
+            return;
+        }
+
         try {
             const logData = {
                 entity_type: target?.type || 'SYSTEM',
@@ -57,7 +70,20 @@ export const AuditService = {
             }
 
             console.log(`[AuditLog] ${actionType} recorded successfully. 💅`);
-        } catch (e) {
+        } catch (e: any) {
+            const status = Number(e?.status || 0);
+            const code = String(e?.code || '');
+            const permissionDenied = status === 403 || code === '42501' || String(e?.message || '').includes('[403]');
+
+            if (permissionDenied) {
+                auditLogWriteDisabledForSession = true;
+                if (!auditLogPermissionWarningShown) {
+                    auditLogPermissionWarningShown = true;
+                    console.warn('[AuditLog] audit_logs 쓰기 권한이 없어 이번 세션에서는 감사 로그 기록을 중단합니다.');
+                }
+                return;
+            }
+
             console.error('[AuditLog] Failed to record action:', e);
             // 감사 로그 기록 실패는 치명적일 수 있으나, 서비스 중단은 막아야 함
         }

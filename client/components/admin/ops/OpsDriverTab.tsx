@@ -71,8 +71,13 @@ const OpsDriverTab: React.FC<OpsDriverTabProps> = ({
                         </div>
                     </div>
 
-                    <button className="w-full py-4 bg-bee-yellow text-bee-black rounded-[20px] font-black text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-bee-yellow/10 relative z-10">
-                        긴급 배차 지시 (All Alert) 🚨
+                    <button
+                        type="button"
+                        disabled
+                        title="긴급 배차 지시는 아직 준비 중입니다."
+                        className="w-full py-4 bg-gray-100 text-gray-400 rounded-[20px] font-black text-sm border border-gray-200 relative z-10 cursor-not-allowed"
+                    >
+                        긴급 배차 지시 준비중
                     </button>
                 </div>
 
@@ -112,11 +117,21 @@ const OpsDriverTab: React.FC<OpsDriverTabProps> = ({
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button className="h-12 px-5 rounded-2xl bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-bee-yellow transition-all flex items-center justify-center gap-2 border border-transparent hover:border-bee-black shadow-none hover:shadow-lg shadow-bee-black/20" title="현재 위치 실시간 조회">
+                                    <button
+                                        type="button"
+                                        disabled
+                                        className="h-12 px-5 rounded-2xl bg-gray-50 text-gray-300 border border-gray-100 flex items-center justify-center gap-2 cursor-not-allowed"
+                                        title="실시간 위치 조회는 아직 준비 중입니다."
+                                    >
                                         <i className="fa-solid fa-location-crosshairs text-xs"></i>
                                         <span className="text-[10px] font-black uppercase tracking-widest">위치 조회</span>
                                     </button>
-                                    <button className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-white transition-all flex items-center justify-center border border-transparent hover:border-bee-black" title="무전/전화 호출">
+                                    <button
+                                        type="button"
+                                        disabled
+                                        className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-300 border border-gray-100 flex items-center justify-center cursor-not-allowed"
+                                        title="무전/전화 호출은 아직 준비 중입니다."
+                                    >
                                         <i className="fa-solid fa-phone text-xs"></i>
                                     </button>
                                 </div>

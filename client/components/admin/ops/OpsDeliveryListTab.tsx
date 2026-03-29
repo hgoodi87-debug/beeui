@@ -100,14 +100,29 @@ const OpsDeliveryListTab: React.FC<OpsDeliveryListTabProps> = ({
                                     </td>
                                     <td className="px-6 py-5 bg-gray-50/50 rounded-r-3xl group-hover:bg-bee-black text-right pr-6 transition-colors">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-400 hover:bg-bee-yellow hover:text-bee-black hover:scale-110 hover:rotate-6 transition-all shadow-sm flex items-center justify-center" title="위치 확인">
+                                            <button
+                                                type="button"
+                                                disabled
+                                                className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-300 shadow-sm flex items-center justify-center cursor-not-allowed"
+                                                title="위치 확인 기능은 아직 준비 중입니다."
+                                            >
                                                 <i className="fa-solid fa-location-dot text-xs"></i>
                                             </button>
-                                            <button className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-400 hover:bg-bee-black hover:text-bee-yellow hover:scale-110 hover:-rotate-6 transition-all shadow-sm flex items-center justify-center" title="기사님 호출">
+                                            <button
+                                                type="button"
+                                                disabled
+                                                className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-300 shadow-sm flex items-center justify-center cursor-not-allowed"
+                                                title="기사 호출 기능은 아직 준비 중입니다."
+                                            >
                                                 <i className="fa-solid fa-phone text-xs"></i>
                                             </button>
-                                            <button className="px-5 py-2.5 bg-bee-black text-bee-yellow group-hover:bg-bee-yellow group-hover:text-bee-black rounded-xl text-[10px] font-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-bee-black/10">
-                                                상세 보기
+                                            <button
+                                                type="button"
+                                                disabled
+                                                className="px-5 py-2.5 bg-gray-100 text-gray-400 rounded-xl text-[10px] font-black border border-gray-200 cursor-not-allowed"
+                                                title="상세 보기는 아직 준비 중입니다."
+                                            >
+                                                상세 보기 준비중
                                             </button>
                                         </div>
                                     </td>

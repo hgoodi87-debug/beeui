@@ -1,4 +1,3 @@
-import { ensureAuth } from '../firebaseApp';
 import { getSupabaseBaseUrl } from './supabaseRuntime';
 
 export type AdminAuthProvider = 'firebase' | 'supabase';
@@ -143,6 +142,8 @@ const clearStoredSupabaseAdminSession = () => {
   localStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
   sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
 };
+
+const getFirebaseAppModule = () => import('../firebaseApp');
 
 const persistSupabaseAdminSession = (session: SupabaseAdminSession) => {
   const serialized = JSON.stringify(session);
@@ -294,9 +295,11 @@ export const warmAdminAuth = async () => {
     return;
   }
 
+  const firebaseAppModulePromise = getFirebaseAppModule();
+
   await Promise.allSettled([
-    ensureAuth(),
-    import('../firebaseApp'),
+    firebaseAppModulePromise.then(({ ensureAuth }) => ensureAuth()),
+    firebaseAppModulePromise,
     import('firebase/functions'),
   ]);
 };
@@ -427,7 +430,7 @@ export const getActiveAdminRequestHeaders = async (): Promise<Record<string, str
   }
 
   try {
-    const { auth } = await import('../firebaseApp');
+    const { auth, ensureAuth } = await getFirebaseAppModule();
     const currentUser = auth.currentUser || await ensureAuth();
     const firebaseIdToken = await currentUser?.getIdToken?.();
 
@@ -598,10 +601,11 @@ const resolveSupabaseLoginEmail = async (identifier: string) => {
 
 const verifyLegacyAdminCredentials = async (identifier: string, password: string) => {
   try {
+    const firebaseAppModulePromise = getFirebaseAppModule();
     const [, firebaseFunctionsModule, firebaseAppModule] = await Promise.all([
-      ensureAuth(),
+      firebaseAppModulePromise.then(({ ensureAuth }) => ensureAuth()),
       import('firebase/functions'),
-      import('../firebaseApp'),
+      firebaseAppModulePromise,
     ]);
     const { httpsCallable } = firebaseFunctionsModule;
     const { functions } = firebaseAppModule;

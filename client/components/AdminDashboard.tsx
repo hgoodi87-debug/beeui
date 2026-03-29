@@ -99,7 +99,6 @@ const QnaEditorTab = lazy(() => import('./admin/QnaEditorTab'));
 const ChatTab = lazy(() => import('./admin/ChatTab'));
 const DiscountTab = lazy(() => import('./admin/DiscountTab'));
 const ReportsTab = lazy(() => import('./admin/ReportsTab'));
-const TipsCMSTab = lazy(() => import('./admin/TipsCMSTab').then((module) => ({ default: module.TipsCMSTab })));
 const RoadmapTab = lazy(() => import('./admin/RoadmapTab'));
 const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
@@ -167,6 +166,11 @@ const getKSTDateString = () => {
   return kst.toISOString().split('T')[0];
 };
 
+const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isSupabaseBookingDetailId = (value?: string | null) =>
+  BOOKING_DETAIL_UUID_PATTERN.test(String(value || '').trim());
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, adminRole = 'staff', adminEmail, scanId, lang, t }) => {
   const currentActor = { id: adminName || 'unknown', name: adminName || 'unknown', email: adminEmail };
   const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
@@ -178,7 +182,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
 
   const queryClient = useQueryClient();
-  const { data: locations = [] } = useLocations();
+  const { data: locations = [] } = useLocations({ includeInactive: true });
   const { data: allBookings = [] } = useBookings();
   const shouldUseSqlRevenueSummaries = needsSettlementData && !canUseLocalLegacyReadBridge();
   const { data: revenueDailySummaries = [] } = useAdminRevenueDailySummaries({ enabled: shouldUseSqlRevenueSummaries });
@@ -188,6 +192,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     () => (globalBranchFilter === 'ALL' ? null : locations.find((location) => location.id === globalBranchFilter) || null),
     [globalBranchFilter, locations]
   );
+  const selectedOperationalBranchId = useMemo(() => {
+    const candidate = String(selectedOperationalLocation?.branchId || '').trim();
+    return BOOKING_DETAIL_UUID_PATTERN.test(candidate) ? candidate : undefined;
+  }, [selectedOperationalLocation]);
   const selectedScopeTokens = useMemo(
     () => buildLocationScopeTokens(selectedOperationalLocation, globalBranchFilter === 'ALL' ? undefined : globalBranchFilter),
     [globalBranchFilter, selectedOperationalLocation]
@@ -272,6 +280,82 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const [todayKST, setTodayKST] = useState(getKSTDateString());
   const [selectedDetailDate, setSelectedDetailDate] = useState<string | null>(null);
 
+  const mergeNoticeFeed = React.useCallback((nextNotice: SystemNotice) => {
+    setNotices((prev) => {
+      const nextId = String(nextNotice.id || '').trim();
+      const merged = nextId
+        ? [nextNotice, ...prev.filter((notice) => String(notice.id || '').trim() !== nextId)]
+        : [nextNotice, ...prev];
+
+      return merged.sort((left, right) =>
+        String(right.createdAt || '').localeCompare(String(left.createdAt || ''))
+      );
+    });
+  }, []);
+
+  const upsertCashClosingCache = React.useCallback((nextClosing: CashClosing) => {
+    queryClient.setQueryData<CashClosing[]>(['cashClosings'], (prev = []) => {
+      const nextId = String(nextClosing.id || '').trim();
+      const merged = nextId
+        ? [nextClosing, ...prev.filter((closing) => String(closing.id || '').trim() !== nextId)]
+        : [nextClosing, ...prev];
+
+      return merged.sort((left, right) =>
+        String(right.date || '').localeCompare(String(left.date || ''))
+      );
+    });
+  }, [queryClient]);
+
+  const upsertExpenditureCache = React.useCallback((nextExpenditure: Expenditure) => {
+    queryClient.setQueryData<Expenditure[]>(['expenditures'], (prev = []) => {
+      const nextId = String(nextExpenditure.id || '').trim();
+      const merged = nextId
+        ? [nextExpenditure, ...prev.filter((item) => String(item.id || '').trim() !== nextId)]
+        : [nextExpenditure, ...prev];
+
+      return merged.sort((left, right) =>
+        String(right.createdAt || right.date || '').localeCompare(String(left.createdAt || left.date || ''))
+      );
+    });
+  }, [queryClient]);
+
+  const updateLegacyBookingRecord = async (id: string, updates: Record<string, unknown>) => {
+    const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
+    const { db: fbDb } = await import('../firebaseApp');
+    await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    });
+  };
+
+  const deleteLegacyBookingRecord = async (id: string) => {
+    const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
+    const { db: fbDb } = await import('../firebaseApp');
+    await fbDeleteDoc(fbDoc(fbDb, 'bookings', id));
+  };
+
+  const mutateBookingRecord = async (
+    id: string,
+    options: {
+      supabaseMethod: 'PATCH' | 'DELETE';
+      supabaseBody?: Record<string, unknown>;
+      legacyUpdates?: Record<string, unknown>;
+      legacyDelete?: boolean;
+    }
+  ) => {
+    if (isSupabaseDataEnabled() && isSupabaseBookingDetailId(id)) {
+      await supabaseMutate(`booking_details?id=eq.${id}`, options.supabaseMethod, options.supabaseBody);
+      return;
+    }
+
+    if (options.legacyDelete) {
+      await deleteLegacyBookingRecord(id);
+      return;
+    }
+
+    await updateLegacyBookingRecord(id, options.legacyUpdates || {});
+  };
+
   // Detail Modal & Edit State
   const [selectedBooking, setSelectedBooking] = useState<BookingState | null>(null);
   const [isManualBooking, setIsManualBooking] = useState(false);
@@ -338,7 +422,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setRefundingId(booking.id);
     try {
-      if (isSupabaseDataEnabled()) {
+      if (isSupabaseDataEnabled() && isSupabaseBookingDetailId(booking.id)) {
         await supabaseMutate(`booking_details?id=eq.${booking.id}`, 'PATCH', {
           settlement_status: 'refunded',
         });
@@ -348,6 +432,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         const processRefund = httpsCallable(functions, 'processBookingRefund');
         await processRefund({ bookingId: booking.id });
       }
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'REFUND', { id: booking.id, type: 'BOOKING' }, { userName: booking.userName });
       alert('반품(환불) 처리가 완료되었습니다.');
     } catch (error: any) {
@@ -510,9 +595,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const diff = revenueStats.cash - cashClosing.actualCash;
 
     try {
-      await StorageService.saveCashClosing({
+      const savedClosing = await StorageService.saveCashClosing({
         date: revenueEndDate,
-        branchId: globalBranchFilter !== 'ALL' ? globalBranchFilter : 'HEADQUARTERS',
+        branchId: selectedOperationalBranchId,
         totalRevenue: revenueStats.total,
         cashRevenue: revenueStats.cash,
         cardRevenue: revenueStats.card,
@@ -529,6 +614,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         closedBy: adminName || 'Admin',
         createdAt: new Date().toISOString()
       });
+      upsertCashClosingCache(savedClosing);
       alert('시재 마감이 완료되었습니다.');
       setCashClosing({ actualCash: 0, notes: '' });
     } catch (e) {
@@ -545,12 +631,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     try {
       const savedExp = {
         ...expForm,
-        branchId: globalBranchFilter !== 'ALL' ? globalBranchFilter : (adminRole === 'branch' ? globalBranchFilter : 'HEADQUARTERS'),
+        branchId: selectedOperationalBranchId,
         createdBy: adminName || 'Admin',
         createdAt: new Date().toISOString()
       } as Expenditure;
       
-      await StorageService.saveExpenditure(savedExp);
+      const persistedExpenditure = await StorageService.saveExpenditure(savedExp);
+      upsertExpenditureCache(persistedExpenditure);
       alert('지출 내역이 성공적으로 기록되었습니다. 💅');
       setExpForm({
         date: new Date().toISOString().split('T')[0],
@@ -565,16 +652,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
   const deleteExpenditure = async (id: string) => {
+    const normalizedId = String(id || '').trim();
+    if (!normalizedId) {
+      alert('삭제할 지출 ID를 찾지 못했습니다. 목록을 새로고침한 뒤 다시 시도해주세요.');
+      return;
+    }
     if (!confirm('지출 내역을 삭제하시겠습니까?')) return;
     try {
-      if (isSupabaseDataEnabled()) {
-        await supabaseMutate(`expenditures?id=eq.${id}`, 'DELETE');
-      } else {
-        // Firebase 폴백
-        const { db: fbDb } = await import('../firebaseApp');
-        const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
-        await fbDeleteDoc(fbDoc(fbDb, 'expenditures', id));
-      }
+      await StorageService.deleteExpenditure(normalizedId);
+      queryClient.setQueryData<Expenditure[]>(['expenditures'], (prev = []) =>
+        prev.filter((item) => item.id !== normalizedId)
+      );
     } catch (e) {
       console.error(e);
       alert('삭제 실패');
@@ -933,6 +1021,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const newLoc: LocationOption = {
         ...(locForm as LocationOption),
         id: trimmedId,
+        supabaseId: String(locForm.supabaseId || '').trim() || undefined,
         name: trimmedName,
         shortCode: trimmedShortCode,
         description: trimmedDesc
@@ -941,7 +1030,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       await StorageService.saveLocation(newLoc);
 
       setLocForm({
-        id: '', shortCode: '', name: '', type: LocationType.HOTEL, supportsDelivery: true, supportsStorage: true,
+        id: '', supabaseId: '', shortCode: '', name: '', type: LocationType.HOTEL, supportsDelivery: true, supportsStorage: true,
         isOrigin: true, isDestination: true, originSurcharge: 0, destinationSurcharge: 0,
         lat: 37.5665, lng: 126.9780, address: '', description: '',
         pickupGuide: '', pickupImageUrl: '',
@@ -1278,9 +1367,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     try {
       await StorageService.deleteLocation(id);
 
-      if (locForm.id === id) {
+      if (String(locForm.supabaseId || locForm.id || '') === id) {
         setLocForm({
-          id: '', shortCode: '', name: '', type: LocationType.HOTEL, supportsDelivery: true, supportsStorage: true,
+          id: '', supabaseId: '', shortCode: '', name: '', type: LocationType.HOTEL, supportsDelivery: true, supportsStorage: true,
           isOrigin: true, isDestination: true, originSurcharge: 0, destinationSurcharge: 0,
           lat: 37.5665, lng: 126.9780, address: '', description: ''
         });
@@ -1395,18 +1484,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setIsBatchUpdating(true);
     try {
-      if (isSupabaseDataEnabled()) {
-        const promises = selectedBookingIds.map(id =>
-          supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', { settlement_status: status })
-        );
-        await Promise.all(promises);
-      } else {
-        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
-        const { db: fbDb } = await import('../firebaseApp');
-        const promises = selectedBookingIds.map(id => fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { status }));
-        await Promise.all(promises);
+      const results = await Promise.allSettled(
+        selectedBookingIds.map((id) =>
+          mutateBookingRecord(id, {
+            supabaseMethod: 'PATCH',
+            supabaseBody: { settlement_status: status },
+            legacyUpdates: { status }
+          })
+        )
+      );
+      const failures = results.filter((result) => result.status === 'rejected');
+      if (failures.length > 0) {
+        throw (failures[0] as PromiseRejectedResult).reason;
       }
       setSelectedBookingIds([]);
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       alert(`성공적으로 ${selectedBookingIds.length}건을 처리했습니다. 💅`);
     } catch (error) {
       console.error('Batch update error:', error);
@@ -1418,15 +1510,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const updateStatus = async (id: string, status: BookingStatus, auditNote?: string) => {
     try {
-      if (isSupabaseDataEnabled()) {
-        const updateData: Record<string, unknown> = { settlement_status: status };
-        if (auditNote) (updateData as any).notes = auditNote;
-        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', updateData);
-      } else {
-        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
-        const { db: fbDb } = await import('../firebaseApp');
-        await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { status, ...(auditNote && { auditNote }), updatedAt: new Date().toISOString() });
-      }
+      const updateData: Record<string, unknown> = { settlement_status: status };
+      if (auditNote) (updateData as any).notes = auditNote;
+      await mutateBookingRecord(id, {
+        supabaseMethod: 'PATCH',
+        supabaseBody: updateData,
+        legacyUpdates: { status, ...(auditNote && { auditNote }) }
+      });
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id, type: 'BOOKING' }, { status, detail: auditNote });
     } catch (e) { console.error(e); }
   };
@@ -1548,13 +1638,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleSoftDelete = async (id: string) => {
     if (!confirm('예약 내역을 휴지통으로 이동하시겠습니까?')) return;
     try {
-      if (isSupabaseDataEnabled()) {
-        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', { settlement_status: 'deleted' });
-      } else {
-        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
-        const { db: fbDb } = await import('../firebaseApp');
-        await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { isDeleted: true, updatedAt: new Date().toISOString() });
-      }
+      await mutateBookingRecord(id, {
+        supabaseMethod: 'PATCH',
+        supabaseBody: { settlement_status: 'deleted' },
+        legacyUpdates: { isDeleted: true }
+      });
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'SOFT_DELETE' });
     } catch (e) {
       console.error(e);
@@ -1595,23 +1684,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     setIsBatchUpdating(true);
     try {
       const candidateIds = new Set(targetBookings.map(booking => booking.id!));
-
-      if (isSupabaseDataEnabled()) {
-        const promises = targetBookings.map(booking =>
-          supabaseMutate(`booking_details?id=eq.${booking.id!}`, 'PATCH', { settlement_status: 'deleted' })
-        );
-        await Promise.allSettled(promises);
-      } else {
-        const { doc: fbDoc, writeBatch: fbWriteBatch } = await import('firebase/firestore');
-        const { db: fbDb } = await import('../firebaseApp');
-        const updatedAt = new Date().toISOString();
-        for (let i = 0; i < targetBookings.length; i += 400) {
-          const batch = fbWriteBatch(fbDb);
-          targetBookings.slice(i, i + 400).forEach((booking) => {
-            batch.update(fbDoc(fbDb, 'bookings', booking.id!), { isDeleted: true, updatedAt });
-          });
-          await batch.commit();
-        }
+      const results = await Promise.allSettled(
+        targetBookings.map((booking) =>
+          mutateBookingRecord(booking.id!, {
+            supabaseMethod: 'PATCH',
+            supabaseBody: { settlement_status: 'deleted' },
+            legacyUpdates: { isDeleted: true }
+          })
+        )
+      );
+      const failures = results.filter((result) => result.status === 'rejected');
+      if (failures.length > 0) {
+        throw (failures[0] as PromiseRejectedResult).reason;
       }
 
       setSelectedBookingIds(prev => prev.filter(id => !candidateIds.has(id)));
@@ -1639,13 +1723,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleRestore = async (id: string) => {
     if (!confirm('예약 내역을 복구하시겠습니까?')) return;
     try {
-      if (isSupabaseDataEnabled()) {
-        await supabaseMutate(`booking_details?id=eq.${id}`, 'PATCH', { settlement_status: null });
-      } else {
-        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
-        const { db: fbDb } = await import('../firebaseApp');
-        await fbUpdateDoc(fbDoc(fbDb, 'bookings', id), { isDeleted: false, updatedAt: new Date().toISOString() });
-      }
+      await mutateBookingRecord(id, {
+        supabaseMethod: 'PATCH',
+        supabaseBody: { settlement_status: null },
+        legacyUpdates: { isDeleted: false }
+      });
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'RESTORE', { id, type: 'BOOKING' }, { method: 'RESTORE' });
     } catch (e) {
       console.error(e);
@@ -1656,13 +1739,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handlePermanentDelete = async (id: string) => {
     if (!confirm('정말로 영구 삭제하시겠습니까? 복구할 수 없습니다.')) return;
     try {
-      if (isSupabaseDataEnabled()) {
-        await supabaseMutate(`booking_details?id=eq.${id}`, 'DELETE');
-      } else {
-        const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
-        const { db: fbDb } = await import('../firebaseApp');
-        await fbDeleteDoc(fbDoc(fbDb, 'bookings', id));
-      }
+      await mutateBookingRecord(id, {
+        supabaseMethod: 'DELETE',
+        legacyDelete: true
+      });
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'PERMANENT_DELETE' });
     } catch (e) {
       console.error(e);
@@ -2005,7 +2086,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
     setIsSaving(true);
     try {
-      await StorageService.saveNotice(noticeForm as SystemNotice);
+      const savedNotice = await StorageService.saveNotice(noticeForm as SystemNotice);
+      mergeNoticeFeed(savedNotice);
       setNoticeForm({ title: '', category: 'NOTICE', isActive: true, imageUrl: '', content: '' });
       alert('공지사항이 성공적으로 저장되었습니다. ✨');
     } catch (e) {
@@ -2020,6 +2102,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!confirm('정말로 이 공지사항을 삭제하시겠어요? 🙄')) return;
     try {
       await StorageService.deleteNotice(id);
+      setNotices((prev) => prev.filter((notice) => notice.id !== id));
       alert('삭제되었습니다.');
     } catch (e) {
       console.error(e);
@@ -2112,6 +2195,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!confirm('제휴 문의를 완료(삭제) 하시겠습니까?')) return;
     try {
       await StorageService.deleteInquiry(id);
+      await queryClient.invalidateQueries({ queryKey: ['inquiries'] });
       alert("삭제되었습니다.");
     } catch (e) { alert("삭제 실패"); }
   };
@@ -2120,6 +2204,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!confirm('정말로 모든 시재 마감 히스토리를 초기화하시겠습니까?')) return;
     try {
       await StorageService.clearCashClosings();
+      queryClient.setQueryData<CashClosing[]>(['cashClosings'], []);
       alert("히스토리 데이터가 초기화되었습니다.");
     } catch (e) { alert("초기화 실패"); }
   };
@@ -2241,7 +2326,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 { id: 'DISCOUNTS', label: '프로모션 마케팅', icon: 'fa-tags' },
                 { id: 'HR', label: '인사/권한 보안', icon: 'fa-user-tie' },
                 { id: 'PARTNERSHIP_INQUIRIES', label: 'B2B 제안서 함', icon: 'fa-handshake' },
-                { id: 'TIPS_CMS', label: '팁스 통합 콘텐츠 관리', icon: 'fa-lightbulb', color: 'bg-orange-400' },
               ].map(item => (
                 <button
                   key={item.id}
@@ -2350,7 +2434,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'LOCATIONS', label: t.admin?.sidebar?.locations || '전 지점 마스터 관리', icon: 'fa-location-dot' },
                         { id: 'ROADMAP', label: t.admin?.sidebar?.roadmap || '서비스 로드맵', icon: 'fa-map-location-dot' },
                         { id: 'CHATS', label: t.admin?.sidebar?.marketing || '실시간 채팅', icon: 'fa-comments' },
-                        { id: 'TIPS_CMS', label: '팁스 콘텐츠 관리', icon: 'fa-lightbulb' },
                       ].map(item => (
                         <button
                           key={item.id}
@@ -2668,10 +2751,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
           {activeTab === 'CHATS' && (
             <ChatTab />
-          )}
-
-          {activeTab === 'TIPS_CMS' && (
-            <TipsCMSTab />
           )}
           </Suspense>
         </main>

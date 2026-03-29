@@ -16,6 +16,31 @@ const SUPABASE_DATA_SCHEMA = 'public';
 export const isSupabaseDataEnabled = (): boolean =>
   Boolean(SUPABASE_URL) && Boolean(SUPABASE_KEY);
 
+const buildSupabaseHttpError = async (response: Response, label: string) => {
+  const text = await response.text();
+  let details: unknown = text;
+
+  try {
+    details = text ? JSON.parse(text) : null;
+  } catch {
+    details = text;
+  }
+
+  const error = new Error(
+    typeof details === 'object' && details && 'message' in details
+      ? String((details as { message?: string }).message)
+      : `${label} failed [${response.status}]`
+  ) as Error & { status?: number; code?: string; details?: unknown };
+
+  error.status = response.status;
+  error.code =
+    typeof details === 'object' && details && 'code' in details
+      ? String((details as { code?: string }).code)
+      : `supabase/${response.status}`;
+  error.details = details;
+  return error;
+};
+
 const resolveAccessToken = async (accessToken?: string) => {
   const explicitToken = (accessToken || '').trim();
   if (explicitToken) {
@@ -56,7 +81,7 @@ export async function supabaseGet<T>(path: string, accessToken?: string): Promis
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers });
   if (!res.ok) {
-    throw new Error(`Supabase GET /${path} failed [${res.status}]`);
+    throw await buildSupabaseHttpError(res, `Supabase GET /${path}`);
   }
   return res.json();
 }
@@ -87,7 +112,7 @@ export async function supabaseMutate<T>(
   });
 
   if (!res.ok) {
-    throw new Error(`Supabase ${method} /${path} failed [${res.status}]`);
+    throw await buildSupabaseHttpError(res, `Supabase ${method} /${path}`);
   }
 
   const text = await res.text();

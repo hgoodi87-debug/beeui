@@ -256,7 +256,12 @@ const OperationsConsole: React.FC<OperationsConsoleProps> = ({
                                         <div className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">{b.status} • {b.serviceType}</div>
                                     </div>
                                 </div>
-                                <button className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-[10px] text-gray-400 hover:bg-bee-black hover:text-bee-yellow transition-all" title="상세 보기">
+                                <button
+                                    type="button"
+                                    disabled
+                                    className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-[10px] text-gray-300 cursor-not-allowed"
+                                    title="상세 보기는 아직 준비 중입니다."
+                                >
                                     <i className="fa-solid fa-chevron-right"></i>
                                 </button>
                             </div>

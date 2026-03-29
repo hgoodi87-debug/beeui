@@ -336,8 +336,19 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                     <i className="fa-solid fa-receipt text-[200px]"></i>
                                 </div>
                                 
-                                <div className="flex justify-between items-start relative z-10">
+                                <div className="flex justify-between items-start relative z-10 gap-6">
                                     <div className="space-y-4">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border flex items-center gap-1.5 ${selectedBooking.paymentStatus === 'paid' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/20' : 'bg-amber-400/15 text-amber-200 border-amber-300/20'}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${selectedBooking.paymentStatus === 'paid' ? 'bg-emerald-300' : 'bg-amber-300'}`}></span>
+                                                {selectedBooking.paymentStatus === 'paid' ? '결제완료' : '결제대기'}
+                                            </span>
+                                            {selectedBooking.paymentStatus !== 'paid' && (
+                                                <span className="text-[10px] font-bold text-gray-300">
+                                                    토스 실결제 전이라 현장 결제 기준으로 처리 중
+                                                </span>
+                                            )}
+                                        </div>
                                         <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">할인 코드 적용 (Promo)</label>
                                         <div className="flex items-center gap-3">
                                             <input

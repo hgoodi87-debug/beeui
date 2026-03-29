@@ -170,11 +170,21 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                 </div>
                 <div className="flex-1"></div>
                 <div className="flex gap-2">
-                    <button className="px-5 py-2.5 bg-bee-black text-white rounded-2xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-2">
-                        <i className="fa-solid fa-lock-open-alt"></i> 월 정산 마감
+                    <button
+                        type="button"
+                        disabled
+                        title="월 정산 마감 기능은 아직 준비 중입니다."
+                        className="px-5 py-2.5 bg-gray-100 text-gray-400 rounded-2xl text-[10px] font-black transition-all border border-gray-200 flex items-center gap-2 cursor-not-allowed"
+                    >
+                        <i className="fa-solid fa-lock"></i> 월 정산 마감 준비중
                     </button>
-                    <button className="px-5 py-2.5 bg-white border border-gray-200 text-gray-400 rounded-2xl text-[10px] font-black hover:border-bee-black hover:text-bee-black transition-all flex items-center gap-2">
-                        <i className="fa-solid fa-file-invoice-dollar"></i> 정산서 PDF 발행
+                    <button
+                        type="button"
+                        disabled
+                        title="정산서 PDF 발행은 아직 준비 중입니다."
+                        className="px-5 py-2.5 bg-white border border-gray-200 text-gray-300 rounded-2xl text-[10px] font-black transition-all flex items-center gap-2 cursor-not-allowed"
+                    >
+                        <i className="fa-solid fa-file-invoice-dollar"></i> PDF 발행 준비중
                     </button>
                 </div>
             </div>
@@ -250,7 +260,14 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-black italic">Partners & Carriers Payout Ledger</h3>
                             <div className="flex gap-2">
-                                <button className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-emerald-500/10">일괄 지급 확정</button>
+                                <button
+                                    type="button"
+                                    disabled
+                                    title="일괄 지급 확정은 아직 준비 중입니다."
+                                    className="px-4 py-2 bg-gray-100 text-gray-400 rounded-xl text-[9px] font-black uppercase border border-gray-200 cursor-not-allowed"
+                                >
+                                    일괄 지급 확정 준비중
+                                </button>
                             </div>
                         </div>
                         <div className="overflow-hidden rounded-3xl border border-gray-50">
@@ -284,7 +301,14 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <button className="text-[10px] font-black text-blue-500 underline hover:text-bee-black transition-colors" title="정산 상세 보기">Details</button>
+                                                    <button
+                                                        type="button"
+                                                        disabled
+                                                        title="정산 상세 보기는 아직 준비 중입니다."
+                                                        className="text-[10px] font-black text-gray-300 underline cursor-not-allowed"
+                                                    >
+                                                        준비중
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))

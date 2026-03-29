@@ -124,9 +124,6 @@ const COLLECTION_MAP: Record<string, string> = {
   'branches': 'branches',
   'users': 'customers',
   'userCoupons': 'user_coupons',
-  'tips_areas': 'cms_areas',
-  'tips_themes': 'cms_themes',
-  'tips_contents': 'cms_contents',
   'settings': 'app_settings',
 };
 
@@ -349,6 +346,7 @@ const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
 };
 
 const LOCAL_ADMIN_DATA_BRIDGE_URL = import.meta.env.VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?.trim() || '';
+const LOCAL_LEGACY_READ_BRIDGE_ENABLED = import.meta.env.VITE_ENABLE_LOCAL_LEGACY_READ_BRIDGE === 'true';
 const LOCAL_ADMIN_DATA_BRIDGE_POLL_MS = 10000;
 const SUPABASE_RUNTIME_URL = getSupabaseBaseUrl();
 const ADMIN_ACCOUNT_SYNC_ENDPOINT = import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT?.trim()
@@ -437,6 +435,7 @@ export const canUseLocalLegacyReadBridge = () => {
   if (typeof window === 'undefined') return false;
   if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) return false;
   if (localAdminDataBridgeDisabled) return false;
+  if (!LOCAL_LEGACY_READ_BRIDGE_ENABLED) return false;
   const hostname = window.location.hostname;
   return Boolean(LOCAL_ADMIN_DATA_BRIDGE_URL) && (hostname === 'localhost' || hostname === '127.0.0.1');
 };
@@ -548,6 +547,37 @@ const mergeRecordsById = <T extends { id?: string }>(preferred: T[], fallback: T
   ];
 };
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isUuidLike = (value?: string | null) => UUID_PATTERN.test(String(value || '').trim());
+
+const normalizeAdminBranchReference = (value?: string | null): string | undefined => {
+  const trimmed = String(value || '').trim();
+  return isUuidLike(trimmed) ? trimmed : undefined;
+};
+
+const getNativeFirestoreDeps = async () => {
+  const [{ db: nativeDb }, firestore] = await Promise.all([
+    import('../firebaseApp'),
+    import('firebase/firestore'),
+  ]);
+
+  return { nativeDb, ...firestore };
+};
+
+interface LocationQueryOptions {
+  includeInactive?: boolean;
+}
+
+const shouldIncludeLocation = (location: LocationOption, includeInactive = false) =>
+  includeInactive || location.isActive !== false;
+
+const buildSupabaseLocationsPath = (includeInactive = false) =>
+  includeInactive
+    ? 'locations?select=*&order=name'
+    : 'locations?select=*&is_active=eq.true&order=name';
+
 const subscribeMergedAdminCollection = <T extends { id?: string }>({
   loadSupabase,
   loadLegacy,
@@ -578,7 +608,9 @@ const subscribeMergedAdminCollection = <T extends { id?: string }>({
     try {
       legacyData = await loadLegacy();
     } catch (error) {
-      console.warn(`[StorageService] ${label} legacy poll failed:`, error);
+      if (!localAdminDataBridgeDisabled) {
+        console.warn(`[StorageService] ${label} legacy poll failed:`, error);
+      }
     }
 
     if (!active) return;
@@ -601,7 +633,15 @@ const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
     const rows = await supabaseGet<Array<Record<string, unknown>>>(
       'admin_booking_list_v1?select=*&order=created_at.desc&limit=500'
     );
-    return (rows || []).map((row) => snakeToCamel(row) as unknown as BookingState);
+    if (Array.isArray(rows) && rows.length > 0) {
+      return rows.map((row) => snakeToCamel(row) as unknown as BookingState);
+    }
+
+    console.warn('[Storage] admin_booking_list_v1 returned 0 rows, probing booking_details directly.');
+    const fallbackRows = await supabaseGet<Array<Record<string, unknown>>>(
+      'booking_details?select=*&order=created_at.desc&limit=500'
+    );
+    return (fallbackRows || []).map((row) => snakeToCamel(row) as unknown as BookingState);
   } catch (error) {
     console.warn('[Storage] admin_booking_list_v1 unavailable, falling back to booking_details:', error);
     const rows = await supabaseGet<Array<Record<string, unknown>>>(
@@ -1422,7 +1462,11 @@ export const StorageService = {
   },
 
   // --- Locations ---
-  subscribeLocations: (callback: (data: LocationOption[]) => void): (() => void) => {
+  subscribeLocations: (
+    callback: (data: LocationOption[]) => void,
+    options: LocationQueryOptions = {}
+  ): (() => void) => {
+    const includeInactive = options.includeInactive === true;
     // [스봉이] Supabase 폴링 우선 💅
     if (isSupabaseDataEnabled()) {
       const enrichLocation = (loc: LocationOption): LocationOption => {
@@ -1438,10 +1482,13 @@ export const StorageService = {
         return enriched;
       };
       return supabasePollingSubscribe<LocationOption>(
-        'locations?select=*&is_active=eq.true&order=name',
-        (items) => callback(items.map(enrichLocation)),
+        buildSupabaseLocationsPath(includeInactive),
+        (items) => callback(items.map(enrichLocation).filter((item) => shouldIncludeLocation(item, includeInactive))),
         (r) => {
           const loc = snakeToCamel(r) as unknown as LocationOption;
+          if (r.id) {
+            (loc as LocationOption).supabaseId = String(r.id);
+          }
           if (!loc.id && (r.short_code || r.id)) {
             (loc as any).id = String(r.short_code || r.id);
           }
@@ -1454,7 +1501,7 @@ export const StorageService = {
     if (canUseLocalAdminDataBridge()) {
       return subscribeLocalAdminBridge<LocationOption[]>(
         '/api/collections/locations',
-        callback,
+        (items) => callback(items.filter((item) => shouldIncludeLocation(item, includeInactive))),
         [],
         (items) => items.map((cloudLoc) => {
           const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
@@ -1491,7 +1538,7 @@ export const StorageService = {
           }
           return cloudLoc;
         });
-        callback(mergedLocations);
+        callback(mergedLocations.filter((item) => shouldIncludeLocation(item, includeInactive)));
       });
     } catch (e) {
       console.error('Failed to subscribe locations', e);
@@ -1499,7 +1546,8 @@ export const StorageService = {
     }
   },
 
-  getLocations: async (): Promise<LocationOption[]> => {
+  getLocations: async (options: LocationQueryOptions = {}): Promise<LocationOption[]> => {
+    const includeInactive = options.includeInactive === true;
     let supabaseLocs: LocationOption[] = [];
     let firebaseLocs: LocationOption[] = [];
 
@@ -1520,11 +1568,14 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const rows = await supabaseGet<Array<Record<string, unknown>>>(
-          'locations?select=*&is_active=eq.true&order=name'
+          buildSupabaseLocationsPath(includeInactive)
         );
         if (rows && rows.length > 0) {
           supabaseLocs = rows.map((row) => {
             const loc = snakeToCamel(row) as unknown as LocationOption;
+            if (row.id) {
+              loc.supabaseId = String(row.id);
+            }
             if (!loc.id && (row.short_code || row.id)) {
               (loc as any).id = String(row.short_code || row.id);
             }
@@ -1562,8 +1613,9 @@ export const StorageService = {
       ...supabaseLocs,
       ...firebaseLocs.filter(fl => !supabaseIds.has(fl.id))
     ];
-    console.log(`[Storage] Merged ${merged.length} locations 💅`);
-    return merged;
+    const filtered = merged.filter((item) => shouldIncludeLocation(item, includeInactive));
+    console.log(`[Storage] Merged ${filtered.length} locations 💅`);
+    return filtered;
   },
 
   syncLocationsWithConstants: async (): Promise<void> => {
@@ -1619,12 +1671,24 @@ export const StorageService = {
 
     if (isSupabaseDataEnabled()) {
       try {
-        const { id, ...payload } = camelToSnake({ ...safeLocation } as Record<string, unknown>);
+        const recordId = String(safeLocation.supabaseId || '').trim()
+          || (isUuidLike(safeLocation.id) ? String(safeLocation.id).trim() : '');
+        const locationCode = String(
+          safeLocation.shortCode ||
+          safeLocation.branchCode ||
+          (!recordId ? safeLocation.id : '')
+        ).trim();
+        const { id, supabase_id, ...payload } = camelToSnake({
+          ...safeLocation,
+          id: recordId || undefined,
+          shortCode: locationCode || safeLocation.shortCode,
+          branchCode: safeLocation.branchCode || locationCode,
+        } as Record<string, unknown>);
         const shortCode = String(payload.short_code || '').trim();
         let mutatedRows: unknown = null;
 
-        if (id) {
-          mutatedRows = await supabaseMutate(`locations?id=eq.${encodeURIComponent(String(id))}`, 'PATCH', payload);
+        if (recordId) {
+          mutatedRows = await supabaseMutate(`locations?id=eq.${encodeURIComponent(recordId)}`, 'PATCH', payload);
         } else if (shortCode) {
           mutatedRows = await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(shortCode)}`, 'PATCH', payload);
         }
@@ -1645,7 +1709,8 @@ export const StorageService = {
       // Allow saving with custom ID if provided, else it's a new doc if no ID? 
       // AdminDashboard usually provides ID.
       if (!safeLocation.id) throw new Error("Location ID required");
-      await setDoc(doc(db, "locations", safeLocation.id), safeLocation);
+      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc } = await getNativeFirestoreDeps();
+      await nativeSetDoc(nativeDoc(nativeDb, "locations", safeLocation.id), safeLocation);
     } catch (e) {
       console.error("Cloud Save Failed (Location):", e);
       throw e;
@@ -1655,14 +1720,19 @@ export const StorageService = {
   deleteLocation: async (id: string): Promise<void> => {
     if (isSupabaseDataEnabled()) {
       try {
-        await supabaseMutate(`locations?id=eq.${encodeURIComponent(id)}`, 'DELETE');
+        if (isUuidLike(id)) {
+          await supabaseMutate(`locations?id=eq.${encodeURIComponent(id)}`, 'DELETE');
+        } else {
+          await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(id)}`, 'DELETE');
+        }
         return;
       } catch (e) {
         console.warn("[Storage] Supabase location delete failed, falling back to Firebase:", e);
       }
     }
     try {
-      await deleteDoc(doc(db, "locations", id));
+      const { nativeDb, doc: nativeDoc, deleteDoc: nativeDeleteDoc } = await getNativeFirestoreDeps();
+      await nativeDeleteDoc(nativeDoc(nativeDb, "locations", id));
     } catch (e) {
       console.error("Cloud Delete Failed:", e);
       throw e;
@@ -2050,29 +2120,39 @@ export const StorageService = {
   },
 
   // --- Accounting / Cash Closing ---
-  saveCashClosing: async (closing: CashClosing): Promise<void> => {
+  saveCashClosing: async (closing: CashClosing): Promise<CashClosing> => {
     const safeClosing = JSON.parse(JSON.stringify(closing));
     if (isSupabaseDataEnabled()) {
       try {
         const { camelToSnake } = await import('./supabaseClient');
         const { supabaseMutate } = await import('./supabaseClient');
-        const payload = camelToSnake(safeClosing);
+        const payload = camelToSnake({
+          ...safeClosing,
+          branchId: normalizeAdminBranchReference(safeClosing.branchId),
+        });
+        let persistedRows: unknown = null;
         if (closing.id) {
-          await supabaseMutate(`daily_closings?id=eq.${encodeURIComponent(String(closing.id))}`, 'PATCH', payload);
+          persistedRows = await supabaseMutate(`daily_closings?id=eq.${encodeURIComponent(String(closing.id))}`, 'PATCH', payload);
         } else {
-          await supabaseMutate('daily_closings', 'POST', payload);
+          persistedRows = await supabaseMutate('daily_closings', 'POST', payload);
         }
         console.log("[Storage] Cash closing saved to Supabase ✅");
-        return;
+        const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
+        return persisted
+          ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as CashClosing)
+          : closing;
       } catch (e) {
         console.warn("[Storage] Supabase cash closing save failed, falling back to Firebase:", e);
       }
     }
     try {
+      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc, collection: nativeCollection, addDoc: nativeAddDoc } = await getNativeFirestoreDeps();
       if (closing.id) {
-        await setDoc(doc(db, "daily_closings", closing.id), safeClosing);
+        await nativeSetDoc(nativeDoc(nativeDb, "daily_closings", closing.id), safeClosing);
+        return safeClosing as CashClosing;
       } else {
-        await addDoc(collection(db, "daily_closings"), safeClosing);
+        const docRef = await nativeAddDoc(nativeCollection(nativeDb, "daily_closings"), safeClosing);
+        return { ...safeClosing, id: docRef.id } as CashClosing;
       }
     } catch (e) {
       console.error("Failed to save cash closing", e);
@@ -2092,7 +2172,11 @@ export const StorageService = {
     try {
       legacyData = await loadLegacyCashClosings();
       if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'cash closings from legacy source ✅');
-    } catch (e) { console.error('[Storage] Legacy closings failed:', e); }
+    } catch (e) {
+      if (!localAdminDataBridgeDisabled) {
+        console.warn('[Storage] Legacy closings failed:', e);
+      }
+    }
 
     const merged = mergeCashClosingSources(supabaseData, legacyData);
     console.log(`[Storage] Merged ${merged.length} cash closings \ud83d\udc85`);
@@ -2134,8 +2218,9 @@ export const StorageService = {
     }
 
     try {
-      const snap = await getDocs(collection(db, "daily_closings"));
-      const batch = writeBatch(db);
+      const { nativeDb, collection: nativeCollection, getDocs: nativeGetDocs, writeBatch: nativeWriteBatch } = await getNativeFirestoreDeps();
+      const snap = await nativeGetDocs(nativeCollection(nativeDb, "daily_closings"));
+      const batch = nativeWriteBatch(nativeDb);
       snap.docs.forEach((d) => batch.delete(d.ref));
       await batch.commit();
     } catch (e) {
@@ -2152,31 +2237,65 @@ export const StorageService = {
   },
 
   // --- Expenditures ---
-  saveExpenditure: async (expenditure: Expenditure): Promise<void> => {
+  saveExpenditure: async (expenditure: Expenditure): Promise<Expenditure> => {
     const safeExp = JSON.parse(JSON.stringify(expenditure));
     if (isSupabaseDataEnabled()) {
       try {
         const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
-        const payload = camelToSnake(safeExp);
+        const payload = camelToSnake({
+          ...safeExp,
+          branchId: normalizeAdminBranchReference(safeExp.branchId),
+        });
+        let persistedRows: unknown = null;
         if (expenditure.id) {
-          await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(String(expenditure.id))}`, 'PATCH', payload);
+          persistedRows = await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(String(expenditure.id))}`, 'PATCH', payload);
         } else {
-          await supabaseMutate('expenditures', 'POST', payload);
+          persistedRows = await supabaseMutate('expenditures', 'POST', payload);
         }
         console.log("[Storage] Expenditure saved to Supabase ✅");
-        return;
+        const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
+        return persisted
+          ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as Expenditure)
+          : expenditure;
       } catch (e) {
         console.warn("[Storage] Supabase expenditure save failed, falling back to Firebase:", e);
       }
     }
     try {
+      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc, collection: nativeCollection, addDoc: nativeAddDoc } = await getNativeFirestoreDeps();
       if (expenditure.id) {
-        await setDoc(doc(db, "expenditures", expenditure.id), safeExp);
+        await nativeSetDoc(nativeDoc(nativeDb, "expenditures", expenditure.id), safeExp);
+        return safeExp as Expenditure;
       } else {
-        await addDoc(collection(db, "expenditures"), safeExp);
+        const docRef = await nativeAddDoc(nativeCollection(nativeDb, "expenditures"), safeExp);
+        return { ...safeExp, id: docRef.id } as Expenditure;
       }
     } catch (e) {
       console.error("Failed to save expenditure", e);
+      throw e;
+    }
+  },
+
+  deleteExpenditure: async (id: string): Promise<void> => {
+    const normalizedId = String(id || '').trim();
+    if (!normalizedId) {
+      throw new Error("Expenditure ID is required");
+    }
+
+    if (isSupabaseDataEnabled() && isUuidLike(normalizedId)) {
+      try {
+        await supabaseMutate(`expenditures?id=eq.${encodeURIComponent(normalizedId)}`, 'DELETE');
+        return;
+      } catch (e) {
+        console.warn("[Storage] Supabase expenditure delete failed, falling back to Firebase:", e);
+      }
+    }
+
+    try {
+      const { nativeDb, doc: nativeDoc, deleteDoc: nativeDeleteDoc } = await getNativeFirestoreDeps();
+      await nativeDeleteDoc(nativeDoc(nativeDb, "expenditures", normalizedId));
+    } catch (e) {
+      console.error("Failed to delete expenditure", e);
       throw e;
     }
   },
@@ -2193,7 +2312,11 @@ export const StorageService = {
     try {
       legacyData = await loadLegacyExpenditures();
       if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'expenditures from legacy source ✅');
-    } catch (e) { console.error('[Storage] Legacy expenditures failed:', e); }
+    } catch (e) {
+      if (!localAdminDataBridgeDisabled) {
+        console.warn('[Storage] Legacy expenditures failed:', e);
+      }
+    }
 
     const merged = mergeExpenditureSources(supabaseData, legacyData);
     console.log(`[Storage] Merged ${merged.length} expenditures \ud83d\udc85`);
@@ -2695,7 +2818,7 @@ export const StorageService = {
     const config = StorageService.getCloudConfig();
     if (!config || !config.apiKey) throw new Error("Google Cloud API Key is missing.");
 
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.apiKey}`;
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${config.apiKey}`;
 
     const prompt = `
       Translate the following Korean location information into English (en), Japanese (ja), and Simplified Chinese (zh).
@@ -2725,6 +2848,12 @@ export const StorageService = {
       });
 
       const result = await response.json();
+      console.log("[Storage] Raw Gemini API Response: 💅", result);
+      
+      if (!result.candidates || result.candidates.length === 0) {
+        throw new Error("Gemini returned no candidates: " + JSON.stringify(result));
+      }
+      
       const translatedText = result.candidates[0].content.parts[0].text;
       return JSON.parse(translatedText);
     } catch (e) {
@@ -3195,28 +3324,35 @@ export const StorageService = {
     }
   },
 
-  saveNotice: async (notice: SystemNotice): Promise<void> => {
+  saveNotice: async (notice: SystemNotice): Promise<SystemNotice> => {
     if (isSupabaseDataEnabled()) {
       try {
         const payload = camelToSnake({ ...notice } as Record<string, unknown>);
+        let persistedRows: unknown = null;
         if (notice.id) {
-          await supabaseMutate(`system_notices?id=eq.${encodeURIComponent(String(notice.id))}`, 'PATCH', payload);
+          persistedRows = await supabaseMutate(`system_notices?id=eq.${encodeURIComponent(String(notice.id))}`, 'PATCH', payload);
         } else {
-          await supabaseMutate('system_notices', 'POST', payload);
+          persistedRows = await supabaseMutate('system_notices', 'POST', payload);
         }
         console.log("[Storage] Notice saved to Supabase ✅");
-        return;
+        const persisted = Array.isArray(persistedRows) ? persistedRows[0] : persistedRows;
+        return persisted
+          ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as SystemNotice)
+          : notice;
       } catch (e) {
         console.warn("[Storage] Supabase notice save failed, falling back to Firebase:", e);
       }
     }
     const safeData = JSON.parse(JSON.stringify(notice));
     try {
+      const { nativeDb, doc: nativeDoc, setDoc: nativeSetDoc, collection: nativeCollection, addDoc: nativeAddDoc } = await getNativeFirestoreDeps();
       if (notice.id) {
-        await setDoc(doc(db, "notices", notice.id), safeData);
+        await nativeSetDoc(nativeDoc(nativeDb, "notices", notice.id), safeData);
+        return safeData as SystemNotice;
       } else {
         safeData.createdAt = new Date().toISOString();
-        await addDoc(collection(db, "notices"), safeData);
+        const docRef = await nativeAddDoc(nativeCollection(nativeDb, "notices"), safeData);
+        return { ...safeData, id: docRef.id } as SystemNotice;
       }
     } catch (e) {
       console.error("Failed to save notice", e);
@@ -3225,7 +3361,7 @@ export const StorageService = {
   },
 
   deleteNotice: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
+    if (isSupabaseDataEnabled() && isUuidLike(id)) {
       try {
         await supabaseMutate(`system_notices?id=eq.${id}`, 'DELETE');
         return;
@@ -3234,234 +3370,12 @@ export const StorageService = {
       }
     }
     try {
-      await deleteDoc(doc(db, "notices", id));
+      const { nativeDb, doc: nativeDoc, deleteDoc: nativeDeleteDoc } = await getNativeFirestoreDeps();
+      await nativeDeleteDoc(nativeDoc(nativeDb, "notices", id));
     } catch (e) {
       console.error("Failed to delete notice", e);
       throw e;
     }
   },
 
-  // --- TIPS CMS ---
-  getTipsAreas: async (): Promise<any[]> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const rows = await supabaseGet<Array<Record<string, unknown>>>('cms_areas?select=*&order=sort_order');
-        if (rows) {
-          console.log("[Storage] Loaded", rows.length, "CMS areas from Supabase ✅");
-          return rows.map(r => snakeToCamel(r));
-        }
-      } catch (e) { console.warn("[Storage] Supabase CMS areas failed:", e); }
-    }
-    try {
-      const snap = await getDocs(collection(db, "tips_areas"));
-      return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-    } catch (e) { console.error(e); return []; }
-  },
-
-  subscribeTipsAreas: (callback: (data: any[]) => void) => {
-    if (isSupabaseDataEnabled()) {
-      return supabasePollingSubscribe<any>(
-        'cms_areas?select=*&order=sort_order',
-        callback,
-        (row) => snakeToCamel(row),
-        10000
-      );
-    }
-
-    const q = query(collection(db, "tips_areas"), orderBy("order", "asc"));
-    return onSnapshot(q, (snapshot: any) => {
-      callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-      console.warn("Tips areas sub fallback (index?):", error);
-      onSnapshot(collection(db, "tips_areas"), (snap: any) => {
-        const items = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-        callback(items);
-      });
-    });
-  },
-
-  saveTipsArea: async (area: any): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const payload = camelToSnake({ ...area });
-        if (area.id) {
-          await supabaseMutate(`cms_areas?id=eq.${encodeURIComponent(String(area.id))}`, 'PATCH', payload);
-        } else {
-          await supabaseMutate('cms_areas', 'POST', payload);
-        }
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase tips area save failed, falling back to Firebase:', e);
-      }
-    }
-    try {
-      const safeData = { ...area, updatedAt: new Date().toISOString() };
-      const id = safeData.id;
-      if (id) {
-        delete safeData.id;
-        await setDoc(doc(db, "tips_areas", id), safeData, { merge: true });
-      } else {
-        safeData.createdAt = new Date().toISOString();
-        await addDoc(collection(db, "tips_areas"), safeData);
-      }
-    } catch (e) { console.error(e); throw e; }
-  },
-
-  deleteTipsArea: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate(`cms_areas?id=eq.${id}`, 'DELETE');
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase tips area delete failed, falling back to Firebase:', e);
-      }
-    }
-    await deleteDoc(doc(db, "tips_areas", id));
-  },
-
-  getTipsThemes: async (): Promise<any[]> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const rows = await supabaseGet<Array<Record<string, unknown>>>('cms_themes?select=*&order=sort_order');
-        if (rows) {
-          console.log("[Storage] Loaded", rows.length, "CMS themes from Supabase ✅");
-          return rows.map(r => snakeToCamel(r));
-        }
-      } catch (e) { console.warn("[Storage] Supabase CMS themes failed:", e); }
-    }
-    try {
-      const snap = await getDocs(collection(db, "tips_themes"));
-      return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-    } catch (e) { console.error(e); return []; }
-  },
-
-  subscribeTipsThemes: (callback: (data: any[]) => void) => {
-    if (isSupabaseDataEnabled()) {
-      return supabasePollingSubscribe<any>(
-        'cms_themes?select=*&order=sort_order',
-        callback,
-        (row) => snakeToCamel(row),
-        10000
-      );
-    }
-
-    const q = query(collection(db, "tips_themes"), orderBy("order", "asc"));
-    return onSnapshot(q, (snapshot: any) => {
-      callback(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-      onSnapshot(collection(db, "tips_themes"), (snap) => {
-        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        items.sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
-        callback(items);
-      });
-    });
-  },
-
-  saveTipsTheme: async (theme: any): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const payload = camelToSnake({ ...theme });
-        if (theme.id) {
-          await supabaseMutate(`cms_themes?id=eq.${encodeURIComponent(String(theme.id))}`, 'PATCH', payload);
-        } else {
-          await supabaseMutate('cms_themes', 'POST', payload);
-        }
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase tips theme save failed, falling back to Firebase:', e);
-      }
-    }
-    try {
-      const safeData = { ...theme, updatedAt: new Date().toISOString() };
-      const id = safeData.id;
-      if (id) {
-        delete safeData.id;
-        await setDoc(doc(db, "tips_themes", id), safeData, { merge: true });
-      } else {
-        safeData.createdAt = new Date().toISOString();
-        await addDoc(collection(db, "tips_themes"), safeData);
-      }
-    } catch (e) { console.error(e); throw e; }
-  },
-
-  deleteTipsTheme: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate(`cms_themes?id=eq.${id}`, 'DELETE');
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase tips theme delete failed, falling back to Firebase:', e);
-      }
-    }
-    await deleteDoc(doc(db, "tips_themes", id));
-  },
-
-  subscribeTipsContents: (filters: { area_slug?: string, theme_tag?: string, slug?: string }, callback: (data: any[]) => void) => {
-    if (isSupabaseDataEnabled()) {
-      const params = new URLSearchParams();
-      params.set('select', '*');
-      params.set('order', 'created_at.desc');
-      if (filters.area_slug) params.set('area_slug', `eq.${filters.area_slug}`);
-      if (filters.theme_tag) params.set('theme_tags', `cs.{${filters.theme_tag}}`);
-      if (filters.slug) params.set('slug', `eq.${filters.slug}`);
-
-      return supabasePollingSubscribe<any>(
-        `cms_contents?${params.toString()}`,
-        callback,
-        (row) => snakeToCamel(row),
-        10000
-      );
-    }
-
-    let q = query(collection(db, "tips_contents"));
-    if (filters.area_slug) q = query(q, where("area_slug", "==", filters.area_slug));
-    if (filters.theme_tag) q = query(q, where("theme_tags", "array-contains", filters.theme_tag));
-    if (filters.slug) q = query(q, where("slug", "==", filters.slug));
-    
-    return onSnapshot(q, (snapshot: any) => {
-      const items = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-      items.sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-      callback(items);
-    });
-  },
-
-  saveTipsContent: async (content: any): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        const payload = camelToSnake({ ...content });
-        if (content.id) {
-          await supabaseMutate(`cms_contents?id=eq.${encodeURIComponent(String(content.id))}`, 'PATCH', payload);
-        } else {
-          await supabaseMutate('cms_contents', 'POST', payload);
-        }
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase tips content save failed, falling back to Firebase:', e);
-      }
-    }
-    try {
-      const safeData = { ...content, updatedAt: new Date().toISOString() };
-      const id = safeData.id;
-      if (id) {
-        delete safeData.id;
-        await setDoc(doc(db, "tips_contents", id), safeData, { merge: true });
-      } else {
-        safeData.createdAt = new Date().toISOString();
-        await addDoc(collection(db, "tips_contents"), safeData);
-      }
-    } catch (e) { console.error(e); throw e; }
-  },
-
-  deleteTipsContent: async (id: string): Promise<void> => {
-    if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate(`cms_contents?id=eq.${id}`, 'DELETE');
-        return;
-      } catch (e) {
-        console.warn('[Storage] Supabase tips content delete failed, falling back to Firebase:', e);
-      }
-    }
-    await deleteDoc(doc(db, "tips_contents", id));
-  }
 };

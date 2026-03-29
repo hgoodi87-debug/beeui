@@ -96,8 +96,10 @@ const OpsHubTab: React.FC<OpsHubTabProps> = ({
                                         상세 대시보드
                                     </button>
                                     <button 
+                                        type="button"
+                                        disabled
                                         title="View Hub Map"
-                                        className="px-4 py-3 bg-gray-50 hover:bg-bee-black hover:text-bee-yellow rounded-2xl text-[10px] font-black transition-all border border-gray-100 group-hover:border-bee-black"
+                                        className="px-4 py-3 bg-gray-50 text-gray-300 rounded-2xl text-[10px] font-black border border-gray-100 cursor-not-allowed"
                                     >
                                         <i className="fa-solid fa-location-arrow"></i>
                                     </button>

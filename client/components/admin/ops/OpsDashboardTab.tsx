@@ -85,7 +85,14 @@ const OpsDashboardTab: React.FC<OpsDashboardTabProps> = ({
                             <i className="fa-solid fa-signal text-green-500 animate-pulse"></i>
                             최근 운영 로그
                         </h3>
-                        <button className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-bee-black transition-colors">전체 로그 보기</button>
+                        <button
+                            type="button"
+                            disabled
+                            title="전체 로그 보기는 아직 준비 중입니다."
+                            className="text-[10px] font-black text-gray-300 uppercase tracking-widest cursor-not-allowed"
+                        >
+                            전체 로그 준비중
+                        </button>
                     </div>
                     
                     <div className="space-y-4">

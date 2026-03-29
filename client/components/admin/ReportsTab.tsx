@@ -477,8 +477,13 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
                             ))}
                         </div>
 
-                        <button className="w-full py-4 bg-gray-50 text-[10px] font-black text-gray-300 uppercase tracking-widest rounded-2xl border border-gray-100 hover:bg-bee-black hover:text-bee-yellow hover:border-bee-black transition-all">
-                            View Full Channel Report
+                        <button
+                            type="button"
+                            disabled
+                            title="상세 채널 리포트는 아직 준비 중입니다."
+                            className="w-full py-4 bg-gray-50 text-[10px] font-black text-gray-300 uppercase tracking-widest rounded-2xl border border-gray-100 cursor-not-allowed"
+                        >
+                            Channel Report 준비중
                         </button>
                     </div>
                 </div>

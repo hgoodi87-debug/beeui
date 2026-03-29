@@ -34,10 +34,8 @@ const RoadmapTab: React.FC<RoadmapTabProps> = ({ t, lang, locations = [] }) => {
             title: '지능형 콘텐츠 및 SEO (Programmatic SEO)',
             description: '검색 엔진 최적화 및 타겟 컨텐츠 제공을 위한 자동화 페이지입니다.',
             routes: [
-                { path: '/tips', name: '여행 팁 메인', desc: '지역별 맛집, 명소 큐레이션 메인', status: 'completed' },
-                { path: '/tips/:slug', name: '지역별 여행 팁', desc: '특정 지역 맞춤형 팁 및 근방 지점 몰입형 지도', status: 'completed' },
-                { path: '/storage/:slug', name: '지역별 보관 랜딩', desc: '특정 지역 보관 키워드 대응 SEO 랜딩', status: 'completed' },
-                { path: '/delivery/:slug', name: '지역별 배송 랜딩', desc: '특정 지역 배송 키워드 대응 SEO 랜딩', status: 'completed' },
+                { path: '/ko/storage/:slug', name: '지역별 보관 랜딩', desc: '특정 지역 보관 키워드 대응 SEO 랜딩', status: 'completed' },
+                { path: '/ko/delivery/:slug', name: '지역별 배송 랜딩', desc: '특정 지역 배송 키워드 대응 SEO 랜딩', status: 'completed' },
             ]
         },
         {

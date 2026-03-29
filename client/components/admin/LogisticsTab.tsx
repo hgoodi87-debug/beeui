@@ -86,6 +86,17 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
         return dateStr !== todayKST;
     };
 
+    const paymentBadgeLabel = (booking: BookingState) =>
+        booking.paymentStatus === 'paid' ? '결제완료' : '결제대기';
+
+    const paymentBadgeStyle = (booking: BookingState) =>
+        booking.paymentStatus === 'paid'
+            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+            : 'bg-amber-50 text-amber-600 border-amber-100';
+
+    const paymentBadgeDotStyle = (booking: BookingState) =>
+        booking.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-amber-500';
+
     const cleanupTargetBookings = React.useMemo(() => {
         return filteredBookings.filter((booking) => {
             if (booking.isDeleted) return false;
@@ -327,9 +338,9 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col gap-1.5">
                                             {/* Tier 1: Payment */}
-                                            <div className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 border ${b.paymentStatus === 'paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
-                                                <span className={`w-1 h-1 rounded-full ${b.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                                                {b.paymentStatus === 'paid' ? '결제완료' : '미결제'}
+                                            <div className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 border ${paymentBadgeStyle(b)}`}>
+                                                <span className={`w-1 h-1 rounded-full ${paymentBadgeDotStyle(b)}`}></span>
+                                                {paymentBadgeLabel(b)}
                                             </div>
                                             {/* Tier 2: Settlement */}
                                             <div className={`text-[9px] font-black px-2 py-0.5 rounded-full w-fit flex items-center gap-1.5 border ${['정산확정', 'CONFIRMED'].includes(b.settlementStatus as string) ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-400 border-gray-100'}`}>
@@ -497,9 +508,9 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
 
                             {/* 3-Tier Badges for Mobile - [스봉이] 줄바꿈 방지 및 가독성 최적화 💅 */}
                             <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-2 pb-1">
-                                <div className="shrink-0 text-[8px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5 border whitespace-nowrap bg-emerald-50 text-emerald-600 border-emerald-100">
-                                    <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
-                                    {b.paymentStatus === 'paid' ? '결제완료' : '미결제'}
+                                <div className={`shrink-0 text-[8px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5 border whitespace-nowrap ${paymentBadgeStyle(b)}`}>
+                                    <span className={`w-1 h-1 rounded-full ${paymentBadgeDotStyle(b)}`}></span>
+                                    {paymentBadgeLabel(b)}
                                 </div>
                                 <div className="shrink-0 text-[8px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5 border whitespace-nowrap bg-blue-50 text-blue-600 border-blue-100">
                                     <i className="fa-solid fa-coins text-[7px]"></i>

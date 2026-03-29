@@ -3,6 +3,7 @@ import { BookingState, BookingStatus, LocationOption, ServiceType } from '../../
 import { StorageService } from '../../services/storageService';
 import { AuditService } from '../../services/auditService';
 import { useQueryClient } from '@tanstack/react-query';
+import { isSupabaseDataEnabled, supabaseMutate } from '../../services/supabaseClient';
 
 import { useAdminStore } from '../../src/store/adminStore';
 
@@ -19,22 +20,66 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
     t,
     currentActor
 }) => {
+    const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const queryClient = useQueryClient();
     const { activeStatusTab } = useAdminStore();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [filterStatus, setFilterStatus] = useState<'ALL' | 'UNSETTLED' | 'SETTLED'>('UNSETTLED');
 
-    // [스봉이] 정산 대상 건들(완료/이슈)을 대시보드 상태에 맞춰 필터링해요. 💅
+    const isSupabaseBookingDetailId = (value?: string | null) =>
+        BOOKING_DETAIL_UUID_PATTERN.test(String(value || '').trim());
+
+    const isFinancialDeleted = (booking?: BookingState | null) =>
+        Boolean(booking?.isDeleted) || String(booking?.settlementStatus || '').toLowerCase() === 'deleted';
+
+    const mutateFinancialBooking = async (
+        booking: BookingState,
+        options: {
+            supabaseMethod: 'PATCH' | 'DELETE';
+            supabaseBody?: Record<string, unknown>;
+            legacyUpdates?: Record<string, unknown>;
+            legacyDelete?: boolean;
+        }
+    ) => {
+        if (!booking.id) return;
+
+        if (isSupabaseDataEnabled() && isSupabaseBookingDetailId(booking.id)) {
+            await supabaseMutate(`booking_details?id=eq.${booking.id}`, options.supabaseMethod, options.supabaseBody);
+            return;
+        }
+
+        if (options.legacyDelete) {
+            const { doc: fbDoc, deleteDoc: fbDeleteDoc } = await import('firebase/firestore');
+            const { db: fbDb } = await import('../../firebaseApp');
+            await fbDeleteDoc(fbDoc(fbDb, 'bookings', booking.id));
+            return;
+        }
+
+        const { doc: fbDoc, updateDoc: fbUpdateDoc } = await import('firebase/firestore');
+        const { db: fbDb } = await import('../../firebaseApp');
+        await fbUpdateDoc(fbDoc(fbDb, 'bookings', booking.id), {
+            ...(options.legacyUpdates || {}),
+            updatedAt: new Date().toISOString()
+        });
+    };
+
+    // [스봉이] 금융 대조는 "정산 대상 완료 예약"만 다뤄요.
+    // 삭제/취소/환불 건은 어떤 탭 상태에서 넘어와도 미정산 목록으로 유입시키지 않습니다. 💅
     const settlementTargets = useMemo(() => {
-        let base = bookings.filter(b => !b.isDeleted);
+        let base = bookings.filter(
+            (b) =>
+                !isFinancialDeleted(b) &&
+                b.status !== BookingStatus.CANCELLED &&
+                b.status !== BookingStatus.REFUNDED
+        );
         
         // 대시보드에서 특정 상태('COMPLETED' 등)를 눌러서 넘어온 경우
         if (activeStatusTab !== 'ALL') {
             if (activeStatusTab === 'COMPLETED') {
                 base = base.filter(b => b.status === BookingStatus.COMPLETED);
             } else if (activeStatusTab === 'ISSUE') {
-                base = base.filter(b => b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || !!b.auditNote);
+                base = base.filter(b => b.status === BookingStatus.COMPLETED && !!b.auditNote);
             }
         } else {
             // 기본은 '완료' 건만 보여주되, 정산 안 된 건들 위주로
@@ -74,10 +119,18 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
         if (!booking.id) return;
         setIsProcessing(true);
         try {
-            await StorageService.updateBooking(booking.id, {
-                settlementStatus: 'CONFIRMED',
-                settledAt: new Date().toISOString(),
-                settledBy: currentActor.name
+            await mutateFinancialBooking(booking, {
+                supabaseMethod: 'PATCH',
+                supabaseBody: {
+                    settlement_status: 'CONFIRMED',
+                    settled_at: new Date().toISOString(),
+                    settled_by: currentActor.name
+                },
+                legacyUpdates: {
+                    settlementStatus: 'CONFIRMED',
+                    settledAt: new Date().toISOString(),
+                    settledBy: currentActor.name
+                }
             });
             await AuditService.logAction(currentActor, 'SETTLEMENT_CONFIRM', { id: booking.id, type: 'BOOKING' }, { method: 'INDIVIDUAL' });
             await queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -96,14 +149,29 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
 
         setIsProcessing(true);
         try {
-            const promises = selectedIds.map(id => 
-                StorageService.updateBooking(id, {
-                    settlementStatus: 'CONFIRMED',
-                    settledAt: new Date().toISOString(),
-                    settledBy: currentActor.name
-                })
+            const selectedBookings = filteredBookings.filter((booking) => booking.id && selectedIds.includes(booking.id));
+            const settledAt = new Date().toISOString();
+            const results = await Promise.allSettled(
+                selectedBookings.map((booking) =>
+                    mutateFinancialBooking(booking, {
+                        supabaseMethod: 'PATCH',
+                        supabaseBody: {
+                            settlement_status: 'CONFIRMED',
+                            settled_at: settledAt,
+                            settled_by: currentActor.name
+                        },
+                        legacyUpdates: {
+                            settlementStatus: 'CONFIRMED',
+                            settledAt,
+                            settledBy: currentActor.name
+                        }
+                    })
+                )
             );
-            await Promise.all(promises);
+            const failures = results.filter((result) => result.status === 'rejected');
+            if (failures.length > 0) {
+                throw (failures[0] as PromiseRejectedResult).reason;
+            }
             await AuditService.logAction(currentActor, 'SETTLEMENT_CONFIRM', { id: 'bulk', type: 'BOOKING' }, { count: selectedIds.length, method: 'BULK' });
             await queryClient.invalidateQueries({ queryKey: ['bookings'] });
             setSelectedIds([]);
@@ -111,6 +179,53 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
         } catch (e) {
             console.error(e);
             alert('일괄 정산 중 오류가 발생했습니다. 🙄');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleBatchDeleteUnsettled = async () => {
+        if (selectedIds.length === 0) return;
+
+        const selectedBookings = filteredBookings.filter((booking) => booking.id && selectedIds.includes(booking.id));
+        const deleteTargets = selectedBookings.filter((booking) => booking.settlementStatus !== 'CONFIRMED');
+
+        if (deleteTargets.length === 0) {
+            alert('미정산 상태인 예약만 일괄 삭제할 수 있어요.');
+            return;
+        }
+
+        if (!confirm(`선택한 ${deleteTargets.length}건의 미정산 내역을 휴지통으로 이동할까요?\n정산 완료 건은 제외되고, 필요하면 예약 관리에서 복구할 수 있습니다.`)) {
+            return;
+        }
+
+        setIsProcessing(true);
+        try {
+            const results = await Promise.allSettled(
+                deleteTargets.map((booking) =>
+                    mutateFinancialBooking(booking, {
+                        supabaseMethod: 'PATCH',
+                        supabaseBody: { settlement_status: 'deleted' },
+                        legacyUpdates: { isDeleted: true }
+                    })
+                )
+            );
+            const failures = results.filter((result) => result.status === 'rejected');
+            if (failures.length > 0) {
+                throw (failures[0] as PromiseRejectedResult).reason;
+            }
+            await AuditService.logAction(
+                currentActor,
+                'DELETE',
+                { id: 'financial-comparison-bulk-delete', type: 'BOOKING' },
+                { count: deleteTargets.length, method: 'BULK_SOFT_DELETE_UNSETTLED' }
+            );
+            await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            setSelectedIds((prev) => prev.filter((id) => !deleteTargets.some((booking) => booking.id === id)));
+            alert(`${deleteTargets.length}건의 미정산 내역을 휴지통으로 이동했습니다.`);
+        } catch (e) {
+            console.error(e);
+            alert('미정산 일괄 삭제 중 오류가 발생했습니다. 🙄');
         } finally {
             setIsProcessing(false);
         }
@@ -169,6 +284,14 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleBatchDeleteUnsettled}
+                        disabled={selectedIds.length === 0 || isProcessing}
+                        className={`px-6 py-3 rounded-2xl text-xs font-black transition-all flex items-center gap-2 ${selectedIds.length > 0 ? 'bg-red-500 text-white hover:scale-105 active:scale-95' : 'bg-gray-100 text-gray-300 cursor-not-allowed'}`}
+                    >
+                        <i className="fa-solid fa-trash-can"></i>
+                        미정산 일괄 삭제
+                    </button>
                     <button
                         onClick={handleBatchSettle}
                         disabled={selectedIds.length === 0 || isProcessing}
@@ -248,15 +371,44 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                                             )}
                                         </td>
                                         <td className="px-6 py-5 text-right">
-                                            {b.settlementStatus !== 'CONFIRMED' && (
-                                                <button
-                                                    onClick={() => settleBooking(b)}
-                                                    disabled={isProcessing}
-                                                    className="px-4 py-2 bg-bee-black text-bee-yellow text-[10px] font-black rounded-xl hover:scale-105 active:scale-95 transition-all"
-                                                >
-                                                    정산 확정
-                                                </button>
-                                            )}
+                                            <div className="flex items-center justify-end gap-2">
+                                                {b.settlementStatus !== 'CONFIRMED' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => settleBooking(b)}
+                                                            disabled={isProcessing}
+                                                            className="px-4 py-2 bg-bee-black text-bee-yellow text-[10px] font-black rounded-xl hover:scale-105 active:scale-95 transition-all"
+                                                        >
+                                                            정산 확정
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!b.id) return;
+                                                                if (!confirm('이 미정산 내역을 휴지통으로 이동할까요? 예약 관리에서 복구할 수 있습니다.')) return;
+                                                                setIsProcessing(true);
+                                                                try {
+                                                                    await mutateFinancialBooking(b, {
+                                                                        supabaseMethod: 'PATCH',
+                                                                        supabaseBody: { settlement_status: 'deleted' },
+                                                                        legacyUpdates: { isDeleted: true }
+                                                                    });
+                                                                    await AuditService.logAction(currentActor, 'DELETE', { id: b.id, type: 'BOOKING' }, { method: 'INDIVIDUAL_SOFT_DELETE_UNSETTLED' });
+                                                                    await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+                                                                } catch (e) {
+                                                                    console.error(e);
+                                                                    alert('삭제 중 오류가 발생했습니다. 🙄');
+                                                                } finally {
+                                                                    setIsProcessing(false);
+                                                                }
+                                                            }}
+                                                            disabled={isProcessing}
+                                                            className="px-4 py-2 bg-red-50 text-red-500 text-[10px] font-black rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

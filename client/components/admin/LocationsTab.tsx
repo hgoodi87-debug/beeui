@@ -54,6 +54,9 @@ const normalizeLocationFormTranslations = (loc: LocationOption): LocationOption 
     };
 };
 
+const getLocIdentifier = (loc: Partial<LocationOption>) =>
+    String(loc.shortCode || loc.branchCode || loc.id || '').trim();
+
 const LocationsTab: React.FC<LocationsTabProps> = ({
     locForm, setLocForm, LOCATION_TYPE_OPTIONS, findCoordinates, isGeocoding,
     handlePickupImageUpload, handleLocationImageUpload, isSaving, setIsSaving, addLocation,
@@ -71,10 +74,17 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
     // [스봉이] 수정/생성 폼 열기 제어 💅
     const handleOpenPanel = (loc?: LocationOption) => {
         if (loc) {
-            focusLocation(normalizeLocationFormTranslations(loc));
+            const normalized = normalizeLocationFormTranslations(loc);
+            const identifier = getLocIdentifier(normalized);
+            focusLocation({
+                ...normalized,
+                supabaseId: normalized.supabaseId || normalized.id,
+                id: identifier || normalized.id,
+                shortCode: normalized.shortCode || normalized.branchCode || identifier,
+            });
         } else {
             // New Draft
-            setLocForm({ id: '', name: '', type: LocationType.PARTNER, isActive: false, supportsStorage: false, supportsDelivery: false });
+            setLocForm({ id: '', supabaseId: '', shortCode: '', name: '', type: LocationType.PARTNER, isActive: false, supportsStorage: false, supportsDelivery: false });
         }
         setIsPanelOpen(true);
     };
@@ -188,7 +198,8 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         if (filterStatus === 'INACTIVE' && loc.isActive !== false) return false;
         if (searchQ.trim()) {
             const q = searchQ.toLowerCase();
-            if (!loc.name.toLowerCase().includes(q) && !loc.id.toLowerCase().includes(q) && !(loc.name_en || '').toLowerCase().includes(q)) return false;
+            const identifier = getLocIdentifier(loc).toLowerCase();
+            if (!loc.name.toLowerCase().includes(q) && !identifier.includes(q) && !(loc.name_en || '').toLowerCase().includes(q)) return false;
         }
         return true;
     }).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
@@ -457,7 +468,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {filteredLocations.map(loc => (
-                                        <tr key={loc.id} onClick={() => handleOpenPanel(loc)} className={`hover:bg-bee-yellow/5 transition-colors cursor-pointer group ${locForm.id === loc.id ? 'bg-bee-yellow/10' : ''}`}>
+                                        <tr key={loc.id} onClick={() => handleOpenPanel(loc)} className={`hover:bg-bee-yellow/5 transition-colors cursor-pointer group ${String(locForm.supabaseId || locForm.id || '') === loc.id ? 'bg-bee-yellow/10' : ''}`}>
                                             <td className="px-5 py-4" onClick={e => e.stopPropagation()}>
                                                 <input type="checkbox" checked={selectedIds.includes(loc.id)} onChange={e => toggleSelect(e as any, loc.id)} title={`${loc.name} 선택`} className="w-4 h-4 rounded-lg accent-bee-black cursor-pointer" />
                                             </td>
@@ -469,7 +480,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-black text-sm text-bee-black">{getLocName(loc)} <span className="text-[9px] text-gray-400 font-bold ml-1">{loc.id}</span></span>
+                                                    <span className="font-black text-sm text-bee-black">{getLocName(loc)} <span className="text-[9px] text-gray-400 font-bold ml-1">{getLocIdentifier(loc)}</span></span>
                                                     <span className="text-[10px] font-medium text-gray-400 truncate max-w-[200px]">{getLocAddress(loc)}</span>
                                                 </div>
                                             </td>
@@ -506,8 +517,11 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 t={t}
                                 lang={lang}
                                 branches={filteredLocations}
-                                selectedBranch={locations.find(l => l.id === locForm.id)}
-                                onLocationSelect={(loc) => loc ? focusLocation(loc) : null}
+                                selectedBranch={locations.find(l =>
+                                    l.id === String(locForm.supabaseId || locForm.id || '')
+                                    || getLocIdentifier(l) === String(locForm.id || '')
+                                )}
+                                onLocationSelect={(loc) => loc ? handleOpenPanel(loc) : null}
                                 currentService="SAME_DAY" // 어드민 오버뷰용 기본값 💅
                                 userLocation={{ lat: 37.5665, lng: 126.9780 }} // 서울 중심점 💅
                             />
@@ -521,7 +535,10 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                     <div className="w-px h-8 bg-gray-200"></div>
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">선택된 지점</span>
-                                        <span className="text-xl font-black text-bee-yellow">{locations.find(l => l.id === locForm.id)?.name || '없음'}</span>
+                                        <span className="text-xl font-black text-bee-yellow">{locations.find(l =>
+                                            l.id === String(locForm.supabaseId || locForm.id || '')
+                                            || getLocIdentifier(l) === String(locForm.id || '')
+                                        )?.name || '없음'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -543,7 +560,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                     <div className="space-y-6 pb-20">
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점 ID (중복불가)</label>
-                            <input value={locForm.id} onChange={e => setLocForm({ ...locForm, id: e.target.value })} placeholder="예: icn-t1" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                            <input value={locForm.id ?? ''} onChange={e => setLocForm({ ...locForm, id: e.target.value })} placeholder="예: icn-t1" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between ml-1">
@@ -553,7 +570,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 gap-2">
-                                <input value={locForm.name} onChange={e => setLocForm({ ...locForm, name: e.target.value })} placeholder="한글 명칭 입력 (예: 인천공항 T1)" title="지점명 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
+                                <input value={locForm.name ?? ''} onChange={e => setLocForm({ ...locForm, name: e.target.value })} placeholder="한글 명칭 입력 (예: 인천공항 T1)" title="지점명 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
                                 <input value={locForm.name_en || ''} onChange={e => setLocForm({ ...locForm, name_en: e.target.value })} placeholder="영어 명칭 입력 (예: Incheon Airport T1)" title="지점명 (영어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.name_ja || ''} onChange={e => setLocForm({ ...locForm, name_ja: e.target.value })} placeholder="일본어 명칭 입력 (예: 仁川空港 T1)" title="지점명 (일본어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.name_zh || ''} onChange={e => setLocForm({ ...locForm, name_zh: e.target.value })} placeholder="중국어 명칭 입력 (예: 仁川机场 T1)" title="지점명 (중국어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
@@ -561,7 +578,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         </div>
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점 분류 (Type)</label>
-                            <select title="Location Type" value={locForm.type} onChange={e => setLocForm({ ...locForm, type: e.target.value as LocationType })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs">
+                            <select title="Location Type" value={locForm.type ?? LocationType.PARTNER} onChange={e => setLocForm({ ...locForm, type: e.target.value as LocationType })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs">
                                 {LOCATION_TYPE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                             </select>
                         </div>
@@ -579,7 +596,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">주소 (Address)</label>
                             <div className="flex gap-2">
-                                <input value={locForm.address} onChange={e => setLocForm({ ...locForm, address: e.target.value })} placeholder="지점의 도로명 주소를 입력하세요" className="flex-1 bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
+                                <input value={locForm.address ?? ''} onChange={e => setLocForm({ ...locForm, address: e.target.value })} placeholder="지점의 도로명 주소를 입력하세요" className="flex-1 bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
                                 <button onClick={findCoordinates} title="Find Coordinates" disabled={isGeocoding} className="px-4 bg-bee-yellow text-bee-black font-black rounded-xl text-[10px] hover:scale-105 transition-all shadow-sm disabled:opacity-50 whitespace-nowrap">
                                     {isGeocoding ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-location-crosshairs"></i>} 좌표찾기
                                 </button>
@@ -682,7 +699,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">영업 시간 (Business Hours)</label>
                             <div className="grid grid-cols-1 gap-2 mt-1">
-                                <input value={locForm.businessHours} onChange={e => setLocForm({ ...locForm, businessHours: e.target.value })} placeholder="예: 09:00 - 22:00 (연중무휴)" title="영업 시간 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
+                                <input value={locForm.businessHours ?? ''} onChange={e => setLocForm({ ...locForm, businessHours: e.target.value })} placeholder="예: 09:00 - 22:00 (연중무휴)" title="영업 시간 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
                                 <input value={locForm.businessHours_en || ''} onChange={e => setLocForm({ ...locForm, businessHours_en: e.target.value })} placeholder="영어 영업 시간 입력" title="영업 시간 (영어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.businessHours_ja || ''} onChange={e => setLocForm({ ...locForm, businessHours_ja: e.target.value })} placeholder="일본어 영업 시간 입력" title="영업 시간 (일본어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.businessHours_zh || ''} onChange={e => setLocForm({ ...locForm, businessHours_zh: e.target.value })} placeholder="중국어 영업 시간 입력" title="영업 시간 (중국어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
@@ -691,7 +708,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
 
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">상세 설명 (Description)</label>
-                            <textarea value={locForm.description} onChange={e => setLocForm({ ...locForm, description: e.target.value })} placeholder="지점에 대한 상세 설명을 입력하세요" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs min-h-[80px]" />
+                            <textarea value={locForm.description ?? ''} onChange={e => setLocForm({ ...locForm, description: e.target.value })} placeholder="지점에 대한 상세 설명을 입력하세요" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs min-h-[80px]" />
                         </div>
 
                         <div>

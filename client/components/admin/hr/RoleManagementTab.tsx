@@ -25,8 +25,10 @@ const RoleManagementTab: React.FC = () => {
                 </div>
               </div>
               <button 
+                type="button"
+                disabled
                 title={`${role.label} 템플릿 수정`}
-                className="w-10 h-10 rounded-xl bg-gray-50 text-gray-300 hover:bg-bee-black hover:text-white transition-all flex items-center justify-center shadow-sm"
+                className="w-10 h-10 rounded-xl bg-gray-50 text-gray-300 transition-all flex items-center justify-center shadow-sm cursor-not-allowed"
               >
                 <i className="fa-solid fa-pen-nib text-xs"></i>
               </button>

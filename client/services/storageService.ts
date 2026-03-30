@@ -1041,7 +1041,17 @@ export const StorageService = {
           safeBooking.dropoffLocationName,
           safeBooking.dropoffLocation,
         ),
+        nametag_id: safeBooking.nametagId || null,
       };
+
+      // [스봉이] 신규 예약일 경우 네임텍 번호 발급! 🔢✨
+      if (!bookingData.nametag_id && safeBooking.branchId) {
+        try {
+          bookingData.nametag_id = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
+        } catch (e) {
+          console.warn("[스봉이] 네임텍 번호 자동 할당 실패 (무시하고 진행):", e);
+        }
+      }
 
       const result = await supabaseMutate<Array<Record<string, unknown>>>(
         'booking_details',
@@ -2359,7 +2369,7 @@ export const StorageService = {
 
       const admins = isSupabaseDataEnabled()
         ? await StorageService.getAdmins()
-        : (() => {
+        : await (() => {
             const snapPromise = getDocs(collection(db, "admins"));
             return snapPromise.then((snap) => snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser)));
           })();
@@ -2439,6 +2449,84 @@ export const StorageService = {
     } catch (e) {
       console.error("Deduplication failed", e);
       throw e;
+    }
+  },
+
+  /**
+   * [스봉이] 지점 비밀번호 일괄 초기화 (0000!!) 💅✨
+   * 보안 및 운영 편의를 위해 모든 지점 관리자 계정의 비밀번호를 특정 값으로 강제 업데이트합니다.
+   */
+  updateAllBranchPasswords: async (password: string = '0000!!'): Promise<{ total: number, success: number, failed: number }> => {
+    try {
+      const admins = await StorageService.getAdmins();
+      // 지점 소속(branchId가 있거나 role이 branch인 경우) 직원만 필터링
+      const branchAdmins = admins.filter(admin => 
+        admin.branchId || admin.branchCode || admin.role === 'branch'
+      );
+
+      if (branchAdmins.length === 0) {
+        return { total: 0, success: 0, failed: 0 };
+      }
+
+      console.log(`[스봉이] 지점 ${branchAdmins.length}명의 비밀번호를 '${password}'로 초기화 시도합니다... 💅`);
+      
+      let success = 0;
+      let failed = 0;
+
+      for (const admin of branchAdmins) {
+        try {
+          // Supabase Auth와 동기화 (password를 페이로드에 포함)
+          await syncSupabaseAdminAccount('POST', {
+            adminId: admin.id,
+            email: admin.email || admin.loginId,
+            password: password,
+            // 기존 정보 유지
+            name: admin.name,
+            role: admin.roleCode || admin.role,
+            branchId: admin.branchId,
+          });
+          success++;
+        } catch (err) {
+          console.error(`[스봉이] ${admin.name} 비밀번호 초기화 실패:`, err);
+          failed++;
+        }
+      }
+
+      return { total: branchAdmins.length, success, failed };
+    } catch (e) {
+      console.error("Bulk password reset failed", e);
+      throw e;
+    }
+  },
+
+  /**
+   * [스봉이] 주 단위 1~100 순환 네임텍 번호 생성 🔢✨
+   * 특정 지점의 이번 주 예약 건수를 기반으로 번호를 할당합니다.
+   */
+  generateWeeklyNametagId: async (branchId: string): Promise<number> => {
+    try {
+      if (!isSupabaseDataEnabled()) return Math.floor(Math.random() * 100) + 1;
+
+      // 이번 주의 시작(월요일 00:00:00) 구하기
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // 월요일 기준
+      const startOfWeek = new Date(now.setDate(diff));
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const startIso = startOfWeek.toISOString();
+
+      // 이번 주 해당 지점의 총 예약 수 조회 (취소 제외)
+      const rows = await supabaseGet<Array<{ id: string }>>(
+        `bookings?select=id&branch_id=eq.${branchId}&created_at=gte.${startIso}&status=neq.CANCELLED`
+      );
+
+      // (기존 카운트 % 100) + 1 로 순환 (1~100)
+      const totalCount = Array.isArray(rows) ? rows.length : 0;
+      return (totalCount % 100) + 1;
+    } catch (e) {
+      console.error("[스봉이] 네임텍 번호 생성 실패:", e);
+      return Math.floor(Math.random() * 100) + 1; // 쉴드 쳐드려요 🛡️
     }
   },
 

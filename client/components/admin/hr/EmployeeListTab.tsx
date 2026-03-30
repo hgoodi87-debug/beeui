@@ -9,10 +9,11 @@ interface EmployeeListTabProps {
   onDelete: (id: string) => void;
   onAdd: () => void;
   onDeduplicate?: () => void;
+  onBulkReset?: () => void;
 }
 
 const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
-  admins, locations, onEdit, onDelete, onAdd, onDeduplicate
+  admins, locations, onEdit, onDelete, onAdd, onDeduplicate, onBulkReset
 }) => {
   const [activeCategory, setActiveCategory] = React.useState<'ALL' | 'SUPER' | 'TITLE' | 'BRANCH'>('ALL');
   const [selectedSubFilter, setSelectedSubFilter] = React.useState<string>('ALL');
@@ -178,6 +179,21 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
             </button>
           ) : (
             <div className="hidden">중복 정리 기능 미연결</div>
+          )}
+
+          {/* [스봉이] 지점 비밀번호 일괄 초기화 버튼 (0000!!) 💅✨ */}
+          {onBulkReset && activeCategory === 'BRANCH' && (
+            <button 
+              onClick={() => {
+                if (window.confirm('모든 지점 관리자의 비밀번호를 "0000!!"으로 초기화하시겠습니까?')) {
+                  onBulkReset();
+                }
+              }}
+              className="bg-red-500 text-white px-5 py-4 rounded-2xl text-[11px] font-black transition-all flex items-center gap-2 group hover:scale-[1.02] active:scale-95 shadow-md shadow-red-100"
+            >
+              <i className="fa-solid fa-key-skeleton"></i>
+              비밀번호 일괄 초기화
+            </button>
           )}
 
           <button 

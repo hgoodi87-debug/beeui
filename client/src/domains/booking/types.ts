@@ -96,4 +96,6 @@ export interface BookingState {
     settledBy?: string;                // [스봉이] 정산 참여자 👤
     statusVersion?: number;            // [스봉이] 낙관적 락을 위한 버전 🔒
     auditNote?: string;                // [스봉이] 상태 변경 사유 (감사 로그용) 🛡️
+    nametagId?: number;                // [스봉이] 주 단위 1~100 순환 네임텍 번호 1~100 🔢✨
+    updatedAt?: string;                // [스봉이] 마지막 업데이트 일시 🕰️
 }

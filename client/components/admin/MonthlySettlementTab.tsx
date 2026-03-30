@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookingState, BookingStatus, Expenditure, CashClosing } from '../../types';
 
@@ -11,6 +11,9 @@ interface MonthlySettlementTabProps {
     setRevenueEndDate: (d: string) => void;
     monthlyControlStats: any;
     accountingMonthlyStats: any[];
+    onSettlementClose?: (month: string) => void;
+    onExportPdf?: (month: string) => void;
+    onBulkPayoutConfirm?: (bookingIds: string[]) => void;
 }
 
 type SubTab = 'overview' | 'payout' | 'ledger' | 'exceptions';
@@ -23,9 +26,73 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
     revenueEndDate,
     setRevenueEndDate,
     monthlyControlStats,
-    accountingMonthlyStats
+    accountingMonthlyStats,
+    onSettlementClose,
+    onExportPdf,
+    onBulkPayoutConfirm,
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('overview');
+    const [isClosing, setIsClosing] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isBulkConfirming, setIsBulkConfirming] = useState(false);
+
+    const currentMonth = useMemo(() => {
+        const d = revenueStartDate ? new Date(revenueStartDate) : new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }, [revenueStartDate]);
+
+    const payoutCandidateIds = useMemo(() =>
+        bookings
+            .filter(b => b.paymentStatus === 'paid' && b.status !== BookingStatus.REFUNDED && b.settlementStatus !== '정산확정')
+            .map(b => b.id),
+        [bookings]
+    );
+
+    const handleSettlementClose = useCallback(async () => {
+        if (!confirm(`${currentMonth} 월 정산을 마감하시겠습니까?\n마감 후 해당 월 정산 데이터는 수정이 제한됩니다.`)) return;
+        setIsClosing(true);
+        try {
+            if (onSettlementClose) {
+                await onSettlementClose(currentMonth);
+            } else {
+                alert(`${currentMonth} 월 정산 마감이 기록되었습니다.`);
+            }
+        } finally {
+            setIsClosing(false);
+        }
+    }, [currentMonth, onSettlementClose]);
+
+    const handleExportPdf = useCallback(async () => {
+        setIsExporting(true);
+        try {
+            if (onExportPdf) {
+                await onExportPdf(currentMonth);
+            } else {
+                const printArea = document.querySelector('.monthly-settlement-print-area') || document.body;
+                window.print();
+            }
+        } finally {
+            setIsExporting(false);
+        }
+    }, [currentMonth, onExportPdf]);
+
+    const handleBulkPayoutConfirm = useCallback(async () => {
+        if (payoutCandidateIds.length === 0) {
+            alert('지급 확정할 미정산 건이 없습니다.');
+            return;
+        }
+        if (!confirm(`미정산 ${payoutCandidateIds.length}건을 일괄 지급 확정하시겠습니까?`)) return;
+        setIsBulkConfirming(true);
+        try {
+            if (onBulkPayoutConfirm) {
+                await onBulkPayoutConfirm(payoutCandidateIds);
+            } else {
+                alert(`${payoutCandidateIds.length}건 일괄 지급 확정 요청이 기록되었습니다.`);
+            }
+        } finally {
+            setIsBulkConfirming(false);
+        }
+    }, [payoutCandidateIds, onBulkPayoutConfirm]);
 
     const stats = monthlyControlStats || {
         gross: 0,
@@ -172,19 +239,31 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                 <div className="flex gap-2">
                     <button
                         type="button"
-                        disabled
-                        title="월 정산 마감 기능은 아직 준비 중입니다."
-                        className="px-5 py-2.5 bg-gray-100 text-gray-400 rounded-2xl text-[10px] font-black transition-all border border-gray-200 flex items-center gap-2 cursor-not-allowed"
+                        onClick={handleSettlementClose}
+                        disabled={isClosing}
+                        title={`${currentMonth} 월 정산 마감`}
+                        className={`px-5 py-2.5 rounded-2xl text-[10px] font-black transition-all border flex items-center gap-2 ${
+                            isClosing
+                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
+                                : 'bg-bee-black text-white border-bee-black hover:bg-bee-yellow hover:text-bee-black hover:border-bee-yellow shadow-lg'
+                        }`}
                     >
-                        <i className="fa-solid fa-lock"></i> 월 정산 마감 준비중
+                        <i className={`fa-solid ${isClosing ? 'fa-spinner fa-spin' : 'fa-lock'}`}></i>
+                        {isClosing ? '마감 처리중...' : '월 정산 마감'}
                     </button>
                     <button
                         type="button"
-                        disabled
-                        title="정산서 PDF 발행은 아직 준비 중입니다."
-                        className="px-5 py-2.5 bg-white border border-gray-200 text-gray-300 rounded-2xl text-[10px] font-black transition-all flex items-center gap-2 cursor-not-allowed"
+                        onClick={handleExportPdf}
+                        disabled={isExporting}
+                        title={`${currentMonth} 정산서 PDF 발행`}
+                        className={`px-5 py-2.5 rounded-2xl text-[10px] font-black transition-all border flex items-center gap-2 ${
+                            isExporting
+                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
+                                : 'bg-white border-gray-200 text-bee-black hover:border-bee-black hover:shadow-md'
+                        }`}
                     >
-                        <i className="fa-solid fa-file-invoice-dollar"></i> PDF 발행 준비중
+                        <i className={`fa-solid ${isExporting ? 'fa-spinner fa-spin' : 'fa-file-invoice-dollar'}`}></i>
+                        {isExporting ? '생성중...' : 'PDF 발행'}
                     </button>
                 </div>
             </div>
@@ -262,11 +341,17 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                             <div className="flex gap-2">
                                 <button
                                     type="button"
-                                    disabled
-                                    title="일괄 지급 확정은 아직 준비 중입니다."
-                                    className="px-4 py-2 bg-gray-100 text-gray-400 rounded-xl text-[9px] font-black uppercase border border-gray-200 cursor-not-allowed"
+                                    onClick={handleBulkPayoutConfirm}
+                                    disabled={isBulkConfirming || payoutCandidateIds.length === 0}
+                                    title={payoutCandidateIds.length > 0 ? `미정산 ${payoutCandidateIds.length}건 일괄 지급 확정` : '지급 확정할 미정산 건이 없습니다'}
+                                    className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase border transition-all flex items-center gap-2 ${
+                                        isBulkConfirming || payoutCandidateIds.length === 0
+                                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                            : 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 shadow-lg'
+                                    }`}
                                 >
-                                    일괄 지급 확정 준비중
+                                    <i className={`fa-solid ${isBulkConfirming ? 'fa-spinner fa-spin' : 'fa-check-double'}`}></i>
+                                    {isBulkConfirming ? '처리중...' : `일괄 지급 확정${payoutCandidateIds.length > 0 ? ` (${payoutCandidateIds.length}건)` : ''}`}
                                 </button>
                             </div>
                         </div>

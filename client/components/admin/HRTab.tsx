@@ -15,13 +15,14 @@ interface HRTabProps {
     isSaving: boolean;
     locations: LocationOption[];
     onDeduplicate?: () => void;
+    onBulkReset?: () => void;
 }
 
 type HRTabMode = 'EMPLOYEES' | 'ROLES' | 'AUDIT_LOGS';
 
 const HRTab: React.FC<HRTabProps> = ({
     adminForm, setAdminForm, showAdminPassword, setShowAdminPassword,
-    saveAdmin, admins, deleteAdmin, isSaving, locations, onDeduplicate
+    saveAdmin, admins, deleteAdmin, isSaving, locations, onDeduplicate, onBulkReset
 }) => {
     const [activeTab, setActiveTab] = React.useState<HRTabMode>('EMPLOYEES');
     const [isDetailOpen, setIsDetailOpen] = React.useState(false);
@@ -83,6 +84,7 @@ const HRTab: React.FC<HRTabProps> = ({
                   onDelete={deleteAdmin}
                   onAdd={handleAdd}
                   onDeduplicate={onDeduplicate}
+                  onBulkReset={onBulkReset}
                 />
               )}
 

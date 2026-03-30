@@ -479,11 +479,22 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
 
                         <button
                             type="button"
-                            disabled
-                            title="상세 채널 리포트는 아직 준비 중입니다."
-                            className="w-full py-4 bg-gray-50 text-[10px] font-black text-gray-300 uppercase tracking-widest rounded-2xl border border-gray-100 cursor-not-allowed"
+                            onClick={() => {
+                                const csvRows = ['결제수단,건수'];
+                                stats.paymentDistribution.sort((a: any, b: any) => b.value - a.value).forEach((p: any) => {
+                                    csvRows.push(`${p.name},${p.value}`);
+                                });
+                                const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `channel-report-${startDate}-${endDate}.csv`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="w-full py-4 bg-bee-black text-[10px] font-black text-white uppercase tracking-widest rounded-2xl border border-bee-black hover:bg-bee-yellow hover:text-bee-black hover:border-bee-yellow transition-all shadow-lg"
                         >
-                            Channel Report 준비중
+                            <i className="fa-solid fa-download mr-2"></i> Channel Report CSV
                         </button>
                     </div>
                 </div>

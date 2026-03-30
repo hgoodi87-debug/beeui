@@ -1444,6 +1444,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
+  const handleBulkAdminPasswordReset = async () => {
+    try {
+      setIsSaving(true);
+      const result = await StorageService.updateAllBranchPasswords('0000!!');
+      alert(`지점 비밀번호 초기화 완료: 총 ${result.total}명 중 ${result.success}명 성공, ${result.failed}명 실패 💅`);
+      refreshData();
+    } catch (e) {
+      console.error(e);
+      alert('지점 비밀번호 초기화 중 오류가 발생했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const deleteAdmin = async (id: string) => {
     if (!confirm('정말로 이 직원의 계정을 삭제하시겠어요? 이 작업은 되돌릴 수 없으니까 신중하게 생각하세요. 💅')) return;
     setIsSaving(true);
@@ -2312,11 +2326,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                   onClick={() => setActiveTab(item.id as AdminTab)}
                   className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all group ${activeTab === item.id ? 'bg-bee-black text-bee-yellow shadow-xl shadow-bee-black/10' : 'hover:bg-gray-50 text-gray-500 hover:text-bee-black'}`}
                 >
-                  {item.color ? (
-                     <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
-                  ) : (
-                    <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
-                  )}
+                  <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
               ))}
@@ -2684,6 +2694,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               saveAdmin={saveAdmin}
               deleteAdmin={deleteAdmin}
               onDeduplicate={handleDeduplicateAdmins}
+              onBulkReset={handleBulkAdminPasswordReset}
               isSaving={isSaving}
               locations={locations}
             />

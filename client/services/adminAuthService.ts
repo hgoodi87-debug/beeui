@@ -685,7 +685,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
       name?: string;
     } | null;
   }>>(
-    `/rest/v1/employee_branch_assignments?select=is_primary,branch_id&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
+    `/rest/v1/employee_branch_assignments?select=is_primary,branch:branches(id,branch_code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
     {},
     accessToken
   )]);

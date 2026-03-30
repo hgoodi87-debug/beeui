@@ -663,7 +663,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     const filteredForExport = bookings.filter(b => {
       const d = new Date(b.pickupDate || '');
-      return d >= start && d <= end && !b.isDeleted;
+      return d >= start && d <= end && !b.isDeleted && b.settlementStatus !== 'deleted';
     }).sort((a, b) => (b.pickupDate || '').localeCompare(a.pickupDate || ''));
 
     if (filteredForExport.length === 0 && closings.length === 0) {
@@ -816,8 +816,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     // Basic filter: Current Day + (Delivery vs Storage vs Trash)
     const baseBookings = bookings.filter(b => {
       // 1. Trash check
-      if (activeTab === 'TRASH') return b.isDeleted === true;
-      if (b.isDeleted) return false;
+      // [스봉이] 휴지통 탭과 삭제 처리 로직을 더 견고하게 만듭니다. 💅
+      if (activeTab === 'TRASH') return b.isDeleted === true || b.settlementStatus === 'deleted';
+      if (b.isDeleted || b.settlementStatus === 'deleted') return false;
 
       // 2. Service type check
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
@@ -839,7 +840,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     // [스봉이] 취소/환불 카운트는 날짜 필터 적용(미정산)
     const cancelCount = bookings.filter(b => {
-      if (b.isDeleted) return false;
+      if (b.isDeleted || b.settlementStatus === 'deleted') return false;
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
       if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
       if (b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.REFUNDED) return false;
@@ -849,7 +850,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     // [스봉이] 긴급 이슈(취소/환불/메모) 카운트
     const issueCount = bookings.filter(b => {
-      if (b.isDeleted) return false;
+      if (b.isDeleted || b.settlementStatus === 'deleted') return false;
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
       if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
       return (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || !!b.auditNote);
@@ -874,9 +875,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
       // 2. Trash Bin Filter
       if (activeTab === 'TRASH') {
-        return b.isDeleted === true;
+        return b.isDeleted === true || b.settlementStatus === 'deleted';
       } else {
-        if (b.isDeleted === true) return false;
+        if (b.isDeleted === true || b.settlementStatus === 'deleted') return false;
 
         // [스봉이] 특정 일자 조회 필터 적용 💅✨ (이게 있으면 다른 날짜 제약 무시)
         if (searchDate) {

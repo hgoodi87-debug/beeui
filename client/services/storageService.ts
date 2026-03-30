@@ -670,20 +670,38 @@ const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
       'admin_booking_list_v1?select=*&order=created_at.desc&limit=500'
     );
     if (Array.isArray(rows) && rows.length > 0) {
-      return rows.map((row) => snakeToCamel(row) as unknown as BookingState);
+      return rows.map((row) => {
+        const camel = snakeToCamel(row);
+        if (row.settlement_status === 'deleted') {
+          camel.isDeleted = true;
+        }
+        return camel as unknown as BookingState;
+      });
     }
 
     console.warn('[Storage] admin_booking_list_v1 returned 0 rows, probing booking_details directly.');
     const fallbackRows = await supabaseGet<Array<Record<string, unknown>>>(
       'booking_details?select=*&order=created_at.desc&limit=500'
     );
-    return (fallbackRows || []).map((row) => snakeToCamel(row) as unknown as BookingState);
+    return (fallbackRows || []).map((row) => {
+      const camel = snakeToCamel(row);
+      if (row.settlement_status === 'deleted') {
+        camel.isDeleted = true;
+      }
+      return camel as unknown as BookingState;
+    });
   } catch (error) {
     console.warn('[Storage] admin_booking_list_v1 unavailable, falling back to booking_details:', error);
     const rows = await supabaseGet<Array<Record<string, unknown>>>(
       'booking_details?select=*&order=created_at.desc&limit=500'
     );
-    return (rows || []).map((row) => snakeToCamel(row) as unknown as BookingState);
+    return (rows || []).map((row) => {
+      const camel = snakeToCamel(row);
+      if (row.settlement_status === 'deleted') {
+        camel.isDeleted = true;
+      }
+      return camel as unknown as BookingState;
+    });
   }
 };
 
@@ -1345,52 +1363,9 @@ export const StorageService = {
       );
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<LocationOption[]>(
-        '/api/collections/locations',
-        (items) => callback(items.filter((item) => shouldIncludeLocation(item, includeInactive))),
-        [],
-        (items) => items.map((cloudLoc) => {
-          const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
-          if (!initialLoc) return cloudLoc;
-          const enriched = { ...cloudLoc };
-          Object.keys(initialLoc).forEach((key) => {
-            const k = key as keyof LocationOption;
-            if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
-              (enriched as Record<string, any>)[k] = initialLoc[k];
-            }
-          });
-          return enriched;
-        }),
-        'Locations local bridge'
-      );
-    }
-
-    try {
-      console.log('[Storage] Subscribing to locations real-time (Firebase)...');
-      return onSnapshot(collection(db, 'locations'), (snap: any) => {
-        if (snap.empty) { callback([]); return; }
-        const mergedLocations = snap.docs.map((doc: any) => {
-          const cloudLoc = { ...doc.data(), id: doc.id } as unknown as LocationOption;
-          const initialLoc = INITIAL_LOCATIONS.find(l => l.id === cloudLoc.id);
-          if (initialLoc) {
-            const enriched = { ...cloudLoc };
-            Object.keys(initialLoc).forEach((key) => {
-              const k = key as keyof LocationOption;
-              if (enriched[k] === undefined || enriched[k] === '' || enriched[k] === null) {
-                (enriched as Record<string, any>)[k] = initialLoc[k];
-              }
-            });
-            return enriched;
-          }
-          return cloudLoc;
-        });
-        callback(mergedLocations.filter((item) => shouldIncludeLocation(item, includeInactive)));
-      });
-    } catch (e) {
-      console.error('Failed to subscribe locations', e);
-      return () => { };
-    }
+    console.warn("Supabase is disabled. Returning empty locations.");
+    callback([]);
+    return () => {};
   },
 
   getLocations: async (options: LocationQueryOptions = {}): Promise<LocationOption[]> => {
@@ -1436,33 +1411,8 @@ export const StorageService = {
       }
     }
 
-    // 2. Firebase 조회 (로컬 브릿지 또는 Supabase 비활성 시만)
-    try {
-      if (canUseLocalAdminDataBridge()) {
-        const items = await fetchLocalAdminBridge<LocationOption[]>('/api/collections/locations');
-        firebaseLocs = items.map(enrichLoc);
-      } else if (!isSupabaseDataEnabled()) {
-        const querySnapshot = await getDocs(collection(db, 'locations'));
-        if (!querySnapshot.empty) {
-          firebaseLocs = querySnapshot.docs.map(doc => {
-            const cloudLoc = { ...doc.data(), id: doc.id } as unknown as LocationOption;
-            return enrichLoc(cloudLoc);
-          });
-        }
-      }
-      if (firebaseLocs.length > 0) console.log('[Storage] Loaded', firebaseLocs.length, 'locations from Firebase ✅');
-    } catch (e) {
-      console.error('[Storage] Firebase locations failed:', e);
-    }
-
-    // 3. 스마트 병합 (Supabase 우선)
-    const supabaseIds = new Set(supabaseLocs.map(l => l.id));
-    const merged = [
-      ...supabaseLocs,
-      ...firebaseLocs.filter(fl => !supabaseIds.has(fl.id))
-    ];
-    const filtered = merged.filter((item) => shouldIncludeLocation(item, includeInactive));
-    console.log(`[Storage] Merged ${filtered.length} locations 💅`);
+    const filtered = supabaseLocs.filter((item) => shouldIncludeLocation(item, includeInactive));
+    console.log(`[Storage] Loaded ${filtered.length} locations from Supabase 💅`);
     return filtered;
   },
 
@@ -2443,7 +2393,7 @@ export const StorageService = {
         const group = uniqueGroups[key];
         if (group.length <= 1) continue;
 
-        group.sort((a, b) => {
+        group.sort((a: any, b: any) => {
           const credentialDiff = Number(hasPassword(b)) - Number(hasPassword(a));
           if (credentialDiff !== 0) return credentialDiff;
 
@@ -2455,7 +2405,7 @@ export const StorageService = {
           return getFreshness(b) - getFreshness(a);
         });
 
-        group.slice(1).forEach(admin => {
+        group.slice(1).forEach((admin: any) => {
           if (admin.id) idsToRemove.push(admin.id);
         });
       }
@@ -3105,7 +3055,7 @@ export const StorageService = {
           sourceQuery: simpleQ,
           parser: (snap) => {
             const items = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as SystemNotice));
-            items.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+            items.sort((a: SystemNotice, b: SystemNotice) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
             return items;
           },
           callback,

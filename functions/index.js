@@ -6,6 +6,7 @@ const { calculateBookingStoragePrice } = require('./src/shared/pricing');
 const { processVoucherEmail } = require("./src/domains/notification/voucherService");
 const { processArrivalEmail } = require("./src/domains/notification/arrivalService");
 const { processRefundEmail } = require("./src/domains/notification/refundService");
+const { sendMail } = require("./src/domains/notification/mailer");
 const { handleSignedUploadRequest, isSignedUploadHttpError } = require("./src/domains/storage/signedUploadService");
 const { createTossPaymentSession, confirmTossPaymentSession } = require("./src/domains/payments/tossPaymentsService");
 const { upsertAdminAccount, deleteAdminAccount } = require("./src/domains/admin/upsertAdminAccountService");
@@ -13,7 +14,7 @@ const { upsertAdminAccount, deleteAdminAccount } = require("./src/domains/admin/
 admin.initializeApp();
 
 const ADMIN_ROLES = new Set(['super', 'hq', 'branch', 'staff', 'partner', 'driver', 'finance', 'cs']);
-const MAILER_SECRETS = ['SMTP_PASS'];
+const MAILER_SECRETS = ['SMTP_PASS', 'INTERNAL_MAIL_KEY'];
 const NOTIFICATION_SECRETS = ['SMTP_PASS', 'GOOGLE_CHAT_WEBHOOK_URL'];
 const SUPABASE_ROLE_TO_LEGACY_ROLE = {
     super_admin: 'super',
@@ -30,6 +31,7 @@ const SUPABASE_ROLE_TO_LEGACY_ROLE = {
 
 const normalizeText = (value) => String(value || '').trim();
 const normalizeLower = (value) => normalizeText(value).toLowerCase();
+const mailSecretMatches = (value) => normalizeText(value) && normalizeText(value) === normalizeText(process.env.INTERNAL_MAIL_KEY);
 
 const createHttpRequestError = (status, message, logMessage) => {
     const error = new Error(message);
@@ -45,6 +47,132 @@ const parseJsonResponse = async (response) => {
     } catch {
         return text;
     }
+};
+
+const sendJson = (res, status, body) => {
+    res.status(status);
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'content-type, x-beeliber-mail-key');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    return res.json(body);
+};
+
+const buildVoucherEmailHtml = (booking) => {
+    const code = normalizeText(booking.reservation_code || booking.reservationCode || booking.id);
+    const userName = normalizeText(booking.user_name || booking.userName);
+    const serviceType = normalizeText(booking.service_type || booking.serviceType) === 'DELIVERY' ? '배송' : '보관';
+    const pickupLabel = normalizeText(booking.pickup_label || booking.pickup_location || booking.pickupLocation) || '주소 직접 입력';
+    const dropoffLabel = normalizeText(booking.dropoff_label || booking.dropoff_location || booking.dropoffLocation);
+    const pickupDate = normalizeText(booking.pickup_date || booking.pickupDate);
+    const pickupTime = normalizeText(booking.pickup_time || booking.pickupTime);
+    const dropoffDate = normalizeText(booking.dropoff_date || booking.dropoffDate);
+    const deliveryTime = normalizeText(booking.delivery_time || booking.deliveryTime);
+    const finalPrice = Number(booking.final_price || booking.finalPrice || 0);
+    const nametagNumber = normalizeText(booking.nametag_number || booking.nametagNumber || '');
+
+    // QR Code URL (points to admin scan page)
+    const qrData = encodeURIComponent(`https://bee-liber.com/admin/scan?id=${code}`);
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}&color=111827&bgcolor=FFFFFF`;
+
+    return `
+      <div style="font-family:'Pretendard', 'Apple SD Gothic Neo', Arial, sans-serif;line-height:1.6;color:#111827;background-color:#f9fafb;padding:40px 20px;max-width:600px;margin:0 auto;">
+        <div style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);">
+          
+          <!-- Header (Black & Gold/Yellow) -->
+          <div style="background-color:#111827;color:#ffffff;padding:32px 24px;text-align:center;border-bottom:4px solid #FBBF24;">
+            <h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-0.5px;">
+              <span style="color:#FBBF24;">Beeliber</span> 예약 확정
+            </h1>
+            <p style="margin:8px 0 0;color:#9CA3AF;font-size:15px;">예약이 성공적으로 확정되었습니다.</p>
+          </div>
+
+          <!-- Content -->
+          <div style="padding:32px 24px;">
+            
+            <!-- Reservation Code & Nametag -->
+            <div style="background-color:#FEF3C7;border-radius:12px;padding:20px;margin-bottom:28px;text-align:center;border:1px solid #FDE68A;">
+              <p style="margin:0;font-size:13px;color:#92400E;font-weight:600;text-transform:uppercase;letter-spacing:1px;">예약번호 (Booking Code)</p>
+              <p style="margin:4px 0 0;font-size:28px;font-weight:800;color:#111827;letter-spacing:2px;">${code}</p>
+              ${nametagNumber ? `
+              <div style="margin-top:16px;padding-top:16px;border-top:1px dashed #FCD34D;">
+                <p style="margin:0;font-size:12px;color:#92400E;font-weight:600;">수하물 태그 번호 (Tag Number)</p>
+                <div style="display:inline-block;background-color:#111827;color:#FBBF24;font-size:24px;font-weight:800;padding:8px 24px;border-radius:8px;margin-top:8px;">
+                  #${nametagNumber}
+                </div>
+              </div>` : ''}
+            </div>
+
+            <!-- QR Code Section -->
+            <div style="text-align:center;margin-bottom:32px;">
+              <p style="margin:0 0 12px;font-size:14px;color:#4B5563;font-weight:600;">직원 확인용 QR 코드</p>
+              <div style="display:inline-block;padding:12px;background-color:#ffffff;border:2px solid #E5E7EB;border-radius:12px;">
+                <img src="${qrCodeUrl}" alt="Booking QR Code" style="width:160px;height:160px;display:block;" />
+              </div>
+              <p style="margin:12px 0 0;font-size:13px;color:#6B7280;">수하물 위탁/수령 시 직원에게 위 QR코드를 보여주세요.</p>
+            </div>
+
+            <!-- Booking Details -->
+            <h3 style="margin:0 0 16px;font-size:16px;font-weight:700;color:#111827;border-bottom:2px solid #f3f4f6;padding-bottom:8px;">예약 상세 정보</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:15px;margin-bottom:24px;">
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#6B7280;width:35%;">고객명</td>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#111827;font-weight:500;text-align:right;">${userName}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#6B7280;">서비스 유형</td>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#111827;font-weight:500;text-align:right;">
+                  <span style="background-color:#F3F4F6;padding:4px 10px;border-radius:6px;font-size:13px;">${serviceType}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#6B7280;">픽업 지점</td>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#111827;font-weight:500;text-align:right;">${pickupLabel}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#6B7280;">이용 시작</td>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#111827;font-weight:500;text-align:right;">${pickupDate} ${pickupTime}</td>
+              </tr>
+              ${serviceType === '배송' ? `
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#6B7280;">도착 지점</td>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#111827;font-weight:500;text-align:right;">${dropoffLabel || '주소 직접 입력'}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#6B7280;">도착 예정</td>
+                <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;color:#111827;font-weight:500;text-align:right;">${dropoffDate} ${deliveryTime}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding:12px 0 4px;color:#6B7280;font-weight:600;">최종 결제 금액</td>
+                <td style="padding:12px 0 4px;color:#F59E0B;font-weight:700;text-align:right;font-size:18px;">₩${finalPrice.toLocaleString()}</td>
+              </tr>
+            </table>
+
+          </div>
+
+          <!-- Footer -->
+          <div style="background-color:#F9FAFB;padding:24px;text-align:center;border-top:1px solid #E5E7EB;">
+            <p style="margin:0;font-size:14px;color:#4B5563;font-weight:500;">프리미엄 수하물 서비스, 빌리버와 함께 가벼운 여행 되세요.</p>
+            <p style="margin:12px 0 0;font-size:12px;color:#9CA3AF;">© Beeliber. All rights reserved.<br/>bee-liber.com</p>
+          </div>
+          
+        </div>
+      </div>
+    `;
+};
+
+const buildArrivalEmailHtml = (booking) => {
+    const code = normalizeText(booking.reservation_code || booking.reservationCode || booking.id);
+    return `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;padding:24px">
+        <h2 style="margin:0 0 16px">🐝 짐이 목적지에 도착했습니다</h2>
+        <p><strong>예약코드:</strong> ${code}</p>
+        <p>짐이 목적지에 안전하게 도착했습니다. 현장에서 바우처를 제시해 주세요.</p>
+        <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb" />
+        <p style="margin:0">가벼운 여행 되세요.</p>
+        <p style="margin:4px 0 0">beeliber · bee-liber.com</p>
+      </div>
+    `;
 };
 
 const resolveSupabaseRuntimeConfig = () => {
@@ -836,6 +964,78 @@ exports.notifyGoogleChat = onRequest({ secrets: ['GOOGLE_CHAT_WEBHOOK_URL'] }, a
     }
 });
 
+exports.sendBookingVoucherEmail = onRequest({ secrets: MAILER_SECRETS }, async (req, res) => {
+    if (req.method === 'OPTIONS') {
+        return sendJson(res, 200, { ok: true });
+    }
+    if (req.method !== 'POST') {
+        return sendJson(res, 405, { error: 'method-not-allowed' });
+    }
+    if (!mailSecretMatches(req.headers['x-beeliber-mail-key'])) {
+        return sendJson(res, 401, { error: 'unauthorized' });
+    }
+
+    const booking = req.body?.record || req.body?.booking || req.body || {};
+    const userEmail = normalizeText(booking.user_email || booking.userEmail);
+    if (!userEmail) {
+        return sendJson(res, 400, { error: 'missing_email' });
+    }
+
+    const code = normalizeText(booking.reservation_code || booking.reservationCode || booking.id);
+
+    try {
+        await sendMail({
+            to: userEmail,
+            bcc: 'bee@bee-liber.com',
+            subject: `[Beeliber] 예약 확정 바우처 (${code})`,
+            html: buildVoucherEmailHtml(booking),
+        });
+        return sendJson(res, 200, { success: true, to: userEmail, code });
+    } catch (error) {
+        console.error('[sendBookingVoucherEmail] failed:', error);
+        return sendJson(res, 500, {
+            error: 'mail_failed',
+            message: error instanceof Error ? error.message : String(error),
+        });
+    }
+});
+
+exports.sendBookingArrivalEmail = onRequest({ secrets: MAILER_SECRETS }, async (req, res) => {
+    if (req.method === 'OPTIONS') {
+        return sendJson(res, 200, { ok: true });
+    }
+    if (req.method !== 'POST') {
+        return sendJson(res, 405, { error: 'method-not-allowed' });
+    }
+    if (!mailSecretMatches(req.headers['x-beeliber-mail-key'])) {
+        return sendJson(res, 401, { error: 'unauthorized' });
+    }
+
+    const booking = req.body?.record || req.body?.booking || req.body || {};
+    const userEmail = normalizeText(booking.user_email || booking.userEmail);
+    if (!userEmail) {
+        return sendJson(res, 400, { error: 'missing_email' });
+    }
+
+    const code = normalizeText(booking.reservation_code || booking.reservationCode || booking.id);
+
+    try {
+        await sendMail({
+            to: userEmail,
+            bcc: 'bee@bee-liber.com',
+            subject: `[Beeliber] 짐이 도착했습니다 (${code})`,
+            html: buildArrivalEmailHtml(booking),
+        });
+        return sendJson(res, 200, { success: true, to: userEmail, code });
+    } catch (error) {
+        console.error('[sendBookingArrivalEmail] failed:', error);
+        return sendJson(res, 500, {
+            error: 'mail_failed',
+            message: error instanceof Error ? error.message : String(error),
+        });
+    }
+});
+
 // 6-1. Supabase Signed Upload URL Issuer (Draft)
 exports.issueSupabaseSignedUpload = onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
@@ -970,16 +1170,49 @@ exports.onBookingCreated = onDocumentCreated({ document: "bookings/{bookingId}",
             const destCode = booking.serviceType === 'DELIVERY' ? 'ADDR' : await getShort(booking.dropoffLocation || booking.destinationLocation);
             const reservationCode = booking.reservationCode || `${originCode}-${destCode}-${Math.floor(1000 + Math.random() * 9000)}`;
 
+            // 주간 네임택 번호 생성 (1~100 순환, 매주 월요일 KST 기준 초기화) 💅
+            const nowKST = new Date();
+            nowKST.setHours(nowKST.getHours() + 9);
+            const dayOfWeek = nowKST.getDay() === 0 ? 7 : nowKST.getDay(); // 1(Mon) to 7(Sun)
+            const weekStartKST = new Date(nowKST);
+            weekStartKST.setDate(nowKST.getDate() - dayOfWeek + 1);
+            const weekId = `${weekStartKST.getFullYear()}-${String(weekStartKST.getMonth() + 1).padStart(2, '0')}-${String(weekStartKST.getDate()).padStart(2, '0')}`;
+            
+            const counterRef = db.collection('counters').doc('nametags');
+            let nametagNumber = 1;
+            
+            try {
+                await db.runTransaction(async (t) => {
+                    const doc = await t.get(counterRef);
+                    let data = doc.exists ? doc.data() : { weekId: "", current: 0 };
+                    
+                    if (data.weekId !== weekId) {
+                        data.weekId = weekId;
+                        data.current = 1;
+                    } else {
+                        data.current = (data.current % 100) + 1;
+                    }
+                    
+                    nametagNumber = data.current;
+                    t.set(counterRef, data);
+                });
+            } catch (e) {
+                console.warn('[onBookingCreated] Failed to generate nametag number:', e.message);
+                nametagNumber = Math.floor(Math.random() * 100) + 1; // Fallback
+            }
+
             await event.data.ref.update({
                 finalPrice,
                 reservationCode: booking.reservationCode || reservationCode,
-                status: '접수완료'
+                status: '접수완료',
+                nametagNumber
             });
 
             // Re-fetch updated booking for email/chat
             booking.reservationCode = reservationCode;
             booking.finalPrice = finalPrice;
             booking.status = '접수완료';
+            booking.nametagNumber = nametagNumber;
         } catch (e) {
             console.error("Validation failed:", e);
             await event.data.ref.update({ status: '예약실패', error: e.message });

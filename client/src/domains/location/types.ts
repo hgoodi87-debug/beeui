@@ -11,6 +11,7 @@ export enum LocationType {
 
 export interface LocationOption {
     id: string;
+    supabaseId?: string;
     shortCode: string;
     branchId?: string;
     name: string;

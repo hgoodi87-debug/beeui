@@ -99,7 +99,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
 
     const cleanupTargetBookings = React.useMemo(() => {
         return filteredBookings.filter((booking) => {
-            if (booking.isDeleted) return false;
+            if (booking.isDeleted || booking.settlementStatus === 'deleted') return false;
             const hasIssueTrace = booking.status === BookingStatus.CANCELLED ||
                 booking.status === BookingStatus.REFUNDED ||
                 Boolean(booking.auditNote?.trim());

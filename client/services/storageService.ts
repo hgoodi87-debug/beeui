@@ -1196,7 +1196,7 @@ export const StorageService = {
         merge: mergeBookingSources,
         callback,
         label: 'Bookings',
-        intervalMs: 8000,
+        intervalMs: 4000,
       });
     }
 

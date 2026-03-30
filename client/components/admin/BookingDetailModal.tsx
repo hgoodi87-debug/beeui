@@ -138,13 +138,22 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                         <input readOnly={adminRole !== 'super'} title="SNS ID" placeholder="SNS ID 입력" value={selectedBooking.snsId || ''} onChange={e => setSelectedBooking({ ...selectedBooking, snsId: e.target.value })} className="flex-1 bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm read-only:bg-gray-100" />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">국가 (Country)</label>
-                                    <select disabled={adminRole !== 'super'} title="국가 선택" value={selectedBooking.country || 'KR'} onChange={e => setSelectedBooking({ ...selectedBooking, country: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
-                                        {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
-                                            <option key={code} value={code}>{name}</option>
-                                        ))}
-                                    </select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">국가 (Country)</label>
+                                        <select disabled={adminRole !== 'super'} title="국가 선택" value={selectedBooking.country || 'KR'} onChange={e => setSelectedBooking({ ...selectedBooking, country: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
+                                            {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
+                                                <option key={code} value={code}>{name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">관할 지점 (Branch)</label>
+                                        <div className="w-full bg-gray-100 p-3 rounded-xl border border-gray-200 font-black text-xs text-bee-black flex items-center gap-2">
+                                            <i className="fa-solid fa-warehouse text-gray-400"></i>
+                                            {selectedBooking.branchName || '지점 정보 없음 🐝'}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -222,25 +231,36 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                             <div className="flex-1 space-y-4">
                                 <div className="relative pl-6 border-l-2 border-dashed border-gray-200">
                                     <div className="absolute top-0 left-[-6px] w-3 h-3 rounded-full bg-bee-yellow"></div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">출발지 (Pickup)</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                        {selectedBooking.serviceType === ServiceType.STORAGE ? '기점/입고지 (Pickup)' : '출발지 (Pickup)'}
+                                    </label>
                                     <select disabled={adminRole !== 'super'} title="출발 지점" value={selectedBooking.pickupLocation} onChange={e => setSelectedBooking({ ...selectedBooking, pickupLocation: e.target.value })} className="w-full bg-white p-2 mb-2 rounded-lg border border-gray-200 text-xs font-bold disabled:bg-gray-100">
                                         {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                        {/* [스봉이] 매칭되는 ID가 없는 레거시 데이터면 텍스트를 옵션에 살짝 끼워넣어드려요 💅 */}
+                                        {!locations.some(l => l.id === selectedBooking.pickupLocation) && selectedBooking.pickupLocation && (
+                                            <option value={selectedBooking.pickupLocation}>{selectedBooking.pickupLocation} (Legacy)</option>
+                                        )}
                                     </select>
                                     <input readOnly={adminRole !== 'super'} value={selectedBooking.pickupAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupAddress: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold mb-2 read-only:bg-gray-100" placeholder="주소" />
                                     <input readOnly={adminRole !== 'super'} value={selectedBooking.pickupAddressDetail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupAddressDetail: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold read-only:bg-gray-100" placeholder="상세 주소" />
                                 </div>
-                                {selectedBooking.serviceType === ServiceType.DELIVERY && (
-                                    <div className="relative pl-6 border-l-2 border-dashed border-gray-200">
-                                        <div className="absolute bottom-0 left-[-6px] w-3 h-3 rounded-full bg-bee-black"></div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">도착지 (Dropoff)</label>
-                                        <select disabled={adminRole !== 'super'} title="도착 지점" value={selectedBooking.dropoffLocation} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffLocation: e.target.value })} className="w-full bg-white p-2 mb-2 rounded-lg border border-gray-200 text-xs font-bold disabled:bg-gray-100">
-                                            <option value="">- 선택 안함 -</option>
-                                            {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                                        </select>
-                                        <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddress: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold mb-2 read-only:bg-gray-100" placeholder="주소" />
-                                        <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddressDetail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddressDetail: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold read-only:bg-gray-100" placeholder="상세 주소" />
-                                    </div>
-                                )}
+                                
+                                <div className="relative pl-6 border-l-2 border-dashed border-gray-200">
+                                    <div className="absolute bottom-0 left-[-6px] w-3 h-3 rounded-full bg-bee-black"></div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                        {selectedBooking.serviceType === ServiceType.STORAGE ? '종점/반환지 (Return)' : '도착지 (Dropoff)'}
+                                    </label>
+                                    <select disabled={adminRole !== 'super'} title="도착 지점" value={selectedBooking.dropoffLocation} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffLocation: e.target.value })} className="w-full bg-white p-2 mb-2 rounded-lg border border-gray-200 text-xs font-bold disabled:bg-gray-100">
+                                        <option value="">- 선택 안함 -</option>
+                                        {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                        {/* [스봉이] 매칭되는 ID가 없는 레거시 데이터 fallback 💅 */}
+                                        {!locations.some(l => l.id === selectedBooking.dropoffLocation) && selectedBooking.dropoffLocation && (
+                                            <option value={selectedBooking.dropoffLocation}>{selectedBooking.dropoffLocation} (Legacy)</option>
+                                        )}
+                                    </select>
+                                    <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddress: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold mb-2 read-only:bg-gray-100" placeholder="주소" />
+                                    <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddressDetail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddressDetail: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold read-only:bg-gray-100" placeholder="상세 주소" />
+                                </div>
                             </div>
                             <div className="min-w-[200px] flex flex-col gap-4">
                                 <div>

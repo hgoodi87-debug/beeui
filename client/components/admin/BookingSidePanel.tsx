@@ -261,8 +261,15 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                             <input title="시작 시간" type="time" value={selectedBooking.pickupTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupTime: e.target.value })} className="w-full bg-gray-50 p-4 rounded-2xl border-none font-black text-xs focus:ring-2 focus:ring-bee-yellow outline-none" />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">완료시간</label>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">완료/반환시간</label>
                                             <input title="완료 시간" type="time" value={selectedBooking.deliveryTime || ''} onChange={e => setSelectedBooking({ ...selectedBooking, deliveryTime: e.target.value })} className="w-full bg-gray-50 p-4 rounded-2xl border-none font-black text-xs focus:ring-2 focus:ring-bee-yellow outline-none" />
+                                        </div>
+                                    </div>
+                                    <div className="pt-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">관할 지점 (Branch)</label>
+                                        <div className="w-full bg-gray-900 text-bee-yellow p-4 rounded-2xl font-black text-sm flex items-center gap-3 shadow-lg">
+                                            <i className="fa-solid fa-warehouse"></i>
+                                            {selectedBooking.branchName || '지점 정보 없음 🐝'}
                                         </div>
                                     </div>
                                 </div>
@@ -281,24 +288,32 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                 <div className="space-y-6 relative z-10">
                                     <div className="relative pl-8 border-l-2 border-dashed border-gray-200">
                                         <div className="absolute left-[-6px] top-0 w-3 h-3 rounded-full bg-bee-yellow shadow-lg shadow-bee-yellow/50"></div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">출발지 (Origin)</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
+                                            {selectedBooking.serviceType === ServiceType.STORAGE ? '기점/입고지 (Origin)' : '출발지 (Origin)'}
+                                        </label>
                                         <select title="출발 지점" value={selectedBooking.pickupLocation} onChange={e => setSelectedBooking({ ...selectedBooking, pickupLocation: e.target.value })} className="w-full bg-gray-50 p-3 rounded-xl border-none font-bold text-xs mb-3">
                                             {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                            {!locations.some(l => l.id === selectedBooking.pickupLocation) && selectedBooking.pickupLocation && (
+                                                <option value={selectedBooking.pickupLocation}>{selectedBooking.pickupLocation} (Legacy)</option>
+                                            )}
                                         </select>
                                         <input title="출발 상세주소" value={selectedBooking.pickupAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupAddress: e.target.value })} placeholder="정확한 주소 정보를 입력하거나 선택하세요" className="w-full bg-gray-50 p-3 rounded-xl border-none font-bold text-xs" />
                                     </div>
 
-                                    {selectedBooking.serviceType === ServiceType.DELIVERY && (
-                                        <div className="relative pl-8 border-l-2 border-dashed border-gray-200">
-                                            <div className="absolute left-[-6px] bottom-0 w-3 h-3 rounded-full bg-bee-black shadow-lg shadow-bee-black/50"></div>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">도착지 (Destination)</label>
-                                            <select title="도착 지점" value={selectedBooking.dropoffLocation} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffLocation: e.target.value })} className="w-full bg-gray-50 p-3 rounded-xl border-none font-bold text-xs mb-3">
-                                                <option value="">- 직접 입력 -</option>
-                                                {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                                            </select>
-                                            <input title="도착 상세주소" value={selectedBooking.dropoffAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddress: e.target.value })} placeholder="도착 지점 정보를 입력하세요" className="w-full bg-gray-50 p-3 rounded-xl border-none font-bold text-xs" />
-                                        </div>
-                                    )}
+                                    <div className="relative pl-8 border-l-2 border-dashed border-gray-200">
+                                        <div className="absolute left-[-6px] bottom-0 w-3 h-3 rounded-full bg-bee-black shadow-lg shadow-bee-black/50"></div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">
+                                            {selectedBooking.serviceType === ServiceType.STORAGE ? '종점/반환지 (Destination)' : '도착지 (Destination)'}
+                                        </label>
+                                        <select title="도착 지점" value={selectedBooking.dropoffLocation} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffLocation: e.target.value })} className="w-full bg-gray-50 p-3 rounded-xl border-none font-bold text-xs mb-3">
+                                            <option value="">- 직접 입력 -</option>
+                                            {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                            {!locations.some(l => l.id === selectedBooking.dropoffLocation) && selectedBooking.dropoffLocation && (
+                                                <option value={selectedBooking.dropoffLocation}>{selectedBooking.dropoffLocation} (Legacy)</option>
+                                            )}
+                                        </select>
+                                        <input title="도착 상세주소" value={selectedBooking.dropoffAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddress: e.target.value })} placeholder="도착 지점 정보를 입력하세요" className="w-full bg-gray-50 p-3 rounded-xl border-none font-bold text-xs" />
+                                    </div>
                                 </div>
 
                                 <div className={`pt-6 border-t border-gray-100 grid gap-4 relative z-10 ${selectedBooking.serviceType === ServiceType.DELIVERY ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>

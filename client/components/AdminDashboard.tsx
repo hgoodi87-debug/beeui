@@ -324,6 +324,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       return id;
     }
 
+    // [스봉이] 이미 불러온 데이터가 있다면 거기서 먼저 찾아볼게요. 네트워크 비용 아껴야죠? 💅
+    const cached = allBookings.find(b => b.id === id || b.reservationCode === id);
+    if (cached?.id && isSupabaseBookingDetailId(cached.id)) {
+      return cached.id;
+    }
+
     const booking = await StorageService.getBooking(id);
     if (booking?.id && isSupabaseBookingDetailId(booking.id)) {
       return booking.id;
@@ -410,6 +416,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!booking.id) return;
     if (!confirm(`[최종 확인]\n\n예약번호: ${booking.id}\n고객명: ${booking.userName}\n\n정말로 반품(환불) 처리하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
 
+    const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
+
+    // [스봉이] 환불도 아주 시원하게 처리해 드릴게요. UI 먼저 'refunded'로 갑니다! 💅
+    if (previousBookings) {
+      queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
+        old?.map(b => b.id === booking.id ? { ...b, status: BookingStatus.CANCELLED } : b)
+      );
+    }
+
     setRefundingId(booking.id);
     try {
       await mutateBookingRecord(booking.id, {
@@ -423,6 +438,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       alert('반품(환불) 처리가 완료되었습니다.');
     } catch (error: any) {
       console.error("Failed to process refund:", error);
+      // [스봉이] 문제 생기면 다시 원상복구! 🙄
+      if (previousBookings) queryClient.setQueryData(['bookings'], previousBookings);
       alert(`반품 처리 실패: ${error.message}`);
     } finally {
       setRefundingId(null);
@@ -1483,6 +1500,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (selectedBookingIds.length === 0) return;
     if (!window.confirm(`${selectedBookingIds.length}건의 예약을 '${OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[status]].label}' 상태로 일괄 변경할까요?`)) return;
 
+    const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
+
+    // [스봉이] 일괄 처리도 성급하게! UI부터 확 바꿔버릴게요. 💅
+    if (previousBookings) {
+      const selectedIdsSet = new Set(selectedBookingIds);
+      queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
+        old?.map(b => selectedIdsSet.has(b.id || '') || selectedIdsSet.has(b.reservationCode || '') ? { ...b, status } : b)
+      );
+    }
+
     setIsBatchUpdating(true);
     try {
       const results = await Promise.allSettled(
@@ -1502,6 +1529,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       alert(`성공적으로 ${selectedBookingIds.length}건을 처리했습니다. 💅`);
     } catch (error) {
       console.error('Batch update error:', error);
+      // [스봉이] 사고 났으면 다시 원복해드려야죠? 휴... 🙄
+      if (previousBookings) queryClient.setQueryData(['bookings'], previousBookings);
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       alert('일괄 처리 중 사고가 났어요! 🙄');
     } finally {
       setIsBatchUpdating(false);
@@ -1509,6 +1539,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   };
 
   const updateStatus = async (id: string, status: BookingStatus, auditNote?: string) => {
+    const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
+
+    // [스봉이] 사장님 성격 급하신 거 아니까 UI부터 바로 바꿔드릴게요. 낙관적으로 가자고요! ✨
+    if (previousBookings) {
+      queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
+        old?.map(b => (b.id === id || b.reservationCode === id) ? { ...b, status } : b)
+      );
+    }
+
     try {
       const updateData: Record<string, unknown> = { settlement_status: status };
       if (auditNote) (updateData as any).notes = auditNote;
@@ -1517,7 +1556,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         supabaseBody: updateData,
       });
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id, type: 'BOOKING' }, { status, detail: auditNote });
-    } catch (e) { console.error(e); }
+
+      // [스봉이] 데이터 정합성을 위해 쿼리 무효화도 잊지 않았어요. 💅
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    } catch (e) {
+      console.error(e);
+      // [스봉이] 서버에 문제 생기면 슬쩍 다시 돌려놓을게요... 비밀이에요! 🙄
+      if (previousBookings) queryClient.setQueryData(['bookings'], previousBookings);
+    }
   };
 
   const handleManualBookingSave = async () => {

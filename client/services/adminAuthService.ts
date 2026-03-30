@@ -1,4 +1,4 @@
-import { getSupabaseBaseUrl } from './supabaseRuntime';
+import { getSupabaseConfig } from './supabaseRuntime';
 
 export type AdminAuthProvider = 'firebase' | 'supabase';
 
@@ -24,8 +24,9 @@ interface SupabaseAdminSession {
   expiresAt?: number;
 }
 
-const supabaseUrl = getSupabaseBaseUrl();
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || '';
+const config = getSupabaseConfig();
+const supabaseUrl = config.url;
+const supabasePublishableKey = config.anonKey;
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
 const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -165,7 +166,7 @@ const isSessionPastKstWindow = (savedAt: number) => {
 };
 
 const shouldRefreshSession = (session: SupabaseAdminSession) => {
-  if (!session.refreshToken) return false;
+  if (!session.refreshToken || !session.expiresAt) return false;
   return session.expiresAt - Date.now() <= ACCESS_TOKEN_REFRESH_BUFFER_MS;
 };
 

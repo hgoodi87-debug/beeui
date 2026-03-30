@@ -3,7 +3,7 @@
 // Supabase 전용 storageService (Firebase Firestore 완전 제거)
 // Firebase → Supabase 어댑터 레이어로 기존 147개 호출 호환
 // ============================================================
-import { getSupabaseBaseUrl, resolveSupabaseEndpoint, resolveSupabaseUrl } from './supabaseRuntime';
+import { getSupabaseBaseUrl, getSupabaseConfig, resolveSupabaseEndpoint, resolveSupabaseUrl } from './supabaseRuntime';
 
 // Firebase Storage 완전 제거 — Supabase Storage 사용
 // storage, ref, uploadBytes, getDownloadURL 모두 Supabase 어댑터로 대체
@@ -11,7 +11,8 @@ const storage = {} as any; // 더미
 const ref = (_s: any, path: string) => ({ _path: path });
 const uploadBytes = async (storageRef: any, file: Blob | ArrayBuffer, _metadata?: any) => {
   // Supabase Storage signed upload
-  const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+  const config = getSupabaseConfig();
+  const SUPABASE_KEY = config.anonKey;
   const bucket = 'brand-public';
   const path = storageRef._path;
   const res = await fetch(resolveSupabaseUrl(`/storage/v1/object/${bucket}/${path}`), {

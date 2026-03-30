@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAdminAuthProvider, isSupabaseAdminAuthEnabled, loginAdmin, warmAdminAuth } from '../services/adminAuthService';
+import { getSupabaseDataDiagnosis } from '../services/supabaseClient';
 
 interface AdminLoginPageProps {
   onLogin: (name: string, jobTitle: string, role: string, email?: string, branchId?: string) => void;
@@ -14,12 +15,18 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [diagnosis, setDiagnosis] = useState<any>(null);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
+
   const authProvider = getAdminAuthProvider();
   const isSupabaseMode = isSupabaseAdminAuthEnabled();
 
   // Pre-warm Auth and Functions
   useEffect(() => {
     warmAdminAuth().catch(console.error);
+
+    // [스봉이] 시스템 진단 정보 로드 💅
+    getSupabaseDataDiagnosis().then(setDiagnosis).catch(console.error);
 
     // 로그인 직후 대시보드 lazy 로딩 대기를 줄이기 위한 사전 워밍업
     void import('./AdminDashboard');
@@ -135,6 +142,14 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
               {error}
             </div>
           )}
+
+          {!diagnosis?.isEnabled && diagnosis && (
+            <div className="p-4 mb-4 text-[10px] bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-2xl font-bold leading-tight">
+              <i className="fa-solid fa-triangle-exclamation mr-2"></i>
+              배포 환경 변수(`VITE_SUPABASE_*`)가 누락되어 데이터 연동이 불가능한 상태입니다. 시스템 진단을 확인해 주세요.
+            </div>
+          )}
+
           <div className="space-y-4">
             <div className="group">
               <label className="block text-[10px] font-black text-gray-500 group-focus-within:text-bee-yellow uppercase tracking-widest mb-2 ml-2 transition-colors">
@@ -202,9 +217,58 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
           </div>
         </form>
 
-        <p className="mt-5 text-center text-[10px] font-bold tracking-[0.25em] uppercase text-gray-500">
-          {isSupabaseMode ? 'Supabase 관리자 로그인 모드' : 'Firebase 관리자 인증 모드'}
-        </p>
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <button
+            onClick={() => setShowDiagnosis(!showDiagnosis)}
+            className="text-[10px] font-bold tracking-[0.25em] uppercase text-gray-500 hover:text-bee-yellow transition-colors flex items-center gap-2"
+          >
+            <i className={`fa-solid ${showDiagnosis ? 'fa-chevron-down' : 'fa-wrench'}`}></i>
+            {isSupabaseMode ? 'Supabase 시스템 진단' : 'Firebase 시스템 진단'}
+          </button>
+
+          {showDiagnosis && diagnosis && (
+            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-[9px] font-mono leading-relaxed space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex justify-between items-center border-b border-white/5 pb-2 mb-2">
+                <span className="text-gray-500 font-bold">DIAGNOSIS REPORT</span>
+                <span className={diagnosis.isEnabled ? 'text-green-500' : 'text-red-500'}>
+                  {diagnosis.isEnabled ? '● SYSTEM READY' : '● CONFIG ERROR'}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <span className="text-gray-500">Provider:</span>
+                <span className="col-span-2 text-white">{diagnosis.hasProvider ? 'Supabase (Default)' : 'Firebase (Legacy Fallback)'}</span>
+
+                <span className="text-gray-500">Base URL:</span>
+                <span className="col-span-2 text-white overflow-hidden text-ellipsis whitespace-nowrap">{diagnosis.url}</span>
+
+                <span className="text-gray-500">URL Source:</span>
+                <span className={`col-span-2 ${diagnosis.usingFallback ? 'text-orange-400' : 'text-green-500'}`}>
+                  {diagnosis.source} {diagnosis.usingFallback ? '(Hardcoded Fallback)' : '(Env Active)'}
+                </span>
+
+                <span className="text-gray-500">Anon Key:</span>
+                <span className={`col-span-2 ${diagnosis.hasAnonKey ? 'text-green-500' : 'text-red-500'}`}>
+                  {diagnosis.hasAnonKey ? 'INJECTED ✅' : 'MISSING ❌'}
+                </span>
+
+                <span className="text-gray-500">Pub Key:</span>
+                <span className={`col-span-2 ${diagnosis.hasPublishableKey ? 'text-green-500' : 'text-red-500'}`}>
+                  {diagnosis.hasPublishableKey ? 'INJECTED ✅' : 'MISSING ❌'}
+                </span>
+
+                <span className="text-gray-500">Combined Key:</span>
+                <span className="col-span-2 text-bee-yellow">{diagnosis.keyPrefix}</span>
+              </div>
+
+              {!diagnosis.isEnabled && (
+                <div className="mt-4 p-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-[8px] leading-normal uppercase tracking-tight">
+                  <i className="fa-solid fa-circle-info mr-1"></i>
+                  Vercel/Firebase 배포 콘솔에서 환경 변수를 확인해 주세요.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <p className="mt-12 text-center text-[10px] text-gray-600 font-bold uppercase tracking-[0.4em]">
           Beeliber Systems &copy; 2025

@@ -2,19 +2,36 @@
  * Supabase REST 클라이언트 유틸
  * storageService.ts에서 Firebase 폴백과 함께 사용
  */
-import { getSupabaseBaseUrl } from './supabaseRuntime';
+import { getSupabaseConfig } from './supabaseRuntime';
 
-const SUPABASE_URL = getSupabaseBaseUrl();
-// anon key 우선, publishable key 폴백
-const SUPABASE_KEY = (
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  ''
-).trim();
+const config = getSupabaseConfig();
+const SUPABASE_URL = config.url;
+const SUPABASE_KEY = config.anonKey;
 const SUPABASE_DATA_SCHEMA = 'public';
 
 export const isSupabaseDataEnabled = (): boolean =>
   Boolean(SUPABASE_URL) && Boolean(SUPABASE_KEY);
+
+/**
+ * [스봉이] Supabase 데이터 연동 상세 진단 💅
+ */
+export const getSupabaseDataDiagnosis = async () => {
+  const { getSupabaseDiagnosis } = await import('./supabaseRuntime');
+  const runtime = getSupabaseDiagnosis();
+  const hasAnonKey = Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY?.trim());
+  const hasPublishableKey = Boolean(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim());
+  const hasProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase';
+
+  return {
+    ...runtime,
+    hasKey: Boolean(SUPABASE_KEY),
+    hasAnonKey,
+    hasPublishableKey,
+    hasProvider,
+    isEnabled: isSupabaseDataEnabled(),
+    keyPrefix: SUPABASE_KEY ? SUPABASE_KEY.substring(0, 5) + '...' : '(none)'
+  };
+};
 
 const buildSupabaseHttpError = async (response: Response, label: string) => {
   const text = await response.text();

@@ -28,7 +28,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/supabase': {
-        target: 'https://xpnfjolqiffduedwtxey.supabase.co',
+        target: process.env.VITE_SUPABASE_URL || 'https://localhost:54321',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/supabase/, '')
       }

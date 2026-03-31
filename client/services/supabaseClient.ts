@@ -16,6 +16,14 @@ const SUPABASE_DATA_SCHEMA = 'public';
 export const isSupabaseDataEnabled = (): boolean =>
   Boolean(SUPABASE_URL) && Boolean(SUPABASE_KEY);
 
+if (!isSupabaseDataEnabled() && typeof window !== 'undefined') {
+  console.error(
+    '[Supabase] DB 연결 불가: VITE_SUPABASE_URL 또는 VITE_SUPABASE_PUBLISHABLE_KEY가 없습니다.\n' +
+    `  URL: ${SUPABASE_URL || '(없음)'}\n` +
+    `  KEY: ${SUPABASE_KEY ? '설정됨' : '(없음)'}`
+  );
+}
+
 const buildSupabaseHttpError = async (response: Response, label: string) => {
   const text = await response.text();
   let details: unknown = text;

@@ -1,7 +1,5 @@
-const DEFAULT_SUPABASE_HOSTED_URL = 'https://xpnfjolqiffduedwtxey.supabase.co';
-
 const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
-const configuredHostedUrl = import.meta.env.VITE_SUPABASE_PUBLIC_URL?.trim() || DEFAULT_SUPABASE_HOSTED_URL;
+const configuredHostedUrl = import.meta.env.VITE_SUPABASE_PUBLIC_URL?.trim() || '';
 
 const normalizeBase = (value: string) => value.replace(/\/+$/, '');
 
@@ -33,6 +31,12 @@ export const getSupabaseBaseUrl = () => {
   const normalizedHosted = normalizeBase(configuredHostedUrl);
 
   if (!normalizedRaw) {
+    if (!normalizedHosted) {
+      console.error(
+        '[Supabase] VITE_SUPABASE_URL 환경변수가 설정되지 않았습니다. ' +
+        'GitHub Secrets 또는 .env 파일을 확인하세요.'
+      );
+    }
     return normalizedHosted;
   }
 

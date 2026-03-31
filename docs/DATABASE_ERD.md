@@ -1,5 +1,6 @@
 # Beeliber Database ERD (Entity Relationship Diagram)
-> 2026.03.26 기준 | Supabase (ap-northeast-1) | 22 테이블 | RLS 전체 활성화
+> 2026-03-31 기준 | Supabase `xpnfjolqiffduedwtxey` (ap-northeast-1) | 49 테이블 + 9 뷰 | RLS 전체 활성화
+> 상세 구조: `docs/DATABASE_STRUCTURE_MAP.md` 참조
 
 ---
 

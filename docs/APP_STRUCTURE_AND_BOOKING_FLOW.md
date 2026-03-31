@@ -61,7 +61,7 @@
 | 상태 (글로벌) | Zustand (3개 스토어) |
 | 상태 (서버) | TanStack React Query |
 | DB | Supabase (PostgreSQL) |
-| 인증 | Supabase Auth + Firebase Auth (레거시) |
+| 인증 | Supabase Auth (Firebase Auth RETIRED 2026-03-29) |
 | 결제 | Toss Payments |
 | i18n | 6개 언어 (ko/en/ja/zh/zh-TW/zh-HK) |
 | 호스팅 | Firebase Hosting |

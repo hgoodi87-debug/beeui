@@ -1,7 +1,8 @@
 # Beeliber Supabase Database — Harness Engineering Analysis
 
-> **Project**: beeliber (`fzvfyeskdivulazjjpgr`) | **Region**: ap-northeast-1 | **Postgres**: 17.6.1
-> **Generated**: 2026-03-29 | **Author**: Claude Code Harness
+> **Project**: beeliber (`xpnfjolqiffduedwtxey`) | **Region**: ap-northeast-1 | **Postgres**: 17
+> **Generated**: 2026-03-31 | **Author**: Claude Code Harness
+> **이전 프로젝트**: `fzvfyeskdivulazjjpgr` (RETIRED 2026-03-27)
 
 ---
 

@@ -1,5 +1,5 @@
 # Beeliber Database Migration Changelog
-> 최종 업데이트: 2026.03.29 | 안티그래비티 공유용
+> 최종 업데이트: 2026-03-31 | 현재 49개 테이블 + 9개 뷰
 
 ---
 

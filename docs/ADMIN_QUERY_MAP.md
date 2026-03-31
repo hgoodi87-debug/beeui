@@ -1,10 +1,13 @@
 # Beeliber 관리자 페이지 쿼리 맵
 
+> **LEGACY REFERENCE** — Firebase Firestore는 2026-03-29 기준 완전 retired.
+> 현재 모든 쿼리는 Supabase REST API (`storageService.ts` 어댑터)를 통해 실행됨.
+
 ## 문서 목적
 
-이 문서는 관리자 페이지가 실제로 어떤 Firebase 데이터에 의존하는지 정리한 맵이다.
+이 문서는 관리자 페이지가 실제로 어떤 데이터에 의존하는지 정리한 맵이다.
 
-Supabase 전환 시 “어느 화면이 어느 테이블을 먼저 필요로 하는지” 판단하는 기준으로 사용한다.
+현재 데이터 소스: **Supabase PostgreSQL** (`xpnfjolqiffduedwtxey`)
 
 ---
 

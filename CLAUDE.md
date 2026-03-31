@@ -42,6 +42,8 @@
     beeliber_operations/ # Layer 3 운영 하네스 (상태머신·SLA·기사배정·이슈)
     beeliber_ai_harness/ # Layer 4 AI 하네스 (생성·검사·승인·배포 통제)
     beeliber_eval/       # Layer 6 성과 측정 (KPI·실패분석·회고)
+    beeliber_booking_flow/ # 예약 플로우 전체 로직 (4단계·가격계산·결제·후처리)
+    beeliber_app_structure/ # 앱 전체 구조 (라우팅·도메인·서비스·상태관리)
     db_audit_auth/       # DB 검수: AUTH & ORGANIZATION (profiles·roles·branches·employees)
     db_audit_reservation/ # DB 검수: RESERVATION CORE (reservations·booking_details·payments)
     db_audit_operations/ # DB 검수: OPERATIONS & FINANCE (locations·daily_closings·service_rules)

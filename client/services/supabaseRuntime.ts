@@ -1,3 +1,15 @@
+/** HTTP 헤더에 사용 가능하도록 비 ASCII / 비가시 문자를 제거 */
+export const sanitizeForHeader = (value: string): string =>
+  value.replace(/[^\x20-\x7E]/g, '').trim();
+
+/** Supabase 키를 안전하게 읽기 (비 ASCII 제거) */
+export const getSupabasePublishableKey = (): string =>
+  sanitizeForHeader(
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    ''
+  );
+
 const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
 const configuredHostedUrl = import.meta.env.VITE_SUPABASE_PUBLIC_URL?.trim() || '';
 

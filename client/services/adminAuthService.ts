@@ -1,4 +1,4 @@
-import { getSupabaseBaseUrl } from './supabaseRuntime';
+import { getSupabaseBaseUrl, getSupabasePublishableKey } from './supabaseRuntime';
 
 export type AdminAuthProvider = 'firebase' | 'supabase';
 
@@ -25,7 +25,7 @@ interface SupabaseAdminSession {
 }
 
 const supabaseUrl = getSupabaseBaseUrl();
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || '';
+const supabasePublishableKey = getSupabasePublishableKey();
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
 const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;

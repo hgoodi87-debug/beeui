@@ -11,8 +11,7 @@ const storage = {} as any; // 더미
 const ref = (_s: any, path: string) => ({ _path: path });
 const uploadBytes = async (storageRef: any, file: Blob | ArrayBuffer, _metadata?: any) => {
   // Supabase Storage signed upload
-  const { getSupabasePublishableKey: _getKey } = await import('./supabaseRuntime');
-  const SUPABASE_KEY = _getKey();
+  const SUPABASE_KEY = getSupabasePublishableKey();
   const bucket = 'brand-public';
   const path = storageRef._path;
   const res = await fetch(resolveSupabaseUrl(`/storage/v1/object/${bucket}/${path}`), {

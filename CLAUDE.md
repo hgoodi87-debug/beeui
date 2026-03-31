@@ -42,6 +42,12 @@
     beeliber_operations/ # Layer 3 운영 하네스 (상태머신·SLA·기사배정·이슈)
     beeliber_ai_harness/ # Layer 4 AI 하네스 (생성·검사·승인·배포 통제)
     beeliber_eval/       # Layer 6 성과 측정 (KPI·실패분석·회고)
+    db_audit_auth/       # DB 검수: AUTH & ORGANIZATION (profiles·roles·branches·employees)
+    db_audit_reservation/ # DB 검수: RESERVATION CORE (reservations·booking_details·payments)
+    db_audit_operations/ # DB 검수: OPERATIONS & FINANCE (locations·daily_closings·service_rules)
+    db_audit_cms/        # DB 검수: CMS & AI (cms_contents·ai_outputs·google_reviews)
+    db_audit_comms/      # DB 검수: COMMUNICATIONS (chat_sessions·notifications)
+    db_audit_promotion/  # DB 검수: PROMOTION & PARTNERSHIPS (discount_codes·user_coupons)
   rules/
     brand_guide_v2.md    # 브랜드 가이드 v4 최우선 적용 규칙 (파일명 유지, 내용 v4)
     blueprint.md         # 설계/기획 모드 트리거

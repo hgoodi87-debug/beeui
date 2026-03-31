@@ -50,6 +50,21 @@
     db_audit_cms/        # DB 검수: CMS & AI (cms_contents·ai_outputs·google_reviews)
     db_audit_comms/      # DB 검수: COMMUNICATIONS (chat_sessions·notifications)
     db_audit_promotion/  # DB 검수: PROMOTION & PARTNERSHIPS (discount_codes·user_coupons)
+    # 서브에이전트 (14명)
+    agent_mira/          # 미라 — 브랜드 매니저 (Brand)
+    agent_sora/          # 소라 — SEO 전문가 (Brand)
+    agent_jay/           # 제이 — 예약 엔지니어 (Commerce)
+    agent_toss/          # 토스 — 결제 엔지니어 (Commerce)
+    agent_maru/          # 마루 — 운영 매니저 (Operations)
+    agent_dbi/           # 디비 — DB 관리자 (Operations)
+    agent_core/          # 코어 — 백엔드 아키텍트 (Engineering)
+    agent_guard/         # 가드 — 보안 엔지니어 (Engineering)
+    agent_supa/          # 슈파 — Supabase 전문가 (Engineering)
+    agent_pika/          # 피카 — UI/UX 디자이너 (Design)
+    agent_sti/           # 스티 — QA 디자이너 (Design)
+    agent_nuri/          # 누리 — AI 콘텐츠 매니저 (AI)
+    agent_qa/            # 큐에이 — QA 리드 (QA)
+    agent_review/        # 리뷰 — 코드 리뷰어 (QA)
   rules/
     brand_guide_v2.md    # 브랜드 가이드 v4 최우선 적용 규칙 (파일명 유지, 내용 v4)
     blueprint.md         # 설계/기획 모드 트리거
@@ -63,6 +78,30 @@
   workflows/
     screenshot-to-code.md # 스샷 → 코드 자동 반영 워크플로우
 ```
+
+## 하네스 필수 참조 규칙
+
+**모든 작업을 할 때는 반드시 하네스 문서를 먼저 읽고 구조를 파악한 후 작업한다.**
+- 코드 수정 전: 관련 스킬 + 에이전트 SKILL.md 참조
+- DB 작업 전: `docs/DATABASE_STRUCTURE_MAP.md` + `db_audit_*` 참조
+- UI 작업 전: `beeliber_design` + `beeliber_ui_map` 참조
+- 예약/가격 작업 전: `beeliber_booking_flow` + `beeliber_pricing` 참조
+- 배포 전: `beeliber_security` + `agent_guard` + `agent_qa` 검수
+
+## 서브에이전트 호출 가이드
+
+| 작업 유형 | 호출 에이전트 |
+|----------|------------|
+| 텍스트/콘텐츠 수정 | 미라(브랜드) + 소라(SEO) |
+| 예약/가격 로직 | 제이(예약) + 가드(보안) |
+| 결제 관련 | 토스(결제) + 가드(보안) |
+| 운영 상태 | 마루(운영) |
+| DB/마이그레이션 | 디비(DB) + 슈파(Supabase) |
+| 아키텍처 변경 | 코어(아키텍트) |
+| UI 수정 | 피카(디자인) → 스티(QA) 검수 |
+| AI 콘텐츠 | 누리(AI) + 미라(브랜드) |
+| 배포 전 | 큐에이(QA) + 가드(보안) |
+| 코드 리뷰 | 리뷰(리뷰어) |
 
 ## 스킬 참조 우선순위
 

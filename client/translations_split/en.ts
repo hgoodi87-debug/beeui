@@ -411,7 +411,7 @@ export const en = {
     locations_page: {
         title: 'Service Points', sidebar_title: 'Service Points', sidebar_subtitle: 'Seoul Hub Network',
         select_baggage_title: 'Select Baggage', bag_unit_4h: '/4h~',
-        filter_all: 'All', filter_airport: 'Airport', filter_partner: 'Partner', filter_city: 'City', back: 'Main', no_results: 'No branches found.',
+        filter_all: 'All', filter_airport: 'Airport', filter_partner: 'Partner', filter_city: 'City', back: 'Main', no_results: 'No locations available.', no_results_hint: 'Select your dates above to see storage locations near you.',
         info_card_delivery: 'Delivery', info_card_storage: 'Storage', 
         book_delivery: 'Reserve Delivery', book_storage: 'Reserve Storage',
         search_placeholder: 'Search location (e.g. Hotel, Station)', search_error: 'Search failed.',

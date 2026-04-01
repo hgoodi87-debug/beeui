@@ -436,7 +436,7 @@ export const ko = {
     locations_page: {
         title: '빌리버 거점 안내', sidebar_title: 'Service Points', sidebar_subtitle: '서울 핵심 거점 안내',
         select_baggage_title: '가방 선택', bag_unit_4h: '/4시간~',
-        filter_all: '전체', filter_airport: '공항', filter_partner: '지점 파트너스', filter_city: '도심', back: '메인으로', no_results: '등록된 지점이 없습니다.',
+        filter_all: '전체', filter_airport: '공항', filter_partner: '지점 파트너스', filter_city: '도심', back: '메인으로', no_results: '이 지역에 이용 가능한 지점이 없습니다.', no_results_hint: '위에서 날짜를 선택하면 근처 보관 가능 지점을 확인할 수 있어요.',
         info_card_delivery: '배송(Delivery)', info_card_storage: '보관(Storage)',
         book_delivery: '배송 예약하기', book_storage: '보관 예약하기',
         search_placeholder: '내 위치 검색 (예: 호텔명, 역 이름)', search_error: '검색에 실패했습니다.',

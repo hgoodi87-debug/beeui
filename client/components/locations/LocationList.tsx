@@ -541,8 +541,10 @@ const LocationList: React.FC<LocationListProps> = ({
                 </div>
 
                 {filteredBranches.length === 0 && (
-                    <div className="py-10 text-center flex flex-col items-center w-full bg-white/50 backdrop-blur-sm rounded-[2rem]">
-                        <p className="text-gray-400 font-bold text-sm tracking-tight">{t.locations_page?.no_results || 'No branches found.'}</p>
+                    <div className="py-12 text-center flex flex-col items-center w-full bg-white/50 backdrop-blur-sm rounded-[2rem] gap-3 px-6">
+                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl mb-1">📍</div>
+                        <p className="text-gray-700 font-black text-sm tracking-tight">{t.locations_page?.no_results || 'No locations available.'}</p>
+                        <p className="text-gray-400 font-medium text-xs leading-relaxed max-w-[240px]">{t.locations_page?.no_results_hint || 'Select your dates above to see storage locations near you.'}</p>
                     </div>
                 )}
 

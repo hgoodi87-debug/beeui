@@ -446,7 +446,7 @@ export const zhTW = {
     locations_page: {
         title: '網點指南', sidebar_title: 'Service Points', sidebar_subtitle: '首爾主要網點指南',
         select_baggage_title: '選擇行李', bag_unit_4h: '/4小時起',
-        filter_all: '全部', filter_airport: '機場', filter_partner: '合作夥伴', filter_city: '市區', back: '回到主頁', no_results: '沒有註冊的網點。',
+        filter_all: '全部', filter_airport: '機場', filter_partner: '合作夥伴', filter_city: '市區', back: '回到主頁', no_results: '目前此區域無可用地點。', no_results_hint: '請在上方選擇日期，查看附近的寄存地點。',
         info_card_delivery: '配送(Delivery)', info_card_storage: '寄存(Storage)',
         book_delivery: '立即預約配送', book_storage: '立即預約寄存',
         search_placeholder: '搜索當前位置 (酒店, 車站等)', search_error: '搜索失敗。',

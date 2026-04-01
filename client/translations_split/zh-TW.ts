@@ -118,7 +118,7 @@ export const zhTW = {
         footer_label3: "安全雲加密"
     },
     pricing: {
-        headline: "比搭車更實惠，換取一整天的完美自由",
+        headline: "一口價方案，換取一整天的完美自由",
         desc: "無需複雜的重量或尺寸計算，提供直觀的一口價方案。",
         airport_hotel: "標準行李箱 (機場 ↔ 酒店)",
         extra_large: "超大件行李",

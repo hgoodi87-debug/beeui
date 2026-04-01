@@ -119,7 +119,7 @@ export const en = {
         choose_service_btn: "CHOOSE SERVICE"
     },
     pricing: {
-        headline: "Cheaper than a taxi,\ncomplete freedom for a day",
+        headline: "One flat rate.\nComplete freedom for a day.",
         desc: "We propose an intuitive flat rate\nwithout complex weight/size calculations.",
         airport_hotel: "Standard Suitcase (Airport ↔ Hotel)",
         extra_large: "Extra Large Luggage",

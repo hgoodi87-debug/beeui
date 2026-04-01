@@ -102,7 +102,14 @@ const getSingleBagStoragePrice = (hours: number, rate: StorageRate): number => {
 
     const extraHours = roundedHours - 24;
     const extraDays = Math.ceil(extraHours / 24);
-    return rate.day1 + (extraDays * rate.extraDay);
+    const normalPrice = rate.day1 + (extraDays * rate.extraDay);
+
+    // 7일 패키지: extraDays >= 6 (총 7일 이상)이면 day7 패키지가 더 저렴
+    if (extraDays >= 6 && rate.day7 > 0) {
+        return Math.min(normalPrice, rate.day7);
+    }
+
+    return normalPrice;
 };
 
 const getSingleBagBreakdown = (hours: number, t: { d: string; h: string }): string => {

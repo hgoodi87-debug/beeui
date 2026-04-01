@@ -36,6 +36,7 @@ jobs:
           VITE_ADMIN_AUTH_PROVIDER: ${{ vars.VITE_ADMIN_AUTH_PROVIDER }}
           VITE_TOSS_PAYMENTS_ENABLED: 'false'
           VITE_TOSS_PAYMENTS_MOCK_MODE: 'false'
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
       - name: Prepare Firebase credentials
         shell: bash

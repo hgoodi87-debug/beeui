@@ -65,7 +65,7 @@ export const sendMessageToClaude = async (
         max_tokens: 1024,
         system: getClaudeSystemPrompt(),
         messages: [
-          ...messages.map(m => ({ role: m.role, content: m.text || m.content })),
+          ...messages.map(m => ({ role: m.role, content: m.content || (m as any).text || '' })),
           { role: "user", content: newMessage }
         ],
       }),

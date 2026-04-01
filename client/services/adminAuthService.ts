@@ -586,8 +586,11 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     resolvedEmail = await resolveSupabaseLoginEmail(identifier);
   }
 
+  // 보안: 임의 이메일 자동 생성 제거 — 폴백 맵 또는 DB에 없으면 로그인 차단
   if (!resolvedEmail && !directEmailInput) {
-    resolvedEmail = `${identifier.toLowerCase()}@bee-liber.com`;
+    const error = new Error('등록되지 않은 관리자입니다. 이메일 또는 등록된 ID로 로그인해주세요.') as Error & { code?: string };
+    error.code = 'supabase/unknown-admin';
+    throw error;
   }
 
   if (!resolvedEmail) {

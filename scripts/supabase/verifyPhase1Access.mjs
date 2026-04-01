@@ -1,14 +1,15 @@
-const requiredEnv = ['SUPABASE_URL', 'SUPABASE_SECRET_KEY'];
+if (!process.env.SUPABASE_URL) {
+  console.error('[verifyPhase1Access] Missing environment variable: SUPABASE_URL');
+  process.exit(1);
+}
 
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    console.error(`[verifyPhase1Access] Missing environment variable: ${key}`);
-    process.exit(1);
-  }
+const secretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!secretKey) {
+  console.error('[verifyPhase1Access] Missing environment variable: SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
 }
 
 const supabaseUrl = process.env.SUPABASE_URL.replace(/\/+$/, '');
-const secretKey = process.env.SUPABASE_SECRET_KEY;
 
 const headers = {
   apikey: secretKey,
@@ -62,6 +63,10 @@ const summarize = (result) => {
     return `${result.label}: MISSING_TABLE`;
   }
 
+  if (result.status === 401 || result.status === 403) {
+    return `${result.label}: AUTH_CONFIG_ERROR(${result.status})`;
+  }
+
   if (!result.ok) {
     return `${result.label}: ERROR(${result.status})`;
   }
@@ -104,6 +109,14 @@ const missingPhase1Tables = results
       typeof result.body === 'object' &&
       result.body.code === 'PGRST205'
   );
+
+const hasAuthConfigError = results.some((result) => result.status === 401 || result.status === 403);
+
+if (hasAuthConfigError) {
+  console.log('');
+  console.log('Next step: check SUPABASE_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY. The current server-side key could not access Supabase Auth or REST APIs.');
+  process.exit(3);
+}
 
 if (missingPhase1Tables) {
   console.log('');

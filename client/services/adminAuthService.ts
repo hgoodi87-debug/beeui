@@ -24,6 +24,25 @@ interface SupabaseAdminSession {
   expiresAt?: number;
 }
 
+interface SupabaseAuthUser {
+  id?: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}
+
+interface SupabaseAuthTokenResponse {
+  access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  user?: SupabaseAuthUser;
+  session?: {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    user?: SupabaseAuthUser;
+  };
+}
+
 const config = getSupabaseConfig();
 const supabaseUrl = config.url;
 const supabasePublishableKey = config.anonKey;
@@ -495,6 +514,40 @@ const supabaseRequest = async <T>(
   return body as T;
 };
 
+const normalizeSupabaseAuthPayload = async (authResponse: SupabaseAuthTokenResponse) => {
+  const accessToken = String(
+    authResponse.access_token
+    || authResponse.session?.access_token
+    || ''
+  ).trim();
+  const refreshToken = String(
+    authResponse.refresh_token
+    || authResponse.session?.refresh_token
+    || ''
+  ).trim();
+  const expiresIn = Number(
+    authResponse.expires_in
+    || authResponse.session?.expires_in
+    || 0
+  ) || undefined;
+
+  let user = authResponse.user || authResponse.session?.user || null;
+  if (!user?.id && accessToken) {
+    try {
+      user = await supabaseRequest<SupabaseAuthUser>('/auth/v1/user', {}, accessToken);
+    } catch (error) {
+      console.warn('[AdminAuth] Supabase /auth/v1/user fallback failed:', error);
+    }
+  }
+
+  return {
+    accessToken,
+    refreshToken: refreshToken || undefined,
+    expiresIn,
+    user,
+  };
+};
+
 const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
   const normalizedIdentifier = normalizeAdminIdentifier(identifier);
   if (!normalizedIdentifier) return '';
@@ -600,16 +653,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     throw error;
   }
 
-  const authResponse = await supabaseRequest<{
-    access_token: string;
-    refresh_token: string;
-    expires_in?: number;
-    user: {
-      id: string;
-      email?: string;
-      user_metadata?: Record<string, unknown>;
-    };
-  }>(
+  const authResponse = await supabaseRequest<SupabaseAuthTokenResponse>(
     '/auth/v1/token?grant_type=password',
     {
       method: 'POST',
@@ -620,11 +664,15 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     }
   );
 
-  const accessToken = authResponse.access_token;
-  const user = authResponse.user;
+  const {
+    accessToken,
+    refreshToken,
+    expiresIn,
+    user,
+  } = await normalizeSupabaseAuthPayload(authResponse);
 
-  if (!user || !user.id) {
-    const error = new Error('로그인 응답에서 사용자 정보를 찾을 수 없습니다. 이메일/비밀번호를 확인해주세요.') as Error & { code?: string };
+  if (!accessToken || !user || !user.id) {
+    const error = new Error('로그인 응답에서 사용자 또는 세션 정보를 찾을 수 없습니다. Supabase Auth 설정을 확인해주세요.') as Error & { code?: string };
     error.code = 'supabase/invalid-auth-response';
     throw error;
   }
@@ -718,14 +766,14 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
 
   persistSupabaseAdminSession({
     accessToken,
-    refreshToken: authResponse.refresh_token,
+    refreshToken,
     userId: user.id,
     email: user.email || resolvedEmail || identifier,
     provider: 'supabase',
     savedAt: Date.now(),
     expiresAt: resolveSessionExpiry(
       Date.now(),
-      authResponse.expires_in ? Date.now() + authResponse.expires_in * 1000 : undefined
+      expiresIn ? Date.now() + expiresIn * 1000 : undefined
     ),
   });
 

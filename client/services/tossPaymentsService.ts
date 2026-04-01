@@ -1,8 +1,8 @@
 // Firebase 완전 제거 — Supabase Edge Function 사용
-import { getSupabaseBaseUrl } from './supabaseRuntime';
+import { getSupabaseBaseUrl, getSupabaseConfig } from './supabaseRuntime';
 
 const SUPABASE_URL = getSupabaseBaseUrl();
-const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+const SUPABASE_KEY = getSupabaseConfig().anonKey;
 import { BookingState } from '../types';
 
 const tossClientKey = import.meta.env.VITE_TOSS_PAYMENTS_CLIENT_KEY?.trim() || '';

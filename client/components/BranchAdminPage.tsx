@@ -5,7 +5,7 @@ import { BookingState, BookingStatus, LocationOption, ServiceType, StorageTier }
 import BookingDetailModal from './admin/BookingDetailModal';
 import BranchHeader from './branch/BranchHeader';
 import { DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS } from '../src/domains/booking/bagCategoryUtils';
-import { getSupabaseBaseUrl } from '../services/supabaseRuntime';
+import { getSupabaseBaseUrl, getSupabaseConfig } from '../services/supabaseRuntime';
 import { isSupabaseDataEnabled, supabaseMutate } from '../services/supabaseClient';
 
 const BranchStaffTab = lazy(() => import('./branch/BranchStaffTab'));
@@ -152,7 +152,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
             const bookingDetailId = isSupabaseBookingDetailId(booking.id) ? booking.id : String((await StorageService.getBooking(booking.id))?.id || '').trim();
             if (!isSupabaseBookingDetailId(bookingDetailId)) throw new Error('Supabase booking_details id를 찾을 수 없습니다.');
             const SUPABASE_URL = getSupabaseBaseUrl();
-            const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+            const SUPABASE_KEY = getSupabaseConfig().anonKey;
             const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },

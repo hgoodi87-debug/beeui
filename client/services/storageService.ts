@@ -1385,7 +1385,7 @@ export const StorageService = {
     // Supabase Edge Function 호출
     try {
       const SUPABASE_URL = getSupabaseBaseUrl();
-      const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+      const SUPABASE_KEY = getSupabaseConfig().anonKey;
       const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },

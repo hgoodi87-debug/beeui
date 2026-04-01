@@ -332,9 +332,8 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
             <footer className="py-20 text-center border-t border-gray-200 bg-white relative overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-1 bg-gradient-to-r from-transparent via-bee-yellow/50 to-transparent"></div>
                 <div className="max-w-xl mx-auto px-6">
-                    <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter text-bee-black mb-8 flex items-center justify-center gap-3">
+                    <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter text-bee-black mb-8">
                         {t.footer_msg}
-                        <span className="not-italic text-4xl inline-block hover:rotate-12 transition-transform cursor-pointer">🐝</span>
                     </h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
                         © 2025 Beeliber Global Logistics.<br className="md:hidden" /> Designed by Beeliber Team.

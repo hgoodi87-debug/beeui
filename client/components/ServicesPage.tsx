@@ -189,7 +189,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
             {/* Section 4: Trust Dashboard */}
             <section className="py-24 px-6 bg-bee-black text-white relative overflow-hidden">
                 <div className="absolute -left-40 -top-40 w-96 h-96 bg-bee-yellow/15 rounded-full blur-[100px]"></div>
-                <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px]"></div>
+                <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-bee-yellow/5 rounded-full blur-[80px]"></div>
 
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10">
                     <div className="md:w-1/2 space-y-8">
@@ -214,7 +214,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-5 bg-white/5 p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                <div className="w-12 h-12 rounded-full bg-bee-yellow/20 flex items-center justify-center text-bee-yellow shrink-0">
                                     <ShieldCheck className="w-6 h-6" />
                                 </div>
                                 <div>

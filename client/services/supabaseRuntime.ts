@@ -1,11 +1,22 @@
 const DEFAULT_SUPABASE_HOSTED_URL = 'https://xpnfjolqiffduedwtxey.supabase.co';
-const fallbackAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbmZqb2xxaWZmZHVlZHd0eGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzEyOTQsImV4cCI6MjA5MDE0NzI5NH0.60fV5WzgBcF1WEetrBwy58yAs-lOtbPk2M57_0Lt3-E';
+const FALLBACK_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbmZqb2xxaWZmZHVlZHd0eGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzEyOTQsImV4cCI6MjA5MDE0NzI5NH0.60fV5WzgBcF1WEetrBwy58yAs-lOtbPk2M57_0Lt3-E';
+
+const LEGACY_PROJECT_ID = 'fzvfyeskdivulazjjpgr';
 
 export const getSupabaseConfig = () => {
+  const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+
+  // 레거시 프로젝트(fzvf...)가 감지되면 운영 프로젝트(xpnf...)로 전환
+  const isLegacyUrl = envUrl.includes(LEGACY_PROJECT_ID);
+  const finalUrl = (isLegacyUrl || !envUrl) ? DEFAULT_SUPABASE_HOSTED_URL : envUrl;
+  const finalKey = (isLegacyUrl || !envKey) ? FALLBACK_ANON_KEY : envKey;
+
   return {
-    url: import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_HOSTED_URL,
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || fallbackAnonKey,
-    isFallback: !import.meta.env.VITE_SUPABASE_URL
+    url: finalUrl,
+    anonKey: finalKey,
+    isFallback: !import.meta.env.VITE_SUPABASE_URL || isLegacyUrl,
+    isLegacyBlocked: isLegacyUrl
   };
 };
 
@@ -38,36 +49,25 @@ const joinBaseAndPath = (base: string, path: string) => {
 };
 
 export const getSupabaseBaseUrl = () => {
-  const normalizedRaw = normalizeBase(rawSupabaseUrl);
-  const normalizedHosted = normalizeBase(configuredHostedUrl);
-
-  if (!normalizedRaw) {
-    return normalizedHosted;
-  }
-
-  if (normalizedRaw.startsWith('/')) {
-    return isLocalProxyHost() ? normalizedRaw : normalizedHosted;
-  }
-
-  return normalizedRaw;
+  return getSupabaseConfig().url;
 };
 
 /**
  * [스봉이] 현재 Supabase 연결 환경 진단 정보 💅
  */
 export const getSupabaseDiagnosis = () => {
-  const normalizedRaw = normalizeBase(rawSupabaseUrl);
-  const normalizedHosted = normalizeBase(configuredHostedUrl);
-  const current = getSupabaseBaseUrl();
-  const isFallback = !normalizedRaw || (normalizedRaw.startsWith('/') && !isLocalProxyHost());
+  const config = getSupabaseConfig();
+  const current = config.url;
+  const isFallback = config.isFallback;
 
   return {
     url: current,
     usingFallback: isFallback,
-    source: isFallback ? 'hardcoded-fallback' : 'env-variable',
-    isLocalProxy: isLocalProxyHost() && normalizedRaw.startsWith('/'),
-    rawEnvUrl: rawSupabaseUrl || '(empty)',
-    configuredHostedUrl: configuredHostedUrl || '(empty)',
+    source: isFallback ? (config.isLegacyBlocked ? 'legacy-project-blocked' : 'hardcoded-fallback') : 'env-variable',
+    isLocalProxy: isLocalProxyHost() && (import.meta.env.VITE_SUPABASE_URL || '').startsWith('/'),
+    rawEnvUrl: import.meta.env.VITE_SUPABASE_URL || '(empty)',
+    configuredHostedUrl: DEFAULT_SUPABASE_HOSTED_URL,
+    isLegacyBlocked: config.isLegacyBlocked,
   };
 };
 

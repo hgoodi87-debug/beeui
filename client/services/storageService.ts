@@ -461,11 +461,47 @@ const preferTranslatedValue = (value?: string, fallback?: string) => {
   return trimmedFallback || undefined;
 };
 
+// Simplified Chinese → Traditional Chinese conversion for common location terms
+const SC2TC: Record<string, string> = {
+  '机场': '機場', '车站': '車站', '广域市': '廣域市', '特别市': '特別市',
+  '区': '區', '路': '路', '街': '街', '号': '號', '层': '層', '楼': '樓',
+  '门': '門', '东': '東', '龙': '龍', '国际线': '國際線', '出境大厅': '出境大廳',
+  '入境大厅': '入境大廳', '寄存处': '寄存處', '柜台': '櫃台', '请': '請',
+  '预订': '預訂', '会面': '會面', '步行': '步行', '弘益大学站': '弘益大學站',
+  '首尔': '首爾', '仁川': '仁川', '金浦': '金浦', '龙山': '龍山',
+  '永登浦': '永登浦', '麻浦': '麻浦', '江南': '江南', '江西': '江西',
+  '中': '中', '钟': '鐘', '广': '廣', '东大门': '東大門', '南大门': '南大門',
+  '梨泰院': '梨泰院', '明洞': '明洞', '弘大': '弘大', '延南': '延南',
+  '圣水': '聖水', '仁寺洞': '仁寺洞', '安国': '安國', '忠武路': '忠武路',
+  '松岛': '松島', '平泽': '平澤', '水原': '水原', '富平': '富平',
+  '昌原': '昌原', '光州': '光州', '釜山': '釜山', '济州': '濟州',
+  '海云台': '海雲台', '光安里': '光安里', '金海': '金海', '大邱': '大邱',
+  '蔚山': '蔚山', '汉江大路': '漢江大路', '世界杯北路': '世界杯北路',
+  '店': '店', '站': '站', '机场': '機場', '寄存': '寄存',
+  '请前往': '請前往', '工作人员': '工作人員',
+  '告知您的': '告知您的', '请寄存在': '請寄存在',
+  '行理': '行李', '寻找': '尋找', '标志': '標誌',
+};
+
+const simplifiedToTraditional = (text?: string): string | undefined => {
+  if (!text) return undefined;
+  let result = text;
+  // Sort keys by length descending to match longer phrases first
+  const sorted = Object.entries(SC2TC).sort((a, b) => b[0].length - a[0].length);
+  for (const [sc, tc] of sorted) {
+    result = result.split(sc).join(tc);
+  }
+  return result;
+};
+
 const normalizeLocationTranslations = (location: LocationOption): LocationOption => {
   const baseName = location.name?.trim();
   const baseAddress = location.address?.trim();
   const zhName = preferTranslatedValue(location.name_zh, baseName);
   const zhAddress = preferTranslatedValue(location.address_zh, baseAddress);
+  const zhDesc = preferTranslatedValue((location as any).description_zh, location.description?.trim());
+  const zhGuide = preferTranslatedValue((location as any).pickupGuide_zh);
+  const zhHours = preferTranslatedValue((location as any).businessHours_zh, (location as any).businessHours);
 
   return {
     ...location,
@@ -474,14 +510,20 @@ const normalizeLocationTranslations = (location: LocationOption): LocationOption
     name_en: preferTranslatedValue(location.name_en, baseName),
     name_ja: preferTranslatedValue(location.name_ja, baseName),
     name_zh: zhName,
-    name_zh_tw: preferTranslatedValue(location.name_zh_tw, zhName),
-    name_zh_hk: preferTranslatedValue(location.name_zh_hk, zhName),
+    name_zh_tw: preferTranslatedValue(location.name_zh_tw, simplifiedToTraditional(zhName)),
+    name_zh_hk: preferTranslatedValue(location.name_zh_hk, simplifiedToTraditional(zhName)),
     address_en: preferTranslatedValue(location.address_en, baseAddress),
     address_ja: preferTranslatedValue(location.address_ja, baseAddress),
     address_zh: zhAddress,
-    address_zh_tw: preferTranslatedValue(location.address_zh_tw, zhAddress),
-    address_zh_hk: preferTranslatedValue(location.address_zh_hk, zhAddress),
-  };
+    address_zh_tw: preferTranslatedValue(location.address_zh_tw, simplifiedToTraditional(zhAddress)),
+    address_zh_hk: preferTranslatedValue(location.address_zh_hk, simplifiedToTraditional(zhAddress)),
+    description_zh_tw: preferTranslatedValue((location as any).description_zh_tw, simplifiedToTraditional(zhDesc)),
+    description_zh_hk: preferTranslatedValue((location as any).description_zh_hk, simplifiedToTraditional(zhDesc)),
+    pickupGuide_zh_tw: preferTranslatedValue((location as any).pickupGuide_zh_tw, simplifiedToTraditional(zhGuide)),
+    pickupGuide_zh_hk: preferTranslatedValue((location as any).pickupGuide_zh_hk, simplifiedToTraditional(zhGuide)),
+    businessHours_zh_tw: preferTranslatedValue((location as any).businessHours_zh_tw, zhHours),
+    businessHours_zh_hk: preferTranslatedValue((location as any).businessHours_zh_hk, zhHours),
+  } as LocationOption;
 };
 
 export const canUseLocalLegacyReadBridge = () => {
@@ -1209,12 +1251,33 @@ export const StorageService = {
   },
 
   subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
+    // Build a Set of all identifiers for this location (UUID, shortCode, branchCode, name)
+    // so bookings stored with any identifier format will match.
+    const buildLocationIdSet = (allLocations?: LocationOption[]): Set<string> => {
+      const ids = new Set<string>();
+      ids.add(locationId);
+      const loc = (allLocations || []).find(l => l.id === locationId || l.shortCode === locationId || (l as any).branchCode === locationId);
+      if (loc) {
+        if (loc.id) ids.add(loc.id);
+        if (loc.shortCode) ids.add(loc.shortCode);
+        if ((loc as any).branchCode) ids.add((loc as any).branchCode);
+        if ((loc as any).branchId) ids.add((loc as any).branchId);
+        if (loc.name) ids.add(loc.name);
+      }
+      return ids;
+    };
+
+    // Pre-load locations for identifier resolution
+    let locationIdSet = new Set<string>([locationId]);
+    StorageService.getLocations().then(locs => { locationIdSet = buildLocationIdSet(locs); });
+
     const filterLocationBookings = (items: BookingState[]) =>
       sortBookingsByPickupDateDesc(
         normalizeBookingsForDeliveryPolicy(items).filter((booking) =>
-          booking.pickupLocation === locationId ||
-          booking.dropoffLocation === locationId ||
-          booking.branchId === locationId
+          locationIdSet.has(booking.pickupLocation || '') ||
+          locationIdSet.has(booking.dropoffLocation || '') ||
+          locationIdSet.has(booking.branchId || '') ||
+          locationIdSet.has((booking as any).pickupLocationId || '')
         )
       );
 

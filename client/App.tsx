@@ -561,6 +561,12 @@ const App: React.FC = () => {
     }
   }, [t]);
 
+  // Safety timeout: force remove loader after 5s even if translations fail
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => setIsInitialLoad(false), 5000);
+    return () => clearTimeout(safetyTimer);
+  }, []);
+
   const LoaderOverlay = React.memo(({ show }: { show: boolean }) => (
     <AnimatePresence>
       {show && (

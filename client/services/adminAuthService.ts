@@ -529,7 +529,8 @@ const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
   settled.forEach((result, index) => {
     if (result.status !== 'fulfilled') return;
     const rank = lookups[index]?.rank ?? 99;
-    result.value.forEach((row) => {
+    const rows = Array.isArray(result.value) ? result.value : [];
+    rows.forEach((row) => {
       if (!normalizeAdminIdentifier(row.email)) return;
       candidates.push({ row, rank });
     });
@@ -622,6 +623,12 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   const accessToken = authResponse.access_token;
   const user = authResponse.user;
 
+  if (!user || !user.id) {
+    const error = new Error('로그인 응답에서 사용자 정보를 찾을 수 없습니다. 이메일/비밀번호를 확인해주세요.') as Error & { code?: string };
+    error.code = 'supabase/invalid-auth-response';
+    throw error;
+  }
+
   const [profiles, employees] = await Promise.all([
     supabaseRequest<Array<{
     id: string;
@@ -645,8 +652,8 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     accessToken
   )]);
 
-  const employee = employees[0];
-  const profile = profiles[0];
+  const employee = (Array.isArray(employees) ? employees : [])[0];
+  const profile = (Array.isArray(profiles) ? profiles : [])[0];
 
   if (!employee) {
     const error = new Error('직원 프로필이 아직 준비되지 않았습니다.') as Error & { code?: string };
@@ -693,6 +700,9 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   } catch (joinErr) {
     console.warn('[AdminAuth] roles/branches JOIN 부분 실패, 폴백:', joinErr);
   }
+
+  employeeRoles = Array.isArray(employeeRoles) ? employeeRoles : [];
+  assignments = Array.isArray(assignments) ? assignments : [];
 
   const primaryRole = employeeRoles.find((entry) => entry.is_primary)?.role?.code
     || employeeRoles[0]?.role?.code

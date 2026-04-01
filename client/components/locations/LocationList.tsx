@@ -205,7 +205,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                 setActiveStep(next);
                             }} className="flex-1 flex items-center gap-2 md:gap-2 shrink-0 py-1.5 md:py-1.5 hover:bg-black/5 rounded-2xl transition-all justify-center">
                                 <div className="bg-bee-yellow text-bee-black text-[9px] md:text-[10px] font-black px-2 md:px-3 h-6 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-md border border-bee-black/5 whitespace-nowrap font-montserrat">
-                                    {lang === 'ko' ? (isDelivery ? '보내는날' : '맡기는 날') : (t.locations_page?.badge_pick?.slice(0, 1) || 'P')}
+                                    {lang === 'ko' ? (isDelivery ? '보내는날' : '맡기는 날') : (t.locations_page?.badge_pick || 'DROP')}
                                 </div>
                                 <div className="flex items-baseline gap-1.5 md:gap-2">
                                     <span className="text-[14px] md:text-[17px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap font-montserrat">{formatToMMDD(bookingDate)}</span>
@@ -219,7 +219,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                 setActiveStep(next);
                             }} className="flex-1 flex items-center gap-2 md:gap-2 shrink-0 py-1.5 md:py-1.5 hover:bg-black/5 rounded-2xl transition-all justify-center">
                                 <div className="bg-gray-100 text-gray-400 text-[9px] md:text-[10px] font-black px-2 md:px-3 h-6 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-md border border-gray-200 whitespace-nowrap font-montserrat">
-                                    {lang === 'ko' ? (isDelivery ? '받는날' : '찾는 날') : (t.locations_page?.badge_ret?.slice(0, 1) || 'R')}
+                                    {lang === 'ko' ? (isDelivery ? '받는날' : '찾는 날') : (t.locations_page?.badge_ret || 'PICK')}
                                 </div>
                                 <div className="flex items-baseline gap-1.5 md:gap-2">
                                     <span className="text-[14px] md:text-[17px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap font-montserrat">{formatToMMDD(returnDate)}</span>

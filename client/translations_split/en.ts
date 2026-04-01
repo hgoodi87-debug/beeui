@@ -416,7 +416,7 @@ export const en = {
         book_delivery: 'Reserve Delivery', book_storage: 'Reserve Storage',
         search_placeholder: 'Search location (e.g. Hotel, Station)', search_error: 'Search failed.',
         badge_delivery: 'DELIVERY', badge_same_day: 'SAME-DAY', badge_scheduled: 'SCHEDULED', badge_storage: 'STORAGE',
-        badge_pick: 'PICK', badge_ret: 'RET',
+        badge_pick: 'DROP', badge_ret: 'PICK',
         tag_airport_delivery: 'Airport Delivery', tag_both_services: 'Delivery | Storage', tag_storage_only: 'Storage Only', tag_delivery_only: 'Delivery Only',
         my_location: "My Location",
         user_marker: "Customer's Location",

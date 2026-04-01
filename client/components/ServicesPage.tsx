@@ -4,15 +4,17 @@ import { ShieldCheck, MapPin, Zap, PackageCheck, Smartphone, CheckCircle2, Box, 
 import TrackingWidget from './TrackingWidget';
 import Logo from './Logo';
 import SEO from './SEO';
+import LandingPricing from './landing/LandingPricing';
 import { useAppStore } from '../src/store/appStore';
 
 interface ServicesPageProps {
     onBack: () => void;
     t: any;
     landingT?: any;
+    pricingT?: any;
 }
 
-const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
+const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT, pricingT }) => {
     const lang = useAppStore(state => state.lang);
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -185,6 +187,11 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                     </div>
                 </div>
             </section>
+
+            {/* Section 3.5: Pricing */}
+            {pricingT && (
+                <LandingPricing t={{ pricing: pricingT }} onNavigate={onBack} lang={lang} />
+            )}
 
             {/* Section 4: Trust Dashboard */}
             <section className="py-24 px-6 bg-bee-black text-white relative overflow-hidden">

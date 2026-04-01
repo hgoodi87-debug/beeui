@@ -69,7 +69,7 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="relative" ref={langMenuRef}>
             <button
               onClick={() => setIsLangOpen(!isLangOpen)}
-              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-full transition-all border border-white/5 group"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 min-h-[44px] rounded-full transition-all border border-white/5 group"
             >
               <img
                 src={`https://flagcdn.com/w40/${currentLangObj.flag}.png`}
@@ -105,14 +105,14 @@ const Navbar: React.FC<NavbarProps> = ({
           {user && !user.isAnonymous ? (
             <button
               onClick={onMyPageClick}
-              className="text-[11px] font-black text-white/90 hover:text-bee-yellow transition-colors tracking-tighter px-2 py-1.5 uppercase"
+              className="text-[11px] font-black text-white/90 hover:text-bee-yellow transition-colors tracking-tighter px-3 min-h-[44px] uppercase"
             >
               {t.mypage || 'MY'}
             </button>
           ) : (
             <button
               onClick={onLoginClick}
-              className="text-[11px] font-black text-white/90 hover:text-bee-yellow transition-colors tracking-tighter px-2 py-1.5 uppercase"
+              className="text-[11px] font-black text-white/90 hover:text-bee-yellow transition-colors tracking-tighter px-3 min-h-[44px] uppercase"
             >
               {t.login || 'LOGIN'}
             </button>
@@ -121,7 +121,7 @@ const Navbar: React.FC<NavbarProps> = ({
           {/* Hamburger Menu - Classic 3-Line Button */}
           <button 
             onClick={onMenuClick}
-            className="w-9 h-9 bg-bee-yellow flex flex-col items-center justify-center gap-[3px] rounded-xl hover:bg-white hover:scale-105 active:scale-95 transition-all shadow-xl ml-1"
+            className="w-11 h-11 bg-bee-yellow flex flex-col items-center justify-center gap-[3px] rounded-xl hover:bg-white hover:scale-105 active:scale-95 transition-all shadow-xl ml-1"
           >
             <span className="w-4 h-[1.5px] bg-black rounded-full"></span>
             <span className="w-4 h-[1.5px] bg-black rounded-full"></span>

@@ -1849,8 +1849,9 @@ export const StorageService = {
       } catch (e) { console.warn("[Storage] Supabase qna failed:", e); }
     }
     try {
-      const snap = await getDoc(doc(db, "settings", "qna_policy"));
-      return snap.exists() ? snap.data() as QnaData : null;
+      const timeout = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Firebase qna timeout')), 3000));
+      const snap = await Promise.race([getDoc(doc(db, "settings", "qna_policy")), timeout]);
+      return snap && (snap as any).exists?.() ? (snap as any).data() as QnaData : null;
     } catch { return null; }
   },
 

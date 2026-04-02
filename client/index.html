@@ -174,23 +174,25 @@
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Preload for Hero Section Background Image -->
-  <link rel="preload" as="image"
-    href="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b" />
-
   <!-- reCAPTCHA Enterprise: lazy loaded on first booking interaction -->
 
   <!-- Google tag (gtag.js) - GA4 + Google Ads 📊 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA4_MEASUREMENT_ID%"></script>
+  <!-- 환경변수 미설정 시 스크립트 로드 자체를 건너뜀 (빈 ID로 GTM 요청 방지) -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    if ("%VITE_GA4_MEASUREMENT_ID%" && "%VITE_GA4_MEASUREMENT_ID%" !== "undefined") {
-      gtag('config', '%VITE_GA4_MEASUREMENT_ID%');
-    }
-    if ("%VITE_GOOGLE_ADS_ID%" && "%VITE_GOOGLE_ADS_ID%" !== "undefined") {
-      gtag('config', '%VITE_GOOGLE_ADS_ID%', { allow_enhanced_conversions: true });
+    var _ga4Id = '%VITE_GA4_MEASUREMENT_ID%';
+    var _adsId = '%VITE_GOOGLE_ADS_ID%';
+    if (_ga4Id && _ga4Id !== '%VITE_GA4_MEASUREMENT_ID%') {
+      var _s = document.createElement('script');
+      _s.async = true;
+      _s.src = 'https://www.googletagmanager.com/gtag/js?id=' + _ga4Id;
+      document.head.appendChild(_s);
+      gtag('js', new Date());
+      gtag('config', _ga4Id);
+      if (_adsId && _adsId !== '%VITE_GOOGLE_ADS_ID%') {
+        gtag('config', _adsId, { allow_enhanced_conversions: true });
+      }
     }
   </script>
 

@@ -53,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const currentLangObj = LANGUAGES.find(l => l.code === currentLang) || LANGUAGES[0];
+  const currentLangObj = LANGUAGES.find(l => l.code.toLowerCase() === currentLang.toLowerCase()) || LANGUAGES[0];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] px-4 py-2 md:py-3 transition-all duration-500 pointer-events-none">
@@ -85,7 +85,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   <button
                     key={lang.code}
                     onClick={() => { onLangChange(lang.code); setIsLangOpen(false); }}
-                    className={`flex items-center gap-3 px-5 py-2.5 hover:bg-white/5 transition-all text-left w-full ${currentLang === lang.code ? 'text-bee-yellow bg-white/5' : 'text-white/60'}`}
+                    className={`flex items-center gap-3 px-5 py-2.5 hover:bg-white/5 transition-all text-left w-full ${currentLang.toLowerCase() === lang.code.toLowerCase() ? 'text-bee-yellow bg-white/5' : 'text-white/60'}`}
                   >
                     <img
                       src={`https://flagcdn.com/w40/${lang.flag}.png`}

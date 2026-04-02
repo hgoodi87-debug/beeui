@@ -1,5 +1,5 @@
 import React from 'react';
-import { Instagram, Facebook, Twitter, MapPin, Mail, Phone, ArrowUp } from 'lucide-react';
+import { Facebook, Twitter, MapPin, Mail, Phone, ArrowUp } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 interface FooterProps {
@@ -38,9 +38,6 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
               {t.footer?.desc || "Experience the freedom of travel without baggage."}
             </p>
             <div className="flex gap-4 justify-center md:justify-start">
-              <a href="https://www.instagram.com/beeliber_official" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
-                <Instagram size={18} className="text-white hover:text-bee-black" />
-              </a>
               <a href="https://www.facebook.com/beeliber" target="_blank" rel="noopener noreferrer" title="Facebook" aria-label="Facebook" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow hover:text-bee-black transition-all">
                 <Facebook size={18} className="text-white hover:text-bee-black" />
               </a>
@@ -59,7 +56,7 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
                 <li><a href={buildHref()} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
                 <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
                 <li><a href={buildHref('/services')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
-                <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
+                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
                 <li><a href={buildHref('/vision')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="hover:text-bee-yellow transition-colors">Brand Vision</a></li>
                 <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">Q&A</a></li>
               </ul>

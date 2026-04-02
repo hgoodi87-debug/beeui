@@ -183,14 +183,14 @@
     function gtag(){dataLayer.push(arguments);}
     var _ga4Id = '%VITE_GA4_MEASUREMENT_ID%';
     var _adsId = '%VITE_GOOGLE_ADS_ID%';
-    if (_ga4Id && _ga4Id !== '%VITE_GA4_MEASUREMENT_ID%') {
+    if (_ga4Id && _ga4Id.indexOf('G-') === 0) {
       var _s = document.createElement('script');
       _s.async = true;
       _s.src = 'https://www.googletagmanager.com/gtag/js?id=' + _ga4Id;
       document.head.appendChild(_s);
       gtag('js', new Date());
       gtag('config', _ga4Id);
-      if (_adsId && _adsId !== '%VITE_GOOGLE_ADS_ID%') {
+      if (_adsId && _adsId.indexOf('AW-') === 0) {
         gtag('config', _adsId, { allow_enhanced_conversions: true });
       }
     }

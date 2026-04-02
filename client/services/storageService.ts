@@ -2620,13 +2620,15 @@ export const StorageService = {
     const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${config.apiKey}`;
 
     const prompt = `
-      Translate the following Korean location information into English (en), Japanese (ja), and Simplified Chinese (zh).
+      Translate the following Korean location information into English (en), Japanese (ja), Simplified Chinese (zh), Traditional Chinese Taiwan (zh_tw), and Traditional Chinese Hong Kong (zh_hk).
+      For addresses: use romanized Korean address format for English/Japanese, and appropriate localized format for Chinese variants.
+      For zh_tw use Taiwan Traditional Chinese conventions. For zh_hk use Hong Kong Traditional Chinese conventions.
       Provide the result in a strict JSON format with the following keys:
       {
-        "name_en": "...", "name_ja": "...", "name_zh": "...",
-        "address_en": "...", "address_ja": "...", "address_zh": "...",
-        "pickupGuide_en": "...", "pickupGuide_ja": "...", "pickupGuide_zh": "...",
-        "description_en": "...", "description_ja": "...", "description_zh": "..."
+        "name_en": "...", "name_ja": "...", "name_zh": "...", "name_zh_tw": "...", "name_zh_hk": "...",
+        "address_en": "...", "address_ja": "...", "address_zh": "...", "address_zh_tw": "...", "address_zh_hk": "...",
+        "pickupGuide_en": "...", "pickupGuide_ja": "...", "pickupGuide_zh": "...", "pickupGuide_zh_tw": "...", "pickupGuide_zh_hk": "...",
+        "description_en": "...", "description_ja": "...", "description_zh": "...", "description_zh_tw": "...", "description_zh_hk": "..."
       }
 
       Korean Data:

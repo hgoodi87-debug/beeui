@@ -111,8 +111,8 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         try {
             let count = 0;
             for (const loc of locations) {
-                // 주소가 있는데 영문, 일문, 중문 중 하나라도 비어있으면 보완 대상
-                if (loc.address && (!loc.address_en || !loc.address_ja || !loc.address_zh)) {
+                // 주소가 있는데 다국어 필드 중 하나라도 비어있으면 보완 대상
+                if (loc.address && (!loc.address_en || !loc.address_ja || !loc.address_zh || !loc.address_zh_tw || !loc.address_zh_hk)) {
                     console.log(`[스봉이] '${loc.name}' 데이터 분석 및 번역 요청... ✨`);
                     const result: TranslatedLocationData = await StorageService.translateLocationData({
                         name: loc.name,
@@ -127,15 +127,23 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         address_en: loc.address_en || result.address_en,
                         address_ja: loc.address_ja || result.address_ja,
                         address_zh: loc.address_zh || result.address_zh,
+                        address_zh_tw: loc.address_zh_tw || result.address_zh_tw,
+                        address_zh_hk: loc.address_zh_hk || result.address_zh_hk,
                         name_en: loc.name_en || result.name_en,
                         name_ja: loc.name_ja || result.name_ja,
                         name_zh: loc.name_zh || result.name_zh,
+                        name_zh_tw: loc.name_zh_tw || result.name_zh_tw,
+                        name_zh_hk: loc.name_zh_hk || result.name_zh_hk,
                         description_en: loc.description_en || result.description_en,
                         description_ja: loc.description_ja || result.description_ja,
                         description_zh: loc.description_zh || result.description_zh,
+                        description_zh_tw: loc.description_zh_tw || result.description_zh_tw,
+                        description_zh_hk: loc.description_zh_hk || result.description_zh_hk,
                         pickupGuide_en: loc.pickupGuide_en || result.pickupGuide_en,
                         pickupGuide_ja: loc.pickupGuide_ja || result.pickupGuide_ja,
                         pickupGuide_zh: loc.pickupGuide_zh || result.pickupGuide_zh,
+                        pickupGuide_zh_tw: loc.pickupGuide_zh_tw || result.pickupGuide_zh_tw,
+                        pickupGuide_zh_hk: loc.pickupGuide_zh_hk || result.pickupGuide_zh_hk,
                     });
                     count++;
                 }
@@ -580,7 +588,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 <input value={locForm.name ?? ''} onChange={e => setLocForm({ ...locForm, name: e.target.value })} placeholder="한글 명칭 입력 (예: 인천공항 T1)" title="지점명 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
                                 <input value={locForm.name_en || ''} onChange={e => setLocForm({ ...locForm, name_en: e.target.value })} placeholder="영어 명칭 입력 (예: Incheon Airport T1)" title="지점명 (영어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.name_ja || ''} onChange={e => setLocForm({ ...locForm, name_ja: e.target.value })} placeholder="일본어 명칭 입력 (예: 仁川空港 T1)" title="지점명 (일본어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.name_zh || ''} onChange={e => setLocForm({ ...locForm, name_zh: e.target.value })} placeholder="중국어 명칭 입력 (예: 仁川机场 T1)" title="지점명 (중국어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.name_zh || ''} onChange={e => setLocForm({ ...locForm, name_zh: e.target.value })} placeholder="중국어 간체 입력 (예: 仁川机场 T1)" title="지점명 (중국어 간체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.name_zh_tw || ''} onChange={e => setLocForm({ ...locForm, name_zh_tw: e.target.value })} placeholder="대만 번체 입력 (예: 仁川機場 T1)" title="지점명 (대만 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.name_zh_hk || ''} onChange={e => setLocForm({ ...locForm, name_zh_hk: e.target.value })} placeholder="홍콩 번체 입력 (예: 仁川機場 T1)" title="지점명 (홍콩 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                             </div>
                         </div>
                         <div>
@@ -611,7 +621,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <div className="mt-2 space-y-2">
                                 <input value={locForm.address_en || ''} onChange={e => setLocForm({ ...locForm, address_en: e.target.value })} placeholder="영어 주소 입력" title="상세 주소 (영어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.address_ja || ''} onChange={e => setLocForm({ ...locForm, address_ja: e.target.value })} placeholder="일본어 주소 입력" title="상세 주소 (일본어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.address_zh || ''} onChange={e => setLocForm({ ...locForm, address_zh: e.target.value })} placeholder="중국어 주소 입력" title="상세 주소 (중국어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.address_zh || ''} onChange={e => setLocForm({ ...locForm, address_zh: e.target.value })} placeholder="중국어 간체 주소 입력" title="상세 주소 (중국어 간체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.address_zh_tw || ''} onChange={e => setLocForm({ ...locForm, address_zh_tw: e.target.value })} placeholder="대만 번체 주소 입력" title="상세 주소 (대만 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.address_zh_hk || ''} onChange={e => setLocForm({ ...locForm, address_zh_hk: e.target.value })} placeholder="홍콩 번체 주소 입력" title="상세 주소 (홍콩 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                             </div>
                         </div>
 

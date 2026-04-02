@@ -607,9 +607,9 @@ const App: React.FC = () => {
     }
   }, [t]);
 
-  // Safety timeout: force remove loader after 5s even if translations fail
+  // Safety timeout: 번역 로드 실패 시 1.5s 후 강제 해제 (모바일 UX 개선)
   useEffect(() => {
-    const safetyTimer = setTimeout(() => setIsInitialLoad(false), 5000);
+    const safetyTimer = setTimeout(() => setIsInitialLoad(false), 1500);
     return () => clearTimeout(safetyTimer);
   }, []);
 

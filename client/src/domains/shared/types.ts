@@ -59,15 +59,9 @@ export interface HeroConfig {
 
 export interface GoogleCloudConfig {
     apiKey: string;
-    authDomain: string;
-    projectId: string;
-    storageBucket: string;
-    messagingSenderId: string;
-    appId: string;
     isActive: boolean;
     enableWorkspaceAutomation?: boolean;
     enableGeminiAutomation?: boolean;
-    googleChatWebhookUrl?: string;
     measurementId?: string;
     mapId?: string;
     mapSecret?: string;

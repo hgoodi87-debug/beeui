@@ -5,15 +5,15 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import {
+  buildVoucherEmailHtml,
+  type VoucherEmailTemplateInput,
+} from "../_shared/booking-email-templates.ts";
+import { sendEdgeMail } from "../_shared/mailer.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SMTP_USER = Deno.env.get("SMTP_USER") || "ceo@bee-liber.com";
-const SMTP_PASS = Deno.env.get("SMTP_PASS") || "";
-const INTERNAL_MAIL_KEY = Deno.env.get("INTERNAL_MAIL_KEY") || "";
 const GOOGLE_CHAT_WEBHOOK_URL = Deno.env.get("GOOGLE_CHAT_WEBHOOK_URL") || "";
-const FIREBASE_VOUCHER_MAIL_ENDPOINT =
-  Deno.env.get("FIREBASE_VOUCHER_MAIL_ENDPOINT")
-  || "https://us-central1-beeliber-main.cloudfunctions.net/sendBookingVoucherEmail";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -65,14 +65,6 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
     console.warn("[on-booking-created] No user_email, skipping voucher");
     return { attempted: false, skipped: true, reason: "missing_email" };
   }
-  if (!SMTP_PASS) {
-    console.warn("[on-booking-created] SMTP_PASS missing, skipping voucher");
-    return { attempted: false, skipped: true, reason: "missing_smtp_pass" };
-  }
-  if (!INTERNAL_MAIL_KEY) {
-    console.warn("[on-booking-created] INTERNAL_MAIL_KEY missing, skipping voucher");
-    return { attempted: false, skipped: true, reason: "missing_internal_mail_key" };
-  }
 
   const reservationCode = booking.reservation_code || booking.id;
   const subject = `[Beeliber] 예약 확인 | Booking Confirmed - ${reservationCode}`;
@@ -96,48 +88,41 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
     <p>— beeliber · bee-liber.com</p>
   `;
 
-  // Firebase mailer relay (Node + nodemailer)
   try {
-    const response = await fetch(FIREBASE_VOUCHER_MAIL_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-beeliber-mail-key": INTERNAL_MAIL_KEY,
-      },
-      body: JSON.stringify({
-        booking: {
-          ...booking,
-          subject,
-          html: body,
-          pickup_label: pickupLabel,
-          dropoff_label: dropoffLabel,
-          smtp_user: SMTP_USER,
-        },
-      }),
+    const bagSummary = [
+      Number(booking.bags || 0) > 0 ? `${Number(booking.bags || 0)}개` : "",
+      typeof booking.bag_summary === "string" ? String(booking.bag_summary) : "",
+    ].filter(Boolean).join(" / ");
+
+    const emailInput: VoucherEmailTemplateInput = {
+      bookingId: String(booking.id || reservationCode || ""),
+      reservationCode: String(reservationCode || ""),
+      userName: String(booking.user_name || "Guest"),
+      serviceType: String(booking.service_type || ""),
+      pickupLabel,
+      pickupDate: String(booking.pickup_date || ""),
+      pickupTime: String(booking.pickup_time || ""),
+      dropoffLabel,
+      dropoffDate: String(booking.dropoff_date || booking.return_date || booking.pickup_date || ""),
+      deliveryTime: String(booking.delivery_time || booking.return_time || booking.pickup_time || ""),
+      finalPrice: Number(booking.final_price || 0),
+      bagSummary,
+      nametagNumber: String(booking.nametag_number || ""),
+    };
+
+    await sendEdgeMail({
+      to: email,
+      bcc: "bee@bee-liber.com",
+      subject,
+      html: buildVoucherEmailHtml(emailInput) || body,
     });
 
-    const responseText = await response.text().catch(() => "");
-    if (!response.ok) {
-      console.error(
-        `[on-booking-created] Voucher email failed (${response.status}): ${responseText}`,
-      );
-      return {
-        attempted: true,
-        skipped: false,
-        ok: false,
-        status: response.status,
-        body: responseText,
-      };
-    }
-
-    console.log(`[on-booking-created] Voucher email sent to ${email}: ${response.status}`);
+    console.log(`[on-booking-created] Voucher email sent to ${email}`);
     return {
       attempted: true,
       skipped: false,
       ok: true,
-      status: response.status,
-      body: responseText,
-      smtpConfigured: Boolean(SMTP_PASS),
+      smtpConfigured: true,
     };
   } catch (e) {
     console.error("[on-booking-created] Email failed:", e);
@@ -146,7 +131,7 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
       skipped: false,
       ok: false,
       error: String(e),
-      smtpConfigured: Boolean(SMTP_PASS),
+      smtpConfigured: Boolean(Deno.env.get("SMTP_PASS")),
     };
   }
 }

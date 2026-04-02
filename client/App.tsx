@@ -2,8 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { flushSync } from 'react-dom';
-import { BagSizes, BookingState, BookingStatus, ServiceType } from './types';
-import { User } from 'firebase/auth';
+import { BagSizes, BookingState, BookingStatus, ServiceType, UserProfile } from './types';
 // Deployment trigger: 2026-01-23 01:35 (Recovery from rollback)
 
 // Lazy load components
@@ -231,6 +230,40 @@ const App: React.FC = () => {
   }, [lang]);
 
   useEffect(() => {
+    if (!currentUser || currentUser.isAnonymous) {
+      return;
+    }
+
+    setShowLoginModal(false);
+    setShowSignupModal(false);
+
+    const provisionCustomerProfile = async () => {
+      try {
+        const profile = await StorageService.getUserProfile(currentUser.uid);
+        if (profile) {
+          return;
+        }
+
+        const newProfile: UserProfile = {
+          uid: currentUser.uid,
+          email: currentUser.email || '',
+          displayName: currentUser.displayName || 'Traveler',
+          createdAt: new Date().toISOString(),
+          level: 'BRONZE',
+          points: 2000,
+        };
+
+        await StorageService.updateUserProfile(currentUser.uid, newProfile);
+        await StorageService.issueWelcomeCoupon(currentUser.uid);
+      } catch (error) {
+        console.error('[App] Customer profile bootstrap failed:', error);
+      }
+    };
+
+    void provisionCustomerProfile();
+  }, [currentUser]);
+
+  useEffect(() => {
     // [스봉이] 어드민 정보를 잊지 않도록 도장 꾹! 🛡️✨
     if (adminInfo.name) {
       localStorage.setItem('beeliber_admin_info', JSON.stringify(adminInfo));
@@ -340,7 +373,7 @@ const App: React.FC = () => {
 
       setLastBooking(confirmedBooking);
       navigate(`/${lang}/booking-success`);
-      console.log("[App] Booking saved to Firestore successfully.", confirmedBooking);
+      console.log("[App] Booking saved to Supabase successfully.", confirmedBooking);
     } catch (saveError: any) {
       console.error("[App] Booking Save failed:", saveError);
 

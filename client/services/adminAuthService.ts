@@ -158,6 +158,37 @@ type RankedAdminDirectoryCandidate = {
   rank: number;
 };
 
+type EmployeeRoleLookupRow = {
+  is_primary: boolean;
+  role_id?: string;
+  role?: {
+    code?: string;
+    name?: string;
+  } | null;
+};
+
+type EmployeeBranchAssignmentLookupRow = {
+  is_primary: boolean;
+  branch_id?: string;
+  branch?: {
+    id: string;
+    branch_code?: string;
+    name?: string;
+  } | null;
+};
+
+type RoleRow = {
+  id: string;
+  code?: string;
+  name?: string;
+};
+
+type BranchRow = {
+  id: string;
+  branch_code?: string;
+  name?: string;
+};
+
 const clearStoredSupabaseAdminSession = () => {
   localStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
   sessionStorage.removeItem(SUPABASE_ADMIN_SESSION_KEY);
@@ -213,6 +244,20 @@ const preferAdminEmail = (...emails: Array<string | undefined>) => {
   });
 
   return candidates[0] || '';
+};
+
+const buildInFilter = (values: Array<string | undefined>) => {
+  const normalizedValues = Array.from(new Set(
+    values
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+  ));
+
+  if (!normalizedValues.length) {
+    return '';
+  }
+
+  return encodeURIComponent(`in.(${normalizedValues.join(',')})`);
 };
 
 const isLocalPreviewHost = () => {
@@ -548,6 +593,115 @@ const normalizeSupabaseAuthPayload = async (authResponse: SupabaseAuthTokenRespo
   };
 };
 
+const fetchEmployeeRoles = async (accessToken: string, employeeId: string): Promise<EmployeeRoleLookupRow[]> => {
+  const normalizedEmployeeId = String(employeeId || '').trim();
+  if (!normalizedEmployeeId) {
+    return [];
+  }
+
+  try {
+    const embeddedRoles = await supabaseRequest<EmployeeRoleLookupRow[]>(
+      `/rest/v1/employee_roles?select=is_primary,role:roles(code,name)&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    if (embeddedRoles.some((entry) => entry.role?.code || entry.role?.name)) {
+      return embeddedRoles;
+    }
+  } catch (error) {
+    console.warn('[AdminAuth] roles JOIN 조회 실패, role_id 폴백 사용:', error);
+  }
+
+  try {
+    const roleLinks = await supabaseRequest<EmployeeRoleLookupRow[]>(
+      `/rest/v1/employee_roles?select=is_primary,role_id&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    const roleFilter = buildInFilter(roleLinks.map((entry) => entry.role_id));
+    if (!roleFilter) {
+      return roleLinks.map((entry) => ({
+        is_primary: entry.is_primary,
+        role: null,
+      }));
+    }
+
+    const roles = await supabaseRequest<RoleRow[]>(
+      `/rest/v1/roles?select=id,code,name&id=${roleFilter}&limit=10`,
+      {},
+      accessToken
+    );
+
+    const roleMap = new Map(roles.map((role) => [role.id, role]));
+
+    return roleLinks.map((entry) => ({
+      is_primary: entry.is_primary,
+      role: entry.role_id ? roleMap.get(entry.role_id) || null : null,
+    }));
+  } catch (error) {
+    console.warn('[AdminAuth] role_id 폴백 조회 실패:', error);
+    return [];
+  }
+};
+
+const fetchEmployeeBranchAssignments = async (
+  accessToken: string,
+  employeeId: string
+): Promise<EmployeeBranchAssignmentLookupRow[]> => {
+  const normalizedEmployeeId = String(employeeId || '').trim();
+  if (!normalizedEmployeeId) {
+    return [];
+  }
+
+  try {
+    const embeddedAssignments = await supabaseRequest<EmployeeBranchAssignmentLookupRow[]>(
+      `/rest/v1/employee_branch_assignments?select=is_primary,branch:branches(id,branch_code,name)&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    if (embeddedAssignments.some((entry) => entry.branch?.id)) {
+      return embeddedAssignments;
+    }
+  } catch (error) {
+    console.warn('[AdminAuth] branches JOIN 조회 실패, branch_id 폴백 사용:', error);
+  }
+
+  try {
+    const branchLinks = await supabaseRequest<EmployeeBranchAssignmentLookupRow[]>(
+      `/rest/v1/employee_branch_assignments?select=is_primary,branch_id&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    const branchFilter = buildInFilter(branchLinks.map((entry) => entry.branch_id));
+    if (!branchFilter) {
+      return branchLinks.map((entry) => ({
+        is_primary: entry.is_primary,
+        branch: null,
+      }));
+    }
+
+    const branches = await supabaseRequest<BranchRow[]>(
+      `/rest/v1/branches?select=id,branch_code,name&id=${branchFilter}&limit=10`,
+      {},
+      accessToken
+    );
+
+    const branchMap = new Map(branches.map((branch) => [branch.id, branch]));
+
+    return branchLinks.map((entry) => ({
+      is_primary: entry.is_primary,
+      branch: entry.branch_id ? branchMap.get(entry.branch_id) || null : null,
+    }));
+  } catch (error) {
+    console.warn('[AdminAuth] branch_id 폴백 조회 실패:', error);
+    return [];
+  }
+};
+
 const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
   const normalizedIdentifier = normalizeAdminIdentifier(identifier);
   if (!normalizedIdentifier) return '';
@@ -715,42 +869,10 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     throw error;
   }
 
-  // roles JOIN + branches JOIN (branches FK 없으면 폴백)
-  let employeeRoles: Array<{ is_primary: boolean; role: { code?: string; name?: string } | null }> = [];
-  let assignments: Array<{ is_primary: boolean; branch: { id: string; branch_code?: string; name?: string } | null }> = [];
-
-  try {
-    [employeeRoles, assignments] = await Promise.all([
-    supabaseRequest<Array<{
-    is_primary: boolean;
-    role: {
-      code?: string;
-      name?: string;
-    } | null;
-  }>>(
-    `/rest/v1/employee_roles?select=is_primary,role:roles(code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
-    {},
-    accessToken
-  ),
-
-    supabaseRequest<Array<{
-    is_primary: boolean;
-    branch: {
-      id: string;
-      branch_code?: string;
-      name?: string;
-    } | null;
-  }>>(
-    `/rest/v1/employee_branch_assignments?select=is_primary,branch:branches(id,branch_code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
-    {},
-    accessToken
-  )]);
-  } catch (joinErr) {
-    console.warn('[AdminAuth] roles/branches JOIN 부분 실패, 폴백:', joinErr);
-  }
-
-  employeeRoles = Array.isArray(employeeRoles) ? employeeRoles : [];
-  assignments = Array.isArray(assignments) ? assignments : [];
+  const [employeeRoles, assignments] = await Promise.all([
+    fetchEmployeeRoles(accessToken, employee.id),
+    fetchEmployeeBranchAssignments(accessToken, employee.id),
+  ]);
 
   const primaryRole = employeeRoles.find((entry) => entry.is_primary)?.role?.code
     || employeeRoles[0]?.role?.code

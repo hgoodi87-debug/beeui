@@ -82,7 +82,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       if (errCode === 'invalid-identifier') {
         setError('로그인 ID 형식이 올바르지 않습니다.');
       } else if (errCode === 'supabase/local-email-login-required') {
-        setError('로컬 프리뷰에서는 이메일 형식으로 로그인해 주세요. 로그인ID/지점ID는 Firebase localhost 허용 후에 붙습니다.');
+        setError('로컬 프리뷰에서는 이메일 형식으로 로그인해 주세요. 로그인ID/지점ID 별칭 로그인은 운영 Supabase 계정 매핑이 준비된 뒤에 사용할 수 있습니다.');
       } else if (
         errCode === 'unauthenticated'
         || errCode === 'functions/unauthenticated'
@@ -103,13 +103,13 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       } else if (errCode === 'supabase/inactive-admin') {
         setError('비활성화된 관리자 계정입니다. HQ 권한 상태를 확인해주세요.');
       } else if (errCode === 'supabase/firebase-bridge-failed') {
-        setError('Firebase 관리자 권한 연결에 실패했어요. 잠시 후 다시 시도해주세요.');
+        setError('관리자 세션 연결에 실패했어요. 잠시 후 다시 시도해주세요.');
       } else if (errCode === 'auth/unauthorized-domain' || errMsg.includes('referer') || errMsg.includes('requests-from-referer')) {
-        setError(`로컬 인증이 막혔어요. [${window.location.origin}] 를 Firebase/GCP 허용 도메인 또는 허용 리퍼러에 추가해 주세요. 급하면 로컬에서는 이메일 로그인으로 먼저 붙으시면 됩니다.`);
+        setError(`로컬 인증이 막혔어요. [${window.location.origin}] 가 Supabase OAuth 리디렉션 또는 허용 도메인 정책에 포함되어 있는지 확인해 주세요. 급하면 로컬에서는 이메일 로그인으로 먼저 붙으시면 됩니다.`);
       } else if (String(errCode).startsWith('supabase/')) {
         setError(`Supabase 연결 오류 (${errCode})가 발생했습니다. Phase 1 스키마와 Auth 설정을 확인해주세요.`);
       } else {
-        setError(`연결 오류 (Code: ${errCode}). 인터넷 연결이나 파이어베이스 설정을 확인해주세요.`);
+        setError(`연결 오류 (Code: ${errCode}). 인터넷 연결이나 Supabase 설정을 확인해주세요.`);
       }
     } finally {
       setLoading(false);
@@ -223,7 +223,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
             className="text-[10px] font-bold tracking-[0.25em] uppercase text-gray-500 hover:text-bee-yellow transition-colors flex items-center gap-2"
           >
             <i className={`fa-solid ${showDiagnosis ? 'fa-chevron-down' : 'fa-wrench'}`}></i>
-            {isSupabaseMode ? 'Supabase 시스템 진단' : 'Firebase 시스템 진단'}
+            {isSupabaseMode ? 'Supabase 시스템 진단' : '운영 시스템 진단'}
           </button>
 
           {showDiagnosis && diagnosis && (
@@ -236,7 +236,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <span className="text-gray-500">Provider:</span>
-                <span className="col-span-2 text-white">{diagnosis.hasProvider ? 'Supabase (Default)' : 'Firebase (Legacy Fallback)'}</span>
+                <span className="col-span-2 text-white">{diagnosis.hasProvider ? 'Supabase (Default)' : 'Supabase (Fallback URL)'}</span>
 
                 <span className="text-gray-500">Base URL:</span>
                 <span className="col-span-2 text-white overflow-hidden text-ellipsis whitespace-nowrap">{diagnosis.url}</span>
@@ -263,7 +263,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
               {!diagnosis.isEnabled && (
                 <div className="mt-4 p-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-[8px] leading-normal uppercase tracking-tight">
                   <i className="fa-solid fa-circle-info mr-1"></i>
-                  Vercel/Firebase 배포 콘솔에서 환경 변수를 확인해 주세요.
+                  배포 콘솔 또는 호스팅 콘솔에서 `VITE_SUPABASE_*` 환경 변수를 확인해 주세요.
                 </div>
               )}
             </div>

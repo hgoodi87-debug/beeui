@@ -1,6 +1,7 @@
 import React from 'react';
 import { LocationOption, LocationType, TranslatedLocationData } from '../../types';
 import { StorageService } from '../../services/storageService';
+import { resolveSupabaseUrl } from '../../services/supabaseRuntime';
 
 import LocationMap from '../locations/LocationMap';
 
@@ -57,6 +58,15 @@ const normalizeLocationFormTranslations = (loc: LocationOption): LocationOption 
 const getLocIdentifier = (loc: Partial<LocationOption>) =>
     String(loc.shortCode || loc.branchCode || loc.id || '').trim();
 
+const buildBrandPublicUrl = (objectPath: string) => {
+    const encodedPath = objectPath
+        .split('/')
+        .map((segment) => encodeURIComponent(segment))
+        .join('/');
+
+    return resolveSupabaseUrl(`/storage/v1/object/public/brand-public/${encodedPath}`);
+};
+
 const LocationsTab: React.FC<LocationsTabProps> = ({
     locForm, setLocForm, LOCATION_TYPE_OPTIONS, findCoordinates, isGeocoding,
     handlePickupImageUpload, handleLocationImageUpload, isSaving, setIsSaving, addLocation,
@@ -111,7 +121,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         description: loc.description || ''
                     });
 
-                    console.log(`[스봉이] '${loc.name}' 번역 완료, Firestore 저장 중... 💅`);
+                    console.log(`[스봉이] '${loc.name}' 번역 완료, Supabase 저장 중... 💅`);
                     await StorageService.saveLocation({
                         ...loc,
                         address_en: loc.address_en || result.address_en,
@@ -147,12 +157,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         setIsBulkMapping(true);
         try {
             const { StorageService } = await import('../../services/storageService');
-            const bucket = "beeliber-main.firebasestorage.app";
-
             for (const loc of locations) {
                 const fileName = mode === 'ID' ? `${loc.id}.jpg` : `${loc.name}.jpg`;
-                const encodedFileName = encodeURIComponent(`locations/${fileName}`);
-                const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedFileName}?alt=media`;
+                const imageUrl = buildBrandPublicUrl(`locations/${fileName}`);
 
                 await StorageService.saveLocation({ ...loc, imageUrl });
             }
@@ -297,7 +304,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 [주소로 전 지점 좌표 연동]
                             </button>
                                 <button onClick={async () => {
-                                    if (!confirm("MYN- 형식의 지점 ID를 3자리 약칭(AGS, DDP 등)으로 일괄 변경하시겠습니까?\n이 작업은 Firestore 데이터를 직접 수정하며 되돌릴 수 없습니다. 💅")) return;
+                                    if (!confirm("MYN- 형식의 지점 ID를 3자리 약칭(AGS, DDP 등)으로 일괄 변경하시겠습니까?\n이 작업은 운영 지점 데이터를 직접 수정하며 되돌릴 수 없습니다. 💅")) return;
                                     setIsBulkMapping(true);
                                     try {
                                         const { StorageService } = await import('../../services/storageService');

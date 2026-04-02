@@ -9,7 +9,9 @@ export const getSupabaseConfig = () => {
 
   // 레거시 프로젝트(fzvf...)가 감지되면 운영 프로젝트(xpnf...)로 전환
   const isLegacyUrl = envUrl.includes(LEGACY_PROJECT_ID);
-  const finalUrl = (isLegacyUrl || !envUrl) ? DEFAULT_SUPABASE_HOSTED_URL : envUrl;
+  // 상대경로(/supabase)는 Vite 개발서버 프록시 전용 — 프로덕션 빌드에서는 하드코딩 URL로 폴백
+  const isDevProxy = envUrl.startsWith('/') && import.meta.env.PROD;
+  const finalUrl = (isLegacyUrl || !envUrl || isDevProxy) ? DEFAULT_SUPABASE_HOSTED_URL : envUrl;
   const finalKey = (isLegacyUrl || !envKey) ? FALLBACK_ANON_KEY : envKey;
 
   return {

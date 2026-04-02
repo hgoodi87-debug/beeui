@@ -358,7 +358,8 @@ import {
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
 const KEYS = {
-  CLOUD_CONFIG: 'beeliber_cloud_config',
+  CLOUD_CONFIG: 'beeliber_integration_config',
+  LEGACY_CLOUD_CONFIG: 'beeliber_cloud_config',
 };
 
 const USER_PROFILE_CACHE_KEY = (uid: string) => `beeliber_user_profile:${uid}`;
@@ -385,27 +386,19 @@ const writeLocalJson = (key: string, value: unknown) => {
 };
 
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
-  apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
-  authDomain: "beeliber-main.firebaseapp.com",
-  projectId: "beeliber-main", // [주의] 프로젝트 ID가 불일치할 경우 이 부분을 수정하세요. 💅
-  storageBucket: "beeliber-main.firebasestorage.app",
-  messagingSenderId: "591358308612",
-  appId: "1:591358308612:web:fb3928d12b0e1bb000a051",
-  measurementId: "G-PQBL1SG842",
-  isActive: true, // Force Active
+  apiKey: "",
+  measurementId: "",
+  isActive: true,
+  enableWorkspaceAutomation: false,
   enableGeminiAutomation: true,
-  // [보안] 클라이언트 웹훅 노출 금지! 🛡️ 세팅은 DB 또는 환경변수(Server)에서 관리합니다.
-  googleChatWebhookUrl: ""
+  mapId: "",
+  mapSecret: "",
 };
 
-const LOCAL_ADMIN_DATA_BRIDGE_URL = import.meta.env.VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?.trim() || '';
-const LOCAL_LEGACY_READ_BRIDGE_ENABLED = import.meta.env.VITE_ENABLE_LOCAL_LEGACY_READ_BRIDGE === 'true';
-const LOCAL_ADMIN_DATA_BRIDGE_POLL_MS = 10000;
 const SUPABASE_RUNTIME_URL = getSupabaseBaseUrl();
 const ADMIN_ACCOUNT_SYNC_ENDPOINT = import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT?.trim()
   ? resolveSupabaseEndpoint(import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT, '/functions/v1/admin-account-sync')
   : (SUPABASE_RUNTIME_URL ? `${SUPABASE_RUNTIME_URL}/functions/v1/admin-account-sync` : '');
-let localAdminDataBridgeDisabled = false;
 const DEFAULT_DELIVERY_PRICES: PriceSettings = PRICING_DEFAULT_DELIVERY_PRICES;
 const DEFAULT_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
 
@@ -530,25 +523,8 @@ export const canUseLocalLegacyReadBridge = () => {
   return false;
 };
 
-const canUseLocalAdminDataBridge = () => {
-  return false;
-};
-
-const shouldDisableLocalAdminDataBridge = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error || '');
-  const normalized = message.toLowerCase();
-
-  return (
-    normalized.includes('failed to fetch')
-    || normalized.includes('networkerror')
-    || normalized.includes('err_connection_refused')
-    || normalized.includes('fetch failed')
-  );
-};
-
 const canUseSupabaseAdminAccountSync = () =>
   isSupabaseAdminAuthEnabled() &&
-  !canUseLocalAdminDataBridge() &&
   import.meta.env.MODE !== 'test' &&
   !import.meta.env.VITEST;
 
@@ -590,30 +566,6 @@ const syncSupabaseAdminAccount = async (
   }
 
   return body;
-};
-
-const fetchLocalAdminBridge = async <T>(path: string): Promise<T> => {
-  let response: Response;
-  try {
-    response = await fetch(`${LOCAL_ADMIN_DATA_BRIDGE_URL}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    });
-  } catch (error) {
-    if (shouldDisableLocalAdminDataBridge(error)) {
-      localAdminDataBridgeDisabled = true;
-      console.warn('[StorageService] Local admin data bridge is unreachable. Disabling bridge for this session.');
-    }
-    throw error;
-  }
-
-  if (!response.ok) {
-    throw new Error(`Local admin data bridge request failed (${response.status})`);
-  }
-
-  return response.json() as Promise<T>;
 };
 
 const sortBookingsByPickupDateDesc = (items: BookingState[]) =>
@@ -687,9 +639,7 @@ const subscribeMergedAdminCollection = <T extends { id?: string }>({
     try {
       legacyData = await loadLegacy();
     } catch (error) {
-      if (!localAdminDataBridgeDisabled) {
-        console.warn(`[StorageService] ${label} legacy poll failed:`, error);
-      }
+      console.warn(`[StorageService] ${label} legacy poll failed:`, error);
     }
 
     if (!active) return;
@@ -803,36 +753,6 @@ const loadSupabaseAdminRevenueMonthlySummaries = async (): Promise<AdminRevenueM
   );
 
   return (rows || []).map((row) => snakeToCamel(row) as unknown as AdminRevenueMonthlySummary);
-};
-
-const subscribeLocalAdminBridge = <T>(
-  path: string,
-  callback: (data: T) => void,
-  fallback: T,
-  transform?: (data: T) => T,
-  label?: string
-): (() => void) => {
-  let active = true;
-
-  const run = async () => {
-    try {
-      const data = await fetchLocalAdminBridge<T>(path);
-      if (!active) return;
-      callback(transform ? transform(data) : data);
-    } catch (error) {
-      console.error(`${label || 'Local admin bridge'} fetch failed:`, error);
-      if (!active) return;
-      callback(fallback);
-    }
-  };
-
-  void run();
-  const timer = window.setInterval(() => void run(), LOCAL_ADMIN_DATA_BRIDGE_POLL_MS);
-
-  return () => {
-    active = false;
-    window.clearInterval(timer);
-  };
 };
 
 // Helper for safe JSON parse (utility)
@@ -980,13 +900,24 @@ const collapseAdminDirectoryEntries = (admins: AdminUser[]): AdminUser[] => {
 export const StorageService = {
   // --- Configuration ---
   saveCloudConfig: (config: GoogleCloudConfig) => {
-    localStorage.setItem(KEYS.CLOUD_CONFIG, JSON.stringify(config));
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(KEYS.LEGACY_CLOUD_CONFIG);
+    }
+    writeLocalJson(KEYS.CLOUD_CONFIG, config);
     window.location.reload();
   },
 
   getCloudConfig: (): GoogleCloudConfig | null => {
-    // [스봉이] 로컬 스토리지의 낡은 캐시가 사고를 유발해서, 강제로 기본 설정을 쓰게 바꿨어요! 💅✨
-    return { ...DEFAULT_CLOUD_CONFIG, isActive: true };
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(KEYS.LEGACY_CLOUD_CONFIG);
+    }
+
+    const savedConfig = readLocalJson<Partial<GoogleCloudConfig> | null>(KEYS.CLOUD_CONFIG, null);
+    return {
+      ...DEFAULT_CLOUD_CONFIG,
+      ...(savedConfig || {}),
+      isActive: savedConfig?.isActive ?? DEFAULT_CLOUD_CONFIG.isActive,
+    };
   },
 
   uploadFile: async (file: File | Blob, path: string): Promise<string> => {
@@ -1232,7 +1163,7 @@ export const StorageService = {
   },
 
   subscribeBookings: (callback: (data: BookingState[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<BookingState>({
         loadSupabase: loadSupabaseAdminBookings,
         loadLegacy: loadLegacyAdminBookings,
@@ -1281,7 +1212,7 @@ export const StorageService = {
         )
       );
 
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<BookingState>({
         loadSupabase: loadSupabaseAdminBookings,
         loadLegacy: loadLegacyAdminBookings,
@@ -1627,15 +1558,6 @@ export const StorageService = {
       }
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return normalizeStorageTiers(await fetchLocalAdminBridge<StorageTier[] | null>('/api/settings/storage_tiers'));
-      } catch (e) {
-        console.error("Failed to get storage tiers from local admin bridge", e);
-        return null;
-      }
-    }
-
     try {
       const snap = await getDoc(doc(db, "settings", "storage_tiers"));
       if (snap.exists()) {
@@ -1686,14 +1608,6 @@ export const StorageService = {
       }
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return await fetchLocalAdminBridge<HeroConfig | null>('/api/settings/hero');
-      } catch {
-        return null;
-      }
-    }
-
     try {
       const snap = await getDoc(doc(db, "settings", "hero"));
       return snap.exists() ? snap.data() as HeroConfig : null;
@@ -1714,15 +1628,6 @@ export const StorageService = {
         }
       } catch (e) {
         console.warn("[Storage] Supabase delivery prices failed, falling back:", e);
-      }
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return normalizeDeliveryPrices(await fetchLocalAdminBridge<PriceSettings | null>('/api/settings/delivery_prices'));
-      } catch (e) {
-        console.error("Failed to get delivery prices from local admin bridge", e);
-        return null;
       }
     }
 
@@ -1775,16 +1680,6 @@ export const StorageService = {
   },
 
   subscribeHeroConfig: (callback: (config: HeroConfig | null) => void): (() => void) => {
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<HeroConfig | null>(
-        '/api/settings/hero',
-        callback,
-        null,
-        undefined,
-        'Hero config local bridge'
-      );
-    }
-
     try {
       const heroRef = doc(db, "settings", "hero");
       return onSnapshot(heroRef, (snap) => {
@@ -1816,9 +1711,7 @@ export const StorageService = {
     }
 
     try {
-      if (canUseLocalAdminDataBridge()) {
-        firebaseData = await fetchLocalAdminBridge<PartnershipInquiry[]>('/api/collections/inquiries');
-      } else if (!isSupabaseDataEnabled()) {
+      if (!isSupabaseDataEnabled()) {
         const querySnapshot = await getDocs(collection(db, 'inquiries'));
         firebaseData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
       }
@@ -1839,16 +1732,6 @@ export const StorageService = {
         (items) => callback(items),
         (r) => snakeToCamel(r) as unknown as PartnershipInquiry,
         10000
-      );
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<PartnershipInquiry[]>(
-        '/api/collections/inquiries',
-        callback,
-        [],
-        (items) => [...items].sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()),
-        'Inquiries local bridge'
       );
     }
 
@@ -2033,9 +1916,7 @@ export const StorageService = {
       legacyData = await loadLegacyCashClosings();
       if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'cash closings from legacy source ✅');
     } catch (e) {
-      if (!localAdminDataBridgeDisabled) {
-        console.warn('[Storage] Legacy closings failed:', e);
-      }
+      console.warn('[Storage] Legacy closings failed:', e);
     }
 
     const merged = mergeCashClosingSources(supabaseData, legacyData);
@@ -2044,7 +1925,7 @@ export const StorageService = {
   },
 
   subscribeCashClosings: (callback: (data: CashClosing[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<CashClosing>({
         loadSupabase: loadSupabaseCashClosings,
         loadLegacy: loadLegacyCashClosings,
@@ -2146,9 +2027,7 @@ export const StorageService = {
       legacyData = await loadLegacyExpenditures();
       if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'expenditures from legacy source ✅');
     } catch (e) {
-      if (!localAdminDataBridgeDisabled) {
-        console.warn('[Storage] Legacy expenditures failed:', e);
-      }
+      console.warn('[Storage] Legacy expenditures failed:', e);
     }
 
     const merged = mergeExpenditureSources(supabaseData, legacyData);
@@ -2157,7 +2036,7 @@ export const StorageService = {
   },
 
   subscribeExpenditures: (callback: (data: Expenditure[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<Expenditure>({
         loadSupabase: loadSupabaseExpenditures,
         loadLegacy: loadLegacyExpenditures,
@@ -2354,10 +2233,7 @@ export const StorageService = {
     }
 
     try {
-      if (canUseLocalAdminDataBridge()) {
-        const items = await fetchLocalAdminBridge<AdminUser[]>('/api/collections/admins');
-        firebaseData = collapseAdminDirectoryEntries(items);
-      } else if (!isSupabaseDataEnabled()) {
+      if (!isSupabaseDataEnabled()) {
         const snap = await getDocs(collection(db, 'admins'));
         firebaseData = collapseAdminDirectoryEntries(snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser)));
       }
@@ -2690,16 +2566,6 @@ export const StorageService = {
         active = false;
         window.clearInterval(timer);
       };
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<AdminUser[]>(
-        '/api/collections/admins',
-        callback,
-        [],
-        (items) => collapseAdminDirectoryEntries(items),
-        'Admins local bridge'
-      );
     }
 
     try {
@@ -3182,16 +3048,6 @@ export const StorageService = {
         callback,
         (row) => snakeToCamel(row) as unknown as SystemNotice,
         10000
-      );
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<SystemNotice[]>(
-        '/api/collections/notices',
-        callback,
-        [],
-        (items: any[]) => items.sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || '')),
-        'Notices local bridge'
       );
     }
 

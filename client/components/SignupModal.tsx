@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth } from '../firebaseApp';
 import {
     createUserWithEmailAndPassword,
     updateProfile,
-    signInWithPopup,
-    GoogleAuthProvider
-} from 'firebase/auth';
+    signInWithGoogle
+} from '../firebaseApp';
 import { StorageService } from '../services/storageService';
 import { UserProfile } from '../types';
 
@@ -30,8 +28,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSignupSucc
         setIsLoading(true);
         setError(null);
         try {
-            const provider = new GoogleAuthProvider();
-            const userCredential = await signInWithPopup(auth, provider);
+            const userCredential = await signInWithGoogle();
             const user = userCredential.user;
 
             const nextProfile: UserProfile = {
@@ -60,7 +57,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose, onSignupSucc
         setIsLoading(true);
         setError(null);
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
 
             await updateProfile(user, { displayName: nickname });

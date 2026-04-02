@@ -4,7 +4,6 @@ import { GoogleCloudConfig } from '../../types';
 interface CloudTabProps {
     cloudConfig: GoogleCloudConfig;
     setCloudConfig: (c: GoogleCloudConfig) => void;
-    CLOUD_PLACEHOLDERS: Record<string, string>;
     saveCloudSettings: () => void;
     handleMigration: () => void;
     isMigrating: boolean;
@@ -13,38 +12,34 @@ interface CloudTabProps {
 const CloudTab: React.FC<CloudTabProps> = ({
     cloudConfig,
     setCloudConfig,
-    CLOUD_PLACEHOLDERS,
     saveCloudSettings,
     handleMigration,
     isMigrating
 }) => {
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight mb-2">Google Cloud & Workspace Automation</h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight mb-2">Google Integrations & Legacy Tools</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
                 {/* Google Cloud Settings */}
                 <div className="bg-white p-6 md:p-10 rounded-[30px] md:rounded-[40px] shadow-sm border border-gray-100 flex flex-col gap-6">
                     <h3 className="text-lg md:text-xl font-black flex items-center gap-3">
                         <span className="w-2 h-8 bg-bee-blue rounded-full"></span>
-                        Google Cloud (Firebase) Config
+                        External Integration Keys
                     </h3>
                     <p className="text-xs text-gray-500 font-bold">
-                        Firebase Console &gt; Project Settings &gt; General &gt; Your Apps &gt; Config 내용을 입력하세요.
+                        운영 DB/Auth/Storage/Functions는 Supabase를 사용합니다. 이 화면에는 Firebase 프로젝트 값이 아니라 외부 서비스 키만 보관합니다.
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'] as const).map(key => (
-                            <div key={key} className="flex flex-col gap-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{key}</label>
-                                <input
-                                    value={cloudConfig[key]}
-                                    onChange={e => setCloudConfig({ ...cloudConfig, [key]: e.target.value })}
-                                    placeholder={CLOUD_PLACEHOLDERS[key]}
-                                    className="bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 text-xs focus:border-bee-blue outline-none"
-                                />
-                            </div>
-                        ))}
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Gemini API Key</label>
+                        <input
+                            type="password"
+                            value={cloudConfig.apiKey}
+                            onChange={e => setCloudConfig({ ...cloudConfig, apiKey: e.target.value })}
+                            placeholder="예: AIzaSy... 또는 Gemini 서버 연동용 키"
+                            className="bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 text-xs focus:border-bee-blue outline-none"
+                        />
                     </div>
 
                     <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 mt-2">
@@ -54,21 +49,21 @@ const CloudTab: React.FC<CloudTabProps> = ({
                         >
                             <div className="w-6 h-6 rounded-full bg-white shadow-md"></div>
                         </div>
-                        <span className="font-bold text-bee-black">Google Cloud 저장소 활성화</span>
+                        <span className="font-bold text-bee-black">외부 서비스 키 설정 사용</span>
                     </div>
 
                     <div className="flex justify-end pt-4">
                         <button onClick={saveCloudSettings} className="w-full md:w-auto px-12 py-4 bg-bee-blue text-white font-black rounded-2xl hover:scale-105 transition-all shadow-xl">
-                            설정 저장 및 연결 테스트
+                            설정 저장
                         </button>
                     </div>
 
                     {/* Migration Tool */}
                     <div className="mt-6 p-6 bg-blue-50 rounded-3xl border border-blue-100">
-                        <h3 className="text-lg font-black text-bee-black mb-2">데이터 마이그레이션 (Local → Cloud)</h3>
+                        <h3 className="text-lg font-black text-bee-black mb-2">레거시 로컬 데이터 백업 도구</h3>
                         <p className="text-xs text-gray-500 mb-4 font-medium leading-relaxed">
-                            현재 브라우저(로컬 스토리지)에 저장된 모든 데이터(지점, 예약, 문의 등)를 연결된 Google Cloud 데이터베이스로 업로드합니다.
-                            <br />이미 클라우드에 동일한 ID의 데이터가 있다면 덮어씌워집니다.
+                            현재 브라우저(로컬 스토리지)에 남아 있는 예전 데이터를 점검하거나 백업하는 보조 도구입니다.
+                            <br />현재 운영 원본 데이터베이스와 함수 런타임은 Supabase 기준으로 관리됩니다.
                         </p>
                         <button
                             onClick={handleMigration}
@@ -76,7 +71,7 @@ const CloudTab: React.FC<CloudTabProps> = ({
                             className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                         >
                             {isMigrating ? <i className="fa-solid fa-spinner animate-spin mr-2"></i> : <i className="fa-solid fa-cloud-arrow-up mr-2"></i>}
-                            로컬 데이터를 클라우드로 백업하기
+                            레거시 로컬 데이터 백업 실행
                         </button>
                     </div>
                 </div>
@@ -119,14 +114,9 @@ const CloudTab: React.FC<CloudTabProps> = ({
                                     <p className="text-[10px] font-bold text-green-600 uppercase">Real-time Monitoring</p>
                                 </div>
                             </div>
-                            <div className="space-y-3">
-                                <input
-                                    value={cloudConfig.googleChatWebhookUrl || ''}
-                                    onChange={e => setCloudConfig({ ...cloudConfig, googleChatWebhookUrl: e.target.value })}
-                                    placeholder="https://chat.googleapis.com/v1/spaces/..."
-                                    className="w-full bg-white p-3 rounded-xl font-bold border border-green-200 text-xs focus:border-green-500 outline-none text-gray-600"
-                                />
-                            </div>
+                            <p className="text-xs font-bold text-green-700 leading-relaxed">
+                                Google Chat 웹훅은 클라이언트에 저장하지 않습니다. Supabase Edge Function 환경변수에서만 관리합니다.
+                            </p>
                         </div>
                     </div>
                 </div>

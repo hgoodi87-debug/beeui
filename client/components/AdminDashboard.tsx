@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabaseMutate, isSupabaseDataEnabled } from '../services/supabaseClient';
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, PriceSettings, StorageTier, AdminUser, SystemNotice, HeroConfig, GoogleCloudConfig, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
-import { StorageService, canUseLocalLegacyReadBridge } from '../services/storageService';
+import { StorageService } from '../services/storageService';
 import { AuditService } from '../services/auditService';
 import { uploadBranchManagedAsset, uploadHeroManagedAsset, uploadNoticeManagedAsset } from '../services/supabaseStorageUploadService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
@@ -64,15 +64,6 @@ const normalizeStorageTierDefaults = (tiers: StorageTier[] | null | undefined): 
 
 // HERO constant removed
 
-
-const CLOUD_PLACEHOLDERS: Record<string, string> = {
-  apiKey: "예: AIzaSy... (API Key)",
-  authDomain: "예: project-id.firebaseapp.com",
-  projectId: "예: project-id (프로젝트 ID)",
-  storageBucket: "예: project-id.appspot.com",
-  messagingSenderId: "예: 123456789... (Sender ID)",
-  appId: "예: 1:123456789:web:... (App ID)"
-};
 
 const LOCATION_TYPE_OPTIONS = [
   { value: LocationType.PARTNER, label: '파트너지점 (Partner Branch)' },
@@ -184,7 +175,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const queryClient = useQueryClient();
   const { data: locations = [] } = useLocations({ includeInactive: true });
   const { data: allBookings = [] } = useBookings();
-  const shouldUseSqlRevenueSummaries = needsSettlementData && !canUseLocalLegacyReadBridge();
+  const shouldUseSqlRevenueSummaries = needsSettlementData;
   const { data: revenueDailySummaries = [] } = useAdminRevenueDailySummaries({ enabled: shouldUseSqlRevenueSummaries });
   const { data: revenueMonthlySummaries = [] } = useAdminRevenueMonthlySummaries({ enabled: shouldUseSqlRevenueSummaries });
 
@@ -448,8 +439,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   // Cloud Config State
   const [cloudConfig, setCloudConfig] = useState<GoogleCloudConfig>({
-    apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '',
-    isActive: false, enableWorkspaceAutomation: false, enableGeminiAutomation: true, googleChatWebhookUrl: ''
+    apiKey: '',
+    measurementId: '',
+    isActive: true,
+    enableWorkspaceAutomation: false,
+    enableGeminiAutomation: true,
+    mapId: '',
+    mapSecret: '',
   });
 
   // Location Form State
@@ -1050,7 +1046,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       console.error("Failed to save location", e);
       let errorMsg = "지점 저장 중 오류가 발생했습니다.";
       if (e.code === 'permission-denied' || e.message?.includes('permission')) {
-        errorMsg += "\n(권한 오류: CLOUD 탭에서 '저장소 활성화'를 끄고 로컬 모드를 사용하거나, Firebase 규칙을 확인하세요.)";
+        errorMsg += "\n(권한 오류: 현재 관리자 세션 권한 또는 Supabase RLS/Storage 정책을 확인해 주세요.)";
       } else if (e.message) {
         errorMsg += `\n(${e.message})`;
       }
@@ -2193,7 +2189,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         alert(`이미지 업로드 성공! [${field === 'imageUrl' ? 'PC' : '모바일'}] 저장 버튼을 눌러야 최종 반영됩니다.`);
       } catch (e: any) {
         console.error("Hero upload error:", e);
-        alert(`히어로 이미지 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: Firebase Storage 규칙(Rules)이나 인증 상태를 확인하세요.`);
+        alert(`히어로 이미지 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: Supabase Storage 정책 또는 관리자 인증 상태를 확인하세요.`);
       }
     }
   };
@@ -2218,7 +2214,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         alert("영상 업로드가 완료되었습니다. 반드시 아래 '히어로 설정 저장하기' 버튼을 눌러야 확정됩니다.");
       } catch (e: any) {
         console.error("Hero video upload error:", e);
-        alert(`히어로 영상 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: 파일 용량 초과(50MB) 또는 Firebase Storage 권한 부족일 수 있습니다.`);
+        alert(`히어로 영상 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: 파일 용량 초과(50MB) 또는 Supabase Storage 권한 부족일 수 있습니다.`);
       } finally {
         setIsSaving(false);
       }
@@ -2767,7 +2763,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             <CloudTab
               cloudConfig={cloudConfig}
               setCloudConfig={setCloudConfig}
-              CLOUD_PLACEHOLDERS={CLOUD_PLACEHOLDERS}
               saveCloudSettings={saveCloudSettings}
               handleMigration={handleMigration}
               isMigrating={isMigrating}

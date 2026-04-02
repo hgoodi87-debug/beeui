@@ -13,7 +13,6 @@ export default defineConfig({
             return;
           }
 
-          if (id.includes('/firebase/')) return 'vendor-firebase';
           if (id.includes('/@tanstack/')) return 'vendor-query';
           if (id.includes('/framer-motion/')) return 'vendor-motion';
           if (id.includes('/lucide-react/')) return 'vendor-icons';
@@ -34,7 +33,6 @@ export default defineConfig({
       }
     }
   },
-  // @ts-ignore - Vitest types might be missing in some environments
   test: {
     globals: true,
     environment: 'jsdom',

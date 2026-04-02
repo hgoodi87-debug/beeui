@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { sendMessageToGemini, translateText } from '../services/geminiService';
 import { StorageService } from '../services/storageService';
+import { resolveSupabaseEndpoint } from '../services/supabaseRuntime';
 import { ChatMessage, ChatSession } from '../types';
 
 interface ChatBotProps {
@@ -12,6 +13,10 @@ interface ChatBotProps {
 
 const INACTIVITY_LIMIT = 300000; // 5 minutes (300,000ms)
 const SUPPORTED_URL_LANGS = new Set(['ko', 'en', 'zh', 'zh-tw', 'zh-hk', 'ja']);
+const GOOGLE_CHAT_NOTIFY_ENDPOINT = resolveSupabaseEndpoint(
+    import.meta.env.VITE_GOOGLE_CHAT_NOTIFY_ENDPOINT,
+    '/functions/v1/notify-google-chat',
+);
 
 const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
     const location = useLocation();
@@ -144,20 +149,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
 
 
     const sendToGoogleChat = async (role: 'user' | 'model', text: string) => {
-        // Core Webhook URL (Direct fallback)
-        const directWebhook = import.meta.env.VITE_GOOGLE_CHAT_WEBHOOK_URL;
-        const functionUrl = `${window.location.origin}/api/notify-google-chat`;
-
-        const displayRole = role === 'user' ? `${userInfo.name || t?.user_label || '고객'} (${userInfo.email || 'N/A'})` : `${t?.header || 'Bee AI'}`;
-        const payload = {
-            text: `*${displayRole}*: ${text}`,
-            thread: { threadKey: sessionId }
-        };
-
-        // Attempt 1: Cloud Function Proxy (CORS Friendly)
         try {
-            console.log('Attempting Proxy Notification...');
-            const response = await fetch(functionUrl, {
+            const response = await fetch(GOOGLE_CHAT_NOTIFY_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -170,26 +163,15 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                     role
                 })
             });
-            if (response.ok) {
-                console.log('Proxy Notification Success');
-                return;
-            }
-        } catch (e) {
-            console.error('Proxy Notification Failed:', e);
-        }
 
-        // Attempt 2: Direct Webhook (Fallback - may hit CORS but good for mobile app-like environments)
-        try {
-            console.log('Attempting Direct Webhook Fallback...');
-            await fetch(directWebhook || '', {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            console.log('Direct Webhook Sent (no-cors mode)');
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => '');
+                throw new Error(errorText || `notify-google-chat failed (${response.status})`);
+            }
+
+            console.log('Supabase Edge chat notification sent');
         } catch (e) {
-            console.error('Direct Webhook Failed:', e);
+            console.error('Supabase Edge chat notification failed:', e);
         }
     };
 

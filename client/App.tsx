@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, Outlet } from 'react-router-dom';
+import { captureAdParams, fireBookingConversion } from './src/utils/gads';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { flushSync } from 'react-dom';
 import { BagSizes, BookingState, BookingStatus, ServiceType, UserProfile } from './types';
@@ -114,6 +115,11 @@ const App: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // Google Ads — 첫 방문 시 UTM/GCLID 캡처 (SPA 라우팅 중 유실 방지)
+  useEffect(() => {
+    captureAdParams();
+  }, []);
 
   const {
     lang,
@@ -374,6 +380,13 @@ const App: React.FC = () => {
       setLastBooking(confirmedBooking);
       navigate(`/${lang}/booking-success`);
       console.log("[App] Booking saved to Supabase successfully.", confirmedBooking);
+
+      // Google Ads 전환 이벤트
+      fireBookingConversion({
+        value: confirmedBooking.totalPrice ?? 0,
+        currency: 'KRW',
+        transactionId: confirmedBooking.id,
+      });
     } catch (saveError: any) {
       console.error("[App] Booking Save failed:", saveError);
 

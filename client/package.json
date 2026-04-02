@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:seo": "node scripts/generate-robots.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/prerender-static-html.mjs",
+    "build": "node scripts/validate-env.mjs && vite build",
+    "build:seo": "node scripts/validate-env.mjs && node scripts/generate-robots.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/prerender-static-html.mjs",
     "preview:seo": "node scripts/seo-preview-server.mjs",
     "verify:seo-preview": "node scripts/verify-prerender-preview.mjs",
     "preview": "vite preview",

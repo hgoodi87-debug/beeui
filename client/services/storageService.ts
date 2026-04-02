@@ -2134,10 +2134,27 @@ export const StorageService = {
 
     if (isSupabaseDataEnabled()) {
       try {
+        // FK 관계 조인 포함 쿼리 — FK 미적용 시 PGRST200 에러 발생
+        const EMPLOYEES_WITH_RELATIONS = 'employees?select=id,profile_id,legacy_admin_doc_id,name,email,job_title,employment_status,org_type,phone,memo,security,login_id,created_at,updated_at,employee_roles(is_primary,role:roles(code,name)),employee_branch_assignments(is_primary,branch_id)&order=name.asc&limit=500';
+        // FK 없을 때 폴백: 관계 없이 기본 컬럼만 조회
+        const EMPLOYEES_WITHOUT_RELATIONS = 'employees?select=id,profile_id,legacy_admin_doc_id,name,email,job_title,employment_status,org_type,phone,memo,security,login_id,created_at,updated_at&order=name.asc&limit=500';
+
+        let employeeRows: Array<Record<string, unknown>> | null = null;
+        try {
+          employeeRows = await supabaseGet<Array<Record<string, unknown>>>(EMPLOYEES_WITH_RELATIONS);
+        } catch (relErr: unknown) {
+          const errCode = (relErr as { code?: string })?.code || '';
+          const errMsg = (relErr as { message?: string })?.message || '';
+          if (errCode === 'PGRST200' || errMsg.includes('relationship')) {
+            console.warn('[Storage] employee_roles/employee_branch_assignments FK 누락 — 폴백 쿼리로 재시도');
+            employeeRows = await supabaseGet<Array<Record<string, unknown>>>(EMPLOYEES_WITHOUT_RELATIONS);
+          } else {
+            throw relErr;
+          }
+        }
+
         const [rows, locationRows, branchRows] = await Promise.all([
-          supabaseGet<Array<Record<string, unknown>>>(
-            'employees?select=id,profile_id,legacy_admin_doc_id,name,email,job_title,employment_status,org_type,phone,memo,security,login_id,created_at,updated_at,employee_roles(is_primary,role:roles(code,name)),employee_branch_assignments(is_primary,branch_id)&order=name.asc&limit=500'
-          ),
+          Promise.resolve(employeeRows),
           supabaseGet<Array<Record<string, unknown>>>(
             'locations?select=id,name,short_code,branch_code&is_active=eq.true&limit=500'
           ),

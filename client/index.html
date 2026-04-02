@@ -180,14 +180,17 @@
 
   <!-- reCAPTCHA Enterprise: lazy loaded on first booking interaction -->
 
-  <!-- Google tag (gtag.js) - GA4 📊 -->
+  <!-- Google tag (gtag.js) - GA4 + Google Ads 📊 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA4_MEASUREMENT_ID%"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    if ("%VITE_GA4_MEASUREMENT_ID%") {
+    if ("%VITE_GA4_MEASUREMENT_ID%" && "%VITE_GA4_MEASUREMENT_ID%" !== "undefined") {
       gtag('config', '%VITE_GA4_MEASUREMENT_ID%');
+    }
+    if ("%VITE_GOOGLE_ADS_ID%" && "%VITE_GOOGLE_ADS_ID%" !== "undefined") {
+      gtag('config', '%VITE_GOOGLE_ADS_ID%', { allow_enhanced_conversions: true });
     }
   </script>
 

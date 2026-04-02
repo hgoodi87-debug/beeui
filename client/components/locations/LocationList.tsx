@@ -486,11 +486,18 @@ const LocationList: React.FC<LocationListProps> = ({
                                 <div className="flex-1 flex flex-col items-start gap-1 md:gap-2.5 min-w-0">
                                     <div className="text-[12px] md:text-[20px] font-black tracking-[-0.05em] whitespace-nowrap overflow-hidden text-ellipsis w-full text-gray-900 group-hover:text-bee-black transition-colors">
                                         {(() => {
-                                            if (lang === 'ko') return branch.name;
+                                            const b = branch as any;
+                                            if (lang === 'ko') return b.name;
+                                            // Supabase 경유 시 snakeToCamel 변환 → camelCase 우선 조회
+                                            // INITIAL_LOCATIONS 폴백은 snake_case → 둘 다 확인
+                                            if (lang === 'en') return b.nameEn || b.name_en || b.name;
+                                            if (lang === 'zh-TW') return b.nameZhTw || b.name_zh_tw || b.nameZh || b.name_zh || b.name;
+                                            if (lang === 'zh-HK') return b.nameZhHk || b.name_zh_hk || b.nameZh || b.name_zh || b.name;
+                                            if (lang === 'ja') return b.nameJa || b.name_ja || b.name;
+                                            // 기타 언어 generic 처리
                                             const lk = lang.replace('-', '_').toLowerCase();
-                                            if (branch[`name_${lk}`]) return branch[`name_${lk}`];
-                                            if (lk.startsWith('zh') && branch.name_zh) return branch.name_zh;
-                                            return branch.name_en || branch.name;
+                                            const ck = 'name' + lk.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+                                            return b[ck] || b[`name_${lk}`] || b.nameEn || b.name_en || b.name;
                                         })()}
                                     </div>
 

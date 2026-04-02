@@ -1,5 +1,4 @@
 const Anthropic = require('@anthropic-ai/sdk');
-// const functions = require("firebase-functions/v1"); // Removed to avoid local runtime issues
 
 /**
  * Claude Code Sub-Agent Controller

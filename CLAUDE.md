@@ -209,12 +209,12 @@ firebase deploy   # 전체 배포
 ## 중요 파일 위치
 
 - 예약 로직: `client/src/domains/booking/`
-- 가격 계산: `client/utils/pricing.ts` + `functions/src/shared/pricing.js`
+- 가격 계산: `client/utils/pricing.ts` + `client/src/domains/booking/deliveryStoragePricing.ts`
 - 랜딩 컴포넌트: `client/components/landing/`
 - 관리자 대시보드: `client/components/AdminDashboard.tsx`
 - 번역 파일: `client/translations_split/`
 - SEO 컴포넌트: `client/components/SEO.tsx`
-- Firebase Functions: `functions/src/domains/`
+- Supabase Edge Functions: `supabase/functions/`
 
 ## Skill routing
 

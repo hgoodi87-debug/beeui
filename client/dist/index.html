@@ -170,8 +170,6 @@
 
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-    rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -182,14 +180,17 @@
 
   <!-- reCAPTCHA Enterprise: lazy loaded on first booking interaction -->
 
-  <!-- Google tag (gtag.js) - GA4 📊 -->
+  <!-- Google tag (gtag.js) - GA4 + Google Ads 📊 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA4_MEASUREMENT_ID%"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    if ("%VITE_GA4_MEASUREMENT_ID%") {
+    if ("%VITE_GA4_MEASUREMENT_ID%" && "%VITE_GA4_MEASUREMENT_ID%" !== "undefined") {
       gtag('config', '%VITE_GA4_MEASUREMENT_ID%');
+    }
+    if ("%VITE_GOOGLE_ADS_ID%" && "%VITE_GOOGLE_ADS_ID%" !== "undefined") {
+      gtag('config', '%VITE_GOOGLE_ADS_ID%', { allow_enhanced_conversions: true });
     }
   </script>
 
@@ -358,12 +359,11 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-BcsJht6B.js"></script>
+  <script type="module" crossorigin src="/assets/index-fA9Ol4Vd.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-react-dom-B-4pjoWT.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-motion-BUt1lcWJ.js">
-  <link rel="modulepreload" crossorigin href="/assets/vendor-firebase-DvkgfxPd.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-query-N1jjWJFK.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-DsdPlDBG.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-BLie2Qdv.css">
 </head>
 
 <body class="antialiased">

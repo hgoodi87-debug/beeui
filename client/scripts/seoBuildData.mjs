@@ -1,7 +1,7 @@
 export const SITE_URL = 'https://bee-liber.com';
 
 export const SEO_DEFAULT_OG_IMAGE =
-  'https://bee-liber.com/hero_main.jpg';
+  'https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b';
 
 export const STATIC_ROUTE_META = {
   '/': {

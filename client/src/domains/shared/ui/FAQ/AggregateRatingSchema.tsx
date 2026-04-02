@@ -6,7 +6,7 @@ const AggregateRatingSchema: React.FC = () => {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": "빌리버 (Beeliber) 짐보관 및 배송 서비스",
-    "image": "https://bee-liber.com/hero_main.jpg",
+    "image": "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b",
     "description": "서울 주요 거점 짐 보관과 인천공항 당일 짐배송 서비스를 제공하는 빌리버.",
     "brand": {
       "@type": "Brand",

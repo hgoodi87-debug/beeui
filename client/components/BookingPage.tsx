@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -19,6 +19,7 @@ import {
 import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
+import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd } from '../services/paypalService';
 import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { calculateDeliveryStoragePrice, STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 import {
@@ -279,6 +280,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
     };
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const paypalContainerRef = useRef<HTMLDivElement>(null);
+    const paypalRenderedRef = useRef(false);
+    const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: string; finalBooking: any } | null>(null);
 
     // 💅 BookingSuccess 첩크 미리 로딩 (lazy 플리커 방지)
     const prefetchBookingSuccess = () => {
@@ -632,6 +636,84 @@ const BookingPage: React.FC<BookingPageProps> = ({
             setIsSubmitting(false);
         }
     };
+
+    // PayPal 버튼 초기화
+    useEffect(() => {
+        if (!isPayPalEnabled() || isDirectBookingMode) return;
+
+        loadPayPalSDK().then(() => {
+            if (paypalRenderedRef.current || !paypalContainerRef.current) return;
+            paypalContainerRef.current.innerHTML = '';
+            paypalRenderedRef.current = true;
+
+            window.paypal.Buttons({
+                style: { layout: 'horizontal', color: 'gold', shape: 'rect', label: 'paypal', height: 48 },
+                createOrder: async () => {
+                    const ctx = latestPayPalCtxRef.current;
+                    if (!ctx || ctx.priceTotal <= 0) throw new Error('결제 금액이 없습니다.');
+                    if (!booking.userName || !booking.userEmail) {
+                        alert('이름과 이메일을 먼저 입력해 주세요.');
+                        throw new Error('폼 미완성');
+                    }
+                    if (!booking.agreedToTerms || !booking.agreedToPrivacy || !booking.agreedToHighValue) {
+                        alert('이용약관에 동의해 주세요.');
+                        throw new Error('약관 미동의');
+                    }
+                    const desc = ctx.serviceType === 'DELIVERY' ? 'Beeliber Airport Delivery' : 'Beeliber Luggage Storage';
+                    return createPayPalOrder(ctx.priceTotal, desc);
+                },
+                onApprove: async (data: { orderID: string }) => {
+                    setIsSubmitting(true);
+                    try {
+                        const capture = await capturePayPalOrder(data.orderID);
+                        const ctx = latestPayPalCtxRef.current;
+                        if (!ctx?.finalBooking) throw new Error('예약 정보가 없습니다.');
+                        await onSuccess({
+                            ...ctx.finalBooking,
+                            paymentMethod: 'paypal',
+                            paymentStatus: 'paid',
+                            paymentProvider: 'paypal',
+                            paymentOrderId: data.orderID,
+                            paymentKey: capture.captureId,
+                            paymentApprovedAt: capture.paidAt,
+                        });
+                    } catch (e) {
+                        alert(e instanceof Error ? e.message : 'PayPal 결제 처리 실패');
+                    } finally {
+                        setIsSubmitting(false);
+                    }
+                },
+                onError: (err: any) => {
+                    console.error('[PayPal]', err);
+                    alert('PayPal 결제 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                },
+            }).render(paypalContainerRef.current);
+        }).catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isDirectBookingMode]);
+
+    // PayPal 버튼에 최신 컨텍스트 주입 (ref 업데이트 — 리렌더 없음)
+    useEffect(() => {
+        if (!isPayPalEnabled()) return;
+        const pickupLoc_ = pickupLoc;
+        const dropoffLoc_ = booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined;
+        latestPayPalCtxRef.current = {
+            priceTotal: priceDetails.total,
+            serviceType: booking.serviceType,
+            finalBooking: {
+                ...booking,
+                pickupLoc: pickupLoc_,
+                returnLoc: dropoffLoc_,
+                price: priceDetails.base + priceDetails.originSurcharge + priceDetails.destSurcharge + priceDetails.insuranceFee,
+                discountCode: appliedCoupon?.code,
+                discountAmount: priceDetails.discount,
+                finalPrice: priceDetails.total,
+                status: BookingStatus.PENDING,
+                createdAt: new Date().toISOString(),
+                language: lang,
+            },
+        };
+    });
 
     const getLocName = (l: LocationOption | undefined) => {
         if (!l) return '';
@@ -1338,6 +1420,25 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         </>
                                     )}
                                 </motion.button>
+
+                                {/* PayPal 버튼 — Toss 대기 기간 임시 결제 수단 */}
+                                {isPayPalEnabled() && !isDirectBookingMode && priceDetails.total > 0 && (
+                                    <div className="mt-4">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="flex-1 h-px bg-gray-200" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                {lang === 'ko' ? '또는 해외 카드' : 'or pay with'}
+                                            </span>
+                                            <div className="flex-1 h-px bg-gray-200" />
+                                        </div>
+                                        <div className="text-center text-[10px] text-gray-400 font-bold mb-2">
+                                            {lang === 'ko'
+                                                ? `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`
+                                                : `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`}
+                                        </div>
+                                        <div ref={paypalContainerRef} id="paypal-button-container" />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

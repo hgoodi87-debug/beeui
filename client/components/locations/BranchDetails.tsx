@@ -36,23 +36,35 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
 
     const getName = () => {
         if (lang === 'ko') return selectedBranch.name;
+        if (lang === 'en') return selectedBranch.nameEn || selectedBranch.name_en || selectedBranch.name;
+        if (lang === 'zh-TW') return selectedBranch.nameZhTw || selectedBranch.name_zh_tw || selectedBranch.nameZh || selectedBranch.name_zh || selectedBranch.name_en || selectedBranch.name;
+        if (lang === 'zh-HK') return selectedBranch.nameZhHk || selectedBranch.name_zh_hk || selectedBranch.nameZh || selectedBranch.name_zh || selectedBranch.name_en || selectedBranch.name;
+        if (lang === 'zh') return selectedBranch.nameZh || selectedBranch.name_zh || selectedBranch.name_en || selectedBranch.name;
+        if (lang === 'ja') return selectedBranch.nameJa || selectedBranch.name_ja || selectedBranch.name_en || selectedBranch.name;
         const fieldSuffix = lang.replace('-', '_').toLowerCase();
-        const key = `name_${fieldSuffix}` as keyof LocationOption;
-        return (selectedBranch[key] as string) || selectedBranch.name_zh || selectedBranch.name_en || selectedBranch.name;
+        const snakeKey = `name_${fieldSuffix}` as keyof LocationOption;
+        return (selectedBranch[snakeKey] as string) || selectedBranch.nameEn || selectedBranch.name_en || selectedBranch.name;
     };
 
     const getAddress = () => {
         if (lang === 'ko') return selectedBranch.address;
+        if (lang === 'en') return selectedBranch.addressEn || selectedBranch.address_en || selectedBranch.address;
+        if (lang === 'zh-TW') return selectedBranch.addressZhTw || selectedBranch.address_zh_tw || selectedBranch.addressZh || selectedBranch.address_zh || selectedBranch.address_en || selectedBranch.address;
+        if (lang === 'zh-HK') return selectedBranch.addressZhHk || selectedBranch.address_zh_hk || selectedBranch.addressZh || selectedBranch.address_zh || selectedBranch.address_en || selectedBranch.address;
+        if (lang === 'zh') return selectedBranch.addressZh || selectedBranch.address_zh || selectedBranch.address_en || selectedBranch.address;
+        if (lang === 'ja') return selectedBranch.addressJa || selectedBranch.address_ja || selectedBranch.address_en || selectedBranch.address;
         const fieldSuffix = lang.replace('-', '_').toLowerCase();
-        const key = `address_${fieldSuffix}` as keyof LocationOption;
-        return (selectedBranch[key] as string) || selectedBranch.address_zh || selectedBranch.address_en || selectedBranch.address;
+        const snakeKey = `address_${fieldSuffix}` as keyof LocationOption;
+        return (selectedBranch[snakeKey] as string) || selectedBranch.addressEn || selectedBranch.address_en || selectedBranch.address;
     };
 
     const getHours = () => {
         if (lang === 'ko') return selectedBranch.businessHours || '09:00 - 21:00';
+        if (lang === 'zh-TW') return selectedBranch.businessHoursZhTw || selectedBranch.businessHours_zh_tw || selectedBranch.businessHoursZh || selectedBranch.businessHours_zh || selectedBranch.businessHours_en || selectedBranch.businessHours || '09:00 - 21:00';
+        if (lang === 'zh-HK') return selectedBranch.businessHoursZhHk || selectedBranch.businessHours_zh_hk || selectedBranch.businessHoursZh || selectedBranch.businessHours_zh || selectedBranch.businessHours_en || selectedBranch.businessHours || '09:00 - 21:00';
         const fieldSuffix = lang.replace('-', '_').toLowerCase();
-        const key = `businessHours_${fieldSuffix}` as keyof LocationOption;
-        return (selectedBranch[key] as string) || selectedBranch.businessHours_zh || selectedBranch.businessHours_en || selectedBranch.businessHours || '09:00 - 21:00';
+        const snakeKey = `businessHours_${fieldSuffix}` as keyof LocationOption;
+        return (selectedBranch[snakeKey] as string) || selectedBranch.businessHours_zh || selectedBranch.businessHours_en || selectedBranch.businessHours || '09:00 - 21:00';
     };
 
     const seoLocation = SEO_LOCATIONS.find(loc => loc.relatedBranchIds.includes(selectedBranch.id));

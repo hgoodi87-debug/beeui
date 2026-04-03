@@ -1788,6 +1788,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
+  const handleBulkPayoutConfirm = async (bookingIds: string[]) => {
+    if (bookingIds.length === 0) return;
+    try {
+      const results = await Promise.allSettled(
+        bookingIds.map(id =>
+          mutateBookingRecord(id, {
+            supabaseMethod: 'PATCH',
+            supabaseBody: { settlement_status: '정산확정' },
+          })
+        )
+      );
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        throw (failures[0] as PromiseRejectedResult).reason;
+      }
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      await AuditService.logAction(currentActor, 'UPDATE', { id: 'bulk-payout', type: 'SETTLEMENT' }, { method: 'BULK_PAYOUT_CONFIRM', count: bookingIds.length });
+      alert(`${bookingIds.length}건 정산 확정 완료되었습니다.`);
+    } catch (e) {
+      console.error(e);
+      alert('정산처리 중 오류가 발생했습니다.');
+    }
+  };
+
   const handlePrintLabel = (booking: BookingState) => {
     const originName = locations.find(l => l.id === booking.pickupLocation)?.name || booking.pickupLocation;
     const destName = locations.find(l => l.id === booking.dropoffLocation)?.name || booking.dropoffLocation;
@@ -2588,6 +2612,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handlePrintLabel={handlePrintLabel}
               handleSoftDelete={handleSoftDelete}
               setSelectedBooking={setSelectedBooking}
+              adminRole={adminRole}
               onAddManual={() => setIsManualBooking(true)}
               cancelStartDate={cancelStartDate}
               setCancelStartDate={setCancelStartDate}
@@ -2694,6 +2719,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               setRevenueEndDate={setRevenueEndDate}
               monthlyControlStats={monthlyControlStats}
               accountingMonthlyStats={accountingMonthlyStats}
+              onBulkPayoutConfirm={handleBulkPayoutConfirm}
             />
           )}
 

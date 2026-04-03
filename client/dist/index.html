@@ -176,24 +176,13 @@
 
   <!-- reCAPTCHA Enterprise: lazy loaded on first booking interaction -->
 
-  <!-- Google tag (gtag.js) - GA4 + Google Ads 📊 -->
-  <!-- 환경변수 미설정 시 스크립트 로드 자체를 건너뜀 (빈 ID로 GTM 요청 방지) -->
+  <!-- Google tag (gtag.js) - GA4 📊 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PQBL1SG842"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    var _ga4Id = 'G-PQBL1SG842';
-    var _adsId = '%VITE_GOOGLE_ADS_ID%';
-    if (_ga4Id && _ga4Id.indexOf('G-') === 0) {
-      var _s = document.createElement('script');
-      _s.async = true;
-      _s.src = 'https://www.googletagmanager.com/gtag/js?id=' + _ga4Id;
-      document.head.appendChild(_s);
-      gtag('js', new Date());
-      gtag('config', _ga4Id);
-      if (_adsId && _adsId.indexOf('AW-') === 0) {
-        gtag('config', _adsId, { allow_enhanced_conversions: true });
-      }
-    }
+    gtag('js', new Date());
+    gtag('config', 'G-PQBL1SG842');
   </script>
 
   <!-- Meta Pixel Code 💅 -->
@@ -361,7 +350,7 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-CfxLY3Xl.js"></script>
+  <script type="module" crossorigin src="/assets/index-BfNwXBO8.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-react-dom-B-4pjoWT.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-motion-BUt1lcWJ.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-query-N1jjWJFK.js">

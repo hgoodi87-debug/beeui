@@ -509,6 +509,11 @@ export const ko = {
         hours_label: '운영 시간',
         nearby_pick: '주변 추천',
         currently_closed: '현재 이 지점은 마감되었습니다.',
+        badge_pick_delivery: '보내는날', badge_ret_delivery: '받는날',
+        closest_label: '가장 가까운 ✨',
+        slot_closed: '마감',
+        premium_luggage_care: '프리미엄 짐케어',
+        image_alt: '빌리버 짐보관 배송 지점',
         info_card_book: 'RESERVE'
     },
     manual: {

@@ -483,6 +483,11 @@ export const zh = {
         hours_label: '营业时间',
         nearby_pick: '周边推荐',
         currently_closed: '该网点目前不在营业时间内。',
+        badge_pick_delivery: '寄出日', badge_ret_delivery: '收件日',
+        closest_label: '最近 ✨',
+        slot_closed: '已截止',
+        premium_luggage_care: '优质行李护理',
+        image_alt: 'Beeliber 行李寄存配送网点',
         info_card_book: 'RESERVE'
     },
     common: {

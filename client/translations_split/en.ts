@@ -484,6 +484,11 @@ export const en = {
         hours_label: 'Business Hours',
         nearby_pick: 'Recommended Nearby',
         currently_closed: 'This branch is currently closed.',
+        badge_pick_delivery: 'SEND DATE', badge_ret_delivery: 'RECV DATE',
+        closest_label: 'Closest ✨',
+        slot_closed: 'Closed',
+        premium_luggage_care: 'Premium Luggage Care',
+        image_alt: 'Beeliber luggage storage & delivery',
         info_card_book: 'RESERVE'
     },
     manual: {

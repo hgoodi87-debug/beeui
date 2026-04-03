@@ -390,6 +390,11 @@ export const zhHK = {
         hours_label: '營業時間',
         nearby_pick: '周邊推薦',
         currently_closed: '該網點目前唔喺營業時間內。',
+        badge_pick_delivery: '寄出日', badge_ret_delivery: '收件日',
+        closest_label: '最近 ✨',
+        slot_closed: '已截止',
+        premium_luggage_care: '優質行李護理',
+        image_alt: 'Beeliber 行李寄存配送網點',
         info_card_book: 'RESERVE'
     },
     services_page: {

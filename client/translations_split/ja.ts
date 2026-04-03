@@ -483,6 +483,11 @@ export const ja = {
         hours_label: '営業時間',
         nearby_pick: '周辺のおすすめ',
         currently_closed: '現在、この店舗は営業時間外です。',
+        badge_pick_delivery: '発送日', badge_ret_delivery: '受取日',
+        closest_label: '最寄り ✨',
+        slot_closed: '締切',
+        premium_luggage_care: 'プレミアム手荷物管理',
+        image_alt: 'Beeliber 手荷物保管・配送店舗',
         info_card_book: 'RESERVE'
     },
     terms: {

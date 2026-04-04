@@ -524,7 +524,7 @@ export const zhTW = {
         slot_closed: '已截止',
         premium_luggage_care: '優質行李護理',
         image_alt: 'Beeliber 行李寄存配送網點',
-        info_card_book: 'RESERVE'
+        info_card_book: '立即預約'
     },
     common: {
         confirm: '確認',

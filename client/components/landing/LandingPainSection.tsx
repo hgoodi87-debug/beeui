@@ -58,7 +58,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-black group">
                             <img
                                 src="/images/landing/before.jpg"
-                                alt="무거운 캐리어와 짐 때문에 지하철 계단과 인파 속에서 고생하는 힘든 모습"
+                                alt="캐리어를 들고 지하철 계단을 오르는 여행자의 모습"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s] grayscale group-hover:grayscale-0"
                             />
                             {/* Before 캡션 */}

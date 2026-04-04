@@ -132,7 +132,7 @@ export const ko = {
         badge_label: "Safe & Trust Beeliber",
         tracking: { title: "실시간 위치 알림", desc: "내 짐의 보관/배송 상태를 실시간 이메일로 확인하세요.", accent: "STATUS UPDATE" },
         insurance: { title: "프리미엄 안심 보험", desc: "분실/파손 걱정 끝! 최대 50만 원까지 보장되는 든든한 보험.", accent: "SECURED" },
-        seal: { title: "스마트 보안 시스템", desc: "CCTV와 전문 파트너가 당신의 짐을 24시간 안전하게 지킵니다.", accent: "SAFE CARE" },
+        seal: { title: "스마트 보안 시스템", desc: "CCTV와 전문 파트너가 당신의 짐을 안전하게 지킵니다.", accent: "SAFE CARE" },
         footer_label1: "마포/서울 공식 파트너십",
         footer_label2: "검증된 보관 거점",
         footer_label3: "이미 수만 명이 경험한 신뢰"
@@ -282,9 +282,9 @@ export const ko = {
         book_now_btn: "지금 예약하기",
         storage_pricing_title: "보관 요금표",
         storage_period: "기간",
-        promo_code: "할인 코드",
+        promo_code: "프로모션 코드",
         promo_code_placeholder: "프로모션 코드 입력",
-        discount_applied: "할인이 적용되었습니다.",
+        discount_applied: "혜택이 적용되었습니다.",
         invalid_promo_code: "유효하지 않은 코드입니다.",
         next: "다음 단계",
         book_now: "예약하기",
@@ -814,7 +814,7 @@ export const ko = {
         error_email: '이메일 또는 비밀번호가 올바르지 않습니다.'
     },
     signup_modal: {
-        promo: '지금 가입하고 2,000원 할인 쿠폰 받으세요!',
+        promo: '지금 가입하고 2,000원 웰컴 쿠폰 받으세요!',
         welcome: 'Beeliber에 오신 것을 환영합니다!',
         subtitle: '여행의 시작을 더욱 가볍게 만들어보세요.',
         signup_btn: '가입 완료하기',
@@ -883,7 +883,7 @@ export const ko = {
     admin: {
         sidebar: {
             overview: '운영 개요',
-            logistics: '물류/예약 관리',
+            logistics: '배송/예약 관리',
             locations: '지점/거점 관리',
             settlement: '정산 원장',
             reports: '비즈니스 리포트',

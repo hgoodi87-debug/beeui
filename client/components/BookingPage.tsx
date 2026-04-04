@@ -449,7 +449,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
         let durationText = '';
 
         if (isDelivery) {
-            const deliveryBase = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * deliveryPrices.carrier);
+            const deliveryBase = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * (deliveryPrices.carrier || DEFAULT_DELIVERY_PRICES.carrier));
             const deliveryStorage = calculateDeliveryStoragePrice(
                 booking.pickupDate || '',
                 booking.dropoffDate || booking.pickupDate || '',

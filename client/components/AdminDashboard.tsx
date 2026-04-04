@@ -838,17 +838,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
       if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
 
-      // 3. 취소/환불: 날짜 구간 필터 적용
-      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
+      // 3. 취소/환불/완료: 날짜 구간 필터 적용
+      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.status === BookingStatus.COMPLETED) {
         const d = b.pickupDate || '';
         return d >= cancelStartDate && d <= cancelEndDate;
       }
 
       // 4. 진행중 상태는 날짜 무관 표시
-      const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+      const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
       if (incompleteStatuses.includes(b.status as any)) return true;
 
-      // 5. 완료 건: 오늘 날짜만
+      // 5. 그 외: 오늘 날짜만
       return b.pickupDate === todayKST;
     });
 
@@ -898,13 +898,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           const isMatchDate = b.pickupDate === searchDate || (b.dropoffDate && b.pickupDate <= searchDate && b.dropoffDate >= searchDate);
           if (!isMatchDate) return false;
         } else {
-          // [스봉이] 취소/환불: 날짜 구간 필터 적용 💅
-          if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
+          // [스봉이] 취소/환불/완료: 날짜 구간 필터 적용 💅
+          if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.status === BookingStatus.COMPLETED) {
             const d = b.pickupDate || '';
             if (d < cancelStartDate || d > cancelEndDate) return false;
           } else {
             // 진행중 상태는 날짜 무관 표시
-            const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+            const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
             const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
             if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
           }

@@ -1,4 +1,6 @@
-# Beeliber Harness Engineering Master v1.0
+# Beeliber Harness Engineering Master v2.0
+
+> 최종 업데이트: 2026-03-31 | 실 구현 기준 반영
 
 ## 0. 문서 개요
 
@@ -15,18 +17,22 @@
 
 ---
 
-## 1. Beeliber에 왜 하네스 엔지니어링이 필요한가
+## 1. 현재 기술 스택 (실 구현)
 
-Beeliber는 단순 예약 웹이 아니라 다음이 동시에 물려 있다.
+| 항목 | 기술 | 상태 |
+|------|------|------|
+| Frontend | React SPA (Vite + TypeScript) + Tailwind CSS | 운영 중 |
+| Backend | Supabase Edge Functions (Deno) | 운영 중 |
+| DB | Supabase PostgreSQL 17 (49개 테이블, 9개 뷰) | 운영 중 |
+| Auth | Supabase Auth (JWT) | 운영 중 |
+| Storage | Supabase Storage (5개 버킷) | 운영 중 |
+| Hosting | Firebase Hosting | 운영 중 |
+| 결제 | Toss Payments | Mock 모드 (실배포 대기) |
+| 상태관리 | Zustand (3개 스토어) + TanStack React Query | 운영 중 |
+| i18n | 6개 언어 (ko/en/ja/zh/zh-TW/zh-HK) | 운영 중 |
+| Supabase 프로젝트 | `xpnfjolqiffduedwtxey` (ap-northeast-1) | ACTIVE |
 
-- Hub 지점: 배송 + 보관
-- Partner 지점: 보관 위주
-- Phase 1 배송 범위: Hub → 인천공항 중심
-- 미운영 범위: 공항 → 호텔, 호텔 픽업
-- 다국어 고객 응대
-- 실시간 운영 관리
-- 기사/지점/관리자 협업
-- 광고/콘텐츠/CS에 AI 활용
+> Firebase Firestore/Auth는 2026-03-29 기준 **완전 retired**. Supabase가 유일한 런타임 DB.
 
 ---
 
@@ -44,458 +50,317 @@ Beeliber는 단순 예약 웹이 아니라 다음이 동시에 물려 있다.
 
 ---
 
-## 3. 목표
+## 3. 전체 구조 (6-Layer)
 
-### 3-1. 핵심 목표
-
-- 예약 단계에서 운영 불가 요청을 최대한 차단
-- 결제 이후 운영 실패율 감소
-- 기사/지점/관리자 간 상태 불일치 최소화
-- CS와 안내 문구 일관성 확보
-- AI를 적극 사용하되 사고를 줄임
-- 운영 데이터를 개선 가능한 구조로 축적
-
-### 3-2. 성공 조건
-
-- 예약 시작 대비 결제 완료율 상승
-- 결제 완료 대비 예약 확정률 상승
-- 수동 검토 비율 합리화
-- 운영 지연률 감소
-- 증빙 누락률 감소
-- 오안내 발생률 감소
-- AI 초안 승인율 상승
-- 이슈 해결 시간 단축
-
----
-
-## 4. 전체 구조
-
-Beeliber 하네스는 6개 레이어로 구성한다.
-
-### Layer 1. Brand Harness
-브랜드 표현, 금지 문구, 서비스 운영 범위 통제
-
-### Layer 2. Commerce Harness
-예약, 상품, 가격, 결제, 환불 전 단계 통제
-
-### Layer 3. Operations Harness
-보관, 픽업, 배송, 인계, SLA, 예외 처리 통제
-
-### Layer 4. AI Harness
-AI 생성, 자동 검사, 승인, 배포 통제
-
-### Layer 5. Admin Harness
-검토함, 운영보드, 이슈 센터, 규칙 관리, 감사 로그
-
-### Layer 6. Eval Harness
-KPI, 실패 원인, 지점별/기사별/AI 성능 측정
-
----
-
-## 5. FSD (Functional Spec Document)
-
-### 5-1. 고객 예약 페이지
-
-**입력 항목**: 이용 유형(보관/Hub→공항 배송), 이용 지점, 날짜, 시간, 짐 종류, 수량, 고객 언어, 이름, 연락처, 목적지 정보, 추가 요청사항
-
-**실시간 검증**:
-- 지점이 Hub인지 Partner인지 판별
-- 선택 서비스가 지점 유형과 맞는지 확인
-- 미운영 배송 방향인지 확인
-- 운영 시간 내 예약 가능 여부 확인
-- 짐 종류 허용 여부 확인
-- 특수짐 여부 확인
-
-**결과 상태**: 예약 가능 / 수동 검토 필요 / 예약 불가
-
-### 5-2. 결제 페이지
-
-- 운영 불가 상태는 결제 진입 차단
-- 수동 검토 상태는 결제 hold 가능
-- 결제 완료 후 운영 불가 발견 시 issue 생성
-
-### 5-3. 예약 검토함
-
-**필터**: 오늘 검토 필요, 고위험 짐, 규격 불일치, 지점 불명확, 시간 충돌, 결제 완료 후 보류
-
-**액션**: 승인, 반려, 추가 정보 요청, 대체 지점 추천, 기사 배정 대기 전환
-
-### 5-4. 실시간 운영 보드
-
-**컬럼**: 예약 접수 → 결제 완료 → 예약 확정 → 픽업 준비 → 픽업 완료 → 이동 중 → 인계 대기 → 완료 / 이슈
-
-**자동 이벤트**: 상태 정체 10분 경고, ETA 초과 경고, 증빙 누락 알림, 고객 미응답 issue 자동 생성
-
-### 5-5. 이슈 센터
-
-**이슈 유형**: 고객 미응답, 지점 영업시간 불일치, 기사 지연, 주소 오류, 증빙 누락, 짐 규격 상이, 결제 후 운영 불가, 파손/분실 의심, 공항 인계 실패
-
-### 5-6. AI 검수함
-
-**자동 검사**: 미운영 서비스 언급, 금지어 포함, 브랜드 톤 이탈, 가격/정책 환각, 확정적 표현 과다
-
-**액션**: 승인, 수정 후 승인, 반려, 프롬프트 수정 요청
-
-### 5-7. 규칙 관리 페이지
-
-**관리 항목**: 지점 유형, 서비스 가능 범위, 운영 시간, 자동 승인 조건, 수동 검토 조건, 금지 문구, 언어별 시스템 메시지, AI 위험도 기준
-
-### 5-8. KPI 대시보드
-
-예약→결제 완료율, 결제→예약 확정률, 수동 검토 비율, 운영 지연률, 증빙 누락률, 이슈 발생률, AI 승인/반려율, 오안내 발생률, 파손/분실 사고율
-
----
-
-## 6. 상태값 체계
-
-### 6-1. 예약 상태
-lead_created → validation_passed → manual_review_required → rejected
-                                 → payment_pending → payment_completed → reservation_confirmed → cancelled
-
-### 6-2. 운영 상태
-pickup_ready → pickup_completed → in_transit → arrived_at_destination → handover_pending → handover_completed → completed
-
-### 6-3. 이슈 상태
-issue_open → issue_in_progress → issue_waiting_customer / issue_waiting_internal → issue_resolved → issue_closed
-
-### 6-4. AI 상태
-ai_generated → ai_policy_failed / ai_review_pending → ai_approved / ai_rejected → ai_published
-
----
-
-## 7. DB 스키마 SQL 초안
-
-```sql
-create extension if not exists "pgcrypto";
-
--- 지점 유형
-create table branch_types (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique,
-  name text not null,
-  created_at timestamptz not null default now()
-);
-
--- 지점
-create table branches (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique,
-  name text not null,
-  branch_type_id uuid not null references branch_types(id),
-  is_active boolean not null default true,
-  address text,
-  city text,
-  timezone text not null default 'Asia/Seoul',
-  open_time time,
-  close_time time,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
--- 서비스
-create table services (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique,
-  name text not null,
-  is_active boolean not null default true,
-  created_at timestamptz not null default now()
-);
-
--- 짐 유형
-create table baggage_types (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique,
-  name text not null,
-  requires_manual_review boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
--- 서비스 규칙
-create table service_rules (
-  id uuid primary key default gen_random_uuid(),
-  branch_id uuid references branches(id),
-  branch_type_id uuid references branch_types(id),
-  service_id uuid not null references services(id),
-  baggage_type_id uuid references baggage_types(id),
-  allowed boolean not null default true,
-  requires_manual_review boolean not null default false,
-  phase_code text not null default 'PHASE_1',
-  reject_message_ko text,
-  reject_message_en text,
-  priority int not null default 100,
-  created_at timestamptz not null default now()
-);
-
--- 고객
-create table customers (
-  id uuid primary key default gen_random_uuid(),
-  full_name text not null,
-  language_code text not null default 'en',
-  email text,
-  phone text,
-  created_at timestamptz not null default now()
-);
-
--- 예약
-create table reservations (
-  id uuid primary key default gen_random_uuid(),
-  reservation_no text not null unique,
-  customer_id uuid not null references customers(id),
-  branch_id uuid not null references branches(id),
-  service_id uuid not null references services(id),
-  scheduled_at timestamptz not null,
-  status text not null,
-  ops_status text,
-  issue_status text,
-  risk_level text not null default 'low',
-  approval_mode text not null default 'auto',
-  currency text not null default 'KRW',
-  total_amount numeric(12,2) not null default 0,
-  notes text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
--- 예약 항목
-create table reservation_items (
-  id uuid primary key default gen_random_uuid(),
-  reservation_id uuid not null references reservations(id) on delete cascade,
-  baggage_type_id uuid not null references baggage_types(id),
-  quantity int not null check (quantity > 0),
-  size_note text,
-  requires_manual_review boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
--- 결제
-create table payments (
-  id uuid primary key default gen_random_uuid(),
-  reservation_id uuid not null references reservations(id) on delete cascade,
-  provider text not null,
-  payment_key text,
-  status text not null,
-  amount numeric(12,2) not null,
-  paid_at timestamptz,
-  failed_reason text,
-  created_at timestamptz not null default now()
-);
-
--- 배송 배정
-create table delivery_assignments (
-  id uuid primary key default gen_random_uuid(),
-  reservation_id uuid not null references reservations(id) on delete cascade,
-  driver_name text,
-  driver_phone text,
-  assigned_at timestamptz,
-  eta timestamptz,
-  sla_due_at timestamptz,
-  status text not null default 'unassigned',
-  created_at timestamptz not null default now()
-);
-
--- 증빙
-create table proof_assets (
-  id uuid primary key default gen_random_uuid(),
-  reservation_id uuid not null references reservations(id) on delete cascade,
-  asset_type text not null,
-  file_url text not null,
-  uploaded_by text,
-  created_at timestamptz not null default now()
-);
-
--- 이슈 티켓
-create table issue_tickets (
-  id uuid primary key default gen_random_uuid(),
-  reservation_id uuid not null references reservations(id) on delete cascade,
-  issue_code text not null,
-  severity text not null default 'medium',
-  status text not null default 'open',
-  title text not null,
-  description text,
-  assigned_to text,
-  opened_at timestamptz not null default now(),
-  resolved_at timestamptz
-);
-
--- 운영 상태 로그
-create table operation_status_logs (
-  id uuid primary key default gen_random_uuid(),
-  reservation_id uuid not null references reservations(id) on delete cascade,
-  from_status text,
-  to_status text not null,
-  changed_by text not null,
-  reason text,
-  created_at timestamptz not null default now()
-);
-
--- AI 출력
-create table ai_outputs (
-  id uuid primary key default gen_random_uuid(),
-  use_case text not null,
-  source_ref text,
-  input_context jsonb not null default '{}'::jsonb,
-  generated_text text not null,
-  risk_score numeric(5,2) not null default 0,
-  policy_passed boolean not null default false,
-  approval_status text not null default 'review_pending',
-  reviewer_id text,
-  published_at timestamptz,
-  created_at timestamptz not null default now()
-);
-
--- AI 검수 로그
-create table ai_review_logs (
-  id uuid primary key default gen_random_uuid(),
-  ai_output_id uuid not null references ai_outputs(id) on delete cascade,
-  check_type text not null,
-  result text not null,
-  detail text,
-  created_at timestamptz not null default now()
-);
-
--- 알림
-create table notifications (
-  id uuid primary key default gen_random_uuid(),
-  reservation_id uuid references reservations(id) on delete cascade,
-  channel text not null,
-  template_code text not null,
-  recipient text not null,
-  status text not null default 'queued',
-  sent_at timestamptz,
-  created_at timestamptz not null default now()
-);
-
--- 감사 로그
-create table audit_logs (
-  id uuid primary key default gen_random_uuid(),
-  entity_type text not null,
-  entity_id text not null,
-  action text not null,
-  actor text not null,
-  before_data jsonb,
-  after_data jsonb,
-  created_at timestamptz not null default now()
-);
+```
+┌──────────────────────────────────────────────────────┐
+│ Layer 1. Brand       │ beeliber_master               │
+│ 브랜드 표현, 금지 문구, 서비스 운영 범위 통제           │
+├──────────────────────┼───────────────────────────────┤
+│ Layer 2. Commerce    │ beeliber_pricing + payments   │
+│ 예약 4단계, 가격 계산, 결제(Toss), 환불              │
+├──────────────────────┼───────────────────────────────┤
+│ Layer 3. Operations  │ beeliber_operations           │
+│ 보관, 픽업, 배송, 인계, SLA, 예외 처리               │
+├──────────────────────┼───────────────────────────────┤
+│ Layer 4. AI          │ beeliber_ai_harness           │
+│ AI 생성, 자동 검사, 승인, 배포 통제                   │
+├──────────────────────┼───────────────────────────────┤
+│ Layer 5. Admin       │ beeliber_ui_map + stitch_qa   │
+│ 20개 탭 대시보드, 운영보드, 이슈센터, 규칙관리         │
+├──────────────────────┼───────────────────────────────┤
+│ Layer 6. Eval        │ beeliber_eval                 │
+│ KPI, 실패 원인, 지점별/기사별/AI 성능 측정            │
+└──────────────────────┴───────────────────────────────┘
 ```
 
 ---
 
-## 8. Supabase RLS 정책 초안
-
-권장 role 구조: admin, ops_manager, ops_staff, finance, marketing, content_manager, driver, customer
-
-핵심 정책:
-- customers: 본인 프로필만 조회
-- reservations: 고객은 본인만 / admin+ops_manager 전체
-- payments: 고객 본인 + admin+ops_manager+finance
-- issue_tickets: admin+ops_manager+ops_staff
-- proof_assets: admin+ops_manager+driver
-- ai_outputs: admin+ops_manager+marketing+content_manager
-- audit_logs: admin only
-
----
-
-## 9. API 명세 초안
-
-### 9-1. Reservation APIs
-- `POST /api/reservations/validate` — 예약 가능 여부 사전 판정
-- `POST /api/reservations` — 예약 생성
-- `GET /api/reservations/:id` — 예약 상세 조회
-- `PATCH /api/reservations/:id/status` — 예약 상태 변경
-
-### 9-2. Payment APIs
-- `POST /api/payments/confirm` — 결제 승인 처리
-- `POST /api/payments/webhook` — 결제사 웹훅 수신
-- `POST /api/payments/refund` — 환불 처리
-
-### 9-3. Operations APIs
-- `POST /api/ops/assign-driver` — 기사 배정
-- `PATCH /api/ops/reservations/:id/ops-status` — 운영 상태 변경
-- `POST /api/ops/reservations/:id/proofs` — 증빙 업로드
-- `POST /api/issues` — 이슈 생성
-- `PATCH /api/issues/:id` — 이슈 상태 업데이트
-
-### 9-4. AI APIs
-- `POST /api/ai/generate` — AI 초안 생성
-- `POST /api/ai/review` — 자동 검사 및 검수 로그 저장
-- `PATCH /api/ai/outputs/:id/approve` — AI 출력 승인
-- `PATCH /api/ai/outputs/:id/reject` — AI 출력 반려
-
-### 9-5. Rules APIs
-- `GET /api/rules` — 규칙 조회
-- `POST /api/rules` — 규칙 생성
-- `PATCH /api/rules/:id` — 규칙 수정
-- `POST /api/rules/simulate` — 테스트 시뮬레이션
-
----
-
-## 10. Next.js 프로젝트 폴더 구조 초안
+## 4. 사용자 예약 플로우 (실 구현)
 
 ```
-apps/web/app/
-  (public)/
-    page.tsx                    ← 랜딩
-    reservation/page.tsx        ← 예약
-    reservation/result/page.tsx ← 예약 결과
-  api/
-    reservations/               ← 예약 API
-    payments/                   ← 결제 API
-    ops/                        ← 운영 API
-    issues/                     ← 이슈 API
-    ai/                         ← AI API
-    rules/                      ← 규칙 API
-  dashboard/
-    page.tsx                    ← 관리자 메인
-    reservations/page.tsx       ← 예약 검토함
-    ops-board/page.tsx          ← 실시간 운영 보드
-    issues/page.tsx             ← 이슈 센터
-    ai-review/page.tsx          ← AI 검수함
-    rules/page.tsx              ← 규칙 관리
-    analytics/page.tsx          ← KPI 대시보드
-
-packages/
-  db/migrations/ seeds/ policies/ functions/
-  ui/ config/ shared/
+[랜딩] → [거점 선택] → [예약 폼 4단계] → [결제] → [저장] → [웹훅] → [완료]
 ```
 
----
+### 4-1. 예약 폼 (BookingPage.tsx, 1352줄)
 
-## 11. 관리자 화면별 작업지시서
-
-### 11-1. 예약 검토함
-위험도/지점유형/서비스유형 배지, 보류사유 태그, 승인/반려/추가정보요청 버튼.
-단건 클릭 사이드패널, 최근 로그 5개, 반려 템플릿 메시지, 대체지점 추천.
-
-### 11-2. 실시간 운영 보드
-칸반형 상태 보드, SLA 타이머, ETA 표시, 기사 배정, 증빙 아이콘, 이슈 아이콘.
-drag & drop 금지 — 규칙 기반 버튼으로만 전이 허용.
-
-### 11-3. 이슈 센터
-issue_code별 템플릿, 고객 대기/내부 대기 분리, 해결 완료 시 회고 태그 필수.
-
-### 11-4. AI 검수함
-use_case 필터, 위험 점수, 금지어/미운영 검사, 원문/수정본 비교.
-고위험 use_case 관리자 승인 필수.
-
-### 11-5. 규칙 관리 페이지
-지점별 규칙 테이블, 서비스 토글, 수동검토 토글, 우선순위, 언어별 메시지.
-규칙 수정 시 audit log 필수, 미래 적용일, 충돌 시 저장 차단.
-
----
-
-## 12. 개발 진행 순서
-
-| 차수 | 작업 |
+| 단계 | 내용 |
 |------|------|
-| **1차** | branch/service/baggage/rules 테이블, validate API, 예약 생성/조회, 상태 머신 기본, 예약 검토함 1차 |
-| **2차** | 결제 confirm/webhook/refund, 운영 상태 변경, 증빙 업로드, 이슈 센터, 알림 연동 |
-| **3차** | 실시간 운영 보드, SLA 타이머, 감사 로그 고도화, 규칙 관리 페이지 |
-| **4차** | AI generate/review/approve 흐름, AI 검수함, KPI 대시보드, 규칙 시뮬레이터 |
-| **5차** | 재배차 추천, ETA 예측 고도화, 지점별 운영 예측, 이상 탐지 자동화 |
+| Step 01 | 서비스 유형 (STORAGE/DELIVERY), 거점, 날짜/시간 |
+| Step 02 | 짐 수량 (handBag, carrier, strollerBicycle) |
+| Step 03 | 고객 정보, SNS, 동의, 보험 |
+| Step 04 | 가격 확인, 쿠폰, 결제 |
+
+### 4-2. 가격 계산 (실 구현)
+
+**보관 요금** (bookingService.ts):
+```
+핸드백:  4h 4,000 / 시간당 200 / 1일 8,000 / 추가일 6,000 / 7일 44,000
+캐리어:  4h 5,000 / 시간당 250 / 1일 10,000 / 추가일 8,000 / 7일 58,000
+유모차:  4h 10,000 / 시간당 200 / 1일 14,000 / 추가일 10,000 / 7일 74,000
+```
+
+**배송 요금** (deliveryStoragePricing.ts):
+```
+핸드백: 10,000 / 캐리어: 25,000 (유모차 배송 불가)
+배송일 > 픽업일이면 보관 요금 추가
+```
+
+**공통 추가**: 보험 5,000×레벨×짐수 + 출발지/도착지 할증 - 쿠폰 할인
+
+### 4-3. 결제 (tossPaymentsService.ts)
+
+1. `createTossPaymentSession()` → orderId 발급
+2. `requestTossCardPayment()` → Toss 결제창
+3. 성공: `/payments/toss/success` → `confirmTossPayment()`
+4. 실패: `/payments/toss/fail`
+
+### 4-4. 후처리 (on-booking-created Edge Function)
+
+1. 예약 코드 생성 (ORIGIN-DEST-RANDOM)
+2. 바우처 이메일 발송
+3. Google Chat 알림
 
 ---
 
-## 13. 최종 요약
+## 5. 상태 머신 (실 구현)
+
+### 5-1. 예약 상태 (reservations.status)
+```
+lead_created → validation_passed → manual_review_required → rejected
+                    │
+                    ▼
+              payment_pending → payment_completed → reservation_confirmed
+                    │                                      │
+                    ▼                                      ▼
+                cancelled                              cancelled
+```
+
+### 5-2. 운영 상태 (reservations.ops_status)
+```
+pickup_ready → pickup_completed → in_transit → arrived_at_destination
+                                                       │
+                                                       ▼
+                                              handover_pending → handover_completed → completed
+```
+
+### 5-3. 배송 상태 (delivery_assignments.status)
+```
+unassigned → assigned → arrived_pickup → picked_up → arrived_destination → handover_done
+                                                                              │
+                                                                          cancelled
+```
+
+### 5-4. 이슈 상태 (issue_tickets.status)
+```
+open → in_progress → waiting_customer / waiting_internal → resolved → closed
+```
+
+### 5-5. AI 상태 (ai_outputs.approval_status)
+```
+review_pending → approved → published
+              → rejected
+```
+
+---
+
+## 6. DB 현황 (Supabase PostgreSQL 17)
+
+### 6-1. 테이블 구조 (49개)
+
+| 영역 | 테이블 | 수 |
+|------|--------|:--:|
+| AUTH & ORG | profiles, roles, branches, branch_types, employees, employee_roles, employee_branch_assignments | 7 |
+| RESERVATION | customers, services, baggage_types, service_rules, reservations, reservation_items, booking_details, payments, delivery_assignments, proof_assets, issue_tickets, operation_status_logs, storage_tiers | 13 |
+| OPERATIONS | locations, location_translations, daily_closings, expenditures, audit_logs, audit_logs_archive | 6 |
+| CMS & AI | cms_areas, cms_contents, cms_themes, content_translations, ai_outputs, ai_review_logs, system_notices, legal_documents, google_reviews, google_review_summary | 10 |
+| COMMS | chat_sessions, chat_messages, notifications, notifications_archive | 4 |
+| PROMOTION | discount_codes, user_coupons, partnership_inquiries, branch_prospects, app_settings | 5 |
+| ARCHIVE | archive_audit_logs, archive_notifications, archive_operation_status_logs, operation_status_logs_archive | 4 |
+
+### 6-2. 뷰 (9개)
+- `admin_booking_list_v1` — 관리자 예약 목록
+- `admin_revenue_daily_v1` — 일별 매출
+- `admin_revenue_monthly_v1` — 월별 매출
+- `v_branch_daily_summary`, `v_branch_settlement_*` — 지점 정산
+- `v_cms_public_list`, `v_reservation_admin_list`
+
+### 6-3. RLS 정책
+
+전체 테이블 RLS 활성화. 11개 역할 기반 접근 제어:
+```
+super_admin, hq_admin, hub_manager, partner_manager, ops_manager,
+ops_staff, finance_staff, cs_staff, driver, marketing, content_editor
+```
+
+헬퍼 함수: `has_any_role()`, `has_branch_access()`, `shares_branch_with_employee()`, `current_employee_id()`
+
+### 6-4. Edge Functions (6개)
+- `on-booking-created` — 예약 생성 후처리 (코드+이메일+알림)
+- `on-booking-updated` — 예약 수정 후처리
+- `signed-upload` — Supabase Storage 서명 업로드
+- `admin-account-sync` — 관리자 계정 동기화
+- `toss-payments` — Toss 결제 세션/확인
+- `cancel-booking` — 예약 취소
+
+> 상세 DB 구조: `docs/DATABASE_STRUCTURE_MAP.md` 참조
+
+---
+
+## 7. 프로젝트 구조 (실 구현)
+
+```
+client/                          ← React SPA (Vite + TypeScript)
+├── App.tsx                      ← 전체 라우팅 (25+ 사용자 + 4 관리자)
+├── components/
+│   ├── BookingPage.tsx          ← 예약 폼 4단계 (1,352줄)
+│   ├── AdminDashboard.tsx       ← 관리자 대시보드 (3,000+줄, 20탭)
+│   ├── LandingRenewal.tsx       ← 랜딩 페이지 (12개 섹션)
+│   ├── admin/                   ← 관리자 탭 컴포넌트 (20개)
+│   └── landing/                 ← 랜딩 섹션 컴포넌트 (12개)
+├── src/
+│   ├── domains/                 ← DDD 도메인 구조
+│   │   ├── booking/             ← 예약 (타입, 서비스, 가격 계산, 훅)
+│   │   ├── location/            ← 거점 (타입, 구독 훅)
+│   │   ├── admin/               ← 관리자 (통계, 매출, 정산 훅)
+│   │   ├── user/                ← 사용자 (인증 훅)
+│   │   └── shared/              ← 공통 (타입, SEO 스키마)
+│   └── store/                   ← Zustand 스토어
+│       ├── appStore.ts          ← 언어, 관리자 정보
+│       ├── bookingStore.ts      ← 예약 상태
+│       └── adminStore.ts        ← 관리자 UI 상태
+├── services/
+│   ├── storageService.ts        ← 핵심 CRUD (Supabase 어댑터, 1,400+줄)
+│   ├── adminAuthService.ts      ← 관리자 인증 (Supabase Auth)
+│   ├── supabaseClient.ts        ← Supabase REST 클라이언트
+│   ├── supabaseRuntime.ts       ← Supabase URL/키 설정
+│   └── tossPaymentsService.ts   ← Toss 결제 연동
+├── translations_split/          ← 6개 언어 번역 (326KB)
+└── types.ts                     ← 전체 타입 정의
+
+supabase/
+├── functions/                   ← Edge Functions (6개)
+│   ├── on-booking-created/
+│   ├── on-booking-updated/
+│   ├── signed-upload/
+│   ├── admin-account-sync/
+│   ├── toss-payments/
+│   └── cancel-booking/
+└── migrations/                  ← DB 마이그레이션 (17개 SQL)
+
+functions/                       ← Firebase Functions (레거시, 운영 중)
+├── index.js                     ← 이메일, 알림 등
+
+.agent/
+├── skills/                      ← 22개 스킬 (브랜드~DB검수)
+├── rules/                       ← 9개 규칙 (설계/구현/수정 모드)
+└── workflows/                   ← 워크플로우 (스크린샷→코드)
+```
+
+---
+
+## 8. 관리자 대시보드 (실 구현, 20탭)
+
+| # | 탭 | 컴포넌트 | 역할 |
+|---|-----|---------|------|
+| 1 | Overview | OverviewTab | KPI + 매출 요약 |
+| 2 | Logistics | LogisticsTab | 예약 목록 + 상태 관리 |
+| 3 | Locations | LocationsTab | 거점 CRUD + 지도 |
+| 4 | Daily Settlement | DailySettlementTab | 일일 정산 |
+| 5 | Accounting | AccountingTab | 회계 상세 |
+| 6 | Monthly Settlement | MonthlySettlementTab | 월별 정산 |
+| 7 | Financial Comparison | FinancialComparisonTab | 재무 비교 |
+| 8 | Notice | NoticeTab | 공지 CRUD |
+| 9 | Partnership | PartnershipTab | 제휴 관리 |
+| 10 | HR | HRTab | 직원/역할 관리 |
+| 11 | System | SystemTab | 시스템 설정 |
+| 12 | Cloud | CloudTab | 클라우드 설정 |
+| 13 | Chat | ChatTab | 채팅 관리 |
+| 14 | Discount | DiscountTab | 할인 코드 CRUD |
+| 15 | Reports | ReportsTab | 리포트 |
+| 16 | Roadmap | RoadmapTab | 로드맵 |
+| 17 | Operations | OperationsConsole | 운영 콘솔 |
+| 18-20 | Editors | Privacy/Terms/QnaEditorTab | 약관 편집 |
+
+> 70+ 버튼/핸들러 전수 검사 완료 (2026-03-31). 코드 레벨 broken 0건.
+
+---
+
+## 9. Supabase Edge Function API 명세 (실 구현)
+
+| Endpoint | Method | 역할 |
+|----------|--------|------|
+| `/functions/v1/on-booking-created` | POST | 예약 코드 생성 + 이메일 + 알림 |
+| `/functions/v1/on-booking-updated` | POST | 예약 수정 후처리 |
+| `/functions/v1/toss-payments` | POST | 결제 세션 생성/확인 |
+| `/functions/v1/cancel-booking` | POST | 예약 취소 처리 |
+| `/functions/v1/signed-upload` | POST | Storage 서명 업로드 |
+| `/functions/v1/admin-account-sync` | POST | 관리자 계정 동기화 |
+
+REST API는 Supabase PostgREST 자동 생성 (`/rest/v1/{table}`)
+
+---
+
+## 10. 하네스 스킬 맵 (22개)
+
+### 핵심 스킬 (우선 참조)
+| 스킬 | Layer | 역할 |
+|------|-------|------|
+| `beeliber_master` | 1. Brand | 금지어, 가격표, 서비스 구조 |
+| `beeliber_security` | 공통 | CISO 보안 가드레일 5대 원칙 |
+| `beeliber_design` | 공통 | 컬러, 폰트, UX 원칙 |
+| `beeliber_core` | 공통 | DDD 아키텍처, 팀 프로토콜 |
+
+### Layer별 스킬
+| 스킬 | Layer | 역할 |
+|------|-------|------|
+| `beeliber_pricing` | 2. Commerce | 가격 정책 + 계산 로직 |
+| `beeliber_payments` | 2. Commerce | Toss Payments 실배포 |
+| `beeliber_booking_flow` | 2. Commerce | 예약 4단계 + 결제 + 후처리 |
+| `beeliber_operations` | 3. Operations | 상태머신, SLA, 기사배정, 이슈 |
+| `beeliber_ai_harness` | 4. AI | AI 생성·검사·승인·배포 통제 |
+| `beeliber_ui_map` | 5. Admin | 화면 구조 + 연동 포인트 맵 |
+| `beeliber_stitch_qa` | 5. Admin | UI/UX 수정 후 QA 프로토콜 |
+| `beeliber_eval` | 6. Eval | KPI, 실패분석, 성과측정 |
+
+### 인프라 스킬
+| 스킬 | 역할 |
+|------|------|
+| `beeliber_app_structure` | 라우팅, 도메인, 서비스, 상태관리 |
+| `beeliber_architecture` | 기술 아키텍처 + Hyper-Gap 로드맵 |
+| `beeliber_supabase` | Supabase 전환 마스터 플랜 |
+| `beeliber_seo` | 다국어 SEO (zh-TW 우선) |
+
+### DB 검수 스킬 (6개)
+| 스킬 | 담당 테이블 |
+|------|-----------|
+| `db_audit_auth` | profiles, roles, branches, employees |
+| `db_audit_reservation` | reservations, booking_details, payments |
+| `db_audit_operations` | locations, daily_closings, service_rules |
+| `db_audit_cms` | cms_contents, ai_outputs, google_reviews |
+| `db_audit_comms` | chat_sessions, notifications |
+| `db_audit_promotion` | discount_codes, user_coupons |
+
+---
+
+## 11. 개발 로드맵
+
+| 차수 | 핵심 작업 | 상태 |
+|------|---------|:----:|
+| **1차** | 테이블 구축 + validate API + 상태머신 + 예약 검토함 | **완료** |
+| **2차** | 결제 연동 + 운영 상태 + 증빙 + 이슈센터 + 알림 | 진행 중 |
+| **3차** | 실시간 운영보드 + SLA + 감사로그 + 규칙관리 | 대기 |
+| **4차** | AI 흐름 + AI 검수함 + KPI 대시보드 | 대기 |
+| **5차** | 재배차 추천 + ETA 예측 + 이상탐지 | 대기 |
+
+---
+
+## 12. 최종 요약
 
 > 예약, 운영, AI, 관리자 업무를
 > "사람의 감"이 아니라 "규칙 + 상태 + 로그 + 검수"로 움직이게 만드는 구조
+
+**참조 문서:**
+- DB 구조 맵: `docs/DATABASE_STRUCTURE_MAP.md`
+- 앱 구조 + 예약 플로우: `docs/APP_STRUCTURE_AND_BOOKING_FLOW.md`
+- 브랜드 가이드: `docs/beeliber_brand_guide_v4.md`

@@ -127,7 +127,8 @@ export type AdminTab =
     | 'PRIVACY_EDITOR'
     | 'TERMS_EDITOR'
     | 'QNA_EDITOR'
-    | 'TRASH';
+    | 'TRASH'
+    | 'AI_REVIEW';
 
 export interface TranslatedLocationData {
     name_en: string;

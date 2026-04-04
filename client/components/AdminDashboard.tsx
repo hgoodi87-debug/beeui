@@ -92,6 +92,7 @@ const DiscountTab = lazy(() => import('./admin/DiscountTab'));
 const ReportsTab = lazy(() => import('./admin/ReportsTab'));
 const RoadmapTab = lazy(() => import('./admin/RoadmapTab'));
 const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
+const AIReviewTab = lazy(() => import('./admin/AIReviewTab'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
 const FinancialComparisonTab = lazy(() => import('./admin/FinancialComparisonTab'));
 
@@ -2382,6 +2383,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               {[
                 { id: 'ROADMAP', label: '전사 서비스 로드맵', icon: 'fa-map-location-dot' },
                 { id: 'LOCATIONS', label: '지점 마스터 관리', icon: 'fa-location-dot' },
+                { id: 'AI_REVIEW', label: 'AI 검수함', icon: 'fa-robot' },
                 { id: 'SYSTEM', label: '운영 정책 설정', icon: 'fa-sliders' },
                 { id: 'DISCOUNTS', label: '프로모션 마케팅', icon: 'fa-tags' },
                 { id: 'HR', label: '인사/권한 보안', icon: 'fa-user-tie' },
@@ -2488,6 +2490,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'ACCOUNTING', label: t.admin?.sidebar?.accounting || '매출 결산 보고', icon: 'fa-receipt' },
                         { id: 'MONTHLY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '월 정산 통제판', icon: 'fa-vault' },
                         { id: 'LOCATIONS', label: t.admin?.sidebar?.locations || '전 지점 마스터 관리', icon: 'fa-location-dot' },
+                        { id: 'AI_REVIEW', label: 'AI 검수함', icon: 'fa-robot' },
                         { id: 'ROADMAP', label: t.admin?.sidebar?.roadmap || '서비스 로드맵', icon: 'fa-map-location-dot' },
                         { id: 'CHATS', label: t.admin?.sidebar?.marketing || '실시간 채팅', icon: 'fa-comments' },
                       ].map(item => (
@@ -2731,6 +2734,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               onStartDateChange={setRevenueStartDate}
               onEndDateChange={setRevenueEndDate}
             />
+          )}
+
+          {activeTab === 'AI_REVIEW' && (
+            <Suspense fallback={<AdminTabFallback />}>
+              <AIReviewTab />
+            </Suspense>
           )}
 
           {activeTab === 'NOTICE' && (

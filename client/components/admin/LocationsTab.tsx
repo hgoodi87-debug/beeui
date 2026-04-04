@@ -1,7 +1,8 @@
 import React from 'react';
 import { LocationOption, LocationType, TranslatedLocationData } from '../../types';
 import { StorageService } from '../../services/storageService';
-import { resolveSupabaseUrl } from '../../services/supabaseRuntime';
+import { resolveSupabaseUrl, getSupabaseBaseUrl } from '../../services/supabaseRuntime';
+import { getActiveAdminRequestHeaders } from '../../services/adminAuthService';
 
 import LocationMap from '../locations/LocationMap';
 
@@ -191,6 +192,46 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
             alert("AI 자동 번역이 완료되었습니다! ✨");
         } catch (e) { alert("번역 중 오류가 발생했습니다."); console.error(e); }
         finally { setIsTranslating(false); }
+    };
+
+    const [isGeneratingForReview, setIsGeneratingForReview] = React.useState(false);
+    const [reviewToast, setReviewToast] = React.useState<string | null>(null);
+
+    const handleAiGenerateForReview = async () => {
+        if (!locForm.name || !locForm.address) { alert("지점명과 주소를 먼저 입력해 주세요."); return; }
+        setIsGeneratingForReview(true);
+        setReviewToast(null);
+        try {
+            const SUPABASE_URL = getSupabaseBaseUrl();
+            const headers = await getActiveAdminRequestHeaders();
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-content-gen`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: 'translation',
+                    entity_id: locForm.supabaseId || locForm.id || null,
+                    location_data: {
+                        name: locForm.name,
+                        address: locForm.address,
+                        pickupGuide: locForm.pickupGuide || '',
+                        description: locForm.description || '',
+                    },
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            const policy = data.data?.policy_check;
+            if (policy && !policy.passed) {
+                setReviewToast(`⚠ 정책 위반 감지 — 검수함에 저장됨 (위반: ${policy.violations.join(', ')})`);
+            } else {
+                setReviewToast('✓ AI 검수함에 저장됨. AI 검수 탭에서 승인하세요.');
+            }
+            setTimeout(() => setReviewToast(null), 5000);
+        } catch (e) {
+            alert(`AI 번역 생성 실패: ${e}`);
+        } finally {
+            setIsGeneratingForReview(false);
+        }
     };
 
     const getLocName = (loc: LocationOption) => {
@@ -580,9 +621,19 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div className="space-y-2">
                             <div className="flex items-center justify-between ml-1">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">지점명</label>
-                                <button onClick={handleAiTranslate} disabled={isTranslating} className="text-[10px] font-black text-bee-yellow bg-bee-black px-2 py-1 rounded-lg hover:scale-105 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50">
-                                    {isTranslating ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>} AI 자동 번역
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handleAiTranslate} disabled={isTranslating} className="text-[10px] font-black text-bee-yellow bg-bee-black px-2 py-1 rounded-lg hover:scale-105 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50">
+                                        {isTranslating ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>} AI 자동 번역
+                                    </button>
+                                    <button onClick={handleAiGenerateForReview} disabled={isGeneratingForReview} className="text-[10px] font-black text-bee-black bg-bee-yellow px-2 py-1 rounded-lg hover:scale-105 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50" title="Claude로 번역 생성 후 검수함에 저장 (직접 반영 안 됨)">
+                                        {isGeneratingForReview ? <i className="fa-solid fa-spinner animate-spin"></i> : <span>🌐</span>} AI 검수 생성
+                                    </button>
+                                </div>
+                                {reviewToast && (
+                                    <div className={`text-[10px] font-bold px-2 py-1 rounded-lg mt-1 ${reviewToast.startsWith('⚠') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                        {reviewToast}
+                                    </div>
+                                )}
                             </div>
                             <div className="grid grid-cols-1 gap-2">
                                 <input value={locForm.name ?? ''} onChange={e => setLocForm({ ...locForm, name: e.target.value })} placeholder="한글 명칭 입력 (예: 인천공항 T1)" title="지점명 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />

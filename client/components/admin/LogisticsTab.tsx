@@ -421,14 +421,24 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                 <i className="fa-solid fa-print"></i>
                                              </button>
 
-                                             {/* [스봉이] 슈퍼관리자 전용 영구 삭제 버튼 (취소/환불 건에만 노출) 💅✨ */}
+                                             {/* 취소/환불 건 휴지통 이동 (전체 관리자) */}
+                                             {(b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
+                                                <button
+                                                    onClick={() => handleSoftDelete(b.id!)}
+                                                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-700 hover:text-white transition-all flex items-center justify-center"
+                                                    title="휴지통으로 이동"
+                                                >
+                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                             )}
+                                             {/* 슈퍼관리자 전용 영구 삭제 버튼 */}
                                              {adminRole === 'super' && (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
                                                 <button
                                                     onClick={() => handlePermanentDelete(b.id!)}
                                                     className="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center"
                                                     title="과거 기록 영구 삭제 (복구 불가)"
                                                 >
-                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                    <i className="fa-solid fa-times text-xs"></i>
                                                 </button>
                                              )}
                                         </div>
@@ -548,13 +558,23 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                      <button onClick={() => handlePrintLabel(b)} title="라벨 출력" className="w-9 h-9 rounded-full bg-gray-50 hover:bg-bee-black hover:text-bee-yellow text-gray-500 transition-all border border-gray-100 flex items-center justify-center">
                                         <i className="fa-solid fa-print text-xs"></i>
                                     </button>
+                                    {/* 취소/환불 건 휴지통 이동 (전체 관리자) */}
+                                    {(b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
+                                        <button
+                                            onClick={() => handleSoftDelete(b.id!)}
+                                            className="w-9 h-9 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-700 hover:text-white transition-all border border-gray-200 flex items-center justify-center"
+                                            title="휴지통으로 이동"
+                                        >
+                                            <i className="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    )}
                                     {adminRole === 'super' && (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
                                         <button
                                             onClick={() => handlePermanentDelete(b.id!)}
                                             className="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all border border-red-100 flex items-center justify-center"
                                             title="영구 삭제"
                                         >
-                                            <i className="fa-solid fa-trash-can text-xs"></i>
+                                            <i className="fa-solid fa-times text-xs"></i>
                                         </button>
                                     )}
                                 </div>

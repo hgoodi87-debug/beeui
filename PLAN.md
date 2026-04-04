@@ -132,7 +132,7 @@ CREATE TABLE ai_outputs (
 
 ---
 
-## 디자인 결정 (Phase 2 리뷰)
+## 디자인 결정 (Phase 2 리뷰 — /plan-design-review 업데이트 2026-04-04)
 
 ### "AI 번역 생성" 버튼
 - **위치**: 지점 편집 모달 내 번역 섹션 옆 (또는 LocationsTab 카드 우측 하단)
@@ -141,6 +141,36 @@ CREATE TABLE ai_outputs (
 - **로딩 상태**: "AI 생성 중..." 스피너, disabled
 - **성공 상태**: "검수함에 저장됨 ✓" 토스트 알림
 
+### AIReviewTab 레이아웃 (결정: 2-column split)
+```
+md:grid-cols-[320px,1fr] h-full
+├── 왼쪽: 목록 패널 (스크롤 가능)
+│   - 카드: 지점명(locations JOIN) / 생성일시 / 정책 배지 / 상태 배지
+│   - 로드 시 첫 번째 항목 자동 선택
+│   - 선택된 항목: border-bee-yellow 하이라이트
+└── 오른쪽: 상세 패널 (고정)
+    - 헤더: 지점명 + 생성 일시
+    - 정책 위반 경고 배너 (위반 시만 표시)
+    - 번역 필드 그리드 (인라인 에디터, 아래 참조)
+    - 액션 버튼 3개 (하단 고정)
+```
+
+### entity_id → 지점명 표시
+- `fetchPendingOutputs()`에 Supabase join 추가:
+  ```
+  GET /rest/v1/ai_outputs?select=*,location:locations!entity_id(name)&status=in.(ai_review_pending,ai_policy_failed)
+  ```
+- 목록 카드: `location?.name || entity_id.slice(0, 8) + '...'` 표시
+
+### 번역 필드 — 인라인 에디터
+- 기본: `<p>` 텍스트 (읽기 모드)
+- "수정 후 승인" 클릭 시 → 모든 필드 `<textarea>` 전환 (수정 모드)
+- 수정 모드 스타일: `border border-gray-200 rounded-xl p-2 text-xs font-bold w-full resize-none`
+- 수정 확인 클릭 시 → `final_content`에 수정된 값 담아 `approve_ai_output` RPC 호출
+
+### 정책 위반 하이라이트 컬러 통일
+- `bg-red-100 text-red-700` (배지와 동일, `bg-red-300 text-red-900` 대신)
+
 ### 생성 → 검수 → 승인 플로우
 ```
 [LocationsTab] 지점 선택 → "AI 번역 생성" 클릭
@@ -148,16 +178,38 @@ CREATE TABLE ai_outputs (
   → 성공: "AI 검수함에 1건 추가됨" 배너
   → [AIReviewTab] 배지 카운트 증가 (빨간 숫자)
 
-[AIReviewTab]
-  → 목록: 지점명 / 생성일시 / 정책 통과여부 (✓ 통과 / ⚠ 위반)
-  → 클릭 → 상세: 원문(한국어) | AI 생성본(en/zh-TW/zh-HK/ja) 2열 레이아웃
-  → 정책 위반 시: 위반 단어 빨간 하이라이트
-  → 액션 버튼: [승인] green / [수정 후 승인] yellow / [반려] red
-  → 승인 시: locations 테이블 자동 업데이트 + 목록에서 제거
+[AIReviewTab — 2-column split]
+  → 왼쪽 목록: 지점명 / 생성일시 / 정책통과 배지 / 상태 배지
+  → 오른쪽 상세: 번역 필드 (인라인 수정 가능)
+  → 정책 위반 시: 위반 단어 bg-red-100 text-red-700 하이라이트
+  → 액션 버튼 3개:
+      [승인] green — 현재 generated_content를 final_content로 저장
+      [수정 후 승인] yellow — 필드 textarea 전환 → 수정 → 저장
+      [반려] red — status='rejected' 업데이트
+  → 승인/수정후승인 성공 시: "번역이 지점 페이지에 반영되었습니다 ✓" 토스트
+  → 목록에서 해당 항목 제거, 다음 항목 자동 선택
 ```
 
+### 탭 배지 카운트
+- `AIReviewTab`에 `onCountChange?: (n: number) => void` prop 추가
+- 데이터 로드/승인/반려 후 `onCountChange(pendingCount)` 호출
+- `AdminDashboard`의 탭 헤더에서: `{count > 0 && <span className="ml-1.5 bg-red-500 text-white text-[10px] font-black rounded-full w-4 h-4 inline-flex items-center justify-center">{count}</span>}`
+
+### 키보드 접근성 (어드민 내부 도구 기준)
+- 목록 항목: `tabIndex={0}` + `onKeyDown Enter` 선택
+- 액션 버튼: 기존 `<button>` 키보드 기본 지원 (추가 작업 불필요)
+- 승인/반려 버튼에 `aria-label` 추가: `aria-label="번역 승인"`
+
 ### 빈 상태
-- AIReviewTab 항목 없음: "✨ 모두 검수했어요! 지점 탭에서 AI 번역을 생성해보세요."
+- AIReviewTab 항목 없음: `text-left` 정렬로:
+  ```
+  ✨ 모두 검수했어요!
+  지점 탭에서 AI 번역을 생성해보세요.
+  ```
+
+### NOT in scope (이번 리뷰에서 결정적으로 제외)
+- 모바일(375px) AIReviewTab 레이아웃 — 어드민 도구이므로 데스크톱 우선
+- DESIGN.md 작성 — 현재 브랜치 범위 외 (/design-consultation 별도 실행 권장)
 
 ---
 
@@ -222,8 +274,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | PASS | SNS/CS Phase 1 포함, AIReviewTab MVP=diff 없음, admin JWT 필수 |
-| Design Review | `/plan-design-review` | UI/UX gaps | 1 | PASS | 버튼/플로우 정의 완료, 빈상태 정의 |
+| Design Review | `/plan-design-review` | UI/UX gaps | 2 | PASS | score: 4/10 → 8/10, 8 decisions (2-column split, entity join, inline editor, tab badge, keyboard nav, diff color, empty state, 승인 토스트) |
 | Eng Review | `/plan-eng-review` | Architecture & tests | 1 | PASS | admin-auth 재활용, Rate limit DB 구현, 승인 RPC 원자성, 5개 파일 |
 | Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
 
-**VERDICT:** APPROVED — 구현 시작 가능. Codex 외부 리뷰는 선택사항.
+**VERDICT:** APPROVED — 구현 시작 가능. Design 결정사항 8개 플랜에 반영 완료.

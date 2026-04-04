@@ -128,6 +128,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const input = inputRef.current;
         if (!input) return;
 
+        // 이미 포커스된 상태이면 picker가 열려있거나 방금 닫힌 것 — 재호출 방지
+        if (document.activeElement === input) return;
+
         if (typeof input.showPicker === 'function') {
             input.showPicker();
             return;

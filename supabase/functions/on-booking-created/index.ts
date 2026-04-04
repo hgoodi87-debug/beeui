@@ -66,6 +66,12 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
     return { attempted: false, skipped: true, reason: "missing_email" };
   }
 
+  // 멱등성: 이미 발송된 경우 스킵
+  if (booking.email_sent_at) {
+    console.log(`[on-booking-created] Email already sent at ${booking.email_sent_at}, skipping`);
+    return { attempted: false, skipped: true, reason: "already_sent" };
+  }
+
   const reservationCode = booking.reservation_code || booking.id;
   const subject = `[Beeliber] 예약 확인 | Booking Confirmed - ${reservationCode}`;
   const pickupLabel = await getLocationLabel(
@@ -116,6 +122,14 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
       subject,
       html: buildVoucherEmailHtml(emailInput) || body,
     });
+
+    // 멱등성 마크: 발송 성공 후 email_sent_at 기록
+    if (booking.id) {
+      await supabase
+        .from("booking_details")
+        .update({ email_sent_at: new Date().toISOString() })
+        .eq("id", booking.id as string);
+    }
 
     console.log(`[on-booking-created] Voucher email sent to ${email}`);
     return {

@@ -107,9 +107,14 @@ const normalizeLocationCommissionRates = (location: LocationOption): LocationOpt
 
 const fireSupabaseBookingCreatedWebhook = async (record: Record<string, unknown>) => {
   const endpoint = resolveSupabaseEndpoint(undefined, '/functions/v1/on-booking-created');
+  const { anonKey } = getSupabaseConfig();
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': anonKey,
+      'Authorization': `Bearer ${anonKey}`,
+    },
     body: JSON.stringify({
       type: 'INSERT',
       table: 'booking_details',
@@ -120,6 +125,18 @@ const fireSupabaseBookingCreatedWebhook = async (record: Record<string, unknown>
   if (!response.ok) {
     const message = await response.text().catch(() => '');
     throw new Error(message || `on-booking-created failed with ${response.status}`);
+  }
+};
+
+const fireWithRetry = async (record: Record<string, unknown>, attempt = 0): Promise<void> => {
+  try {
+    await fireSupabaseBookingCreatedWebhook(record);
+  } catch (error) {
+    if (attempt < 2) {
+      await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
+      return fireWithRetry(record, attempt + 1);
+    }
+    console.error("[StorageService] on-booking-created bridge failed after 3 attempts:", error);
   }
 };
 
@@ -1016,6 +1033,16 @@ export const StorageService = {
           safeBooking.dropoffLocation,
         ),
         nametag_id: safeBooking.nametagId || null,
+        bags: safeBooking.bags || 0,
+        bag_summary: (() => {
+          const s = safeBooking.bagSizes;
+          if (!s) return '';
+          return [
+            s.handBag > 0 ? `핸드백 ${s.handBag}개` : '',
+            s.carrier > 0 ? `캐리어 ${s.carrier}개` : '',
+            s.strollerBicycle > 0 ? `유모차/자전거 ${s.strollerBicycle}개` : '',
+          ].filter(Boolean).join(', ');
+        })(),
       };
 
       // [스봉이] 신규 예약일 경우 네임텍 번호 발급! 🔢✨
@@ -1043,9 +1070,7 @@ export const StorageService = {
           ...bookingData,
           id: bookingId,
         };
-        void fireSupabaseBookingCreatedWebhook(webhookRecord).catch((error) => {
-          console.error("[StorageService] on-booking-created bridge failed:", error);
-        });
+        void fireWithRetry(webhookRecord);
       }
 
       return {

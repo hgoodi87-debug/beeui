@@ -73,6 +73,8 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     isBatchUpdating,
     t
 }) => {
+    const [batchSelectValue, setBatchSelectValue] = React.useState('');
+
     // [스봉이] KST 기준 오늘 날짜 계산 센스있게 해드려요 💅✨
     const todayKST = React.useMemo(() => {
         const now = new Date();
@@ -609,8 +611,15 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                         </div>
                         
                         <div className="flex items-center gap-3 w-full md:w-auto">
-                            <select 
-                                onChange={(e) => handleBatchUpdateStatus(e.target.value as BookingStatus)}
+                            <select
+                                value={batchSelectValue}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (!val) return;
+                                    setBatchSelectValue(val);
+                                    handleBatchUpdateStatus(val as BookingStatus);
+                                    setBatchSelectValue('');
+                                }}
                                 disabled={isBatchUpdating}
                                 title="일괄 상태 변경"
                                 className="flex-1 md:flex-none bg-white/10 border border-white/20 text-white text-[10px] font-black px-4 py-3 rounded-xl focus:ring-bee-yellow focus:border-bee-yellow outline-none transition-all cursor-pointer hover:bg-white/20 appearance-none"

@@ -1,15 +1,22 @@
 import React from 'react';
-import { getSupabaseBaseUrl } from '../../services/supabaseRuntime';
-import { getActiveAdminRequestHeaders } from '../../services/adminAuthService';
+import { getSupabaseBaseUrl, getSupabaseConfig } from '../../services/supabaseRuntime';
+import { getActiveAdminRequestHeaders, getActiveAdminUserId } from '../../services/adminAuthService';
 
 interface AiOutput {
   id: string;
   use_case: string;
-  entity_id: string | null;
-  generated_content: Record<string, string>;
-  policy_check: { passed: boolean; violations: string[] };
-  status: string;
+  source_ref: string | null;
+  input_context: Record<string, unknown> | null;
+  generated_text: string | null;
+  risk_score: number | null;
+  policy_passed: boolean;
+  approval_status: string;
+  reviewer_id: string | null;
+  published_at: string | null;
   created_at: string;
+  // 렌더링용 파생 필드 (fetch 후 변환)
+  _generatedContent?: Record<string, string>;
+  _violations?: string[];
 }
 
 const LANG_LABELS: Record<string, string> = {
@@ -43,22 +50,50 @@ const TRANSLATION_FIELD_LABELS: Record<string, string> = {
   description_zh_hk: '설명 ZH-HK',
 };
 
+function parseGeneratedContent(raw: AiOutput): Record<string, string> {
+  // generated_text가 JSON 객체 문자열이면 파싱, 아니면 단일 텍스트로 처리
+  if (raw.generated_text) {
+    try {
+      const parsed = JSON.parse(raw.generated_text);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, string>;
+      }
+    } catch {/* not JSON */}
+    return { content: raw.generated_text };
+  }
+  // input_context에서 번역 필드 추출 시도
+  if (raw.input_context && typeof raw.input_context === 'object') {
+    const ctx = raw.input_context as Record<string, unknown>;
+    const filtered: Record<string, string> = {};
+    for (const [k, v] of Object.entries(ctx)) {
+      if (typeof v === 'string' && v.trim()) filtered[k] = v;
+    }
+    if (Object.keys(filtered).length > 0) return filtered;
+  }
+  return {};
+}
+
 async function fetchPendingOutputs(): Promise<AiOutput[]> {
   const SUPABASE_URL = getSupabaseBaseUrl();
   const headers = await getActiveAdminRequestHeaders();
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/ai_outputs?status=in.(ai_review_pending,ai_policy_failed)&order=created_at.desc`,
+    `${SUPABASE_URL}/rest/v1/ai_outputs?approval_status=in.(ai_review_pending,ai_policy_failed)&order=created_at.desc`,
     {
       headers: {
         ...headers,
-        apikey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || ''),
+        apikey: getSupabaseConfig().anonKey,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
     }
   );
   if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const rows: AiOutput[] = await res.json();
+  return rows.map(r => ({
+    ...r,
+    _generatedContent: parseGeneratedContent(r),
+    _violations: r.policy_passed ? [] : ['정책 위반 감지됨'],
+  }));
 }
 
 async function callRpc(rpcName: string, params: Record<string, string>): Promise<void> {
@@ -110,7 +145,7 @@ const AIReviewTab: React.FC = () => {
   const handleApprove = async (outputId: string) => {
     setActionLoading(true);
     try {
-      await callRpc('approve_ai_output', { p_output_id: outputId, p_reviewer_id: '' });
+      await callRpc('approve_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
       showToast('승인 완료! 지점 번역이 업데이트되었습니다. ✓');
       setSelected(null);
       await load();
@@ -125,7 +160,7 @@ const AIReviewTab: React.FC = () => {
     if (!confirm('이 AI 생성 번역을 반려하시겠습니까?')) return;
     setActionLoading(true);
     try {
-      await callRpc('reject_ai_output', { p_output_id: outputId, p_reviewer_id: '' });
+      await callRpc('reject_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
       showToast('반려 처리되었습니다.');
       setSelected(null);
       await load();
@@ -187,14 +222,14 @@ const AIReviewTab: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-black text-gray-700">
-                    {out.entity_id ? `지점: ${out.entity_id}` : out.use_case}
+                    {out.source_ref ? `지점: ${out.source_ref}` : out.use_case}
                   </span>
                   <span className="ml-2 text-[10px] text-gray-400">
                     {new Date(out.created_at).toLocaleString('ko-KR')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {out.policy_check?.passed ? (
+                  {out.policy_passed ? (
                     <span className="text-[10px] font-black bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                       ✓ 정책 통과
                     </span>
@@ -203,16 +238,16 @@ const AIReviewTab: React.FC = () => {
                       ⚠ 정책 위반
                     </span>
                   )}
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${out.status === 'ai_review_pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                    {out.status === 'ai_review_pending' ? '검수 대기' : '정책 실패'}
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${out.approval_status === 'ai_review_pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                    {out.approval_status === 'ai_review_pending' ? '검수 대기' : '정책 실패'}
                   </span>
                 </div>
               </div>
 
-              {/* 정책 위반 단어 하이라이트 */}
-              {out.policy_check?.violations?.length > 0 && (
+              {/* 정책 위반 항목 */}
+              {(out._violations?.length ?? 0) > 0 && (
                 <div className="mt-2 text-[10px] text-red-600 font-bold">
-                  위반 단어: {out.policy_check.violations.map(v => (
+                  {out._violations!.map(v => (
                     <span key={v} className="bg-red-100 px-1.5 py-0.5 rounded mr-1">{v}</span>
                   ))}
                 </div>
@@ -238,17 +273,18 @@ const AIReviewTab: React.FC = () => {
 
             {/* 생성된 번역 내용 */}
             <div className="space-y-3">
-              {Object.entries(selected.generated_content).map(([key, value]) => {
+              {Object.entries(selected._generatedContent ?? {}).map(([key, value]) => {
                 if (!value) return null;
-                const isViolation = selected.policy_check?.violations?.some(v => value.includes(v));
+                const violations = selected._violations ?? [];
+                const isViolation = violations.some(v => value.includes(v));
                 return (
                   <div key={key} className={`rounded-xl p-3 border ${isViolation ? 'border-red-300 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
                     <div className="text-[10px] font-black text-gray-400 uppercase mb-1">
                       {TRANSLATION_FIELD_LABELS[key] || key}
                     </div>
                     <p className="text-xs font-bold text-gray-700 leading-relaxed">
-                      {selected.policy_check?.violations?.length ? (
-                        highlightViolations(value, selected.policy_check.violations)
+                      {violations.length ? (
+                        highlightViolations(value, violations)
                       ) : (
                         value
                       )}
@@ -256,6 +292,9 @@ const AIReviewTab: React.FC = () => {
                   </div>
                 );
               })}
+              {Object.keys(selected._generatedContent ?? {}).length === 0 && (
+                <p className="text-xs text-gray-400 italic">생성된 번역 내용이 없습니다.</p>
+              )}
             </div>
 
             {/* 액션 버튼 */}

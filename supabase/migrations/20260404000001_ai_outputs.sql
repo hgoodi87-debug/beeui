@@ -24,29 +24,38 @@ CREATE INDEX IF NOT EXISTS ai_outputs_created_by_idx ON ai_outputs(created_by, c
 -- RLS
 ALTER TABLE ai_outputs ENABLE ROW LEVEL SECURITY;
 
--- 관리자만 SELECT
+-- 관리자만 SELECT (JWT app_metadata.role 기반)
 CREATE POLICY "admin_select_ai_outputs"
   ON ai_outputs FOR SELECT
   TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM admin_users WHERE id = auth.uid()
-  ));
+  USING (
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') IN (
+      'admin', 'ops_manager', 'ops_staff', 'finance_staff',
+      'hub_manager', 'super_admin', 'hq_admin'
+    )
+  );
 
 -- 관리자만 INSERT
 CREATE POLICY "admin_insert_ai_outputs"
   ON ai_outputs FOR INSERT
   TO authenticated
-  WITH CHECK (EXISTS (
-    SELECT 1 FROM admin_users WHERE id = auth.uid()
-  ));
+  WITH CHECK (
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') IN (
+      'admin', 'ops_manager', 'ops_staff', 'finance_staff',
+      'hub_manager', 'super_admin', 'hq_admin'
+    )
+  );
 
 -- 관리자만 UPDATE (승인/반려)
 CREATE POLICY "admin_update_ai_outputs"
   ON ai_outputs FOR UPDATE
   TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM admin_users WHERE id = auth.uid()
-  ));
+  USING (
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') IN (
+      'admin', 'ops_manager', 'ops_staff', 'finance_staff',
+      'hub_manager', 'super_admin', 'hq_admin'
+    )
+  );
 
 -- 승인 원자성 RPC: ai_outputs 승인 + locations 번역 업데이트
 CREATE OR REPLACE FUNCTION approve_ai_output(
@@ -95,8 +104,8 @@ BEGIN
       address_zh    = COALESCE(v_content->>'address_zh',    address_zh),
       address_zh_tw = COALESCE(v_content->>'address_zh_tw', address_zh_tw),
       address_zh_hk = COALESCE(v_content->>'address_zh_hk', address_zh_hk)
-    WHERE supabase_id = v_entity_id
-       OR id = v_entity_id;
+    WHERE id::text = v_entity_id
+       OR short_code = v_entity_id;
   END IF;
 END;
 $$;

@@ -91,7 +91,7 @@ const ADMIN_IDENTIFIER_EMAIL_FALLBACKS: Record<string, string> = {
   'ndm': 'ndm@bee-liber.com',
   'npo': 'npo@bee-liber.com',
   'ptk': 'ptk@bee-liber.com',
-  'rlaxowl98': 'rlaxowl98@gmail.con',
+  'rlaxowl98': 'rlaxowl98@gmail.com',
   'sdo': 'sdo@bee-liber.com',
   'srk': 'srk@bee-liber.com',
   'swn': 'swn@bee-liber.com',
@@ -134,7 +134,7 @@ const ADMIN_IDENTIFIER_EMAIL_FALLBACKS: Record<string, string> = {
   '제주동문시장점': 'jdm@bee-liber.com',
   '제주지점': 'jej@bee-liber.com',
   '종로지점': 'jno@bee-liber.com',
-  '진호': 'rlaxowl98@gmail.con',
+  '진호': 'rlaxowl98@gmail.com',
   '창원지점': 'cwn@bee-liber.com',
   '천명': 'dbcjsaud@gmail.com',
   '충무로지점': 'cmr@bee-liber.com',
@@ -410,6 +410,10 @@ export const getActiveAdminAccessToken = () => {
     return '';
   }
   return readSupabaseAdminSession()?.accessToken || '';
+};
+
+export const getActiveAdminUserId = () => {
+  return readSupabaseAdminSession()?.userId || '';
 };
 
 export const ensureActiveAdminSession = async () => {

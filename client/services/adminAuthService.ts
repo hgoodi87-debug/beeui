@@ -800,7 +800,9 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
   }
 
   if (!resolvedEmail && !directEmailInput) {
-    resolvedEmail = `${identifier.toLowerCase()}@bee-liber.com`;
+    const error = new Error('알 수 없는 관리자 ID입니다. 이메일로 직접 로그인하세요.') as Error & { code?: string };
+    error.code = 'supabase/unknown-admin-identifier';
+    throw error;
   }
 
   if (!resolvedEmail) {

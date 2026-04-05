@@ -1337,7 +1337,7 @@ export const StorageService = {
     }
   },
 
-  cancelBooking: async (id: string): Promise<void> => {
+  cancelBooking: async (id: string, options?: { name?: string; email?: string; reason?: string }): Promise<void> => {
     // Supabase Edge Function 호출
     try {
       const SUPABASE_URL = getSupabaseBaseUrl();
@@ -1345,9 +1345,12 @@ export const StorageService = {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-        body: JSON.stringify({ bookingId: id }),
+        body: JSON.stringify({ bookingId: id, name: options?.name, email: options?.email, reason: options?.reason }),
       });
-      if (!res.ok) throw new Error(`Cancel failed [${res.status}]`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Cancel failed [${res.status}]`);
+      }
       console.log("[Storage] Booking cancelled via Supabase Edge Function ✅");
     } catch (e) {
       console.error("Cancel error:", e);

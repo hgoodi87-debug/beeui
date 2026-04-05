@@ -1,15 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authenticateAdminRequest, CORS_HEADERS, EdgeHttpError } from "../_shared/admin-auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,7 +12,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { bookingId, reason } = await req.json();
+    const body = await req.json();
+    const { bookingId, reason, name, email } = body;
+
     if (!bookingId) {
       return new Response(JSON.stringify({ error: "bookingId required" }), {
         status: 400,
@@ -25,10 +22,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ─── 인증 경로 1: 관리자 JWT ──────────────────────────────────────────
+    // Authorization 헤더가 있으면 관리자 인증 시도
+    let isAdminCancellation = false;
+    const authHeader = req.headers.get("authorization") || req.headers.get("x-supabase-access-token");
+    if (authHeader) {
+      await authenticateAdminRequest(req); // 실패하면 401/403 throw
+      isAdminCancellation = true;
+    }
+
+    // ─── 인증 경로 2: 고객 소유권 검증 (name + email) ────────────────────
+    if (!isAdminCancellation) {
+      if (!name || !email) {
+        throw new EdgeHttpError(
+          401,
+          "취소하려면 예약 시 입력한 이름과 이메일이 필요합니다.",
+          "Customer cancellation requires name and email for ownership verification.",
+        );
+      }
+    }
+
     // 1. booking_details 현재 상태 조회
     const { data: booking } = await supabase
       .from("booking_details")
-      .select("id, reservation_id, settlement_status, payment_key, service_type")
+      .select("id, reservation_id, settlement_status, payment_key, service_type, user_name, user_email")
       .eq("id", bookingId)
       .single();
 
@@ -37,6 +54,19 @@ Deno.serve(async (req) => {
         status: 404,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
+    }
+
+    // 고객 경로: 이름·이메일 일치 여부 검증 (대소문자 무시)
+    if (!isAdminCancellation) {
+      const nameMatch = (booking.user_name || "").trim().toLowerCase() === name.trim().toLowerCase();
+      const emailMatch = (booking.user_email || "").trim().toLowerCase() === email.trim().toLowerCase();
+      if (!nameMatch || !emailMatch) {
+        throw new EdgeHttpError(
+          403,
+          "예약자 정보가 일치하지 않습니다.",
+          `Ownership check failed: name=${nameMatch}, email=${emailMatch}`,
+        );
+      }
     }
 
     const previousStatus = booking.settlement_status || "unknown";
@@ -82,16 +112,17 @@ Deno.serve(async (req) => {
       reservation_id: booking.reservation_id || bookingId,
       from_status: previousStatus,
       to_status: "cancelled",
-      changed_by: "customer",
-      reason: reason || "Customer cancellation",
+      changed_by: isAdminCancellation ? "admin" : "customer",
+      reason: reason || (isAdminCancellation ? "Admin cancellation" : "Customer cancellation"),
     });
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500,
+    const status = e instanceof EdgeHttpError ? e.status : 500;
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
+      status,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }

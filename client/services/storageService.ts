@@ -1306,7 +1306,29 @@ export const StorageService = {
       bookingDetailId = resolvedId;
     }
 
-    const supabaseUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
+    // booking_details 테이블에 실제 존재하는 컬럼만 허용 (없는 컬럼 포함 시 PostgREST 400 에러)
+    const BOOKING_DETAILS_COLUMNS = new Set([
+      'sns_channel', 'sns_id', 'country', 'pickup_location_id', 'pickup_address',
+      'pickup_address_detail', 'pickup_image_url', 'pickup_date', 'pickup_time',
+      'dropoff_location_id', 'dropoff_address', 'dropoff_address_detail', 'dropoff_date',
+      'delivery_time', 'return_date', 'return_time', 'insurance_level', 'insurance_bag_count',
+      'use_insurance', 'base_price', 'final_price', 'promo_code', 'discount_amount',
+      'weight_surcharge_5kg', 'weight_surcharge_10kg', 'payment_method', 'payment_provider',
+      'payment_order_id', 'payment_key', 'payment_receipt_url', 'payment_approved_at',
+      'branch_commission_delivery', 'branch_commission_storage', 'branch_settlement_amount',
+      'settlement_status', 'settled_at', 'settled_by', 'language', 'image_url',
+      'service_type', 'user_name', 'user_email', 'pickup_location', 'dropoff_location',
+      'reservation_code', 'agreed_to_terms', 'agreed_to_privacy', 'agreed_to_high_value',
+      'email_sent_at',
+    ]);
+    const allUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
+    const supabaseUpdates = Object.fromEntries(
+      Object.entries(allUpdates).filter(([k]) => BOOKING_DETAILS_COLUMNS.has(k))
+    );
+    if (Object.keys(supabaseUpdates).length === 0) {
+      console.warn('[Storage] updateBooking: 유효한 booking_details 컬럼이 없습니다. 업데이트 스킵.');
+      return;
+    }
     await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, 'PATCH', supabaseUpdates);
     console.log(`[Storage] Booking ${bookingDetailId} updated in Supabase ✅`);
   },
@@ -1834,7 +1856,10 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('app_settings?key=eq.privacy_policy', 'PATCH', { value: data });
+        const result = await supabaseMutate<Array<unknown>>('app_settings?key=eq.privacy_policy', 'PATCH', { value: data });
+        if (!result || (Array.isArray(result) && result.length === 0)) {
+          await supabaseMutate('app_settings', 'POST', { key: 'privacy_policy', value: data });
+        }
         return;
       } catch (e) {
         console.warn("[Storage] Supabase privacy save failed, falling back to Firebase:", e);
@@ -1887,7 +1912,10 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('app_settings?key=eq.qna_policy', 'PATCH', { value: data });
+        const result = await supabaseMutate<Array<unknown>>('app_settings?key=eq.qna_policy', 'PATCH', { value: data });
+        if (!result || (Array.isArray(result) && result.length === 0)) {
+          await supabaseMutate('app_settings', 'POST', { key: 'qna_policy', value: data });
+        }
         return;
       } catch (e) {
         console.warn("[Storage] Supabase qna save failed, falling back to Firebase:", e);
@@ -2896,6 +2924,20 @@ export const StorageService = {
   },
 
   subscribeDiscountCodes: (callback: (data: DiscountCode[]) => void): (() => void) => {
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<DiscountCode>(
+        'discount_codes?select=*&order=code.asc',
+        callback,
+        (row) => ({
+          id: String(row.id),
+          code: String(row.code),
+          amountPerBag: Number(row.amount_per_bag || 0),
+          description: String(row.description || ''),
+          isActive: Boolean(row.is_active),
+          allowedService: String(row.allowed_service || 'ALL'),
+        } as DiscountCode)
+      );
+    }
     try {
       const q = query(collection(db, "promo_codes"), orderBy("code", "asc"));
       return onSnapshot(q, (snapshot: any) => {

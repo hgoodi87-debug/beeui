@@ -35,7 +35,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
                     loading="eager"
                     fetchPriority="high"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-[1]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-[1] pointer-events-none" />
             </div>
 
             {/* 2. LAYER: Content */}

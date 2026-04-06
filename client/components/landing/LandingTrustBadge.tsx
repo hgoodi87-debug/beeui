@@ -45,7 +45,7 @@ const LandingTrustBadge: React.FC<LandingTrustBadgeProps> = ({ t }) => {
             {/* Premium Glowing Background */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-bee-yellow/10 blur-[150px] rounded-full pointer-events-none" />
             <div className="absolute inset-0 opacity-[0.05] pointer-events-none noise-overlay" />
-            <div className="absolute inset-0 bg-gradient-to-b from-bee-black via-transparent to-bee-black" />
+            <div className="absolute inset-0 bg-gradient-to-b from-bee-black via-transparent to-bee-black pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
                 <div className="text-center mb-12 md:mb-20">

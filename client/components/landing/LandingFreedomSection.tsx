@@ -19,8 +19,8 @@ const LandingFreedomSection: React.FC<LandingFreedomSectionProps> = ({ t }) => {
                         loading="lazy"
                     />
                 </picture>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/35" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/45" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/35 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/45 pointer-events-none" />
             </div>
 
             <div className="relative z-10 w-full max-w-7xl mx-auto px-6 text-center">

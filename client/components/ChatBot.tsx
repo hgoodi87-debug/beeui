@@ -64,7 +64,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
 
             if (adminMsgs.length === 0) return;
 
-            console.log(`${adminMsgs.length}개의 새로운 관리자 메시지 번역 중...`);
 
             for (const msg of adminMsgs) {
                 try {
@@ -170,7 +169,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                 throw new Error(errorText || `notify-google-chat failed (${response.status})`);
             }
 
-            console.log('Supabase Edge chat notification sent');
         } catch (e) {
             console.error('Supabase Edge chat notification failed:', e);
         }
@@ -202,7 +200,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
         });
 
         if (sessionMeta?.isBotDisabled) {
-            console.log("Bot is disabled by admin. Skipping AI response.");
             setLoading(false);
             return;
         }

@@ -56,7 +56,7 @@ export interface SignedUploadResponse {
 
 interface ManagedUploadOptions {
   file: File | Blob;
-  firebasePath: string;
+  storagePath: string;
   signedUploadRequest?: SignedUploadRequest;
   fallbackReason?: string;
 }
@@ -198,19 +198,19 @@ const resolveSignedUploadTargetUrl = (uploadUrl: string) => {
 
 const uploadManagedAsset = async ({
   file,
-  firebasePath,
+  storagePath,
   signedUploadRequest,
   fallbackReason,
 }: ManagedUploadOptions) => {
   const shouldUseSupabase = Boolean(signedUploadRequest) && isSupabaseStorageUploadEnabled();
 
   if (!shouldUseSupabase) {
-    return StorageService.uploadFile(file, firebasePath);
+    return StorageService.uploadFile(file, storagePath);
   }
 
   if (fallbackReason) {
     console.info(`[StorageUpload] ${fallbackReason} Firebase 업로드로 유지합니다.`);
-    return StorageService.uploadFile(file, firebasePath);
+    return StorageService.uploadFile(file, storagePath);
   }
 
   const signedUpload = await requestSupabaseSignedUpload(signedUploadRequest!);
@@ -294,7 +294,7 @@ export const uploadHeroManagedAsset = async (
   file: File | Blob,
   options: {
     assetCategory: 'hero-image' | 'hero-mobile-image' | 'hero-video';
-    firebasePath: string;
+    storagePath: string;
     entityId?: string;
     originalFileName?: string;
   }
@@ -310,7 +310,7 @@ export const uploadHeroManagedAsset = async (
 
   return uploadManagedAsset({
     file,
-    firebasePath: options.firebasePath,
+    storagePath: options.storagePath,
     signedUploadRequest,
     fallbackReason:
       options.assetCategory === 'hero-video'
@@ -322,7 +322,7 @@ export const uploadHeroManagedAsset = async (
 export const uploadBranchManagedAsset = async (
   file: File | Blob,
   options: {
-    firebasePath: string;
+    storagePath: string;
     branchCode: string;
     branchType: 'hub' | 'partner';
     assetCategory: 'main' | 'pickup' | 'thumb' | 'cover';
@@ -332,7 +332,7 @@ export const uploadBranchManagedAsset = async (
 ) =>
   uploadManagedAsset({
     file,
-    firebasePath: options.firebasePath,
+    storagePath: options.storagePath,
     signedUploadRequest: buildBranchAssetSignedUploadRequest(file, {
       branchCode: options.branchCode,
       branchType: options.branchType,
@@ -345,14 +345,14 @@ export const uploadBranchManagedAsset = async (
 export const uploadNoticeManagedAsset = async (
   file: File | Blob,
   options: {
-    firebasePath: string;
+    storagePath: string;
     noticeId?: string;
     originalFileName?: string;
   }
 ) =>
   uploadManagedAsset({
     file,
-    firebasePath: options.firebasePath,
+    storagePath: options.storagePath,
     signedUploadRequest: buildNoticeSignedUploadRequest(file, {
       noticeId: options.noticeId,
       originalFileName: options.originalFileName,

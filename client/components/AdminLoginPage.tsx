@@ -54,11 +54,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin, onCancel }) =>
       const inputName = formData.name.trim();
       const inputPass = formData.password.trim();
 
-      console.log(`[AdminLogin] 🚀 ${authProvider.toUpperCase()} 로그인 시도: "${inputName}" / 비밀번호: "${inputPass.replace(/./g, '*')}"`);
-
       const admin = await loginAdmin(inputName, inputPass);
-
-      console.log(`[AdminLogin] 🎉 로그인 최종 승인! 어서 오세요, ${admin.name} ${admin.jobTitle}님! (권한: ${admin.role}, provider: ${admin.provider}) 💅`);
       onLogin(admin.name, admin.jobTitle || 'Staff', admin.role, admin.email, admin.branchId);
 
       void import('../services/auditService')

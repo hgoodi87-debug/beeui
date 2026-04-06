@@ -107,14 +107,11 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
     const handleBulkTranslateAddresses = async () => {
         if (!window.confirm("모든 지점의 누락된 다국어 주소(영문, 일문, 중문)를 AI 번역으로 일괄 보완하시겠습니까?\n이 작업은 시간이 다소 소요될 수 있습니다. 💅")) return;
         
-        console.log("[스봉이] 다국어 보완 시작... 💅✨");
         setIsBulkMapping(true);
         try {
             let count = 0;
             for (const loc of locations) {
-                // 주소가 있는데 다국어 필드 중 하나라도 비어있으면 보완 대상
                 if (loc.address && (!loc.address_en || !loc.address_ja || !loc.address_zh || !loc.address_zh_tw || !loc.address_zh_hk)) {
-                    console.log(`[스봉이] '${loc.name}' 데이터 분석 및 번역 요청... ✨`);
                     const result: TranslatedLocationData = await StorageService.translateLocationData({
                         name: loc.name,
                         address: loc.address,
@@ -122,7 +119,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         description: loc.description || ''
                     });
 
-                    console.log(`[스봉이] '${loc.name}' 번역 완료, Supabase 저장 중... 💅`);
                     await StorageService.saveLocation({
                         ...loc,
                         address_en: loc.address_en || result.address_en,

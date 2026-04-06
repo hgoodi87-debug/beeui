@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookingState, LocationOption, ServiceType, BookingStatus, SnsType, BagSizes, Expenditure } from '../../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/constants/admin';
+import { COUNTRY_NAMES } from '../../src/constants/countries';
 import { StorageService } from '../../services/storageService';
 import { AuditService } from '../../services/auditService';
 import { maskName, maskEmail, maskPhone, maskId } from '../../src/utils/maskUtils';
@@ -35,12 +36,7 @@ interface BookingSidePanelProps {
     t: any;
 }
 
-const COUNTRY_NAMES: Record<string, string> = {
-    'KR': 'Korea 🇰🇷', 'US': 'USA 🇺🇸', 'JP': 'Japan 🇯🇵', 'CN': 'China 🇨🇳', 'TW': 'Taiwan 🇹🇼',
-    'HK': 'Hong Kong 🇰ore', 'SG': 'Singapore 🇸🇬', 'TH': 'Thailand 🇹🇭', 'VN': 'Vietnam 🇻🇳',
-    'MY': 'Malaysia 🇲🇾', 'PH': 'Philippines 🇵🇭', 'ID': 'Indonesia 🇮🇩', 'FR': 'France 🇫🇷',
-    'DE': 'Germany 🇩🇪', 'GB': 'UK 🇬🇧', 'OTHER': 'Other 🌎'
-};
+
 
 const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
     isOpen,

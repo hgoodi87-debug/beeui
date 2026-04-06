@@ -23,6 +23,7 @@ import { StorageService } from '../services/storageService';
 import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, generateTimeSlots } from '../utils/dateUtils';
 import { calculateDeliveryStoragePrice, calculateStoragePrice } from '../utils/pricing';
 import { DEFAULT_DELIVERY_PRICES, getTotalBags, sanitizeBagSizes, sanitizeDeliveryBagSizes } from '../src/domains/booking/bagCategoryUtils';
+import { COUNTRY_NAMES } from '../src/constants/countries';
 
 interface BookingDetailedProps {
     t: any;
@@ -36,22 +37,6 @@ interface BookingDetailedProps {
     onSuccess: (booking: BookingState) => void;
     user?: any; // Add user prop
 }
-
-const COUNTRY_NAMES: Record<string, string> = {
-    'KR': 'Korea 🇰🇷',
-    'US': 'USA 🇺🇸',
-    'JP': 'Japan 🇯🇵',
-    'CN': 'China 🇨🇳',
-    'HK': 'Hong Kong 🇭🇰',
-    'TW': 'Taiwan 🇹🇼',
-    'SG': 'Singapore 🇸🇬',
-    'MY': 'Malaysia 🇲🇲',
-    'VN': 'Vietnam 🇻🇳',
-    'TH': 'Thailand 🇹🇭',
-    'PH': 'Philippines 🇵🇭',
-    'ID': 'Indonesia 🇮🇩',
-    'ETC': 'Other 🌏'
-};
 
 const BookingDetailed: React.FC<BookingDetailedProps> = ({
     t,

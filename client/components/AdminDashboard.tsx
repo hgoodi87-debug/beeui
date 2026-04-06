@@ -1201,7 +1201,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             resolve();
             return;
           }
-          console.log("[Admin] Naver Maps Service not found, loading script...");
           const clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'zbepfoglvy';
           const script = document.createElement('script');
           script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}&submodules=geocoder`;
@@ -1272,7 +1271,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             resolve();
             return;
           }
-          console.log("[Admin] Naver Maps Service not found in bulk geocode, loading script...");
           const clientId = import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'zbepfoglvy';
           const script = document.createElement('script');
           script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}&submodules=geocoder`;
@@ -2113,7 +2111,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (file) {
       try {
         const url = await uploadNoticeManagedAsset(file, {
-          firebasePath: `notices/${Date.now()}_${file.name}`,
+          storagePath: `notices/${Date.now()}_${file.name}`,
           noticeId: noticeForm.id,
           originalFileName: file.name,
         });
@@ -2130,7 +2128,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (file) {
       try {
         const url = await uploadBranchManagedAsset(file, {
-          firebasePath: `locations/${Date.now()}_pickup_${file.name}`,
+          storagePath: `locations/${Date.now()}_pickup_${file.name}`,
           branchCode: locForm.branchCode || locForm.shortCode || locForm.id || 'branch',
           branchType: locForm.type === LocationType.PARTNER || locForm.isPartner ? 'partner' : 'hub',
           assetCategory: 'pickup',
@@ -2150,7 +2148,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (file) {
       try {
         const url = await uploadBranchManagedAsset(file, {
-          firebasePath: `locations/${Date.now()}_main_${file.name}`,
+          storagePath: `locations/${Date.now()}_main_${file.name}`,
           branchCode: locForm.branchCode || locForm.shortCode || locForm.id || 'branch',
           branchType: locForm.type === LocationType.PARTNER || locForm.isPartner ? 'partner' : 'hub',
           assetCategory: 'main',
@@ -2231,7 +2229,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (file) {
       try {
         const url = await uploadHeroManagedAsset(file, {
-          firebasePath: `hero/${Date.now()}_${file.name}`,
+          storagePath: `hero/${Date.now()}_${file.name}`,
           assetCategory: field === 'imageUrl' ? 'hero-image' : 'hero-mobile-image',
           entityId: 'hero-config',
           originalFileName: file.name,
@@ -2256,7 +2254,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       setIsSaving(true);
       try {
         const url = await uploadHeroManagedAsset(file, {
-          firebasePath: `hero/videos/${Date.now()}_${file.name}`,
+          storagePath: `hero/videos/${Date.now()}_${file.name}`,
           assetCategory: 'hero-video',
           entityId: 'hero-config',
           originalFileName: file.name,

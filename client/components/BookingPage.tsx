@@ -22,6 +22,7 @@ import { supabaseGet } from '../services/supabaseClient';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
 import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd } from '../services/paypalService';
 import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
+import { COUNTRY_NAMES } from '../src/constants/countries';
 import { calculateDeliveryStoragePrice, STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 import {
     BagCategoryId,
@@ -56,22 +57,6 @@ interface BookingPageProps {
     customerBranchId?: string;
     customerBranchRates?: { delivery: number; storage: number };
 }
-
-const COUNTRY_NAMES: Record<string, string> = {
-    'KR': 'Korea 🇰🇷',
-    'US': 'USA 🇺🇸',
-    'JP': 'Japan 🇯🇵',
-    'CN': 'China 🇨🇳',
-    'HK': 'Hong Kong 🇭🇰',
-    'TW': 'Taiwan 🇹🇼',
-    'SG': 'Singapore 🇸🇬',
-    'MY': 'Malaysia 🇲🇲',
-    'VN': 'Vietnam 🇻🇳',
-    'TH': 'Thailand 🇹🇭',
-    'PH': 'Philippines 🇵🇭',
-    'ID': 'Indonesia 🇮🇩',
-    'ETC': 'Other 🌏'
-};
 
 const TEMP_DIRECT_BOOKING_MODE = true;
 
@@ -550,8 +535,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
     }, [lang]);
 
     const handleBook = async () => {
-        console.log("[BookingPage] handleBook triggered. Current state:", booking);
-
         if (!isMember) {
             if (!booking.userName || !booking.userEmail || !booking.snsId) {
                 alert(tBooking.alert_fill_info || 'Please fill in your information.');

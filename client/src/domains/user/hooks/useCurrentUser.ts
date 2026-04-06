@@ -18,7 +18,6 @@ export const useCurrentUser = () => {
     });
 
     useEffect(() => {
-        console.log('[DAL] Subscribing to Auth state changes...');
         const unsubscribe = auth.onAuthStateChanged((user: CustomerAuthUser | null) => {
             queryClient.setQueryData(['currentUser'], user);
         });

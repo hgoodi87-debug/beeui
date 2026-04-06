@@ -12,5 +12,9 @@ export const COUNTRY_NAMES: Record<string, string> = {
   'TH': 'Thailand 🇹🇭',
   'PH': 'Philippines 🇵🇭',
   'ID': 'Indonesia 🇮🇩',
+  'FR': 'France 🇫🇷',
+  'DE': 'Germany 🇩🇪',
+  'GB': 'UK 🇬🇧',
   'ETC': 'Other 🌏',
+  'OTHER': 'Other 🌎',
 };

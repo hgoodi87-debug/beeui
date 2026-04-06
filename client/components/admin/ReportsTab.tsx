@@ -1,6 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { BookingState, BookingStatus, ServiceType } from '../../types';
+import { COUNTRY_NAMES } from '../../src/constants/countries';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
 
@@ -28,25 +29,6 @@ interface ReportsTabProps {
 }
 
 const COLORS = ['#FACC15', '#3B82F6', '#10B981', '#F87171', '#A78BFA', '#FB923C', '#2DD4BF'];
-
-const COUNTRY_NAMES: Record<string, string> = {
-    'KR': 'Korea 🇰🇷',
-    'US': 'USA 🇺🇸',
-    'JP': 'Japan 🇯🇵',
-    'CN': 'China 🇨🇳',
-    'TW': 'Taiwan 🇹🇼',
-    'HK': 'Hong Kong 🇭🇰',
-    'SG': 'Singapore 🇸🇬',
-    'TH': 'Thailand 🇹🇭',
-    'VN': 'Vietnam 🇻🇳',
-    'MY': 'Malaysia 🇲🇾',
-    'PH': 'Philippines 🇵🇭',
-    'ID': 'Indonesia 🇮🇩',
-    'FR': 'France 🇫🇷',
-    'DE': 'Germany 🇩🇪',
-    'GB': 'UK 🇬🇧',
-    'OTHER': 'Other 🌎'
-};
 
 const ReportsTab: React.FC<ReportsTabProps> = ({ 
     bookings, 

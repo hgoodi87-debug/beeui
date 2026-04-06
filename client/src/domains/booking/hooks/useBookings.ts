@@ -5,23 +5,19 @@ import { BookingState } from '../types';
 
 /**
  * Hook: useBookings
- * Fetch and subscribe to all bookings in real-time.
- * Synchronizes Firestore onSnapshot with TanStack Query cache.
+ * Fetches all bookings via Supabase and subscribes to real-time updates.
+ * Syncs with TanStack Query cache on each update.
  */
 export const useBookings = () => {
     const queryClient = useQueryClient();
 
     const query = useQuery<BookingState[]>({
         queryKey: ['bookings'],
-        queryFn: async () => {
-            console.log('[DAL] Initial fetch for bookings...');
-            return await StorageService.getBookings();
-        },
-        staleTime: Infinity, // Rely on real-time updates after initial fetch
+        queryFn: () => StorageService.getBookings(),
+        staleTime: Infinity,
     });
 
     useEffect(() => {
-        console.log('[DAL] Subscribing to bookings real-time...');
         const unsubscribe = StorageService.subscribeBookings((data) => {
             queryClient.setQueryData(['bookings'], data);
         });

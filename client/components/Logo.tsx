@@ -16,10 +16,10 @@ const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
     return (
         <div className={`flex items-center gap-2 select-none ${className}`}>
             {/* Text: beeliber */}
-            <h1 className={`logo ${size === 'sm' ? 'text-lg' : size === 'md' ? 'text-xl' : size === 'lg' ? 'text-2xl' : 'text-3xl'}`}>
+            <span className={`logo ${size === 'sm' ? 'text-lg' : size === 'md' ? 'text-xl' : size === 'lg' ? 'text-2xl' : 'text-3xl'}`}>
                 <span className="bee">bee</span>
                 <span className="liber pr-1">liber</span>
-            </h1>
+            </span>
         </div>
     );
 };

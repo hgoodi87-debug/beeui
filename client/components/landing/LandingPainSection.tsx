@@ -38,6 +38,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                             <img
                                 src="/images/landing/after.jpg"
                                 alt="빌리버 서비스를 이용해 짐 없이 가볍게 한강을 산책하는 자유로운 모습"
+                                loading="lazy"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s]"
                             />
                             {/* After 캡션 */}
@@ -59,6 +60,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                             <img
                                 src="/images/landing/before.jpg"
                                 alt="캐리어를 들고 지하철 계단을 오르는 여행자의 모습"
+                                loading="lazy"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s] grayscale group-hover:grayscale-0"
                             />
                             {/* Before 캡션 */}

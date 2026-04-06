@@ -71,10 +71,10 @@ const PartnershipPage: React.FC<PartnershipPageProps> = ({ onBack, t }) => {
   };
 
   const benefits = [
-    { icon: <TrendingUp className="w-8 h-8" />, title: t.partnership.benefit1_t, desc: t.partnership.benefit1_d, color: "bg-blue-500/10 text-blue-600" },
-    { icon: <Users className="w-8 h-8" />, title: t.partnership.benefit2_t, desc: t.partnership.benefit2_d, color: "bg-orange-500/10 text-orange-600" },
-    { icon: <Globe className="w-8 h-8" />, title: t.partnership.benefit3_t, desc: t.partnership.benefit3_d, color: "bg-purple-500/10 text-purple-600" },
-    { icon: <ShieldCheck className="w-8 h-8" />, title: t.partnership.benefit4_t, desc: t.partnership.benefit4_d, color: "bg-green-500/10 text-green-600" },
+    { icon: <TrendingUp className="w-8 h-8" />, title: t.partnership.benefit1_t, desc: t.partnership.benefit1_d, color: "bg-bee-yellow/15 text-bee-black" },
+    { icon: <Users className="w-8 h-8" />, title: t.partnership.benefit2_t, desc: t.partnership.benefit2_d, color: "bg-bee-yellow/15 text-bee-black" },
+    { icon: <Globe className="w-8 h-8" />, title: t.partnership.benefit3_t, desc: t.partnership.benefit3_d, color: "bg-bee-yellow/15 text-bee-black" },
+    { icon: <ShieldCheck className="w-8 h-8" />, title: t.partnership.benefit4_t, desc: t.partnership.benefit4_d, color: "bg-bee-yellow/15 text-bee-black" },
   ];
 
   return (
@@ -171,7 +171,6 @@ const PartnershipPage: React.FC<PartnershipPageProps> = ({ onBack, t }) => {
 
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[1000px] h-[1000px] bg-bee-yellow/10 rounded-full blur-[160px] -z-10" />
-          <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-orange-500/5 rounded-full blur-[140px] -z-10" />
         </section>
 
         {/* 3. BENEFITS GRID */}

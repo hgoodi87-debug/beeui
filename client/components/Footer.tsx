@@ -62,12 +62,12 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.service || "Service"}</h3>
               <ul className="space-y-0 text-sm md:text-base text-gray-400">
-                <li><a href={buildHref()} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
-                <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
-                <li><a href={buildHref('/services')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
-                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
-                <li><a href={buildHref('/vision')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="block py-2 hover:text-bee-yellow transition-colors">Brand Vision</a></li>
-                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2 hover:text-bee-yellow transition-colors">Q&A</a></li>
+                <li><a href={buildHref()} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
+                <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
+                <li><a href={buildHref('/services')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
+                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
+                <li><a href={buildHref('/vision')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">Brand Vision</a></li>
+                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">Q&A</a></li>
               </ul>
             </div>
 
@@ -75,9 +75,9 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.legal || "Legal"}</h3>
               <ul className="space-y-0 text-sm md:text-base text-gray-400">
-                <li><a href={buildHref('/privacy')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('PRIVACY'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</a></li>
-                <li><a href={buildHref('/terms')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TERMS'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</a></li>
-                <li><a href={buildHref('/refund')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('REFUND'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</a></li>
+                <li><a href={buildHref('/privacy')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('PRIVACY'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</a></li>
+                <li><a href={buildHref('/terms')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TERMS'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</a></li>
+                <li><a href={buildHref('/refund')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('REFUND'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</a></li>
               </ul>
             </div>
 
@@ -91,13 +91,13 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-bee-yellow shrink-0" />
-                  <a href={`mailto:${t.footer?.email || 'support@bee-liber.com'}`} title={t.footer?.email || 'support@bee-liber.com'} aria-label={`Email us at ${t.footer?.email || 'support@bee-liber.com'}`} className="block py-2 hover:text-bee-yellow">
+                  <a href={`mailto:${t.footer?.email || 'support@bee-liber.com'}`} title={t.footer?.email || 'support@bee-liber.com'} aria-label={`Email us at ${t.footer?.email || 'support@bee-liber.com'}`} className="block py-2.5 hover:text-bee-yellow">
                     {t.footer?.email || 'support@bee-liber.com'}
                   </a>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-bee-yellow shrink-0" />
-                  <a href={`tel:${t.footer?.phone || '+82-2-1234-5678'}`} title={t.footer?.phone || '+82-2-1234-5678'} aria-label={`Call us at ${t.footer?.phone || '+82-2-1234-5678'}`} className="block py-2 hover:text-bee-yellow">
+                  <a href={`tel:${t.footer?.phone || '+82-2-1234-5678'}`} title={t.footer?.phone || '+82-2-1234-5678'} aria-label={`Call us at ${t.footer?.phone || '+82-2-1234-5678'}`} className="block py-2.5 hover:text-bee-yellow">
                     {t.footer?.phone || '+82-2-1234-5678'}
                   </a>
                 </li>

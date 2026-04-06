@@ -25,14 +25,14 @@
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://bee-liber.com" />
 
-  <!-- Multi-language Support (SEO) -->
-  <link rel="alternate" hreflang="ko-KR" href="https://bee-liber.com" />
+  <!-- Multi-language Support (SEO) — x-default = zh-tw (주요 고객 대만/홍콩 90%) -->
+  <link rel="alternate" hreflang="ko" href="https://bee-liber.com/ko" />
   <link rel="alternate" hreflang="en" href="https://bee-liber.com/en" />
-  <link rel="alternate" hreflang="ja-JP" href="https://bee-liber.com/ja" />
+  <link rel="alternate" hreflang="ja" href="https://bee-liber.com/ja" />
   <link rel="alternate" hreflang="zh-CN" href="https://bee-liber.com/zh" />
   <link rel="alternate" hreflang="zh-TW" href="https://bee-liber.com/zh-tw" />
   <link rel="alternate" hreflang="zh-HK" href="https://bee-liber.com/zh-hk" />
-  <link rel="alternate" hreflang="x-default" href="https://bee-liber.com" />
+  <link rel="alternate" hreflang="x-default" href="https://bee-liber.com/zh-tw" />
 
   <meta name="google-site-verification" content="sLGwv--I9zUjxvE6QgM-Ul-1kZFlgMhsFLFBiQsoOIQ" />
   <meta name="naver-site-verification" content="27b3efc19cfcc972a2ec5b219dc20454c3ec4ea3" />
@@ -111,7 +111,7 @@
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "Beeliber (비리버)",
+    "name": "Beeliber (빌리버)",
     "image": "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b",
     "description": "서울 주요 거점 짐 보관과 당일 짐배송 서비스를 제공하는 빌리버.",
     "url": "https://bee-liber.com",
@@ -150,7 +150,7 @@
         "name": "짐 보관 서비스는 안전한가요?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "모든 보관 예약은 실시간 CCTV와 스마트 보안 씰로 보호되며, 글로벌 수준의 안심 보험이 기본 적용됩니다. AI 기반 트래킹으로 실시간 위치 확인이 가능합니다."
+          "text": "모든 보관 예약은 실시간 CCTV와 스마트 보안 씰로 보호됩니다. 글로벌 수준의 안심 보험이 기본 적용되어 소중한 짐을 안전하게 지킵니다."
         }
       }
     ]
@@ -215,7 +215,10 @@
     (function () {
       const siteUrl = 'https://bee-liber.com';
       const ogImage = 'https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b';
-      const path = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+      const rawPath = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+      // lang prefix 제거 → 순수 경로 추출 (SEO.tsx와 동일 로직)
+      const langPattern = /^\/(ko|en|zh-tw|zh-hk|ja|zh)(\/|$)/i;
+      const path = rawPath.replace(langPattern, '/').replace(/\/$/, '') || '/';
       const routeMeta = {
         '/': {
           title: '빌리버 | 서울 짐보관 · 인천공항 당일 짐배송',
@@ -275,7 +278,8 @@
           keywords: '당일 짐배송, 호텔 짐배송, 공항 짐배송, 지역별 짐배송, 빌리버'
         } : null)
         || routeMeta['/'];
-      const canonicalUrl = siteUrl + path;
+      const canonicalUrl = siteUrl + rawPath;
+      const langSuffix = path === '/' ? '' : path;
 
       const setNamedMeta = function (name, content) {
         if (!content) return;
@@ -326,13 +330,13 @@
       setPropertyMeta('og:description', meta.description);
       setPropertyMeta('og:image', ogImage);
       setLink('canonical', canonicalUrl);
-      setLink('alternate', canonicalUrl, 'ko-KR');
-      setLink('alternate', siteUrl + '/en' + (path === '/' ? '' : path), 'en');
-      setLink('alternate', siteUrl + '/ja' + (path === '/' ? '' : path), 'ja-JP');
-      setLink('alternate', siteUrl + '/zh' + (path === '/' ? '' : path), 'zh-CN');
-      setLink('alternate', siteUrl + '/zh-tw' + (path === '/' ? '' : path), 'zh-TW');
-      setLink('alternate', siteUrl + '/zh-hk' + (path === '/' ? '' : path), 'zh-HK');
-      setLink('alternate', canonicalUrl, 'x-default');
+      setLink('alternate', siteUrl + '/ko' + langSuffix, 'ko');
+      setLink('alternate', siteUrl + '/en' + langSuffix, 'en');
+      setLink('alternate', siteUrl + '/ja' + langSuffix, 'ja');
+      setLink('alternate', siteUrl + '/zh' + langSuffix, 'zh-CN');
+      setLink('alternate', siteUrl + '/zh-tw' + langSuffix, 'zh-TW');
+      setLink('alternate', siteUrl + '/zh-hk' + langSuffix, 'zh-HK');
+      setLink('alternate', siteUrl + '/zh-tw' + langSuffix, 'x-default');
     })();
 
     // Shim process for buggy libraries
@@ -350,12 +354,12 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-DA9Tiil0.js"></script>
+  <script type="module" crossorigin src="/assets/index-xbMffilz.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-react-dom-B-4pjoWT.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-motion-BUt1lcWJ.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-RvhTvX1M.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-query-N1jjWJFK.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-CEQHrejV.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-DupuJiWX.css">
 </head>
 
 <body class="antialiased">

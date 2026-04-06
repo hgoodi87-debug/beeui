@@ -158,7 +158,7 @@ const getKSTDateString = () => {
   return kst.toISOString().split('T')[0];
 };
 
-const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isSupabaseBookingDetailId = (value?: string | null) =>
   BOOKING_DETAIL_UUID_PATTERN.test(String(value || '').trim());
@@ -334,22 +334,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   }, [queryClient]);
 
   const resolveBookingDetailId = async (id: string): Promise<string> => {
+    // UUID면 바로 반환
     if (isSupabaseBookingDetailId(id)) {
       return id;
     }
 
-    // [스봉이] 이미 불러온 데이터가 있다면 거기서 먼저 찾아볼게요. 네트워크 비용 아껴야죠? 💅
+    // 캐시에서 UUID 탐색 (Supabase 데이터만)
     const cached = allBookings.find(b => b.id === id || b.reservationCode === id);
     if (cached?.id && isSupabaseBookingDetailId(cached.id)) {
       return cached.id;
     }
 
-    const booking = await StorageService.getBooking(id);
-    if (booking?.id && isSupabaseBookingDetailId(booking.id)) {
-      return booking.id;
-    }
-
-    throw new Error(`Supabase booking_details row not found for booking identifier: ${id}`);
+    throw new Error(`UUID를 찾을 수 없습니다: ${id}`);
   };
 
   const mutateBookingRecord = async (
@@ -920,29 +916,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
         const effectiveStatus = getEffectiveStatus(b);
 
-        // 날짜 범위 조회 필터 (설정 시 status 필터 무시하고 날짜 범위만 적용)
+        // 날짜 범위 조회 필터
         if (searchStartDate || searchEndDate) {
+          // 날짜 필터 입력 시: 해당 기간 내 모든 내역 (완료/취소 포함) 표시
           const bookingDate = b.pickupDate || '';
           if (searchStartDate && bookingDate < searchStartDate) return false;
           if (searchEndDate && bookingDate > searchEndDate) return false;
         } else {
-          // ALL 탭: 완료/취소/환불 항목 기본 숨김
-          if (activeStatusTab === 'ALL') {
-            // status 또는 settlementStatus 중 하나라도 DONE이면 숨김
-            const ss = String(b.settlementStatus || '');
-            if (DONE_STATUSES.has(effectiveStatus) || DONE_STATUSES.has(ss)) return false;
-          } else {
-            // 완료/취소/환불 탭이 아닌 경우: 날짜 구간 필터 적용
-            if (DONE_STATUSES.has(effectiveStatus)) {
-              const d = b.pickupDate || '';
-              if (d < cancelStartDate || d > cancelEndDate) return false;
-            } else {
-              // 진행중 상태는 날짜 무관 표시
-              const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-              const isStatusIncomplete = incompleteStatuses.includes(effectiveStatus as any);
-              if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
-            }
-          }
+          // 날짜 필터 없을 때: 과거 완료/취소/환불 기본 숨김
+          const ss = String(b.settlementStatus || '');
+          if (DONE_STATUSES.has(effectiveStatus) || DONE_STATUSES.has(ss)) return false;
+
+          // 진행중 상태 중 과거 날짜도 숨김 (단, PENDING/CONFIRMED/TRANSIT/STORAGE/ARRIVED는 날짜 무관 표시)
+          const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+          const isStatusIncomplete = incompleteStatuses.includes(effectiveStatus as any);
+          if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
         }
       }
 
@@ -1530,7 +1518,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   // [스봉이] 일괄 상태 업데이트 함수 💅✨
   const handleBatchUpdateStatus = async (status: BookingStatus) => {
     if (selectedBookingIds.length === 0) return;
-    if (!window.confirm(`${selectedBookingIds.length}건의 예약을 '${OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[status]].label}' 상태로 일괄 변경할까요?`)) return;
+    const statusLabel = BOOKING_STATUS_DISPLAY_MAP[status]
+      ? OPERATING_STATUS_CONFIG[BOOKING_STATUS_DISPLAY_MAP[status]]?.label ?? status
+      : status;
+    if (!window.confirm(`${selectedBookingIds.length}건의 예약을 '${statusLabel}' 상태로 일괄 변경할까요?`)) return;
 
     const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
 

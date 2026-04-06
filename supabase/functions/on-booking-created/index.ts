@@ -95,10 +95,12 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
   `;
 
   try {
-    const bagSummary = [
-      Number(booking.bags || 0) > 0 ? `${Number(booking.bags || 0)}개` : "",
-      typeof booking.bag_summary === "string" ? String(booking.bag_summary) : "",
-    ].filter(Boolean).join(" / ");
+    // bag_summary 있으면 그걸 우선, 없으면 총 개수만
+    const bagSummary = typeof booking.bag_summary === "string" && String(booking.bag_summary).trim()
+      ? String(booking.bag_summary).trim()
+      : Number(booking.bags || 0) > 0
+      ? `총 ${Number(booking.bags)}개`
+      : "-";
 
     const emailInput: VoucherEmailTemplateInput = {
       bookingId: String(booking.id || reservationCode || ""),

@@ -5,79 +5,43 @@ import { getActiveAdminRequestHeaders, getActiveAdminUserId } from '../../servic
 interface AiOutput {
   id: string;
   use_case: string;
-  source_ref: string | null;
-  input_context: Record<string, unknown> | null;
-  generated_text: string | null;
-  risk_score: number | null;
-  policy_passed: boolean;
-  approval_status: string;
+  entity_id: string | null;
+  prompt_snapshot: Record<string, string> | null;
+  generated_content: Record<string, string> | null;
+  policy_check: { passed: boolean; violations: string[] } | null;
+  status: string;
+  created_by: string | null;
   reviewer_id: string | null;
-  published_at: string | null;
+  reviewed_at: string | null;
+  final_content: Record<string, string> | null;
   created_at: string;
-  // 렌더링용 파생 필드 (fetch 후 변환)
-  _generatedContent?: Record<string, string>;
-  _violations?: string[];
 }
 
-const LANG_LABELS: Record<string, string> = {
-  en: '영어 (EN)',
-  ja: '일본어 (JA)',
-  zh: '중국어 간체 (ZH)',
-  zh_tw: '대만 번체 (ZH-TW)',
-  zh_hk: '홍콩 번체 (ZH-HK)',
+// use_case별 표시 이름
+const USE_CASE_LABELS: Record<string, string> = {
+  translation: '번역',
+  cs_reply: 'CS 답변',
+  branch_guide: '지점 안내',
 };
 
+// translation use_case 필드 라벨
 const TRANSLATION_FIELD_LABELS: Record<string, string> = {
-  en: '지점명 EN',
-  ja: '지점명 JA',
-  zh: '지점명 ZH',
-  zh_tw: '지점명 ZH-TW',
-  zh_hk: '지점명 ZH-HK',
-  address_en: '주소 EN',
-  address_ja: '주소 JA',
-  address_zh: '주소 ZH',
-  address_zh_tw: '주소 ZH-TW',
-  address_zh_hk: '주소 ZH-HK',
-  pickupGuide_en: '픽업 안내 EN',
-  pickupGuide_ja: '픽업 안내 JA',
-  pickupGuide_zh: '픽업 안내 ZH',
-  pickupGuide_zh_tw: '픽업 안내 ZH-TW',
+  en: '지점명 EN', ja: '지점명 JA', zh: '지점명 ZH',
+  zh_tw: '지점명 ZH-TW', zh_hk: '지점명 ZH-HK',
+  address_en: '주소 EN', address_ja: '주소 JA', address_zh: '주소 ZH',
+  address_zh_tw: '주소 ZH-TW', address_zh_hk: '주소 ZH-HK',
+  pickupGuide_en: '픽업 안내 EN', pickupGuide_ja: '픽업 안내 JA',
+  pickupGuide_zh: '픽업 안내 ZH', pickupGuide_zh_tw: '픽업 안내 ZH-TW',
   pickupGuide_zh_hk: '픽업 안내 ZH-HK',
-  description_en: '설명 EN',
-  description_ja: '설명 JA',
-  description_zh: '설명 ZH',
-  description_zh_tw: '설명 ZH-TW',
-  description_zh_hk: '설명 ZH-HK',
+  description_en: '설명 EN', description_ja: '설명 JA', description_zh: '설명 ZH',
+  description_zh_tw: '설명 ZH-TW', description_zh_hk: '설명 ZH-HK',
 };
-
-function parseGeneratedContent(raw: AiOutput): Record<string, string> {
-  // generated_text가 JSON 객체 문자열이면 파싱, 아니면 단일 텍스트로 처리
-  if (raw.generated_text) {
-    try {
-      const parsed = JSON.parse(raw.generated_text);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Record<string, string>;
-      }
-    } catch {/* not JSON */}
-    return { content: raw.generated_text };
-  }
-  // input_context에서 번역 필드 추출 시도
-  if (raw.input_context && typeof raw.input_context === 'object') {
-    const ctx = raw.input_context as Record<string, unknown>;
-    const filtered: Record<string, string> = {};
-    for (const [k, v] of Object.entries(ctx)) {
-      if (typeof v === 'string' && v.trim()) filtered[k] = v;
-    }
-    if (Object.keys(filtered).length > 0) return filtered;
-  }
-  return {};
-}
 
 async function fetchPendingOutputs(): Promise<AiOutput[]> {
   const SUPABASE_URL = getSupabaseBaseUrl();
   const headers = await getActiveAdminRequestHeaders();
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/ai_outputs?approval_status=in.(ai_review_pending,ai_policy_failed)&order=created_at.desc`,
+    `${SUPABASE_URL}/rest/v1/ai_outputs?status=in.(ai_review_pending,ai_policy_failed)&order=created_at.desc`,
     {
       headers: {
         ...headers,
@@ -88,12 +52,7 @@ async function fetchPendingOutputs(): Promise<AiOutput[]> {
     }
   );
   if (!res.ok) throw new Error(await res.text());
-  const rows: AiOutput[] = await res.json();
-  return rows.map(r => ({
-    ...r,
-    _generatedContent: parseGeneratedContent(r),
-    _violations: r.policy_passed ? [] : ['정책 위반 감지됨'],
-  }));
+  return res.json();
 }
 
 async function callRpc(rpcName: string, params: Record<string, string>): Promise<void> {
@@ -103,7 +62,7 @@ async function callRpc(rpcName: string, params: Record<string, string>): Promise
     method: 'POST',
     headers: {
       ...headers,
-      apikey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || ''),
+      apikey: getSupabaseConfig().anonKey,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
@@ -113,215 +72,6 @@ async function callRpc(rpcName: string, params: Record<string, string>): Promise
     throw new Error(err.message || res.statusText);
   }
 }
-
-const AIReviewTab: React.FC = () => {
-  const [outputs, setOutputs] = React.useState<AiOutput[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [selected, setSelected] = React.useState<AiOutput | null>(null);
-  const [actionLoading, setActionLoading] = React.useState(false);
-  const [toast, setToast] = React.useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
-  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchPendingOutputs();
-      setOutputs(data);
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  React.useEffect(() => { load(); }, []);
-
-  const handleApprove = async (outputId: string) => {
-    setActionLoading(true);
-    try {
-      await callRpc('approve_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
-      showToast('승인 완료! 지점 번역이 업데이트되었습니다. ✓');
-      setSelected(null);
-      await load();
-    } catch (e) {
-      showToast(`승인 실패: ${e}`, 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleReject = async (outputId: string) => {
-    if (!confirm('이 AI 생성 번역을 반려하시겠습니까?')) return;
-    setActionLoading(true);
-    try {
-      await callRpc('reject_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
-      showToast('반려 처리되었습니다.');
-      setSelected(null);
-      await load();
-    } catch (e) {
-      showToast(`반려 실패: ${e}`, 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      {/* 토스트 */}
-      {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl font-bold text-sm shadow-lg transition-all ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-          {toast.msg}
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-black text-bee-black">AI 검수함</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Claude가 생성한 번역을 검토하고 승인/반려합니다.</p>
-        </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-all flex items-center gap-1.5"
-        >
-          <i className={`fa-solid fa-arrows-rotate ${loading ? 'animate-spin' : ''}`}></i>
-          새로고침
-        </button>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 font-bold">
-          <i className="fa-solid fa-triangle-exclamation mr-2"></i>{error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <i className="fa-solid fa-spinner animate-spin text-2xl text-bee-yellow"></i>
-        </div>
-      ) : outputs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="text-4xl mb-4">✨</div>
-          <p className="text-sm font-black text-gray-500">모두 검수했어요!</p>
-          <p className="text-xs text-gray-400 mt-1">지점 탭에서 AI 번역을 생성해보세요.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3">
-          {outputs.map(out => (
-            <div
-              key={out.id}
-              onClick={() => setSelected(out)}
-              className={`bg-white rounded-2xl border p-4 cursor-pointer hover:border-bee-yellow transition-all shadow-sm ${selected?.id === out.id ? 'border-bee-yellow' : 'border-gray-100'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-black text-gray-700">
-                    {out.source_ref ? `지점: ${out.source_ref}` : out.use_case}
-                  </span>
-                  <span className="ml-2 text-[10px] text-gray-400">
-                    {new Date(out.created_at).toLocaleString('ko-KR')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {out.policy_passed ? (
-                    <span className="text-[10px] font-black bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                      ✓ 정책 통과
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                      ⚠ 정책 위반
-                    </span>
-                  )}
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${out.approval_status === 'ai_review_pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                    {out.approval_status === 'ai_review_pending' ? '검수 대기' : '정책 실패'}
-                  </span>
-                </div>
-              </div>
-
-              {/* 정책 위반 항목 */}
-              {(out._violations?.length ?? 0) > 0 && (
-                <div className="mt-2 text-[10px] text-red-600 font-bold">
-                  {out._violations!.map(v => (
-                    <span key={v} className="bg-red-100 px-1.5 py-0.5 rounded mr-1">{v}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 상세 패널 */}
-      {selected && (
-        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40" onClick={() => setSelected(null)}>
-          <div
-            className="bg-white rounded-t-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 space-y-4"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-black text-bee-black">번역 검수</h3>
-              <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-700">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
-            </div>
-
-            {/* 생성된 번역 내용 */}
-            <div className="space-y-3">
-              {Object.entries(selected._generatedContent ?? {}).map(([key, value]) => {
-                if (!value) return null;
-                const violations = selected._violations ?? [];
-                const isViolation = violations.some(v => value.includes(v));
-                return (
-                  <div key={key} className={`rounded-xl p-3 border ${isViolation ? 'border-red-300 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
-                    <div className="text-[10px] font-black text-gray-400 uppercase mb-1">
-                      {TRANSLATION_FIELD_LABELS[key] || key}
-                    </div>
-                    <p className="text-xs font-bold text-gray-700 leading-relaxed">
-                      {violations.length ? (
-                        highlightViolations(value, violations)
-                      ) : (
-                        value
-                      )}
-                    </p>
-                  </div>
-                );
-              })}
-              {Object.keys(selected._generatedContent ?? {}).length === 0 && (
-                <p className="text-xs text-gray-400 italic">생성된 번역 내용이 없습니다.</p>
-              )}
-            </div>
-
-            {/* 액션 버튼 */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => handleApprove(selected.id)}
-                disabled={actionLoading}
-                className="flex-1 bg-green-500 text-white font-black py-3 rounded-2xl text-sm hover:bg-green-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {actionLoading ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-check"></i>}
-                승인 (locations 업데이트)
-              </button>
-              <button
-                onClick={() => handleReject(selected.id)}
-                disabled={actionLoading}
-                className="flex-1 bg-red-500 text-white font-black py-3 rounded-2xl text-sm hover:bg-red-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <i className="fa-solid fa-xmark"></i>
-                반려
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 function highlightViolations(text: string, violations: string[]): React.ReactNode {
   if (!violations.length) return text;
@@ -341,5 +91,313 @@ function highlightViolations(text: string, violations: string[]): React.ReactNod
   parts.push(remaining);
   return <>{parts}</>;
 }
+
+function ContentField({
+  label, value, violations,
+}: { label: string; value: string; violations: string[] }) {
+  const hasViolation = violations.some(v => value.includes(v));
+  return (
+    <div className={`rounded-xl p-3 border ${hasViolation ? 'border-red-300 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
+      <div className="text-[10px] font-black text-gray-400 uppercase mb-1">{label}</div>
+      <p className="text-xs font-bold text-gray-700 leading-relaxed whitespace-pre-wrap">
+        {violations.length ? highlightViolations(value, violations) : value}
+      </p>
+    </div>
+  );
+}
+
+function DetailPanel({
+  out,
+  onApprove,
+  onReject,
+  actionLoading,
+}: {
+  out: AiOutput;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  actionLoading: boolean;
+}) {
+  const content = out.generated_content ?? {};
+  const violations = out.policy_check?.violations ?? [];
+  const passed = out.policy_check?.passed ?? true;
+  const isTranslation = out.use_case === 'translation';
+  const isCsReply = out.use_case === 'cs_reply';
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* 헤더 */}
+      <div className="flex-shrink-0 pb-3 border-b border-gray-100 mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-black bg-bee-yellow/20 text-bee-black px-2 py-0.5 rounded-full">
+            {USE_CASE_LABELS[out.use_case] ?? out.use_case}
+          </span>
+          {passed ? (
+            <span className="text-[10px] font-black bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+              ✓ 정책 통과
+            </span>
+          ) : (
+            <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+              ⚠ 정책 위반
+            </span>
+          )}
+        </div>
+        {out.entity_id && (
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            <span className="font-bold">엔티티:</span> {out.entity_id}
+          </p>
+        )}
+        {out.prompt_snapshot && (
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            {isCsReply && out.prompt_snapshot.inquiry_preview && (
+              <><span className="font-bold">문의 미리보기:</span> {out.prompt_snapshot.inquiry_preview}</>
+            )}
+            {isTranslation && out.prompt_snapshot.location_name && (
+              <><span className="font-bold">지점:</span> {out.prompt_snapshot.location_name}</>
+            )}
+          </p>
+        )}
+      </div>
+
+      {/* 정책 위반 항목 */}
+      {violations.length > 0 && (
+        <div className="flex-shrink-0 mb-3 flex flex-wrap gap-1">
+          {violations.map(v => (
+            <span key={v} className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+              ✕ {v}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* 콘텐츠 */}
+      <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+        {isCsReply && content.reply ? (
+          <ContentField label="CS 답변 초안" value={content.reply} violations={violations} />
+        ) : isTranslation ? (
+          Object.entries(content).map(([key, value]) =>
+            value ? (
+              <ContentField
+                key={key}
+                label={TRANSLATION_FIELD_LABELS[key] ?? key}
+                value={value}
+                violations={violations}
+              />
+            ) : null
+          )
+        ) : (
+          Object.entries(content).map(([key, value]) =>
+            value ? <ContentField key={key} label={key} value={value} violations={violations} /> : null
+          )
+        )}
+        {Object.keys(content).length === 0 && (
+          <p className="text-xs text-gray-400 italic py-8 text-center">생성된 콘텐츠가 없습니다.</p>
+        )}
+      </div>
+
+      {/* 액션 버튼 */}
+      <div className="flex-shrink-0 flex gap-3 pt-4 mt-4 border-t border-gray-100">
+        <button
+          onClick={() => onApprove(out.id)}
+          disabled={actionLoading || out.status === 'ai_policy_failed'}
+          className="flex-1 bg-green-500 text-white font-black py-3 rounded-2xl text-sm hover:bg-green-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+          title={out.status === 'ai_policy_failed' ? '정책 위반 항목은 승인할 수 없습니다' : ''}
+        >
+          {actionLoading
+            ? <i className="fa-solid fa-spinner animate-spin"></i>
+            : <i className="fa-solid fa-check"></i>
+          }
+          {isTranslation ? '승인 (번역 적용)' : isCsReply ? '승인 (답변 확정)' : '승인'}
+        </button>
+        <button
+          onClick={() => onReject(out.id)}
+          disabled={actionLoading}
+          className="flex-1 bg-red-100 text-red-700 font-black py-3 rounded-2xl text-sm hover:bg-red-200 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+        >
+          <i className="fa-solid fa-xmark"></i>
+          반려
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const AIReviewTab: React.FC = () => {
+  const [outputs, setOutputs] = React.useState<AiOutput[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [selected, setSelected] = React.useState<AiOutput | null>(null);
+  const [actionLoading, setActionLoading] = React.useState(false);
+  const [toast, setToast] = React.useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchPendingOutputs();
+      setOutputs(data);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const handleApprove = async (outputId: string) => {
+    setActionLoading(true);
+    try {
+      const out = outputs.find(o => o.id === outputId);
+      await callRpc('approve_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
+      const label = out?.use_case === 'translation' ? '번역이 지점에 적용' : out?.use_case === 'cs_reply' ? 'CS 답변이 확정' : '승인';
+      showToast(`✓ ${label}되었습니다.`);
+      setSelected(null);
+      await load();
+    } catch (e) {
+      showToast(`승인 실패: ${e}`, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async (outputId: string) => {
+    if (!confirm('이 AI 생성 콘텐츠를 반려하시겠습니까?')) return;
+    setActionLoading(true);
+    try {
+      await callRpc('reject_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
+      showToast('반려 처리되었습니다.');
+      setSelected(null);
+      await load();
+    } catch (e) {
+      showToast(`반려 실패: ${e}`, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const pendingCount = outputs.filter(o => o.status === 'ai_review_pending').length;
+
+  return (
+    <div className="relative">
+      {/* 토스트 */}
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-2xl font-black text-sm shadow-2xl whitespace-nowrap transition-all ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* 헤더 */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-black text-bee-black flex items-center gap-2">
+            AI 검수함
+            {pendingCount > 0 && (
+              <span className="text-xs font-black bg-bee-yellow text-bee-black px-2 py-0.5 rounded-full">
+                {pendingCount}
+              </span>
+            )}
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">Claude가 생성한 콘텐츠를 검토하고 승인/반려합니다.</p>
+        </div>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-all flex items-center gap-1.5"
+        >
+          <i className={`fa-solid fa-arrows-rotate ${loading ? 'animate-spin' : ''}`}></i>
+          새로고침
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 font-bold mb-4">
+          <i className="fa-solid fa-triangle-exclamation mr-2"></i>{error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <i className="fa-solid fa-spinner animate-spin text-2xl text-bee-yellow"></i>
+        </div>
+      ) : outputs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="text-4xl mb-4">✨</div>
+          <p className="text-sm font-black text-gray-500">모두 검수했어요!</p>
+          <p className="text-xs text-gray-400 mt-1">지점 탭이나 예약 상세에서 AI 콘텐츠를 생성해보세요.</p>
+        </div>
+      ) : (
+        /* 2-컬럼 스플릿 레이아웃 */
+        <div className="flex gap-4" style={{ minHeight: '60vh' }}>
+          {/* 좌: 큐 목록 */}
+          <div className={`flex-shrink-0 space-y-2 overflow-y-auto ${selected ? 'w-72 hidden md:block' : 'w-full md:w-72'}`}>
+            {outputs.map(out => {
+              const passed = out.policy_check?.passed ?? true;
+              const isSelected = selected?.id === out.id;
+              return (
+                <button
+                  key={out.id}
+                  onClick={() => setSelected(out)}
+                  className={`w-full text-left bg-white rounded-2xl border p-3 hover:border-bee-yellow transition-all shadow-sm ${isSelected ? 'border-bee-yellow bg-bee-yellow/5' : 'border-gray-100'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black text-gray-700 truncate">
+                      {USE_CASE_LABELS[out.use_case] ?? out.use_case}
+                      {out.entity_id && <span className="text-gray-400 font-bold"> · {out.entity_id.slice(0, 8)}</span>}
+                    </span>
+                    {!passed && (
+                      <span className="flex-shrink-0 text-[10px] font-black bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">
+                        위반
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${out.status === 'ai_review_pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-600'}`}>
+                      {out.status === 'ai_review_pending' ? '검수 대기' : '정책 실패'}
+                    </span>
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(out.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 우: 상세 패널 */}
+          {selected ? (
+            <div className={`flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${selected ? 'block' : 'hidden md:block'}`}
+              style={{ maxHeight: '75vh', display: 'flex', flexDirection: 'column' }}>
+              {/* 모바일 뒤로가기 */}
+              <button
+                onClick={() => setSelected(null)}
+                className="md:hidden text-xs font-bold text-gray-500 mb-3 flex items-center gap-1"
+              >
+                <i className="fa-solid fa-chevron-left"></i> 목록으로
+              </button>
+              <DetailPanel
+                out={selected}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                actionLoading={actionLoading}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 hidden md:flex items-center justify-center text-center">
+              <div>
+                <i className="fa-regular fa-hand-pointer text-3xl text-gray-200 mb-3 block"></i>
+                <p className="text-sm font-bold text-gray-400">항목을 선택하면 내용을 검수할 수 있습니다.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default AIReviewTab;

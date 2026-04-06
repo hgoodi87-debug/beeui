@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(ship)",
+      "Skill(ship:*)",
+      "Bash(git merge:*)"
+    ]
+  }
+}

@@ -28,9 +28,11 @@ interface LogisticsTabProps {
     setCancelStartDate?: (d: string) => void;
     cancelEndDate?: string;
     setCancelEndDate?: (d: string) => void;
-    searchDate: string;
-    setSearchDate: (d: string) => void;
-    // [스봉이] 일괄 처리 전용 프롭스 💅✨
+    searchStartDate: string;
+    setSearchStartDate: (d: string) => void;
+    searchEndDate: string;
+    setSearchEndDate: (d: string) => void;
+    // 일괄 처리 전용 프롭스
     selectedBookingIds: string[];
     setSelectedBookingIds: (ids: string[]) => void;
     handleBatchUpdateStatus: (s: BookingStatus) => void;
@@ -64,8 +66,10 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     setCancelStartDate,
     cancelEndDate,
     setCancelEndDate,
-    searchDate,
-    setSearchDate,
+    searchStartDate,
+    setSearchStartDate,
+    searchEndDate,
+    setSearchEndDate,
     selectedBookingIds,
     setSelectedBookingIds,
     handleBatchUpdateStatus,
@@ -150,21 +154,29 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                 </div>
 
                 <div className="flex-1 flex justify-start lg:justify-end gap-3">
-                    {/* [스봉이] 전용 날짜 조회 필터 💅✨ */}
-                    <div className="flex items-center gap-2 bg-white/50 backdrop-blur-3xl px-4 py-2 rounded-2xl border border-bee-yellow/20 shadow-lg shadow-bee-yellow/5">
-                        <i className="fa-solid fa-calendar-day text-bee-yellow text-xs"></i>
+                    {/* 날짜 구간 조회 필터 */}
+                    <div className="flex items-center gap-2 bg-white/50 backdrop-blur-3xl px-3 py-2 rounded-2xl border border-bee-yellow/20 shadow-lg shadow-bee-yellow/5">
+                        <i className="fa-solid fa-calendar-range text-bee-yellow text-xs shrink-0"></i>
                         <input
                             type="date"
-                            value={searchDate}
-                            onChange={(e) => setSearchDate(e.target.value)}
-                            className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-bee-black"
-                            title="특정 일자 조회"
+                            value={searchStartDate}
+                            onChange={(e) => setSearchStartDate(e.target.value)}
+                            className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-bee-black w-[110px]"
+                            title="시작 날짜"
                         />
-                        {searchDate && (
-                            <button 
-                                onClick={() => setSearchDate('')}
-                                className="text-gray-400 hover:text-bee-black transition-colors"
-                                title="필터 초기화"
+                        <span className="text-[10px] font-black text-gray-400">~</span>
+                        <input
+                            type="date"
+                            value={searchEndDate}
+                            onChange={(e) => setSearchEndDate(e.target.value)}
+                            className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-bee-black w-[110px]"
+                            title="종료 날짜"
+                        />
+                        {(searchStartDate || searchEndDate) && (
+                            <button
+                                onClick={() => { setSearchStartDate(''); setSearchEndDate(''); }}
+                                className="text-gray-400 hover:text-bee-black transition-colors shrink-0"
+                                title="날짜 필터 초기화"
                             >
                                 <i className="fa-solid fa-circle-xmark text-xs"></i>
                             </button>
@@ -275,8 +287,15 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col">
-                                            <div className="px-2 py-0.5 bg-gray-900 text-white text-[9px] font-black w-fit rounded mb-1.5 tracking-tighter">
-                                                {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <div className="px-2 py-0.5 bg-gray-900 text-white text-[9px] font-black w-fit rounded tracking-tighter">
+                                                    {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
+                                                </div>
+                                                {b.nametagId && (
+                                                    <div className="w-6 h-6 rounded-full bg-bee-yellow text-bee-black text-[10px] font-black flex items-center justify-center" title={`네임태그 #${b.nametagId}`}>
+                                                        {b.nametagId}
+                                                    </div>
+                                                )}
                                             </div>
                                             <span className="font-black text-bee-black text-sm group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>
                                                 {adminRole === 'super' ? b.userName : maskName(b.userName || '')}

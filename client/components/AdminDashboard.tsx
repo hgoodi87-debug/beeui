@@ -170,7 +170,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const needsInquiryData = activeTab === 'PARTNERSHIP_INQUIRIES';
   const needsSettlementData = ['OVERVIEW', 'DAILY_SETTLEMENT', 'ACCOUNTING', 'MONTHLY_SETTLEMENT'].includes(activeTab);
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]); // [스봉이] 일괄 처리를 위한 체크박스 상태 💅
-  const [searchDate, setSearchDate] = useState<string>(''); // [스봉이] 특정 일자 예약 조회 💅
+  const [searchStartDate, setSearchStartDate] = useState<string>('');
+  const [searchEndDate, setSearchEndDate] = useState<string>('');
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
 
   const queryClient = useQueryClient();
@@ -882,6 +883,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   // Filter Bookings for Current Tab
   const filteredBookings = useMemo(() => {
+    // DB 뷰(admin_booking_list_v1)는 status 컬럼을 계산해서 반환하지만
+    // 직접 booking_details 조회 시에는 settlement_status만 존재 → 둘 다 확인
+    const getEffectiveStatus = (b: BookingState): string => {
+      return ((b.status || b.settlementStatus || '') as string);
+    };
+
+    const DONE_STATUSES = new Set([
+      BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.REFUNDED,
+      '완료', '취소됨', '환불완료', 'COMPLETED', 'CANCELLED', 'REFUNDED',
+    ]);
+
     return bookings.filter(b => {
       // 1. Service Type Filter
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
@@ -893,26 +905,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       } else {
         if (b.isDeleted === true || b.settlementStatus === 'deleted') return false;
 
-        // 특정 일자 조회 필터 (날짜 지정 시 다른 필터 무시)
-        if (searchDate) {
-          const isMatchDate = b.pickupDate === searchDate || (b.dropoffDate && b.pickupDate <= searchDate && b.dropoffDate >= searchDate);
-          if (!isMatchDate) return false;
+        const effectiveStatus = getEffectiveStatus(b);
+
+        // 날짜 범위 조회 필터 (설정 시 status 필터 무시하고 날짜 범위만 적용)
+        if (searchStartDate || searchEndDate) {
+          const bookingDate = b.pickupDate || '';
+          if (searchStartDate && bookingDate < searchStartDate) return false;
+          if (searchEndDate && bookingDate > searchEndDate) return false;
         } else {
-          // ALL 탭: 완료/취소/환불은 기본 숨김 (각 전용 탭에서 조회)
+          // ALL 탭: 완료/취소/환불 항목 기본 숨김
           if (activeStatusTab === 'ALL') {
-            const isDone = b.status === BookingStatus.COMPLETED ||
-              b.status === BookingStatus.CANCELLED ||
-              b.status === BookingStatus.REFUNDED;
-            if (isDone) return false;
+            if (DONE_STATUSES.has(effectiveStatus)) return false;
           } else {
-            // 완료/취소/환불: 날짜 구간 필터 적용
-            if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.status === BookingStatus.COMPLETED) {
+            // 완료/취소/환불 탭이 아닌 경우: 날짜 구간 필터 적용
+            if (DONE_STATUSES.has(effectiveStatus)) {
               const d = b.pickupDate || '';
               if (d < cancelStartDate || d > cancelEndDate) return false;
             } else {
               // 진행중 상태는 날짜 무관 표시
               const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-              const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
+              const isStatusIncomplete = incompleteStatuses.includes(effectiveStatus as any);
               if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
             }
           }
@@ -920,21 +932,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
 
       if (activeStatusTab !== 'ALL') {
-        if (activeStatusTab === 'PENDING' && b.status !== BookingStatus.PENDING) return false;
-        if (activeStatusTab === 'ACTIVE' && ![BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any)) return false;
-        if (activeStatusTab === 'COMPLETED' && b.status !== BookingStatus.COMPLETED) return false;
-        if (activeStatusTab === 'CANCELLED' && ![BookingStatus.CANCELLED, BookingStatus.REFUNDED].includes(b.status as any)) return false;
+        const effectiveStatus = getEffectiveStatus(b);
+        if (activeStatusTab === 'PENDING' && effectiveStatus !== BookingStatus.PENDING) return false;
+        if (activeStatusTab === 'ACTIVE' && ![BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(effectiveStatus as any)) return false;
+        if (activeStatusTab === 'COMPLETED' && effectiveStatus !== BookingStatus.COMPLETED && effectiveStatus !== '완료' && effectiveStatus !== 'COMPLETED') return false;
+        if (activeStatusTab === 'CANCELLED' && ![BookingStatus.CANCELLED, BookingStatus.REFUNDED, '취소됨', '환불완료'].includes(effectiveStatus as any)) return false;
 
-        if (activeStatusTab === 'TODAY_IN' && !(b.status === BookingStatus.PENDING && b.pickupDate === todayKST)) return false;
-        if (activeStatusTab === 'STORAGE' && b.status !== BookingStatus.STORAGE) return false;
-        if (activeStatusTab === 'TODAY_OUT' && !(b.status === BookingStatus.STORAGE && (b.returnDate === todayKST || b.dropoffDate === todayKST))) return false;
-        if (activeStatusTab === 'TRANSIT' && b.status !== BookingStatus.TRANSIT) return false;
-        if (activeStatusTab === 'ARRIVED' && b.status !== BookingStatus.ARRIVED) return false;
-        if (activeStatusTab === 'ISSUE' && !(b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || !!b.auditNote)) return false;
+        if (activeStatusTab === 'TODAY_IN' && !(effectiveStatus === BookingStatus.PENDING && b.pickupDate === todayKST)) return false;
+        if (activeStatusTab === 'STORAGE' && effectiveStatus !== BookingStatus.STORAGE) return false;
+        if (activeStatusTab === 'TODAY_OUT' && !(effectiveStatus === BookingStatus.STORAGE && (b.returnDate === todayKST || b.dropoffDate === todayKST))) return false;
+        if (activeStatusTab === 'TRANSIT' && effectiveStatus !== BookingStatus.TRANSIT) return false;
+        if (activeStatusTab === 'ARRIVED' && effectiveStatus !== BookingStatus.ARRIVED) return false;
+        if (activeStatusTab === 'ISSUE' && !(effectiveStatus === BookingStatus.CANCELLED || effectiveStatus === BookingStatus.REFUNDED || !!b.auditNote)) return false;
       }
       return true;
     });
-  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate, searchDate]);
+  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate, searchStartDate, searchEndDate]);
 
   // Daily Statistics Calculation (Aggregated by pickupDate)
   const dailyStats = useMemo(() => {
@@ -2628,8 +2641,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               setCancelStartDate={setCancelStartDate}
               cancelEndDate={cancelEndDate}
               setCancelEndDate={setCancelEndDate}
-              searchDate={searchDate}
-              setSearchDate={setSearchDate}
+              searchStartDate={searchStartDate}
+              setSearchStartDate={setSearchStartDate}
+              searchEndDate={searchEndDate}
+              setSearchEndDate={setSearchEndDate}
               selectedBookingIds={selectedBookingIds}
               setSelectedBookingIds={setSelectedBookingIds}
               handleBatchUpdateStatus={handleBatchUpdateStatus}

@@ -1032,27 +1032,20 @@ export const StorageService = {
           safeBooking.dropoffLocationName,
           safeBooking.dropoffLocation,
         ),
-        nametag_id: safeBooking.nametagId || null,
-        bags: safeBooking.bags || 0,
-        bag_summary: (() => {
-          const s = safeBooking.bagSizes;
-          if (!s) return '';
-          return [
-            s.handBag > 0 ? `핸드백 ${s.handBag}개` : '',
-            s.carrier > 0 ? `캐리어 ${s.carrier}개` : '',
-            s.strollerBicycle > 0 ? `유모차/자전거 ${s.strollerBicycle}개` : '',
-          ].filter(Boolean).join(', ');
-        })(),
       };
 
-      // [스봉이] 신규 예약일 경우 네임텍 번호 발급! 🔢✨
-      if (!bookingData.nametag_id && safeBooking.branchId) {
-        try {
-          bookingData.nametag_id = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
-        } catch (e) {
-          console.warn("[스봉이] 네임텍 번호 자동 할당 실패 (무시하고 진행):", e);
-        }
-      }
+      // bags, bag_summary, nametag_id는 INSERT 후 PATCH로 업데이트
+      // (PostgREST 스키마 캐시 갱신 전 호환성 유지)
+      const bagSummaryValue = (() => {
+        const s = safeBooking.bagSizes;
+        if (!s) return '';
+        return [
+          s.handBag > 0 ? `핸드백 ${s.handBag}개` : '',
+          s.carrier > 0 ? `캐리어 ${s.carrier}개` : '',
+          s.strollerBicycle > 0 ? `유모차/자전거 ${s.strollerBicycle}개` : '',
+        ].filter(Boolean).join(', ');
+      })();
+      const bagsValue = safeBooking.bags || 0;
 
       const result = await supabaseMutate<Array<Record<string, unknown>>>(
         'booking_details',
@@ -1062,6 +1055,23 @@ export const StorageService = {
 
       const created = Array.isArray(result) && result[0] ? result[0] : null;
       const bookingId = String(created?.id || '');
+
+      // 네임텍 + bags + bag_summary PATCH
+      if (bookingId) {
+        try {
+          let nametagId = safeBooking.nametagId || null;
+          if (!nametagId && safeBooking.branchId) {
+            nametagId = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
+          }
+          await supabaseMutate(
+            `booking_details?id=eq.${bookingId}`,
+            'PATCH',
+            { nametag_id: nametagId, bags: bagsValue, bag_summary: bagSummaryValue }
+          );
+        } catch (e) {
+          console.warn("[StorageService] bags/bag_summary/nametag_id PATCH 실패 (무시):", e);
+        }
+      }
 
       console.log("[StorageService] Booking saved to Supabase ✅");
 

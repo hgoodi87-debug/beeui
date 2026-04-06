@@ -36,8 +36,15 @@ const escapeHtml = (value: unknown) =>
 const formatCurrency = (value: number) => `₩${Number(value || 0).toLocaleString("ko-KR")}`;
 
 const buildQrCodeUrl = (reservationCode: string) => {
-  const trackingUrl = `https://bee-liber.com/tracking?id=${encodeURIComponent(reservationCode)}`;
-  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(trackingUrl)}`;
+  // QR은 직원 스캔용 — /staff/scan 으로 연결
+  const staffUrl = `https://bee-liber.com/staff/scan?id=${encodeURIComponent(reservationCode)}`;
+  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(staffUrl)}`;
+};
+
+// 예약코드 기반 환율 우대 쿠폰 코드 생성 (결정론적)
+const buildFxCouponCode = (reservationCode: string) => {
+  const suffix = reservationCode.replace(/[^A-Z0-9]/gi, '').slice(-4).toUpperCase();
+  return `BEE-FX-${suffix}`;
 };
 
 export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
@@ -88,6 +95,26 @@ export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
             <a href="https://bee-liber.com/tracking?id=${encodeURIComponent(input.reservationCode || input.bookingId)}" style="color:#111827;font-weight:900;text-decoration:none;"> tracking 페이지</a>
             에서 다시 확인하실 수 있습니다.
           </div>
+
+          <!-- 파트너 지점 환율 우대 쿠폰 -->
+          <div style="margin-top:20px;background:linear-gradient(135deg,#111827 0%,#1e293b 100%);border-radius:20px;padding:22px 20px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:#facc15;border-radius:50%;opacity:0.08;"></div>
+            <div style="position:absolute;bottom:-30px;left:-10px;width:100px;height:100px;background:#facc15;border-radius:50%;opacity:0.05;"></div>
+            <div style="font-size:10px;font-weight:900;color:#facc15;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;">🎁 파트너 지점 환율 우대 혜택</div>
+            <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:14px;line-height:1.6;">
+              빌리버 이용 고객 전용 환율 우대 쿠폰입니다.<br>
+              <span style="color:#94a3b8;font-size:12px;">제휴 환전소에서 아래 코드를 제시해 주세요.</span>
+            </div>
+            <div style="background:#facc15;border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.1em;margin-bottom:4px;">COUPON CODE</div>
+                <div style="font-size:22px;font-weight:900;color:#111827;letter-spacing:0.12em;">${buildFxCouponCode(input.reservationCode || input.bookingId)}</div>
+              </div>
+              <div style="font-size:28px;">💱</div>
+            </div>
+            <div style="margin-top:10px;font-size:10px;color:#64748b;font-weight:700;">* 1회 사용 가능 · 예약코드와 함께 제시</div>
+          </div>
+
           <div style="margin-top:28px;text-align:center;color:#94a3b8;font-size:11px;font-weight:800;letter-spacing:0.3em;text-transform:uppercase;">
             No Bags, Just Freedom
           </div>

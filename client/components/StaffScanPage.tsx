@@ -18,6 +18,8 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const [error, setError] = useState<string | null>(null);
     const [locations, setLocations] = useState<LocationOption[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [nametagInput, setNametagInput] = useState<string>('');
+    const [nametagSaved, setNametagSaved] = useState(false);
 
     useEffect(() => {
         // 1. URL에서 ID 파싱 (id와 scan 모두 지원 💅)
@@ -65,6 +67,25 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const getPaymentStatusLabel = (status?: string) => {
         const normalized = String(status || 'unknown').toLowerCase();
         return scanText.payment_statuses?.[normalized] || normalized;
+    };
+
+    const handleNametagSave = async () => {
+        const num = parseInt(nametagInput, 10);
+        if (isNaN(num) || num < 1 || num > 100) {
+            alert('네임태그 번호는 1~100 사이 숫자를 입력하세요.');
+            return;
+        }
+        setIsUpdating(true);
+        try {
+            await StorageService.updateBooking(booking!.id!, { nametagId: num } as any);
+            setBooking(prev => prev ? { ...prev, nametagId: num } : null);
+            setNametagSaved(true);
+            setTimeout(() => setNametagSaved(false), 3000);
+        } catch (e) {
+            alert('네임태그 저장 실패: ' + String(e));
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
     const handleStatusUpdate = async (newStatus: BookingStatus) => {
@@ -194,6 +215,50 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                         <h2 className="text-2xl font-black text-bee-black mb-1">{booking.userName}</h2>
                         <p className="text-xs font-bold text-gray-400">{(booking.snsChannel || booking.snsType || 'kakao').toUpperCase()}: {booking.snsId}</p>
                     </div>
+                </motion.div>
+
+                {/* Nametag Assignment Card */}
+                <motion.div
+                    initial={{ y: 25, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.08 }}
+                    className="bg-bee-black rounded-[32px] p-6 shadow-xl"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-bee-yellow flex items-center justify-center text-bee-black text-lg font-black">
+                            🏷️
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nametag</p>
+                            <p className="text-sm font-black text-white">네임태그 번호 배정</p>
+                        </div>
+                        {booking.nametagId && (
+                            <div className="ml-auto bg-bee-yellow text-bee-black rounded-full w-10 h-10 flex items-center justify-center font-black text-lg">
+                                {booking.nametagId}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={nametagInput}
+                            onChange={e => setNametagInput(e.target.value)}
+                            placeholder={booking.nametagId ? `현재: ${booking.nametagId}번` : '1~100'}
+                            className="flex-1 bg-white/10 text-white font-black text-center text-xl rounded-2xl py-3 px-4 border border-white/20 focus:outline-none focus:border-bee-yellow placeholder-gray-500"
+                        />
+                        <button
+                            onClick={handleNametagSave}
+                            disabled={isUpdating || !nametagInput}
+                            className="px-5 py-3 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm disabled:opacity-40 active:scale-95 transition-all"
+                        >
+                            {nametagSaved ? '✓ 저장됨' : '배정'}
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold mt-2 text-center">
+                        캐리어에 부착할 네임태그 번호를 입력하고 배정 버튼을 누르세요
+                    </p>
                 </motion.div>
 
                 {/* Route Info */}

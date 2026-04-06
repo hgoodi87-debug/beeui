@@ -1074,14 +1074,8 @@ export const StorageService = {
       }
 
       console.log("[StorageService] Booking saved to Supabase ✅");
-
-      if (bookingId) {
-        const webhookRecord = {
-          ...bookingData,
-          id: bookingId,
-        };
-        void fireWithRetry(webhookRecord);
-      }
+      // DB INSERT 트리거(trigger_on_booking_created)가 이메일+채팅 알림을 처리합니다.
+      // 클라이언트 직접 호출(fireWithRetry) 제거 — 중복 알림 방지
 
       return {
         ...safeBooking,
@@ -1329,9 +1323,14 @@ export const StorageService = {
       'settlement_status', 'settled_at', 'settled_by', 'language', 'image_url',
       'service_type', 'user_name', 'user_email', 'pickup_location', 'dropoff_location',
       'reservation_code', 'agreed_to_terms', 'agreed_to_privacy', 'agreed_to_high_value',
-      'email_sent_at',
+      'email_sent_at', 'nametag_id', 'bags', 'bag_summary', 'audit_note',
     ]);
     const allUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
+    // booking_details 테이블에는 'status' 컬럼이 없고 'settlement_status'가 상태 필드
+    if ('status' in allUpdates) {
+      allUpdates['settlement_status'] = allUpdates['status'];
+      delete allUpdates['status'];
+    }
     const supabaseUpdates = Object.fromEntries(
       Object.entries(allUpdates).filter(([k]) => BOOKING_DETAILS_COLUMNS.has(k))
     );

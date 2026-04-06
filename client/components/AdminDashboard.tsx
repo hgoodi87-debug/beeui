@@ -893,20 +893,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       } else {
         if (b.isDeleted === true || b.settlementStatus === 'deleted') return false;
 
-        // [스봉이] 특정 일자 조회 필터 적용 💅✨ (이게 있으면 다른 날짜 제약 무시)
+        // 특정 일자 조회 필터 (날짜 지정 시 다른 필터 무시)
         if (searchDate) {
           const isMatchDate = b.pickupDate === searchDate || (b.dropoffDate && b.pickupDate <= searchDate && b.dropoffDate >= searchDate);
           if (!isMatchDate) return false;
         } else {
-          // [스봉이] 취소/환불/완료: 날짜 구간 필터 적용 💅
-          if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.status === BookingStatus.COMPLETED) {
-            const d = b.pickupDate || '';
-            if (d < cancelStartDate || d > cancelEndDate) return false;
+          // ALL 탭: 완료/취소/환불은 기본 숨김 (각 전용 탭에서 조회)
+          if (activeStatusTab === 'ALL') {
+            const isDone = b.status === BookingStatus.COMPLETED ||
+              b.status === BookingStatus.CANCELLED ||
+              b.status === BookingStatus.REFUNDED;
+            if (isDone) return false;
           } else {
-            // 진행중 상태는 날짜 무관 표시
-            const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-            const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
-            if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+            // 완료/취소/환불: 날짜 구간 필터 적용
+            if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.status === BookingStatus.COMPLETED) {
+              const d = b.pickupDate || '';
+              if (d < cancelStartDate || d > cancelEndDate) return false;
+            } else {
+              // 진행중 상태는 날짜 무관 표시
+              const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+              const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
+              if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+            }
           }
         }
       }
@@ -917,7 +925,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         if (activeStatusTab === 'COMPLETED' && b.status !== BookingStatus.COMPLETED) return false;
         if (activeStatusTab === 'CANCELLED' && ![BookingStatus.CANCELLED, BookingStatus.REFUNDED].includes(b.status as any)) return false;
 
-        // [스봉이] 실무형 탭 추가 (P0) 💅
         if (activeStatusTab === 'TODAY_IN' && !(b.status === BookingStatus.PENDING && b.pickupDate === todayKST)) return false;
         if (activeStatusTab === 'STORAGE' && b.status !== BookingStatus.STORAGE) return false;
         if (activeStatusTab === 'TODAY_OUT' && !(b.status === BookingStatus.STORAGE && (b.returnDate === todayKST || b.dropoffDate === todayKST))) return false;
@@ -927,7 +934,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
       return true;
     });
-  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate]);
+  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate, searchDate]);
 
   // Daily Statistics Calculation (Aggregated by pickupDate)
   const dailyStats = useMemo(() => {

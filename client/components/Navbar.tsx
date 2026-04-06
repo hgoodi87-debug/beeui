@@ -101,20 +101,13 @@ const Navbar: React.FC<NavbarProps> = ({
 
           <div className="w-px h-3 bg-white/10 mx-1 hidden md:block"></div>
 
-          {/* Login/MyPage - Smaller text */}
-          {user && !user.isAnonymous ? (
+          {/* Login/MyPage - 로그인 비활성화 (활성화 요청 시 이 주석 제거) */}
+          {user && !user.isAnonymous && (
             <button
               onClick={onMyPageClick}
               className="text-[11px] font-black text-white/90 hover:text-bee-yellow transition-colors tracking-tighter px-3 min-h-[44px] uppercase"
             >
               {t.mypage || 'MY'}
-            </button>
-          ) : (
-            <button
-              onClick={onLoginClick}
-              className="text-[11px] font-black text-white/90 hover:text-bee-yellow transition-colors tracking-tighter px-3 min-h-[44px] uppercase"
-            >
-              {t.login || 'LOGIN'}
             </button>
           )}
 

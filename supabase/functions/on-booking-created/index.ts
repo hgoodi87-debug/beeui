@@ -217,6 +217,14 @@ serve(async (req) => {
 
     const payload = await req.json();
     // Database Webhook payload: { type: "INSERT", table: "booking_details", record: {...} }
+    // UPDATE 이벤트(reservation_code/email_sent_at 업데이트)는 무시 — 중복 알림 방지
+    if (payload.type && payload.type !== "INSERT") {
+      return new Response(JSON.stringify({ skipped: true, reason: "not_insert" }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+
     const record = payload.record;
     if (!record) {
       return new Response(JSON.stringify({ error: "No record" }), {

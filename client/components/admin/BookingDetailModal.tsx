@@ -2,6 +2,8 @@ import React from 'react';
 import { BookingState, LocationOption, ServiceType, BookingStatus, SnsType } from '../../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/constants/admin';
 import { StorageService } from '../../services/storageService';
+import { getSupabaseBaseUrl } from '../../services/supabaseRuntime';
+import { getActiveAdminRequestHeaders } from '../../services/adminAuthService';
 import {
     createEmptyBagSizes,
     getBagCategoriesForService,
@@ -58,6 +60,48 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
 }) => {
     const [promoCode, setPromoCode] = React.useState('');
     const [isApplyingPromo, setIsApplyingPromo] = React.useState(false);
+    const [csPanelOpen, setCsPanelOpen] = React.useState(false);
+    const [csInquiry, setCsInquiry] = React.useState('');
+    const [csGenerating, setCsGenerating] = React.useState(false);
+    const [csToast, setCsToast] = React.useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const COUNTRY_TO_LANG: Record<string, string> = {
+        TW: 'zh-TW', HK: 'zh-HK', JP: 'ja', CN: 'zh', KR: 'ko',
+    };
+
+    const handleGenerateCsReply = async () => {
+        if (!csInquiry.trim()) return;
+        setCsGenerating(true);
+        setCsToast(null);
+        try {
+            const SUPABASE_URL = getSupabaseBaseUrl();
+            const headers = await getActiveAdminRequestHeaders();
+            const customerLang = COUNTRY_TO_LANG[selectedBooking?.country || ''] || 'en';
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-content-gen`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: 'cs_reply',
+                    entity_id: selectedBooking?.id || null,
+                    inquiry_body: csInquiry.trim(),
+                    customer_lang: customerLang,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            const policy = data.data?.policy_check;
+            const msg = policy && !policy.passed
+                ? `⚠ 정책 위반 감지 — AI 검수함에 저장됨`
+                : '✓ AI 답변 초안이 검수함에 저장되었습니다.';
+            setCsToast({ msg, type: policy && !policy.passed ? 'error' : 'success' });
+            setCsInquiry('');
+            setTimeout(() => { setCsToast(null); setCsPanelOpen(false); }, 3500);
+        } catch (e) {
+            setCsToast({ msg: `생성 실패: ${e}`, type: 'error' });
+        } finally {
+            setCsGenerating(false);
+        }
+    };
 
     if (!selectedBooking) return null;
 
@@ -336,16 +380,68 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                     )}
                 </div>
 
+                {/* CS 답변 초안 패널 */}
+                {csPanelOpen && (
+                    <div className="px-8 pb-4 border-t border-gray-50 bg-gray-50/50 pt-4">
+                        <div className="bg-white rounded-2xl border border-bee-yellow/40 p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-black text-bee-black flex items-center gap-1.5">
+                                    <i className="fa-solid fa-robot text-bee-yellow"></i> AI CS 답변 초안 생성
+                                </p>
+                                <button onClick={() => setCsPanelOpen(false)} className="text-gray-400 hover:text-gray-700 text-xs">
+                                    <i className="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            {csToast && (
+                                <div className={`text-xs font-bold px-3 py-2 rounded-xl ${csToast.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                                    {csToast.msg}
+                                </div>
+                            )}
+                            <textarea
+                                value={csInquiry}
+                                onChange={e => setCsInquiry(e.target.value)}
+                                placeholder="고객 문의 내용을 붙여넣으세요..."
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-bold resize-none focus:outline-none focus:border-bee-yellow"
+                                rows={3}
+                            />
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] text-gray-400">
+                                    언어 자동감지: <span className="font-bold">{COUNTRY_TO_LANG[selectedBooking.country || ''] || 'en'}</span>
+                                    {` (국가: ${selectedBooking.country || '?'})`}
+                                </p>
+                                <button
+                                    onClick={handleGenerateCsReply}
+                                    disabled={csGenerating || !csInquiry.trim()}
+                                    className="bg-bee-yellow text-bee-black px-4 py-2 rounded-xl text-xs font-black hover:bg-bee-black hover:text-bee-yellow transition-all disabled:opacity-40 flex items-center gap-1.5"
+                                >
+                                    {csGenerating ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>}
+                                    생성
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Modal Footer */}
-                <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-end gap-4">
-                    <button onClick={() => handlePrintLabel(selectedBooking)} className="bg-white text-gray-600 border border-gray-200 px-6 py-4 rounded-2xl font-black text-sm hover:bg-gray-100 shadow-sm transition-all"><i className="fa-solid fa-print mr-2"></i> Label</button>
-                    <button onClick={handleUpdateBooking} disabled={isSaving} className="bg-bee-black text-bee-yellow px-8 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-xl disabled:opacity-50">
-                        {isSaving ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-check mr-2"></i>} Update
+                <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between gap-4">
+                    <button
+                        onClick={() => setCsPanelOpen(p => !p)}
+                        className={`flex items-center gap-2 px-5 py-4 rounded-2xl font-black text-sm transition-all ${csPanelOpen ? 'bg-bee-yellow text-bee-black' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                        title="AI CS 답변 초안 생성"
+                    >
+                        <i className="fa-solid fa-robot"></i>
+                        <span className="hidden sm:inline">CS 답변 초안</span>
                     </button>
-                    <button onClick={() => handleResendEmail(selectedBooking)} disabled={sendingEmailId === selectedBooking.id} className="bg-bee-yellow text-bee-black px-6 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-md disabled:opacity-50"><i className="fa-solid fa-envelope mr-2"></i> Resend Email</button>
-                    {handleRefund && (
-                        <button onClick={() => handleRefund(selectedBooking)} className="bg-red-50 text-red-500 border border-red-100 px-6 py-4 rounded-2xl font-black text-sm hover:bg-red-500 hover:text-white transition-all"><i className="fa-solid fa-rotate-left mr-2"></i> Refund</button>
-                    )}
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => handlePrintLabel(selectedBooking)} className="bg-white text-gray-600 border border-gray-200 px-6 py-4 rounded-2xl font-black text-sm hover:bg-gray-100 shadow-sm transition-all"><i className="fa-solid fa-print mr-2"></i> Label</button>
+                        <button onClick={handleUpdateBooking} disabled={isSaving} className="bg-bee-black text-bee-yellow px-8 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-xl disabled:opacity-50">
+                            {isSaving ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-check mr-2"></i>} Update
+                        </button>
+                        <button onClick={() => handleResendEmail(selectedBooking)} disabled={sendingEmailId === selectedBooking.id} className="bg-bee-yellow text-bee-black px-6 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-md disabled:opacity-50"><i className="fa-solid fa-envelope mr-2"></i> Resend Email</button>
+                        {handleRefund && (
+                            <button onClick={() => handleRefund(selectedBooking)} className="bg-red-50 text-red-500 border border-red-100 px-6 py-4 rounded-2xl font-black text-sm hover:bg-red-500 hover:text-white transition-all"><i className="fa-solid fa-rotate-left mr-2"></i> Refund</button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

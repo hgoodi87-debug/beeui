@@ -68,14 +68,10 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const [showTracking, setShowTracking] = React.useState(false);
 
-    // 예약 페이지 이동 전 로그인 여부 확인
+    // 로그인 게이트 비활성화 — 재활성화 요청 시 원복
     const handleBookingNavigate = React.useCallback((view: any) => {
-        if (BOOKING_VIEWS.has(view) && !user) {
-            onLoginClick();
-            return;
-        }
         onNavigate(view);
-    }, [user, onLoginClick, onNavigate]);
+    }, [onNavigate]);
 
     React.useEffect(() => {
         // [스봉이] 메타 광고 트래킹: 랜딩 페이지 조회 💅✨

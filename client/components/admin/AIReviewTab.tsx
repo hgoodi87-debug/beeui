@@ -1,6 +1,6 @@
 import React from 'react';
 import { getSupabaseBaseUrl, getSupabaseConfig } from '../../services/supabaseRuntime';
-import { getActiveAdminRequestHeaders, getActiveAdminUserId } from '../../services/adminAuthService';
+import { getActiveAdminRequestHeaders } from '../../services/adminAuthService';
 
 interface AiOutput {
   id: string;
@@ -73,6 +73,25 @@ async function callRpc(rpcName: string, params: Record<string, string>): Promise
   }
 }
 
+async function patchGeneratedContent(outputId: string, content: Record<string, string>): Promise<void> {
+  const SUPABASE_URL = getSupabaseBaseUrl();
+  const headers = await getActiveAdminRequestHeaders();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/ai_outputs?id=eq.${outputId}`, {
+    method: 'PATCH',
+    headers: {
+      ...headers,
+      apikey: getSupabaseConfig().anonKey,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ generated_content: content }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || res.statusText);
+  }
+}
+
 function highlightViolations(text: string, violations: string[]): React.ReactNode {
   if (!violations.length) return text;
   const parts: React.ReactNode[] = [];
@@ -111,13 +130,28 @@ function DetailPanel({
   onApprove,
   onReject,
   actionLoading,
+  isEditing,
+  editedContent,
+  isDirty,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onContentChange,
 }: {
   out: AiOutput;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   actionLoading: boolean;
+  isEditing: boolean;
+  editedContent: Record<string, string> | null;
+  isDirty: boolean;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  onContentChange: (field: string, value: string) => void;
 }) {
   const content = out.generated_content ?? {};
+  const displayContent = (isEditing ? editedContent : null) ?? content;
   const violations = out.policy_check?.violations ?? [];
   const passed = out.policy_check?.passed ?? true;
   const isTranslation = out.use_case === 'translation';
@@ -139,6 +173,33 @@ function DetailPanel({
             <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
               ⚠ 정책 위반
             </span>
+          )}
+          {/* 편집 토글 */}
+          {!isEditing ? (
+            <button
+              onClick={onStartEdit}
+              className="ml-auto text-[10px] font-black text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-all flex items-center gap-1"
+            >
+              <i className="fa-solid fa-pen text-[9px]"></i> 편집
+            </button>
+          ) : (
+            <div className="ml-auto flex items-center gap-1.5">
+              <button
+                onClick={onCancelEdit}
+                disabled={actionLoading}
+                className="text-[10px] font-black text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-all"
+              >
+                취소
+              </button>
+              <button
+                onClick={onSaveEdit}
+                disabled={actionLoading || !isDirty}
+                className="text-[10px] font-black text-white bg-blue-500 px-2 py-0.5 rounded-full hover:bg-blue-600 transition-all disabled:opacity-40 flex items-center gap-1"
+              >
+                {actionLoading ? <i className="fa-solid fa-spinner animate-spin text-[9px]"></i> : null}
+                저장
+              </button>
+            </div>
           )}
         </div>
         {out.entity_id && (
@@ -171,22 +232,54 @@ function DetailPanel({
 
       {/* 콘텐츠 */}
       <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-        {isCsReply && content.reply ? (
-          <ContentField label="CS 답변 초안" value={content.reply} violations={violations} />
-        ) : isTranslation ? (
-          Object.entries(content).map(([key, value]) =>
-            value ? (
-              <ContentField
-                key={key}
-                label={TRANSLATION_FIELD_LABELS[key] ?? key}
-                value={value}
-                violations={violations}
+        {isEditing ? (
+          /* 편집 모드: textarea */
+          isCsReply ? (
+            <div className="rounded-xl p-3 border border-blue-200 bg-blue-50">
+              <div className="text-[10px] font-black text-blue-400 uppercase mb-1">CS 답변 초안 (편집 중)</div>
+              <textarea
+                className="w-full text-xs font-bold text-gray-700 leading-relaxed bg-transparent resize-none outline-none min-h-[120px]"
+                value={displayContent.reply ?? ''}
+                onChange={e => onContentChange('reply', e.target.value)}
+                autoFocus
               />
-            ) : null
+            </div>
+          ) : (
+            Object.entries(content).map(([key, originalValue]) =>
+              originalValue ? (
+                <div key={key} className="rounded-xl p-3 border border-blue-200 bg-blue-50">
+                  <div className="text-[10px] font-black text-blue-400 uppercase mb-1">
+                    {TRANSLATION_FIELD_LABELS[key] ?? key}
+                  </div>
+                  <textarea
+                    className="w-full text-xs font-bold text-gray-700 leading-relaxed bg-transparent resize-none outline-none min-h-[48px]"
+                    value={displayContent[key] ?? originalValue}
+                    onChange={e => onContentChange(key, e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              ) : null
+            )
           )
         ) : (
-          Object.entries(content).map(([key, value]) =>
-            value ? <ContentField key={key} label={key} value={value} violations={violations} /> : null
+          /* 보기 모드 */
+          isCsReply && content.reply ? (
+            <ContentField label="CS 답변 초안" value={content.reply} violations={violations} />
+          ) : isTranslation ? (
+            Object.entries(content).map(([key, value]) =>
+              value ? (
+                <ContentField
+                  key={key}
+                  label={TRANSLATION_FIELD_LABELS[key] ?? key}
+                  value={value}
+                  violations={violations}
+                />
+              ) : null
+            )
+          ) : (
+            Object.entries(content).map(([key, value]) =>
+              value ? <ContentField key={key} label={key} value={value} violations={violations} /> : null
+            )
           )
         )}
         {Object.keys(content).length === 0 && (
@@ -204,9 +297,9 @@ function DetailPanel({
         >
           {actionLoading
             ? <i className="fa-solid fa-spinner animate-spin"></i>
-            : <i className="fa-solid fa-check"></i>
+            : <i className={`fa-solid ${isCsReply ? 'fa-copy' : 'fa-check'}`}></i>
           }
-          {isTranslation ? '승인 (번역 적용)' : isCsReply ? '승인 (답변 확정)' : '승인'}
+          {isTranslation ? '승인 (번역 적용)' : isCsReply ? '승인 + 복사' : '승인'}
         </button>
         <button
           onClick={() => onReject(out.id)}
@@ -249,14 +342,48 @@ const AIReviewTab: React.FC = () => {
 
   React.useEffect(() => { load(); }, [load]);
 
+  // 인라인 에디터 상태
+  const [editedContent, setEditedContent] = React.useState<Record<string, string> | null>(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+
+  // selected 변경 시 편집 상태 초기화
+  React.useEffect(() => {
+    setEditedContent(null);
+    setIsEditing(false);
+  }, [selected?.id]);
+
+  const isDirty = editedContent !== null &&
+    JSON.stringify(editedContent) !== JSON.stringify(selected?.generated_content);
+
   const handleApprove = async (outputId: string) => {
     setActionLoading(true);
     try {
       const out = outputs.find(o => o.id === outputId);
-      await callRpc('approve_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
-      const label = out?.use_case === 'translation' ? '번역이 지점에 적용' : out?.use_case === 'cs_reply' ? 'CS 답변이 확정' : '승인';
+
+      // auto-save if dirty (편집 내용 먼저 저장)
+      if (isDirty && editedContent) {
+        await patchGeneratedContent(outputId, editedContent);
+      }
+
+      // RPC: auth.uid()가 reviewer_id로 서버에서 결정됨
+      await callRpc('approve_ai_output', { p_output_id: outputId });
+
+      // CS 승인 후 클립보드 복사
+      if (out?.use_case === 'cs_reply') {
+        const replyText = (editedContent ?? out.generated_content)?.reply;
+        if (replyText) {
+          await navigator.clipboard.writeText(replyText).catch(() => {
+            showToast('클립보드 복사 실패 — 직접 선택해서 복사해 주세요', 'error');
+          });
+        }
+      }
+
+      const label = out?.use_case === 'translation' ? '번역이 지점에 적용'
+        : out?.use_case === 'cs_reply' ? 'CS 답변 확정 + 복사됨'
+        : '승인';
       showToast(`✓ ${label}되었습니다.`);
       setSelected(null);
+      setEditedContent(null);
       await load();
     } catch (e) {
       showToast(`승인 실패: ${e}`, 'error');
@@ -269,12 +396,44 @@ const AIReviewTab: React.FC = () => {
     if (!confirm('이 AI 생성 콘텐츠를 반려하시겠습니까?')) return;
     setActionLoading(true);
     try {
-      await callRpc('reject_ai_output', { p_output_id: outputId, p_reviewer_id: getActiveAdminUserId() });
+      // ai_policy_failed 포함 처리 (RPC fix: IN ('ai_review_pending', 'ai_policy_failed'))
+      await callRpc('reject_ai_output', { p_output_id: outputId });
       showToast('반려 처리되었습니다.');
       setSelected(null);
+      setEditedContent(null);
       await load();
     } catch (e) {
       showToast(`반려 실패: ${e}`, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setEditedContent({ ...(selected?.generated_content ?? {}) });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedContent(null);
+    setIsEditing(false);
+  };
+
+  const handleContentChange = (field: string, value: string) => {
+    setEditedContent(prev => ({ ...(prev ?? selected?.generated_content ?? {}), [field]: value }));
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selected || !editedContent) return;
+    setActionLoading(true);
+    try {
+      await patchGeneratedContent(selected.id, editedContent);
+      showToast('✓ 수정 내용 저장됨');
+      setIsEditing(false);
+      // 로컬 상태 동기화
+      setSelected({ ...selected, generated_content: editedContent });
+    } catch (e) {
+      showToast(`저장 실패: ${e}`, 'error');
     } finally {
       setActionLoading(false);
     }
@@ -384,6 +543,13 @@ const AIReviewTab: React.FC = () => {
                 onApprove={handleApprove}
                 onReject={handleReject}
                 actionLoading={actionLoading}
+                isEditing={isEditing}
+                editedContent={editedContent}
+                isDirty={isDirty}
+                onStartEdit={handleStartEdit}
+                onCancelEdit={handleCancelEdit}
+                onSaveEdit={handleSaveEdit}
+                onContentChange={handleContentChange}
               />
             </div>
           ) : (

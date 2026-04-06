@@ -55,8 +55,25 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
     ) => {
         if (!booking.id) return;
 
-        const bookingDetailId = await resolveBookingDetailId(booking);
-        await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);
+        // 1차: UUID 기반 PATCH 시도
+        try {
+            const bookingDetailId = await resolveBookingDetailId(booking);
+            await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);
+            return;
+        } catch {
+            // UUID 조회 실패 시 reservation_code 폴백으로 진행
+        }
+
+        // 2차: reservation_code 기반 PATCH 폴백
+        const code = booking.reservationCode || (isSupabaseBookingDetailId(booking.id) ? null : booking.id);
+        if (!code) {
+            throw new Error(`정산 처리 불가 — 예약 식별자 없음 (id: ${booking.id})`);
+        }
+        await supabaseMutate(
+            `booking_details?reservation_code=eq.${encodeURIComponent(code)}`,
+            options.supabaseMethod,
+            options.supabaseBody
+        );
     };
 
     // [스봉이] 금융 대조는 "정산 대상 완료 예약"만 다뤄요.
@@ -143,9 +160,8 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
             const settledAt = new Date().toISOString();
 
             let successCount = 0;
-            let skipCount = 0;
+            const failedBookings: { code: string; reason: string }[] = [];
 
-            // 개별 처리: 비-UUID ID(Firebase 레거시) 예약은 스킵, 나머지는 개별 오류 허용
             for (const booking of selectedBookings) {
                 try {
                     await mutateFinancialBooking(booking, {
@@ -158,13 +174,16 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                     });
                     successCount++;
                 } catch (e) {
-                    console.warn(`[FinancialTab] 정산 스킵 (${booking.id}):`, e);
-                    skipCount++;
+                    const errMsg = e instanceof Error ? e.message : String(e);
+                    console.warn(`[FinancialTab] 정산 실패 (${booking.reservationCode || booking.id}):`, errMsg);
+                    failedBookings.push({ code: booking.reservationCode || booking.id || '?', reason: errMsg });
                 }
             }
 
-            if (successCount === 0 && skipCount > 0) {
-                alert(`정산 처리할 수 있는 예약이 없습니다.\n${skipCount}건이 Supabase에 등록되지 않은 레거시 예약입니다.`);
+            if (successCount === 0 && failedBookings.length > 0) {
+                const detail = failedBookings.slice(0, 5).map(f => `• ${f.code}`).join('\n');
+                const more = failedBookings.length > 5 ? `\n…외 ${failedBookings.length - 5}건` : '';
+                alert(`정산 처리할 수 있는 예약이 없습니다.\n\n실패 목록:\n${detail}${more}\n\n콘솔에서 상세 오류를 확인하세요.`);
                 return;
             }
 
@@ -172,8 +191,10 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
             await queryClient.invalidateQueries({ queryKey: ['bookings'] });
             setSelectedIds([]);
 
-            if (skipCount > 0) {
-                alert(`${successCount}건 정산 확정 완료.\n${skipCount}건은 레거시 예약으로 건너뛰었습니다.`);
+            if (failedBookings.length > 0) {
+                const detail = failedBookings.slice(0, 3).map(f => `• ${f.code}`).join('\n');
+                const more = failedBookings.length > 3 ? `\n…외 ${failedBookings.length - 3}건` : '';
+                alert(`${successCount}건 정산 확정 완료.\n\n${failedBookings.length}건 실패 (DB에서 찾을 수 없는 예약):\n${detail}${more}`);
             } else {
                 alert(`${successCount}건의 일괄 정산 확정이 완료되었습니다. ✨`);
             }

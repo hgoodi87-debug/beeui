@@ -639,17 +639,13 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                 <select
                                     value={batchSelectValue}
                                     onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (!val) return;
-                                        setBatchSelectValue(val);
-                                        handleBatchUpdateStatus(val as BookingStatus);
-                                        setBatchSelectValue('');
+                                        setBatchSelectValue(e.target.value);
                                     }}
                                     disabled={isBatchUpdating}
                                     title="일괄 상태 변경"
-                                    className="w-full md:w-[200px] bg-white text-bee-black text-[11px] font-black px-4 py-3 pr-10 rounded-2xl outline-none transition-all cursor-pointer appearance-none shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="w-full md:w-[180px] bg-white text-bee-black text-[11px] font-black px-4 py-3 pr-10 rounded-2xl outline-none transition-all cursor-pointer appearance-none shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <option value="">상태 일괄 변경...</option>
+                                    <option value="">상태 선택...</option>
                                     <option value="접수완료">접수 대기</option>
                                     <option value="이동중">이동중</option>
                                     <option value="목적지도착">도착</option>
@@ -658,6 +654,22 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                 </select>
                                 <i className={`fa-solid ${isBatchUpdating ? 'fa-spinner animate-spin' : 'fa-chevron-down'} absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none`}></i>
                             </div>
+
+                            <button
+                                onClick={() => {
+                                    if (!batchSelectValue) {
+                                        alert('변경할 상태를 먼저 선택해 주세요.');
+                                        return;
+                                    }
+                                    handleBatchUpdateStatus(batchSelectValue as BookingStatus);
+                                    setBatchSelectValue('');
+                                }}
+                                disabled={!batchSelectValue || isBatchUpdating}
+                                className="flex items-center gap-2 text-bee-black text-[11px] font-black px-4 py-3 bg-bee-yellow hover:bg-bee-yellow/90 rounded-2xl transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                            >
+                                <i className="fa-solid fa-check text-[10px]"></i>
+                                확인
+                            </button>
 
                             <button
                                 onClick={() => setSelectedBookingIds([])}

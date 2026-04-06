@@ -49,6 +49,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
     });
 
     const [sessionMeta, setSessionMeta] = useState<ChatSession | null>(null);
+    const [showEscalate, setShowEscalate] = useState(false);
 
     const [translatedMessages, setTranslatedMessages] = useState<Record<string, string>>({});
     const firstSegment = location.pathname.split('/').filter(Boolean)[0]?.toLowerCase() || '';
@@ -202,6 +203,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
 
         if (sessionMeta?.isBotDisabled) {
             console.log("Bot is disabled by admin. Skipping AI response.");
+            setLoading(false);
             return;
         }
 
@@ -211,16 +213,22 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
             const responseText = await sendMessageToGemini(historyContext, promptToSend, lang);
 
             if (responseText) {
+                // 에스컬레이션 감지
+                if (responseText.includes('[ESCALATE]')) {
+                    setShowEscalate(true);
+                }
+                const cleanText = responseText.replace(/\[ESCALATE\]\s*/g, '').trim();
+
                 const aiMsg: ChatMessage = {
                     role: 'model',
-                    text: responseText,
+                    text: cleanText,
                     timestamp: new Date().toISOString(),
                     sessionId,
                     userName: 'Bee AI',
                     userEmail: 'ai@beeliber.com'
                 };
                 await StorageService.saveChatMessage(aiMsg);
-                sendToGoogleChat('model', responseText);
+                sendToGoogleChat('model', cleanText);
             }
         } catch (e) {
             console.error(e);
@@ -472,6 +480,26 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                             )}
 
                             <div className="p-4 bg-white border-t border-gray-100">
+                                {/* 에스컬레이션 버튼 */}
+                                {showEscalate && (
+                                    <button
+                                        onClick={async () => {
+                                            setShowEscalate(false);
+                                            const escalateText = lang === 'ko' ? '상담원과 연결을 요청합니다.' :
+                                                lang === 'ja' ? 'オペレーターとの接続をお願いします。' :
+                                                lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK' ? '請求連接客服人員。' :
+                                                'I would like to speak with a human agent.';
+                                            await processMessage(escalateText);
+                                        }}
+                                        className="w-full mb-3 bg-bee-yellow text-bee-black font-black py-3 rounded-2xl text-sm hover:bg-bee-yellow/80 transition-all flex items-center justify-center gap-2 shadow-sm"
+                                    >
+                                        <i className="fa-solid fa-headset"></i>
+                                        {lang === 'ko' ? '상담원 연결하기' :
+                                         lang === 'ja' ? 'オペレーターに繋ぐ' :
+                                         lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK' ? '聯絡客服人員' :
+                                         'Connect to Human Agent'}
+                                    </button>
+                                )}
                                 <div className="flex gap-2">
                                     <input
                                         type="text"

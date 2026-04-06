@@ -3,7 +3,8 @@ import { Helmet } from 'react-helmet-async';
 import {
     SEO_DEFAULT_OG_IMAGE,
     SITE_URL,
-    STATIC_ROUTE_META
+    STATIC_ROUTE_META,
+    getLocalizedRouteMeta
 } from '../src/constants/seoRouteMeta';
 
 interface SEOProps {
@@ -34,7 +35,9 @@ const SEO: React.FC<SEOProps> = ({
 
     const canonicalUrl = `${SITE_URL}${rawPath}`;
     const currentUrl = `${SITE_URL}${path}`;
-    const routeDefault = STATIC_ROUTE_META[cleanPath];
+    // lang 기반 다국어 메타 → 없으면 한국어 fallback → 없으면 하드코딩 fallback
+    const localizedMeta = getLocalizedRouteMeta(lang, cleanPath);
+    const routeDefault = localizedMeta ?? STATIC_ROUTE_META[cleanPath];
 
     // Default values
     const defaultTitle = routeDefault?.title || '빌리버 | 서울 짐보관 · 인천공항 당일 짐배송';

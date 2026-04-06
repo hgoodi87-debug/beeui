@@ -211,6 +211,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const { data: closings = [] } = useCashClosings({ enabled: needsSettlementData });
   const { data: expenditures = [] } = useExpenditures({ enabled: needsSettlementData });
 
+  const [aiPendingCount, setAiPendingCount] = useState(0);
+
+  useEffect(() => {
+    const fetchAiPending = async () => {
+      try {
+        const { getActiveAdminRequestHeaders } = await import('../services/adminAuthService');
+        const { getSupabaseBaseUrl, getSupabaseConfig } = await import('../services/supabaseRuntime');
+        const headers = await getActiveAdminRequestHeaders();
+        const res = await fetch(
+          `${getSupabaseBaseUrl()}/rest/v1/ai_outputs?status=eq.ai_review_pending&select=id`,
+          { headers: { ...headers, apikey: getSupabaseConfig().anonKey, Accept: 'application/json' } }
+        );
+        if (res.ok) {
+          const rows = await res.json();
+          setAiPendingCount(Array.isArray(rows) ? rows.length : 0);
+        }
+      } catch { /* 배지 fetch 실패는 silent */ }
+    };
+    fetchAiPending();
+  }, [activeTab]); // AI_REVIEW 탭 전환 시 재조회
+
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -907,7 +928,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         } else {
           // ALL 탭: 완료/취소/환불 항목 기본 숨김
           if (activeStatusTab === 'ALL') {
-            if (DONE_STATUSES.has(effectiveStatus)) return false;
+            // status 또는 settlementStatus 중 하나라도 DONE이면 숨김
+            const ss = String(b.settlementStatus || '');
+            if (DONE_STATUSES.has(effectiveStatus) || DONE_STATUSES.has(ss)) return false;
           } else {
             // 완료/취소/환불 탭이 아닌 경우: 날짜 구간 필터 적용
             if (DONE_STATUSES.has(effectiveStatus)) {
@@ -2408,6 +2431,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 >
                   <i className={`fa-solid ${item.icon} w-5 text-center transition-transform group-hover:scale-110`}></i>
                   <span className="flex-1 text-left">{item.label}</span>
+                  {item.id === 'AI_REVIEW' && aiPendingCount > 0 && (
+                    <span className="text-[10px] font-black bg-bee-yellow text-bee-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      {aiPendingCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -2512,7 +2540,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                           className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20' : 'text-gray-500 active:bg-gray-50'}`}
                         >
                           <i className={`fa-solid ${item.icon} w-5`}></i>
-                          {item.label}
+                          <span className="flex-1 text-left">{item.label}</span>
+                          {item.id === 'AI_REVIEW' && aiPendingCount > 0 && (
+                            <span className="text-[10px] font-black bg-bee-yellow text-bee-black px-1.5 py-0.5 rounded-full">
+                              {aiPendingCount}
+                            </span>
+                          )}
                         </button>
                       ))}
                     </nav>

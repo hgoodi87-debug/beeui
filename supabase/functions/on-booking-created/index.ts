@@ -158,7 +158,16 @@ async function notifyGoogleChat(booking: Record<string, unknown>) {
   }
 
   const code = booking.reservation_code || booking.id;
-  const isDelivery = booking.service_type === "DELIVERY";
+  // service_type 판단: 명시적 값 우선, 없으면 dropoff 주소/지점 존재 여부로 fallback
+  const isDelivery =
+    booking.service_type === "DELIVERY" ||
+    (!booking.service_type && !!(booking.dropoff_address || booking.dropoff_location_id));
+  const bagCount = Number(booking.bags || 0);
+  const bagSummaryLine = booking.bag_summary
+    ? `🧳 *수하물*: ${booking.bag_summary} (총 ${bagCount}개)`
+    : bagCount > 0
+    ? `🧳 *수하물*: 총 ${bagCount}개`
+    : "";
   const pickupLabel = await getLocationLabel(
     booking.pickup_location_id as string | null,
     booking.pickup_location,
@@ -167,8 +176,8 @@ async function notifyGoogleChat(booking: Record<string, unknown>) {
     ? await getLocationLabel(booking.dropoff_location_id as string | null, booking.dropoff_location)
     : pickupLabel;
   const text = isDelivery
-    ? `*🚨 신규 배송 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🚚 *서비스*: 배송\n📍 *픽업*: ${pickupLabel} (${booking.pickup_time})\n🎯 *도착*: ${dropoffLabel} (${booking.dropoff_date || ""} ${booking.delivery_time || ""})\n💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`
-    : `*🚨 신규 보관 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🏦 *서비스*: 보관\n📥 *보관*: ${pickupLabel} (${booking.pickup_date} ${booking.pickup_time})\n💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`;
+    ? `*🚨 신규 배송 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🚚 *서비스*: 배송\n📍 *픽업*: ${pickupLabel} (${booking.pickup_time})\n🎯 *도착*: ${dropoffLabel} (${booking.dropoff_date || ""} ${booking.delivery_time || ""})\n${bagSummaryLine ? bagSummaryLine + "\n" : ""}💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`
+    : `*🚨 신규 보관 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🏦 *서비스*: 보관\n📥 *보관*: ${pickupLabel} (${booking.pickup_date} ${booking.pickup_time})\n${bagSummaryLine ? bagSummaryLine + "\n" : ""}💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`;
 
   try {
     const response = await fetch(GOOGLE_CHAT_WEBHOOK_URL, {

@@ -1009,20 +1009,19 @@ export const StorageService = {
           safeBooking.dropoffLocationName,
           safeBooking.dropoffLocation,
         ),
+        // bags/bag_summary를 INSERT에 포함 — DB Webhook이 INSERT 직후 발화하므로
+        // PATCH로 분리하면 알림/바우처에 가방 정보가 누락됨
+        bags: safeBooking.bags || 0,
+        bag_summary: (() => {
+          const s = safeBooking.bagSizes;
+          if (!s) return '';
+          return [
+            s.handBag > 0 ? `핸드백 ${s.handBag}개` : '',
+            s.carrier > 0 ? `캐리어 ${s.carrier}개` : '',
+            s.strollerBicycle > 0 ? `유모차/자전거 ${s.strollerBicycle}개` : '',
+          ].filter(Boolean).join(', ');
+        })(),
       };
-
-      // bags, bag_summary, nametag_id는 INSERT 후 PATCH로 업데이트
-      // (PostgREST 스키마 캐시 갱신 전 호환성 유지)
-      const bagSummaryValue = (() => {
-        const s = safeBooking.bagSizes;
-        if (!s) return '';
-        return [
-          s.handBag > 0 ? `핸드백 ${s.handBag}개` : '',
-          s.carrier > 0 ? `캐리어 ${s.carrier}개` : '',
-          s.strollerBicycle > 0 ? `유모차/자전거 ${s.strollerBicycle}개` : '',
-        ].filter(Boolean).join(', ');
-      })();
-      const bagsValue = safeBooking.bags || 0;
 
       const result = await supabaseMutate<Array<Record<string, unknown>>>(
         'booking_details',
@@ -1033,7 +1032,7 @@ export const StorageService = {
       const created = Array.isArray(result) && result[0] ? result[0] : null;
       const bookingId = String(created?.id || '');
 
-      // 네임텍 + bags + bag_summary PATCH
+      // nametag_id만 별도 PATCH (bags/bag_summary는 INSERT에 이미 포함)
       if (bookingId) {
         try {
           let nametagId = safeBooking.nametagId || null;
@@ -1043,7 +1042,7 @@ export const StorageService = {
           await supabaseMutate(
             `booking_details?id=eq.${bookingId}`,
             'PATCH',
-            { nametag_id: nametagId, bags: bagsValue, bag_summary: bagSummaryValue }
+            { nametag_id: nametagId }
           );
         } catch (e) {
           console.warn("[StorageService] bags/bag_summary/nametag_id PATCH 실패 (무시):", e);

@@ -743,7 +743,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         <ChevronLeft size={24} />
                     </button>
                     <h2 className="text-xl font-black italic tracking-tighter flex items-center gap-2">
-                        <span className="text-bee-yellow">BEE</span> {t.bee_ai?.header || "RESERVATION"}
+                        <span className="text-bee-yellow">beeliber</span> 예약
                     </h2>
                 </div>
             </div>

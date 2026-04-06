@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
+import { supabaseGet } from '../services/supabaseClient';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
 import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd } from '../services/paypalService';
 import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
@@ -283,6 +284,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
     };
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showDupeConfirm, setShowDupeConfirm] = useState(false);
+    const pendingBookingRef = useRef<BookingState | null>(null);
     const paypalContainerRef = useRef<HTMLDivElement>(null);
     const paypalRenderedRef = useRef(false);
     const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: string; finalBooking: any } | null>(null);
@@ -564,7 +567,32 @@ const BookingPage: React.FC<BookingPageProps> = ({
             return;
         }
 
+        // 단시간 중복 예약 감지 (10분 이내 동일 이메일+날짜+지점)
+        const email = booking.userEmail || user?.email;
+        if (email && booking.pickupDate && booking.pickupLocation) {
+            try {
+                const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+                const rows = await supabaseGet<Array<Record<string, unknown>>>(
+                    `booking_details?user_email=eq.${encodeURIComponent(email)}&pickup_date=eq.${booking.pickupDate}&pickup_location_id=eq.${encodeURIComponent(booking.pickupLocation)}&created_at=gte.${encodeURIComponent(since)}&select=id,reservation_code,created_at&limit=1`
+                );
+                if (Array.isArray(rows) && rows.length > 0) {
+                    pendingBookingRef.current = { ...booking as BookingState };
+                    setShowDupeConfirm(true);
+                    return;
+                }
+            } catch {
+                // 조회 실패 시 그냥 진행
+            }
+        }
+
+        await proceedBooking(booking as BookingState);
+    };
+
+    // 중복 확인 후 실제 예약 진행
+    const proceedBooking = async (bookingState: BookingState) => {
+        setShowDupeConfirm(false);
         setIsSubmitting(true);
+        const booking = bookingState;
         const finalBooking: BookingState = {
             ...booking as BookingState,
             pickupLoc: pickupLoc,
@@ -731,6 +759,59 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
     return (
         <div className="w-full min-h-screen bg-white">
+            {/* 중복 예약 확인 다이얼로그 */}
+            <AnimatePresence>
+                {showDupeConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8"
+                        >
+                            <div className="text-center mb-6">
+                                <div className="w-14 h-14 rounded-full bg-bee-yellow/20 flex items-center justify-center mx-auto mb-4">
+                                    <AlertCircle size={28} className="text-bee-black" />
+                                </div>
+                                <h3 className="text-lg font-black text-bee-black leading-snug break-keep">
+                                    방금 예약을 하셨는데<br />추가로 예약하시는 건가요?
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-2 break-keep">
+                                    동일한 날짜·지점으로 최근 예약이 확인되었어요.
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowDupeConfirm(false);
+                                        pendingBookingRef.current = null;
+                                        onBack();
+                                    }}
+                                    className="flex-1 py-3.5 rounded-2xl bg-gray-100 text-bee-black font-black text-sm hover:bg-gray-200 transition-colors"
+                                >
+                                    아니요
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const b = pendingBookingRef.current;
+                                        pendingBookingRef.current = null;
+                                        if (b) proceedBooking(b);
+                                    }}
+                                    className="flex-1 py-3.5 rounded-2xl bg-bee-yellow text-bee-black font-black text-sm hover:bg-bee-yellow/80 transition-colors"
+                                >
+                                    네, 추가 예약
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center z-50">
                 <div className="flex items-center gap-4">

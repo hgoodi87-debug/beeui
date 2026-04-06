@@ -61,23 +61,23 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             {/* Service Links */}
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.service || "Service"}</h3>
-              <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
-                <li><a href={buildHref()} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
-                <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
-                <li><a href={buildHref('/services')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
-                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
-                <li><a href={buildHref('/vision')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="hover:text-bee-yellow transition-colors">Brand Vision</a></li>
-                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="hover:text-bee-yellow transition-colors">Q&A</a></li>
+              <ul className="space-y-0 text-sm md:text-base text-gray-400">
+                <li><a href={buildHref()} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
+                <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
+                <li><a href={buildHref('/services')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
+                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
+                <li><a href={buildHref('/vision')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="block py-2 hover:text-bee-yellow transition-colors">Brand Vision</a></li>
+                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2 hover:text-bee-yellow transition-colors">Q&A</a></li>
               </ul>
             </div>
 
             {/* Legal Links */}
             <div className="space-y-4 md:space-y-6 flex-1 min-w-[120px]">
               <h3 className="font-bold text-lg md:text-xl text-white tracking-tight">{t.footer?.legal || "Legal"}</h3>
-              <ul className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
-                <li><a href={buildHref('/privacy')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('PRIVACY'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</a></li>
-                <li><a href={buildHref('/terms')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TERMS'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</a></li>
-                <li><a href={buildHref('/refund')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('REFUND'); }} className="hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</a></li>
+              <ul className="space-y-0 text-sm md:text-base text-gray-400">
+                <li><a href={buildHref('/privacy')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('PRIVACY'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.privacy || "Privacy Policy"}</a></li>
+                <li><a href={buildHref('/terms')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('TERMS'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.terms || "Terms of Service"}</a></li>
+                <li><a href={buildHref('/refund')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('REFUND'); }} className="block py-2 hover:text-bee-yellow transition-colors">{t.footer?.refund || "Refund Policy"}</a></li>
               </ul>
             </div>
 
@@ -115,7 +115,7 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
             onClick={scrollToTop}
             title={t.footer?.back_to_top || "Back to Top"}
             aria-label={t.footer?.back_to_top || "Back to Top"}
-            className="flex items-center gap-2 text-xs font-bold text-bee-yellow hover:text-white transition-colors"
+            className="flex items-center gap-2 text-xs font-bold text-bee-yellow hover:text-white transition-colors py-3 px-2"
           >
             {t.footer?.back_to_top || "Back to Top"} <ArrowUp size={14} />
           </button>

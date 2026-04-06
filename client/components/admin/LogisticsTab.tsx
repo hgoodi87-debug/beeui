@@ -292,8 +292,8 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                     {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
                                                 </div>
                                                 {b.nametagId && (
-                                                    <div className="w-6 h-6 rounded-full bg-bee-yellow text-bee-black text-[10px] font-black flex items-center justify-center" title={`네임태그 #${b.nametagId}`}>
-                                                        {b.nametagId}
+                                                    <div className="min-w-[24px] h-6 px-1.5 rounded-full bg-bee-yellow text-bee-black text-[10px] font-black flex items-center justify-center" title={`네임태그 #${b.nametagId}`}>
+                                                        #{b.nametagId}
                                                     </div>
                                                 )}
                                             </div>
@@ -650,11 +650,11 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     className="w-full md:w-[200px] bg-white text-bee-black text-[11px] font-black px-4 py-3 pr-10 rounded-2xl outline-none transition-all cursor-pointer appearance-none shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     <option value="">상태 일괄 변경...</option>
-                                    <option value="PENDING">접수 대기</option>
-                                    <option value="TRANSIT">이동중</option>
-                                    <option value="ARRIVED">도착</option>
-                                    <option value="COMPLETED">✅ 완료 처리</option>
-                                    <option value="CANCELLED">취소/환불</option>
+                                    <option value="접수완료">접수 대기</option>
+                                    <option value="이동중">이동중</option>
+                                    <option value="목적지도착">도착</option>
+                                    <option value="완료">✅ 완료 처리</option>
+                                    <option value="취소됨">취소/환불</option>
                                 </select>
                                 <i className={`fa-solid ${isBatchUpdating ? 'fa-spinner animate-spin' : 'fa-chevron-down'} absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none`}></i>
                             </div>

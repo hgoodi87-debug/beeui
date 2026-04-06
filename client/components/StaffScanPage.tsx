@@ -20,6 +20,12 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const [isUpdating, setIsUpdating] = useState(false);
     const [nametagInput, setNametagInput] = useState<string>('');
     const [nametagSaved, setNametagSaved] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     useEffect(() => {
         // 1. URL에서 ID 파싱 (id와 scan 모두 지원 💅)
@@ -72,7 +78,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const handleNametagSave = async () => {
         const num = parseInt(nametagInput, 10);
         if (isNaN(num) || num < 1 || num > 100) {
-            alert('네임태그 번호는 1~100 사이 숫자를 입력하세요.');
+            showToast('네임태그 번호는 1~100 사이 숫자를 입력하세요.', 'error');
             return;
         }
         setIsUpdating(true);
@@ -82,7 +88,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             setNametagSaved(true);
             setTimeout(() => setNametagSaved(false), 3000);
         } catch (e) {
-            alert('네임태그 저장 실패: ' + String(e));
+            showToast('네임태그 저장 실패: ' + String(e), 'error');
         } finally {
             setIsUpdating(false);
         }
@@ -90,8 +96,7 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
 
     const handleStatusUpdate = async (newStatus: BookingStatus) => {
         if (!booking) return;
-        const confirmMessage = (scanText.confirm_update || "상태를 '{status}'(으)로 변경하시겠습니까?").replace('{status}', getStatusLabel(newStatus));
-        if (!confirm(confirmMessage)) return;
+        // confirm() 제거 — 모바일에서 네이티브 다이얼로그 차단. 버튼 자체가 명시적 액션임.
 
         setIsUpdating(true);
         try {
@@ -99,10 +104,10 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
 
             // 로컬 상태 즉시 업데이트
             setBooking(prev => prev ? { ...prev, status: newStatus } : null);
-            alert(scanText.changed || "상태가 변경되었습니다.");
+            showToast(scanText.changed || "상태가 변경되었습니다.");
         } catch (err) {
             console.error(err);
-            alert(scanText.failed || "상태 변경 실패");
+            showToast(scanText.failed || "상태 변경 실패", 'error');
         } finally {
             setIsUpdating(false);
         }
@@ -179,10 +184,28 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
 
     return (
         <div className="min-h-screen bg-[#fafafb] pb-32 font-sans">
+            {/* Toast */}
+            <AnimatePresence>
+                {toast && (
+                    <motion.div
+                        initial={{ y: -60, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -60, opacity: 0 }}
+                        className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-2xl font-black text-sm shadow-2xl whitespace-nowrap ${
+                            toast.type === 'error'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-green-500 text-white'
+                        }`}
+                    >
+                        {toast.type === 'success' ? '✓ ' : '✕ '}{toast.msg}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <header className="bg-bee-black px-6 py-4 flex justify-between items-center sticky top-0 z-50">
                 <div className="flex items-center gap-3">
-                    <button title={t.common?.back || "Back"} aria-label={t.common?.back || "Back"} onClick={onBack} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
+                    <button title={t.common?.back || "Back"} aria-label={t.common?.back || "Back"} onClick={onBack} className="w-11 h-11 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
                         <i className="fa-solid fa-chevron-left text-xs"></i>
                     </button>
                     <span className="font-black text-bee-yellow italic text-lg tracking-tight">{scanText.staff_mode || "Staff Mode"}</span>
@@ -215,50 +238,6 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                         <h2 className="text-2xl font-black text-bee-black mb-1">{booking.userName}</h2>
                         <p className="text-xs font-bold text-gray-400">{(booking.snsChannel || booking.snsType || 'kakao').toUpperCase()}: {booking.snsId}</p>
                     </div>
-                </motion.div>
-
-                {/* Nametag Assignment Card */}
-                <motion.div
-                    initial={{ y: 25, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.08 }}
-                    className="bg-bee-black rounded-[32px] p-6 shadow-xl"
-                >
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-2xl bg-bee-yellow flex items-center justify-center text-bee-black text-lg font-black">
-                            🏷️
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nametag</p>
-                            <p className="text-sm font-black text-white">네임태그 번호 배정</p>
-                        </div>
-                        {booking.nametagId && (
-                            <div className="ml-auto bg-bee-yellow text-bee-black rounded-full w-10 h-10 flex items-center justify-center font-black text-lg">
-                                {booking.nametagId}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex gap-2">
-                        <input
-                            type="number"
-                            min={1}
-                            max={100}
-                            value={nametagInput}
-                            onChange={e => setNametagInput(e.target.value)}
-                            placeholder={booking.nametagId ? `현재: ${booking.nametagId}번` : '1~100'}
-                            className="flex-1 bg-white/10 text-white font-black text-center text-xl rounded-2xl py-3 px-4 border border-white/20 focus:outline-none focus:border-bee-yellow placeholder-gray-500"
-                        />
-                        <button
-                            onClick={handleNametagSave}
-                            disabled={isUpdating || !nametagInput}
-                            className="px-5 py-3 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm disabled:opacity-40 active:scale-95 transition-all"
-                        >
-                            {nametagSaved ? '✓ 저장됨' : '배정'}
-                        </button>
-                    </div>
-                    <p className="text-[10px] text-gray-500 font-bold mt-2 text-center">
-                        캐리어에 부착할 네임태그 번호를 입력하고 배정 버튼을 누르세요
-                    </p>
                 </motion.div>
 
                 {/* Route Info */}
@@ -301,11 +280,60 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     </div>
                 </motion.div>
 
+                {/* Nametag Assignment Card */}
+                <motion.div
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.12 }}
+                    className="bg-bee-black rounded-[32px] p-6 shadow-xl"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-bee-yellow flex items-center justify-center text-bee-black text-lg font-black">
+                            🏷️
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nametag</p>
+                            <p className="text-sm font-black text-white">네임태그 번호 배정</p>
+                        </div>
+                        {booking.nametagId && (
+                            <div className="ml-auto bg-bee-yellow text-bee-black rounded-full w-10 h-10 flex items-center justify-center font-black text-lg">
+                                {booking.nametagId}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={nametagInput}
+                            onChange={e => setNametagInput(e.target.value)}
+                            placeholder={booking.nametagId ? `현재: ${booking.nametagId}번` : '1~100'}
+                            aria-label="네임태그 번호 (1~100)"
+                            className="flex-1 bg-white/10 text-white font-black text-center text-xl rounded-2xl py-3 px-4 border border-white/20 focus:outline-none focus:border-bee-yellow placeholder-gray-500"
+                        />
+                        <button
+                            onClick={handleNametagSave}
+                            disabled={isUpdating || !nametagInput}
+                            className="px-5 py-3 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm disabled:opacity-40 active:scale-95 transition-all"
+                        >
+                            {isUpdating ? (
+                                <span className="flex items-center gap-1">
+                                    <span className="w-3 h-3 border-2 border-bee-black border-t-transparent rounded-full animate-spin inline-block"></span>
+                                </span>
+                            ) : nametagSaved ? '✓ 저장됨' : '배정'}
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-bold mt-2 text-center">
+                        캐리어에 부착할 네임태그 번호를 입력하고 배정 버튼을 누르세요
+                    </p>
+                </motion.div>
+
                 {/* Payment & Receipt Info */}
                 <motion.div
                     initial={{ y: 35, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.15 }}
+                    transition={{ delay: 0.17 }}
                     className="bg-white rounded-[32px] p-6 shadow-xl border border-gray-100"
                 >
                     <div className="flex justify-between items-center mb-4">

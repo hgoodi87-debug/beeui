@@ -35,7 +35,7 @@ const LandingOperationsMarquee: React.FC<{ t: any }> = ({ t }) => {
                 loading="lazy"
                 decoding="async"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none" />
             <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
                 <p className="text-white text-[10px] md:text-[13px] font-bold leading-snug drop-shadow-lg break-keep line-clamp-3">
                     "{review.text}"

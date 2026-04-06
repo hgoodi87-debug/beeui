@@ -28,9 +28,11 @@ interface LogisticsTabProps {
     setCancelStartDate?: (d: string) => void;
     cancelEndDate?: string;
     setCancelEndDate?: (d: string) => void;
-    searchDate: string;
-    setSearchDate: (d: string) => void;
-    // [스봉이] 일괄 처리 전용 프롭스 💅✨
+    searchStartDate: string;
+    setSearchStartDate: (d: string) => void;
+    searchEndDate: string;
+    setSearchEndDate: (d: string) => void;
+    // 일괄 처리 전용 프롭스
     selectedBookingIds: string[];
     setSelectedBookingIds: (ids: string[]) => void;
     handleBatchUpdateStatus: (s: BookingStatus) => void;
@@ -64,8 +66,10 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     setCancelStartDate,
     cancelEndDate,
     setCancelEndDate,
-    searchDate,
-    setSearchDate,
+    searchStartDate,
+    setSearchStartDate,
+    searchEndDate,
+    setSearchEndDate,
     selectedBookingIds,
     setSelectedBookingIds,
     handleBatchUpdateStatus,
@@ -73,6 +77,8 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     isBatchUpdating,
     t
 }) => {
+    const [batchSelectValue, setBatchSelectValue] = React.useState('');
+
     // [스봉이] KST 기준 오늘 날짜 계산 센스있게 해드려요 💅✨
     const todayKST = React.useMemo(() => {
         const now = new Date();
@@ -148,21 +154,29 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                 </div>
 
                 <div className="flex-1 flex justify-start lg:justify-end gap-3">
-                    {/* [스봉이] 전용 날짜 조회 필터 💅✨ */}
-                    <div className="flex items-center gap-2 bg-white/50 backdrop-blur-3xl px-4 py-2 rounded-2xl border border-bee-yellow/20 shadow-lg shadow-bee-yellow/5">
-                        <i className="fa-solid fa-calendar-day text-bee-yellow text-xs"></i>
+                    {/* 날짜 구간 조회 필터 */}
+                    <div className="flex items-center gap-2 bg-white/50 backdrop-blur-3xl px-3 py-2 rounded-2xl border border-bee-yellow/20 shadow-lg shadow-bee-yellow/5">
+                        <i className="fa-solid fa-calendar-range text-bee-yellow text-xs shrink-0"></i>
                         <input
                             type="date"
-                            value={searchDate}
-                            onChange={(e) => setSearchDate(e.target.value)}
-                            className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-bee-black"
-                            title="특정 일자 조회"
+                            value={searchStartDate}
+                            onChange={(e) => setSearchStartDate(e.target.value)}
+                            className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-bee-black w-[110px]"
+                            title="시작 날짜"
                         />
-                        {searchDate && (
-                            <button 
-                                onClick={() => setSearchDate('')}
-                                className="text-gray-400 hover:text-bee-black transition-colors"
-                                title="필터 초기화"
+                        <span className="text-[10px] font-black text-gray-400">~</span>
+                        <input
+                            type="date"
+                            value={searchEndDate}
+                            onChange={(e) => setSearchEndDate(e.target.value)}
+                            className="bg-transparent text-[11px] font-black outline-none cursor-pointer text-bee-black w-[110px]"
+                            title="종료 날짜"
+                        />
+                        {(searchStartDate || searchEndDate) && (
+                            <button
+                                onClick={() => { setSearchStartDate(''); setSearchEndDate(''); }}
+                                className="text-gray-400 hover:text-bee-black transition-colors shrink-0"
+                                title="날짜 필터 초기화"
                             >
                                 <i className="fa-solid fa-circle-xmark text-xs"></i>
                             </button>
@@ -273,8 +287,15 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col">
-                                            <div className="px-2 py-0.5 bg-gray-900 text-white text-[9px] font-black w-fit rounded mb-1.5 tracking-tighter">
-                                                {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <div className="px-2 py-0.5 bg-gray-900 text-white text-[9px] font-black w-fit rounded tracking-tighter">
+                                                    {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
+                                                </div>
+                                                {b.nametagId && (
+                                                    <div className="w-6 h-6 rounded-full bg-bee-yellow text-bee-black text-[10px] font-black flex items-center justify-center" title={`네임태그 #${b.nametagId}`}>
+                                                        {b.nametagId}
+                                                    </div>
+                                                )}
                                             </div>
                                             <span className="font-black text-bee-black text-sm group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>
                                                 {adminRole === 'super' ? b.userName : maskName(b.userName || '')}
@@ -421,14 +442,24 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                 <i className="fa-solid fa-print"></i>
                                              </button>
 
-                                             {/* [스봉이] 슈퍼관리자 전용 영구 삭제 버튼 (취소/환불 건에만 노출) 💅✨ */}
+                                             {/* 취소/환불 건 휴지통 이동 (전체 관리자) */}
+                                             {(b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
+                                                <button
+                                                    onClick={() => handleSoftDelete(b.id!)}
+                                                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-700 hover:text-white transition-all flex items-center justify-center"
+                                                    title="휴지통으로 이동"
+                                                >
+                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                </button>
+                                             )}
+                                             {/* 슈퍼관리자 전용 영구 삭제 버튼 */}
                                              {adminRole === 'super' && (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
                                                 <button
                                                     onClick={() => handlePermanentDelete(b.id!)}
                                                     className="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center"
                                                     title="과거 기록 영구 삭제 (복구 불가)"
                                                 >
-                                                    <i className="fa-solid fa-trash-can text-xs"></i>
+                                                    <i className="fa-solid fa-times text-xs"></i>
                                                 </button>
                                              )}
                                         </div>
@@ -548,13 +579,23 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                      <button onClick={() => handlePrintLabel(b)} title="라벨 출력" className="w-9 h-9 rounded-full bg-gray-50 hover:bg-bee-black hover:text-bee-yellow text-gray-500 transition-all border border-gray-100 flex items-center justify-center">
                                         <i className="fa-solid fa-print text-xs"></i>
                                     </button>
+                                    {/* 취소/환불 건 휴지통 이동 (전체 관리자) */}
+                                    {(b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
+                                        <button
+                                            onClick={() => handleSoftDelete(b.id!)}
+                                            className="w-9 h-9 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-700 hover:text-white transition-all border border-gray-200 flex items-center justify-center"
+                                            title="휴지통으로 이동"
+                                        >
+                                            <i className="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    )}
                                     {adminRole === 'super' && (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) && (
                                         <button
                                             onClick={() => handlePermanentDelete(b.id!)}
                                             className="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all border border-red-100 flex items-center justify-center"
                                             title="영구 삭제"
                                         >
-                                            <i className="fa-solid fa-trash-can text-xs"></i>
+                                            <i className="fa-solid fa-times text-xs"></i>
                                         </button>
                                     )}
                                 </div>
@@ -570,44 +611,60 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                 </div>
             </div>
 
-            {/* [스봉이] 일괄 처리 플로팅 액션바 - 모바일 터짐 방지 및 세련된 레이아웃 💅✨ */}
+            {/* 일괄 처리 플로팅 액션바 */}
             {selectedBookingIds.length > 0 && (
-                <div className="fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in w-[calc(100%-32px)] md:w-auto md:min-w-[500px] max-w-2xl px-4">
-                    <div className="bg-bee-black/90 backdrop-blur-2xl px-6 py-4 md:px-8 md:py-5 rounded-[28px] md:rounded-[30px] shadow-2xl border border-white/10 flex flex-col md:flex-row items-center gap-4 md:gap-8">
+                <div className="fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] w-[calc(100%-32px)] md:w-auto md:min-w-[520px] max-w-2xl px-4">
+                    <div className="bg-gray-900 px-6 py-4 md:px-8 md:py-5 rounded-[28px] shadow-[0_8px_40px_rgba(0,0,0,0.55)] border border-bee-yellow/30 flex flex-col md:flex-row items-center gap-4 md:gap-8">
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
-                            <div className="flex flex-col">
-                                <span className="text-bee-yellow text-[9px] font-black uppercase tracking-widest">Selected</span>
-                                <span className="text-white text-lg font-black">{selectedBookingIds.length}<span className="text-xs ml-1 opacity-50 font-medium">items</span></span>
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 bg-bee-yellow rounded-2xl flex items-center justify-center shadow-lg shadow-bee-yellow/30">
+                                    <i className="fa-solid fa-check text-bee-black text-sm font-black"></i>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-bee-yellow text-[9px] font-black uppercase tracking-widest">선택됨</span>
+                                    <span className="text-white text-lg font-black leading-none">{selectedBookingIds.length}<span className="text-xs ml-1 text-gray-400 font-medium">건</span></span>
+                                </div>
                             </div>
                             <div className="hidden md:block h-10 w-[1px] bg-white/10 mx-2"></div>
-                            <button 
+                            <button
                                 onClick={() => setSelectedBookingIds([])}
-                                className="md:hidden text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-tighter px-3 py-2 bg-white/5 rounded-xl border border-white/10"
+                                className="md:hidden text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-tighter px-3 py-2 bg-white/10 rounded-xl border border-white/10 transition-all"
                             >
                                 취소
                             </button>
                         </div>
-                        
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <select 
-                                onChange={(e) => handleBatchUpdateStatus(e.target.value as BookingStatus)}
-                                disabled={isBatchUpdating}
-                                title="일괄 상태 변경"
-                                className="flex-1 md:flex-none bg-white/10 border border-white/20 text-white text-[10px] font-black px-4 py-3 rounded-xl focus:ring-bee-yellow focus:border-bee-yellow outline-none transition-all cursor-pointer hover:bg-white/20 appearance-none"
-                            >
-                                <option value="" className="text-black">상태 일괄 변경...</option>
-                                <option value="PENDING" className="text-black">접수 대기</option>
-                                <option value="TRANSIT" className="text-black">이동중</option>
-                                <option value="ARRIVED" className="text-black">도착</option>
-                                <option value="COMPLETED" className="text-black">완료</option>
-                                <option value="CANCELLED" className="text-black">취소/환불</option>
-                            </select>
 
-                            <button 
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <div className="relative flex-1 md:flex-none">
+                                <select
+                                    value={batchSelectValue}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (!val) return;
+                                        setBatchSelectValue(val);
+                                        handleBatchUpdateStatus(val as BookingStatus);
+                                        setBatchSelectValue('');
+                                    }}
+                                    disabled={isBatchUpdating}
+                                    title="일괄 상태 변경"
+                                    className="w-full md:w-[200px] bg-white text-bee-black text-[11px] font-black px-4 py-3 pr-10 rounded-2xl outline-none transition-all cursor-pointer appearance-none shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">상태 일괄 변경...</option>
+                                    <option value="PENDING">접수 대기</option>
+                                    <option value="TRANSIT">이동중</option>
+                                    <option value="ARRIVED">도착</option>
+                                    <option value="COMPLETED">✅ 완료 처리</option>
+                                    <option value="CANCELLED">취소/환불</option>
+                                </select>
+                                <i className={`fa-solid ${isBatchUpdating ? 'fa-spinner animate-spin' : 'fa-chevron-down'} absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none`}></i>
+                            </div>
+
+                            <button
                                 onClick={() => setSelectedBookingIds([])}
-                                className="hidden md:block text-gray-400 hover:text-white text-[10px] font-bold uppercase tracking-tighter px-3 py-2 transition-all"
+                                className="hidden md:flex items-center gap-2 text-gray-400 hover:text-white text-[10px] font-bold px-4 py-3 bg-white/10 hover:bg-white/15 rounded-2xl border border-white/10 transition-all"
                             >
-                                Clear Selection
+                                <i className="fa-solid fa-xmark text-[10px]"></i>
+                                선택 해제
                             </button>
                         </div>
                     </div>

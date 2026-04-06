@@ -42,17 +42,21 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
                 }
             }
         } catch { /* ignore */ }
-        // 캐시 없으면 네트워크
+        // 캐시 없으면 네트워크 (3초 타임아웃, 실패 시 폴백 사용)
         (async () => {
             try {
+                const timeout = <T,>(p: Promise<T>) => Promise.race([
+                    p,
+                    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('fetch timeout')), 3000)),
+                ]);
                 const [reviews, summaries] = await Promise.all([
-                    supabaseGet<GoogleReview[]>('google_reviews?select=id,author_name,author_photo_url,rating,text,relative_time&is_visible=eq.true&order=rating.desc&limit=8'),
-                    supabaseGet<ReviewSummary[]>('google_review_summary?select=average_rating,total_reviews&limit=1'),
+                    timeout(supabaseGet<GoogleReview[]>('google_reviews?select=id,author_name,author_photo_url,rating,text,relative_time&is_visible=eq.true&order=rating.desc&limit=8')),
+                    timeout(supabaseGet<ReviewSummary[]>('google_review_summary?select=average_rating,total_reviews&limit=1')),
                 ]);
                 if (reviews?.length) setGoogleReviews(reviews);
                 if (summaries?.[0]) setSummary(summaries[0]);
-            } catch (e) {
-                console.warn("[LandingReviews] Google reviews fetch failed:", e);
+            } catch {
+                // 조용히 폴백 처리 (console.warn 제거 — 정상적인 미설정 환경에서 불필요한 노이즈)
             }
         })();
     }, []);

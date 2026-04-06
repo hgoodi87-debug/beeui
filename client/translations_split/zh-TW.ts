@@ -118,7 +118,7 @@ export const zhTW = {
         footer_label3: "安全雲加密"
     },
     pricing: {
-        headline: "比搭車更實惠，換取一整天的完美自由",
+        headline: "一口價方案，換取一整天的完美自由",
         desc: "無需複雜的重量或尺寸計算，提供直觀的一口價方案。",
         airport_hotel: "標準行李箱 (機場 ↔ 酒店)",
         extra_large: "超大件行李",
@@ -446,7 +446,7 @@ export const zhTW = {
     locations_page: {
         title: '網點指南', sidebar_title: 'Service Points', sidebar_subtitle: '首爾主要網點指南',
         select_baggage_title: '選擇行李', bag_unit_4h: '/4小時起',
-        filter_all: '全部', filter_airport: '機場', filter_partner: '合作夥伴', filter_city: '市區', back: '回到主頁', no_results: '沒有註冊的網點。',
+        filter_all: '全部', filter_airport: '機場', filter_partner: '合作夥伴', filter_city: '市區', back: '回到主頁', no_results: '目前此區域無可用地點。', no_results_hint: '請在上方選擇日期，查看附近的寄存地點。',
         info_card_delivery: '配送(Delivery)', info_card_storage: '寄存(Storage)',
         book_delivery: '立即預約配送', book_storage: '立即預約寄存',
         search_placeholder: '搜索當前位置 (酒店, 車站等)', search_error: '搜索失敗。',
@@ -519,7 +519,12 @@ export const zhTW = {
         hours_label: '營業時間',
         nearby_pick: '周邊推薦',
         currently_closed: '該網點目前不在營業時間內。',
-        info_card_book: 'RESERVE'
+        badge_pick_delivery: '寄出日', badge_ret_delivery: '收件日',
+        closest_label: '最近 ✨',
+        slot_closed: '已截止',
+        premium_luggage_care: '優質行李護理',
+        image_alt: 'Beeliber 行李寄存配送網點',
+        info_card_book: '立即預約'
     },
     common: {
         confirm: '確認',

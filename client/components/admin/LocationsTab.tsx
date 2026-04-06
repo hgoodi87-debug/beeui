@@ -1,6 +1,8 @@
 import React from 'react';
 import { LocationOption, LocationType, TranslatedLocationData } from '../../types';
 import { StorageService } from '../../services/storageService';
+import { resolveSupabaseUrl, getSupabaseBaseUrl } from '../../services/supabaseRuntime';
+import { getActiveAdminRequestHeaders } from '../../services/adminAuthService';
 
 import LocationMap from '../locations/LocationMap';
 
@@ -57,6 +59,15 @@ const normalizeLocationFormTranslations = (loc: LocationOption): LocationOption 
 const getLocIdentifier = (loc: Partial<LocationOption>) =>
     String(loc.shortCode || loc.branchCode || loc.id || '').trim();
 
+const buildBrandPublicUrl = (objectPath: string) => {
+    const encodedPath = objectPath
+        .split('/')
+        .map((segment) => encodeURIComponent(segment))
+        .join('/');
+
+    return resolveSupabaseUrl(`/storage/v1/object/public/brand-public/${encodedPath}`);
+};
+
 const LocationsTab: React.FC<LocationsTabProps> = ({
     locForm, setLocForm, LOCATION_TYPE_OPTIONS, findCoordinates, isGeocoding,
     handlePickupImageUpload, handleLocationImageUpload, isSaving, setIsSaving, addLocation,
@@ -101,8 +112,8 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         try {
             let count = 0;
             for (const loc of locations) {
-                // 주소가 있는데 영문, 일문, 중문 중 하나라도 비어있으면 보완 대상
-                if (loc.address && (!loc.address_en || !loc.address_ja || !loc.address_zh)) {
+                // 주소가 있는데 다국어 필드 중 하나라도 비어있으면 보완 대상
+                if (loc.address && (!loc.address_en || !loc.address_ja || !loc.address_zh || !loc.address_zh_tw || !loc.address_zh_hk)) {
                     console.log(`[스봉이] '${loc.name}' 데이터 분석 및 번역 요청... ✨`);
                     const result: TranslatedLocationData = await StorageService.translateLocationData({
                         name: loc.name,
@@ -111,21 +122,29 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         description: loc.description || ''
                     });
 
-                    console.log(`[스봉이] '${loc.name}' 번역 완료, Firestore 저장 중... 💅`);
+                    console.log(`[스봉이] '${loc.name}' 번역 완료, Supabase 저장 중... 💅`);
                     await StorageService.saveLocation({
                         ...loc,
                         address_en: loc.address_en || result.address_en,
                         address_ja: loc.address_ja || result.address_ja,
                         address_zh: loc.address_zh || result.address_zh,
+                        address_zh_tw: loc.address_zh_tw || result.address_zh_tw,
+                        address_zh_hk: loc.address_zh_hk || result.address_zh_hk,
                         name_en: loc.name_en || result.name_en,
                         name_ja: loc.name_ja || result.name_ja,
                         name_zh: loc.name_zh || result.name_zh,
+                        name_zh_tw: loc.name_zh_tw || result.name_zh_tw,
+                        name_zh_hk: loc.name_zh_hk || result.name_zh_hk,
                         description_en: loc.description_en || result.description_en,
                         description_ja: loc.description_ja || result.description_ja,
                         description_zh: loc.description_zh || result.description_zh,
+                        description_zh_tw: loc.description_zh_tw || result.description_zh_tw,
+                        description_zh_hk: loc.description_zh_hk || result.description_zh_hk,
                         pickupGuide_en: loc.pickupGuide_en || result.pickupGuide_en,
                         pickupGuide_ja: loc.pickupGuide_ja || result.pickupGuide_ja,
                         pickupGuide_zh: loc.pickupGuide_zh || result.pickupGuide_zh,
+                        pickupGuide_zh_tw: loc.pickupGuide_zh_tw || result.pickupGuide_zh_tw,
+                        pickupGuide_zh_hk: loc.pickupGuide_zh_hk || result.pickupGuide_zh_hk,
                     });
                     count++;
                 }
@@ -147,12 +166,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         setIsBulkMapping(true);
         try {
             const { StorageService } = await import('../../services/storageService');
-            const bucket = "beeliber-main.firebasestorage.app";
-
             for (const loc of locations) {
                 const fileName = mode === 'ID' ? `${loc.id}.jpg` : `${loc.name}.jpg`;
-                const encodedFileName = encodeURIComponent(`locations/${fileName}`);
-                const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedFileName}?alt=media`;
+                const imageUrl = buildBrandPublicUrl(`locations/${fileName}`);
 
                 await StorageService.saveLocation({ ...loc, imageUrl });
             }
@@ -176,6 +192,46 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
             alert("AI 자동 번역이 완료되었습니다! ✨");
         } catch (e) { alert("번역 중 오류가 발생했습니다."); console.error(e); }
         finally { setIsTranslating(false); }
+    };
+
+    const [isGeneratingForReview, setIsGeneratingForReview] = React.useState(false);
+    const [reviewToast, setReviewToast] = React.useState<string | null>(null);
+
+    const handleAiGenerateForReview = async () => {
+        if (!locForm.name || !locForm.address) { alert("지점명과 주소를 먼저 입력해 주세요."); return; }
+        setIsGeneratingForReview(true);
+        setReviewToast(null);
+        try {
+            const SUPABASE_URL = getSupabaseBaseUrl();
+            const headers = await getActiveAdminRequestHeaders();
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-content-gen`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: 'translation',
+                    entity_id: locForm.supabaseId || locForm.id || null,
+                    location_data: {
+                        name: locForm.name,
+                        address: locForm.address,
+                        pickupGuide: locForm.pickupGuide || '',
+                        description: locForm.description || '',
+                    },
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            const policy = data.data?.policy_check;
+            if (policy && !policy.passed) {
+                setReviewToast(`⚠ 정책 위반 감지 — 검수함에 저장됨 (위반: ${policy.violations.join(', ')})`);
+            } else {
+                setReviewToast('✓ AI 검수함에 저장됨. AI 검수 탭에서 승인하세요.');
+            }
+            setTimeout(() => setReviewToast(null), 5000);
+        } catch (e) {
+            alert(`AI 번역 생성 실패: ${e}`);
+        } finally {
+            setIsGeneratingForReview(false);
+        }
     };
 
     const getLocName = (loc: LocationOption) => {
@@ -297,7 +353,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 [주소로 전 지점 좌표 연동]
                             </button>
                                 <button onClick={async () => {
-                                    if (!confirm("MYN- 형식의 지점 ID를 3자리 약칭(AGS, DDP 등)으로 일괄 변경하시겠습니까?\n이 작업은 Firestore 데이터를 직접 수정하며 되돌릴 수 없습니다. 💅")) return;
+                                    if (!confirm("MYN- 형식의 지점 ID를 3자리 약칭(AGS, DDP 등)으로 일괄 변경하시겠습니까?\n이 작업은 운영 지점 데이터를 직접 수정하며 되돌릴 수 없습니다. 💅")) return;
                                     setIsBulkMapping(true);
                                     try {
                                         const { StorageService } = await import('../../services/storageService');
@@ -565,15 +621,27 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div className="space-y-2">
                             <div className="flex items-center justify-between ml-1">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">지점명</label>
-                                <button onClick={handleAiTranslate} disabled={isTranslating} className="text-[10px] font-black text-bee-yellow bg-bee-black px-2 py-1 rounded-lg hover:scale-105 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50">
-                                    {isTranslating ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>} AI 자동 번역
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handleAiTranslate} disabled={isTranslating} className="text-[10px] font-black text-bee-yellow bg-bee-black px-2 py-1 rounded-lg hover:scale-105 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50">
+                                        {isTranslating ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>} AI 자동 번역
+                                    </button>
+                                    <button onClick={handleAiGenerateForReview} disabled={isGeneratingForReview} className="text-[10px] font-black text-bee-black bg-bee-yellow px-2 py-1 rounded-lg hover:scale-105 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50" title="Claude로 번역 생성 후 검수함에 저장 (직접 반영 안 됨)">
+                                        {isGeneratingForReview ? <i className="fa-solid fa-spinner animate-spin"></i> : <span>🌐</span>} AI 검수 생성
+                                    </button>
+                                </div>
+                                {reviewToast && (
+                                    <div className={`text-[10px] font-bold px-2 py-1 rounded-lg mt-1 ${reviewToast.startsWith('⚠') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                        {reviewToast}
+                                    </div>
+                                )}
                             </div>
                             <div className="grid grid-cols-1 gap-2">
                                 <input value={locForm.name ?? ''} onChange={e => setLocForm({ ...locForm, name: e.target.value })} placeholder="한글 명칭 입력 (예: 인천공항 T1)" title="지점명 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
                                 <input value={locForm.name_en || ''} onChange={e => setLocForm({ ...locForm, name_en: e.target.value })} placeholder="영어 명칭 입력 (예: Incheon Airport T1)" title="지점명 (영어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.name_ja || ''} onChange={e => setLocForm({ ...locForm, name_ja: e.target.value })} placeholder="일본어 명칭 입력 (예: 仁川空港 T1)" title="지점명 (일본어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.name_zh || ''} onChange={e => setLocForm({ ...locForm, name_zh: e.target.value })} placeholder="중국어 명칭 입력 (예: 仁川机场 T1)" title="지점명 (중국어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.name_zh || ''} onChange={e => setLocForm({ ...locForm, name_zh: e.target.value })} placeholder="중국어 간체 입력 (예: 仁川机场 T1)" title="지점명 (중국어 간체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.name_zh_tw || ''} onChange={e => setLocForm({ ...locForm, name_zh_tw: e.target.value })} placeholder="대만 번체 입력 (예: 仁川機場 T1)" title="지점명 (대만 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.name_zh_hk || ''} onChange={e => setLocForm({ ...locForm, name_zh_hk: e.target.value })} placeholder="홍콩 번체 입력 (예: 仁川機場 T1)" title="지점명 (홍콩 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                             </div>
                         </div>
                         <div>
@@ -604,7 +672,9 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <div className="mt-2 space-y-2">
                                 <input value={locForm.address_en || ''} onChange={e => setLocForm({ ...locForm, address_en: e.target.value })} placeholder="영어 주소 입력" title="상세 주소 (영어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                                 <input value={locForm.address_ja || ''} onChange={e => setLocForm({ ...locForm, address_ja: e.target.value })} placeholder="일본어 주소 입력" title="상세 주소 (일본어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.address_zh || ''} onChange={e => setLocForm({ ...locForm, address_zh: e.target.value })} placeholder="중국어 주소 입력" title="상세 주소 (중국어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.address_zh || ''} onChange={e => setLocForm({ ...locForm, address_zh: e.target.value })} placeholder="중국어 간체 주소 입력" title="상세 주소 (중국어 간체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.address_zh_tw || ''} onChange={e => setLocForm({ ...locForm, address_zh_tw: e.target.value })} placeholder="대만 번체 주소 입력" title="상세 주소 (대만 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input value={locForm.address_zh_hk || ''} onChange={e => setLocForm({ ...locForm, address_zh_hk: e.target.value })} placeholder="홍콩 번체 주소 입력" title="상세 주소 (홍콩 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                             </div>
                         </div>
 

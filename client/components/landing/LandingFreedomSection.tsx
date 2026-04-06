@@ -10,13 +10,17 @@ const LandingFreedomSection: React.FC<LandingFreedomSectionProps> = ({ t }) => {
     return (
         <section className="relative h-[60vh] md:h-[80vh] flex items-center justify-center overflow-hidden bg-black">
             <div className="absolute inset-0 z-0">
-                <img
-                    src="/images/landing/freedom-riverside-night.jpeg"
-                    alt="짐 없이 서울의 밤을 바라보는 자유로운 여행자"
-                    className="w-full h-full object-cover brightness-[0.68] contrast-[1.08]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/35" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/45" />
+                <picture>
+                    <source srcSet="/images/landing/freedom-riverside-night.webp" type="image/webp" />
+                    <img
+                        src="/images/landing/freedom-riverside-night.jpeg"
+                        alt="짐 없이 서울의 밤을 바라보는 자유로운 여행자"
+                        className="w-full h-full object-cover brightness-[0.68] contrast-[1.08]"
+                        loading="lazy"
+                    />
+                </picture>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/35 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/45 pointer-events-none" />
             </div>
 
             <div className="relative z-10 w-full max-w-7xl mx-auto px-6 text-center">

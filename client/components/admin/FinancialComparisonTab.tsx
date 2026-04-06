@@ -145,26 +145,42 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
         try {
             const selectedBookings = filteredBookings.filter((booking) => booking.id && selectedIds.includes(booking.id));
             const settledAt = new Date().toISOString();
-            const results = await Promise.allSettled(
-                selectedBookings.map((booking) =>
-                    mutateFinancialBooking(booking, {
+
+            let successCount = 0;
+            let skipCount = 0;
+
+            // 개별 처리: 비-UUID ID(Firebase 레거시) 예약은 스킵, 나머지는 개별 오류 허용
+            for (const booking of selectedBookings) {
+                try {
+                    await mutateFinancialBooking(booking, {
                         supabaseMethod: 'PATCH',
                         supabaseBody: {
                             settlement_status: 'CONFIRMED',
                             settled_at: settledAt,
                             settled_by: currentActor.name
                         }
-                    })
-                )
-            );
-            const failures = results.filter((result) => result.status === 'rejected');
-            if (failures.length > 0) {
-                throw (failures[0] as PromiseRejectedResult).reason;
+                    });
+                    successCount++;
+                } catch (e) {
+                    console.warn(`[FinancialTab] 정산 스킵 (${booking.id}):`, e);
+                    skipCount++;
+                }
             }
-            await AuditService.logAction(currentActor, 'SETTLEMENT_CONFIRM', { id: 'bulk', type: 'BOOKING' }, { count: selectedIds.length, method: 'BULK' });
+
+            if (successCount === 0 && skipCount > 0) {
+                alert(`정산 처리할 수 있는 예약이 없습니다.\n${skipCount}건이 Supabase에 등록되지 않은 레거시 예약입니다.`);
+                return;
+            }
+
+            await AuditService.logAction(currentActor, 'SETTLEMENT_CONFIRM', { id: 'bulk', type: 'BOOKING' }, { count: successCount, method: 'BULK' });
             await queryClient.invalidateQueries({ queryKey: ['bookings'] });
             setSelectedIds([]);
-            alert(`${selectedIds.length}건의 일괄 정산 확정이 완료되었습니다. ✨`);
+
+            if (skipCount > 0) {
+                alert(`${successCount}건 정산 확정 완료.\n${skipCount}건은 레거시 예약으로 건너뛰었습니다.`);
+            } else {
+                alert(`${successCount}건의 일괄 정산 확정이 완료되었습니다. ✨`);
+            }
         } catch (e) {
             console.error(e);
             alert('일괄 정산 중 오류가 발생했습니다. 🙄');
@@ -190,27 +206,33 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
 
         setIsProcessing(true);
         try {
-            const results = await Promise.allSettled(
-                deleteTargets.map((booking) =>
-                    mutateFinancialBooking(booking, {
+            let successCount = 0;
+            let skipCount = 0;
+            for (const booking of deleteTargets) {
+                try {
+                    await mutateFinancialBooking(booking, {
                         supabaseMethod: 'PATCH',
                         supabaseBody: { settlement_status: 'deleted' },
-                    })
-                )
-            );
-            const failures = results.filter((result) => result.status === 'rejected');
-            if (failures.length > 0) {
-                throw (failures[0] as PromiseRejectedResult).reason;
+                    });
+                    successCount++;
+                } catch (e) {
+                    console.warn(`[FinancialTab] 삭제 스킵 (${booking.id}):`, e);
+                    skipCount++;
+                }
             }
             await AuditService.logAction(
                 currentActor,
                 'DELETE',
                 { id: 'financial-comparison-bulk-delete', type: 'BOOKING' },
-                { count: deleteTargets.length, method: 'BULK_SOFT_DELETE_UNSETTLED' }
+                { count: successCount, method: 'BULK_SOFT_DELETE_UNSETTLED' }
             );
             await queryClient.invalidateQueries({ queryKey: ['bookings'] });
             setSelectedIds((prev) => prev.filter((id) => !deleteTargets.some((booking) => booking.id === id)));
-            alert(`${deleteTargets.length}건의 미정산 내역을 휴지통으로 이동했습니다.`);
+            if (skipCount > 0) {
+                alert(`${successCount}건 휴지통 이동 완료. ${skipCount}건은 레거시 예약으로 건너뛰었습니다.`);
+            } else {
+                alert(`${successCount}건의 미정산 내역을 휴지통으로 이동했습니다.`);
+            }
         } catch (e) {
             console.error(e);
             alert('미정산 일괄 삭제 중 오류가 발생했습니다. 🙄');

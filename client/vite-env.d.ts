@@ -1,17 +1,15 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_FIREBASE_STORAGE_BUCKET?: string;
   readonly VITE_NAVER_MAP_CLIENT_ID?: string;
   readonly VITE_RECAPTCHA_SITE_KEY?: string;
-  readonly VITE_GOOGLE_CHAT_WEBHOOK_URL?: string;
+  readonly VITE_GOOGLE_CHAT_NOTIFY_ENDPOINT?: string;
   readonly VITE_CLAUDE_API_KEY?: string;
   readonly VITE_GEMINI_API_KEY?: string;
   readonly VITE_GA4_MEASUREMENT_ID?: string;
   readonly VITE_TOSS_PAYMENTS_ENABLED?: 'true' | 'false';
   readonly VITE_TOSS_PAYMENTS_CLIENT_KEY?: string;
   readonly VITE_TOSS_PAYMENTS_MOCK_MODE?: 'true' | 'false';
-  readonly VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_PUBLIC_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;

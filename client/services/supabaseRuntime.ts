@@ -1,17 +1,29 @@
-/** HTTP 헤더에 사용 가능하도록 비 ASCII / 비가시 문자를 제거 */
-export const sanitizeForHeader = (value: string): string =>
-  value.replace(/[^\x20-\x7E]/g, '').trim();
+const DEFAULT_SUPABASE_HOSTED_URL = 'https://xpnfjolqiffduedwtxey.supabase.co';
+const FALLBACK_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbmZqb2xxaWZmZHVlZHd0eGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzEyOTQsImV4cCI6MjA5MDE0NzI5NH0.60fV5WzgBcF1WEetrBwy58yAs-lOtbPk2M57_0Lt3-E';
 
-/** Supabase 키를 안전하게 읽기 (비 ASCII 제거) */
-export const getSupabasePublishableKey = (): string =>
-  sanitizeForHeader(
-    import.meta.env.VITE_SUPABASE_ANON_KEY ||
-    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    ''
-  );
+const LEGACY_PROJECT_ID = 'fzvfyeskdivulazjjpgr';
+
+export const getSupabaseConfig = () => {
+  const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+
+  // 레거시 프로젝트(fzvf...)가 감지되면 운영 프로젝트(xpnf...)로 전환
+  const isLegacyUrl = envUrl.includes(LEGACY_PROJECT_ID);
+  // 상대경로(/supabase)는 Vite 개발서버 프록시 전용 — 프로덕션 빌드에서는 하드코딩 URL로 폴백
+  const isDevProxy = envUrl.startsWith('/') && import.meta.env.PROD;
+  const finalUrl = (isLegacyUrl || !envUrl || isDevProxy) ? DEFAULT_SUPABASE_HOSTED_URL : envUrl;
+  const finalKey = (isLegacyUrl || !envKey) ? FALLBACK_ANON_KEY : envKey;
+
+  return {
+    url: finalUrl,
+    anonKey: finalKey,
+    isFallback: !import.meta.env.VITE_SUPABASE_URL || isLegacyUrl,
+    isLegacyBlocked: isLegacyUrl
+  };
+};
 
 const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
-const configuredHostedUrl = import.meta.env.VITE_SUPABASE_PUBLIC_URL?.trim() || '';
+const configuredHostedUrl = import.meta.env.VITE_SUPABASE_PUBLIC_URL?.trim() || DEFAULT_SUPABASE_HOSTED_URL;
 
 const normalizeBase = (value: string) => value.replace(/\/+$/, '');
 
@@ -39,24 +51,26 @@ const joinBaseAndPath = (base: string, path: string) => {
 };
 
 export const getSupabaseBaseUrl = () => {
-  const normalizedRaw = normalizeBase(rawSupabaseUrl);
-  const normalizedHosted = normalizeBase(configuredHostedUrl);
+  return getSupabaseConfig().url;
+};
 
-  if (!normalizedRaw) {
-    if (!normalizedHosted) {
-      console.error(
-        '[Supabase] VITE_SUPABASE_URL 환경변수가 설정되지 않았습니다. ' +
-        'GitHub Secrets 또는 .env 파일을 확인하세요.'
-      );
-    }
-    return normalizedHosted;
-  }
+/**
+ * [스봉이] 현재 Supabase 연결 환경 진단 정보 💅
+ */
+export const getSupabaseDiagnosis = () => {
+  const config = getSupabaseConfig();
+  const current = config.url;
+  const isFallback = config.isFallback;
 
-  if (normalizedRaw.startsWith('/')) {
-    return isLocalProxyHost() ? normalizedRaw : normalizedHosted;
-  }
-
-  return normalizedRaw;
+  return {
+    url: current,
+    usingFallback: isFallback,
+    source: isFallback ? (config.isLegacyBlocked ? 'legacy-project-blocked' : 'hardcoded-fallback') : 'env-variable',
+    isLocalProxy: isLocalProxyHost() && (import.meta.env.VITE_SUPABASE_URL || '').startsWith('/'),
+    rawEnvUrl: import.meta.env.VITE_SUPABASE_URL || '(empty)',
+    configuredHostedUrl: DEFAULT_SUPABASE_HOSTED_URL,
+    isLegacyBlocked: config.isLegacyBlocked,
+  };
 };
 
 export const resolveSupabaseUrl = (path = '') => {

@@ -59,15 +59,9 @@ export interface HeroConfig {
 
 export interface GoogleCloudConfig {
     apiKey: string;
-    authDomain: string;
-    projectId: string;
-    storageBucket: string;
-    messagingSenderId: string;
-    appId: string;
     isActive: boolean;
     enableWorkspaceAutomation?: boolean;
     enableGeminiAutomation?: boolean;
-    googleChatWebhookUrl?: string;
     measurementId?: string;
     mapId?: string;
     mapSecret?: string;
@@ -133,21 +127,30 @@ export type AdminTab =
     | 'PRIVACY_EDITOR'
     | 'TERMS_EDITOR'
     | 'QNA_EDITOR'
-    | 'TRASH';
+    | 'TRASH'
+    | 'AI_REVIEW';
 
 export interface TranslatedLocationData {
     name_en: string;
     name_ja: string;
     name_zh: string;
+    name_zh_tw: string;
+    name_zh_hk: string;
     address_en: string;
     address_ja: string;
     address_zh: string;
+    address_zh_tw: string;
+    address_zh_hk: string;
     pickupGuide_en: string;
     pickupGuide_ja: string;
     pickupGuide_zh: string;
+    pickupGuide_zh_tw: string;
+    pickupGuide_zh_hk: string;
     description_en: string;
     description_ja: string;
     description_zh: string;
+    description_zh_tw: string;
+    description_zh_hk: string;
 }
 
 export interface CashClosing {

@@ -4,15 +4,17 @@ import { ShieldCheck, MapPin, Zap, PackageCheck, Smartphone, CheckCircle2, Box, 
 import TrackingWidget from './TrackingWidget';
 import Logo from './Logo';
 import SEO from './SEO';
+import LandingPricing from './landing/LandingPricing';
 import { useAppStore } from '../src/store/appStore';
 
 interface ServicesPageProps {
     onBack: () => void;
     t: any;
     landingT?: any;
+    pricingT?: any;
 }
 
-const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
+const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT, pricingT }) => {
     const lang = useAppStore(state => state.lang);
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -186,10 +188,15 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                 </div>
             </section>
 
+            {/* Section 3.5: Pricing */}
+            {pricingT && (
+                <LandingPricing t={{ pricing: pricingT }} onNavigate={onBack} lang={lang} />
+            )}
+
             {/* Section 4: Trust Dashboard */}
             <section className="py-24 px-6 bg-bee-black text-white relative overflow-hidden">
                 <div className="absolute -left-40 -top-40 w-96 h-96 bg-bee-yellow/15 rounded-full blur-[100px]"></div>
-                <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px]"></div>
+                <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-bee-yellow/5 rounded-full blur-[80px]"></div>
 
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10">
                     <div className="md:w-1/2 space-y-8">
@@ -214,7 +221,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-5 bg-white/5 p-5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                <div className="w-12 h-12 rounded-full bg-bee-yellow/20 flex items-center justify-center text-bee-yellow shrink-0">
                                     <ShieldCheck className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -332,9 +339,8 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT }) => {
             <footer className="py-20 text-center border-t border-gray-200 bg-white relative overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-1 bg-gradient-to-r from-transparent via-bee-yellow/50 to-transparent"></div>
                 <div className="max-w-xl mx-auto px-6">
-                    <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter text-bee-black mb-8 flex items-center justify-center gap-3">
+                    <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter text-bee-black mb-8">
                         {t.footer_msg}
-                        <span className="not-italic text-4xl inline-block hover:rotate-12 transition-transform cursor-pointer">🐝</span>
                     </h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
                         © 2025 Beeliber Global Logistics.<br className="md:hidden" /> Designed by Beeliber Team.

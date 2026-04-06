@@ -80,10 +80,10 @@ const SEO: React.FC<SEOProps> = ({
                 </script>
             )}
 
-            {/* Alternate Language Links (Hreflang) */}
-            <link rel="alternate" hrefLang="ko-KR" href={`${SITE_URL}/ko${cleanPath === '/' ? '' : cleanPath}`} />
+            {/* Alternate Language Links (Hreflang) — sitemap.xml과 동일한 코드 사용 */}
+            <link rel="alternate" hrefLang="ko" href={`${SITE_URL}/ko${cleanPath === '/' ? '' : cleanPath}`} />
             <link rel="alternate" hrefLang="en" href={`${SITE_URL}/en${cleanPath === '/' ? '' : cleanPath}`} />
-            <link rel="alternate" hrefLang="ja-JP" href={`${SITE_URL}/ja${cleanPath === '/' ? '' : cleanPath}`} />
+            <link rel="alternate" hrefLang="ja" href={`${SITE_URL}/ja${cleanPath === '/' ? '' : cleanPath}`} />
             <link rel="alternate" hrefLang="zh-CN" href={`${SITE_URL}/zh${cleanPath === '/' ? '' : cleanPath}`} />
             <link rel="alternate" hrefLang="zh-TW" href={`${SITE_URL}/zh-tw${cleanPath === '/' ? '' : cleanPath}`} />
             <link rel="alternate" hrefLang="zh-HK" href={`${SITE_URL}/zh-hk${cleanPath === '/' ? '' : cleanPath}`} />

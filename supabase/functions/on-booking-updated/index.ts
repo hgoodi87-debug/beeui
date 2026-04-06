@@ -5,14 +5,14 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import {
+  buildArrivalEmailHtml,
+  type ArrivalEmailTemplateInput,
+} from "../_shared/booking-email-templates.ts";
+import { sendEdgeMail } from "../_shared/mailer.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SMTP_USER = Deno.env.get("SMTP_USER") || "ceo@bee-liber.com";
-const SMTP_PASS = Deno.env.get("SMTP_PASS") || "";
-const INTERNAL_MAIL_KEY = Deno.env.get("INTERNAL_MAIL_KEY") || "";
-const FIREBASE_ARRIVAL_MAIL_ENDPOINT =
-  Deno.env.get("FIREBASE_ARRIVAL_MAIL_ENDPOINT")
-  || "https://us-central1-beeliber-main.cloudfunctions.net/sendBookingArrivalEmail";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -21,17 +21,27 @@ const CORS_HEADERS = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+const getLocationDetails = async (locationId: string | null | undefined) => {
+  const lookupValue = String(locationId || "").trim();
+  if (!lookupValue || lookupValue === "custom") {
+    return null;
+  }
+
+  const { data } = await supabase
+    .from("locations")
+    .select("id, short_code, name, name_en, pickup_guide, pickup_image_url, lat, lng")
+    .or(`id.eq.${lookupValue},short_code.eq.${lookupValue}`)
+    .limit(1)
+    .maybeSingle();
+
+  return data || null;
+};
+
 // 도착 알림 이메일
 async function sendArrivalEmail(booking: Record<string, unknown>) {
   const email = booking.user_email as string;
   if (!email) {
     return { attempted: false, skipped: true, reason: "missing_email" };
-  }
-  if (!SMTP_PASS) {
-    return { attempted: false, skipped: true, reason: "missing_smtp_pass" };
-  }
-  if (!INTERNAL_MAIL_KEY) {
-    return { attempted: false, skipped: true, reason: "missing_internal_mail_key" };
   }
 
   const code = booking.reservation_code || booking.id;
@@ -46,43 +56,40 @@ async function sendArrivalEmail(booking: Record<string, unknown>) {
   `;
 
   try {
-    const response = await fetch(FIREBASE_ARRIVAL_MAIL_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-beeliber-mail-key": INTERNAL_MAIL_KEY,
-      },
-      body: JSON.stringify({
-        booking: {
-          ...booking,
-          subject,
-          html: body,
-          smtp_user: SMTP_USER,
-        },
-      }),
+    const destination = await getLocationDetails(
+      String(booking.dropoff_location_id || booking.dropoff_location || ""),
+    );
+    const destinationLabel =
+      String(destination?.name || destination?.name_en || booking.dropoff_location || booking.pickup_location || "");
+    const mapUrl =
+      destination?.lat && destination?.lng
+        ? `https://www.google.com/maps/search/?api=1&query=${destination.lat},${destination.lng}`
+        : "https://bee-liber.com/locations";
+
+    const emailInput: ArrivalEmailTemplateInput = {
+      bookingId: String(booking.id || code || ""),
+      reservationCode: String(code || ""),
+      destinationLabel,
+      arrivalDate: String(booking.dropoff_date || booking.return_date || ""),
+      arrivalTime: String(booking.delivery_time || booking.return_time || ""),
+      pickupGuide: String(destination?.pickup_guide || ""),
+      pickupImageUrl: String(destination?.pickup_image_url || ""),
+      mapUrl,
+    };
+
+    await sendEdgeMail({
+      to: email,
+      bcc: "bee@bee-liber.com",
+      subject,
+      html: buildArrivalEmailHtml(emailInput) || body,
     });
-    const responseText = await response.text().catch(() => "");
-    if (!response.ok) {
-      console.error(
-        `[on-booking-updated] Arrival email failed (${response.status}): ${responseText}`,
-      );
-      return {
-        attempted: true,
-        skipped: false,
-        ok: false,
-        status: response.status,
-        body: responseText,
-        smtpConfigured: Boolean(SMTP_PASS),
-      };
-    }
+
     console.log(`[on-booking-updated] Arrival email sent to ${email}`);
     return {
       attempted: true,
       skipped: false,
       ok: true,
-      status: response.status,
-      body: responseText,
-      smtpConfigured: Boolean(SMTP_PASS),
+      smtpConfigured: true,
     };
   } catch (e) {
     console.error("[on-booking-updated] Arrival email failed:", e);
@@ -91,7 +98,7 @@ async function sendArrivalEmail(booking: Record<string, unknown>) {
       skipped: false,
       ok: false,
       error: String(e),
-      smtpConfigured: Boolean(SMTP_PASS),
+      smtpConfigured: Boolean(Deno.env.get("SMTP_PASS")),
     };
   }
 }

@@ -3,7 +3,7 @@
 // Supabase 전용 storageService (Firebase Firestore 완전 제거)
 // Firebase → Supabase 어댑터 레이어로 기존 147개 호출 호환
 // ============================================================
-import { getSupabaseBaseUrl, getSupabasePublishableKey, resolveSupabaseEndpoint, resolveSupabaseUrl } from './supabaseRuntime';
+import { getSupabaseBaseUrl, getSupabaseConfig, resolveSupabaseEndpoint, resolveSupabaseUrl } from './supabaseRuntime';
 
 // Firebase Storage 완전 제거 — Supabase Storage 사용
 // storage, ref, uploadBytes, getDownloadURL 모두 Supabase 어댑터로 대체
@@ -11,7 +11,8 @@ const storage = {} as any; // 더미
 const ref = (_s: any, path: string) => ({ _path: path });
 const uploadBytes = async (storageRef: any, file: Blob | ArrayBuffer, _metadata?: any) => {
   // Supabase Storage signed upload
-  const SUPABASE_KEY = getSupabasePublishableKey();
+  const config = getSupabaseConfig();
+  const SUPABASE_KEY = config.anonKey;
   const bucket = 'brand-public';
   const path = storageRef._path;
   const res = await fetch(resolveSupabaseUrl(`/storage/v1/object/${bucket}/${path}`), {
@@ -106,9 +107,14 @@ const normalizeLocationCommissionRates = (location: LocationOption): LocationOpt
 
 const fireSupabaseBookingCreatedWebhook = async (record: Record<string, unknown>) => {
   const endpoint = resolveSupabaseEndpoint(undefined, '/functions/v1/on-booking-created');
+  const { anonKey } = getSupabaseConfig();
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': anonKey,
+      'Authorization': `Bearer ${anonKey}`,
+    },
     body: JSON.stringify({
       type: 'INSERT',
       table: 'booking_details',
@@ -119,6 +125,18 @@ const fireSupabaseBookingCreatedWebhook = async (record: Record<string, unknown>
   if (!response.ok) {
     const message = await response.text().catch(() => '');
     throw new Error(message || `on-booking-created failed with ${response.status}`);
+  }
+};
+
+const fireWithRetry = async (record: Record<string, unknown>, attempt = 0): Promise<void> => {
+  try {
+    await fireSupabaseBookingCreatedWebhook(record);
+  } catch (error) {
+    if (attempt < 2) {
+      await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
+      return fireWithRetry(record, attempt + 1);
+    }
+    console.error("[StorageService] on-booking-created bridge failed after 3 attempts:", error);
   }
 };
 
@@ -357,7 +375,8 @@ import {
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
 const KEYS = {
-  CLOUD_CONFIG: 'beeliber_cloud_config',
+  CLOUD_CONFIG: 'beeliber_integration_config',
+  LEGACY_CLOUD_CONFIG: 'beeliber_cloud_config',
 };
 
 const USER_PROFILE_CACHE_KEY = (uid: string) => `beeliber_user_profile:${uid}`;
@@ -384,27 +403,19 @@ const writeLocalJson = (key: string, value: unknown) => {
 };
 
 const DEFAULT_CLOUD_CONFIG: GoogleCloudConfig = {
-  apiKey: "AIzaSyCWCnernI5QA1UGRI080vjlzBEVpevAzt0",
-  authDomain: "beeliber-main.firebaseapp.com",
-  projectId: "beeliber-main", // [주의] 프로젝트 ID가 불일치할 경우 이 부분을 수정하세요. 💅
-  storageBucket: "beeliber-main.firebasestorage.app",
-  messagingSenderId: "591358308612",
-  appId: "1:591358308612:web:fb3928d12b0e1bb000a051",
-  measurementId: "G-PQBL1SG842",
-  isActive: true, // Force Active
+  apiKey: "",
+  measurementId: "",
+  isActive: true,
+  enableWorkspaceAutomation: false,
   enableGeminiAutomation: true,
-  // [보안] 클라이언트 웹훅 노출 금지! 🛡️ 세팅은 DB 또는 환경변수(Server)에서 관리합니다.
-  googleChatWebhookUrl: ""
+  mapId: "",
+  mapSecret: "",
 };
 
-const LOCAL_ADMIN_DATA_BRIDGE_URL = import.meta.env.VITE_LOCAL_ADMIN_DATA_BRIDGE_URL?.trim() || '';
-const LOCAL_LEGACY_READ_BRIDGE_ENABLED = import.meta.env.VITE_ENABLE_LOCAL_LEGACY_READ_BRIDGE === 'true';
-const LOCAL_ADMIN_DATA_BRIDGE_POLL_MS = 10000;
 const SUPABASE_RUNTIME_URL = getSupabaseBaseUrl();
 const ADMIN_ACCOUNT_SYNC_ENDPOINT = import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT?.trim()
   ? resolveSupabaseEndpoint(import.meta.env.VITE_ADMIN_ACCOUNT_SYNC_ENDPOINT, '/functions/v1/admin-account-sync')
   : (SUPABASE_RUNTIME_URL ? `${SUPABASE_RUNTIME_URL}/functions/v1/admin-account-sync` : '');
-let localAdminDataBridgeDisabled = false;
 const DEFAULT_DELIVERY_PRICES: PriceSettings = PRICING_DEFAULT_DELIVERY_PRICES;
 const DEFAULT_STORAGE_TIERS: StorageTier[] = PRICING_DEFAULT_STORAGE_TIERS;
 
@@ -460,11 +471,47 @@ const preferTranslatedValue = (value?: string, fallback?: string) => {
   return trimmedFallback || undefined;
 };
 
+// Simplified Chinese → Traditional Chinese conversion for common location terms
+const SC2TC: Record<string, string> = {
+  '机场': '機場', '车站': '車站', '广域市': '廣域市', '特别市': '特別市',
+  '区': '區', '路': '路', '街': '街', '号': '號', '层': '層', '楼': '樓',
+  '门': '門', '东': '東', '龙': '龍', '国际线': '國際線', '出境大厅': '出境大廳',
+  '入境大厅': '入境大廳', '寄存处': '寄存處', '柜台': '櫃台', '请': '請',
+  '预订': '預訂', '会面': '會面', '步行': '步行', '弘益大学站': '弘益大學站',
+  '首尔': '首爾', '仁川': '仁川', '金浦': '金浦', '龙山': '龍山',
+  '永登浦': '永登浦', '麻浦': '麻浦', '江南': '江南', '江西': '江西',
+  '中': '中', '钟': '鐘', '广': '廣', '东大门': '東大門', '南大门': '南大門',
+  '梨泰院': '梨泰院', '明洞': '明洞', '弘大': '弘大', '延南': '延南',
+  '圣水': '聖水', '仁寺洞': '仁寺洞', '安国': '安國', '忠武路': '忠武路',
+  '松岛': '松島', '平泽': '平澤', '水原': '水原', '富平': '富平',
+  '昌原': '昌原', '光州': '光州', '釜山': '釜山', '济州': '濟州',
+  '海云台': '海雲台', '光安里': '光安里', '金海': '金海', '大邱': '大邱',
+  '蔚山': '蔚山', '汉江大路': '漢江大路', '世界杯北路': '世界杯北路',
+  '店': '店', '站': '站', '机场': '機場', '寄存': '寄存',
+  '请前往': '請前往', '工作人员': '工作人員',
+  '告知您的': '告知您的', '请寄存在': '請寄存在',
+  '行理': '行李', '寻找': '尋找', '标志': '標誌',
+};
+
+const simplifiedToTraditional = (text?: string): string | undefined => {
+  if (!text) return undefined;
+  let result = text;
+  // Sort keys by length descending to match longer phrases first
+  const sorted = Object.entries(SC2TC).sort((a, b) => b[0].length - a[0].length);
+  for (const [sc, tc] of sorted) {
+    result = result.split(sc).join(tc);
+  }
+  return result;
+};
+
 const normalizeLocationTranslations = (location: LocationOption): LocationOption => {
   const baseName = location.name?.trim();
   const baseAddress = location.address?.trim();
   const zhName = preferTranslatedValue(location.name_zh, baseName);
   const zhAddress = preferTranslatedValue(location.address_zh, baseAddress);
+  const zhDesc = preferTranslatedValue((location as any).description_zh, location.description?.trim());
+  const zhGuide = preferTranslatedValue((location as any).pickupGuide_zh);
+  const zhHours = preferTranslatedValue((location as any).businessHours_zh, (location as any).businessHours);
 
   return {
     ...location,
@@ -473,39 +520,28 @@ const normalizeLocationTranslations = (location: LocationOption): LocationOption
     name_en: preferTranslatedValue(location.name_en, baseName),
     name_ja: preferTranslatedValue(location.name_ja, baseName),
     name_zh: zhName,
-    name_zh_tw: preferTranslatedValue(location.name_zh_tw, zhName),
-    name_zh_hk: preferTranslatedValue(location.name_zh_hk, zhName),
+    name_zh_tw: preferTranslatedValue(location.name_zh_tw, simplifiedToTraditional(zhName)),
+    name_zh_hk: preferTranslatedValue(location.name_zh_hk, simplifiedToTraditional(zhName)),
     address_en: preferTranslatedValue(location.address_en, baseAddress),
     address_ja: preferTranslatedValue(location.address_ja, baseAddress),
     address_zh: zhAddress,
-    address_zh_tw: preferTranslatedValue(location.address_zh_tw, zhAddress),
-    address_zh_hk: preferTranslatedValue(location.address_zh_hk, zhAddress),
-  };
+    address_zh_tw: preferTranslatedValue(location.address_zh_tw, simplifiedToTraditional(zhAddress)),
+    address_zh_hk: preferTranslatedValue(location.address_zh_hk, simplifiedToTraditional(zhAddress)),
+    description_zh_tw: preferTranslatedValue((location as any).description_zh_tw, simplifiedToTraditional(zhDesc)),
+    description_zh_hk: preferTranslatedValue((location as any).description_zh_hk, simplifiedToTraditional(zhDesc)),
+    pickupGuide_zh_tw: preferTranslatedValue((location as any).pickupGuide_zh_tw, simplifiedToTraditional(zhGuide)),
+    pickupGuide_zh_hk: preferTranslatedValue((location as any).pickupGuide_zh_hk, simplifiedToTraditional(zhGuide)),
+    businessHours_zh_tw: preferTranslatedValue((location as any).businessHours_zh_tw, zhHours),
+    businessHours_zh_hk: preferTranslatedValue((location as any).businessHours_zh_hk, zhHours),
+  } as LocationOption;
 };
 
 export const canUseLocalLegacyReadBridge = () => {
   return false;
 };
 
-const canUseLocalAdminDataBridge = () => {
-  return false;
-};
-
-const shouldDisableLocalAdminDataBridge = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error || '');
-  const normalized = message.toLowerCase();
-
-  return (
-    normalized.includes('failed to fetch')
-    || normalized.includes('networkerror')
-    || normalized.includes('err_connection_refused')
-    || normalized.includes('fetch failed')
-  );
-};
-
 const canUseSupabaseAdminAccountSync = () =>
   isSupabaseAdminAuthEnabled() &&
-  !canUseLocalAdminDataBridge() &&
   import.meta.env.MODE !== 'test' &&
   !import.meta.env.VITEST;
 
@@ -547,30 +583,6 @@ const syncSupabaseAdminAccount = async (
   }
 
   return body;
-};
-
-const fetchLocalAdminBridge = async <T>(path: string): Promise<T> => {
-  let response: Response;
-  try {
-    response = await fetch(`${LOCAL_ADMIN_DATA_BRIDGE_URL}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    });
-  } catch (error) {
-    if (shouldDisableLocalAdminDataBridge(error)) {
-      localAdminDataBridgeDisabled = true;
-      console.warn('[StorageService] Local admin data bridge is unreachable. Disabling bridge for this session.');
-    }
-    throw error;
-  }
-
-  if (!response.ok) {
-    throw new Error(`Local admin data bridge request failed (${response.status})`);
-  }
-
-  return response.json() as Promise<T>;
 };
 
 const sortBookingsByPickupDateDesc = (items: BookingState[]) =>
@@ -644,9 +656,7 @@ const subscribeMergedAdminCollection = <T extends { id?: string }>({
     try {
       legacyData = await loadLegacy();
     } catch (error) {
-      if (!localAdminDataBridgeDisabled) {
-        console.warn(`[StorageService] ${label} legacy poll failed:`, error);
-      }
+      console.warn(`[StorageService] ${label} legacy poll failed:`, error);
     }
 
     if (!active) return;
@@ -760,36 +770,6 @@ const loadSupabaseAdminRevenueMonthlySummaries = async (): Promise<AdminRevenueM
   );
 
   return (rows || []).map((row) => snakeToCamel(row) as unknown as AdminRevenueMonthlySummary);
-};
-
-const subscribeLocalAdminBridge = <T>(
-  path: string,
-  callback: (data: T) => void,
-  fallback: T,
-  transform?: (data: T) => T,
-  label?: string
-): (() => void) => {
-  let active = true;
-
-  const run = async () => {
-    try {
-      const data = await fetchLocalAdminBridge<T>(path);
-      if (!active) return;
-      callback(transform ? transform(data) : data);
-    } catch (error) {
-      console.error(`${label || 'Local admin bridge'} fetch failed:`, error);
-      if (!active) return;
-      callback(fallback);
-    }
-  };
-
-  void run();
-  const timer = window.setInterval(() => void run(), LOCAL_ADMIN_DATA_BRIDGE_POLL_MS);
-
-  return () => {
-    active = false;
-    window.clearInterval(timer);
-  };
 };
 
 // Helper for safe JSON parse (utility)
@@ -937,13 +917,24 @@ const collapseAdminDirectoryEntries = (admins: AdminUser[]): AdminUser[] => {
 export const StorageService = {
   // --- Configuration ---
   saveCloudConfig: (config: GoogleCloudConfig) => {
-    localStorage.setItem(KEYS.CLOUD_CONFIG, JSON.stringify(config));
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(KEYS.LEGACY_CLOUD_CONFIG);
+    }
+    writeLocalJson(KEYS.CLOUD_CONFIG, config);
     window.location.reload();
   },
 
   getCloudConfig: (): GoogleCloudConfig | null => {
-    // [스봉이] 로컬 스토리지의 낡은 캐시가 사고를 유발해서, 강제로 기본 설정을 쓰게 바꿨어요! 💅✨
-    return { ...DEFAULT_CLOUD_CONFIG, isActive: true };
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(KEYS.LEGACY_CLOUD_CONFIG);
+    }
+
+    const savedConfig = readLocalJson<Partial<GoogleCloudConfig> | null>(KEYS.CLOUD_CONFIG, null);
+    return {
+      ...DEFAULT_CLOUD_CONFIG,
+      ...(savedConfig || {}),
+      isActive: savedConfig?.isActive ?? DEFAULT_CLOUD_CONFIG.isActive,
+    };
   },
 
   uploadFile: async (file: File | Blob, path: string): Promise<string> => {
@@ -1041,17 +1032,20 @@ export const StorageService = {
           safeBooking.dropoffLocationName,
           safeBooking.dropoffLocation,
         ),
-        nametag_id: safeBooking.nametagId || null,
       };
 
-      // [스봉이] 신규 예약일 경우 네임텍 번호 발급! 🔢✨
-      if (!bookingData.nametag_id && safeBooking.branchId) {
-        try {
-          bookingData.nametag_id = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
-        } catch (e) {
-          console.warn("[스봉이] 네임텍 번호 자동 할당 실패 (무시하고 진행):", e);
-        }
-      }
+      // bags, bag_summary, nametag_id는 INSERT 후 PATCH로 업데이트
+      // (PostgREST 스키마 캐시 갱신 전 호환성 유지)
+      const bagSummaryValue = (() => {
+        const s = safeBooking.bagSizes;
+        if (!s) return '';
+        return [
+          s.handBag > 0 ? `핸드백 ${s.handBag}개` : '',
+          s.carrier > 0 ? `캐리어 ${s.carrier}개` : '',
+          s.strollerBicycle > 0 ? `유모차/자전거 ${s.strollerBicycle}개` : '',
+        ].filter(Boolean).join(', ');
+      })();
+      const bagsValue = safeBooking.bags || 0;
 
       const result = await supabaseMutate<Array<Record<string, unknown>>>(
         'booking_details',
@@ -1062,6 +1056,23 @@ export const StorageService = {
       const created = Array.isArray(result) && result[0] ? result[0] : null;
       const bookingId = String(created?.id || '');
 
+      // 네임텍 + bags + bag_summary PATCH
+      if (bookingId) {
+        try {
+          let nametagId = safeBooking.nametagId || null;
+          if (!nametagId && safeBooking.branchId) {
+            nametagId = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
+          }
+          await supabaseMutate(
+            `booking_details?id=eq.${bookingId}`,
+            'PATCH',
+            { nametag_id: nametagId, bags: bagsValue, bag_summary: bagSummaryValue }
+          );
+        } catch (e) {
+          console.warn("[StorageService] bags/bag_summary/nametag_id PATCH 실패 (무시):", e);
+        }
+      }
+
       console.log("[StorageService] Booking saved to Supabase ✅");
 
       if (bookingId) {
@@ -1069,9 +1080,7 @@ export const StorageService = {
           ...bookingData,
           id: bookingId,
         };
-        void fireSupabaseBookingCreatedWebhook(webhookRecord).catch((error) => {
-          console.error("[StorageService] on-booking-created bridge failed:", error);
-        });
+        void fireWithRetry(webhookRecord);
       }
 
       return {
@@ -1189,7 +1198,7 @@ export const StorageService = {
   },
 
   subscribeBookings: (callback: (data: BookingState[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<BookingState>({
         loadSupabase: loadSupabaseAdminBookings,
         loadLegacy: loadLegacyAdminBookings,
@@ -1208,16 +1217,37 @@ export const StorageService = {
   },
 
   subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
+    // Build a Set of all identifiers for this location (UUID, shortCode, branchCode, name)
+    // so bookings stored with any identifier format will match.
+    const buildLocationIdSet = (allLocations?: LocationOption[]): Set<string> => {
+      const ids = new Set<string>();
+      ids.add(locationId);
+      const loc = (allLocations || []).find(l => l.id === locationId || l.shortCode === locationId || (l as any).branchCode === locationId);
+      if (loc) {
+        if (loc.id) ids.add(loc.id);
+        if (loc.shortCode) ids.add(loc.shortCode);
+        if ((loc as any).branchCode) ids.add((loc as any).branchCode);
+        if ((loc as any).branchId) ids.add((loc as any).branchId);
+        if (loc.name) ids.add(loc.name);
+      }
+      return ids;
+    };
+
+    // Pre-load locations for identifier resolution
+    let locationIdSet = new Set<string>([locationId]);
+    StorageService.getLocations().then(locs => { locationIdSet = buildLocationIdSet(locs); });
+
     const filterLocationBookings = (items: BookingState[]) =>
       sortBookingsByPickupDateDesc(
         normalizeBookingsForDeliveryPolicy(items).filter((booking) =>
-          booking.pickupLocation === locationId ||
-          booking.dropoffLocation === locationId ||
-          booking.branchId === locationId
+          locationIdSet.has(booking.pickupLocation || '') ||
+          locationIdSet.has(booking.dropoffLocation || '') ||
+          locationIdSet.has(booking.branchId || '') ||
+          locationIdSet.has((booking as any).pickupLocationId || '')
         )
       );
 
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<BookingState>({
         loadSupabase: loadSupabaseAdminBookings,
         loadLegacy: loadLegacyAdminBookings,
@@ -1286,7 +1316,29 @@ export const StorageService = {
       bookingDetailId = resolvedId;
     }
 
-    const supabaseUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
+    // booking_details 테이블에 실제 존재하는 컬럼만 허용 (없는 컬럼 포함 시 PostgREST 400 에러)
+    const BOOKING_DETAILS_COLUMNS = new Set([
+      'sns_channel', 'sns_id', 'country', 'pickup_location_id', 'pickup_address',
+      'pickup_address_detail', 'pickup_image_url', 'pickup_date', 'pickup_time',
+      'dropoff_location_id', 'dropoff_address', 'dropoff_address_detail', 'dropoff_date',
+      'delivery_time', 'return_date', 'return_time', 'insurance_level', 'insurance_bag_count',
+      'use_insurance', 'base_price', 'final_price', 'promo_code', 'discount_amount',
+      'weight_surcharge_5kg', 'weight_surcharge_10kg', 'payment_method', 'payment_provider',
+      'payment_order_id', 'payment_key', 'payment_receipt_url', 'payment_approved_at',
+      'branch_commission_delivery', 'branch_commission_storage', 'branch_settlement_amount',
+      'settlement_status', 'settled_at', 'settled_by', 'language', 'image_url',
+      'service_type', 'user_name', 'user_email', 'pickup_location', 'dropoff_location',
+      'reservation_code', 'agreed_to_terms', 'agreed_to_privacy', 'agreed_to_high_value',
+      'email_sent_at',
+    ]);
+    const allUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
+    const supabaseUpdates = Object.fromEntries(
+      Object.entries(allUpdates).filter(([k]) => BOOKING_DETAILS_COLUMNS.has(k))
+    );
+    if (Object.keys(supabaseUpdates).length === 0) {
+      console.warn('[Storage] updateBooking: 유효한 booking_details 컬럼이 없습니다. 업데이트 스킵.');
+      return;
+    }
     await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, 'PATCH', supabaseUpdates);
     console.log(`[Storage] Booking ${bookingDetailId} updated in Supabase ✅`);
   },
@@ -1317,17 +1369,20 @@ export const StorageService = {
     }
   },
 
-  cancelBooking: async (id: string): Promise<void> => {
+  cancelBooking: async (id: string, options?: { name?: string; email?: string; reason?: string }): Promise<void> => {
     // Supabase Edge Function 호출
     try {
       const SUPABASE_URL = getSupabaseBaseUrl();
-      const SUPABASE_KEY = getSupabasePublishableKey();
+      const SUPABASE_KEY = getSupabaseConfig().anonKey;
       const res = await fetch(`${SUPABASE_URL}/functions/v1/cancel-booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-        body: JSON.stringify({ bookingId: id }),
+        body: JSON.stringify({ bookingId: id, name: options?.name, email: options?.email, reason: options?.reason }),
       });
-      if (!res.ok) throw new Error(`Cancel failed [${res.status}]`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Cancel failed [${res.status}]`);
+      }
       console.log("[Storage] Booking cancelled via Supabase Edge Function ✅");
     } catch (e) {
       console.error("Cancel error:", e);
@@ -1563,15 +1618,6 @@ export const StorageService = {
       }
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return normalizeStorageTiers(await fetchLocalAdminBridge<StorageTier[] | null>('/api/settings/storage_tiers'));
-      } catch (e) {
-        console.error("Failed to get storage tiers from local admin bridge", e);
-        return null;
-      }
-    }
-
     try {
       const snap = await getDoc(doc(db, "settings", "storage_tiers"));
       if (snap.exists()) {
@@ -1622,14 +1668,6 @@ export const StorageService = {
       }
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return await fetchLocalAdminBridge<HeroConfig | null>('/api/settings/hero');
-      } catch {
-        return null;
-      }
-    }
-
     try {
       const snap = await getDoc(doc(db, "settings", "hero"));
       return snap.exists() ? snap.data() as HeroConfig : null;
@@ -1650,15 +1688,6 @@ export const StorageService = {
         }
       } catch (e) {
         console.warn("[Storage] Supabase delivery prices failed, falling back:", e);
-      }
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      try {
-        return normalizeDeliveryPrices(await fetchLocalAdminBridge<PriceSettings | null>('/api/settings/delivery_prices'));
-      } catch (e) {
-        console.error("Failed to get delivery prices from local admin bridge", e);
-        return null;
       }
     }
 
@@ -1711,16 +1740,6 @@ export const StorageService = {
   },
 
   subscribeHeroConfig: (callback: (config: HeroConfig | null) => void): (() => void) => {
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<HeroConfig | null>(
-        '/api/settings/hero',
-        callback,
-        null,
-        undefined,
-        'Hero config local bridge'
-      );
-    }
-
     try {
       const heroRef = doc(db, "settings", "hero");
       return onSnapshot(heroRef, (snap) => {
@@ -1752,9 +1771,7 @@ export const StorageService = {
     }
 
     try {
-      if (canUseLocalAdminDataBridge()) {
-        firebaseData = await fetchLocalAdminBridge<PartnershipInquiry[]>('/api/collections/inquiries');
-      } else if (!isSupabaseDataEnabled()) {
+      if (!isSupabaseDataEnabled()) {
         const querySnapshot = await getDocs(collection(db, 'inquiries'));
         firebaseData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PartnershipInquiry));
       }
@@ -1775,16 +1792,6 @@ export const StorageService = {
         (items) => callback(items),
         (r) => snakeToCamel(r) as unknown as PartnershipInquiry,
         10000
-      );
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<PartnershipInquiry[]>(
-        '/api/collections/inquiries',
-        callback,
-        [],
-        (items) => [...items].sort((a: any, b: any) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()),
-        'Inquiries local bridge'
       );
     }
 
@@ -1859,7 +1866,10 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('app_settings?key=eq.privacy_policy', 'PATCH', { value: data });
+        const result = await supabaseMutate<Array<unknown>>('app_settings?key=eq.privacy_policy', 'PATCH', { value: data });
+        if (!result || (Array.isArray(result) && result.length === 0)) {
+          await supabaseMutate('app_settings', 'POST', { key: 'privacy_policy', value: data });
+        }
         return;
       } catch (e) {
         console.warn("[Storage] Supabase privacy save failed, falling back to Firebase:", e);
@@ -1902,8 +1912,9 @@ export const StorageService = {
       } catch (e) { console.warn("[Storage] Supabase qna failed:", e); }
     }
     try {
-      const snap = await getDoc(doc(db, "settings", "qna_policy"));
-      return snap.exists() ? snap.data() as QnaData : null;
+      const timeout = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Firebase qna timeout')), 3000));
+      const snap = await Promise.race([getDoc(doc(db, "settings", "qna_policy")), timeout]);
+      return snap && (snap as any).exists?.() ? (snap as any).data() as QnaData : null;
     } catch { return null; }
   },
 
@@ -1911,7 +1922,10 @@ export const StorageService = {
     if (isSupabaseDataEnabled()) {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
-        await supabaseMutate('app_settings?key=eq.qna_policy', 'PATCH', { value: data });
+        const result = await supabaseMutate<Array<unknown>>('app_settings?key=eq.qna_policy', 'PATCH', { value: data });
+        if (!result || (Array.isArray(result) && result.length === 0)) {
+          await supabaseMutate('app_settings', 'POST', { key: 'qna_policy', value: data });
+        }
         return;
       } catch (e) {
         console.warn("[Storage] Supabase qna save failed, falling back to Firebase:", e);
@@ -1969,9 +1983,7 @@ export const StorageService = {
       legacyData = await loadLegacyCashClosings();
       if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'cash closings from legacy source ✅');
     } catch (e) {
-      if (!localAdminDataBridgeDisabled) {
-        console.warn('[Storage] Legacy closings failed:', e);
-      }
+      console.warn('[Storage] Legacy closings failed:', e);
     }
 
     const merged = mergeCashClosingSources(supabaseData, legacyData);
@@ -1980,7 +1992,7 @@ export const StorageService = {
   },
 
   subscribeCashClosings: (callback: (data: CashClosing[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<CashClosing>({
         loadSupabase: loadSupabaseCashClosings,
         loadLegacy: loadLegacyCashClosings,
@@ -2082,9 +2094,7 @@ export const StorageService = {
       legacyData = await loadLegacyExpenditures();
       if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'expenditures from legacy source ✅');
     } catch (e) {
-      if (!localAdminDataBridgeDisabled) {
-        console.warn('[Storage] Legacy expenditures failed:', e);
-      }
+      console.warn('[Storage] Legacy expenditures failed:', e);
     }
 
     const merged = mergeExpenditureSources(supabaseData, legacyData);
@@ -2093,7 +2103,7 @@ export const StorageService = {
   },
 
   subscribeExpenditures: (callback: (data: Expenditure[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled() || canUseLocalLegacyReadBridge()) {
+    if (isSupabaseDataEnabled()) {
       return subscribeMergedAdminCollection<Expenditure>({
         loadSupabase: loadSupabaseExpenditures,
         loadLegacy: loadLegacyExpenditures,
@@ -2191,10 +2201,27 @@ export const StorageService = {
 
     if (isSupabaseDataEnabled()) {
       try {
+        // FK 관계 조인 포함 쿼리 — FK 미적용 시 PGRST200 에러 발생
+        const EMPLOYEES_WITH_RELATIONS = 'employees?select=id,profile_id,legacy_admin_doc_id,name,email,job_title,employment_status,org_type,phone,memo,security,login_id,created_at,updated_at,employee_roles(is_primary,role:roles(code,name)),employee_branch_assignments(is_primary,branch_id)&order=name.asc&limit=500';
+        // FK 없을 때 폴백: 관계 없이 기본 컬럼만 조회
+        const EMPLOYEES_WITHOUT_RELATIONS = 'employees?select=id,profile_id,legacy_admin_doc_id,name,email,job_title,employment_status,org_type,phone,memo,security,login_id,created_at,updated_at&order=name.asc&limit=500';
+
+        let employeeRows: Array<Record<string, unknown>> | null = null;
+        try {
+          employeeRows = await supabaseGet<Array<Record<string, unknown>>>(EMPLOYEES_WITH_RELATIONS);
+        } catch (relErr: unknown) {
+          const errCode = (relErr as { code?: string })?.code || '';
+          const errMsg = (relErr as { message?: string })?.message || '';
+          if (errCode === 'PGRST200' || errMsg.includes('relationship')) {
+            console.warn('[Storage] employee_roles/employee_branch_assignments FK 누락 — 폴백 쿼리로 재시도');
+            employeeRows = await supabaseGet<Array<Record<string, unknown>>>(EMPLOYEES_WITHOUT_RELATIONS);
+          } else {
+            throw relErr;
+          }
+        }
+
         const [rows, locationRows, branchRows] = await Promise.all([
-          supabaseGet<Array<Record<string, unknown>>>(
-            'employees?select=id,profile_id,legacy_admin_doc_id,name,email,job_title,employment_status,org_type,phone,memo,security,login_id,created_at,updated_at,employee_roles(is_primary,role:roles(code,name)),employee_branch_assignments(is_primary,branch_id)&order=name.asc&limit=500'
-          ),
+          Promise.resolve(employeeRows),
           supabaseGet<Array<Record<string, unknown>>>(
             'locations?select=id,name,short_code,branch_code&is_active=eq.true&limit=500'
           ),
@@ -2290,10 +2317,7 @@ export const StorageService = {
     }
 
     try {
-      if (canUseLocalAdminDataBridge()) {
-        const items = await fetchLocalAdminBridge<AdminUser[]>('/api/collections/admins');
-        firebaseData = collapseAdminDirectoryEntries(items);
-      } else if (!isSupabaseDataEnabled()) {
+      if (!isSupabaseDataEnabled()) {
         const snap = await getDocs(collection(db, 'admins'));
         firebaseData = collapseAdminDirectoryEntries(snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser)));
       }
@@ -2628,16 +2652,6 @@ export const StorageService = {
       };
     }
 
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<AdminUser[]>(
-        '/api/collections/admins',
-        callback,
-        [],
-        (items) => collapseAdminDirectoryEntries(items),
-        'Admins local bridge'
-      );
-    }
-
     try {
       const dbRef = collection(db, 'admins');
       const q = query(dbRef, orderBy('createdAt', 'desc'));
@@ -2672,13 +2686,15 @@ export const StorageService = {
     const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${config.apiKey}`;
 
     const prompt = `
-      Translate the following Korean location information into English (en), Japanese (ja), and Simplified Chinese (zh).
+      Translate the following Korean location information into English (en), Japanese (ja), Simplified Chinese (zh), Traditional Chinese Taiwan (zh_tw), and Traditional Chinese Hong Kong (zh_hk).
+      For addresses: use romanized Korean address format for English/Japanese, and appropriate localized format for Chinese variants.
+      For zh_tw use Taiwan Traditional Chinese conventions. For zh_hk use Hong Kong Traditional Chinese conventions.
       Provide the result in a strict JSON format with the following keys:
       {
-        "name_en": "...", "name_ja": "...", "name_zh": "...",
-        "address_en": "...", "address_ja": "...", "address_zh": "...",
-        "pickupGuide_en": "...", "pickupGuide_ja": "...", "pickupGuide_zh": "...",
-        "description_en": "...", "description_ja": "...", "description_zh": "..."
+        "name_en": "...", "name_ja": "...", "name_zh": "...", "name_zh_tw": "...", "name_zh_hk": "...",
+        "address_en": "...", "address_ja": "...", "address_zh": "...", "address_zh_tw": "...", "address_zh_hk": "...",
+        "pickupGuide_en": "...", "pickupGuide_ja": "...", "pickupGuide_zh": "...", "pickupGuide_zh_tw": "...", "pickupGuide_zh_hk": "...",
+        "description_en": "...", "description_ja": "...", "description_zh": "...", "description_zh_tw": "...", "description_zh_hk": "..."
       }
 
       Korean Data:
@@ -2918,6 +2934,20 @@ export const StorageService = {
   },
 
   subscribeDiscountCodes: (callback: (data: DiscountCode[]) => void): (() => void) => {
+    if (isSupabaseDataEnabled()) {
+      return supabasePollingSubscribe<DiscountCode>(
+        'discount_codes?select=*&order=code.asc',
+        callback,
+        (row) => ({
+          id: String(row.id),
+          code: String(row.code),
+          amountPerBag: Number(row.amount_per_bag || 0),
+          description: String(row.description || ''),
+          isActive: Boolean(row.is_active),
+          allowedService: String(row.allowed_service || 'ALL'),
+        } as DiscountCode)
+      );
+    }
     try {
       const q = query(collection(db, "promo_codes"), orderBy("code", "asc"));
       return onSnapshot(q, (snapshot: any) => {
@@ -3118,16 +3148,6 @@ export const StorageService = {
         callback,
         (row) => snakeToCamel(row) as unknown as SystemNotice,
         10000
-      );
-    }
-
-    if (canUseLocalAdminDataBridge()) {
-      return subscribeLocalAdminBridge<SystemNotice[]>(
-        '/api/collections/notices',
-        callback,
-        [],
-        (items: any[]) => items.sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || '')),
-        'Notices local bridge'
       );
     }
 

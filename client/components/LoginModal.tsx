@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth } from '../firebaseApp';
 import {
-  signInWithPopup,
-  GoogleAuthProvider,
-  signInWithEmailAndPassword
-} from 'firebase/auth';
+  signInWithEmailAndPassword,
+  signInWithGoogle,
+} from '../firebaseApp';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -25,8 +23,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
     setIsLoading(true);
     setError(null);
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      await signInWithGoogle();
       onLoginSuccess?.();
       onClose();
     } catch (err: any) {
@@ -43,7 +40,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
     setIsLoading(true);
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(email, password);
       onLoginSuccess?.();
       onClose();
     } catch (err: any) {

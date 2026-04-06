@@ -268,10 +268,7 @@ auth.users.id
 
 ### 마이그레이션 / 부트스트랩
 
-- `scripts/supabase/syncFirebasePhase1Auth.mjs`
-- `scripts/supabase/syncFirebasePhase1Org.mjs`
 - `scripts/supabase/bootstrapFirstAdmin.mjs`
-- `scripts/supabase/migrateFirebaseData.mjs`
 - `scripts/supabase/verifyPhase1Access.mjs`
 
 ### Edge Functions
@@ -281,18 +278,12 @@ auth.users.id
 - `supabase/functions/toss-payments`
 - `supabase/functions/cancel-booking`
 - `supabase/functions/sync-google-reviews`
+- `supabase/functions/notify-google-chat`
 
 ### 서버 측 직접 DB 접근
 
-- `functions/src/shared/dbService.js`
-
-주의:
-
-- 이 파일은 `POSTGRES_URL`로 직접 PostgreSQL 연결을 열고
-- `app.user_id`, `app.role` 세션 변수를 세팅하는 방식이다.
-
-하지만 현재 Supabase 문서와 RLS 기준선은 주로 `auth.uid()`와 관계 테이블 기반이다.  
-즉, 이 경로는 현재 Supabase RLS 설계와 완전히 같은 모델이 아니다.
+- 현재 운영 기준선에는 Firebase Functions 기반 직접 DB 접근 경로를 포함하지 않는다.
+- 서버 런타임은 Supabase Edge Functions와 Supabase Auth/RLS 기준으로 본다.
 
 ---
 
@@ -433,10 +424,8 @@ auth.users.id
 
 ### C. 서버 직접 DB 접근 모델이 별도다
 
-- `functions/src/shared/dbService.js`는 세션 변수 기반
-- Supabase 쪽 문서는 `auth.uid()` 기반
-
-즉, 둘을 같은 권한 모델로 간주하면 안 된다.
+- 과거 Firebase Functions 기반 직접 DB 접근 모델은 현재 운영 기준선에서 제거되었다.
+- 현재 문서 기준 서버 권한 모델은 `auth.uid()`와 관계 테이블 기반으로만 해석한다.
 
 ### D. 관리자 UI는 아직 레거시 role명을 사용한다
 

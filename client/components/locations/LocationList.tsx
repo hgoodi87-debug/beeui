@@ -205,7 +205,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                 setActiveStep(next);
                             }} className="flex-1 flex items-center gap-2 md:gap-2 shrink-0 py-1.5 md:py-1.5 hover:bg-black/5 rounded-2xl transition-all justify-center">
                                 <div className="bg-bee-yellow text-bee-black text-[9px] md:text-[10px] font-black px-2 md:px-3 h-6 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-md border border-bee-black/5 whitespace-nowrap font-montserrat">
-                                    {lang === 'ko' ? (isDelivery ? '보내는날' : '맡기는 날') : (t.locations_page?.badge_pick?.slice(0, 1) || 'P')}
+                                    {isDelivery ? (t.locations_page?.badge_pick_delivery || t.locations_page?.badge_pick || 'DROP') : (t.locations_page?.badge_pick || 'DROP')}
                                 </div>
                                 <div className="flex items-baseline gap-1.5 md:gap-2">
                                     <span className="text-[14px] md:text-[17px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap font-montserrat">{formatToMMDD(bookingDate)}</span>
@@ -219,7 +219,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                 setActiveStep(next);
                             }} className="flex-1 flex items-center gap-2 md:gap-2 shrink-0 py-1.5 md:py-1.5 hover:bg-black/5 rounded-2xl transition-all justify-center">
                                 <div className="bg-gray-100 text-gray-400 text-[9px] md:text-[10px] font-black px-2 md:px-3 h-6 md:h-7 flex items-center justify-center rounded-full uppercase tracking-tighter shrink-0 shadow-md border border-gray-200 whitespace-nowrap font-montserrat">
-                                    {lang === 'ko' ? (isDelivery ? '받는날' : '찾는 날') : (t.locations_page?.badge_ret?.slice(0, 1) || 'R')}
+                                    {isDelivery ? (t.locations_page?.badge_ret_delivery || t.locations_page?.badge_ret || 'PICK') : (t.locations_page?.badge_ret || 'PICK')}
                                 </div>
                                 <div className="flex items-baseline gap-1.5 md:gap-2">
                                     <span className="text-[14px] md:text-[17px] font-black text-gray-900 italic tracking-tighter whitespace-nowrap font-montserrat">{formatToMMDD(returnDate)}</span>
@@ -285,7 +285,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                         <h3 className="text-[16px] font-black italic tracking-tighter text-gray-900 uppercase font-montserrat">
                                             {t.booking?.bags_selection_title || 'Select Baggage'}
                                         </h3>
-                                        <p className="text-[9px] font-black text-bee-black/30 uppercase tracking-widest leading-none mt-1 font-montserrat">Premium Luggage Care</p>
+                                        <p className="text-[9px] font-black text-bee-black/30 uppercase tracking-widest leading-none mt-1 font-montserrat">{t.locations_page?.premium_luggage_care || 'Premium Luggage Care'}</p>
                                     </div>
                                     <button title="닫기" onClick={() => setActiveStep(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                         <X size={20} className="text-gray-900" />
@@ -389,7 +389,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                                         className={`py-3 px-4 rounded-xl text-[10px] font-black transition-all flex flex-col items-center justify-center gap-0.5 ${isPast ? 'bg-gray-50 text-gray-200 border-gray-50' : isSelected ? 'bg-bee-black text-bee-yellow' : 'bg-white border border-gray-100 hover:border-bee-yellow'}`}
                                                     >
                                                         <span>{h}</span>
-                                                        {isPast && <span className="text-[7px] opacity-60">({lang === 'ko' ? '마감' : 'Closed'})</span>}
+                                                        {isPast && <span className="text-[7px] opacity-60">({t.locations_page?.slot_closed || 'Closed'})</span>}
                                                     </button>
                                                 );
                                             })}
@@ -479,24 +479,31 @@ const LocationList: React.FC<LocationListProps> = ({
                             >
                                 {isClosest && (
                                     <div className="absolute -top-2 -left-2 z-30 bg-bee-black text-bee-yellow text-[8px] md:text-[10px] font-black px-2 py-1 rounded-lg shadow-lg border border-bee-yellow/30 animate-bounce font-montserrat italic uppercase tracking-tighter">
-                                        Closest ✨
+                                        {t.locations_page?.closest_label || 'Closest ✨'}
                                     </div>
                                 )}
 
                                 <div className="flex-1 flex flex-col items-start gap-1 md:gap-2.5 min-w-0">
                                     <div className="text-[12px] md:text-[20px] font-black tracking-[-0.05em] whitespace-nowrap overflow-hidden text-ellipsis w-full text-gray-900 group-hover:text-bee-black transition-colors">
                                         {(() => {
-                                            if (lang === 'ko') return branch.name;
+                                            const b = branch as any;
+                                            if (lang === 'ko') return b.name;
+                                            // Supabase 경유 시 snakeToCamel 변환 → camelCase 우선 조회
+                                            // INITIAL_LOCATIONS 폴백은 snake_case → 둘 다 확인
+                                            if (lang === 'en') return b.nameEn || b.name_en || b.name;
+                                            if (lang === 'zh-TW') return b.nameZhTw || b.name_zh_tw || b.nameZh || b.name_zh || b.name;
+                                            if (lang === 'zh-HK') return b.nameZhHk || b.name_zh_hk || b.nameZh || b.name_zh || b.name;
+                                            if (lang === 'ja') return b.nameJa || b.name_ja || b.name;
+                                            // 기타 언어 generic 처리
                                             const lk = lang.replace('-', '_').toLowerCase();
-                                            if (branch[`name_${lk}`]) return branch[`name_${lk}`];
-                                            if (lk.startsWith('zh') && branch.name_zh) return branch.name_zh;
-                                            return branch.name_en || branch.name;
+                                            const ck = 'name' + lk.split('_').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+                                            return b[ck] || b[`name_${lk}`] || b.nameEn || b.name_en || b.name;
                                         })()}
                                     </div>
 
                                     <div className="flex items-center gap-1.5">
                                         <div className={`px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-wider w-fit border shadow-sm ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                                            {isActive ? 'ACTIVE' : 'CLOSE'}
+                                            {isActive ? (t.locations_page?.open || 'ACTIVE') : (t.locations_page?.close || 'CLOSE')}
                                         </div>
                                         {branch.distance !== undefined && (
                                             <div className="text-[8px] md:text-[12px] font-black text-blue-500 italic font-montserrat">
@@ -523,7 +530,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                     {branch.imageUrl ? (
                                         <img
                                             src={branch.imageUrl}
-                                            alt={`${branch.name} 빌리버 짐보관 배송 지점`}
+                                            alt={`${branch.name} ${t.locations_page?.image_alt || 'Beeliber luggage storage'}`}
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
                                             onError={(e) => {
                                                 (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1580978640103-ba69fa7a9003?q=80&w=2670&auto=format&fit=crop';
@@ -541,8 +548,10 @@ const LocationList: React.FC<LocationListProps> = ({
                 </div>
 
                 {filteredBranches.length === 0 && (
-                    <div className="py-10 text-center flex flex-col items-center w-full bg-white/50 backdrop-blur-sm rounded-[2rem]">
-                        <p className="text-gray-400 font-bold text-sm tracking-tight">{t.locations_page?.no_results || 'No branches found.'}</p>
+                    <div className="py-12 text-center flex flex-col items-center w-full bg-white/50 backdrop-blur-sm rounded-[2rem] gap-3 px-6">
+                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl mb-1">📍</div>
+                        <p className="text-gray-700 font-black text-sm tracking-tight">{t.locations_page?.no_results || 'No locations available.'}</p>
+                        <p className="text-gray-400 font-medium text-xs leading-relaxed max-w-[240px]">{t.locations_page?.no_results_hint || 'Select your dates above to see storage locations near you.'}</p>
                     </div>
                 )}
 
@@ -550,9 +559,7 @@ const LocationList: React.FC<LocationListProps> = ({
                     <div className="px-4 md:px-6 pt-1">
                         <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/70 backdrop-blur-md border border-white/40 shadow-sm text-[10px] md:text-[11px] font-black text-gray-500 uppercase tracking-[0.08em]">
                             <span className="w-1.5 h-1.5 rounded-full bg-bee-yellow" />
-                            {lang === 'ko'
-                                ? `가까운 3개 지점만 표시 중 · ${hiddenBranchCount}개는 지도에서 확인`
-                                : `Showing nearest 3 · ${hiddenBranchCount} more on map`}
+                            {(t.locations_page?.nearest_3_info || 'Showing nearest 3 · {count} more on map').replace('{count}', String(hiddenBranchCount))}
                         </div>
                     </div>
                 )}
@@ -561,9 +568,7 @@ const LocationList: React.FC<LocationListProps> = ({
                     <div className="px-4 md:px-6 pt-1">
                         <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/70 backdrop-blur-md border border-white/40 shadow-sm text-[10px] md:text-[11px] font-black text-gray-500 uppercase tracking-[0.12em]">
                             <span className="w-1.5 h-1.5 rounded-full bg-bee-yellow animate-pulse" />
-                            {lang === 'ko'
-                                ? `지점 ${visibleBranches.length}/${filteredBranches.length} 불러오는 중`
-                                : `Loading ${visibleBranches.length}/${filteredBranches.length}`}
+                            {(t.locations_page?.loading_branches || 'Loading {current}/{total}').replace('{current}', String(visibleBranches.length)).replace('{total}', String(filteredBranches.length))}
                         </div>
                     </div>
                 )}

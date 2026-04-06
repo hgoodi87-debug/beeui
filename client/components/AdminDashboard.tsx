@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabaseMutate, isSupabaseDataEnabled } from '../services/supabaseClient';
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, PriceSettings, StorageTier, AdminUser, SystemNotice, HeroConfig, GoogleCloudConfig, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
-import { StorageService, canUseLocalLegacyReadBridge } from '../services/storageService';
+import { StorageService } from '../services/storageService';
 import { AuditService } from '../services/auditService';
 import { uploadBranchManagedAsset, uploadHeroManagedAsset, uploadNoticeManagedAsset } from '../services/supabaseStorageUploadService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
-import { getSupabaseBaseUrl } from '../services/supabaseRuntime';
+import { getSupabaseBaseUrl, getSupabaseConfig } from '../services/supabaseRuntime';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminStore } from '../src/store/adminStore';
 import { useAdmins } from '../src/domains/admin/hooks/useAdmins';
@@ -65,15 +65,6 @@ const normalizeStorageTierDefaults = (tiers: StorageTier[] | null | undefined): 
 // HERO constant removed
 
 
-const CLOUD_PLACEHOLDERS: Record<string, string> = {
-  apiKey: "예: AIzaSy... (API Key)",
-  authDomain: "예: project-id.firebaseapp.com",
-  projectId: "예: project-id (프로젝트 ID)",
-  storageBucket: "예: project-id.appspot.com",
-  messagingSenderId: "예: 123456789... (Sender ID)",
-  appId: "예: 1:123456789:web:... (App ID)"
-};
-
 const LOCATION_TYPE_OPTIONS = [
   { value: LocationType.PARTNER, label: '파트너지점 (Partner Branch)' },
   { value: LocationType.AIRPORT, label: '공항 (Airport)' },
@@ -101,6 +92,7 @@ const DiscountTab = lazy(() => import('./admin/DiscountTab'));
 const ReportsTab = lazy(() => import('./admin/ReportsTab'));
 const RoadmapTab = lazy(() => import('./admin/RoadmapTab'));
 const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
+const AIReviewTab = lazy(() => import('./admin/AIReviewTab'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
 const FinancialComparisonTab = lazy(() => import('./admin/FinancialComparisonTab'));
 
@@ -178,13 +170,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const needsInquiryData = activeTab === 'PARTNERSHIP_INQUIRIES';
   const needsSettlementData = ['OVERVIEW', 'DAILY_SETTLEMENT', 'ACCOUNTING', 'MONTHLY_SETTLEMENT'].includes(activeTab);
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>([]); // [스봉이] 일괄 처리를 위한 체크박스 상태 💅
-  const [searchDate, setSearchDate] = useState<string>(''); // [스봉이] 특정 일자 예약 조회 💅
+  const [searchStartDate, setSearchStartDate] = useState<string>('');
+  const [searchEndDate, setSearchEndDate] = useState<string>('');
   const [isBatchUpdating, setIsBatchUpdating] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: locations = [] } = useLocations({ includeInactive: true });
   const { data: allBookings = [] } = useBookings();
-  const shouldUseSqlRevenueSummaries = needsSettlementData && !canUseLocalLegacyReadBridge();
+  const shouldUseSqlRevenueSummaries = needsSettlementData;
   const { data: revenueDailySummaries = [] } = useAdminRevenueDailySummaries({ enabled: shouldUseSqlRevenueSummaries });
   const { data: revenueMonthlySummaries = [] } = useAdminRevenueMonthlySummaries({ enabled: shouldUseSqlRevenueSummaries });
 
@@ -394,7 +387,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
       const bookingDetailId = await resolveBookingDetailId(booking.id);
       const SUPABASE_URL = getSupabaseBaseUrl();
-      const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '').trim();
+      const SUPABASE_KEY = getSupabaseConfig().anonKey;
       const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
@@ -448,8 +441,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   // Cloud Config State
   const [cloudConfig, setCloudConfig] = useState<GoogleCloudConfig>({
-    apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '',
-    isActive: false, enableWorkspaceAutomation: false, enableGeminiAutomation: true, googleChatWebhookUrl: ''
+    apiKey: '',
+    measurementId: '',
+    isActive: true,
+    enableWorkspaceAutomation: false,
+    enableGeminiAutomation: true,
+    mapId: '',
+    mapSecret: '',
   });
 
   // Location Form State
@@ -841,17 +839,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
       if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
 
-      // 3. 취소/환불: 날짜 구간 필터 적용
-      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
+      // 3. 취소/환불/완료: 날짜 구간 필터 적용
+      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.status === BookingStatus.COMPLETED) {
         const d = b.pickupDate || '';
         return d >= cancelStartDate && d <= cancelEndDate;
       }
 
       // 4. 진행중 상태는 날짜 무관 표시
-      const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+      const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
       if (incompleteStatuses.includes(b.status as any)) return true;
 
-      // 5. 완료 건: 오늘 날짜만
+      // 5. 그 외: 오늘 날짜만
       return b.pickupDate === todayKST;
     });
 
@@ -885,6 +883,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   // Filter Bookings for Current Tab
   const filteredBookings = useMemo(() => {
+    // DB 뷰(admin_booking_list_v1)는 status 컬럼을 계산해서 반환하지만
+    // 직접 booking_details 조회 시에는 settlement_status만 존재 → 둘 다 확인
+    const getEffectiveStatus = (b: BookingState): string => {
+      return ((b.status || b.settlementStatus || '') as string);
+    };
+
+    const DONE_STATUSES = new Set([
+      BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.REFUNDED,
+      '완료', '취소됨', '환불완료', 'COMPLETED', 'CANCELLED', 'REFUNDED',
+    ]);
+
     return bookings.filter(b => {
       // 1. Service Type Filter
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
@@ -896,41 +905,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       } else {
         if (b.isDeleted === true || b.settlementStatus === 'deleted') return false;
 
-        // [스봉이] 특정 일자 조회 필터 적용 💅✨ (이게 있으면 다른 날짜 제약 무시)
-        if (searchDate) {
-          const isMatchDate = b.pickupDate === searchDate || (b.dropoffDate && b.pickupDate <= searchDate && b.dropoffDate >= searchDate);
-          if (!isMatchDate) return false;
+        const effectiveStatus = getEffectiveStatus(b);
+
+        // 날짜 범위 조회 필터 (설정 시 status 필터 무시하고 날짜 범위만 적용)
+        if (searchStartDate || searchEndDate) {
+          const bookingDate = b.pickupDate || '';
+          if (searchStartDate && bookingDate < searchStartDate) return false;
+          if (searchEndDate && bookingDate > searchEndDate) return false;
         } else {
-          // [스봉이] 취소/환불: 날짜 구간 필터 적용 💅
-          if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
-            const d = b.pickupDate || '';
-            if (d < cancelStartDate || d > cancelEndDate) return false;
+          // ALL 탭: 완료/취소/환불 항목 기본 숨김
+          if (activeStatusTab === 'ALL') {
+            if (DONE_STATUSES.has(effectiveStatus)) return false;
           } else {
-            // 진행중 상태는 날짜 무관 표시
-            const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-            const isStatusIncomplete = incompleteStatuses.includes(b.status as any);
-            if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+            // 완료/취소/환불 탭이 아닌 경우: 날짜 구간 필터 적용
+            if (DONE_STATUSES.has(effectiveStatus)) {
+              const d = b.pickupDate || '';
+              if (d < cancelStartDate || d > cancelEndDate) return false;
+            } else {
+              // 진행중 상태는 날짜 무관 표시
+              const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+              const isStatusIncomplete = incompleteStatuses.includes(effectiveStatus as any);
+              if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+            }
           }
         }
       }
 
       if (activeStatusTab !== 'ALL') {
-        if (activeStatusTab === 'PENDING' && b.status !== BookingStatus.PENDING) return false;
-        if (activeStatusTab === 'ACTIVE' && ![BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any)) return false;
-        if (activeStatusTab === 'COMPLETED' && b.status !== BookingStatus.COMPLETED) return false;
-        if (activeStatusTab === 'CANCELLED' && ![BookingStatus.CANCELLED, BookingStatus.REFUNDED].includes(b.status as any)) return false;
+        const effectiveStatus = getEffectiveStatus(b);
+        if (activeStatusTab === 'PENDING' && effectiveStatus !== BookingStatus.PENDING) return false;
+        if (activeStatusTab === 'ACTIVE' && ![BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(effectiveStatus as any)) return false;
+        if (activeStatusTab === 'COMPLETED' && effectiveStatus !== BookingStatus.COMPLETED && effectiveStatus !== '완료' && effectiveStatus !== 'COMPLETED') return false;
+        if (activeStatusTab === 'CANCELLED' && ![BookingStatus.CANCELLED, BookingStatus.REFUNDED, '취소됨', '환불완료'].includes(effectiveStatus as any)) return false;
 
-        // [스봉이] 실무형 탭 추가 (P0) 💅
-        if (activeStatusTab === 'TODAY_IN' && !(b.status === BookingStatus.PENDING && b.pickupDate === todayKST)) return false;
-        if (activeStatusTab === 'STORAGE' && b.status !== BookingStatus.STORAGE) return false;
-        if (activeStatusTab === 'TODAY_OUT' && !(b.status === BookingStatus.STORAGE && (b.returnDate === todayKST || b.dropoffDate === todayKST))) return false;
-        if (activeStatusTab === 'TRANSIT' && b.status !== BookingStatus.TRANSIT) return false;
-        if (activeStatusTab === 'ARRIVED' && b.status !== BookingStatus.ARRIVED) return false;
-        if (activeStatusTab === 'ISSUE' && !(b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || !!b.auditNote)) return false;
+        if (activeStatusTab === 'TODAY_IN' && !(effectiveStatus === BookingStatus.PENDING && b.pickupDate === todayKST)) return false;
+        if (activeStatusTab === 'STORAGE' && effectiveStatus !== BookingStatus.STORAGE) return false;
+        if (activeStatusTab === 'TODAY_OUT' && !(effectiveStatus === BookingStatus.STORAGE && (b.returnDate === todayKST || b.dropoffDate === todayKST))) return false;
+        if (activeStatusTab === 'TRANSIT' && effectiveStatus !== BookingStatus.TRANSIT) return false;
+        if (activeStatusTab === 'ARRIVED' && effectiveStatus !== BookingStatus.ARRIVED) return false;
+        if (activeStatusTab === 'ISSUE' && !(effectiveStatus === BookingStatus.CANCELLED || effectiveStatus === BookingStatus.REFUNDED || !!b.auditNote)) return false;
       }
       return true;
     });
-  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate]);
+  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate, searchStartDate, searchEndDate]);
 
   // Daily Statistics Calculation (Aggregated by pickupDate)
   const dailyStats = useMemo(() => {
@@ -1050,7 +1067,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       console.error("Failed to save location", e);
       let errorMsg = "지점 저장 중 오류가 발생했습니다.";
       if (e.code === 'permission-denied' || e.message?.includes('permission')) {
-        errorMsg += "\n(권한 오류: CLOUD 탭에서 '저장소 활성화'를 끄고 로컬 모드를 사용하거나, Firebase 규칙을 확인하세요.)";
+        errorMsg += "\n(권한 오류: 현재 관리자 세션 권한 또는 Supabase RLS/Storage 정책을 확인해 주세요.)";
       } else if (e.message) {
         errorMsg += `\n(${e.message})`;
       }
@@ -1792,6 +1809,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
+  const handleBulkPayoutConfirm = async (bookingIds: string[]) => {
+    if (bookingIds.length === 0) return;
+    try {
+      const results = await Promise.allSettled(
+        bookingIds.map(id =>
+          mutateBookingRecord(id, {
+            supabaseMethod: 'PATCH',
+            supabaseBody: { settlement_status: '정산확정' },
+          })
+        )
+      );
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        throw (failures[0] as PromiseRejectedResult).reason;
+      }
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      await AuditService.logAction(currentActor, 'UPDATE', { id: 'bulk-payout', type: 'SETTLEMENT' }, { method: 'BULK_PAYOUT_CONFIRM', count: bookingIds.length });
+      alert(`${bookingIds.length}건 정산 확정 완료되었습니다.`);
+    } catch (e) {
+      console.error(e);
+      alert('정산처리 중 오류가 발생했습니다.');
+    }
+  };
+
   const handlePrintLabel = (booking: BookingState) => {
     const originName = locations.find(l => l.id === booking.pickupLocation)?.name || booking.pickupLocation;
     const destName = locations.find(l => l.id === booking.dropoffLocation)?.name || booking.dropoffLocation;
@@ -2193,7 +2234,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         alert(`이미지 업로드 성공! [${field === 'imageUrl' ? 'PC' : '모바일'}] 저장 버튼을 눌러야 최종 반영됩니다.`);
       } catch (e: any) {
         console.error("Hero upload error:", e);
-        alert(`히어로 이미지 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: Firebase Storage 규칙(Rules)이나 인증 상태를 확인하세요.`);
+        alert(`히어로 이미지 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: Supabase Storage 정책 또는 관리자 인증 상태를 확인하세요.`);
       }
     }
   };
@@ -2218,7 +2259,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         alert("영상 업로드가 완료되었습니다. 반드시 아래 '히어로 설정 저장하기' 버튼을 눌러야 확정됩니다.");
       } catch (e: any) {
         console.error("Hero video upload error:", e);
-        alert(`히어로 영상 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: 파일 용량 초과(50MB) 또는 Firebase Storage 권한 부족일 수 있습니다.`);
+        alert(`히어로 영상 업로드 실패: ${e.message || "알 수 없는 오류"}\n\n사유: 파일 용량 초과(50MB) 또는 Supabase Storage 권한 부족일 수 있습니다.`);
       } finally {
         setIsSaving(false);
       }
@@ -2362,6 +2403,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               {[
                 { id: 'ROADMAP', label: '전사 서비스 로드맵', icon: 'fa-map-location-dot' },
                 { id: 'LOCATIONS', label: '지점 마스터 관리', icon: 'fa-location-dot' },
+                { id: 'AI_REVIEW', label: 'AI 검수함', icon: 'fa-robot' },
                 { id: 'SYSTEM', label: '운영 정책 설정', icon: 'fa-sliders' },
                 { id: 'DISCOUNTS', label: '프로모션 마케팅', icon: 'fa-tags' },
                 { id: 'HR', label: '인사/권한 보안', icon: 'fa-user-tie' },
@@ -2468,6 +2510,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'ACCOUNTING', label: t.admin?.sidebar?.accounting || '매출 결산 보고', icon: 'fa-receipt' },
                         { id: 'MONTHLY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '월 정산 통제판', icon: 'fa-vault' },
                         { id: 'LOCATIONS', label: t.admin?.sidebar?.locations || '전 지점 마스터 관리', icon: 'fa-location-dot' },
+                        { id: 'AI_REVIEW', label: 'AI 검수함', icon: 'fa-robot' },
                         { id: 'ROADMAP', label: t.admin?.sidebar?.roadmap || '서비스 로드맵', icon: 'fa-map-location-dot' },
                         { id: 'CHATS', label: t.admin?.sidebar?.marketing || '실시간 채팅', icon: 'fa-comments' },
                       ].map(item => (
@@ -2592,13 +2635,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handlePrintLabel={handlePrintLabel}
               handleSoftDelete={handleSoftDelete}
               setSelectedBooking={setSelectedBooking}
+              adminRole={adminRole}
               onAddManual={() => setIsManualBooking(true)}
               cancelStartDate={cancelStartDate}
               setCancelStartDate={setCancelStartDate}
               cancelEndDate={cancelEndDate}
               setCancelEndDate={setCancelEndDate}
-              searchDate={searchDate}
-              setSearchDate={setSearchDate}
+              searchStartDate={searchStartDate}
+              setSearchStartDate={setSearchStartDate}
+              searchEndDate={searchEndDate}
+              setSearchEndDate={setSearchEndDate}
               selectedBookingIds={selectedBookingIds}
               setSelectedBookingIds={setSelectedBookingIds}
               handleBatchUpdateStatus={handleBatchUpdateStatus}
@@ -2698,6 +2744,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               setRevenueEndDate={setRevenueEndDate}
               monthlyControlStats={monthlyControlStats}
               accountingMonthlyStats={accountingMonthlyStats}
+              onBulkPayoutConfirm={handleBulkPayoutConfirm}
             />
           )}
 
@@ -2709,6 +2756,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               onStartDateChange={setRevenueStartDate}
               onEndDateChange={setRevenueEndDate}
             />
+          )}
+
+          {activeTab === 'AI_REVIEW' && (
+            <Suspense fallback={<AdminTabFallback />}>
+              <AIReviewTab />
+            </Suspense>
           )}
 
           {activeTab === 'NOTICE' && (
@@ -2767,7 +2820,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             <CloudTab
               cloudConfig={cloudConfig}
               setCloudConfig={setCloudConfig}
-              CLOUD_PLACEHOLDERS={CLOUD_PLACEHOLDERS}
               saveCloudSettings={saveCloudSettings}
               handleMigration={handleMigration}
               isMigrating={isMigrating}

@@ -50,6 +50,8 @@ interface LandingRenewalProps {
     branchData?: Branch;
 }
 
+const BOOKING_VIEWS = new Set(['LOCATIONS_STORE', 'LOCATIONS_DELIVER', 'LOCATIONS']);
+
 const LandingRenewal: React.FC<LandingRenewalProps> = ({
     t,
     lang,
@@ -65,6 +67,15 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
 }) => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const [showTracking, setShowTracking] = React.useState(false);
+
+    // 예약 페이지 이동 전 로그인 여부 확인
+    const handleBookingNavigate = React.useCallback((view: any) => {
+        if (BOOKING_VIEWS.has(view) && !user) {
+            onLoginClick();
+            return;
+        }
+        onNavigate(view);
+    }, [user, onLoginClick, onNavigate]);
 
     React.useEffect(() => {
         // [스봉이] 메타 광고 트래킹: 랜딩 페이지 조회 💅✨
@@ -169,7 +180,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                 <LandingHero
                     t={t}
                     lang={lang}
-                    onNavigate={onNavigate}
+                    onNavigate={handleBookingNavigate}
                     onTrackClick={() => setShowTracking(true)}
                     branchCode={branchCode}
                     branchData={branchData}
@@ -195,13 +206,13 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     <LandingFreedomSection t={t} />
                     
                     {/* L-PRICE (9) - 가격표 🏷️ */}
-                    <LandingPricing t={t} onNavigate={onNavigate} lang={lang} />
+                    <LandingPricing t={t} onNavigate={handleBookingNavigate} lang={lang} />
 
                     {/* L-FAQ (10) - FAQ (이제 절대 안 사라져요!) ✨ */}
                     <LandingFAQ t={t} />
 
                     {/* L-CTA (11) - 최종 CTA 🎁 */}
-                    <LandingFinalCTA t={t} onNavigate={onNavigate} lang={lang} />
+                    <LandingFinalCTA t={t} onNavigate={handleBookingNavigate} lang={lang} />
                 </React.Suspense>
 
 

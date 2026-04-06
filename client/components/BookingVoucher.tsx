@@ -136,7 +136,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
         >
             <style>
                 {`
-                @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+                @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
                 .font-pretendard { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif !important; }
                 @media print {
                     .no-print { display: none !important; }

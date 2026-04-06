@@ -1,4 +1,4 @@
-import { getSupabaseBaseUrl, getSupabasePublishableKey } from './supabaseRuntime';
+import { getSupabaseConfig } from './supabaseRuntime';
 
 export type AdminAuthProvider = 'firebase' | 'supabase';
 
@@ -24,8 +24,28 @@ interface SupabaseAdminSession {
   expiresAt?: number;
 }
 
-const supabaseUrl = getSupabaseBaseUrl();
-const supabasePublishableKey = getSupabasePublishableKey();
+interface SupabaseAuthUser {
+  id?: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}
+
+interface SupabaseAuthTokenResponse {
+  access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  user?: SupabaseAuthUser;
+  session?: {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    user?: SupabaseAuthUser;
+  };
+}
+
+const config = getSupabaseConfig();
+const supabaseUrl = config.url;
+const supabasePublishableKey = config.anonKey;
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
 const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -71,7 +91,7 @@ const ADMIN_IDENTIFIER_EMAIL_FALLBACKS: Record<string, string> = {
   'ndm': 'ndm@bee-liber.com',
   'npo': 'npo@bee-liber.com',
   'ptk': 'ptk@bee-liber.com',
-  'rlaxowl98': 'rlaxowl98@gmail.con',
+  'rlaxowl98': 'rlaxowl98@gmail.com',
   'sdo': 'sdo@bee-liber.com',
   'srk': 'srk@bee-liber.com',
   'swn': 'swn@bee-liber.com',
@@ -114,7 +134,7 @@ const ADMIN_IDENTIFIER_EMAIL_FALLBACKS: Record<string, string> = {
   '제주동문시장점': 'jdm@bee-liber.com',
   '제주지점': 'jej@bee-liber.com',
   '종로지점': 'jno@bee-liber.com',
-  '진호': 'rlaxowl98@gmail.con',
+  '진호': 'rlaxowl98@gmail.com',
   '창원지점': 'cwn@bee-liber.com',
   '천명': 'dbcjsaud@gmail.com',
   '충무로지점': 'cmr@bee-liber.com',
@@ -136,6 +156,37 @@ type PublicAdminDirectoryRow = {
 type RankedAdminDirectoryCandidate = {
   row: PublicAdminDirectoryRow;
   rank: number;
+};
+
+type EmployeeRoleLookupRow = {
+  is_primary: boolean;
+  role_id?: string;
+  role?: {
+    code?: string;
+    name?: string;
+  } | null;
+};
+
+type EmployeeBranchAssignmentLookupRow = {
+  is_primary: boolean;
+  branch_id?: string;
+  branch?: {
+    id: string;
+    branch_code?: string;
+    name?: string;
+  } | null;
+};
+
+type RoleRow = {
+  id: string;
+  code?: string;
+  name?: string;
+};
+
+type BranchRow = {
+  id: string;
+  branch_code?: string;
+  name?: string;
 };
 
 const clearStoredSupabaseAdminSession = () => {
@@ -165,7 +216,7 @@ const isSessionPastKstWindow = (savedAt: number) => {
 };
 
 const shouldRefreshSession = (session: SupabaseAdminSession) => {
-  if (!session.refreshToken) return false;
+  if (!session.refreshToken || !session.expiresAt) return false;
   return session.expiresAt - Date.now() <= ACCESS_TOKEN_REFRESH_BUFFER_MS;
 };
 
@@ -193,6 +244,20 @@ const preferAdminEmail = (...emails: Array<string | undefined>) => {
   });
 
   return candidates[0] || '';
+};
+
+const buildInFilter = (values: Array<string | undefined>) => {
+  const normalizedValues = Array.from(new Set(
+    values
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+  ));
+
+  if (!normalizedValues.length) {
+    return '';
+  }
+
+  return encodeURIComponent(`in.(${normalizedValues.join(',')})`);
 };
 
 const isLocalPreviewHost = () => {
@@ -347,6 +412,10 @@ export const getActiveAdminAccessToken = () => {
   return readSupabaseAdminSession()?.accessToken || '';
 };
 
+export const getActiveAdminUserId = () => {
+  return readSupabaseAdminSession()?.userId || '';
+};
+
 export const ensureActiveAdminSession = async () => {
   if (getAdminAuthProvider() !== 'supabase') {
     return null;
@@ -494,6 +563,149 @@ const supabaseRequest = async <T>(
   return body as T;
 };
 
+const normalizeSupabaseAuthPayload = async (authResponse: SupabaseAuthTokenResponse) => {
+  const accessToken = String(
+    authResponse.access_token
+    || authResponse.session?.access_token
+    || ''
+  ).trim();
+  const refreshToken = String(
+    authResponse.refresh_token
+    || authResponse.session?.refresh_token
+    || ''
+  ).trim();
+  const expiresIn = Number(
+    authResponse.expires_in
+    || authResponse.session?.expires_in
+    || 0
+  ) || undefined;
+
+  let user = authResponse.user || authResponse.session?.user || null;
+  if (!user?.id && accessToken) {
+    try {
+      user = await supabaseRequest<SupabaseAuthUser>('/auth/v1/user', {}, accessToken);
+    } catch (error) {
+      console.warn('[AdminAuth] Supabase /auth/v1/user fallback failed:', error);
+    }
+  }
+
+  return {
+    accessToken,
+    refreshToken: refreshToken || undefined,
+    expiresIn,
+    user,
+  };
+};
+
+const fetchEmployeeRoles = async (accessToken: string, employeeId: string): Promise<EmployeeRoleLookupRow[]> => {
+  const normalizedEmployeeId = String(employeeId || '').trim();
+  if (!normalizedEmployeeId) {
+    return [];
+  }
+
+  try {
+    const embeddedRoles = await supabaseRequest<EmployeeRoleLookupRow[]>(
+      `/rest/v1/employee_roles?select=is_primary,role:roles(code,name)&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    if (embeddedRoles.some((entry) => entry.role?.code || entry.role?.name)) {
+      return embeddedRoles;
+    }
+  } catch (error) {
+    console.warn('[AdminAuth] roles JOIN 조회 실패, role_id 폴백 사용:', error);
+  }
+
+  try {
+    const roleLinks = await supabaseRequest<EmployeeRoleLookupRow[]>(
+      `/rest/v1/employee_roles?select=is_primary,role_id&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    const roleFilter = buildInFilter(roleLinks.map((entry) => entry.role_id));
+    if (!roleFilter) {
+      return roleLinks.map((entry) => ({
+        is_primary: entry.is_primary,
+        role: null,
+      }));
+    }
+
+    const roles = await supabaseRequest<RoleRow[]>(
+      `/rest/v1/roles?select=id,code,name&id=${roleFilter}&limit=10`,
+      {},
+      accessToken
+    );
+
+    const roleMap = new Map(roles.map((role) => [role.id, role]));
+
+    return roleLinks.map((entry) => ({
+      is_primary: entry.is_primary,
+      role: entry.role_id ? roleMap.get(entry.role_id) || null : null,
+    }));
+  } catch (error) {
+    console.warn('[AdminAuth] role_id 폴백 조회 실패:', error);
+    return [];
+  }
+};
+
+const fetchEmployeeBranchAssignments = async (
+  accessToken: string,
+  employeeId: string
+): Promise<EmployeeBranchAssignmentLookupRow[]> => {
+  const normalizedEmployeeId = String(employeeId || '').trim();
+  if (!normalizedEmployeeId) {
+    return [];
+  }
+
+  try {
+    const embeddedAssignments = await supabaseRequest<EmployeeBranchAssignmentLookupRow[]>(
+      `/rest/v1/employee_branch_assignments?select=is_primary,branch:branches(id,branch_code,name)&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    if (embeddedAssignments.some((entry) => entry.branch?.id)) {
+      return embeddedAssignments;
+    }
+  } catch (error) {
+    console.warn('[AdminAuth] branches JOIN 조회 실패, branch_id 폴백 사용:', error);
+  }
+
+  try {
+    const branchLinks = await supabaseRequest<EmployeeBranchAssignmentLookupRow[]>(
+      `/rest/v1/employee_branch_assignments?select=is_primary,branch_id&employee_id=eq.${encodeURIComponent(normalizedEmployeeId)}&order=is_primary.desc&limit=10`,
+      {},
+      accessToken
+    );
+
+    const branchFilter = buildInFilter(branchLinks.map((entry) => entry.branch_id));
+    if (!branchFilter) {
+      return branchLinks.map((entry) => ({
+        is_primary: entry.is_primary,
+        branch: null,
+      }));
+    }
+
+    const branches = await supabaseRequest<BranchRow[]>(
+      `/rest/v1/branches?select=id,branch_code,name&id=${branchFilter}&limit=10`,
+      {},
+      accessToken
+    );
+
+    const branchMap = new Map(branches.map((branch) => [branch.id, branch]));
+
+    return branchLinks.map((entry) => ({
+      is_primary: entry.is_primary,
+      branch: entry.branch_id ? branchMap.get(entry.branch_id) || null : null,
+    }));
+  } catch (error) {
+    console.warn('[AdminAuth] branch_id 폴백 조회 실패:', error);
+    return [];
+  }
+};
+
 const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
   const normalizedIdentifier = normalizeAdminIdentifier(identifier);
   if (!normalizedIdentifier) return '';
@@ -528,7 +740,8 @@ const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
   settled.forEach((result, index) => {
     if (result.status !== 'fulfilled') return;
     const rank = lookups[index]?.rank ?? 99;
-    result.value.forEach((row) => {
+    const rows = Array.isArray(result.value) ? result.value : [];
+    rows.forEach((row) => {
       if (!normalizeAdminIdentifier(row.email)) return;
       candidates.push({ row, rank });
     });
@@ -586,10 +799,9 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     resolvedEmail = await resolveSupabaseLoginEmail(identifier);
   }
 
-  // 보안: 임의 이메일 자동 생성 제거 — 폴백 맵 또는 DB에 없으면 로그인 차단
   if (!resolvedEmail && !directEmailInput) {
-    const error = new Error('등록되지 않은 관리자입니다. 이메일 또는 등록된 ID로 로그인해주세요.') as Error & { code?: string };
-    error.code = 'supabase/unknown-admin';
+    const error = new Error('알 수 없는 관리자 ID입니다. 이메일로 직접 로그인하세요.') as Error & { code?: string };
+    error.code = 'supabase/unknown-admin-identifier';
     throw error;
   }
 
@@ -601,16 +813,7 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     throw error;
   }
 
-  const authResponse = await supabaseRequest<{
-    access_token: string;
-    refresh_token: string;
-    expires_in?: number;
-    user: {
-      id: string;
-      email?: string;
-      user_metadata?: Record<string, unknown>;
-    };
-  }>(
+  const authResponse = await supabaseRequest<SupabaseAuthTokenResponse>(
     '/auth/v1/token?grant_type=password',
     {
       method: 'POST',
@@ -621,8 +824,18 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     }
   );
 
-  const accessToken = authResponse.access_token;
-  const user = authResponse.user;
+  const {
+    accessToken,
+    refreshToken,
+    expiresIn,
+    user,
+  } = await normalizeSupabaseAuthPayload(authResponse);
+
+  if (!accessToken || !user || !user.id) {
+    const error = new Error('로그인 응답에서 사용자 또는 세션 정보를 찾을 수 없습니다. Supabase Auth 설정을 확인해주세요.') as Error & { code?: string };
+    error.code = 'supabase/invalid-auth-response';
+    throw error;
+  }
 
   const [profiles, employees] = await Promise.all([
     supabaseRequest<Array<{
@@ -647,8 +860,8 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     accessToken
   )]);
 
-  const employee = employees[0];
-  const profile = profiles[0];
+  const employee = (Array.isArray(employees) ? employees : [])[0];
+  const profile = (Array.isArray(profiles) ? profiles : [])[0];
 
   if (!employee) {
     const error = new Error('직원 프로필이 아직 준비되지 않았습니다.') as Error & { code?: string };
@@ -662,39 +875,10 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     throw error;
   }
 
-  // roles JOIN + branches JOIN (branches FK 없으면 폴백)
-  let employeeRoles: Array<{ is_primary: boolean; role: { code?: string; name?: string } | null }> = [];
-  let assignments: Array<{ is_primary: boolean; branch: { id: string; branch_code?: string; name?: string } | null }> = [];
-
-  try {
-    [employeeRoles, assignments] = await Promise.all([
-    supabaseRequest<Array<{
-    is_primary: boolean;
-    role: {
-      code?: string;
-      name?: string;
-    } | null;
-  }>>(
-    `/rest/v1/employee_roles?select=is_primary,role:roles(code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
-    {},
-    accessToken
-  ),
-
-    supabaseRequest<Array<{
-    is_primary: boolean;
-    branch: {
-      id: string;
-      branch_code?: string;
-      name?: string;
-    } | null;
-  }>>(
-    `/rest/v1/employee_branch_assignments?select=is_primary,branch:branches(id,branch_code,name)&employee_id=eq.${encodeURIComponent(employee.id)}&order=is_primary.desc&limit=10`,
-    {},
-    accessToken
-  )]);
-  } catch (joinErr) {
-    console.warn('[AdminAuth] roles/branches JOIN 부분 실패, 폴백:', joinErr);
-  }
+  const [employeeRoles, assignments] = await Promise.all([
+    fetchEmployeeRoles(accessToken, employee.id),
+    fetchEmployeeBranchAssignments(accessToken, employee.id),
+  ]);
 
   const primaryRole = employeeRoles.find((entry) => entry.is_primary)?.role?.code
     || employeeRoles[0]?.role?.code
@@ -710,14 +894,14 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
 
   persistSupabaseAdminSession({
     accessToken,
-    refreshToken: authResponse.refresh_token,
+    refreshToken,
     userId: user.id,
     email: user.email || resolvedEmail || identifier,
     provider: 'supabase',
     savedAt: Date.now(),
     expiresAt: resolveSessionExpiry(
       Date.now(),
-      authResponse.expires_in ? Date.now() + authResponse.expires_in * 1000 : undefined
+      expiresIn ? Date.now() + expiresIn * 1000 : undefined
     ),
   });
 

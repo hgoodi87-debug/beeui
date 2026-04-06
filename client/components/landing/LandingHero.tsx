@@ -5,6 +5,8 @@ import { Smartphone, ChevronRight, MapPin } from "lucide-react";
 import { Branch } from "../../types";
 import LandingGoogleReviewsStrip from "./LandingGoogleReviewsStrip";
 
+const ORIGINAL_HERO_IMAGE_URL = "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b";
+
 interface LandingHeroProps {
     t: any;
     lang: string;
@@ -27,13 +29,13 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
             {/* 1. LAYER: Cinematic Background */}
             <div className="absolute inset-0 z-0 overflow-hidden bg-black">
                 <img
-                    src="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b"
+                    src={ORIGINAL_HERO_IMAGE_URL}
                     alt="빌리버 비전 배경"
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-70 brightness-[0.6] scale-105"
                     loading="eager"
                     fetchPriority="high"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-[1]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-[1] pointer-events-none" />
             </div>
 
             {/* 2. LAYER: Content */}

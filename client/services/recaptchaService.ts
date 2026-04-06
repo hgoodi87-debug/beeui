@@ -7,9 +7,32 @@ declare global {
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
+let loadPromise: Promise<void> | null = null;
+
+function loadRecaptchaScript(): Promise<void> {
+    if (loadPromise) return loadPromise;
+    if (window.grecaptcha?.enterprise) return Promise.resolve();
+
+    loadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `https://www.google.com/recaptcha/enterprise.js?render=${RECAPTCHA_SITE_KEY}`;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => {
+            loadPromise = null;
+            reject(new Error('Failed to load reCAPTCHA'));
+        };
+        document.head.appendChild(script);
+    });
+
+    return loadPromise;
+}
+
 export const RecaptchaService = {
     execute: async (action: string = 'submit'): Promise<string | null> => {
         try {
+            await loadRecaptchaScript();
+
             if (!window.grecaptcha || !window.grecaptcha.enterprise) {
                 console.warn('reCAPTCHA Enterprise not loaded yet');
                 return null;

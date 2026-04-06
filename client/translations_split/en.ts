@@ -119,7 +119,7 @@ export const en = {
         choose_service_btn: "CHOOSE SERVICE"
     },
     pricing: {
-        headline: "Cheaper than a taxi,\ncomplete freedom for a day",
+        headline: "One flat rate.\nComplete freedom for a day.",
         desc: "We propose an intuitive flat rate\nwithout complex weight/size calculations.",
         airport_hotel: "Standard Suitcase (Airport ↔ Hotel)",
         extra_large: "Extra Large Luggage",
@@ -411,12 +411,12 @@ export const en = {
     locations_page: {
         title: 'Service Points', sidebar_title: 'Service Points', sidebar_subtitle: 'Seoul Hub Network',
         select_baggage_title: 'Select Baggage', bag_unit_4h: '/4h~',
-        filter_all: 'All', filter_airport: 'Airport', filter_partner: 'Partner', filter_city: 'City', back: 'Main', no_results: 'No branches found.',
+        filter_all: 'All', filter_airport: 'Airport', filter_partner: 'Partner', filter_city: 'City', back: 'Main', no_results: 'No locations available.', no_results_hint: 'Select your dates above to see storage locations near you.',
         info_card_delivery: 'Delivery', info_card_storage: 'Storage', 
         book_delivery: 'Reserve Delivery', book_storage: 'Reserve Storage',
         search_placeholder: 'Search location (e.g. Hotel, Station)', search_error: 'Search failed.',
         badge_delivery: 'DELIVERY', badge_same_day: 'SAME-DAY', badge_scheduled: 'SCHEDULED', badge_storage: 'STORAGE',
-        badge_pick: 'PICK', badge_ret: 'RET',
+        badge_pick: 'DROP', badge_ret: 'PICK',
         tag_airport_delivery: 'Airport Delivery', tag_both_services: 'Delivery | Storage', tag_storage_only: 'Storage Only', tag_delivery_only: 'Delivery Only',
         my_location: "My Location",
         user_marker: "Customer's Location",
@@ -484,6 +484,11 @@ export const en = {
         hours_label: 'Business Hours',
         nearby_pick: 'Recommended Nearby',
         currently_closed: 'This branch is currently closed.',
+        badge_pick_delivery: 'SEND DATE', badge_ret_delivery: 'RECV DATE',
+        closest_label: 'Closest ✨',
+        slot_closed: 'Closed',
+        premium_luggage_care: 'Premium Luggage Care',
+        image_alt: 'Beeliber luggage storage & delivery',
         info_card_book: 'RESERVE'
     },
     manual: {

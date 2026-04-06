@@ -1,9 +1,9 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, Outlet } from 'react-router-dom';
+import { captureAdParams, fireBookingConversion } from './src/utils/gads';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import { flushSync } from 'react-dom';
-import { BagSizes, BookingState, BookingStatus, ServiceType } from './types';
-import { User } from 'firebase/auth';
+import { BagSizes, BookingState, BookingStatus, ServiceType, UserProfile } from './types';
 // Deployment trigger: 2026-01-23 01:35 (Recovery from rollback)
 
 // Lazy load components
@@ -115,6 +115,11 @@ const App: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // Google Ads — 첫 방문 시 UTM/GCLID 캡처 (SPA 라우팅 중 유실 방지)
+  useEffect(() => {
+    captureAdParams();
+  }, []);
 
   const {
     lang,
@@ -231,6 +236,40 @@ const App: React.FC = () => {
   }, [lang]);
 
   useEffect(() => {
+    if (!currentUser || currentUser.isAnonymous) {
+      return;
+    }
+
+    setShowLoginModal(false);
+    setShowSignupModal(false);
+
+    const provisionCustomerProfile = async () => {
+      try {
+        const profile = await StorageService.getUserProfile(currentUser.uid);
+        if (profile) {
+          return;
+        }
+
+        const newProfile: UserProfile = {
+          uid: currentUser.uid,
+          email: currentUser.email || '',
+          displayName: currentUser.displayName || 'Traveler',
+          createdAt: new Date().toISOString(),
+          level: 'BRONZE',
+          points: 2000,
+        };
+
+        await StorageService.updateUserProfile(currentUser.uid, newProfile);
+        await StorageService.issueWelcomeCoupon(currentUser.uid);
+      } catch (error) {
+        console.error('[App] Customer profile bootstrap failed:', error);
+      }
+    };
+
+    void provisionCustomerProfile();
+  }, [currentUser]);
+
+  useEffect(() => {
     // [스봉이] 어드민 정보를 잊지 않도록 도장 꾹! 🛡️✨
     if (adminInfo.name) {
       localStorage.setItem('beeliber_admin_info', JSON.stringify(adminInfo));
@@ -340,7 +379,14 @@ const App: React.FC = () => {
 
       setLastBooking(confirmedBooking);
       navigate(`/${lang}/booking-success`);
-      console.log("[App] Booking saved to Firestore successfully.", confirmedBooking);
+      console.log("[App] Booking saved to Supabase successfully.", confirmedBooking);
+
+      // Google Ads 전환 이벤트
+      fireBookingConversion({
+        value: confirmedBooking.totalPrice ?? 0,
+        currency: 'KRW',
+        transactionId: confirmedBooking.id,
+      });
     } catch (saveError: any) {
       console.error("[App] Booking Save failed:", saveError);
 
@@ -561,6 +607,12 @@ const App: React.FC = () => {
     }
   }, [t]);
 
+  // Safety timeout: 번역 로드 실패 시 1.5s 후 강제 해제 (모바일 UX 개선)
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => setIsInitialLoad(false), 1500);
+    return () => clearTimeout(safetyTimer);
+  }, []);
+
   const LoaderOverlay = React.memo(({ show }: { show: boolean }) => (
     <AnimatePresence>
       {show && (
@@ -609,7 +661,7 @@ const App: React.FC = () => {
                   <Route path="/:urlLang" element={<LangRouteLayout setLang={setLang} lang={lang} />}>
                     <Route index element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
                     <Route path="branch/:code" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
-                    <Route path="services" element={<AnimatedRoute><ServicesPage onBack={() => navigate(`/${lang}`)} t={t.services_page} landingT={t.landing_renewal} /></AnimatedRoute>} />
+                    <Route path="services" element={<AnimatedRoute><ServicesPage onBack={() => navigate(`/${lang}`)} t={t.services_page} landingT={t.landing_renewal} pricingT={t.pricing} /></AnimatedRoute>} />
                     <Route path="locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate(`/${lang}`)} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={changeLanguage} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as string | undefined} /></AnimatedRoute>} />
                     <Route path="booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate(`/${lang}/locations`)} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
                     <Route path="payments/toss/success" element={<AnimatedRoute fade><TossPaymentSuccessPage lang={lang} onBookingReady={handlePaidBookingReady} onBackToBooking={() => navigate(`/${lang}/booking`, { replace: true })} /></AnimatedRoute>} />

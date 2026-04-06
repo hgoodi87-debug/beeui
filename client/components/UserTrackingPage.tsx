@@ -82,7 +82,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
         if (!selectedBooking?.id) return;
         setIsCancelling(true);
         try {
-            await StorageService.cancelBooking(selectedBooking.id);
+            await StorageService.cancelBooking(selectedBooking.id, { name, email });
             alert(t.refund.alert_cancel_success);
             setShowRefundModal(false);
             // Refresh search

@@ -2,7 +2,7 @@
  * [스봉이] 감사 로그 서비스 — Supabase 전용 💅
  * Firebase Firestore 완전 제거, Supabase REST API 사용
  */
-import { isSupabaseDataEnabled, supabaseMutate } from './supabaseClient';
+import { supabaseMutate } from './supabaseClient';
 
 let auditLogWriteDisabledForSession = false;
 let auditLogPermissionWarningShown = false;
@@ -68,12 +68,7 @@ export const AuditService = {
                 after_data: details ? JSON.stringify(details) : null,
             };
 
-            if (isSupabaseDataEnabled()) {
-                await supabaseMutate('audit_logs', 'POST', logData);
-            } else {
-                // Supabase 미설정 시 콘솔에만 기록
-                console.warn('[AuditLog] Supabase not configured, logging to console only:', logData);
-            }
+            await supabaseMutate('audit_logs', 'POST', logData);
 
             console.log(`[AuditLog] ${actionType} recorded successfully. 💅`);
         } catch (e: any) {

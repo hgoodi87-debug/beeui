@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Star, MapPin } from "lucide-react";
-import { isSupabaseDataEnabled, supabaseGet } from "../../services/supabaseClient";
+import { supabaseGet } from "../../services/supabaseClient";
 
 interface LandingReviewsProps {
     t: any;
@@ -29,7 +29,6 @@ const LandingReviews: React.FC<LandingReviewsProps> = ({ t }) => {
 
     // Google 리뷰 로드 — sessionStorage 캐시 우선, 없으면 네트워크
     useEffect(() => {
-        if (!isSupabaseDataEnabled()) return;
         // Strip 컴포넌트가 이미 캐시했으면 재사용
         try {
             const raw = sessionStorage.getItem('beeliber_google_reviews_cache');

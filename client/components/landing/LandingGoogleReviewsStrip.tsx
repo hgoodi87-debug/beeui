@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { Star } from "lucide-react";
-import { isSupabaseDataEnabled, supabaseGet } from "../../services/supabaseClient";
+import { supabaseGet } from "../../services/supabaseClient";
 
 interface GoogleReview {
     id: string;
@@ -50,8 +50,6 @@ const LandingGoogleReviewsStrip: React.FC = () => {
     });
 
     useEffect(() => {
-        if (!isSupabaseDataEnabled()) return;
-        
         (async () => {
             try {
                 const [revs, sums] = await Promise.all([

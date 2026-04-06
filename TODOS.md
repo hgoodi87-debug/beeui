@@ -33,3 +33,31 @@
 **Context:** `supabaseGet()` 유틸은 이미 잘 동작하므로 급하지 않음. storageService 분리 이후 도메인별로 점진적 교체 권장.
 
 **Depends on:** storageService.ts 도메인별 분리 완료 후
+
+---
+
+## AI 검수 큐 알림 시스템
+
+**What:** ai_outputs 큐에 새 항목이 쌓일 때 관리자에게 Google Chat 또는 이메일 알림 발송.
+
+**Why:** 현재 관리자가 AIReviewTab을 수동으로 확인해야 함. 알림 없으면 큐가 적체되고 CS 응답 지연 발생. `/autoplan` CEO 리뷰에서 식별된 핵심 운영 위험.
+
+**Pros:** 큐 적체 방지, CS 응답 속도 향상, 관리자 UX 개선.
+
+**Cons:** Google Chat Webhook 또는 이메일 추가 설정 필요. DB 트리거 또는 Supabase Realtime으로 구현 가능.
+
+**Context:** `on-booking-created`에 이미 Google Chat Webhook 연동 완료. 동일 패턴으로 `ai_outputs` INSERT 트리거 추가 가능. `GOOGLE_CHAT_WEBHOOK_URL` 이미 Supabase secret으로 등록됨.
+
+**Depends on:** ai-content-gen Edge Function + AIReviewTab 구현 완료 후
+
+---
+
+## ANTHROPIC_API_KEY Supabase Secret 등록
+
+**What:** `supabase secrets set ANTHROPIC_API_KEY=sk-ant-...` 실행.
+
+**Why:** `ai-content-gen` Edge Function이 이 키 없이는 503으로 실패. 현재 미등록 상태.
+
+**Context:** `supabase secrets list`로 확인. Key는 console.anthropic.com에서 발급.
+
+**Depends on:** 없음 — 즉시 실행 가능

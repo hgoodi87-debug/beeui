@@ -1,34 +1,37 @@
-# Beeliber — Claude Admin Integration Plan
-<!-- /autoplan restore point: /Users/cm/.gstack/projects/dbcjsaud-ycm-beeliber-main/codex-continue-after-restore-20260322-autoplan-restore-20260403-221623.md -->
+# Beeliber — Claude Admin Integration Plan (v2 — CS 자동화 우선)
+<!-- /autoplan restore point: /Users/cm/.gstack/projects/dbcjsaud-ycm-beeliber-main/codex-continue-after-restore-20260322-autoplan-restore-20260406-184502.md -->
 
 **Branch:** `codex/continue-after-restore-20260322`
-**Date:** 2026-04-03
+**Date:** 2026-04-06 (v2 — /autoplan CEO 검토 후 피봇)
 **Author:** cm
+
+> **전략 피봇 (2026-04-06):** CEO 검토에서 번역 자동화의 ROI가 낮음(월 ~2시간 절감) 확인. CS 응대 자동화가 실질 병목. Phase 1 → CS 자동화. 번역 자동화 → Phase 2.
 
 ---
 
 ## 문제 정의
 
-빌리버 어드민에서 반복적인 운영 작업(지점 안내문 작성, 고객 응답 초안, 다국어 번역)을 수동으로 처리하고 있어 운영 비효율이 높다. 또한 AI가 생성한 콘텐츠가 브랜드 가이드(금지어, 미운영 서비스 언급 등)를 위반할 위험이 있어 자동 검수 체계가 필요하다.
+빌리버 어드민에서 고객 문의 응대, 예약 변경 알림, 다국어 커뮤니케이션을 수동으로 처리하고 있어 운영 부하가 높다. 관리자가 카카오/샤오홍슈 DM에 직접 답변하는 시간 > 번역 작업 시간. AI 초안 생성 + 관리자 검수 게이트 구조로 CS 품질 유지하면서 속도 향상.
 
-**목표**: Claude를 어드민의 콘텐츠 생성 + 자동 검수 주체로 연동해 운영 효율 2배, 브랜드 가이드 준수율 100% 달성.
+**목표**: Claude를 CS 응대 초안 생성 주체로 연동, 관리자 검수 후 발송. 브랜드 가이드 준수율 100%.
 
 ---
 
-## 범위
+## 범위 (Phase 1 — CS 자동화)
 
 ### 포함
-1. **AI 콘텐츠 생성 버튼** — AdminDashboard 내 지점 관리(LocationsTab)에 "AI 작성" 버튼 추가. 지점명·주소 입력 시 Claude가 en/zh-TW/zh-HK/ja 번역 초안 자동 생성
-2. **자동 정책 검사** — 생성된 콘텐츠에 대해 beeliber_master 금지어 + 미운영 서비스 언급 자동 체크
-3. **AI 검수 큐** — AdminDashboard 새 탭 "AI 검수함": ai_review_pending 상태 콘텐츠 목록, 원문/수정본 diff, 승인/반려 액션
-4. **Supabase Edge Function** — `ai-content-gen` 함수: Claude API 호출 + 정책 검사 + DB 저장
-5. **DB 스키마** — `ai_outputs` 테이블 + RLS
+1. **CS 응답 초안 생성** — 고객 문의(예약 변경, 위치 안내, 수하물 문의) → Claude가 ko/zh-TW/zh-HK/ja 응답 초안 생성
+2. **자동 정책 검사** — beeliber_master 금지어 + 미운영 서비스 언급 자동 체크
+3. **AI 검수 큐** — AdminDashboard 탭 "AI 검수함": 응답 초안 목록, 원문/초안 diff, 승인/수정후승인/반려
+4. **Supabase Edge Function** — `ai-content-gen` 함수 (use_case: 'cs_reply'): Claude API 호출 + 정책 검사 + DB 저장
+5. **DB 스키마** — `ai_outputs` 테이블 + RLS (번역 자동화와 공용 테이블)
 
 ### 제외 (Phase 2)
+- **지점 번역 자동화** — ROI 재측정 후 결정 (현재 월 절감 ~2시간 추정)
 - SNS 포스트 자동 생성 (샤오홍슈·Threads)
 - B2B 제안서 초안
-- CS 응답 자동화 (고객 직접 노출 위험)
 - PayPal Live 전환 (인증 대기 중, 별도 작업)
+- CS 응답 자동 발송 (고객 직접 노출 — 관리자 승인 필수)
 
 ---
 
@@ -36,23 +39,23 @@
 
 ```
 AdminDashboard (React)
-  └── LocationsTab
-        └── "AI 번역 생성" 버튼
+  └── CSTab (기존) 또는 신규 진입점
+        └── "AI 응답 초안 생성" 버튼 (문의 선택 후)
               │
               ▼
   supabase/functions/ai-content-gen/index.ts
         ├── Claude API (claude-sonnet-4-6)
-        │     └── system: beeliber_master 금지어 + 브랜드 톤 주입
+        │     └── system: beeliber_master 금지어 + 브랜드 톤 + CS 페르소나
         ├── policy_check() — 금지어·미운영 서비스·가격 환각 자동 검사
-        └── INSERT ai_outputs (status: ai_review_pending | ai_policy_failed)
+        └── INSERT ai_outputs (use_case: 'cs_reply', status: 'ai_review_pending')
               │
               ▼
   AdminDashboard
   └── AIReviewTab (신규)
-        ├── 콘텐츠 목록 (use_case 필터)
-        ├── diff view (원문 ↔ AI 생성본)
+        ├── 문의 목록 (use_case 필터)
+        ├── 원문 ↔ AI 초안 diff view
         ├── 정책 검사 결과 (통과/실패 + 위반 단어 하이라이트)
-        └── 승인/수정후승인/반려 액션
+        └── 승인/수정후승인/반려 액션 (승인 = 클립보드 복사 or 카카오 전송 준비)
 ```
 
 ### DB 스키마
@@ -60,15 +63,16 @@ AdminDashboard (React)
 ```sql
 CREATE TABLE ai_outputs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  use_case TEXT NOT NULL,  -- 'translation' | 'branch_guide' | 'cs_reply'
-  entity_id TEXT,          -- 지점 ID 등 연관 엔티티
-  prompt_snapshot JSONB,   -- 사용된 프롬프트
-  generated_content JSONB, -- {en, zh_tw, zh_hk, ja, ...}
+  use_case TEXT NOT NULL,  -- 'cs_reply' | 'translation' (Phase 2)
+  entity_id TEXT,          -- 예약 ID 또는 고객 ID
+  prompt_snapshot JSONB,   -- 사용된 프롬프트 (감사 로그)
+  generated_content JSONB, -- {ko, zh_tw, zh_hk, ja, en}
   policy_check JSONB,      -- 검사 결과 {passed, violations: [...]}
   status TEXT DEFAULT 'ai_review_pending',
-  reviewer_id UUID REFERENCES admin_users(id),
+  reviewer_id UUID REFERENCES auth.users(id),
   reviewed_at TIMESTAMPTZ,
-  final_content JSONB,     -- 승인된 최종 콘텐츠
+  final_content JSONB,     -- 승인된 최종 응답
+  created_by UUID REFERENCES auth.users(id),  -- Rate limiting용
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
@@ -82,32 +86,34 @@ CREATE TABLE ai_outputs (
 ## 구현 단계
 
 ### Step 1 — DB + Edge Function (1일)
-- `supabase/migrations/20260404000001_ai_outputs.sql` 작성
+- `supabase/migrations/20260407000001_ai_outputs.sql` 작성
 - `supabase/functions/ai-content-gen/index.ts` 작성
-  - Claude API 호출 (claude-sonnet-4-6)
-  - 금지어 정책 검사 (beeliber_master 기반 하드코딩)
+  - Claude API 호출 (claude-sonnet-4-6), use_case='cs_reply'
+  - CS 페르소나 시스템 프롬프트 (친절, 명확, 브랜드 금지어 없음)
+  - 금지어 정책 검사 (beeliber_master 기반)
+  - Rate limiting: created_by당 분당 10회
   - ai_outputs INSERT
 
-### Step 2 — LocationsTab AI 버튼 (반일)
-- `client/components/AdminDashboard.tsx` > LocationsTab
-- "AI 번역 생성" 버튼 → ai-content-gen Edge Function 호출
-- 로딩/성공/실패 상태 표시
+### Step 2 — AI 검수 탭 (1일)
+- AdminDashboard 탭 추가: "AI 검수함" (뱃지 카운트 포함)
+- 2-column split: 목록 패널 + 상세 패널
+- 인라인 에디터 (수정 후 승인 모드)
+- 승인/반려 RPC 호출
 
-### Step 3 — AIReviewTab 신규 탭 (1일)
-- AdminDashboard 탭 추가: "AI 검수함"
-- 콘텐츠 목록 (Supabase realtime 구독)
-- diff view 컴포넌트
-- 승인/반려 API 호출 + 상태 업데이트
+### Step 3 — CS 응답 진입점 (반일)
+- 기존 관리자 화면에 "AI 응답 생성" 버튼 추가
+- 문의 내용 + 고객 언어 감지 → ai-content-gen 호출
+- 승인 후: 클립보드 복사 (1차) → 카카오 API 연동 (Phase 2)
 
-### Step 4 — 번역 자동 적용 (반일)
-- 승인 시 locations 테이블 번역 필드 자동 업데이트
-- PATCH locations SET name_en=..., name_zh_tw=... WHERE id=...
+### Step 4 — approve RPC (반일)
+- `approve_ai_output(p_output_id, p_reviewer_id)` PostgreSQL 함수
+- 낙관적 잠금 + status 업데이트 원자적 처리
 
 ---
 
 ## 성공 기준
 
-- 지점 번역 생성 소요 시간: 30분 → 2분
+- CS 응답 초안 생성: 5분 이상 → 30초
 - 브랜드 가이드 위반 자동 탐지율: >95%
 - AIReviewTab에서 승인/반려 처리 가능
 
@@ -116,9 +122,9 @@ CREATE TABLE ai_outputs (
 ## 보안 고려사항
 
 - Claude API 키는 Supabase secrets에만 저장 (클라이언트 노출 금지)
-- 관리자 인증 토큰 검증 (Edge Function 내 Supabase Auth)
-- 생성 콘텐츠는 직접 locations에 반영 금지 — 반드시 검수함 통과 필수
-- Rate limiting: 관리자 ID당 분당 10회 요청 제한
+- 관리자 인증 토큰 검증 (`authenticateAdminRequest()` 재활용)
+- 생성 콘텐츠는 관리자 승인 전 고객 발송 금지
+- Rate limiting: created_by당 분당 10회
 
 ---
 
@@ -127,8 +133,9 @@ CREATE TABLE ai_outputs (
 | 위험 | 가능성 | 대응 |
 |------|--------|------|
 | Claude API 할당량 초과 | 낮음 | 요청당 비용 모니터링 |
-| 금지어 검사 누락 | 중간 | 검수함 강제 통과로 완화 |
-| 관리자 승인 없이 locations 업데이트 | 낮음 | 상태 머신 강제 + RLS |
+| CS 응답 품질 불만족 (오역) | 중간 | 검수함 강제 + 수정후승인 |
+| 검수 큐 적체 (알림 없음) | 높음 | TODOS.md: 알림 시스템 추가 |
+| 관리자 승인 없이 발송 | 낮음 | 상태 머신 + RLS |
 
 ---
 

@@ -142,15 +142,16 @@ const fireWithRetry = async (record: Record<string, unknown>, attempt = 0): Prom
 
 // Firebase Firestore 어댑터 — 기존 코드의 147개 호출을 Supabase로 라우팅
 import { 
-  isSupabaseDataEnabled as _sbEnabled, 
-  supabaseGet as _sbGet, 
-  supabaseMutate as _sbMutate, 
-  snakeToCamel, 
+  isSupabaseDataEnabled as _sbEnabled,
+  supabaseGet as _sbGet,
+  supabaseMutate as _sbMutate,
+  snakeToCamel,
   camelToSnake,
   isSupabaseDataEnabled,
   supabaseGet,
   supabaseMutate,
-  supabasePollingSubscribe
+  supabasePollingSubscribe,
+  getSupabaseClient
 } from './supabaseClient';
 import { getActiveAdminRequestHeaders, isSupabaseAdminAuthEnabled } from './adminAuthService';
 
@@ -588,21 +589,6 @@ const syncSupabaseAdminAccount = async (
 const sortBookingsByPickupDateDesc = (items: BookingState[]) =>
   [...items].sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
 
-const mergeRecordsById = <T extends { id?: string }>(preferred: T[], fallback: T[]): T[] => {
-  const preferredIds = new Set(
-    preferred
-      .map((item) => String(item.id || '').trim())
-      .filter(Boolean)
-  );
-
-  return [
-    ...preferred,
-    ...fallback.filter((item) => {
-      const itemId = String(item.id || '').trim();
-      return !itemId || !preferredIds.has(itemId);
-    }),
-  ];
-};
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -626,55 +612,71 @@ const buildSupabaseLocationsPath = (includeInactive = false) =>
     ? 'locations?select=*&order=name'
     : 'locations?select=*&is_active=eq.true&order=name';
 
-const subscribeMergedAdminCollection = <T extends { id?: string }>({
-  loadSupabase,
-  loadLegacy,
-  merge,
-  callback,
-  label,
-  intervalMs = 8000,
-}: {
-  loadSupabase: () => Promise<T[]>;
-  loadLegacy: () => Promise<T[]>;
-  merge: (supabaseData: T[], legacyData: T[]) => T[];
-  callback: (data: T[]) => void;
-  label: string;
-  intervalMs?: number;
-}) => {
-  let active = true;
 
-  const run = async () => {
-    let supabaseData: T[] = [];
-    let legacyData: T[] = [];
+/**
+ * Supabase Realtime 채널 구독 헬퍼
+ * - postgres_changes 이벤트 감지 → loader() 실행 → callback 호출
+ * - 디바운스 300ms (이벤트 버스트 방지)
+ * - 에러/타임아웃 핸들링 내장 (무음 실패 방지)
+ */
+function createRealtimeSubscription<T>(
+  channelName: string,
+  table: string,
+  loader: () => Promise<T[]>,
+  callback: (data: T[]) => void
+): () => void {
+  const supabase = getSupabaseClient();
 
-    try {
-      supabaseData = await loadSupabase();
-    } catch (error) {
-      console.warn(`[StorageService] ${label} Supabase poll failed:`, error);
-    }
-
-    try {
-      legacyData = await loadLegacy();
-    } catch (error) {
-      console.warn(`[StorageService] ${label} legacy poll failed:`, error);
-    }
-
-    if (!active) return;
-    callback(merge(supabaseData, legacyData));
+  // 디바운스 (300ms) — 연속 이벤트 시 loader 중복 호출 방지
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const debouncedLoad = () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      void loader().then(callback).catch((e) => {
+        console.error(`[Realtime] ${channelName} reload failed:`, e);
+      });
+    }, 300);
   };
 
-  void run();
-  const timer = window.setInterval(() => void run(), intervalMs);
+  // 무음 실패 감지: 60초 후 이벤트가 없으면 경고
+  let receivedFirstEvent = false;
+  const silenceWarningTimer = setTimeout(() => {
+    if (!receivedFirstEvent) {
+      console.warn(
+        `[Realtime] ${channelName}: 60s 동안 이벤트 없음. ` +
+        `Supabase 대시보드에서 "${table}" 테이블의 Realtime Publication 설정을 확인하세요.`
+      );
+    }
+  }, 60_000);
+
+  const channel = supabase
+    .channel(channelName)
+    .on('postgres_changes', { event: '*', schema: 'public', table }, () => {
+      receivedFirstEvent = true;
+      debouncedLoad();
+    })
+    .subscribe((status, err) => {
+      if (status === 'CHANNEL_ERROR') {
+        console.error(`[Realtime] ${channelName} 채널 오류:`, err);
+      }
+      if (status === 'TIMED_OUT') {
+        console.warn(`[Realtime] ${channelName} 채널 타임아웃. 재연결 시도 중...`);
+      }
+    });
+
+  // 초기 1회 로드
+  void loader().then(callback).catch((e) => {
+    console.error(`[Realtime] ${channelName} 초기 로드 실패:`, e);
+  });
 
   return () => {
-    active = false;
-    window.clearInterval(timer);
+    clearTimeout(silenceWarningTimer);
+    if (debounceTimer) clearTimeout(debounceTimer);
+    void supabase.removeChannel(channel);
   };
-};
+}
 
 const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
-  if (!isSupabaseDataEnabled()) return [];
-
   try {
     const rows = await supabaseGet<Array<Record<string, unknown>>>(
       'admin_booking_list_v1?select=*&order=created_at.desc&limit=500'
@@ -715,46 +717,23 @@ const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
   }
 };
 
-const loadLegacyAdminBookings = async (): Promise<BookingState[]> => {
-  return [];
-};
 
-const mergeBookingSources = (supabaseBookings: BookingState[], legacyBookings: BookingState[]) =>
-  sortBookingsByPickupDateDesc(
-    normalizeBookingsForDeliveryPolicy(mergeRecordsById(supabaseBookings, legacyBookings))
-  );
 
 const loadSupabaseCashClosings = async (): Promise<CashClosing[]> => {
-  if (!isSupabaseDataEnabled()) return [];
-
   const rows = await supabaseGet<Array<Record<string, unknown>>>('daily_closings?select=*&order=date.desc&limit=500');
   return (rows || []).map((row) => snakeToCamel(row) as unknown as CashClosing);
 };
 
-const loadLegacyCashClosings = async (): Promise<CashClosing[]> => {
-  return [];
-};
 
-const mergeCashClosingSources = (supabaseData: CashClosing[], legacyData: CashClosing[]) =>
-  mergeRecordsById(supabaseData, legacyData);
 
 const loadSupabaseExpenditures = async (): Promise<Expenditure[]> => {
-  if (!isSupabaseDataEnabled()) return [];
-
   const rows = await supabaseGet<Array<Record<string, unknown>>>('expenditures?select=*&order=date.desc&limit=1000');
   return (rows || []).map((row) => snakeToCamel(row) as unknown as Expenditure);
 };
 
-const loadLegacyExpenditures = async (): Promise<Expenditure[]> => {
-  return [];
-};
 
-const mergeExpenditureSources = (supabaseData: Expenditure[], legacyData: Expenditure[]) =>
-  mergeRecordsById(supabaseData, legacyData);
 
 const loadSupabaseAdminRevenueDailySummaries = async (): Promise<AdminRevenueDailySummary[]> => {
-  if (!isSupabaseDataEnabled()) return [];
-
   const rows = await supabaseGet<Array<Record<string, unknown>>>(
     'admin_revenue_daily_v1?select=*&order=date.desc&limit=1000'
   );
@@ -763,8 +742,6 @@ const loadSupabaseAdminRevenueDailySummaries = async (): Promise<AdminRevenueDai
 };
 
 const loadSupabaseAdminRevenueMonthlySummaries = async (): Promise<AdminRevenueMonthlySummary[]> => {
-  if (!isSupabaseDataEnabled()) return [];
-
   const rows = await supabaseGet<Array<Record<string, unknown>>>(
     'admin_revenue_monthly_v1?select=*&order=month.desc&limit=120'
   );
@@ -1090,30 +1067,14 @@ export const StorageService = {
   },
 
   getBookings: async (): Promise<BookingState[]> => {
-    let supabaseBookings: BookingState[] = [];
-    let legacyBookings: BookingState[] = [];
-
     try {
-      supabaseBookings = await loadSupabaseAdminBookings();
-      if (supabaseBookings.length > 0) {
-        console.log(`[Storage] Loaded ${supabaseBookings.length} bookings from Supabase admin view ✅`);
-      }
+      const bookings = await loadSupabaseAdminBookings();
+      console.log(`[Storage] Loaded ${bookings.length} bookings from Supabase ✅`);
+      return sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(bookings));
     } catch (e) {
-      console.warn("[Storage] Supabase booking view fetch failed", e);
+      console.warn("[Storage] Supabase booking fetch failed", e);
+      return [];
     }
-
-    try {
-      legacyBookings = await loadLegacyAdminBookings();
-      if (legacyBookings.length > 0) {
-        console.log(`[Storage] Loaded ${legacyBookings.length} legacy bookings ✅`);
-      }
-    } catch (e) {
-      console.error("[Storage] Legacy booking fetch failed", e);
-    }
-
-    const merged = mergeBookingSources(supabaseBookings, legacyBookings);
-    console.log(`[Storage] Merged result: ${merged.length} total bookings 💅`);
-    return merged;
   },
 
   getBookingsByDate: async (date: string): Promise<BookingState[]> => {
@@ -1192,27 +1153,20 @@ export const StorageService = {
   },
 
   subscribeBookings: (callback: (data: BookingState[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled()) {
-      return subscribeMergedAdminCollection<BookingState>({
-        loadSupabase: loadSupabaseAdminBookings,
-        loadLegacy: loadLegacyAdminBookings,
-        merge: mergeBookingSources,
-        callback,
-        label: 'Bookings',
-        intervalMs: 4000,
-      });
-    }
-
-    const q = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(500));
-    return onSnapshot(q, (snapshot: any) => {
-      const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState));
-      callback(sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(items)));
-    }, (error: any) => console.error('Bookings sub error', error));
+    return createRealtimeSubscription(
+      'bookings-changes',
+      'booking_details',
+      async () => {
+        const data = await loadSupabaseAdminBookings();
+        return sortBookingsByPickupDateDesc(normalizeBookingsForDeliveryPolicy(data));
+      },
+      callback
+    );
   },
 
   subscribeBookingsByLocation: (locationId: string, callback: (data: BookingState[]) => void): (() => void) => {
-    // Build a Set of all identifiers for this location (UUID, shortCode, branchCode, name)
-    // so bookings stored with any identifier format will match.
+    // NOTE: Supabase Realtime postgres_changes는 서버 사이드 복합 필터 불가 (Set 기반 다중 식별자).
+    // 변경 감지 → 전체 로드 → 클라이언트 필터 패턴 유지.
     const buildLocationIdSet = (allLocations?: LocationOption[]): Set<string> => {
       const ids = new Set<string>();
       ids.add(locationId);
@@ -1227,7 +1181,6 @@ export const StorageService = {
       return ids;
     };
 
-    // Pre-load locations for identifier resolution
     let locationIdSet = new Set<string>([locationId]);
     StorageService.getLocations().then(locs => { locationIdSet = buildLocationIdSet(locs); });
 
@@ -1241,56 +1194,12 @@ export const StorageService = {
         )
       );
 
-    if (isSupabaseDataEnabled()) {
-      return subscribeMergedAdminCollection<BookingState>({
-        loadSupabase: loadSupabaseAdminBookings,
-        loadLegacy: loadLegacyAdminBookings,
-        merge: (supabaseData, legacyData) => filterLocationBookings(mergeBookingSources(supabaseData, legacyData)),
-        callback,
-        label: `Location bookings (${locationId})`,
-        intervalMs: 8000,
-      });
-    }
-
-    try {
-      console.log(`[Storage] Subscribing to bookings for location: ${locationId}`);
-      // OR query: pickupLocation is ID OR dropoffLocation is ID
-      const q = query(
-        collection(db, "bookings"),
-        or(
-          where("pickupLocation", "==", locationId),
-          where("dropoffLocation", "==", locationId),
-          where("branchId", "==", locationId)
-        ),
-        orderBy("pickupDate", "desc"),
-        limit(500)
-      );
-
-      return onSnapshot(q, (snapshot: any) => {
-        const bookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState)));
-        // Ensure strictly sorted and filtered in memory as back-up
-        const filtered = bookings.filter(b => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
-        filtered.sort((a, b) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-        callback(filtered);
-      }, (error) => {
-        console.error("Location booking sub error, falling back to all-fetch filter:", error);
-        const simpleQ = query(collection(db, "bookings"), orderBy("pickupDate", "desc"), limit(1000));
-        void runSnapshotFallback({
-          sourceQuery: simpleQ,
-          parser: (snapshot: any) => {
-            const fallbackBookings = normalizeBookingsForDeliveryPolicy(snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as BookingState)));
-            const filtered = fallbackBookings.filter((b: BookingState) => b.pickupLocation === locationId || b.dropoffLocation === locationId || b.branchId === locationId);
-            filtered.sort((a: any, b: any) => new Date(b.pickupDate || '').getTime() - new Date(a.pickupDate || '').getTime());
-            return filtered;
-          },
-          callback,
-          label: "Location booking subscription"
-        });
-      });
-    } catch (e) {
-      console.error("Critical failure in location subscription", e);
-      return () => { };
-    }
+    return createRealtimeSubscription(
+      `bookings-location-${locationId}`,
+      'booking_details',
+      async () => filterLocationBookings(await loadSupabaseAdminBookings()),
+      callback
+    );
   },
 
   updateBooking: async (id: string, updates: Partial<BookingState>): Promise<void> => {
@@ -1970,47 +1879,23 @@ export const StorageService = {
   },
 
   getCashClosings: async (): Promise<CashClosing[]> => {
-    let supabaseData: CashClosing[] = [];
-    let legacyData: CashClosing[] = [];
-
     try {
-      supabaseData = await loadSupabaseCashClosings();
-      console.log('[Storage] Loaded', supabaseData.length, 'cash closings from Supabase ✅');
-    } catch (e) { console.warn('[Storage] Supabase closings failed:', e); }
-
-    try {
-      legacyData = await loadLegacyCashClosings();
-      if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'cash closings from legacy source ✅');
+      const data = await loadSupabaseCashClosings();
+      console.log('[Storage] Loaded', data.length, 'cash closings from Supabase ✅');
+      return data;
     } catch (e) {
-      console.warn('[Storage] Legacy closings failed:', e);
+      console.warn('[Storage] Supabase closings failed:', e);
+      return [];
     }
-
-    const merged = mergeCashClosingSources(supabaseData, legacyData);
-    console.log(`[Storage] Merged ${merged.length} cash closings \ud83d\udc85`);
-    return merged;
   },
 
   subscribeCashClosings: (callback: (data: CashClosing[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled()) {
-      return subscribeMergedAdminCollection<CashClosing>({
-        loadSupabase: loadSupabaseCashClosings,
-        loadLegacy: loadLegacyCashClosings,
-        merge: mergeCashClosingSources,
-        callback,
-        label: 'Cash closings',
-        intervalMs: 10000,
-      });
-    }
-
-    try {
-      const q = query(collection(db, 'daily_closings'), orderBy('date', 'desc'), limit(500));
-      return onSnapshot(q, (snapshot: any) => {
-        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as CashClosing));
-        callback(items);
-      }, (error: any) => console.error('Closings sub error', error));
-    } catch (e) {
-      return () => { };
-    }
+    return createRealtimeSubscription(
+      'daily-closings-changes',
+      'daily_closings',
+      loadSupabaseCashClosings,
+      callback
+    );
   },
 
   clearCashClosings: async (): Promise<void> => {
@@ -2081,47 +1966,23 @@ export const StorageService = {
   },
 
   getExpenditures: async (): Promise<Expenditure[]> => {
-    let supabaseData: Expenditure[] = [];
-    let legacyData: Expenditure[] = [];
-
     try {
-      supabaseData = await loadSupabaseExpenditures();
-      console.log('[Storage] Loaded', supabaseData.length, 'expenditures from Supabase ✅');
-    } catch (e) { console.warn('[Storage] Supabase expenditures failed:', e); }
-
-    try {
-      legacyData = await loadLegacyExpenditures();
-      if (legacyData.length > 0) console.log('[Storage] Loaded', legacyData.length, 'expenditures from legacy source ✅');
+      const data = await loadSupabaseExpenditures();
+      console.log('[Storage] Loaded', data.length, 'expenditures from Supabase ✅');
+      return data;
     } catch (e) {
-      console.warn('[Storage] Legacy expenditures failed:', e);
+      console.warn('[Storage] Supabase expenditures failed:', e);
+      return [];
     }
-
-    const merged = mergeExpenditureSources(supabaseData, legacyData);
-    console.log(`[Storage] Merged ${merged.length} expenditures \ud83d\udc85`);
-    return merged;
   },
 
   subscribeExpenditures: (callback: (data: Expenditure[]) => void): (() => void) => {
-    if (isSupabaseDataEnabled()) {
-      return subscribeMergedAdminCollection<Expenditure>({
-        loadSupabase: loadSupabaseExpenditures,
-        loadLegacy: loadLegacyExpenditures,
-        merge: mergeExpenditureSources,
-        callback,
-        label: 'Expenditures',
-        intervalMs: 10000,
-      });
-    }
-
-    try {
-      const q = query(collection(db, 'expenditures'), orderBy('date', 'desc'), limit(1000));
-      return onSnapshot(q, (snapshot: any) => {
-        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as Expenditure));
-        callback(items);
-      }, (error: any) => console.error('Expenditure sub error', error));
-    } catch (e) {
-      return () => { };
-    }
+    return createRealtimeSubscription(
+      'expenditures-changes',
+      'expenditures',
+      loadSupabaseExpenditures,
+      callback
+    );
   },
 
   getAdminRevenueDailySummaries: async (): Promise<AdminRevenueDailySummary[]> => {
@@ -2627,54 +2488,12 @@ export const StorageService = {
   },
 
   subscribeAdmins: (callback: (data: AdminUser[]) => void): (() => void) => {
-    // [스봉이] Supabase 폴링 우선 💅
-    if (isSupabaseDataEnabled()) {
-      let active = true;
-
-      const run = async () => {
-        try {
-          const items = await StorageService.getAdmins();
-          if (!active) return;
-          callback(items);
-        } catch (error) {
-          console.error('Supabase admins polling failed:', error);
-          if (!active) return;
-          callback([]);
-        }
-      };
-
-      void run();
-      const timer = window.setInterval(() => void run(), 10000);
-      return () => {
-        active = false;
-        window.clearInterval(timer);
-      };
-    }
-
-    try {
-      const dbRef = collection(db, 'admins');
-      const q = query(dbRef, orderBy('createdAt', 'desc'));
-      return onSnapshot(q, (snapshot: any) => {
-        const items = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
-        const normalizedItems = collapseAdminDirectoryEntries(items);
-        callback(normalizedItems);
-      }, (error: any) => {
-        console.error('Admins subscription error (likely index missing):', error);
-        const simpleQ = query(dbRef, limit(100));
-        void runSnapshotFallback({
-          sourceQuery: simpleQ,
-          parser: (snap: any) => {
-            const items = snap.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as AdminUser));
-            return collapseAdminDirectoryEntries(items);
-          },
-          callback,
-          label: 'Admins subscription'
-        });
-      });
-    } catch (e) {
-      console.error('Admins subscription critical failure:', e);
-      return () => { };
-    }
+    return createRealtimeSubscription(
+      'admins-changes',
+      'admins',
+      StorageService.getAdmins,
+      callback
+    );
   },
 
   // --- AI Translation Service (Gemini) ---

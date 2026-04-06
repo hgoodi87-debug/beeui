@@ -2,12 +2,31 @@
  * Supabase REST 클라이언트 유틸
  * storageService.ts에서 Firebase 폴백과 함께 사용
  */
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseConfig } from './supabaseRuntime';
 
 const config = getSupabaseConfig();
 const SUPABASE_URL = config.url;
 const SUPABASE_KEY = config.anonKey;
 const SUPABASE_DATA_SCHEMA = 'public';
+
+/**
+ * Supabase JS 클라이언트 싱글턴 — Realtime 채널용
+ * REST 요청은 기존 fetch 기반 supabaseGet/supabaseMutate 사용
+ */
+let _supabaseClient: SupabaseClient | null = null;
+
+export const getSupabaseClient = (): SupabaseClient => {
+  if (!_supabaseClient) {
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      throw new Error('[SupabaseClient] URL 또는 KEY 미설정 — Realtime 불가');
+    }
+    _supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
+      realtime: { params: { eventsPerSecond: 10 } },
+    });
+  }
+  return _supabaseClient;
+};
 
 export const isSupabaseDataEnabled = (): boolean =>
   Boolean(SUPABASE_URL) && Boolean(SUPABASE_KEY);

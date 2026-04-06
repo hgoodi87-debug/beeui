@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // Firebase import 제거 — Supabase 어댑터 사용
-import { supabaseMutate, isSupabaseDataEnabled } from '../services/supabaseClient';
+import { supabaseMutate } from '../services/supabaseClient';
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, PriceSettings, StorageTier, AdminUser, SystemNotice, HeroConfig, GoogleCloudConfig, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
 import { StorageService } from '../services/storageService';
@@ -338,10 +338,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       supabaseBody?: Record<string, unknown>;
     }
   ) => {
-    if (!isSupabaseDataEnabled()) {
-      throw new Error('Supabase booking API is not configured');
-    }
-
     const bookingDetailId = await resolveBookingDetailId(id);
     await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);
   };
@@ -381,10 +377,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setSendingEmailId(booking.id);
     try {
-      if (!isSupabaseDataEnabled()) {
-        throw new Error('Supabase booking notification endpoint is not configured.');
-      }
-
       const bookingDetailId = await resolveBookingDetailId(booking.id);
       const SUPABASE_URL = getSupabaseBaseUrl();
       const SUPABASE_KEY = getSupabaseConfig().anonKey;

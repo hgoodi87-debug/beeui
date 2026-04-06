@@ -3,7 +3,7 @@ import { BookingState, BookingStatus, LocationOption, ServiceType } from '../../
 import { StorageService } from '../../services/storageService';
 import { AuditService } from '../../services/auditService';
 import { useQueryClient } from '@tanstack/react-query';
-import { isSupabaseDataEnabled, supabaseMutate } from '../../services/supabaseClient';
+import { supabaseMutate } from '../../services/supabaseClient';
 
 import { useAdminStore } from '../../src/store/adminStore';
 
@@ -54,10 +54,6 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
         }
     ) => {
         if (!booking.id) return;
-
-        if (!isSupabaseDataEnabled()) {
-            throw new Error('Supabase booking API is not configured');
-        }
 
         const bookingDetailId = await resolveBookingDetailId(booking);
         await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);

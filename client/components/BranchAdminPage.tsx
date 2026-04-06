@@ -6,7 +6,7 @@ import BookingDetailModal from './admin/BookingDetailModal';
 import BranchHeader from './branch/BranchHeader';
 import { DEFAULT_STORAGE_TIERS as PRICING_DEFAULT_STORAGE_TIERS } from '../src/domains/booking/bagCategoryUtils';
 import { getSupabaseBaseUrl, getSupabaseConfig } from '../services/supabaseRuntime';
-import { isSupabaseDataEnabled, supabaseMutate } from '../services/supabaseClient';
+import { supabaseMutate } from '../services/supabaseClient';
 
 const BranchStaffTab = lazy(() => import('./branch/BranchStaffTab'));
 const BranchRevenueTab = lazy(() => import('./branch/BranchRevenueTab'));
@@ -148,7 +148,6 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         if (!confirm(`Is it okay to resend the voucher email to ${booking.userName} (${booking.userEmail})?`)) return;
         setSendingEmailId(booking.id);
         try {
-            if (!isSupabaseDataEnabled()) throw new Error('Supabase booking notification endpoint is not configured.');
             const bookingDetailId = isSupabaseBookingDetailId(booking.id) ? booking.id : String((await StorageService.getBooking(booking.id))?.id || '').trim();
             if (!isSupabaseBookingDetailId(bookingDetailId)) throw new Error('Supabase booking_details id를 찾을 수 없습니다.');
             const SUPABASE_URL = getSupabaseBaseUrl();
@@ -169,7 +168,6 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         if (!confirm(`[최종 확인]\n\n예약번호: ${booking.id}\n고객명: ${booking.userName}\n\n정말로 반품(환불) 처리하시겠습니까?`)) return;
         setRefundingId(booking.id);
         try {
-            if (!isSupabaseDataEnabled()) throw new Error('Supabase booking storage is not configured.');
             const bookingDetailId = isSupabaseBookingDetailId(booking.id) ? booking.id : String((await StorageService.getBooking(booking.id))?.id || '').trim();
             if (!isSupabaseBookingDetailId(bookingDetailId)) throw new Error('Supabase booking_details id를 찾을 수 없습니다.');
             await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, 'PATCH', { settlement_status: 'refunded' });

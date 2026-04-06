@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, MapPin, Zap, PackageCheck, Smartphone, CheckCircle2, Box, Sparkles } from 'lucide-react';
+import { ShieldCheck, MapPin, Zap, PackageCheck, Smartphone, CheckCircle2, Box, Sparkles, Package, Clock } from 'lucide-react';
 import TrackingWidget from './TrackingWidget';
 import Logo from './Logo';
 import SEO from './SEO';
@@ -116,7 +116,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT, pricin
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Column 1: Pain (Desaturated) */}
                         <motion.div {...fadeInUp} className="bg-white p-8 rounded-[2rem] border border-gray-200 shadow-sm opacity-80 grayscale-[50%] hover:grayscale-0 transition-all duration-500">
-                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-6 text-2xl">📦</div>
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-6 text-gray-400"><Package className="w-6 h-6" /></div>
                             <h3 className="text-xl font-black mb-3 tracking-tight">{t.service_1_title}</h3>
                             <p className="text-gray-500 font-medium leading-relaxed break-keep">
                                 {t.pain_1}
@@ -125,7 +125,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT, pricin
 
                         {/* Column 2: Pain (Desaturated) */}
                         <motion.div {...fadeInUp} transition={{ delay: 0.1 }} className="bg-white p-8 rounded-[2rem] border border-gray-200 shadow-sm opacity-80 grayscale-[50%] hover:grayscale-0 transition-all duration-500">
-                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-6 text-2xl">⏰</div>
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-6 text-gray-400"><Clock className="w-6 h-6" /></div>
                             <h3 className="text-xl font-black mb-3 tracking-tight">{t.service_2_title}</h3>
                             <p className="text-gray-500 font-medium leading-relaxed break-keep">
                                 {t.pain_3}

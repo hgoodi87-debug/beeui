@@ -180,6 +180,16 @@ cd ~/.claude/skills/gstack && ./setup
 /cso → /review → /careful 모드에서 수정
 ```
 
+**리팩토링:**
+```
+/investigate → 리팩이 Phase 1(충격 분석) → Phase 2~3(실행·검증) → /review → /qa → /ship
+```
+
+**예약·결제 오류 점검:**
+```
+감시이 Step 1(로그 조회) → Step 2(심각도 판정) → 🔴 상거래이/보안이 에스컬레이션 → /investigate → hotfix → /ship
+```
+
 ## 개발 로드맵
 
 | 차수 | 핵심 작업 |
@@ -246,6 +256,10 @@ Key routing rules:
 | **운영이** (agent_ops) | 3 | 상태머신, SLA, 기사배정, QA |
 | **보안이** (agent_security) | 4 | 인증/권한, RLS, 보안 감사, AI 검수 |
 | **평가이** (agent_eval) | 5+6 | KPI, 대시보드, 벤치마크, 회고 |
+| **리팩이** (agent_refactor) | 2.5 | 페이지·컴포넌트 리팩토링, 충격 분석, 기능 동일성 검증 |
+| **감시이** (agent-sentinel) | 2.5 | 예약·결제 오류 감시, 로그 분석, 심각도별 에스컬레이션 |
 | **배포이** (agent_shipper) | 7 | 배포, PR, 카나리, 문서 갱신 |
+| **디비이** (agent_dbi) | DB | 스키마 설계, 마이그레이션, RLS 정합성, 데이터 검수 |
+| **슈파이** (agent_supa) | DB | RLS 정책 설계, Edge Functions, Auth, Storage 버킷 |
 
 배포 전 필수 게이트: 브랜드이 PASS + 보안이 PASS + 평가이 Performance OK

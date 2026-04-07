@@ -12,13 +12,15 @@ interface FinancialComparisonTabProps {
     locations: LocationOption[];
     t: any;
     currentActor: any;
+    onSettleComplete?: () => void;
 }
 
 const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
     bookings,
     locations,
     t,
-    currentActor
+    currentActor,
+    onSettleComplete,
 }) => {
     const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const queryClient = useQueryClient();
@@ -141,7 +143,7 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
             });
             await AuditService.logAction(currentActor, 'SETTLEMENT_CONFIRM', { id: booking.id, type: 'BOOKING' }, { method: 'INDIVIDUAL' });
             await queryClient.invalidateQueries({ queryKey: ['bookings'] });
-            // alert('정산 확정 처리가 완료되었습니다. ✨');
+            onSettleComplete?.();
         } catch (e) {
             console.error(e);
             alert('정산 처리 중 오류가 발생했습니다. 🙄');
@@ -198,6 +200,7 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
             } else {
                 alert(`${successCount}건의 일괄 정산 확정이 완료되었습니다. ✨`);
             }
+            onSettleComplete?.();
         } catch (e) {
             console.error(e);
             alert('일괄 정산 중 오류가 발생했습니다. 🙄');

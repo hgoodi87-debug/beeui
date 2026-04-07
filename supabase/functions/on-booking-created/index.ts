@@ -257,10 +257,16 @@ serve(async (req) => {
       const destCode = record.service_type === "DELIVERY" ? "ADDR" : await getShortCode(record.dropoff_location_id);
       const reservationCode = generateReservationCode(originCode, destCode);
 
-      await supabase
+      // [W-2] update 실패 시 명시적 에러 처리
+      const { error: codeUpdateError } = await supabase
         .from("booking_details")
         .update({ reservation_code: reservationCode })
         .eq("id", record.id);
+
+      if (codeUpdateError) {
+        console.error(`[on-booking-created] reservation_code update failed for ${record.id}:`, codeUpdateError.message);
+        // 예약코드 DB 저장 실패 — 이메일/알림은 메모리 코드로 계속 진행하되 에러 기록
+      }
 
       record.reservation_code = reservationCode;
     }
@@ -270,6 +276,17 @@ serve(async (req) => {
 
     // 3. Google Chat 알림
     const chatResult = await notifyGoogleChat(record);
+
+    // [W-1] 이메일 발송 실패 시 Google Chat에 별도 경고 알림
+    if (emailResult.attempted && !emailResult.ok && GOOGLE_CHAT_WEBHOOK_URL) {
+      const code = record.reservation_code || record.id;
+      const warnText = `*⚠️ 바우처 이메일 발송 실패*\n예약코드: ${code}\n수신자: ${record.user_email || "unknown"}\n사유: ${emailResult.error || "unknown"}\nSMTP 설정 확인 필요`;
+      fetch(GOOGLE_CHAT_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: warnText }),
+      }).catch((e) => console.error("[on-booking-created] email-fail chat notify failed:", e));
+    }
 
     return new Response(JSON.stringify({
       success: true,

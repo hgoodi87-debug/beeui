@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BookingState, Expenditure, CashClosing, AdminTab } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { exportKoreanAccountingXLSX } from '../../utils/accountingExport';
 
 
 interface AccountingTabProps {
@@ -90,10 +91,25 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         </div>
                         <button
                             onClick={handleExportCSV}
-                            title="CSV 내보내기"
-                            className="w-8 h-8 bg-bee-yellow text-bee-black rounded-xl text-[10px] flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sm"
+                            title="CSV 내보내기 (간편)"
+                            className="w-8 h-8 bg-gray-100 text-gray-500 rounded-xl text-[10px] flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sm"
                         >
-                            <i className="fa-solid fa-file-excel"></i>
+                            <i className="fa-solid fa-file-csv"></i>
+                        </button>
+                        <button
+                            onClick={() => exportKoreanAccountingXLSX({
+                                revenueStats,
+                                accountingDailyStats,
+                                accountingMonthlyStats,
+                                expenditures,
+                                startDate: revenueStartDate,
+                                endDate: revenueEndDate,
+                            })}
+                            title="한국 회계처리 양식 XLSX 다운로드 (손익계산서 · 매출 거래장 · 지출 거래장 · 통합 계정원장)"
+                            className="flex items-center gap-2 px-4 py-2 bg-bee-black text-bee-yellow rounded-xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-md shadow-black/10 whitespace-nowrap"
+                        >
+                            <i className="fa-solid fa-file-spreadsheet"></i>
+                            회계장부 XLSX
                         </button>
                     </div>
 
@@ -332,11 +348,30 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">카테고리</label>
                                     <input
                                         type="text"
+                                        list="expense-category-list"
                                         value={expForm.category}
                                         onChange={e => setExpForm({ ...expForm, category: e.target.value })}
-                                        placeholder="예: 유류비, 소모품 등"
+                                        placeholder="카테고리 선택 또는 직접 입력"
                                         className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm"
                                     />
+                                    <datalist id="expense-category-list">
+                                        <option value="식대" />
+                                        <option value="소모품비" />
+                                        <option value="파트너십 운송비" />
+                                        <option value="유류비" />
+                                        <option value="교통비" />
+                                        <option value="임차료" />
+                                        <option value="광고비" />
+                                        <option value="마케팅" />
+                                        <option value="수수료" />
+                                        <option value="플랫폼" />
+                                        <option value="급여" />
+                                        <option value="인건비" />
+                                        <option value="보험" />
+                                        <option value="통신비" />
+                                        <option value="수리" />
+                                        <option value="기타" />
+                                    </datalist>
                                 </div>
                                 <div className="space-y-2 text-left">
                                     <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">금액 (₩)</label>

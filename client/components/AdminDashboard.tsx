@@ -166,6 +166,11 @@ const isSupabaseBookingDetailId = (value?: string | null) =>
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, adminRole = 'staff', adminEmail, scanId, lang, t }) => {
   const currentActor = { id: adminName || 'unknown', name: adminName || 'unknown', email: adminEmail };
   const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
+  const [prevTab, setPrevTab] = React.useState<string>('DELIVERY_BOOKINGS');
+  const setActiveTabWithHistory = React.useCallback((tab: string) => {
+    setPrevTab(activeTab);
+    setActiveTab(tab as any);
+  }, [activeTab, setActiveTab]);
   const needsAdminDirectory = Boolean(scanId) || activeTab === 'HR' || activeTab === 'OPERATIONS';
   const needsInquiryData = activeTab === 'PARTNERSHIP_INQUIRIES';
   const needsSettlementData = ['OVERVIEW', 'DAILY_SETTLEMENT', 'ACCOUNTING', 'MONTHLY_SETTLEMENT'].includes(activeTab);
@@ -1601,6 +1606,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
       // [스봉이] 데이터 정합성을 위해 쿼리 무효화도 잊지 않았어요. 💅
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+
+      // 완료 처리 시 미정산 건 금융 대조 탭으로 이동
+      if (status === BookingStatus.COMPLETED) {
+        setActiveTabWithHistory('FINANCIAL_COMPARISON');
+      }
     } catch (e) {
       console.error(e);
       // [스봉이] 서버에 문제 생기면 슬쩍 다시 돌려놓을게요... 비밀이에요! 🙄
@@ -2749,6 +2759,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               locations={locations}
               t={t}
               currentActor={currentActor}
+              onSettleComplete={() => setActiveTab(prevTab as any)}
             />
           )}
 

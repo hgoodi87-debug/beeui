@@ -21,6 +21,7 @@
     "firebase-tools": "^15.11.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.101.1"
+    "@supabase/supabase-js": "^2.101.1",
+    "xlsx": "^0.18.5"
   }
 }

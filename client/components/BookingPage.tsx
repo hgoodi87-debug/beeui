@@ -58,7 +58,9 @@ interface BookingPageProps {
     customerBranchRates?: { delivery: number; storage: number };
 }
 
-const TEMP_DIRECT_BOOKING_MODE = true;
+// VITE_DIRECT_BOOKING_MODE=true 이면 현금 직접 예약 모드 (Toss 결제 비활성화)
+// Toss 실배포 전환 시 이 환경변수를 false 또는 제거하세요.
+const TEMP_DIRECT_BOOKING_MODE = import.meta.env.VITE_DIRECT_BOOKING_MODE !== 'false';
 
 const BookingPage: React.FC<BookingPageProps> = ({
     t,

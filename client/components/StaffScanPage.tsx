@@ -154,22 +154,12 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
                 <i className="fa-solid fa-circle-exclamation text-4xl text-bee-yellow mb-4"></i>
                 <p className="text-gray-800 font-black text-lg mb-2">{error || (scanText.invalid_access || "잘못된 접근입니다.")}</p>
-                {!adminName && (
-                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                        {(scanText.auth_required || '스태프 권한이 필요합니다.\n먼저 관리자 로그인을 완료해주세요.').split('\n').map((line: string, index: number, arr: string[]) => (
-                            <React.Fragment key={index}>
-                                {line}
-                                {index < arr.length - 1 ? <br /> : null}
-                            </React.Fragment>
-                        ))}
-                    </p>
-                )}
-                <button 
-                    onClick={onBack} 
-                    title="Go back to Admin"
+                <button
+                    onClick={onBack}
+                    title="Go back"
                     className="px-8 py-3 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all"
                 >
-                    {adminName ? (scanText.admin_home || "관리자 홈으로") : (scanText.go_login || "로그인하러 가기")}
+                    {scanText.admin_home || "돌아가기"}
                 </button>
             </div>
         );

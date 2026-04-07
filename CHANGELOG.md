@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.1.0] - 2026-04-07
+
+### Added
+- **빌드 시 sitemap 자동 생성**: `npm run build` 실행 시 `generate-sitemap.mjs` + `generate-robots.mjs` 자동 실행 — 186 URLs (31 routes × 6 langs), `lastmod` 항상 오늘 날짜
+- **SEO 지역별 랜딩 페이지**: `StorageLandingPage` 컴포넌트 신규 + `/storage/:slug` 라우트 추가
+
+### Fixed
+- **`index.html` x-default**: 주요 고객(대만·홍콩 90%) 기준으로 기본 언어를 zh-TW로 변경
+- **브랜드 오타 수정**: "비리버" → "빌리버" (seoLocations.ts 2곳)
+- **테스트 동기화**: bookingService 요금 로직 변경 후 테스트 기댓값 미반영 수정 (hourlyAfter4h 상한, 24h 초과 extraDay 단위 과금)
+
 ## [1.2.0.0] - 2026-04-07
 
 ### Added

@@ -33,6 +33,7 @@ const Footer = lazy(() => import('./components/Footer'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
 const VisionPage = lazy(() => import('./components/VisionPage'));
 const RefundPage = lazy(() => import('./components/RefundPage'));
+const StorageLandingPage = lazy(() => import('./components/StorageLandingPage'));
 import { useParams } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
@@ -675,6 +676,7 @@ const App: React.FC = () => {
                     <Route path="refund" element={<AnimatedRoute><RefundPage onBack={() => navigate(`/${lang}/privacy`)} t={t} /></AnimatedRoute>} />
                     <Route path="qna" element={<AnimatedRoute><QnaPage onBack={() => navigate(`/${lang}`)} t={t} lang={lang} /></AnimatedRoute>} />
                     <Route path="vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
+                    <Route path="storage/:slug" element={<AnimatedRoute><StorageLandingPage lang={lang} onBack={() => navigate(`/${lang}/locations`)} onBook={(locationId) => { navigate(`/${lang}/locations`); }} /></AnimatedRoute>} />
                     <Route path="mypage" element={<AnimatedRoute><div className="fixed inset-0 z-0 pointer-events-none"><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /><div className="absolute inset-0 bg-black/50 pointer-events-auto" /></div><MyPage t={t} onClose={() => { navigate(-1); }} /></AnimatedRoute>} />
                     <Route path="*" element={<Navigate to={`/${lang}`} replace />} />
                   </Route>

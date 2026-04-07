@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { BookingState, BookingStatus, LocationOption, ServiceType, StorageTier } from '../types';
 import BookingDetailModal from './admin/BookingDetailModal';
@@ -19,7 +19,7 @@ interface BranchAdminPageProps {
     onBack: () => void;
 }
 
-const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isSupabaseBookingDetailId = (value?: string | null) =>
     BOOKING_DETAIL_UUID_PATTERN.test(String(value || '').trim());
 
@@ -37,8 +37,9 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
 
 const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranchId, adminRole = 'staff', lang, t, onBack }) => {
     const navigate = useNavigate();
-    const path = window.location.pathname;
-    const branchId = propsBranchId || (path.startsWith('/branch/') ? path.split('/')[2] : '');
+    // URL params를 우선 사용 — adminInfo.branchId가 비어있어도 동작
+    const { branchId: urlBranchId } = useParams<{ branchId: string }>();
+    const branchId = urlBranchId || propsBranchId || '';
 
     const [bookings, setBookings] = useState<BookingState[]>([]);
     const [locations, setLocations] = useState<LocationOption[]>([]);

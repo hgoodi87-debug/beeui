@@ -313,7 +313,8 @@ const resolveLegacyLocationId = async (
   accessToken: string,
   branchCode?: string,
   fallbackBranchId?: string,
-  preferredLocationId?: string
+  preferredLocationId?: string,
+  branchUuid?: string  // branches.id — branchCode가 없을 때 locations.branch_id로 조회
 ) => {
   const normalizedPreferredLocationId = String(preferredLocationId || '').trim();
   if (normalizedPreferredLocationId) {
@@ -321,28 +322,44 @@ const resolveLegacyLocationId = async (
   }
 
   const normalizedBranchCode = String(branchCode || '').trim();
-  if (!normalizedBranchCode) {
-    return '';
-  }
 
   try {
-    const [byBranchCode, byShortCode] = await Promise.all([
-      supabaseRequest<Array<{ id: string }>>(
-        `/rest/v1/locations?select=id&branch_code=eq.${encodeURIComponent(normalizedBranchCode)}&is_active=eq.true&limit=1`,
-        {},
-        accessToken
-      ),
-      supabaseRequest<Array<{ id: string }>>(
-        `/rest/v1/locations?select=id&short_code=eq.${encodeURIComponent(normalizedBranchCode)}&is_active=eq.true&limit=1`,
-        {},
-        accessToken
-      ),
-    ]);
+    const queries: Promise<Array<{ id: string }>>[] = [];
 
-    return String(byBranchCode[0]?.id || byShortCode[0]?.id || fallbackBranchId || '').trim();
+    if (normalizedBranchCode) {
+      queries.push(
+        supabaseRequest<Array<{ id: string }>>(
+          `/rest/v1/locations?select=id&branch_code=eq.${encodeURIComponent(normalizedBranchCode)}&is_active=eq.true&limit=1`,
+          {},
+          accessToken
+        ),
+        supabaseRequest<Array<{ id: string }>>(
+          `/rest/v1/locations?select=id&short_code=eq.${encodeURIComponent(normalizedBranchCode)}&is_active=eq.true&limit=1`,
+          {},
+          accessToken
+        )
+      );
+    }
+
+    // branchUuid(branches.id)로 locations.branch_id 조회
+    if (branchUuid) {
+      queries.push(
+        supabaseRequest<Array<{ id: string }>>(
+          `/rest/v1/locations?select=id&branch_id=eq.${encodeURIComponent(branchUuid)}&is_active=eq.true&limit=1`,
+          {},
+          accessToken
+        )
+      );
+    }
+
+    if (queries.length === 0) return String(fallbackBranchId || '').trim();
+
+    const results = await Promise.all(queries);
+    const found = results.flatMap(r => r).find(r => r?.id);
+    return String(found?.id || fallbackBranchId || branchUuid || '').trim();
   } catch (error) {
     console.warn('[AdminAuth] legacy location id lookup failed:', error);
-    return String(fallbackBranchId || '').trim();
+    return String(fallbackBranchId || branchUuid || '').trim();
   }
 };
 
@@ -886,10 +903,13 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
 
   const primaryBranch = assignments.find((entry: any) => entry.is_primary) || assignments[0] || null;
   const branchCode = (primaryBranch as any)?.branch?.branch_code || '';
+  const branchUuid = (primaryBranch as any)?.branch?.id || (primaryBranch as any)?.branch_id || '';
   const branchId = await resolveLegacyLocationId(
     accessToken,
     branchCode,
-    ''
+    '',
+    undefined,
+    branchUuid
   );
 
   persistSupabaseAdminSession({

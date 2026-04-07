@@ -19,7 +19,9 @@ export const useLocations = ({ enabled = true, includeInactive = false }: UseLoc
     const query = useQuery<LocationOption[]>({
         queryKey: ['locations', includeInactive ? 'all' : 'active'],
         queryFn: () => StorageService.getLocations({ includeInactive }),
-        staleTime: Infinity,
+        staleTime: 5 * 60 * 1000, // 5분 — Infinity 대신 주기적 갱신 허용
+        retry: 3,
+        retryDelay: 1500,
         enabled,
     });
 

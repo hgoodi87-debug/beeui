@@ -151,18 +151,23 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
     const intro = location.intros[lk] || location.intros['en'];
     const keywords = location.keywords[lk] || location.keywords['en'];
 
-    // JSON-LD FAQPage 스키마
-    const faqSchema = location.faqs.length > 0 ? {
-        '@context': 'https://schema.org',
+    // JSON-LD: FAQPage + LocalBusiness 배열 → @graph로 묶어서 주입
+    const localBusinessList = LOCAL_BUSINESS_SCHEMAS[location.slug] || [];
+    const faqEntity = location.faqs.length > 0 ? {
         '@type': 'FAQPage',
         mainEntity: location.faqs.map((faq) => ({
             '@type': 'Question',
             name: faq.question,
-            acceptedAnswer: {
-                '@type': 'Answer',
-                text: faq.answer[lk] || faq.answer['en'],
-            },
+            acceptedAnswer: { '@type': 'Answer', text: faq.answer[lk] || faq.answer['en'] },
         })),
+    } : null;
+
+    const combinedSchema = (localBusinessList.length > 0 || faqEntity) ? {
+        '@context': 'https://schema.org',
+        '@graph': [
+            ...localBusinessList.map(({ '@context': _ctx, ...rest }) => rest),
+            ...(faqEntity ? [faqEntity] : []),
+        ],
     } : undefined;
 
     const fadeUp = {
@@ -180,7 +185,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                 keywords={keywords}
                 lang={lang}
                 path={`/storage/${slug}`}
-                schema={faqSchema}
+                schema={combinedSchema}
             />
 
             {/* Hero */}

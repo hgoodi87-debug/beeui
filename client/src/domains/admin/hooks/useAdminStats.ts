@@ -329,7 +329,7 @@ export const useAdminStats = ({
             const sortedMonthly = [...filteredMonthlySummaries]
                 .sort((a, b) => a.month.localeCompare(b.month))
                 .map((summary) => ({
-                    month: summary.month,
+                    month: summary.month.slice(0, 7),
                     count: summary.activeBookingCount,
                     total: summary.totalRevenue,
                     cumulative: 0,

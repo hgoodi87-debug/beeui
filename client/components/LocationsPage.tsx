@@ -271,7 +271,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   }, [locations, deferredSearchTerm, currentService]);
 
   const listLocations = useMemo(() => {
-    return filteredLocations.slice(0, 3);
+    return filteredLocations;
   }, [filteredLocations]);
 
   useEffect(() => {

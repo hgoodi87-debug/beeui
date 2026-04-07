@@ -1331,14 +1331,20 @@ export const StorageService = {
       };
       return supabasePollingSubscribe<LocationOption>(
         buildSupabaseLocationsPath(includeInactive),
-        (items) => callback(items.map(enrichLocation).filter((item) => shouldIncludeLocation(item, includeInactive))),
+        (items) => {
+          const filtered = items.map(enrichLocation).filter((item) => shouldIncludeLocation(item, includeInactive));
+          // 폴링 결과가 비어 있으면 콜백 스킵 (INITIAL_LOCATIONS 폴백 유지)
+          if (filtered.length > 0) callback(filtered);
+        },
         (r) => {
           const loc = snakeToCamel(r) as unknown as LocationOption;
+          // UUID는 supabaseId로 보존
           if (r.id) {
             (loc as LocationOption).supabaseId = String(r.id);
           }
-          if (!loc.id && (r.short_code || r.id)) {
-            (loc as any).id = String(r.short_code || r.id);
+          // short_code를 primary id로 사용 (INITIAL_LOCATIONS 매칭 + 비즈니스 로직 호환)
+          if (r.short_code) {
+            (loc as any).id = String(r.short_code);
           }
           return loc;
         },
@@ -1379,11 +1385,13 @@ export const StorageService = {
         if (rows && rows.length > 0) {
           supabaseLocs = rows.map((row) => {
             const loc = snakeToCamel(row) as unknown as LocationOption;
+            // UUID는 supabaseId로 보존
             if (row.id) {
               loc.supabaseId = String(row.id);
             }
-            if (!loc.id && (row.short_code || row.id)) {
-              (loc as any).id = String(row.short_code || row.id);
+            // short_code를 primary id로 사용 (INITIAL_LOCATIONS 매칭 + 비즈니스 로직 호환)
+            if (row.short_code) {
+              (loc as any).id = String(row.short_code);
             }
             return enrichLoc(loc);
           });
@@ -1394,8 +1402,14 @@ export const StorageService = {
       }
     }
 
+    // Supabase 조회 실패 또는 결과 없을 때 INITIAL_LOCATIONS 폴백
+    if (supabaseLocs.length === 0) {
+      console.warn('[Storage] Supabase returned no locations — falling back to INITIAL_LOCATIONS');
+      supabaseLocs = INITIAL_LOCATIONS.map(normalizeLocationCommissionRates) as LocationOption[];
+    }
+
     const filtered = supabaseLocs.filter((item) => shouldIncludeLocation(item, includeInactive));
-    console.log(`[Storage] Loaded ${filtered.length} locations from Supabase 💅`);
+    console.log(`[Storage] Loaded ${filtered.length} locations 💅`);
     return filtered;
   },
 

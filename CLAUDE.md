@@ -162,32 +162,43 @@ cd ~/.claude/skills/gstack && ./setup
 
 **기능 개발 전체 사이클:**
 ```
-/office-hours → /plan-ceo-review → /plan-eng-review → 구현 → /review → /qa → /ship → /land-and-deploy → /canary → /retro
+/office-hours → /plan-ceo-review → /plan-eng-review → 구현
+  → [비평이 + 검수이-코드 + 검수이-UX + 검수이-비즈 병렬 검수]
+  → /review → /qa → /ship → /land-and-deploy → /canary → /retro
 ```
 
 **버그 수정:**
 ```
-/investigate → 수정 → /review → /qa → /ship
+/investigate → 수정
+  → [비평이 + 검수이-코드 병렬 검수]
+  → /review → /qa → /ship
 ```
 
 **UI 작업:**
 ```
-/design-consultation → /design-shotgun → /design-html → /design-review → /qa → /ship
+/design-consultation → /design-shotgun → /design-html → /design-review
+  → [비평이 + 검수이-UX + 검수이-비즈 병렬 검수]
+  → /qa → /ship
 ```
 
 **보안 감사:**
 ```
-/cso → /review → /careful 모드에서 수정
+/cso → [비평이 + 검수이-코드 병렬 검수] → /review → /careful 모드에서 수정
 ```
 
 **리팩토링:**
 ```
-/investigate → 리팩이 Phase 1(충격 분석) → Phase 2~3(실행·검증) → /review → /qa → /ship
+/investigate → 리팩이 Phase 1(충격 분석) → Phase 2~3(실행·검증)
+  → [비평이 + 검수이-코드 병렬 검수]
+  → /review → /qa → /ship
 ```
 
 **예약·결제 오류 점검:**
 ```
-감시이 Step 1(로그 조회) → Step 2(심각도 판정) → 🔴 상거래이/보안이 에스컬레이션 → /investigate → hotfix → /ship
+감시이 Step 1(로그 조회) → Step 2(심각도 판정) → 🔴 상거래이/보안이 에스컬레이션
+  → /investigate → hotfix
+  → [비평이 + 검수이-코드 + 검수이-비즈 병렬 검수]
+  → /ship
 ```
 
 ## 개발 로드맵
@@ -261,5 +272,13 @@ Key routing rules:
 | **배포이** (agent_shipper) | 7 | 배포, PR, 카나리, 문서 갱신 |
 | **디비이** (agent_dbi) | DB | 스키마 설계, 마이그레이션, RLS 정합성, 데이터 검수 |
 | **슈파이** (agent_supa) | DB | RLS 정책 설계, Edge Functions, Auth, Storage 버킷 |
+| **비평이** (agent_critic) | X | 모든 작업 완료 후 전방위 냉정 비평. BLOCKING 발견 시 배포 차단 |
+| **검수이-코드** (agent_inspector_code) | X | 코드 변경 포함 작업 후 타입·에러처리·성능·보안 검수 |
+| **검수이-UX** (agent_inspector_ux) | X | UI 변경 포함 작업 후 다국어·접근성·모바일·상태 UI 검수 |
+| **검수이-비즈** (agent_inspector_biz) | X | 비즈 로직 포함 작업 후 가격정책·브랜드규칙·상태머신 검수 |
 
-배포 전 필수 게이트: 브랜드이 PASS + 보안이 PASS + 평가이 Performance OK
+배포 전 필수 게이트: **비평이 PASS + 검수이-코드 PASS + 검수이-UX PASS + 검수이-비즈 PASS** + 보안이 PASS + 평가이 Performance OK
+
+> **검수 4인방 병렬 호출 규칙**: 구현 완료 후 `/review` 또는 `/ship` 직전에
+> 비평이·검수이-코드·검수이-UX·검수이-비즈를 Agent tool로 **동시 4개** 호출.
+> 코드 변경 없는 문서·기획 작업은 비평이 + 검수이-비즈만 호출.

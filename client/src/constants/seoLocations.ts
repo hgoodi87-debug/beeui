@@ -85,14 +85,59 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '抵達 機場 即刻 寄放 沉重 行李. 提供 酒店 當日 配送, 開啟 輕鬆 之旅. 💅'
         },
         intros: {
-            ko: '여행의 시작과 끝을 비리버의 프리미엄 공항 서비스와 함께하세요! 입국장에서 바로 짐을 맡기고 빈손으로 관광을 시작하거나, 출국 전 마중 나온 캐리어를 공항에서 편하게 받아보세요. 💅✨',
+            ko: '여행의 시작과 끝을 빌리버의 프리미엄 공항 서비스와 함께하세요! 입국장에서 바로 짐을 맡기고 빈손으로 관광을 시작하거나, 출국 전 마중 나온 캐리어를 공항에서 편하게 받아보세요. 💅✨',
             en: 'Start and end your journey with Beeliber\'s premium airport services! Drop off bags at the arrivals and start sightseeing empty-handed. 💅✨',
             ja: '旅の始まりと終わりをBeeliberのプレミアム空港サービスと共に！到着ロビーで荷物を預けて身軽に観光へ. 💅✨',
             zh: '在机场畅享Beeliber高级服务！抵达后即刻寄放，开启轻松之旅，返程时在机场便捷取件。 💅✨',
             'zh-TW': '在 機場 暢享 Beeliber 高級 服務! 抵達 後 即刻 寄放, 開啟 輕鬆 之旅, 返程 時 在 機場 便捷 取件. 💅✨',
             'zh-HK': '在 機場 暢享 Beeliber 高級 服務! 抵達 後 即刻 寄放, 開啟 輕鬆 之旅, 返程 時 在 機場 便捷 取件. 💅✨'
         },
-        faqs: [],
+        faqs: [
+            {
+                question: '仁川機場行李配送需要提前多久預約？',
+                answer: {
+                    ko: '당일 배송은 출발 3시간 전까지 예약 가능합니다. 여유로운 여행을 위해 하루 전 예약을 권장합니다.',
+                    en: 'Same-day airport delivery must be booked at least 3 hours before departure. We recommend booking the day before for peace of mind.',
+                    ja: '当日配送は出発の3時間前まで予約可能です。ゆとりある旅のため、前日までの予約をおすすめします。',
+                    zh: '当日机场配送需在出发前至少3小时预约。建议提前一天预约，确保行程从容。',
+                    'zh-TW': '當日機場配送需在出發前至少3小時預約。建議提前一天預約，確保行程從容。',
+                    'zh-HK': '即日機場配送需在出發前至少3小時預約。建議提前一天預約，確保行程從容。',
+                },
+            },
+            {
+                question: '仁川機場哪個航廈可以使用？',
+                answer: {
+                    ko: '인천공항 T1(3층 출국장 A카운터)과 T2(3층 출국장 H카운터) 모두 이용 가능합니다. 김포공항도 지원합니다.',
+                    en: 'Both Incheon Airport T1 (3F Departure Hall A Counter) and T2 (3F Departure Hall H Counter) are available. Gimpo Airport is also supported.',
+                    ja: '仁川空港T1（3階出発ロビーAカウンター）とT2（3階出発ロビーHカウンター）の両方をご利用いただけます。金浦空港にも対応しています。',
+                    zh: '仁川机场T1（3楼出境大厅A柜台）和T2（3楼出境大厅H柜台）均可使用。也支持金浦机场。',
+                    'zh-TW': '仁川機場T1（3樓出境大廳A櫃台）和T2（3樓出境大廳H櫃台）均可使用。也支援金浦機場。',
+                    'zh-HK': '仁川機場T1（3樓出境大廳A櫃台）和T2（3樓出境大廳H櫃台）均可使用。也支援金浦機場。',
+                },
+            },
+            {
+                question: '幾個行李可以寄送？有大小限制嗎？',
+                answer: {
+                    ko: '캐리어, 쇼핑백, 손가방 등 종류에 상관없이 개수 제한 없이 이용 가능합니다. 유모차·자전거는 배송 불가, 보관만 가능합니다.',
+                    en: 'There is no limit on the number of bags — suitcases, shopping bags, handbags all accepted. Strollers and bicycles are storage-only (not eligible for delivery).',
+                    ja: 'キャリーケース、ショッピングバッグ、ハンドバッグなど種類・個数制限なしです。ベビーカー・自転車は配送不可（保管のみ）。',
+                    zh: '行李箱、购物袋、手提包等不限数量。婴儿车、自行车不可配送，仅限寄存。',
+                    'zh-TW': '行李箱、購物袋、手提包等不限數量。嬰兒車、自行車不可配送，僅限寄放。',
+                    'zh-HK': '行李箱、購物袋、手提包等不限數量。嬰兒車、自行車不可配送，僅限寄存。',
+                },
+            },
+            {
+                question: '預約後在哪裡交行李？',
+                answer: {
+                    ko: '예약한 빌리버 지점(홍대, 성수, 명동 등)에 직접 방문해서 짐을 맡기면 됩니다. 공항 배송 시 지점에서 수령 후 공항으로 배송합니다.',
+                    en: 'Visit your reserved Beeliber branch (Hongdae, Seongsu, Myeongdong, etc.) to drop off. For airport delivery, bags are collected from the branch and delivered to the airport.',
+                    ja: '予約したBeeliber拠点（弘大、聖水、明洞など）に直接訪問して荷物をお預けください。空港配送の場合、拠点から空港へ配送します。',
+                    zh: '直接前往预约的Beeliber据点（弘大、圣水、明洞等）交付行李即可。机场配送时，行李从据点取走后送达机场。',
+                    'zh-TW': '直接前往預約的Beeliber據點（弘大、聖水、明洞等）交付行李即可。機場配送時，行李從據點取走後送達機場。',
+                    'zh-HK': '直接前往預約的Beeliber據點（弘大、聖水、明洞等）交付行李即可。機場配送時，行李從據點取走後送達機場。',
+                },
+            },
+        ],
         relatedBranchIds: ['IN1T', 'IN2T', 'GMP', 'MBX-020', 'MBX-028'],
         touristSpots: []
     },
@@ -124,14 +169,70 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '在 弘大 開啟 活力 之旅! 告別 沉重 行李, 盡情 享受 購物 與 美食. 💅'
         },
         intros: {
-            ko: '홍대는 서울에서 가장 활기찬 곳이죠? 비리버 홍대/연남 센터에 짐을 맡기시면 연트럴파크 산책부터 홍대 레드로드 버스킹 구경까지 양손 자유롭게 즐길 수 있습니다. 💅✨',
+            ko: '홍대는 서울에서 가장 활기찬 곳이죠? 빌리버 홍대/연남 센터에 짐을 맡기시면 연트럴파크 산책부터 홍대 레드로드 버스킹 구경까지 양손 자유롭게 즐길 수 있습니다. 💅✨',
             en: 'Hongdae is the most vibrant place in Seoul. Visit our centers and enjoy Yeonnam-dong and the Red Road empty-handed. 💅✨',
             ja: '弘大はソウルで最も活気あふれる場所！Beeliberの弘大・延南センターに預けて、延南洞から弘大のストリートパフォーマンスまで自由に。 💅✨',
             zh: '弘大是首尔最具活力的地方！将行李寄存在Beeliber弘大/延南中心，无忧散步延南洞，尽情打卡红色之路吧. 💅✨',
             'zh-TW': '弘大是首爾最具活力的地方！將行李寄存在Beeliber弘大/延南中心，無憂散步延南洞, 盡情打卡紅色之路吧. 💅✨',
             'zh-HK': '弘大是首爾最具活力的地方！將行李寄存在Beeliber弘大/延남中心, 無憂 散步 延南洞, 盡情 打卡 紅色之路吧. 💅✨'
         },
-        faqs: [],
+        faqs: [
+            {
+                question: '弘大行李寄放的費用是多少？',
+                answer: {
+                    ko: '손가방·쇼핑백은 4시간 기준 ₩4,000, 캐리어는 ₩5,000부터 시작합니다. 8시간 이상은 1일 요금(손가방 ₩8,000, 캐리어 ₩10,000)이 적용됩니다.',
+                    en: 'Handbags & shopping bags start from ₩4,000 for 4 hours; suitcases from ₩5,000. Full-day rates apply after 8 hours (handbag ₩8,000, suitcase ₩10,000).',
+                    ja: 'ハンドバッグ・ショッピングバッグは4時間₩4,000から、キャリーケースは₩5,000から。8時間以上は1日料金（ハンドバッグ₩8,000、キャリー₩10,000）が適用。',
+                    zh: '购物袋、手提包4小时起₩4,000，行李箱₩5,000起。超过8小时按日收费（购物袋₩8,000，行李箱₩10,000）。',
+                    'zh-TW': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。超過8小時按日收費（購物袋₩8,000，行李箱₩10,000）。',
+                    'zh-HK': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。超過8小時按日收費（購物袋₩8,000，行李箱₩10,000）。',
+                },
+            },
+            {
+                question: '弘大據點營業時間是幾點到幾點？',
+                answer: {
+                    ko: '홍대 바오점은 10:00~22:00, 연남점은 10:00~21:00 운영합니다. 예약 시 선택한 지점의 운영시간을 확인하세요.',
+                    en: 'Hongdae Bao Branch: 10:00–22:00 / Yeonnam Branch: 10:00–21:00. Please check the specific branch hours when booking.',
+                    ja: '弘大バオ店：10:00〜22:00 / 延南店：10:00〜21:00。予約時に選択した拠点の営業時間をご確認ください。',
+                    zh: '弘大Bao店：10:00–22:00 / 延南店：10:00–21:00。预约时请确认所选据点的营业时间。',
+                    'zh-TW': '弘大Bao店：10:00–22:00 / 延南店：10:00–21:00。預約時請確認所選據點的營業時間。',
+                    'zh-HK': '弘大Bao店：10:00–22:00 / 延南店：10:00–21:00。預約時請確認所選據點的營業時間。',
+                },
+            },
+            {
+                question: '弘大站哪個出口最近？',
+                answer: {
+                    ko: '홍대 바오점은 홍대입구역 9번 출구에서 도보 3분, 연남점은 3번 출구에서 도보 2분입니다.',
+                    en: 'Hongdae Bao Branch is 3 min walk from Exit 9 / Yeonnam Branch is 2 min walk from Exit 3 of Hongik Univ. Station.',
+                    ja: '弘大バオ店は弘大入口駅9番出口から徒歩3分 / 延南店は3番出口から徒歩2分です。',
+                    zh: '弘大Bao店距弘益大学站9号出口步行3分钟 / 延南店距3号出口步行2分钟。',
+                    'zh-TW': '弘大Bao店距弘益大學站9號出口步行3分鐘 / 延南店距3號出口步行2分鐘。',
+                    'zh-HK': '弘大Bao店距弘益大學站9號出口步行3分鐘 / 延南店距3號出口步行2分鐘。',
+                },
+            },
+            {
+                question: '不預約可以直接去嗎？',
+                answer: {
+                    ko: '현장 방문도 가능하지만, 온라인 예약 시 대기 없이 바로 이용 가능하며 보험이 자동 적용됩니다. 사전 예약을 권장합니다.',
+                    en: 'Walk-ins are welcome, but online booking guarantees no wait time and automatically applies insurance coverage. We recommend booking in advance.',
+                    ja: '飛び込みも歓迎ですが、オンライン予約なら待ち時間なし・保険自動適用。事前予約をおすすめします。',
+                    zh: '可以直接到店，但线上预约可免等待并自动享受保险保障。建议提前预约。',
+                    'zh-TW': '可以直接到店，但線上預約可免等待並自動享有保險保障。建議提前預約。',
+                    'zh-HK': '可以直接到店，但線上預約可免等待並自動享有保險保障。建議提前預約。',
+                },
+            },
+            {
+                question: '行李寄放安全嗎？有保險嗎？',
+                answer: {
+                    ko: '모든 예약에 기본 보험이 적용됩니다. 고가 물품은 예약 시 프리미엄 보험(단계별 추가 가능)으로 더 안전하게 보호받을 수 있습니다.',
+                    en: 'Basic insurance is included with every booking. For valuables, premium insurance (tiered add-on) provides additional protection at checkout.',
+                    ja: 'すべての予約に基本保険が含まれています。貴重品はプレミアム保険（段階的な追加オプション）でより安心。',
+                    zh: '每笔预约均含基本保险。贵重物品可在结账时选择附加高级保险（阶梯式）。',
+                    'zh-TW': '每筆預約均含基本保險。貴重物品可在結帳時選擇附加高級保險（階梯式）。',
+                    'zh-HK': '每筆預約均含基本保險。貴重物品可在結帳時選擇附加高級保險（階梯式）。',
+                },
+            },
+        ],
         relatedBranchIds: ['HBO', 'MYN', 'MBX-015', 'MMP'],
         touristSpots: [
             {
@@ -171,7 +272,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '明洞 & 南大門行李寄存 | Beeliber 💅'
         },
         descriptions: {
-            ko: '쇼핑 천국 명동! 양손 가득 쇼핑백을 들고 다니지 마세요. 비리버가 안전하게 지켜드립니다.',
+            ko: '쇼핑 천국 명동! 양손 가득 쇼핑백을 들고 다니지 마세요. 빌리버가 안전하게 지켜드립니다.',
             en: 'Myeongdong shopping haven! Don\'t carry heavy bags. Beeliber keeps them safe.',
             ja: 'ショッピングの天国・明洞！両手いっぱいの荷物は持たないで。Beeliberが安全にお預かりします. ',
             zh: '购物天堂明洞！告别拎包重负，尽情血拼。Beeliber为您安全守护。',
@@ -186,7 +287,52 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-TW': '打卡明洞購物街和南大門美食! 把 大大小小 의 購物袋 寄存 在 高級 中心, 開啟 輕鬆 之旅. 💅✨',
             'zh-HK': '打卡 明洞 購物街 和 南大門 美食! 把 大大小小 의 購物袋 寄存 在 高級 中心, 開啟 輕鬆 之旅. 💅✨'
         },
-        faqs: [],
+        faqs: [
+            {
+                question: '明洞行李寄放的費用是多少？',
+                answer: {
+                    ko: '손가방·쇼핑백은 4시간 기준 ₩4,000, 캐리어는 ₩5,000부터 시작합니다. 하루 종일 맡기시면 손가방 ₩8,000, 캐리어 ₩10,000이 적용됩니다.',
+                    en: 'Handbags & shopping bags from ₩4,000 for 4 hours; suitcases from ₩5,000. Full-day: handbag ₩8,000, suitcase ₩10,000.',
+                    ja: 'ハンドバッグ・ショッピングバッグは4時間₩4,000から、キャリーケースは₩5,000から。終日：ハンドバッグ₩8,000、キャリー₩10,000。',
+                    zh: '购物袋、手提包4小时起₩4,000，行李箱₩5,000起。全天：购物袋₩8,000，行李箱₩10,000。',
+                    'zh-TW': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。全天：購物袋₩8,000，行李箱₩10,000。',
+                    'zh-HK': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。全天：購物袋₩8,000，行李箱₩10,000。',
+                },
+            },
+            {
+                question: '明洞據點的營業時間是幾點到幾點？',
+                answer: {
+                    ko: '명동 지점은 09:00~21:00 운영합니다. 쇼핑 후 늦은 시간 짐 수령도 가능합니다.',
+                    en: 'Myeongdong branches are open 09:00–21:00. You can pick up your bags in the evening after shopping.',
+                    ja: '明洞拠点は09:00〜21:00営業。ショッピング後の夜間でも荷物を受け取れます。',
+                    zh: '明洞据点营业时间09:00–21:00。购物后傍晚也可取回行李。',
+                    'zh-TW': '明洞據點營業時間09:00–21:00。購物後傍晚也可取回行李。',
+                    'zh-HK': '明洞據點營業時間09:00–21:00。購物後傍晚也可取回行李。',
+                },
+            },
+            {
+                question: '明洞站哪個出口最近？',
+                answer: {
+                    ko: '명동점은 명동역 6번 출구에서 도보 약 3분 거리입니다. 예약 시 지점 상세 주소를 확인하세요.',
+                    en: 'The Myeongdong branch is about 3 min walk from Myeongdong Station Exit 6. Check the branch address when booking.',
+                    ja: '明洞店は明洞駅6番出口から徒歩約3分です。予約時に拠点の詳しい住所をご確認ください。',
+                    zh: '明洞店距明洞站6号出口步行约3分钟。预约时请确认据点详细地址。',
+                    'zh-TW': '明洞店距明洞站6號出口步行約3分鐘。預約時請確認據點詳細地址。',
+                    'zh-HK': '明洞店距明洞站6號出口步行約3分鐘。預約時請確認據點詳細地址。',
+                },
+            },
+            {
+                question: '退房後可以在明洞寄放行李再去購物嗎？',
+                answer: {
+                    ko: '네! 체크아웃 후 바로 짐을 맡기고 명동 쇼핑을 가볍게 즐길 수 있습니다. 공항 배송도 연계 예약 가능합니다.',
+                    en: 'Yes! Drop off after check-out and enjoy Myeongdong shopping light. You can also book same-day airport delivery at the same time.',
+                    ja: 'はい！チェックアウト後すぐ預けて、身軽に明洞ショッピングを楽しめます。空港当日配送との同時予約も可能。',
+                    zh: '可以！退房后直接寄放行李，轻松逛明洞。还可同时预约当日机场配送。',
+                    'zh-TW': '可以！退房後直接寄放行李，輕鬆逛明洞。還可同時預約當日機場配送。',
+                    'zh-HK': '可以！退房後直接寄存行李，輕鬆逛明洞。還可同時預約即日機場配送。',
+                },
+            },
+        ],
         relatedBranchIds: ['MBX-016', 'MBX-009', 'MBX-007', 'MBX-013'],
         touristSpots: [
             {
@@ -234,7 +380,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '時尚 聖地 東大門 與 美食 天堂 廣藏市場! 告別 行李 身外物, 200% 盡享 首爾 活力. 💅'
         },
         intros: {
-            ko: '동대문 DDP의 야경과 광장시장의 육회, 빈손으로 정복하세요! 비리버 동대문/광장시장 지점이 당신의 짐을 완벽하게 지켜드립니다. 💅✨',
+            ko: '동대문 DDP의 야경과 광장시장의 육회, 빈손으로 정복하세요! 빌리버 동대문/광장시장 지점이 당신의 짐을 완벽하게 지켜드립니다. 💅✨',
             en: 'Conquer DDP night view and Gwangjang food empty-handed! Our centers keep your bags perfectly safe. 💅✨',
             ja: 'DDPの夜景と広蔵市場の美食を身軽に！東大門・広蔵市場支店があなたの荷物をしっかり守ります。 💅✨',
             zh: '开启 DDP 夜景与广藏市场美食之旅! Beeliber 东大门/广藏市场店为您妥善保管行李. 💅✨',
@@ -281,7 +427,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '北村 & 仁寺洞行李寄存 | Beeliber 💅'
         },
         descriptions: {
-            ko: '좁은 골목길과 한옥의 정취! 무거운 캐리어는 비리버에게 맡기고 북촌의 아름다움을 만끽하세요.',
+            ko: '좁은 골목길과 한옥의 정취! 무거운 캐리어는 빌리버에게 맡기고 북촌의 아름다움을 만끽하세요.',
             en: 'Narrow alleys and Hanok vibes! Leave your heavy suitcase and enjoy Bukchon.',
             ja: '細い路地と韓屋の情緒！重いキャリアは預けて北村の美しさを堪능して。',
             zh: '漫步传统韩屋小巷！告别沉身行李，尽情领略北村韵味。',
@@ -289,7 +435,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '漫步 傳統 韓屋 小巷! 告別 沉身 行李, 盡情 領略 北村 韻味. 💅'
         },
         intros: {
-            ko: '북촌 한옥마을의 언덕길과 인사동 갤러리 투어! 비리버 안국/인사동 센터를 이용하시면 가벼운 발걸음으로 한국의 전통미를 발견할 수 있습니다. 💅✨',
+            ko: '북촌 한옥마을의 언덕길과 인사동 갤러리 투어! 빌리버 안국/인사동 센터를 이용하시면 가벼운 발걸음으로 한국의 전통미를 발견할 수 있습니다. 💅✨',
             en: 'Bukchon hills and Insadong galleries! Visit our centers and discover traditional Korean beauty with a light step. 💅✨',
             ja: '北村韓屋村の坂道と仁寺洞のギャラリー巡り! 身軽に韓国の伝統美を発見しましょう. 💅✨',
             zh: '打卡北村韩屋村山道和仁寺洞画廊! 利用 Beeliber 中心, 身轻如燕地探索韩国传统之美. 💅✨',
@@ -344,7 +490,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '魅力 梨泰院 與 龍山! 告別 沉重 行李, 盡情 探索 特色 街巷. 💅'
         },
         intros: {
-            ko: '이태원의 앤티크 거리와 용산 드래곤시티의 럭셔리함! 비리버와 함께라면 그 어떤 비탈길도 가볍게 오를 수 있습니다. 💅✨',
+            ko: '이태원의 앤티크 거리와 용산 드래곤시티의 럭셔리함! 빌리버와 함께라면 그 어떤 비탈길도 가볍게 오를 수 있습니다. 💅✨',
             en: 'Antique street in Itaewon and luxury in Yongsan! With Beeliber, any hill is easy to climb. 💅✨',
             ja: '梨泰院のアンティーク通りと龍山のラグジュアリーさ! Beeliberがあればどんな坂道も楽々です. 💅✨',
             zh: '梨泰院古董街与龙山龙城的奢华感! 有了 Beeliber, 无惧地势高低, 轻盈前行. 💅✨',
@@ -383,7 +529,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '江南站行李寄存, 新沙林蔭道, 三成'
         },
         titles: {
-            ko: '강남역 & 가로수길 짐보관 | 비리버 프리미엄 💅',
+            ko: '강남역 & 가로수길 짐보관 | 빌리버 프리미엄 💅',
             en: 'Gangnam & Sinsa Luggage Storage | Beeliber 💅',
             ja: '江南駅 & 街로樹通り 荷物預かり | Beeliber 💅',
             zh: '江南站 & 林荫道行李寄存 | Beeliber 💅',
@@ -399,14 +545,59 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '潮流 中心 江南! 告別 行李, 開啟 完美 高級 購物之旅. 💅'
         },
         intros: {
-            ko: '강남의 세련된 감성 투어! 무거운 짐은 비리버 강남/신사 센터에 맡기고, 당신의 럭셔리한 하루에 온전히 집중하세요. 💅✨',
+            ko: '강남의 세련된 감성 투어! 무거운 짐은 빌리버 강남/신사 센터에 맡기고, 당신의 럭셔리한 하루에 온전히 집중하세요. 💅✨',
             en: 'Stylish tour in Gangnam! Leave heavy bags at Beeliber and focus on your luxury day. 💅✨',
             ja: '江南のスタイリッシュな旅! 重い荷物はBeeliberに預けて, ラグジュאリーな一日に集中しましょう. 💅✨',
             zh: '打卡时尚江南! 把沉重行李寄存在 Beeliber 江南/新沙中心, 身轻松享受奢华日常. 💅✨',
             'zh-TW': '打卡時尚江南! 把 沉重行李 寄存 在 Beeliber 江남/新사 中心, 身輕鬆享受奢華日常. 💅✨',
             'zh-HK': '打卡 時尚 江南! 把 沉重 行李 寄存 在 Beeliber 江남/新사 中心, 身 輕鬆 享受 奢華 日常. 💅✨'
         },
-        faqs: [],
+        faqs: [
+            {
+                question: '江南行李寄放的費用是多少？',
+                answer: {
+                    ko: '손가방·쇼핑백은 4시간 기준 ₩4,000, 캐리어는 ₩5,000부터 시작합니다. 하루 요금은 손가방 ₩8,000, 캐리어 ₩10,000입니다.',
+                    en: 'Handbags & shopping bags from ₩4,000 for 4 hours; suitcases from ₩5,000. Full-day: handbag ₩8,000, suitcase ₩10,000.',
+                    ja: 'ハンドバッグ・ショッピングバッグは4時間₩4,000から、キャリーケースは₩5,000から。終日：ハンドバッグ₩8,000、キャリー₩10,000。',
+                    zh: '购物袋、手提包4小时起₩4,000，行李箱₩5,000起。全天：购物袋₩8,000，行李箱₩10,000。',
+                    'zh-TW': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。全天：購物袋₩8,000，行李箱₩10,000。',
+                    'zh-HK': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。全天：購物袋₩8,000，行李箱₩10,000。',
+                },
+            },
+            {
+                question: '江南據點的營業時間是幾點到幾點？',
+                answer: {
+                    ko: '강남역점은 10:00~22:00, 신사점은 10:00~21:00 운영합니다.',
+                    en: 'Gangnam Station Branch: 10:00–22:00 / Sinsa Branch: 10:00–21:00.',
+                    ja: '江南駅店：10:00〜22:00 / 新沙店：10:00〜21:00。',
+                    zh: '江南站店：10:00–22:00 / 新沙店：10:00–21:00。',
+                    'zh-TW': '江南站店：10:00–22:00 / 新沙店：10:00–21:00。',
+                    'zh-HK': '江南站店：10:00–22:00 / 新沙店：10:00–21:00。',
+                },
+            },
+            {
+                question: '江南站哪個出口最近？',
+                answer: {
+                    ko: '강남역점은 강남역 11번 출구에서 도보 3분 거리입니다.',
+                    en: 'Gangnam Branch is about 3 min walk from Gangnam Station Exit 11.',
+                    ja: '江南駅店は江南駅11番出口から徒歩約3分です。',
+                    zh: '江南站店距江南站11号出口步行约3分钟。',
+                    'zh-TW': '江南站店距江南站11號出口步行約3分鐘。',
+                    'zh-HK': '江南站店距江南站11號出口步行約3分鐘。',
+                },
+            },
+            {
+                question: '可以同時預約行李寄放和機場配送嗎？',
+                answer: {
+                    ko: '네, 강남 지점에서 짐 맡기고 인천공항으로 당일 배송 예약을 동시에 하실 수 있습니다.',
+                    en: 'Yes, you can drop off at Gangnam and book same-day delivery to Incheon Airport at the same time.',
+                    ja: 'はい、江南拠点で荷物を預けながら、仁川空港への当日配送を同時予約できます。',
+                    zh: '可以，在江南据点寄存行李的同时，可一并预约当日仁川机场配送。',
+                    'zh-TW': '可以，在江南據點寄放行李的同時，可一併預約當日仁川機場配送。',
+                    'zh-HK': '可以，在江南據點寄存行李的同時，可一併預約即日仁川機場配送。',
+                },
+            },
+        ],
         relatedBranchIds: ['MGN', 'MSIS', 'MBX-006', 'MBX-012'],
         touristSpots: [
             {
@@ -454,7 +645,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '漢江 公園 野餐 與 現代 百貨 購物! 告別 行李, 盡享 浪漫 時光. 💅'
         },
         intros: {
-            ko: '여의도의 탁 트인 풍경과 쇼핑의 즐거움! 비리버 여의도 지점과 함께라면 거추장스러운 짐은 더 이상 방해물이 아닙니다. 💅✨',
+            ko: '여의도의 탁 트인 풍경과 쇼핑의 즐거움! 빌리버 여의도 지점과 함께라면 거추장스러운 짐은 더 이상 방해물이 아닙니다. 💅✨',
             en: 'Yeouido views and shopping fun! With Beeliber, heavy tags are no longer an obstacle. 💅✨',
             ja: '汝矣島の開放的な景色とショッピングの楽しさ! Beeliberがあれば荷物はもう邪魔になりません. 💅✨',
             zh: '在汝矣岛畅享美景与购物! 有了 Beeliber, 沉重行李不再是您的绊脚石. 💅✨',
@@ -463,6 +654,122 @@ export const SEO_LOCATIONS: SeoLocation[] = [
         },
         faqs: [],
         relatedBranchIds: ['MBX-008'],
+    },
+    {
+        slug: 'seongsu',
+        relatedTipIds: ['luggage-free-seoul', 'shipping-to-airport'],
+        keywords: {
+            ko: '성수 짐보관, 성수역 짐보관, 성수동 캐리어 보관, 서울숲 짐보관, 성동구 짐보관',
+            en: 'Seongsu luggage storage, Seongsu Station storage, Seoul Forest luggage',
+            ja: '聖水 荷物預かり, 聖水駅 荷物預かり, ソウルの森 荷物',
+            zh: '圣水行李寄存, 圣水站行李寄存, 首尔森林行李',
+            'zh-TW': '聖水行李寄放, 聖水站行李寄放, 首爾森林行李',
+            'zh-HK': '聖水行李寄存, 聖水站行李寄存, 首爾森林行李',
+        },
+        titles: {
+            ko: '성수역 & 서울숲 짐보관 | 빌리버 핸즈프리 💅',
+            en: 'Seongsu & Seoul Forest Luggage Storage | Beeliber 💅',
+            ja: '聖水駅 & ソウルの森 荷物預かり | Beeliber 💅',
+            zh: '圣水站 & 首尔森林行李寄存 | Beeliber 💅',
+            'zh-TW': '聖水站 & 首爾森林行李寄放 | Beeliber 💅',
+            'zh-HK': '聖水站 & 首爾森林行李寄存 | Beeliber 💅',
+        },
+        descriptions: {
+            ko: '힙한 카페거리와 서울숲이 있는 성수! 무거운 짐 없이 빈티지 편집숍과 감성 카페를 자유롭게 즐기세요.',
+            en: 'Hip cafes and Seoul Forest in Seongsu! Explore vintage shops and trendy cafes without luggage.',
+            ja: 'おしゃれなカフェ通りとソウルの森がある聖水！身軽にヴィンテージショップや話題のカフェを楽しんで。',
+            zh: '时尚咖啡街与首尔森林汇聚于圣水！告别行李，尽情逛复古精品店和网红咖啡馆。',
+            'zh-TW': '時尚咖啡街與首爾森林匯聚於聖水！告別行李，盡情逛復古精品店和打卡咖啡館。',
+            'zh-HK': '時尚咖啡街與首爾森林匯聚於聖水！告別行李，盡情逛復古精品店和打卡咖啡館。',
+        },
+        intros: {
+            ko: '성수는 요즘 가장 핫한 서울의 로컬 감성 동네죠? 빌리버 성수 센터에 짐을 맡기면 카페투어부터 서울숲 산책까지 두 손 가득 쇼핑백과 함께 즐길 수 있어요! 💅✨',
+            en: 'Seongsu is Seoul\'s hottest local neighborhood right now! Leave your bags at Beeliber and enjoy cafe tours and Seoul Forest walks hands-free. 💅✨',
+            ja: '聖水は今最もホットなソウルのローカルエリア！Beeliberに荷物を預けて、カフェツアーやソウルの森の散策を身軽に楽しみましょう。 💅✨',
+            zh: '圣水是首尔最潮的街区！把行李存在Beeliber圣水中心，轻松享受咖啡之旅和首尔森林散步。 💅✨',
+            'zh-TW': '聖水是首爾最潮的街區！把行李寄在빌리버聖水中心，輕鬆享受咖啡之旅和首爾森林散步。 💅✨',
+            'zh-HK': '聖水是首爾最潮的街區！把行李寄在빌리버聖水中心，輕鬆享受咖啡之旅和首爾森林散步。 💅✨',
+        },
+        faqs: [
+            {
+                question: '聖水行李寄放的費用是多少？',
+                answer: {
+                    ko: '손가방·쇼핑백은 4시간 기준 ₩4,000, 캐리어는 ₩5,000부터 시작합니다. 하루 요금은 손가방 ₩8,000, 캐리어 ₩10,000입니다.',
+                    en: 'Handbags & shopping bags from ₩4,000 for 4 hours; suitcases from ₩5,000. Full-day: handbag ₩8,000, suitcase ₩10,000.',
+                    ja: 'ハンドバッグ・ショッピングバッグは4時間₩4,000から、キャリーケースは₩5,000から。終日：ハンドバッグ₩8,000、キャリー₩10,000。',
+                    zh: '购物袋、手提包4小时起₩4,000，行李箱₩5,000起。全天：购物袋₩8,000，行李箱₩10,000。',
+                    'zh-TW': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。全天：購物袋₩8,000，行李箱₩10,000。',
+                    'zh-HK': '購物袋、手提包4小時起₩4,000，行李箱₩5,000起。全天：購物袋₩8,000，行李箱₩10,000。',
+                },
+            },
+            {
+                question: '聖水據點的營業時間是幾點到幾點？',
+                answer: {
+                    ko: '성수역점은 10:00~22:00 운영합니다.',
+                    en: 'Seongsu Branch is open 10:00–22:00.',
+                    ja: '聖水店は10:00〜22:00営業です。',
+                    zh: '圣水店营业时间10:00–22:00。',
+                    'zh-TW': '聖水店營業時間10:00–22:00。',
+                    'zh-HK': '聖水店營業時間10:00–22:00。',
+                },
+            },
+            {
+                question: '聖水站哪個出口最近？',
+                answer: {
+                    ko: '성수역점은 성수역 3번 출구에서 도보 약 3분 거리입니다.',
+                    en: 'Seongsu Branch is about 3 min walk from Seongsu Station Exit 3.',
+                    ja: '聖水店は聖水駅3番出口から徒歩約3分です。',
+                    zh: '圣水店距圣水站3号出口步行约3分钟。',
+                    'zh-TW': '聖水店距聖水站3號出口步行約3分鐘。',
+                    'zh-HK': '聖水店距聖水站3號出口步行約3分鐘。',
+                },
+            },
+            {
+                question: '附近有首爾森林嗎？怎麼走？',
+                answer: {
+                    ko: '성수역에서 서울숲역으로 한 정거장이거나 도보 약 20분 거리입니다. 짐을 맡기고 서울숲에서 여유롭게 피크닉을 즐겨보세요!',
+                    en: 'Seoul Forest is one stop away (Seoul Forest Station) or about 20 min walk from Seongsu. Drop off your bags and enjoy a relaxed picnic!',
+                    ja: '首爾の森は聖水から電車1駅（ソウルの森駅）または徒歩約20分。荷物を預けてピクニックを楽しんで！',
+                    zh: '首尔森林距圣水站乘地铁一站（首尔森林站）或步行约20分钟。寄存行李，尽情野餐！',
+                    'zh-TW': '首爾森林距聖水站搭地鐵一站（首爾森林站）或步行約20分鐘。寄放行李，盡情野餐！',
+                    'zh-HK': '首爾森林距聖水站搭地鐵一站（首爾森林站）或步行約20分鐘。寄存行李，盡情野餐！',
+                },
+            },
+        ],
+        relatedBranchIds: ['MSUS', 'MBX-005'],
+        touristSpots: [
+            {
+                id: 'seoul-forest',
+                category: 'nature',
+                lat: 37.5445,
+                lng: 127.0374,
+                name: { ko: '서울숲', en: 'Seoul Forest', ja: 'ソウルの森', zh: '首尔森林', 'zh-TW': '首爾森林', 'zh-HK': '首爾森林' },
+                description: {
+                    ko: '도심 속 자연 쉼터. 짐 없이 가볍게 산책하고 피크닉을 즐기세요. ✨',
+                    en: 'Urban nature retreat in the heart of Seoul. Perfect for a bag-free picnic. ✨',
+                    ja: '都心の自然スポット。身軽に散策とピクニックを楽しんで。 ✨',
+                    zh: '都市中的自然绿洲。轻松散步，享受无行李野餐。 ✨',
+                    'zh-TW': '都市中的自然綠洲。輕鬆散步，享受無行李野餐。 ✨',
+                    'zh-HK': '都市中的自然綠洲。輕鬆散步，享受無行李野餐。 ✨',
+                },
+                distance: '도보 20분 / 20 min walk',
+            },
+            {
+                id: 'seongsu-cafe-street',
+                category: 'food',
+                lat: 37.5444,
+                lng: 127.0557,
+                name: { ko: '성수 카페거리', en: 'Seongsu Cafe Street', ja: '聖水カフェ通り', zh: '圣水咖啡街', 'zh-TW': '聖水咖啡街', 'zh-HK': '聖水咖啡街' },
+                description: {
+                    ko: '트렌디한 카페와 빈티지 편집숍이 밀집한 성수의 핵심 거리입니다. ✨',
+                    en: 'The heart of Seongsu, packed with trendy cafes and vintage concept stores. ✨',
+                    ja: 'トレンドカフェとヴィンテージショップが集まる聖水の中心地。 ✨',
+                    zh: '聚集众多网红咖啡馆与复古精品店的圣水核心地带。 ✨',
+                    'zh-TW': '聚集眾多網紅咖啡館與復古精品店的聖水核心地帶。 ✨',
+                    'zh-HK': '聚集眾多網紅咖啡館與復古精品店的聖水核心地帶。 ✨',
+                },
+            },
+        ],
         touristSpots: [
             {
                 id: 'yeouido-han-river-park',
@@ -509,7 +816,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '從 釜山站 到 海雲台! 告別 行李, 盡情 感受 大海 氣息. 💅'
         },
         intros: {
-            ko: '제2의 도시 부산, 비리버와 함께 가장 힙하게 여행하세요! 부산역, 광안리, 해운대 어디서든 당신의 여정을 가볍게 만들어 드립니다. 💅🌊',
+            ko: '제2의 도시 부산, 빌리버와 함께 가장 힙하게 여행하세요! 부산역, 광안리, 해운대 어디서든 당신의 여정을 가볍게 만들어 드립니다. 💅🌊',
             en: 'Travel Busan hip as it gets with Beeliber! We make your journey light at Busan Stn, Haeundae, and Gwangalli. 💅🌊',
             ja: '第二の都市・釜山, Beeliberと共に最高にヒップな旅を! 釜山駅, 海雲台, 広安里どこでも身軽に. 💅🌊',
             zh: '在釜山开启最时尚的旅行! 无论是在釜山站还是广安里、海云台, Beeliber 都能让您的旅程倍感轻松. 💅🌊',
@@ -556,7 +863,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '濟州機場 & 東門市場行李寄存 | Beeliber 💅'
         },
         descriptions: {
-            ko: '환상의 섬 제주! 비리버와 함께 빈손으로 가벼운 제주 여행을 시작하세요.',
+            ko: '환상의 섬 제주! 빌리버와 함께 빈손으로 가벼운 제주 여행을 시작하세요.',
             en: 'Fantasy island Jeju! Start your flight empty-handed with Beeliber.',
             ja: '幻想の島・済州！Beeliberで身軽な済州旅行をスタート。',
             zh: '奇幻岛屿济州！开启 Beeliber 陪伴下的轻松之旅。',
@@ -602,7 +909,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '韓國 全境 行李寄存, 大邱, 水原, 平澤'
         },
         titles: {
-            ko: '대한민국 전역 거점 짐보관 | 비리버 네트워크 💅',
+            ko: '대한민국 전역 거점 짐보관 | 빌리버 네트워크 💅',
             en: 'Nationwide Luggage Network | Beeliber 💅',
             ja: '韓国全土 荷物預かり | Beeliber 💅',
             zh: '韩国全境行李寄存 | Beeliber 💅',
@@ -610,7 +917,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': '韓國 全境 行李寄存 | Beeliber 💅'
         },
         descriptions: {
-            ko: '전국 어디서나 비리버의 프리미엄 핸즈프리 서비스를 만나보세요.',
+            ko: '전국 어디서나 빌리버의 프리미엄 핸즈프리 서비스를 만나보세요.',
             en: 'Experience Beeliber\'s premium hands-free service anywhere in Korea.',
             ja: '韓国中どこでもBeeliberのプレミアムハン즈프리サービスを体験して。',
             zh: '在韩国任何地方开启 Beeliber 高级免提服务。',
@@ -618,7 +925,7 @@ export const SEO_LOCATIONS: SeoLocation[] = [
             'zh-HK': 'In 韓國 任何 地方 開啟 Beeliber 高級 免提 服務. 💅'
         },
         intros: {
-            ko: '주요 도시와 교통 허브마다 위치한 비리버 파트너 센터! 대구, 광주, 수원 등 당신이 가는 그곳에 비리버가 항상 가벼운 여행을 위해 기다리고 있습니다. 💅✨',
+            ko: '주요 도시와 교통 허브마다 위치한 빌리버 파트너 센터! 대구, 광주, 수원 등 당신이 가는 그곳에 빌리버가 항상 가벼운 여행을 위해 기다리고 있습니다. 💅✨',
             en: 'Beeliber partner centers in major cities and hubs! We are always there for your light travel in Daegu, Gwangju, Suwon, and more. 💅✨',
             ja: '主要都市や交通の拠点にあるBeeliberパートナーセンター! 大邱, 光州, 水原など, どこでも身軽な旅をサポートします. 💅✨',
             zh: '打卡各大城市及交通枢纽的 Beeliber 合作伙伴中心! 无论是在大邱、光州还是水原, Beeliber 始终如一为您提供便利. 💅✨',

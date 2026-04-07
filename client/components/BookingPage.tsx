@@ -21,7 +21,7 @@ import { StorageService } from '../services/storageService';
 import { supabaseGet } from '../services/supabaseClient';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
 import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd } from '../services/paypalService';
-import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
+import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr, add2MonthsToDateStr } from '../utils/dateUtils';
 import { COUNTRY_NAMES } from '../src/constants/countries';
 import { calculateDeliveryStoragePrice, STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 import {
@@ -276,6 +276,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const paypalContainerRef = useRef<HTMLDivElement>(null);
     const paypalRenderedRef = useRef(false);
     const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: string; finalBooking: any } | null>(null);
+    const [paypalLoadError, setPaypalLoadError] = useState(false);
 
     // 💅 BookingSuccess 첩크 미리 로딩 (lazy 플리커 방지)
     const prefetchBookingSuccess = () => {
@@ -704,7 +705,11 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     alert('PayPal 결제 중 오류가 발생했습니다. 다시 시도해 주세요.');
                 },
             }).render(paypalContainerRef.current);
-        }).catch(console.error);
+        }).catch((e) => {
+            // [W-3] SDK 로드 실패 시 사용자에게 에러 상태 노출
+            console.error('[PayPal] SDK load failed:', e);
+            setPaypalLoadError(true);
+        });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isDirectBookingMode]);
 
@@ -882,6 +887,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             aria-label="Pickup Date"
                                                             value={booking.pickupDate?.split(' ')[0]}
                                                             min={formatKSTDate()}
+                                                            max={add2MonthsToDateStr(formatKSTDate())}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
                                                             className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                         />
@@ -957,6 +963,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             aria-label="Delivery Date"
                                                             value={booking.dropoffDate}
                                                             min={booking.pickupDate}
+                                                            max={add2MonthsToDateStr(formatKSTDate())}
                                                             onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
                                                             className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                         />
@@ -1023,6 +1030,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 aria-label="Drop-off Date"
                                                                 value={booking.dropoffDate?.split(' ')[0]}
                                                                 min={booking.pickupDate || formatKSTDate()}
+                                                                max={add2MonthsToDateStr(formatKSTDate())}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
                                                                 className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                             />
@@ -1505,7 +1513,16 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 ? `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`
                                                 : `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`}
                                         </div>
-                                        <div ref={paypalContainerRef} id="paypal-button-container" />
+                                        {/* [W-3] PayPal SDK 로드 실패 시 안내 메시지 */}
+                                        {paypalLoadError ? (
+                                            <p className="text-xs text-red-500 font-bold text-center py-3">
+                                                {lang === 'ko'
+                                                    ? 'PayPal 결제를 불러오지 못했습니다. 페이지를 새로고침해 주세요.'
+                                                    : 'PayPal failed to load. Please refresh the page.'}
+                                            </p>
+                                        ) : (
+                                            <div ref={paypalContainerRef} id="paypal-button-container" />
+                                        )}
                                     </div>
                                 )}
                             </div>

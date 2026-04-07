@@ -9,9 +9,9 @@ export interface StorageRate {
 }
 
 export const STORAGE_RATES: Record<keyof BagSizes, StorageRate> = {
-    handBag: { hours4: 4000, hourlyAfter4h: 200, day1: 8000, extraDay: 6000, day7: 44000 },
-    carrier: { hours4: 5000, hourlyAfter4h: 250, day1: 10000, extraDay: 8000, day7: 58000 },
-    strollerBicycle: { hours4: 10000, hourlyAfter4h: 200, day1: 14000, extraDay: 10000, day7: 74000 },
+    handBag: { hours4: 4000, hourlyAfter4h: 1000, day1: 8000, extraDay: 6000, day7: 44000 },
+    carrier: { hours4: 5000, hourlyAfter4h: 1250, day1: 10000, extraDay: 8000, day7: 58000 },
+    strollerBicycle: { hours4: 10000, hourlyAfter4h: 2500, day1: 14000, extraDay: 10000, day7: 74000 },
 };
 
 export interface PriceResult {
@@ -84,9 +84,10 @@ const hasBusinessHoursBoundaryCrossed = (
         return true;
     }
 
-    const startMinutes = getKstMinutesOfDay(start);
     const endMinutes = getKstMinutesOfDay(end);
-    return startMinutes < openMinutes || endMinutes > closeMinutes;
+    // 같은 날(하루 안) 예약은 반납 시간이 영업 마감 이후일 때만 하루치 청구.
+    // 시작 시간이 영업 시작 전이어도 하루치로 업셀하지 않음 (1시간씩 카운트가 맞음).
+    return endMinutes > closeMinutes;
 };
 
 const getSingleBagStoragePrice = (hours: number, rate: StorageRate): number => {
@@ -97,7 +98,8 @@ const getSingleBagStoragePrice = (hours: number, rate: StorageRate): number => {
     }
 
     if (roundedHours <= 24) {
-        return rate.hours4 + ((roundedHours - 4) * rate.hourlyAfter4h);
+        // day1 요금을 상한으로 적용 (hourlyAfter4h가 높아서 day1 초과 방지)
+        return Math.min(rate.hours4 + ((roundedHours - 4) * rate.hourlyAfter4h), rate.day1);
     }
 
     const extraHours = roundedHours - 24;

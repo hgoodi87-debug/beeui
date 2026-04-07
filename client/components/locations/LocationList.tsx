@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, LocateFixed, Plane, Store, Calendar, Clock, Wallet, Luggage, Handshake, ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import BaggageCounter from './BaggageCounter';
-import { generateTimeSlots, isPastKSTTime, getFirstAvailableSlot, formatKSTDate } from '../../utils/dateUtils';
+import { generateTimeSlots, isPastKSTTime, getFirstAvailableSlot, formatKSTDate, add2MonthsToDateStr } from '../../utils/dateUtils';
 import { formatDistance } from '../../utils/locationUtils';
 import { BagCategoryId } from '../../src/domains/booking/bagCategoryUtils';
 import { BagSizes } from '../../types';
@@ -35,6 +35,7 @@ interface LocationListProps {
     deliveryPrices?: any;
     onBack?: () => void;
     onFindMyLocation?: () => void;
+    isLoading?: boolean;
 }
 
 const LocationList: React.FC<LocationListProps> = ({
@@ -44,7 +45,8 @@ const LocationList: React.FC<LocationListProps> = ({
     baggageCounts, onBaggageChange,
     deliveryPrices,
     onBack,
-    onFindMyLocation
+    onFindMyLocation,
+    isLoading
 }) => {
     const INITIAL_BRANCH_RENDER_COUNT = 8;
     const SEARCH_BRANCH_RENDER_COUNT = 16;
@@ -143,7 +145,7 @@ const LocationList: React.FC<LocationListProps> = ({
     }, []);
 
     return (
-        <div className="flex flex-col h-full overflow-hidden md:pointer-events-auto select-none pointer-events-none md:border-r md:weightless-glass relative z-20">
+        <div className="flex flex-col h-full overflow-visible md:overflow-hidden md:pointer-events-auto select-none pointer-events-none md:border-r md:weightless-glass relative z-20">
             {/* Header / Search Area - Floating Card Design on Mobile, Sticky Header on PC 💅 */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -332,6 +334,7 @@ const LocationList: React.FC<LocationListProps> = ({
                                         <CalendarView
                                             selectedDate={activeStep === 'PICKUP_DATE' ? (bookingDate || '') : (returnDate || '')}
                                             minDate={activeStep === 'PICKUP_DATE' ? formatKSTDate() : (bookingDate || formatKSTDate())}
+                                            maxDate={add2MonthsToDateStr(formatKSTDate())}
                                             onSelect={(d) => {
                                                 if (activeStep === 'PICKUP_DATE') {
                                                     onDateChange?.(d);
@@ -547,7 +550,15 @@ const LocationList: React.FC<LocationListProps> = ({
                     })}
                 </div>
 
-                {filteredBranches.length === 0 && (
+                {filteredBranches.length === 0 && isLoading && (
+                    <div className="flex flex-row md:flex-col gap-3 md:gap-4">
+                        {[0, 1, 2].map((i) => (
+                            <div key={i} className="shrink-0 w-[140px] md:w-full h-[120px] md:h-[88px] rounded-[1.8rem] md:rounded-[2.5rem] bg-white/60 backdrop-blur-md border border-white/20 animate-pulse" />
+                        ))}
+                    </div>
+                )}
+
+                {filteredBranches.length === 0 && !isLoading && (
                     <div className="py-12 text-center flex flex-col items-center w-full bg-white/50 backdrop-blur-sm rounded-[2rem] gap-3 px-6">
                         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl mb-1">📍</div>
                         <p className="text-gray-700 font-black text-sm tracking-tight">{t.locations_page?.no_results || 'No locations available.'}</p>
@@ -582,6 +593,7 @@ const CalendarView = ({
     selectedDate,
     onSelect,
     minDate,
+    maxDate,
     lang,
     isDelivery,
     bh,
@@ -591,6 +603,7 @@ const CalendarView = ({
     selectedDate: string;
     onSelect: (date: string) => void;
     minDate?: string;
+    maxDate?: string;
     lang: string;
     isDelivery: boolean;
     bh: { start: number; end: number };
@@ -643,6 +656,7 @@ const CalendarView = ({
                     const disabled = (() => {
                         const nowKST = formatKSTDate();
                         if (minDate && dStr < minDate) return true;
+                        if (maxDate && dStr > maxDate) return true;
                         if (dStr < nowKST) return true;
 
                         if (dStr === nowKST) {

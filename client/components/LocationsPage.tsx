@@ -38,7 +38,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   initialLocationId,
   initialServiceType
 }) => {
-  const { data: rawLocations = [] } = useLocations();
+  const { data: rawLocations = [], isLoading: isLocationsLoading } = useLocations();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState<LocationOption | null>(null);
   const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>(
@@ -377,6 +377,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
             onBaggageChange={handleBaggageChange}
             deliveryPrices={deliveryPrices}
             onBack={onBack}
+            isLoading={isLocationsLoading}
           />
         </div>
 

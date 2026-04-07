@@ -174,6 +174,9 @@ export interface CashClosing {
     createdAt: string;
 }
 
+export type ExpenditureCostType = 'fixed' | 'variable';    // 고정비 | 유동비
+export type ExpenditurePaymentType = 'corporate_card' | 'personal'; // 법인카드 | 개인비용
+
 export interface Expenditure {
     id?: string;
     date: string;
@@ -181,6 +184,8 @@ export interface Expenditure {
     category: string;
     amount: number;
     description: string;
+    costType?: ExpenditureCostType;     // 고정비 / 유동비
+    paymentType?: ExpenditurePaymentType; // 법인카드 / 개인비용
     createdBy: string;
     createdAt: string;
 }

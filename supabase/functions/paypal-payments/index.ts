@@ -8,8 +8,44 @@ const PAYPAL_API = PAYPAL_MODE === "live"
   ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+// [C-1] 환율: app_settings.paypal_krw_usd_rate → 없으면 fallback 1380
+// 캐시: 모듈 단위 (cold start 기준 최대 1시간)
+let cachedRate: number | null = null;
+let cacheAt = 0;
+const RATE_CACHE_TTL_MS = 60 * 60 * 1000; // 1시간
+
+async function getKrwUsdRate(): Promise<number> {
+  const now = Date.now();
+  if (cachedRate !== null && now - cacheAt < RATE_CACHE_TTL_MS) return cachedRate;
+
+  try {
+    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data } = await db
+      .from("app_settings")
+      .select("value")
+      .eq("key", "paypal_krw_usd_rate")
+      .single();
+    const rate = Number(data?.value ?? 0);
+    if (rate > 100) {
+      cachedRate = rate;
+      cacheAt = now;
+      return rate;
+    }
+  } catch (e) {
+    console.warn("[paypal-payments] rate fetch failed, using fallback:", e);
+  }
+
+  // fallback — 최신 환율로 주기적 업데이트 필요
+  cachedRate = 1380;
+  cacheAt = now;
+  return 1380;
+}
+
 // amountUsd 서버사이드 유효성 검사: 양수, 소수점 2자리, $0.50~$500 범위
-// (전체 DB 기반 재계산은 결제 연동 완성 시 적용)
 function validateAmountUsd(raw: unknown): string {
   const s = String(raw ?? "").trim();
   const n = parseFloat(s);
@@ -34,7 +70,7 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-async function createOrder(amountUsd: string, description: string): Promise<{ orderId: string }> {
+async function createOrder(amountUsd: string, description: string): Promise<{ orderId: string; rateUsed: number }> {
   const token = await getAccessToken();
   const res = await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
     method: "POST",
@@ -61,7 +97,8 @@ async function createOrder(amountUsd: string, description: string): Promise<{ or
     throw new Error(`PayPal create order failed [${res.status}]: ${err}`);
   }
   const data = await res.json();
-  return { orderId: data.id };
+  const rateUsed = await getKrwUsdRate();
+  return { orderId: data.id, rateUsed };
 }
 
 async function captureOrder(orderId: string): Promise<{ status: string; captureId: string; paidAt: string }> {
@@ -79,7 +116,6 @@ async function captureOrder(orderId: string): Promise<{ status: string; captureI
     const errBody = await res.json().catch(() => ({}));
     const issue = errBody?.details?.[0]?.issue ?? "";
     if (issue === "ORDER_ALREADY_CAPTURED") {
-      // 주문 상태 조회로 기존 capture 데이터 반환
       const orderRes = await fetch(`${PAYPAL_API}/v2/checkout/orders/${orderId}`, {
         headers: { "Authorization": `Bearer ${token}` },
       });
@@ -105,17 +141,34 @@ async function captureOrder(orderId: string): Promise<{ status: string; captureI
 
   const data = await res.json();
 
-  // COMPLETED가 아닌 상태(PENDING_REVIEW, VOIDED, FAILED 등)는 결제 실패로 처리
   if (data.status !== "COMPLETED") {
     throw new Error(`PayPal capture not completed: status=${data.status}. 결제가 완료되지 않았습니다.`);
   }
 
   const capture = data.purchase_units?.[0]?.payments?.captures?.[0];
-  return {
+  const result = {
     status: data.status,
     captureId: capture?.id || "",
     paidAt: capture?.create_time || new Date().toISOString(),
   };
+
+  // [C-2] 결제 완료 기록 payments 테이블에 저장
+  if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && result.captureId) {
+    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const amountUsd = Number(capture?.amount?.value ?? 0);
+    const { error: insertErr } = await db.from("payments").insert({
+      provider: "paypal",
+      payment_key: result.captureId,
+      status: "paid",
+      amount: amountUsd,
+      paid_at: result.paidAt,
+    });
+    if (insertErr) {
+      console.error("[paypal-payments] payments INSERT failed:", insertErr.message);
+    }
+  }
+
+  return result;
 }
 
 const corsHeaders = {
@@ -127,7 +180,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // JWT 인증: Supabase anon/authenticated JWT 검증
+  // [W-1] JWT 인증: 항상 강제 (환경변수 누락 시에도 401 반환)
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized: missing Bearer token" }), {
@@ -135,19 +188,24 @@ Deno.serve(async (req) => {
       headers: corsHeaders,
     });
   }
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  if (supabaseUrl && supabaseAnonKey) {
-    const client = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error("[paypal-payments] SUPABASE_URL or SUPABASE_ANON_KEY not configured — rejecting request");
+    return new Response(JSON.stringify({ error: "Server configuration error" }), {
+      status: 503,
+      headers: corsHeaders,
     });
-    const { error: authError } = await client.auth.getUser();
-    if (authError) {
-      return new Response(JSON.stringify({ error: "Unauthorized: invalid token" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
+  }
+
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { error: authError } = await client.auth.getUser();
+  if (authError) {
+    return new Response(JSON.stringify({ error: "Unauthorized: invalid token" }), {
+      status: 401,
+      headers: corsHeaders,
+    });
   }
 
   const path = new URL(req.url).pathname.split("/").pop();
@@ -164,6 +222,7 @@ Deno.serve(async (req) => {
     }
     return new Response(JSON.stringify({ error: "Unknown action" }), { status: 404, headers: corsHeaders });
   } catch (e) {
+    console.error("[paypal-payments] error:", e);
     return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: corsHeaders });
   }
 });

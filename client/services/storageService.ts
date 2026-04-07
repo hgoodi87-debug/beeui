@@ -1332,7 +1332,11 @@ export const StorageService = {
       return supabasePollingSubscribe<LocationOption>(
         buildSupabaseLocationsPath(includeInactive),
         (items) => {
-          const filtered = items.map(enrichLocation).filter((item) => shouldIncludeLocation(item, includeInactive));
+          const filtered = items
+            // INITIAL_LOCATIONS에 없는 지점 제외 (미운영 / 설정 미완료)
+            .filter(loc => INITIAL_LOCATIONS.find(l => l.id === (loc as any).id))
+            .map(enrichLocation)
+            .filter((item) => shouldIncludeLocation(item, includeInactive));
           // 폴링 결과가 비어 있으면 콜백 스킵 (INITIAL_LOCATIONS 폴백 유지)
           if (filtered.length > 0) callback(filtered);
         },
@@ -1383,7 +1387,7 @@ export const StorageService = {
           buildSupabaseLocationsPath(includeInactive)
         );
         if (rows && rows.length > 0) {
-          supabaseLocs = rows.map((row) => {
+          supabaseLocs = rows.flatMap((row) => {
             const loc = snakeToCamel(row) as unknown as LocationOption;
             // UUID는 supabaseId로 보존
             if (row.id) {
@@ -1393,7 +1397,9 @@ export const StorageService = {
             if (row.short_code) {
               (loc as any).id = String(row.short_code);
             }
-            return enrichLoc(loc);
+            // INITIAL_LOCATIONS에 없는 지점은 미운영 / 설정 미완료 → 제외
+            if (!INITIAL_LOCATIONS.find(l => l.id === (loc as any).id)) return [];
+            return [enrichLoc(loc)];
           });
           console.log('[Storage] Loaded', supabaseLocs.length, 'locations from Supabase ✅');
         }

@@ -156,6 +156,14 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     <input readOnly={adminRole !== 'super'} title="이메일" placeholder="이메일 입력" value={selectedBooking.userEmail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, userEmail: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm read-only:bg-gray-100" />
                                 </div>
                                 <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">국가 (Country)</label>
+                                    <select disabled={adminRole !== 'super'} title="국가 선택" value={selectedBooking.country || 'KR'} onChange={e => setSelectedBooking({ ...selectedBooking, country: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
+                                        {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
+                                            <option key={code} value={code}>{name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">연락처 (SNS)</label>
                                     <div className="flex gap-2">
                                         <select disabled={adminRole !== 'super'} title="SNS 종류" value={selectedBooking.snsType} onChange={e => setSelectedBooking({ ...selectedBooking, snsType: e.target.value as SnsType })} className="bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
@@ -164,21 +172,11 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                         <input readOnly={adminRole !== 'super'} title="SNS ID" placeholder="SNS ID 입력" value={selectedBooking.snsId || ''} onChange={e => setSelectedBooking({ ...selectedBooking, snsId: e.target.value })} className="flex-1 bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm read-only:bg-gray-100" />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">국가 (Country)</label>
-                                        <select disabled={adminRole !== 'super'} title="국가 선택" value={selectedBooking.country || 'KR'} onChange={e => setSelectedBooking({ ...selectedBooking, country: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
-                                            {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
-                                                <option key={code} value={code}>{name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">관할 지점 (Branch)</label>
-                                        <div className="w-full bg-gray-100 p-3 rounded-xl border border-gray-200 font-black text-xs text-bee-black flex items-center gap-2">
-                                            <i className="fa-solid fa-warehouse text-gray-400"></i>
-                                            {selectedBooking.branchName || '지점 정보 없음 🐝'}
-                                        </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">관할 지점 (Branch)</label>
+                                    <div className="w-full bg-gray-100 p-3 rounded-xl border border-gray-200 font-black text-xs text-bee-black flex items-center gap-2">
+                                        <i className="fa-solid fa-warehouse text-gray-400"></i>
+                                        {selectedBooking.branchName || '지점 정보 없음 🐝'}
                                     </div>
                                 </div>
                             </div>

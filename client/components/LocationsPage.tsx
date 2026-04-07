@@ -263,7 +263,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     if (currentService === 'STORAGE') {
       result = result.filter(l => l.supportsStorage);
     } else {
-      result = result.filter(l => l.supportsDelivery);
+      result = result.filter(l => l.supportsDelivery && l.isOrigin !== false);
     }
     // [스봉이] 활성화된 지점만 보여드려야죠? 🙄💅
     result = result.filter(l => l.isActive !== false);

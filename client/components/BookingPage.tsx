@@ -538,6 +538,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
     }, [lang]);
 
     const handleBook = async () => {
+        if (!booking.pickupLocation) {
+            alert(tBooking.select_storage || 'Please select a location.');
+            return;
+        }
         if (!isMember) {
             if (!booking.userName || !booking.userEmail || !booking.snsId) {
                 alert(tBooking.alert_fill_info || 'Please fill in your information.');

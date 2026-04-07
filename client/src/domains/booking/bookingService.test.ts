@@ -15,7 +15,10 @@ describe('calculateBookingStoragePrice', () => {
         expect(result.total).toBe(STORAGE_RATES.handBag.hours4);
     });
 
-    it('4시간 초과 24시간 미만은 1시간 단위로 추가한다', () => {
+    it('4시간 초과 24시간 미만은 1시간 단위로 추가한다 (day1 상한)', () => {
+        // 9:00 → 14:00 = 5시간
+        // handBag: min(4000 + 1*1000, 8000) = 5000
+        // carrier:  min(5000 + 1*1250, 10000) = 6250
         const result = calculateBookingStoragePrice(
             makeDate('2026-03-23T09:00'),
             makeDate('2026-03-23T14:00'),
@@ -23,7 +26,10 @@ describe('calculateBookingStoragePrice', () => {
             'ko'
         );
 
-        expect(result.total).toBe(4200 + 5250);
+        expect(result.total).toBe(
+            Math.min(STORAGE_RATES.handBag.hours4 + STORAGE_RATES.handBag.hourlyAfter4h, STORAGE_RATES.handBag.day1) +
+            Math.min(STORAGE_RATES.carrier.hours4 + STORAGE_RATES.carrier.hourlyAfter4h, STORAGE_RATES.carrier.day1)
+        );
     });
 
     it('24시간은 첫날 정액을 적용한다', () => {
@@ -50,7 +56,9 @@ describe('calculateBookingStoragePrice', () => {
         expect(result.durationText).toBe('1일 0시간');
     });
 
-    it('24시간 초과는 남은 시간을 1시간 단위로 추가한다', () => {
+    it('24시간 초과는 추가 1일 단위로 과금한다', () => {
+        // 9:00 → 다음날 11:00 = 26시간 → 1일 2시간
+        // carrier: day1(10000) + ceil(2/24)=1 extraDay(8000) = 18000
         const result = calculateBookingStoragePrice(
             makeDate('2026-03-23T09:00'),
             makeDate('2026-03-24T11:00'),
@@ -58,7 +66,7 @@ describe('calculateBookingStoragePrice', () => {
             'ko'
         );
 
-        expect(result.total).toBe(STORAGE_RATES.carrier.day1 + (STORAGE_RATES.carrier.hourlyAfter4h * 2));
+        expect(result.total).toBe(STORAGE_RATES.carrier.day1 + STORAGE_RATES.carrier.extraDay);
         expect(result.durationText).toBe('1일 2시간');
     });
 });

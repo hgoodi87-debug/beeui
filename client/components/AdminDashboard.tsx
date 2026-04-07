@@ -419,7 +419,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           bags: booking.bags || 0,
           final_price: booking.finalPrice,
           nametag_number: booking.nametagId,
-          audit_note: booking.auditNote || '',
+          admin_note: booking.auditNote || '',
           force_resend: true,
         } }),
       });
@@ -2072,6 +2072,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       alert('예약 정보가 성공적으로 업데이트되었습니다. 💅');
       setSelectedBooking(null);
       refreshData();
+    } catch (err: any) {
+      console.error('[handleUpdateBooking] 저장 실패:', err);
+      alert(`저장 중 오류가 발생했습니다: ${err?.message || err}`);
     } finally {
       setIsSaving(false);
     }

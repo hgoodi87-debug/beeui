@@ -175,7 +175,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                     bags: booking.bags || 0,
                     final_price: booking.finalPrice,
                     nametag_number: booking.nametagId,
-                    audit_note: booking.auditNote || '',
+                    admin_note: booking.auditNote || '',
                     force_resend: true,
                 } }),
             });

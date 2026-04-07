@@ -112,11 +112,13 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
       pickupTime: String(booking.pickup_time || ""),
       dropoffLabel,
       dropoffDate: String(booking.dropoff_date || booking.return_date || booking.pickup_date || ""),
-      deliveryTime: String(booking.delivery_time || booking.return_time || booking.pickup_time || ""),
+      deliveryTime: String(booking.delivery_time || booking.return_time || ""),
       finalPrice: Number(booking.final_price || 0),
       bagSummary,
       nametagNumber: String(booking.nametag_number || ""),
-      adminNote: typeof booking.audit_note === "string" && booking.audit_note.trim()
+      adminNote: typeof booking.admin_note === "string" && booking.admin_note.trim()
+        ? booking.admin_note.trim()
+        : typeof booking.audit_note === "string" && booking.audit_note.trim()
         ? booking.audit_note.trim()
         : undefined,
     };

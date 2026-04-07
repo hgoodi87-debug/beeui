@@ -445,20 +445,26 @@ const normalizeStorageTiers = (tiers: StorageTier[] | null | undefined): Storage
 };
 
 const normalizeBookingForDeliveryPolicy = (booking: BookingState): BookingState => {
-  if (booking.serviceType !== 'DELIVERY') {
-    return booking;
+  // DB의 admin_note 컬럼이 snakeToCamel로 adminNote가 됨 → auditNote로 병합
+  const merged: BookingState = {
+    ...booking,
+    auditNote: booking.auditNote || (booking as any).adminNote || '',
+  };
+
+  if (merged.serviceType !== 'DELIVERY') {
+    return merged;
   }
 
-  const bagSizes = sanitizeDeliveryBagSizes(booking.bagSizes);
+  const bagSizes = sanitizeDeliveryBagSizes(merged.bagSizes);
   const totalBags = getTotalBags(bagSizes);
 
   return {
-    ...booking,
+    ...merged,
     bagSizes,
     bags: totalBags,
-    insuranceBagCount: typeof booking.insuranceBagCount === 'number'
-      ? Math.min(booking.insuranceBagCount, totalBags)
-      : booking.insuranceBagCount,
+    insuranceBagCount: typeof merged.insuranceBagCount === 'number'
+      ? Math.min(merged.insuranceBagCount, totalBags)
+      : merged.insuranceBagCount,
   };
 };
 
@@ -1231,13 +1237,18 @@ export const StorageService = {
       'settlement_status', 'settled_at', 'settled_by', 'language', 'image_url',
       'service_type', 'user_name', 'user_email', 'pickup_location', 'dropoff_location',
       'reservation_code', 'agreed_to_terms', 'agreed_to_privacy', 'agreed_to_high_value',
-      'email_sent_at', 'nametag_id', 'bags', 'bag_summary', 'audit_note',
+      'email_sent_at', 'nametag_id', 'bags', 'bag_summary', 'admin_note',
     ]);
     const allUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
     // booking_details 테이블에는 'status' 컬럼이 없고 'settlement_status'가 상태 필드
     if ('status' in allUpdates) {
       allUpdates['settlement_status'] = allUpdates['status'];
       delete allUpdates['status'];
+    }
+    // auditNote → audit_note (camelToSnake) → 실제 DB 컬럼명은 admin_note
+    if ('audit_note' in allUpdates) {
+      allUpdates['admin_note'] = allUpdates['audit_note'];
+      delete allUpdates['audit_note'];
     }
     const supabaseUpdates = Object.fromEntries(
       Object.entries(allUpdates).filter(([k]) => BOOKING_DETAILS_COLUMNS.has(k))

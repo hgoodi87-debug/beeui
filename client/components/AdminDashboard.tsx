@@ -2779,6 +2779,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handleSaveExpenditure={handleSaveExpenditure}
               expenditures={filteredExpenditures}
               deleteExpenditure={deleteExpenditure}
+              bookings={bookings}
               t={t}
             />
           )}
@@ -2798,8 +2799,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           )}
 
           {activeTab === 'REPORTS' && (
-            <ReportsTab 
-              bookings={bookings} 
+            <ReportsTab
+              bookings={bookings}
+              locations={locations}
               startDate={revenueStartDate}
               endDate={revenueEndDate}
               onStartDateChange={setRevenueStartDate}

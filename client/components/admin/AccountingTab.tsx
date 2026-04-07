@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { BookingState, Expenditure, CashClosing, AdminTab } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { exportKoreanAccountingXLSX } from '../../utils/accountingExport';
+import { exportPaymentMethodWordDoc } from '../../utils/wordExport';
 
 
 interface AccountingTabProps {
@@ -19,6 +20,7 @@ interface AccountingTabProps {
     handleSaveExpenditure: () => void;
     expenditures: Expenditure[];
     deleteExpenditure: (id: string) => void;
+    bookings: BookingState[];
     t: any;
 }
 
@@ -39,6 +41,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     handleSaveExpenditure,
     expenditures,
     deleteExpenditure,
+    bookings,
     t
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
@@ -110,6 +113,18 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         >
                             <i className="fa-solid fa-file-spreadsheet"></i>
                             회계장부 XLSX
+                        </button>
+                        <button
+                            onClick={() => exportPaymentMethodWordDoc({
+                                bookings,
+                                startDate: revenueStartDate,
+                                endDate: revenueEndDate,
+                            })}
+                            title="일자별 결제수단 현황 Word 문서 다운로드"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-md shadow-blue-600/20 whitespace-nowrap"
+                        >
+                            <i className="fa-solid fa-file-word"></i>
+                            결제수단별 Word
                         </button>
                     </div>
 
@@ -384,6 +399,48 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     />
                                 </div>
                             </div>
+                            {/* 비용구분 / 결제구분 */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2 text-left">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">비용 구분</label>
+                                    <div className="flex gap-2">
+                                        {[
+                                            { value: 'fixed',    label: '고정비', icon: 'fa-lock', color: 'emerald' },
+                                            { value: 'variable', label: '유동비', icon: 'fa-wave-square', color: 'amber' },
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => setExpForm({ ...expForm, costType: opt.value as any })}
+                                                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-black transition-all border-2 ${expForm.costType === opt.value ? `border-${opt.color}-400 bg-${opt.color}-50 text-${opt.color}-600 shadow-sm` : 'border-transparent bg-white text-gray-400 hover:border-gray-200'}`}
+                                            >
+                                                <i className={`fa-solid ${opt.icon} text-[10px]`}></i>
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[9px] text-gray-300 ml-1">미선택 시 계정과목으로 자동 판단</p>
+                                </div>
+                                <div className="space-y-2 text-left">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">결제 구분</label>
+                                    <div className="flex gap-2">
+                                        {[
+                                            { value: 'corporate_card', label: '법인카드', icon: 'fa-credit-card', color: 'blue' },
+                                            { value: 'personal',       label: '개인비용', icon: 'fa-user-wallet', color: 'orange' },
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => setExpForm({ ...expForm, paymentType: opt.value as any })}
+                                                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-black transition-all border-2 ${expForm.paymentType === opt.value ? `border-${opt.color}-400 bg-${opt.color}-50 text-${opt.color}-600 shadow-sm` : 'border-transparent bg-white text-gray-400 hover:border-gray-200'}`}
+                                            >
+                                                <i className={`fa-solid ${opt.icon} text-[10px]`}></i>
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                             <div className="space-y-2 text-left">
                                 <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">지출 상세 내역</label>
                                 <input
@@ -408,18 +465,36 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     <tr>
                                         <th className="px-6 py-4">일자</th>
                                         <th className="px-6 py-4">항목</th>
+                                        <th className="px-6 py-4">구분</th>
                                         <th className="px-6 py-4 text-right">금액</th>
                                         <th className="px-6 py-4 w-10"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {expenditures.map(e => (
+                                    {expenditures.map(e => {
+                                        const costLabel = e.costType === 'fixed' ? '고정비' : e.costType === 'variable' ? '유동비' : null;
+                                        const payLabel  = e.paymentType === 'corporate_card' ? '법카' : e.paymentType === 'personal' ? '개인' : null;
+                                        return (
                                         <tr key={e.id} className="hover:bg-red-50/20 transition-colors group">
                                             <td className="px-6 py-4 font-black text-gray-500 text-xs">{e.date}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
                                                     <span className="font-black text-xs text-bee-black">{e.category}</span>
                                                     <span className="text-[10px] text-gray-400 font-bold">{e.description}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {costLabel && (
+                                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${costLabel === '고정비' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
+                                                            {costLabel}
+                                                        </span>
+                                                    )}
+                                                    {payLabel && (
+                                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${payLabel === '법카' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>
+                                                            {payLabel}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right font-black text-red-500 text-xs">₩{e.amount?.toLocaleString()}</td>
@@ -433,9 +508,10 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                                 </button>
                                             </td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                                     {expenditures.length === 0 && (
-                                        <tr><td colSpan={4} className="px-6 py-20 text-center text-gray-300 font-black italic">표시할 지출 내역이 없습니다.</td></tr>
+                                        <tr><td colSpan={5} className="px-6 py-20 text-center text-gray-300 font-black italic">표시할 지출 내역이 없습니다.</td></tr>
                                     )}
                                 </tbody>
                             </table>

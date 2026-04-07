@@ -12,6 +12,7 @@ export interface VoucherEmailTemplateInput {
   finalPrice: number;
   bagSummary: string;
   nametagNumber?: string;
+  adminNote?: string;
 }
 
 export interface ArrivalEmailTemplateInput {
@@ -90,6 +91,12 @@ export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
             <tr><td style="padding:10px 0;color:#64748b;border-bottom:1px solid #f1f5f9;">수하물</td><td style="padding:10px 0;color:#111827;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:800;">${bagSummary}</td></tr>
             <tr><td style="padding:16px 0 0;color:#111827;font-weight:900;">결제 금액</td><td style="padding:16px 0 0;color:#111827;text-align:right;font-size:24px;font-weight:900;">${formatCurrency(input.finalPrice)}</td></tr>
           </table>
+          ${input.adminNote ? `
+          <div style="margin-top:20px;padding:16px 20px;background:#fffbeb;border:1px solid #fde68a;border-radius:18px;">
+            <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">📋 운영 메모</div>
+            <p style="margin:0;color:#78350f;font-size:13px;font-weight:700;white-space:pre-line;">${escapeHtml(input.adminNote)}</p>
+          </div>
+          ` : ""}
           <div style="margin-top:24px;padding:18px 20px;background:#f8fafc;border-radius:18px;color:#475569;font-size:13px;font-weight:700;">
             예약 상세 및 진행 상태는
             <a href="https://bee-liber.com/tracking?id=${encodeURIComponent(input.reservationCode || input.bookingId)}" style="color:#111827;font-weight:900;text-decoration:none;"> tracking 페이지</a>

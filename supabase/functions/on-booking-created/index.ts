@@ -66,8 +66,8 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
     return { attempted: false, skipped: true, reason: "missing_email" };
   }
 
-  // 멱등성: 이미 발송된 경우 스킵
-  if (booking.email_sent_at) {
+  // 멱등성: 이미 발송된 경우 스킵 (force_resend=true 이면 무시)
+  if (booking.email_sent_at && !booking.force_resend) {
     console.log(`[on-booking-created] Email already sent at ${booking.email_sent_at}, skipping`);
     return { attempted: false, skipped: true, reason: "already_sent" };
   }
@@ -116,6 +116,9 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
       finalPrice: Number(booking.final_price || 0),
       bagSummary,
       nametagNumber: String(booking.nametag_number || ""),
+      adminNote: typeof booking.audit_note === "string" && booking.audit_note.trim()
+        ? booking.audit_note.trim()
+        : undefined,
     };
 
     await sendEdgeMail({

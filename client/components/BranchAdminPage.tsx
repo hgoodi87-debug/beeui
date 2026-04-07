@@ -156,7 +156,28 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
             const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
-                body: JSON.stringify({ type: 'INSERT', table: 'booking_details', record: { id: bookingDetailId, reservation_code: booking.reservationCode, user_name: booking.userName, user_email: booking.userEmail, service_type: booking.serviceType, pickup_date: booking.pickupDate, pickup_time: booking.pickupTime, pickup_location: booking.pickupLocation, final_price: booking.finalPrice } }),
+                body: JSON.stringify({ type: 'INSERT', table: 'booking_details', record: {
+                    id: bookingDetailId,
+                    reservation_code: booking.reservationCode,
+                    user_name: booking.userName,
+                    user_email: booking.userEmail,
+                    service_type: booking.serviceType,
+                    pickup_date: booking.pickupDate,
+                    pickup_time: booking.pickupTime,
+                    pickup_location: booking.pickupLocation,
+                    pickup_location_id: booking.pickupLocation,
+                    dropoff_location: booking.dropoffLocation,
+                    dropoff_location_id: booking.dropoffLocation,
+                    dropoff_date: booking.dropoffDate,
+                    delivery_time: booking.deliveryTime,
+                    return_date: booking.dropoffDate,
+                    return_time: booking.deliveryTime,
+                    bags: booking.bags || 0,
+                    final_price: booking.finalPrice,
+                    nametag_number: booking.nametagId,
+                    audit_note: booking.auditNote || '',
+                    force_resend: true,
+                } }),
             });
             if (!res.ok) throw new Error(`Edge Function 호출 실패 [${res.status}]`);
             alert('Email sent successfully!');

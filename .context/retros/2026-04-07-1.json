@@ -1,0 +1,36 @@
+{
+  "date": "2026-04-07",
+  "window": "7d",
+  "metrics": {
+    "commits_to_main": 15,
+    "commits_on_branch": 68,
+    "contributors": 2,
+    "prs_merged": 1,
+    "insertions": 7160,
+    "deletions": 18071,
+    "net_loc": -10911,
+    "active_days": 5,
+    "sessions": 9,
+    "deep_sessions": 4,
+    "avg_session_minutes": 55,
+    "feat_pct": 0.16,
+    "fix_pct": 0.50,
+    "style_pct": 0.22,
+    "chore_pct": 0.06,
+    "peak_hour_kst": 1,
+    "ai_assisted_commits": 14,
+    "shipping_streak_days": 7
+  },
+  "authors": {
+    "ycm": { "commits": 68, "top_area": "client/components/", "peak_hour_kst": "01:00~02:00" },
+    "Claude (AI)": { "commits": 14, "top_area": ".agent/skills/", "note": "AI co-author on main" }
+  },
+  "version_range": ["1.0.0", "1.1.0"],
+  "streak_days": 7,
+  "tweetable": "Week of Mar 31: 68 commits (1 human + AI), 7.2k ins/18k del, v1.1.0 shipped | SEO fix + 결제 + AI 검수 + 디자인 12패스 | Streak: 7d",
+  "backlog": {
+    "total_open": 3,
+    "completed_this_period": 0,
+    "added_this_period": 3
+  }
+}

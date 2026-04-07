@@ -9,6 +9,7 @@
       "node_modules": true,
       ".firebase": true
     },
-    "editor.autoIndentOnPaste": true
+    "editor.autoIndentOnPaste": true,
+    "claudeCode.useTerminal": true
   }
 }

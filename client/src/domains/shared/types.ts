@@ -59,15 +59,9 @@ export interface HeroConfig {
 
 export interface GoogleCloudConfig {
     apiKey: string;
-    authDomain: string;
-    projectId: string;
-    storageBucket: string;
-    messagingSenderId: string;
-    appId: string;
     isActive: boolean;
     enableWorkspaceAutomation?: boolean;
     enableGeminiAutomation?: boolean;
-    googleChatWebhookUrl?: string;
     measurementId?: string;
     mapId?: string;
     mapSecret?: string;
@@ -125,105 +119,38 @@ export type AdminTab =
     | 'CLOUD' 
     | 'ROADMAP' 
     | 'CHATS' 
-    | 'TIPS_CMS'
     | 'DAILY_SETTLEMENT'
+    | 'FINANCIAL_COMPARISON'
     | 'ACCOUNTING'
     | 'MONTHLY_SETTLEMENT'
     | 'REPORTS'
     | 'PRIVACY_EDITOR'
     | 'TERMS_EDITOR'
     | 'QNA_EDITOR'
-    | 'TRASH';
-
-// --- TIPS CMS Types ---
-export type TipContentType = 'landmark' | 'hotplace' | 'attraction' | 'event';
-export type TipPublishStatus = 
-    | 'draft' 
-    | 'review_requested' 
-    | 'in_review' 
-    | 'approved' 
-    | 'scheduled' 
-    | 'published' 
-    | 'hidden' 
-    | 'archived' 
-    | 'rejected';
-
-export interface TipI18nString {
-    ko: string;
-    en: string;
-    ja?: string;
-    zh?: string;
-    [key: string]: string | undefined;
-}
-
-export interface TipContent {
-    id?: string;
-    slug: string;
-    title: TipI18nString;
-    content_type: TipContentType;
-    area_slug: string;
-    summary: TipI18nString;
-    body: TipI18nString;
-    cover_image_url: string;
-    recommended_time?: string;
-    audience_tags: string[];
-    theme_tags: string[];
-    official_url?: string;
-    source_name?: string;
-    start_date?: string;
-    end_date?: string;
-    publish_status: TipPublishStatus;
-    language_available: string[];
-    author_id?: string;
-    reviewer_id?: string;
-    review_comment?: string;
-    quality_score?: number;
-    priority_score?: number;
-    is_foreigner_friendly?: boolean;
-    forbidden_word_detected?: boolean;
-    created_at?: string;
-    updated_at?: string;
-}
-
-export interface TipAreaInfo {
-    id?: string;
-    area_slug: string;
-    area_name: TipI18nString;
-    headline: TipI18nString;
-    intro_text: TipI18nString;
-    cover_image_url: string;
-    is_priority_area: boolean;
-    relatedBranchIds: string[];
-    order?: number;
-    created_at?: string;
-    updated_at?: string;
-}
-
-export interface TipThemeInfo {
-    id?: string;
-    theme_slug: string;
-    theme_name: TipI18nString;
-    description: TipI18nString;
-    icon?: string;
-    order?: number;
-    is_active: boolean;
-    created_at?: string;
-    updated_at?: string;
-}
+    | 'TRASH'
+    | 'AI_REVIEW';
 
 export interface TranslatedLocationData {
     name_en: string;
     name_ja: string;
     name_zh: string;
+    name_zh_tw: string;
+    name_zh_hk: string;
     address_en: string;
     address_ja: string;
     address_zh: string;
+    address_zh_tw: string;
+    address_zh_hk: string;
     pickupGuide_en: string;
     pickupGuide_ja: string;
     pickupGuide_zh: string;
+    pickupGuide_zh_tw: string;
+    pickupGuide_zh_hk: string;
     description_en: string;
     description_ja: string;
     description_zh: string;
+    description_zh_tw: string;
+    description_zh_hk: string;
 }
 
 export interface CashClosing {
@@ -247,6 +174,9 @@ export interface CashClosing {
     createdAt: string;
 }
 
+export type ExpenditureCostType = 'fixed' | 'variable';    // 고정비 | 유동비
+export type ExpenditurePaymentType = 'corporate_card' | 'personal'; // 법인카드 | 개인비용
+
 export interface Expenditure {
     id?: string;
     date: string;
@@ -254,6 +184,74 @@ export interface Expenditure {
     category: string;
     amount: number;
     description: string;
+    costType?: ExpenditureCostType;     // 고정비 / 유동비
+    paymentType?: ExpenditurePaymentType; // 법인카드 / 개인비용
     createdBy: string;
     createdAt: string;
+}
+
+export interface AdminRevenueDailySummary {
+    date: string;
+    branchId?: string;
+    branchCode?: string;
+    branchName?: string;
+    bookingCount: number;
+    activeBookingCount: number;
+    deliveryCount: number;
+    storageCount: number;
+    bagCount: number;
+    handBagCount: number;
+    carrierCount: number;
+    strollerBicycleCount: number;
+    completedCount: number;
+    cancelledCount: number;
+    refundedCount: number;
+    totalRevenue: number;
+    cancelledTotal: number;
+    refundedTotal: number;
+    cashRevenue: number;
+    cardRevenue: number;
+    appleRevenue: number;
+    samsungRevenue: number;
+    wechatRevenue: number;
+    alipayRevenue: number;
+    naverRevenue: number;
+    kakaoRevenue: number;
+    paypalRevenue: number;
+    confirmedAmount: number;
+    unconfirmedAmount: number;
+    partnerPayoutTotal: number;
+}
+
+export interface AdminRevenueMonthlySummary {
+    month: string;
+    branchId?: string;
+    branchCode?: string;
+    branchName?: string;
+    bookingCount: number;
+    activeBookingCount: number;
+    deliveryCount: number;
+    storageCount: number;
+    bagCount: number;
+    handBagCount: number;
+    carrierCount: number;
+    strollerBicycleCount: number;
+    completedCount: number;
+    cancelledCount: number;
+    refundedCount: number;
+    totalRevenue: number;
+    cancelledTotal: number;
+    refundedTotal: number;
+    cashRevenue: number;
+    cardRevenue: number;
+    appleRevenue: number;
+    samsungRevenue: number;
+    wechatRevenue: number;
+    alipayRevenue: number;
+    naverRevenue: number;
+    kakaoRevenue: number;
+    paypalRevenue: number;
+    confirmedAmount: number;
+    unconfirmedAmount: number;
+    partnerPayoutTotal: number;
 }

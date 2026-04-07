@@ -10,7 +10,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Pretendard', 'Outfit', 'Inter', 'sans-serif'],
+                sans: ['Pretendard', 'Outfit', 'sans-serif'],
                 display: ['Montserrat', 'Pretendard', 'sans-serif'],
                 outfit: ['Outfit', 'sans-serif'],
             },

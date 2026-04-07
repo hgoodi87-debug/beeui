@@ -180,3 +180,21 @@ export const addDaysToDateStr = (dateStr: string, days: number): string => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
+
+/**
+ * Returns the date 2 months from the given YYYY-MM-DD string (or today if omitted).
+ * Uses calendar months (Jan 31 + 2m = Mar 31, Feb 28 + 2m = Apr 28).
+ */
+export const add2MonthsToDateStr = (dateStr?: string): string => {
+    const base = dateStr ? new Date(dateStr.split(' ')[0]) : new Date();
+    if (isNaN(base.getTime())) {
+        const today = new Date();
+        today.setMonth(today.getMonth() + 2);
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    }
+    base.setMonth(base.getMonth() + 2);
+    const year = base.getFullYear();
+    const month = String(base.getMonth() + 1).padStart(2, '0');
+    const day = String(base.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};

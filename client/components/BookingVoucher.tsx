@@ -54,6 +54,18 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
         return (l[`pickupGuide_${lang}` as keyof LocationOption] as string) || (l[`pickupGuide_${dbLang}` as keyof LocationOption] as string) || l.pickupGuide_en || l.pickupGuide;
     };
 
+    const getLocAddress = (l: LocationOption) => {
+        if (!l) return 'N/A';
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
+        return (l[`address_${lang}` as keyof LocationOption] as string) || (l[`address_${dbLang}` as keyof LocationOption] as string) || l.address_en || l.address || 'N/A';
+    };
+
+    const getLocHours = (l: LocationOption) => {
+        if (!l) return '09:00 - 21:00';
+        const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
+        return (l[`businessHours_${lang}` as keyof LocationOption] as string) || (l[`businessHours_${dbLang}` as keyof LocationOption] as string) || l.businessHours_en || l.businessHours || '09:00 - 21:00';
+    };
+
     const getMapUrl = (l: LocationOption) => {
         if (!l) return '#';
         if (l.lat && l.lng) {
@@ -93,7 +105,8 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                 logging: false,
             });
             const link = document.createElement('a');
-            link.download = `MoneyBox_Coupon_${booking.id}.png`;
+            const branchCode = pickupLoc?.shortCode || 'BEE';
+            link.download = `MoneyBox_Coupon_${branchCode}_${booking.reservationCode || booking.id}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         } catch (err) {
@@ -123,7 +136,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
         >
             <style>
                 {`
-                @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+                @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
                 .font-pretendard { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif !important; }
                 @media print {
                     .no-print { display: none !important; }
@@ -186,6 +199,14 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.reservation_id || 'Reservation ID'}</p>
                             <h3 className="text-sm font-black text-bee-black">{booking.reservationCode || booking.id}</h3>
                         </div>
+                        {booking.nametagId && (
+                            <div className="flex flex-col items-center">
+                                <p className="text-[9px] font-black text-bee-yellow bg-bee-black px-2 py-0.5 rounded-full mb-1 uppercase tracking-tighter">Nametag No.</p>
+                                <div className="w-10 h-10 rounded-full bg-bee-yellow flex items-center justify-center shadow-lg border-2 border-white">
+                                    <span className="text-lg font-black text-bee-black leading-none">{booking.nametagId}</span>
+                                </div>
+                            </div>
+                        )}
                         <div className="text-right">
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.issue_date || 'Issue Date'}</p>
                             <h3 className="text-sm font-black text-bee-black">
@@ -194,23 +215,42 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         </div>
                     </div>
 
-                    {/* Main Ticket Body */}
-                    <div className="p-10 space-y-8">
-                        {/* Header QR Placeholder */}
-                        <div className="flex flex-col items-center pb-6 border-b border-gray-100 text-center">
-                            <div className="w-32 h-32 bg-white rounded-3xl p-3 mb-4 border-2 border-bee-yellow/20 flex items-center justify-center relative group shadow-sm">
+                    {/* Main Ticket Body - Glassmorphism Applied 💅 */}
+                    <div className="p-10 space-y-8 relative">
+                        {/* Background subtle texture */}
+                        <div className="absolute inset-0 bg-white/40 backdrop-blur-xl pointer-events-none" />
+
+                        {/* Header QR Placeholder with Scanner Animation */}
+                        <div className="flex flex-col items-center pb-6 border-b border-gray-100/50 text-center relative z-10">
+                            <div className="w-40 h-40 bg-white rounded-[32px] p-4 mb-6 border-4 border-bee-yellow/10 flex items-center justify-center relative group shadow-xl">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/staff/scan?id=${booking.id || booking.reservationCode}`)}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/staff/scan?id=${booking.id || booking.reservationCode}`)}`}
                                     alt="QR Code"
                                     className="w-full h-full object-contain"
                                 />
-                                <div className="absolute -bottom-2 px-3 py-1 bg-bee-black rounded-full shadow-lg border border-white/10">
-                                    <p className="text-[8px] font-black text-bee-yellow uppercase tracking-tighter">{voucherText.scan_to_verify || 'Scan to Verify'}</p>
+                                {/* Scanner Line Animation 💅 */}
+                                <motion.div 
+                                    className="absolute left-4 right-4 h-0.5 bg-bee-yellow shadow-[0_0_15px_rgba(255,191,0,0.8)] z-20"
+                                    animate={{ top: ['10%', '90%', '10%'] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                />
+                                <div className="absolute -bottom-3 px-4 py-1.5 bg-bee-black rounded-full shadow-lg border border-white/20">
+                                    <p className="text-[9px] font-black text-bee-yellow uppercase tracking-tighter">{voucherText.scan_to_verify || 'Scan to Verify'}</p>
                                 </div>
                             </div>
-                            <p className="text-[11px] font-black text-bee-black mb-1 uppercase tracking-widest">{voucherText.show_to_staff || '본 바우처를 직원에게 제시하세요'}</p>
-                            <p className="text-[9px] font-bold text-gray-500 leading-relaxed max-w-[260px]">
-                                {(voucherText.show_code_note || '지점 방문 시 본 코드를 제시해 주세요.\n현장 확인 후 즉시 처리가 진행됩니다.').split('\n').map((line: string, index: number, arr: string[]) => (
+                            
+                            <div className="space-y-2">
+                                <p className="text-[12px] font-black text-bee-black uppercase tracking-widest">{voucherText.show_to_staff || '본 바우처를 직원에게 제시하세요'}</p>
+                                <div className="inline-block px-3 py-1 bg-bee-yellow/10 rounded-lg border border-bee-yellow/20">
+                                    <p className="text-[9px] font-black text-bee-yellow uppercase tracking-wide">
+                                        <i className="fa-solid fa-user-shield mr-1"></i>
+                                        {lang === 'ko' ? '지점 직원 확인 전용' : 'For Branch Staff Verification'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <p className="text-[10px] font-bold text-gray-500 leading-relaxed max-w-[280px] mt-4">
+                                {(voucherText.show_code_note || '지점 방문 시 본 코드를 제시해 주세요.\n직원이 스캔 시 예약 상태가 자동으로 업데이트됩니다.').split('\n').map((line: string, index: number, arr: string[]) => (
                                     <React.Fragment key={index}>
                                         {line}
                                         {index < arr.length - 1 ? <br /> : null}
@@ -220,8 +260,8 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         </div>
 
                         {/* Service Visualization */}
-                        <div className="relative">
-                            <div className="absolute left-[13px] top-6 bottom-6 w-0.5 border-l-2 border-dashed border-gray-200" />
+                        <div className="relative z-10">
+                            <div className="absolute left-[13px] top-6 bottom-6 w-0.5 border-l-2 border-dashed border-gray-200/50" />
 
                             <div className="space-y-8">
                                 {/* From */}
@@ -409,7 +449,9 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                         <span className="text-xl font-black italic text-bee-yellow">money</span>
                                         <span className="text-xl font-black text-white">box</span>
                                     </div>
-                                    <p className="text-[10px] font-black text-bee-yellow/80 uppercase tracking-widest whitespace-nowrap">{voucherText.moneybox_partner || 'Yeonnam Branch Official Partner'}</p>
+                                    <p className="text-[10px] font-black text-bee-yellow/80 uppercase tracking-widest whitespace-nowrap">
+                                        {getLocName(pickupLoc)} {voucherText.moneybox_partner || 'Official Partner'}
+                                    </p>
                                 </div>
                                 <div className="px-3 py-1 bg-bee-yellow rounded-full shadow-lg border border-white/20">
                                     <p className="text-[10px] font-black text-bee-black uppercase">{voucherText.vip_coupon || 'VIP Coupon'}</p>
@@ -432,14 +474,14 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                     <i className="fa-solid fa-location-dot text-bee-yellow mt-1 text-xs"></i>
                                     <div>
                                         <p className="text-[10px] font-bold text-white/50 mb-0.5">{voucherText.branch_address || 'ADDRESS'}</p>
-                                        <p className="text-[11px] font-bold text-white leading-tight">서울 마포구 월드컵북로2길 93 (연남점)</p>
+                                        <p className="text-[11px] font-bold text-white leading-tight">{getLocAddress(pickupLoc)}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <i className="fa-solid fa-clock text-bee-yellow mt-1 text-xs"></i>
                                     <div>
                                         <p className="text-[10px] font-bold text-white/50 mb-0.5">{voucherText.open_hours || 'OPEN HOURS'}</p>
-                                        <p className="text-[11px] font-bold text-white">{voucherText.everyday_hours || '09:00 - 21:00 (Everyday)'}</p>
+                                        <p className="text-[11px] font-bold text-white">{getLocHours(pickupLoc)}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">

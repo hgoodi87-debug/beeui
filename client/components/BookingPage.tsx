@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -18,9 +18,12 @@ import {
 } from 'lucide-react';
 import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
+import { supabaseGet } from '../services/supabaseClient';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
-import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
-import { STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
+import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd } from '../services/paypalService';
+import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr, add2MonthsToDateStr } from '../utils/dateUtils';
+import { COUNTRY_NAMES } from '../src/constants/countries';
+import { calculateDeliveryStoragePrice, STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
 import {
     BagCategoryId,
     DEFAULT_DELIVERY_PRICES,
@@ -55,22 +58,9 @@ interface BookingPageProps {
     customerBranchRates?: { delivery: number; storage: number };
 }
 
-const COUNTRY_NAMES: Record<string, string> = {
-    'KR': 'Korea 🇰🇷',
-    'US': 'USA 🇺🇸',
-    'JP': 'Japan 🇯🇵',
-    'CN': 'China 🇨🇳',
-    'HK': 'Hong Kong 🇭🇰',
-    'TW': 'Taiwan 🇹🇼',
-    'SG': 'Singapore 🇸🇬',
-    'MY': 'Malaysia 🇲🇲',
-    'VN': 'Vietnam 🇻🇳',
-    'TH': 'Thailand 🇹🇭',
-    'PH': 'Philippines 🇵🇭',
-    'ID': 'Indonesia 🇮🇩',
-    'ETC': 'Other 🌏'
-};
-
+// VITE_DIRECT_BOOKING_MODE=true 이면 현금 직접 예약 모드 (Toss 결제 비활성화)
+// Toss 실배포 전환 시 이 환경변수를 false 또는 제거하세요.
+const TEMP_DIRECT_BOOKING_MODE = import.meta.env.VITE_DIRECT_BOOKING_MODE !== 'false';
 
 const BookingPage: React.FC<BookingPageProps> = ({
     t,
@@ -87,8 +77,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
     customerBranchId,
     customerBranchRates
 }) => {
-    const isTossPaymentFlowEnabled = isTossPaymentsFlowEnabled();
+    const isTossPaymentFlowEnabled = !TEMP_DIRECT_BOOKING_MODE && isTossPaymentsFlowEnabled();
     const isMockPaymentMode = isTossPaymentFlowEnabled && isTossPaymentsMockMode();
+    const isDirectBookingMode = !isTossPaymentFlowEnabled;
     const isMember = !!user && !user.isAnonymous;
     const defaultDate = formatKSTDate();
     const normalizedInitialBagSizes = initialServiceType === ServiceType.DELIVERY
@@ -125,6 +116,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const input = inputRef.current;
         if (!input) return;
 
+        // 이미 포커스된 상태이면 picker가 열려있거나 방금 닫힌 것 — 재호출 방지
+        if (document.activeElement === input) return;
+
         if (typeof input.showPicker === 'function') {
             input.showPicker();
             return;
@@ -149,10 +143,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
             setCouponMessage({ type: 'success', text: '프로모션 코드가 적용되었습니다. 💅✨' });
         } else if (code === 'WELCOME5000') {
             setAppliedCoupon({ code, amount: 5000, type: 'fixed' });
-            setCouponMessage({ type: 'success', text: '웰컴 할인이 적용되었습니다. 🎉' });
+            setCouponMessage({ type: 'success', text: '웰컴 혜택이 적용되었습니다. 🎉' });
         } else if (code === 'BEE10') {
             setAppliedCoupon({ code, amount: 10, type: 'percent' });
-            setCouponMessage({ type: 'success', text: '10% 할인이 적용되었습니다. 🐝' });
+            setCouponMessage({ type: 'success', text: '10% 보너스 혜택이 적용되었습니다. 🐝' });
         } else {
             setAppliedCoupon(null);
             setCouponMessage({ type: 'error', text: '유효하지 않거나 만료된 코드입니다. 🙄' });
@@ -277,6 +271,12 @@ const BookingPage: React.FC<BookingPageProps> = ({
     };
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showDupeConfirm, setShowDupeConfirm] = useState(false);
+    const pendingBookingRef = useRef<BookingState | null>(null);
+    const paypalContainerRef = useRef<HTMLDivElement>(null);
+    const paypalRenderedRef = useRef(false);
+    const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: string; finalBooking: any } | null>(null);
+    const [paypalLoadError, setPaypalLoadError] = useState(false);
 
     // 💅 BookingSuccess 첩크 미리 로딩 (lazy 플리커 방지)
     const prefetchBookingSuccess = () => {
@@ -435,23 +435,24 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const destSurcharge = isDelivery ? (dropoffLoc?.destinationSurcharge || 0) : 0;
 
         let base = 0;
+        let storageFee = 0;
         let breakdown = '';
         let durationText = '';
 
         if (isDelivery) {
-            const deliveryBase = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * deliveryPrices.carrier);
-
-            // Overnight Storage Fee calculation
-            const pickupD = new Date(booking.pickupDate || '');
-            const deliveryD = new Date(booking.dropoffDate || booking.pickupDate || '');
-            const diffDays = Math.max(0, Math.floor((deliveryD.getTime() - pickupD.getTime()) / (1000 * 60 * 60 * 24)));
-
-            let storageFee = 0;
-            if (diffDays > 0) {
-                storageFee = (handBag * STORAGE_RATES.handBag.extraDay) + (carrier * STORAGE_RATES.carrier.extraDay);
-                storageFee *= diffDays;
-                durationText = lang.startsWith('ko') ? `${diffDays}일 보관 포함` : `${diffDays}d storage incl.`;
-                breakdown = lang.startsWith('ko') ? `기본배송 + ${diffDays}일 보관료` : `Base delivery + ${diffDays}d storage`;
+            const deliveryBase = (handBag * (deliveryPrices.handBag || DEFAULT_DELIVERY_PRICES.handBag)) + (carrier * (deliveryPrices.carrier || DEFAULT_DELIVERY_PRICES.carrier));
+            const deliveryStorage = calculateDeliveryStoragePrice(
+                booking.pickupDate || '',
+                booking.dropoffDate || booking.pickupDate || '',
+                normalizedBagSizes,
+                lang
+            );
+            storageFee = deliveryStorage.total;
+            if (deliveryStorage.storageDays > 0) {
+                durationText = deliveryStorage.durationText;
+                breakdown = lang.startsWith('ko')
+                    ? `기본배송 + 선보관 ${deliveryStorage.storageDays}일`
+                    : `Base delivery + ${deliveryStorage.storageDays}d pre-delivery storage`;
             }
 
             base = deliveryBase + storageFee;
@@ -537,8 +538,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
     }, [lang]);
 
     const handleBook = async () => {
-        console.log("[BookingPage] handleBook triggered. Current state:", booking);
-
         if (!isMember) {
             if (!booking.userName || !booking.userEmail || !booking.snsId) {
                 alert(tBooking.alert_fill_info || 'Please fill in your information.');
@@ -554,7 +553,32 @@ const BookingPage: React.FC<BookingPageProps> = ({
             return;
         }
 
+        // 단시간 중복 예약 감지 (10분 이내 동일 이메일+날짜+지점)
+        const email = booking.userEmail || user?.email;
+        if (email && booking.pickupDate && booking.pickupLocation) {
+            try {
+                const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+                const rows = await supabaseGet<Array<Record<string, unknown>>>(
+                    `booking_details?user_email=eq.${encodeURIComponent(email)}&pickup_date=eq.${booking.pickupDate}&pickup_location_id=eq.${encodeURIComponent(booking.pickupLocation)}&created_at=gte.${encodeURIComponent(since)}&select=id,reservation_code,created_at&limit=1`
+                );
+                if (Array.isArray(rows) && rows.length > 0) {
+                    pendingBookingRef.current = { ...booking as BookingState };
+                    setShowDupeConfirm(true);
+                    return;
+                }
+            } catch {
+                // 조회 실패 시 그냥 진행
+            }
+        }
+
+        await proceedBooking(booking as BookingState);
+    };
+
+    // 중복 확인 후 실제 예약 진행
+    const proceedBooking = async (bookingState: BookingState) => {
+        setShowDupeConfirm(false);
         setIsSubmitting(true);
+        const booking = bookingState;
         const finalBooking: BookingState = {
             ...booking as BookingState,
             pickupLoc: pickupLoc,
@@ -576,8 +600,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
             language: lang,
             branchId: customerBranchId,
             branchCommissionRates: customerBranchRates,
-            paymentMethod: 'card',
-            paymentStatus: priceDetails.total > 0 ? 'pending' : 'paid'
+            paymentMethod: isDirectBookingMode ? 'cash' : 'card',
+            paymentStatus: priceDetails.total > 0 ? 'pending' : 'paid',
+            paymentProvider: isDirectBookingMode ? 'manual' : 'toss'
         };
 
         const channelMap: Record<string, any> = {
@@ -629,6 +654,88 @@ const BookingPage: React.FC<BookingPageProps> = ({
         }
     };
 
+    // PayPal 버튼 초기화
+    useEffect(() => {
+        if (!isPayPalEnabled() || isDirectBookingMode) return;
+
+        loadPayPalSDK().then(() => {
+            if (paypalRenderedRef.current || !paypalContainerRef.current) return;
+            paypalContainerRef.current.innerHTML = '';
+            paypalRenderedRef.current = true;
+
+            window.paypal.Buttons({
+                style: { layout: 'horizontal', color: 'gold', shape: 'rect', label: 'paypal', height: 48 },
+                createOrder: async () => {
+                    const ctx = latestPayPalCtxRef.current;
+                    if (!ctx || ctx.priceTotal <= 0) throw new Error('결제 금액이 없습니다.');
+                    if (!booking.userName || !booking.userEmail) {
+                        alert('이름과 이메일을 먼저 입력해 주세요.');
+                        throw new Error('폼 미완성');
+                    }
+                    if (!booking.agreedToTerms || !booking.agreedToPrivacy || !booking.agreedToHighValue) {
+                        alert('이용약관에 동의해 주세요.');
+                        throw new Error('약관 미동의');
+                    }
+                    const desc = ctx.serviceType === 'DELIVERY' ? 'Beeliber Airport Delivery' : 'Beeliber Luggage Storage';
+                    return createPayPalOrder(ctx.priceTotal, desc);
+                },
+                onApprove: async (data: { orderID: string }) => {
+                    setIsSubmitting(true);
+                    try {
+                        const capture = await capturePayPalOrder(data.orderID);
+                        const ctx = latestPayPalCtxRef.current;
+                        if (!ctx?.finalBooking) throw new Error('예약 정보가 없습니다.');
+                        await onSuccess({
+                            ...ctx.finalBooking,
+                            paymentMethod: 'paypal',
+                            paymentStatus: 'paid',
+                            paymentProvider: 'paypal',
+                            paymentOrderId: data.orderID,
+                            paymentKey: capture.captureId,
+                            paymentApprovedAt: capture.paidAt,
+                        });
+                    } catch (e) {
+                        alert(e instanceof Error ? e.message : 'PayPal 결제 처리 실패');
+                    } finally {
+                        setIsSubmitting(false);
+                    }
+                },
+                onError: (err: any) => {
+                    console.error('[PayPal]', err);
+                    alert('PayPal 결제 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                },
+            }).render(paypalContainerRef.current);
+        }).catch((e) => {
+            // [W-3] SDK 로드 실패 시 사용자에게 에러 상태 노출
+            console.error('[PayPal] SDK load failed:', e);
+            setPaypalLoadError(true);
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isDirectBookingMode]);
+
+    // PayPal 버튼에 최신 컨텍스트 주입 (ref 업데이트 — 리렌더 없음)
+    useEffect(() => {
+        if (!isPayPalEnabled()) return;
+        const pickupLoc_ = pickupLoc;
+        const dropoffLoc_ = booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined;
+        latestPayPalCtxRef.current = {
+            priceTotal: priceDetails.total,
+            serviceType: booking.serviceType,
+            finalBooking: {
+                ...booking,
+                pickupLoc: pickupLoc_,
+                returnLoc: dropoffLoc_,
+                price: priceDetails.base + priceDetails.originSurcharge + priceDetails.destSurcharge + priceDetails.insuranceFee,
+                discountCode: appliedCoupon?.code,
+                discountAmount: priceDetails.discount,
+                finalPrice: priceDetails.total,
+                status: BookingStatus.PENDING,
+                createdAt: new Date().toISOString(),
+                language: lang,
+            },
+        };
+    });
+
     const getLocName = (l: LocationOption | undefined) => {
         if (!l) return '';
         // 'zh', 'zh-HK', 'zh-TW' 지원을 위한 개선
@@ -642,6 +749,59 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
     return (
         <div className="w-full min-h-screen bg-white">
+            {/* 중복 예약 확인 다이얼로그 */}
+            <AnimatePresence>
+                {showDupeConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8"
+                        >
+                            <div className="text-center mb-6">
+                                <div className="w-14 h-14 rounded-full bg-bee-yellow/20 flex items-center justify-center mx-auto mb-4">
+                                    <AlertCircle size={28} className="text-bee-black" />
+                                </div>
+                                <h3 className="text-lg font-black text-bee-black leading-snug break-keep">
+                                    방금 예약을 하셨는데<br />추가로 예약하시는 건가요?
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-2 break-keep">
+                                    동일한 날짜·지점으로 최근 예약이 확인되었어요.
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowDupeConfirm(false);
+                                        pendingBookingRef.current = null;
+                                        onBack();
+                                    }}
+                                    className="flex-1 py-3.5 rounded-2xl bg-gray-100 text-bee-black font-black text-sm hover:bg-gray-200 transition-colors"
+                                >
+                                    아니요
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const b = pendingBookingRef.current;
+                                        pendingBookingRef.current = null;
+                                        if (b) proceedBooking(b);
+                                    }}
+                                    className="flex-1 py-3.5 rounded-2xl bg-bee-yellow text-bee-black font-black text-sm hover:bg-bee-yellow/80 transition-colors"
+                                >
+                                    네, 추가 예약
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center z-50">
                 <div className="flex items-center gap-4">
@@ -654,7 +814,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         <ChevronLeft size={24} />
                     </button>
                     <h2 className="text-xl font-black italic tracking-tighter flex items-center gap-2">
-                        <span className="text-bee-yellow">BEE</span> {t.bee_ai?.header || "RESERVATION"}
+                        <span className="text-bee-yellow">beeliber</span> 예약
                     </h2>
                 </div>
             </div>
@@ -727,6 +887,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             aria-label="Pickup Date"
                                                             value={booking.pickupDate?.split(' ')[0]}
                                                             min={formatKSTDate()}
+                                                            max={add2MonthsToDateStr(formatKSTDate())}
                                                             onChange={e => setBooking(prev => ({ ...prev, pickupDate: e.target.value }))}
                                                             className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                         />
@@ -802,6 +963,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             aria-label="Delivery Date"
                                                             value={booking.dropoffDate}
                                                             min={booking.pickupDate}
+                                                            max={add2MonthsToDateStr(formatKSTDate())}
                                                             onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
                                                             className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                         />
@@ -868,6 +1030,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 aria-label="Drop-off Date"
                                                                 value={booking.dropoffDate?.split(' ')[0]}
                                                                 min={booking.pickupDate || formatKSTDate()}
+                                                                max={add2MonthsToDateStr(formatKSTDate())}
                                                                 onChange={e => setBooking(prev => ({ ...prev, dropoffDate: e.target.value }))}
                                                                 className="absolute inset-0 h-14 sm:h-[3.75rem] w-full rounded-[1.35rem] opacity-0 pointer-events-none outline-none appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                                                             />
@@ -1232,15 +1395,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10">
-                                    {isMockPaymentMode && (
+                                    {isDirectBookingMode && (
                                         <div className="rounded-2xl border border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
                                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-bee-yellow mb-1">
-                                                Local Mock Payment
+                                                Reservation First
                                             </p>
                                             <p className="text-[11px] font-bold text-white/80 leading-relaxed">
                                                 {lang === 'ko'
-                                                    ? '지금은 로컬 토스 mock 모드예요. 실제 카드 결제 없이 성공 페이지 흐름만 확인합니다.'
-                                                    : 'Local Toss mock mode is enabled. This simulates the success flow without charging a real card.'}
+                                                    ? '지금은 온라인 결제를 잠시 숨겨두었어요. 예약은 바로 접수되고 결제는 현장 또는 별도 안내로 이어집니다.'
+                                                    : 'Online payment is temporarily hidden. Your booking will be confirmed first, and payment will be handled offline.'}
                                             </p>
                                         </div>
                                     )}
@@ -1330,10 +1493,38 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         <>
                                             {isMockPaymentMode
                                                 ? (lang === 'ko' ? '결제 흐름 테스트하기' : 'TEST PAYMENT FLOW')
-                                                : (tBooking.book_now || 'COMPLETE BOOKING')} <ArrowRight size={20} />
+                                                : (lang === 'ko' ? '예약 바로 확정하기' : (tBooking.book_now || 'COMPLETE BOOKING'))} <ArrowRight size={20} />
                                         </>
                                     )}
                                 </motion.button>
+
+                                {/* PayPal 버튼 — Toss 대기 기간 임시 결제 수단 */}
+                                {isPayPalEnabled() && !isDirectBookingMode && priceDetails.total > 0 && (
+                                    <div className="mt-4">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="flex-1 h-px bg-gray-200" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                {lang === 'ko' ? '또는 해외 카드' : 'or pay with'}
+                                            </span>
+                                            <div className="flex-1 h-px bg-gray-200" />
+                                        </div>
+                                        <div className="text-center text-[10px] text-gray-400 font-bold mb-2">
+                                            {lang === 'ko'
+                                                ? `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`
+                                                : `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`}
+                                        </div>
+                                        {/* [W-3] PayPal SDK 로드 실패 시 안내 메시지 */}
+                                        {paypalLoadError ? (
+                                            <p className="text-xs text-red-500 font-bold text-center py-3">
+                                                {lang === 'ko'
+                                                    ? 'PayPal 결제를 불러오지 못했습니다. 페이지를 새로고침해 주세요.'
+                                                    : 'PayPal failed to load. Please refresh the page.'}
+                                            </p>
+                                        ) : (
+                                            <div ref={paypalContainerRef} id="paypal-button-container" />
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

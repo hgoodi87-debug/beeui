@@ -18,6 +18,14 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
     const [error, setError] = useState<string | null>(null);
     const [locations, setLocations] = useState<LocationOption[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [nametagInput, setNametagInput] = useState<string>('');
+    const [nametagSaved, setNametagSaved] = useState(false);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     useEffect(() => {
         // 1. URL에서 ID 파싱 (id와 scan 모두 지원 💅)
@@ -67,10 +75,28 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
         return scanText.payment_statuses?.[normalized] || normalized;
     };
 
+    const handleNametagSave = async () => {
+        const num = parseInt(nametagInput, 10);
+        if (isNaN(num) || num < 1 || num > 100) {
+            showToast('네임태그 번호는 1~100 사이 숫자를 입력하세요.', 'error');
+            return;
+        }
+        setIsUpdating(true);
+        try {
+            await StorageService.updateBooking(booking!.id!, { nametagId: num } as any);
+            setBooking(prev => prev ? { ...prev, nametagId: num } : null);
+            setNametagSaved(true);
+            setTimeout(() => setNametagSaved(false), 3000);
+        } catch (e) {
+            showToast('네임태그 저장 실패: ' + String(e), 'error');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     const handleStatusUpdate = async (newStatus: BookingStatus) => {
         if (!booking) return;
-        const confirmMessage = (scanText.confirm_update || "상태를 '{status}'(으)로 변경하시겠습니까?").replace('{status}', getStatusLabel(newStatus));
-        if (!confirm(confirmMessage)) return;
+        // confirm() 제거 — 모바일에서 네이티브 다이얼로그 차단. 버튼 자체가 명시적 액션임.
 
         setIsUpdating(true);
         try {
@@ -78,10 +104,10 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
 
             // 로컬 상태 즉시 업데이트
             setBooking(prev => prev ? { ...prev, status: newStatus } : null);
-            alert(scanText.changed || "상태가 변경되었습니다.");
+            showToast(scanText.changed || "상태가 변경되었습니다.");
         } catch (err) {
             console.error(err);
-            alert(scanText.failed || "상태 변경 실패");
+            showToast(scanText.failed || "상태 변경 실패", 'error');
         } finally {
             setIsUpdating(false);
         }
@@ -128,22 +154,12 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
                 <i className="fa-solid fa-circle-exclamation text-4xl text-bee-yellow mb-4"></i>
                 <p className="text-gray-800 font-black text-lg mb-2">{error || (scanText.invalid_access || "잘못된 접근입니다.")}</p>
-                {!adminName && (
-                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                        {(scanText.auth_required || '스태프 권한이 필요합니다.\n먼저 관리자 로그인을 완료해주세요.').split('\n').map((line: string, index: number, arr: string[]) => (
-                            <React.Fragment key={index}>
-                                {line}
-                                {index < arr.length - 1 ? <br /> : null}
-                            </React.Fragment>
-                        ))}
-                    </p>
-                )}
-                <button 
-                    onClick={onBack} 
-                    title="Go back to Admin"
+                <button
+                    onClick={onBack}
+                    title="Go back"
                     className="px-8 py-3 bg-bee-black text-bee-yellow rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all"
                 >
-                    {adminName ? (scanText.admin_home || "관리자 홈으로") : (scanText.go_login || "로그인하러 가기")}
+                    {scanText.admin_home || "돌아가기"}
                 </button>
             </div>
         );
@@ -158,10 +174,28 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
 
     return (
         <div className="min-h-screen bg-[#fafafb] pb-32 font-sans">
+            {/* Toast */}
+            <AnimatePresence>
+                {toast && (
+                    <motion.div
+                        initial={{ y: -60, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -60, opacity: 0 }}
+                        className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-2xl font-black text-sm shadow-2xl whitespace-nowrap ${
+                            toast.type === 'error'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-green-500 text-white'
+                        }`}
+                    >
+                        {toast.type === 'success' ? '✓ ' : '✕ '}{toast.msg}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <header className="bg-bee-black px-6 py-4 flex justify-between items-center sticky top-0 z-50">
                 <div className="flex items-center gap-3">
-                    <button title={t.common?.back || "Back"} aria-label={t.common?.back || "Back"} onClick={onBack} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
+                    <button title={t.common?.back || "Back"} aria-label={t.common?.back || "Back"} onClick={onBack} className="w-11 h-11 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-95 transition-transform">
                         <i className="fa-solid fa-chevron-left text-xs"></i>
                     </button>
                     <span className="font-black text-bee-yellow italic text-lg tracking-tight">{scanText.staff_mode || "Staff Mode"}</span>
@@ -236,11 +270,60 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     </div>
                 </motion.div>
 
+                {/* Nametag Assignment Card */}
+                <motion.div
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.12 }}
+                    className="bg-bee-black rounded-[32px] p-6 shadow-xl"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-bee-yellow flex items-center justify-center text-bee-black text-lg font-black">
+                            🏷️
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nametag</p>
+                            <p className="text-sm font-black text-white">네임태그 번호 배정</p>
+                        </div>
+                        {booking.nametagId && (
+                            <div className="ml-auto bg-bee-yellow text-bee-black rounded-full w-10 h-10 flex items-center justify-center font-black text-lg">
+                                {booking.nametagId}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={nametagInput}
+                            onChange={e => setNametagInput(e.target.value)}
+                            placeholder={booking.nametagId ? `현재: ${booking.nametagId}번` : '1~100'}
+                            aria-label="네임태그 번호 (1~100)"
+                            className="flex-1 bg-white/10 text-white font-black text-center text-xl rounded-2xl py-3 px-4 border border-white/20 focus:outline-none focus:border-bee-yellow placeholder-gray-500"
+                        />
+                        <button
+                            onClick={handleNametagSave}
+                            disabled={isUpdating || !nametagInput}
+                            className="px-5 py-3 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm disabled:opacity-40 active:scale-95 transition-all"
+                        >
+                            {isUpdating ? (
+                                <span className="flex items-center gap-1">
+                                    <span className="w-3 h-3 border-2 border-bee-black border-t-transparent rounded-full animate-spin inline-block"></span>
+                                </span>
+                            ) : nametagSaved ? '✓ 저장됨' : '배정'}
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-bold mt-2 text-center">
+                        캐리어에 부착할 네임태그 번호를 입력하고 배정 버튼을 누르세요
+                    </p>
+                </motion.div>
+
                 {/* Payment & Receipt Info */}
                 <motion.div
                     initial={{ y: 35, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.15 }}
+                    transition={{ delay: 0.17 }}
                     className="bg-white rounded-[32px] p-6 shadow-xl border border-gray-100"
                 >
                     <div className="flex justify-between items-center mb-4">
@@ -281,89 +364,107 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     </div>
                 </motion.div>
 
-                {/* Update Actions */}
+                {/* Update Actions - Enhanced Workflow 💅 */}
                 <motion.div
                     initial={{ y: 40, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2 }}
+                    className="space-y-4"
                 >
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">{scanText.update_status || "Update Status"}</p>
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">{scanText.update_status || "Update Status"}</p>
+                        <span className="text-[9px] font-bold text-bee-yellow bg-bee-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Staff Authorization Verified 🛡️</span>
+                    </div>
                     
-                    {/* [스봉이] 바로 보관 처리 버튼 (QR 스캔 퀵 액션) 💅✨ */}
-                    {booking.status !== BookingStatus.STORAGE && booking.status !== BookingStatus.COMPLETED && (
+                    {/* [스봉이] 원터치 워크플로우 버튼 💅✨ */}
+                    {booking.status === BookingStatus.CONFIRMED && (
+                        <div className="space-y-3">
+                            {booking.serviceType === ServiceType.STORAGE ? (
+                                <button
+                                    onClick={() => handleStatusUpdate(BookingStatus.STORAGE)}
+                                    disabled={isUpdating}
+                                    className="w-full py-5 bg-bee-yellow text-bee-black rounded-[24px] font-black text-base shadow-[0_10px_30px_rgba(255,191,0,0.3)] active:scale-[0.98] transition-all border-2 border-white flex flex-col items-center justify-center gap-1"
+                                >
+                                    <div className="flex items-center">
+                                        <i className="fa-solid fa-box-archive mr-2 text-xl"></i> {lang === 'ko' ? '짐 보관 시작하기' : 'Start Storage'}
+                                    </div>
+                                    <span className="text-[10px] opacity-70 font-bold uppercase tracking-tight">Status Update: CONFIRMED ➔ STORAGE</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handleStatusUpdate(BookingStatus.TRANSIT)}
+                                    disabled={isUpdating}
+                                    className="w-full py-5 bg-bee-black text-bee-yellow rounded-[24px] font-black text-base shadow-[0_10px_30px_rgba(0,0,0,0.2)] active:scale-[0.98] transition-all border-2 border-bee-yellow/20 flex flex-col items-center justify-center gap-1"
+                                >
+                                    <div className="flex items-center">
+                                        <i className="fa-solid fa-truck-fast mr-2 text-xl"></i> {lang === 'ko' ? '배송 시작하기' : 'Start Delivery'}
+                                    </div>
+                                    <span className="text-[10px] opacity-70 font-bold uppercase tracking-tight">Status Update: CONFIRMED ➔ TRANSIT</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {booking.status === BookingStatus.TRANSIT && (
                         <button
-                            onClick={() => handleStatusUpdate(BookingStatus.STORAGE)}
+                            onClick={() => handleStatusUpdate(BookingStatus.ARRIVED)}
                             disabled={isUpdating}
-                            className="w-full mb-4 py-4 bg-bee-yellow text-bee-black rounded-2xl font-black text-sm shadow-xl active:scale-[0.98] transition-all border border-bee-yellow/20 flex flex-col items-center justify-center gap-1"
+                            className="w-full py-5 bg-blue-600 text-white rounded-[24px] font-black text-base shadow-[0_10px_30px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all border-2 border-white/20 flex flex-col items-center justify-center gap-1"
                         >
-                            <div className="flex items-center text-base">
-                                <i className="fa-solid fa-box-archive mr-2"></i> {scanText.storage_quick_action || '바로 보관(STORAGE) 처리하기'}
+                            <div className="flex items-center">
+                                <i className="fa-solid fa-location-dot mr-2 text-xl"></i> {lang === 'ko' ? '도착 완료 (지점/호텔)' : 'Mark as Arrived'}
                             </div>
-                            <span className="text-[10px] opacity-75 font-bold tracking-tight">QR 스캔 즉시 보관 완료 처리</span>
+                            <span className="text-[10px] opacity-70 font-bold uppercase tracking-tight">Status Update: TRANSIT ➔ ARRIVED</span>
                         </button>
                     )}
 
-                    {/* [스봉이] 바로 결제 금액 강조 (버튼 밑에 배치) 💅✨ */}
-                    <div className="w-full mb-6 bg-white border-2 border-bee-black/5 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                            <i className="fa-solid fa-won-sign"></i>
-                            {scanText.total_payment || '결제 금액'}
-                        </span>
-                        <div className="text-right">
-                            <span className="text-xl font-black text-blue-600">
-                                {(booking.finalPrice ?? booking.price ?? 0).toLocaleString()} <span className="text-sm text-blue-600/60 ml-0.5">KRW</span>
-                            </span>
-                            <div className="text-[9px] font-bold text-gray-400 mt-0.5 uppercase">
-                                {booking.paymentStatus === 'paid' ? '결제 완료' : '미결제 / 현장 결제'}
+                    {(booking.status === BookingStatus.STORAGE || booking.status === BookingStatus.ARRIVED) && (
+                        <button
+                            onClick={() => handleStatusUpdate(BookingStatus.COMPLETED)}
+                            disabled={isUpdating}
+                            className="w-full py-5 bg-green-500 text-white rounded-[24px] font-black text-base shadow-[0_10px_30px_rgba(34,197,94,0.3)] active:scale-[0.98] transition-all border-2 border-white/20 flex flex-col items-center justify-center gap-1"
+                        >
+                            <div className="flex items-center">
+                                <i className="fa-solid fa-handshake mr-2 text-xl"></i> {lang === 'ko' ? '고객 수령 완료 (최종)' : 'Handover to Customer'}
+                            </div>
+                            <span className="text-[10px] opacity-70 font-bold uppercase tracking-tight">Final Step: Complete Reservation</span>
+                        </button>
+                    )}
+
+                    {booking.status === BookingStatus.COMPLETED && (
+                        <div className="w-full py-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-[24px] flex flex-col items-center justify-center text-gray-400 gap-2">
+                            <i className="fa-solid fa-circle-check text-3xl opacity-20"></i>
+                            <p className="font-black text-sm uppercase tracking-widest">{scanText.already_completed || 'Mission Accomplished'}</p>
+                        </div>
+                    )}
+
+                    {/* Quick Payment Info Overlay 💅 */}
+                    <div className="mt-8 bg-white/40 backdrop-blur-md border border-white/60 rounded-[32px] p-6 shadow-sm">
+                        <div className="flex justify-between items-center">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{scanText.total_payment || 'Payment Summary'}</p>
+                                <h4 className="text-xl font-black text-bee-black">
+                                    {(booking.finalPrice ?? booking.price ?? 0).toLocaleString()} <span className="text-sm font-bold opacity-30">KRW</span>
+                                </h4>
+                            </div>
+                            <div className={`px-4 py-2 rounded-2xl border-2 ${booking.paymentStatus === 'paid' ? 'bg-green-500/10 border-green-500/20 text-green-600' : 'bg-red-500/10 border-red-500/20 text-red-600'} flex flex-col items-end`}>
+                                <span className="text-[10px] font-black uppercase tracking-tighter">
+                                    {booking.paymentStatus === 'paid' ? 'Verified' : 'Unpaid'}
+                                </span>
+                                <span className="text-[8px] font-black opacity-60">
+                                    {booking.paymentMethod?.toUpperCase() || 'CASH/CARD'}
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
-                        {canStartHandling && (
-                            <button
-                                onClick={() => handleStatusUpdate(initialActionStatus)}
-                                disabled={isUpdating}
-                                className="col-span-2 py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-[13px] shadow-lg active:scale-[0.98] transition-all"
-                            >
-                                <i className="fa-solid fa-box-open mr-2"></i> {scanText.confirm_pickup_checkin || '픽업/입고 확인 (일반)'}
-                            </button>
-                        )}
-
-                        {booking.status === BookingStatus.TRANSIT && (
-                            <>
-                                <button
-                                    onClick={() => handleStatusUpdate(BookingStatus.STORAGE)}
-                                    disabled={isUpdating}
-                                    className="py-4 bg-white border border-gray-200 text-bee-black rounded-2xl font-bold text-[13px] hover:border-bee-yellow transition-all"
-                                >
-                                    {scanText.storage_in_progress || '보관 중 (일반)'}
-                                </button>
-                                <button
-                                    onClick={() => handleStatusUpdate(BookingStatus.ARRIVED)}
-                                    disabled={isUpdating}
-                                    className="py-4 bg-bee-black text-bee-yellow rounded-2xl font-black text-[13px] shadow-lg active:scale-[0.98] transition-all"
-                                >
-                                    <i className="fa-solid fa-flag-checkered mr-2"></i> {scanText.delivery_arrival_complete || '배송/도착 완료'}
-                                </button>
-                            </>
-                        )}
-
-                        {(booking.status === BookingStatus.STORAGE || booking.status === BookingStatus.ARRIVED) && (
-                            <button
-                                onClick={() => handleStatusUpdate(BookingStatus.COMPLETED)}
-                                disabled={isUpdating}
-                                className="col-span-2 py-4 bg-green-500 text-white rounded-2xl font-black text-[13px] shadow-lg active:scale-[0.98] transition-all"
-                            >
-                                <i className="fa-solid fa-check mr-2"></i> {scanText.customer_pickup_complete || '고객 수령 (완료 처리)'}
-                            </button>
-                        )}
-
-                        {booking.status === BookingStatus.COMPLETED && (
-                            <div className="col-span-2 py-4 bg-gray-100 text-gray-400 rounded-2xl font-bold text-sm text-center">
-                                {scanText.already_completed || '이미 완료된 예약입니다'}
-                            </div>
-                        )}
+                    <div className="pt-6 flex justify-center">
+                        <button 
+                            onClick={() => window.location.reload()}
+                            className="text-[10px] font-black text-gray-400 hover:text-bee-black transition-colors uppercase tracking-[0.3em]"
+                        >
+                            <i className="fa-solid fa-rotate mr-2"></i> Refresh Data
+                        </button>
                     </div>
                 </motion.div>
             </main>

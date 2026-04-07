@@ -2,16 +2,41 @@ export const ja = {
     seo: {
         title: 'Beeliber - 弘大/ソウル駅 荷物保管 & 空港当日配送',
         description: '弘大入口駅、ソウル駅、仁川空港、金浦空港での荷物保管および配送サービス。ホテルから空港までスーツケースを当日配送。重い荷物は預けて身軽に旅行しましょう。',
-        keywords: '弘大 荷物保管, 弘大 荷物配送, ソウル駅 荷物保管, 荷物配送サービス, スーツケース配送, 仁川空港 荷物配送, 当日荷物配送, ホテル 荷物配送'
+        keywords: '弘大 荷物保管, 弘大 荷物配送, ソウル駅 荷物保管, 荷物配送サービス, スーツケース配送, 仁川空港 荷物配送, 当日荷物配送, ホテル 荷物配送',
+        locations_title: '拠点案内 | ソウルで近くの荷物保管拠点を探す',
+        locations_desc: '現在地に近い Beeliber の荷물保管拠点、営業時間、利用可能な保管・配送サービスを確認できます。',
+        services_title: 'サービス案内 | 荷物保管・空港当日配送',
+        services_desc: '荷物保管、空港当日配送、利用方法、サービス範囲をまとめて確認できます。',
+        qna_title: 'よくある質問 | Beeliber',
+        qna_desc: '予約、キャンセル・払い戻し、荷物の安全、拠点利用方法についてよくある質問を確認してください。'
     },
-    nav: { services: 'サービス紹介', locations: '拠点案内', tracking: '配送追跡', partners: '提携お問い合わせ', book: '今すぐ予約', terms_label: '利用規約', admin_portal: 'ポータル', login: 'ログイン', mypage: 'マイページ' },
+    nav: {
+        services: 'サービス紹介',
+        locations: '拠点案内',
+        tracking: '配送追跡',
+        partners: '提携お問い合わせ',
+        community: 'コミュニティ',
+        about: 'ブランドストーリー',
+        support_policy: 'サポート＆運営ポリシー',
+        terms: '利用規約',
+        privacy: '個人情報保護方針',
+        help_center: 'ヘルプセンター',
+        dashboard: 'ダッシュボード',
+        contact: 'お問い合わせ',
+        book: '今すぐ予約',
+        terms_label: '利用規約',
+        admin_portal: 'ポータル',
+        login: 'ログイン',
+        mypage: 'マイページ'
+    },
     terms_page: {
         title: 'サービス利用規約',
         last_updated: '最終更新: 2025年 1月 1日',
         agree_button: '確認して閉じる',
+        intro: '本規約は、Beeliber（以下「会社」）が提供하는荷物保管、荷物配送予約連携、決済、予約照会、通知、カスタマーサポートなどの関連サービスについて、会社と利用者の権利・義務・責任を定めるものです。\n\n本規約はウェブサイト、モバイルウェブ、アプリ、および会社が運営する各種オンラインチャネルに共通して適用されます。',
         content: [
             { title: '第1条 (目的)', text: '本規約は、Beeliber（以下「当社」）が提供する手荷物配送および保管サービス（以下「サービス」）の利用に関し、当社と利用者の権利、義務および責任事項を規定することを目的とします。' },
-            { title: '第2条 (定義)', text: '1. 「配送」とは、利用者が指定した出発地から目的地まで手荷物を運送することをいいます。\n2. 「保管」とは、当社が指定した場所（Money Box等）に手荷物を一定期間預けることをいいます。\n3. 「利用者」とは、本規約に同意してサービスを利用する者をいいます。' },
+            { title: '第2条 (定義)', text: '1. 「配送」とは、利用者が指定した出発地から目的地まで手荷物を運送することをいいます。\n2. 「保管」とは、当社가指定した場所（Money Box等）に手荷物を一定期間預けることをいいます。\n3. 「利用者」とは、本規約に同意してサービスを利用する者をいいます。' },
             { title: '第3条 (運送および保管禁止物品)', text: '次に該当する物品はサービス利用が制限される場合があります。\n1. 現金、有価証券、貴金属など50万ウォン以上の高額品。\n2. 破損しやすい物品（ガラス、陶磁器など）または腐敗しやすい飲食物。\n3. 引火性物質、毒性物質など危険物および法令により運送が禁止された物品。\n4. 麻薬類およびその他不法な物品。' },
             { title: '第4条 (包装責任および内容物確認)', text: '1. 利用者は受荷物が運送および保管中に破損しないよう堅固に包装する義務があります。不十分な包装（過度な内容物、ロック装置の不備など）による破損について会社は責任を負いません。\n2. 会社は安全上必要と判断される場合（搬入禁止物品の疑いなど）利用者の同意を求めるか、緊急時に受荷物を開封して内容物を確認することができます。' },
             { title: '第5条 (会社の責任および損害賠償)', text: '1. 会社は受荷物の紛失、破損時に会社の故意または過失が立証された場合、最大50万ウォンを限度に賠償します。\n2. 利用者が事前に価額を申告していない高価品の破損および紛失については責任を負いません。\n3. 交通状況、天災地変などによる配送遅延については責任を負いません。' },
@@ -22,6 +47,7 @@ export const ja = {
         title: '個人情報処理方針',
         last_updated: '最終更新: 2025年 1月 1日',
         agree_button: '確認して閉じる',
+        intro: 'Beeliber はお客様の個人情報を大切にし、安心してサービスをご利用いただけるよう関連法令を遵守しています。特に QR コードによる安全な受け渡し認証と手荷物補償対応のため、以下のとおり個人情報処理方針を定めます。',
         content: [
             { title: '1. 個人情報の収集および利用に関する明確な告知と同意', text: '- 収集目的 : 配送サービス提供、顧客相談時の本人確認、処理過程および結果案内、税무申告のための帳簿作成など関連法令上の義務履行目的含む。\n- 収集項目 : 名前、連絡先(電話番号、メールアドレス、SNSメッセンジャーなど)、配送開始場所(ピックアップ住所)、配送対象場所(到着地住所)\n- 保有および利用期間 : 個人情報収集目的が達成されれば遅滞なく破棄します。但し、所得税法、付加価値税法、電子商取引法など関連法令により保存が必要な場合には、該当法律が定めた期間だけ安全に保管します。' },
             { title: '2. 第三者提供に関する告知および同意', text: '- 提供を受ける者 : 配送業者および物流関連サービス提供者など\n- 提供項目 : 名前、連絡先、配送開始場所、配送対象場所\n- 提供目的 : 配送サービス遂行のための必須情報伝達\n- 保有および利用期間 : 提供目的達成時まで保有し、以後関連法令が定めた期間に限り保管' },
@@ -30,17 +56,17 @@ export const ja = {
         ]
     },
     hero: {
-        badge: 'グローバルトラベルパートナー',
-        title1: '荷物から',
-        title2: '自由になろう。',
-        subtitle: 'ホテルから空港まで、重い荷物は Beeliber に預けて、\n身軽に旅行のすべての瞬間を楽しんでください。',
-        btn_now: '今すぐ身軽になる ➔',
-        track_booking: '予約と配送を確認',
+        badge: 'ソウル荷物預かり・空港配送 🐝',
+        main_title_1: 'チェックアウト後、',
+        main_title_2: '身軽にソウル旅行を完成',
+        subtitle: '弘大・明洞・ソウル駅など40+拠点 ₩4,000~\n仁川空港当日配送 ₩25,000~',
+        btn_now: '今すぐ予約 ➔',
+        cta_storage: "近くの預かり所を探す",
+        cta_delivery: "空港配送予約",
+        track_booking: '予約確認',
         book_branch: '今すぐ予約',
-        main_title_1: '荷物から、',
-        main_title_2: '自由になろう。',
-        main_title_bags: 'BAGS.',
-        main_title_city: 'CITY.',
+        main_title_bags: '',
+        main_title_city: '',
         live_label: 'リアルタイム状態フィード',
         search_btn: '照会する',
         status_suffix: '現況',
@@ -65,14 +91,21 @@ export const ja = {
         badge_without: "Beeliberなしで",
         badge_with: "Beeliberと一緒に 💅",
         quote_bad: "\"階段は地獄だ\"",
-        quote_good: "\"雲の上を歩く気分\""
+        quote_good: "\"雲の上を歩く気分\"",
+        after_caption: "荷物はBeeliberへ。この自由、₩4,000から。",
+        before_caption: "スーツケース을引いて階段…本当に大丈夫？"
     },
     howitworks: {
-        headline: "たった3回のタッチ、魔法のように消える荷物",
-        badge_label: "MAGIC PROCESS ✨",
-        step1: { title: "Drop (預ける)", desc: "空港（またはホテル）の Beeliber デスク/パートナーに\nあなたの重い荷物を渡します。", badge: "STEP 1. Drop" },
-        step2: { title: "Enjoy (楽しむ)", desc: "両手が自由な状態で、すぐに\n観光地、レストラン、ショッピングを楽しみます。", badge: "STEP 2. Enjoy" },
-        step3: { title: "Meet (出会う)", desc: "日程を終えてホテルの部屋に到着すると,\n荷物が先にあなたを待っています。", badge: "STEP 3. Meet" }
+        headline: "手荷物から解放された、\n真のソウル旅行の始まり。",
+        badge_label: "SERVICE PROCESS",
+        step1: { title: "ハブで荷物を預ける", desc: "入国後、6つのハブ拠点(09:00-13:00)のいずれかを訪問してください。荷物を預けてすぐにツアーを開始できます。", badge: "STEP 01" },
+        step2: { title: "リアルタイム追跡", desc: "追跡リンクを受け取ります。コーヒーを楽しみながら、荷物が街を安全に移動する様子を確認できます。", badge: "STEP 02" },
+        step3: { title: "空港で荷物を受け取る", desc: "荷物は仁川空港(16:00-21:00)に到着しています。身軽な状態で空港へ向かい、スタッフから荷物を受け取って出発しましょう。", badge: "STEP 03" }
+    },
+    freedom: {
+        badge: "AFTER",
+        headline: "手荷物はビルリバーに。<br /><span class=\"text-bee-yellow\">今この自由、</span> ₩4,000から。",
+        sub_copy: "重い荷物なしで身軽に、ソウルのロマンを楽しんでください。 💅✨"
     },
     trust: {
         headline: "あなたの荷物は、VIP 待遇を受けます。",
@@ -89,37 +122,82 @@ export const ja = {
         desc: "複雑な重量/サイズ計算なしで、\n直感的なフラット料金を提案します。",
         airport_hotel: "標準スーツケース (空港 ↔ ホテル)",
         extra_large: "特大サイズ手荷物",
-        price_standard: "₩20,000",
-        price_extra: "₩29,000",
+        price_standard: "₩4,000~",
+        price_extra: "₩25,000~",
         features_standard: ["23インチ以下のすべてのサイズ", "空港 ↔ ホテル当日配送", "リアルタイムメール状況通知", "基本破損保険込み"],
         features_extra: ["27インチ超", "重量物特化管理", "当日安全配送保証", "プレミアム保険適用"],
         flat_rate_label: "一律料金 💰",
         most_popular_label: "一番人気",
         per_bag_label: "/ 個",
-        choose_service_btn: "サービスを選択"
+        choose_service_btn: "サービスを選択",
+        badges: {
+            hour_day: "4H / 1DAY",
+            spots: "40+ 拠点",
+            all_sizes: "全てのサイズ",
+            same_day: "当日配送",
+            icn: "仁川空港",
+            insured: "保険適用"
+        }
     },
     reviews_section: {
-        headline: "荷物なしで歩くソウルがいかに美しいか、彼らが証明します。",
-        review1: "荷物を預けてすぐに景福宮に行きました。人生最高の決断！ - Sarah, USA ⭐️⭐️⭐️⭐️⭐️",
-        review2: "空港に行く前に荷物を預けて身軽に旅行しました！ - Kim T. ⭐️⭐️⭐️⭐️⭐️",
-        review3: "リアルタイム追跡機能が本当に最高です。強くお勧めします！ - Lee J. ⭐️⭐️⭐️⭐️⭐️"
+        headline: "ソウルを訪れた旅行者たちの\nリアルな声をご確認ください。",
+        verified_google: "検証済み Google フィードバック",
+        people_experienced: "名が体験済み",
+        reviews_count: "+ 件のレビュー",
+        google_rating: "Google 評価",
+        safe_handling: "安全な手荷物管理を保証",
+        review_1: { name: "Sarah", location: "USA", text: "DDPは本当に幻想的でした！手荷물配送のおかげで、身軽に建築物を鑑賞することができました。 ✨" },
+        review_2: { name: "Yuki", location: "Japan", text: "景福宮で韓服を着て写真を撮るのが夢でしたが、Beeliberのおかげで荷物の心配なく楽しい時間を過ごせました！ 🌸" },
+        review_3: { name: "Emma", location: "UK", text: "南山タワーまで重い荷物を持って上がらなくて済んで、本当によかったです。ソウルの夜景は最高です！ 🗼" },
+        review_4: { name: "Li-Wei", location: "Taiwan", text: "北村韓屋村の狭い路地を重いスーツケースなしで歩く体験は、まさに癒しそのものでした。 🏠" },
+        review_5: { name: "Min-Ji", location: "Korea", text: "聖水洞のカフェ巡りの際、荷物が本当に邪魔でしたが、Beeliberで送ってしまったら世界が晴れやかになりました！ ☕" },
+        review_6: { name: "Chen", location: "China", text: "光化門広場の雄大さを、荷物の負担なく存分に感じることができました。 🛡️" },
+        review_7: { name: "Hans", location: "Germany", text: "益善洞の可愛らしいショップを回る時、荷物がなくて本当に自由でした。 10/10! 🎁" },
+        review_8: { name: "Sofia", location: "Italy", text: "漢江公園でピクニックを楽しむ前に、ホテルに荷物をあらかじめ送っておいたのは最高の選択でした。 🧺" }
     },
     final_cta: {
-        headline: "飛行機から降りますか？ それとももうすぐ出発ですか？",
-        btn_airport_hotel: "空港 ➔ ホテル配送を予約する",
-        btn_hotel_airport: "ホテル ➔ 空港配送を予約する"
+        headline: "ソウルでの最後の日、\n完璧に締めくくりましょう。",
+        sub: "荷物のない旅、新しいスタンダードを体験してください。",
+        btn_airport_hotel: "空港 ➔ 受付拠点",
+        btn_hotel_airport: "拠点 ➔ 空港受取",
+        copyright: "© 2026 BEELIBER GLOBAL LOGISTICS | 多くの旅行者に信頼されています"
     },
     notice: {
         title: 'お知らせ',
         close: '閉じる',
         dont_show_today: '今日一日表示しない'
     },
+    refund_page: {
+        title: 'キャンセル・払い戻しポリシー v1.0',
+        last_updated: '施行日: 2026-03-17',
+        agree_button: '確認して閉じる',
+        intro: '本ポリシーは、Beeliber サービスの予約キャンセル、変更、払い戻し、追加料金の基準を案内するものです。利用規約とあわせて適用されます。',
+        content: [
+            { title: '1. 適用範囲', text: '本ポリシーは、荷物保管予約、提携パートナー連携の配送予約、および付加サービスを含む予約に適用されます。' },
+            { title: '2. 変更およびキャンセル', text: '利用者はサービス開始前であれば、拠点状況、時間帯、荷물数、配送導線などの条件に応じて変更またはキャンセルを申請できます。' },
+            { title: '3. 払い戻し基準', text: 'サービス開始前のキャンセルは、原則として全額払い戻しの対象です。ただし、プロモーション商品など別途条件がある場合はその基準が優先されます。サービス開始後は実際に発生した運営費用に応じて全額または一部払い戻しとなる場合があります。' },
+            { title: '4. No-show', text: '予約時間に現れない場合、連絡が取れない場合、または現場で規定外の荷物であることが確認された場合は No-show とみなされ、実費が控除されることがあります。' },
+            { title: '5. 追加料金', text: '予約時間超過、荷物数やサイズ超過、特別保管、受け取り遅延、再配送依頼などの場合、追加料金が発生することがあります。' },
+            { title: '6. 未受取荷物', text: '予約された受け取り時刻や保管期間を過ぎても荷物が引き取られない場合、追加保管料が発生することがあります。' },
+            { title: '7. 不可抗力', text: '天災、交通統制、国家機関の措置、システム障害など不可抗力により、サービスが遅延・変更・中止される場合があります。' },
+            { title: '8. 返金方法', text: '返金は原則として元の決済手段で行われます。金融機関や決済会社の事情により反映時期が異なる場合があります。' },
+            { title: '9. 異議申立て', text: 'キャンセル、払い戻し、追加料金について異議がある場合は、関連記録を確認のうえカスタマーサポートで対応します。' }
+        ]
+    },
+    servicedetails: {
+        delivery_title: '荷物なしで',
+        delivery_accent: '軽やかな到着',
+        delivery_desc: '駅近くの到着拠点に荷物を預ければ、ホテルロビーまで直接お届けします。手ぶらで旅を始めましょう。',
+        handsfree_title: '優雅で',
+        handsfree_accent: '完璧な出発',
+        handsfree_desc: 'チェックアウト後に荷物を預け、街を楽しみ、駅や空港へ向かう直前に荷物を受け取れば完了です。'
+    },
     partnership: {
         title: '提携お問い合わせ', subtitle: 'Beeliberと共に新しい旅の基準を。',
         hero_badge: 'GLOBAL PARTNERSHIP',
         hero_title: 'Beeliberと共に\n成長の翼を広げましょう',
         hero_desc: '世界中の旅行者のための最もスマートな手荷物サービス、Beeliberのパートナーになって、新しい収益モデルと顧客体験を創出してください。',
-        benefits_title: 'なぜBeeliberパートナーなのですか？',
+        benefits_title: '왜 Beeliber 파트너인가요?',
         benefit1_t: '追加収益の創出',
         benefit1_d: '空きスペースを活用して、安定した手数料収入を創出できます。',
         benefit2_t: 'トラフィックの増大',
@@ -163,7 +241,7 @@ export const ja = {
         name: 'お名前',
         email: 'メールアドレス',
         sns: 'SNS',
-        sns_placeholder: 'LINE ID または 電話番号',
+        sns_placeholder: 'LINE ID 或者 電話番号',
         extra_storage: '追加保管料',
         pickup_title: '受取情報',
         country: "国",
@@ -181,7 +259,7 @@ export const ja = {
         agree_terms_link: '[リンク]',
         agree_terms_required: '[必須]',
         agree_privacy: '[必須] 個人情報保護方針に同意 (手荷物写真および位置情報含む)',
-        agree_privacy_simple: '[必須] 個人情報保護方針に同意',
+        agree_privacy_simple: '[必須] 個人情報保護方針에 同意',
         agree_privacy_link: '[リンク]',
         agree_privacy_required: '[必須]',
         agree_premium: '[必須] プレミアム保険および第三者情報提供同意',
@@ -210,7 +288,7 @@ export const ja = {
         capture_instruction: '写真をアップロードしてください',
         bags_label: 'バッグ数',
         bags_selection_title: 'バッグ数を選択してください',
-        bags_selection_sub: 'ショッピングバッグ、ハンドバッグ、キャリーケース、ベビーカー・自転車の数量を調整できます。',
+        bags_selection_sub: 'ショッピングバッグ、ハンドバッグ、キャリーケース、ベ비ーカー・自転車の数量を調整できます。',
         contact_info_title: '予約者情報を入力してください',
         size_m_desc: '機内持ち込み・受託手荷物キャリー',
         size_l_desc: '機内持ち込み・受託手荷物キャリー',
@@ -302,7 +380,15 @@ export const ja = {
         step3_title: '簡便予約および決済',
         step3_desc: '提案された内容が気に入れば、クリック一つで予約を確定して軽やかに旅行を始めてください。'
     },
-    tracking: { title: '追跡', desc: 'メールアドレスで現在の位置を確認。', placeholder: 'メールアドレス', btn: '追跡する', noResult: '結果がありません。', status_suffix: '状態' },
+    tracking: {
+        title: '追跡',
+        desc: 'メールアドレスで現在の位置を確認。',
+        placeholder: 'メールアドレス',
+        btn: '追跡する',
+        noResult: '結果がありません。',
+        status_suffix: '状態',
+        name_placeholder: '予約者名を入力'
+    },
     footer: {
         desc: 'Beeliberは旅行の価値の「軽さ」を提案します。',
         service: "サービス",
@@ -321,52 +407,51 @@ export const ja = {
         back_to_top: "一番上へ"
     },
     locations_page: {
-        title: 'Beeliber 拠点案内', sidebar_title: 'Global Network', sidebar_subtitle: '拠点案内',
-        select_baggage_title: '手荷物選択', bag_unit_4h: '/4時間~',
-        filter_all: 'すべて', filter_airport: '空港', filter_city: '市内', filter_partner: '提携パートナー', back: 'ホーム', no_results: '登録された拠点がありません。',
-        info_card_delivery: '配送(Delivery)', info_card_storage: '保管(Storage)', info_card_book: '今すぐ予約',
-        book_delivery: '配送を予約する', book_storage: '保管を予約する',
-        search_placeholder: '現在地を検索 (ホテル, 駅など)', search_error: '検索に失敗しました。',
-        badge_delivery: '配送', badge_same_day: '当日配送', badge_scheduled: '予約配送', badge_storage: '保管',
-        badge_pick: '預ける', badge_ret: '受取る',
+        title: '拠点案内', sidebar_title: 'Service Points', sidebar_subtitle: 'ソウル主要拠点のご案内',
+        select_baggage_title: '荷物選択', bag_unit_4h: '/4時間〜',
+        filter_all: 'すべて', filter_airport: '空港', filter_partner: '提携パートナー', filter_city: '都心', back: 'メインへ', no_results: '登録された店舗가ありません。',
+        info_card_delivery: '配送(Delivery)', info_card_storage: '保管(Storage)',
+        book_delivery: '配送予約', book_storage: '保管予約',
+        search_placeholder: '現在地を検索 (ホテル名、駅名など)', search_error: '検索に失敗しました。',
+        badge_delivery: '配送', badge_same_day: '当日配送', badge_scheduled: '予約配送', badge_storage: '荷物保管',
+        badge_pick: '預け', badge_ret: '受け取り',
         tag_airport_delivery: '空港配送', tag_both_services: '配送 | 保管', tag_storage_only: '保管専用', tag_delivery_only: '配送専用',
-        my_location: '本部長の位置 💅✨',
+        my_location: "現在地",
         user_marker: 'お客様の位置',
         service_delivery: '配送',
         service_storage: '保管',
         service_exchange: '両替',
         service_carrier: 'キャリア',
-        map_error_title: '地図を読み込めません。',
+        map_error_title: '地図を読み込めませんでした。',
         map_error_desc: 'リストから店舗を選択してください。',
         geolocation_not_supported: '現在のブラウザでは位置情報をサポートしていません。',
         location_error: '位置情報の取得に失敗しました。',
-        geolocation_permission_denied: '位置情報のアクセス権限が拒否されました。',
-        get_directions: 'ルート検索 (Google Maps)',
-        btn_get_directions: '道順を見る',
+        geolocation_permission_denied: '位置情報へのアクセス権限が拒否されました。',
+        get_directions: '道順 (Google Maps)',
+        btn_get_directions: '道順',
         btn_view_roadview: 'ストリートビュー',
-        btn_reserve_delivery: '配送予約',
+        btn_reserve_delivery: '配送を予約する',
         btn_storage_only: '保管専用サービス',
-        branch_label: '拠点',
+        branch_label: '店舗',
         view_details: '詳細を見る',
-        found_units: '利用可能な拠点',
-        currently_closed: 'この拠点は現在営業時間外です。',
-        ai_prompt: 'Bee AIが予約のお手伝いをします。',
+        found_units: '利用可能な店舗',
+        ai_prompt: 'Bee AIが予約のお手伝いをいたします。',
         bag_size_s_desc: '~20インチ (機内持ち込み)',
-        bag_size_m_desc: 'キャリーケース',
-        bag_size_l_desc: 'キャリーケース',
-        bag_size_xl_desc: 'ベビーカー・自転車',
-        btn_apply: '適用',
-        btn_reload_page: 'リロード',
+        bag_size_m_desc: 'スーツケース',
+        bag_size_l_desc: 'スーツケース',
+        bag_size_xl_desc: 'ベビーカー、自転車',
+        btn_apply: '適用する',
+        btn_reload_page: 'ページを更新',
         label_back_to_list: 'リストに戻る',
-        label_viewing_branch: '店舗を確認中',
+        label_viewing_branch: '店舗照会中',
         label_reserving_now: '予約進行中',
         label_deposit_date: '預ける日',
         label_arrival_date: '到着予定日',
         label_return_date: '受け取る日',
-        date_hint: '預ける日または配送開始日を選択してください。',
-        return_date_hint: '受け取る日または終了日を選択してください。',
+        date_hint: 'ご希望の保管または配送開始日を選択してください。',
+        return_date_hint: '受け取りまたは終了予定日を選択してください。',
         extra_storage: '追加保管料: 1日あたり ₩{amount} が追加されます。',
-        label_baggage_select: '荷物を選択',
+        label_baggage_select: '手荷物選択',
         label_bag_count_suffix: '個',
         label_service_default: 'サービス',
         tag_delivery: '配送',
@@ -374,7 +459,7 @@ export const ja = {
         tag_same_day_delivery: '当日配送',
         tag_global_shipping: '海外配送',
         tag_baggage_storage: '荷物保管',
-        msg_booking_confirmed: '予約が確定しました! ✨',
+        msg_booking_confirmed: '予約が確定しました。',
         msg_live_preview: 'ロードビュー',
         msg_map_load_error: '地図を読み込めません。接続を確認してください。',
         msg_error_reason: 'エラー原因',
@@ -386,8 +471,111 @@ export const ja = {
         label_guide: '利用ガイド',
         label_facilities: '利用可能サービス',
         reservation_title: '予約する',
-        label_map_error: '地図の読み込み失敗',
-        find_my_location_short: '現在地を探す'
+        label_map_error: '地図の読み込みに失敗',
+        find_my_location_short: '現在地',
+        nearest_3_info: '近隣の3店舗のみ表示中 · 他{count}店舗は地図で確認',
+        loading_branches: '店舗 {current}/{total} を読み込み中',
+        branch_info: '店舗情報',
+        storage_hub: '保管ハブ',
+        open: '営業中',
+        close: '終了',
+        address_label: '住所',
+        hours_label: '営業時間',
+        nearby_pick: '周辺のおすすめ',
+        currently_closed: '現在、この店舗は営業時間外です。',
+        badge_pick_delivery: '発送日', badge_ret_delivery: '受取日',
+        closest_label: '最寄り ✨',
+        slot_closed: '締切',
+        premium_luggage_care: 'プレミアム手荷物管理',
+        image_alt: 'Beeliber 手荷物保管・配送店舗',
+        info_card_book: 'RESERVE'
+    },
+    terms: {
+        usage_title: '利用規約に同意',
+        privacy_title: '個人情報処理方針に同意',
+        insurance_title: '高価品および補償規定を確認',
+        agree_format: '{link}に同意します',
+        link_usage: '利用規約',
+        link_privacy: '個人情報処理方針',
+        link_insurance: '高価品および補償規定'
+    },
+    staff_scan: {
+        no_scan_info: 'スキャンされた予約情報가ありません。',
+        booking_not_found: '予約情報が見つかりません。',
+        load_error: 'データの読み込み中にエラーが発生しました。',
+        invalid_access: '無効なアクセスです。',
+        auth_required: 'スタッフ権限が必要です。\nまず管理者ログインを完了してください。',
+        admin_home: '管理者ホームへ',
+        go_login: 'ログインへ',
+        staff_mode: 'スタッフモード',
+        current_status: '現在の状態',
+        booking_id: '予約 ID',
+        service_type: 'サービス種類',
+        from: '出発 / 預け',
+        to: '到着 / 受取',
+        payment_details: '決済情報',
+        method: '決済手段',
+        discount: '割引',
+        total_amount: '合計金額',
+        update_status: 'ステータス変更',
+        confirm_update: "状態を「{status}」に変更しますか？",
+        changed: '状態が変更されました。',
+        failed: '状態の変更に失敗しました。',
+        confirm_pickup_checkin: '集荷 / 入庫確認',
+        storage_in_progress: '保管中',
+        delivery_arrival_complete: '配送 / 到着完了',
+        customer_pickup_complete: 'お客様受取（完了処理）',
+        already_completed: 'すでに完了した予約です。',
+        preview_image: '画像プレビュー',
+        statuses: {
+            pending: '受付待機',
+            confirmed: '予約確定',
+            transit: '移動中',
+            storage: '保管中',
+            arrived: '到着完了',
+            completed: '利用完了',
+            cancelled: 'キャンセル'
+        },
+        payment_statuses: {
+            paid: '支払い完了',
+            unpaid: '未払い',
+            refunded: '払い戻し済み',
+            unknown: '未確認'
+        }
+    },
+    booking_voucher: {
+        image_save_failed: '画像の保存に失敗しました。',
+        official_receipt: '公式予約確認書',
+        reservation_id: '予約番号',
+        issue_date: '発行日',
+        scan_to_verify: 'スキャンして確認',
+        show_to_staff: 'このバウチャーをスタッフに提示してください',
+        show_code_note: '拠点訪問時にこのコードをご提示ください。\n現場確認後、すぐに処理が進行します。',
+        directions_short: '道順',
+        branch_pickup_guide: '拠点・受取ガイド',
+        storage: '保管',
+        vat_included: 'VAT込み',
+        save_voucher: 'バウチャー保存',
+        home: 'ホームへ',
+        branch_address: '住所',
+        open_hours: '営業時間',
+        coupon_code: 'クーポンコード',
+        show_to_staff_short: '「スタッフに見せてください」',
+        coupon_small_note: '少額紙幣は優待対象外となる場合があります。',
+        touch_to_save_coupon: 'タップしてクーポン画像を保存',
+        quick_access_note: 'サービスカウンターですぐ確認できるよう、この画面をキャプチャするか PDF で保存してください。',
+        save_simple_qr: 'シンプル QR 画像を保存',
+        official_service_voucher: '公式サービスバウチャー',
+        moneybox_partner: '延南店 公式提携先',
+        vip_coupon: 'VIP クーポン',
+        currency_exchange: '両替特典',
+        special_benefit: '特別優待',
+        everyday_hours: '09:00 - 21:00（毎日）',
+        address_specified: '住所指定'
+    },
+    size_simulator: {
+        size_s_range: '18〜20インチ',
+        size_s_desc: 'ハンドバッグ／小型機内持ち込み'
     },
     manual: {
         title: 'ご利用ガイド', subtitle: 'How to use', desc: 'Beeliberで重い荷物のストレスから解放されましょう。',
@@ -430,7 +618,7 @@ export const ja = {
         main_title_2: "荷物のない軽い足取り",
         email_status_check: "メール状態照会",
         trust_badge: "TRUST & SAFETY",
-        freedom_title: "Beeliberの自由",
+        freedom_title: "Beeliber의 自由",
         how_it_works_badge: "HOW IT WORKS",
         everyone_badge: "FOR EVERYONE",
         title: "Beeliberと共に、手荷物のない軽やかな旅行を始めましょう！",
@@ -444,7 +632,7 @@ export const ja = {
         pain_solution: "Beeliberはすべての荷物の悩みからあなたを解放する完璧なソリューションです。",
         service_1_title: "手荷物運送サービス",
         service_1_desc: "空港からホテル、ホテルからホテル、またはご希望の場所へ、手荷物を迅速かつ安全に運送します。",
-        service_2_title: "手荷物保管サービス",
+        service_2_title: "手荷물保管サービス",
         service_2_desc: "日程が変更されたり、チェックイン前/チェックアウト後に空き時間がある場合、安全な保管サービスをご利用ください。",
         service_prefix: "サービス",
         benefits_title: "Beeliberの特別特典",
@@ -500,7 +688,11 @@ export const ja = {
         persona_2_title: "旅行最終日",
         persona_2_desc: "フライトは夜、チェックアウトは午前...\n荷物を先に空港へ送って、\n身軽な状態で思い出の写真を残しましょう。",
         persona_3_title: "徒歩旅行者",
-        persona_3_desc: "レンタカーなしで移動していますか？\nホテルを変えるたびに重い荷物と格闘せず,\n荷物だけ「瞬間移動」させて身軽に移動しましょう。"
+        persona_3_desc: "レンタカーなしで移動していますか？\nホテルを変えるたびに重い荷物と格闘せず,\n荷物だけ「瞬間移動」させて身軽に移動しましょう。",
+        status_update_label: 'ステータス更新',
+        safety_insurance_title: '安心補償보험',
+        safety_insurance_desc: '紛失・破損時は最大50万ウォンまで補償されます',
+        back: 'ホームに戻る'
     },
     bee_ai: {
         header_title: "Beeスタッフ ブンブンイ",
@@ -548,8 +740,9 @@ export const ja = {
         error_msg: 'しばらくしてからもう一度お試しください。'
     },
     qna: {
-        title: "よくある質問",
-        subtitle: "Beeliberのプレミアムなサービスに関するガイドです。",
+        title: "ご不明な点はありますか？",
+        subtitle: "Beeliber があなたの疑問を完璧に解決します。 💅",
+        view_all: "すべての質問を見る",
         categories: {
             general: "サービス全般",
             booking: "予約・利用",
@@ -560,7 +753,7 @@ export const ja = {
             {
                 category: "general",
                 question: "Beeliber(ビリーバー)はどのようなサービスですか？",
-                answer: "Beeliber은、旅行者の手荷物を空港からホテルへ配送したり、安全に保管したりする「手荷物解放ソリューション」입니다。重い荷物は私たちに任せて、軽やかにソウル旅行を楽しんでください。 💅"
+                answer: "Beeliber은、旅行者の手荷物を空港からホテルへ配送したり、安全に保管したりする「手荷物解放ソリューション」입니다. 重い荷物は私たちに任せて、軽やかにソウル旅行を楽しんでください。 💅"
             },
             {
                 category: "general",
@@ -575,7 +768,7 @@ export const ja = {
             {
                 category: "booking",
                 question: "預けられない物品はありますか？",
-                answer: "現金、50万ウォン以上の貴金属、腐敗しやすい食品、危険物などはお預かりできません。お客様の大切な荷物をVIPのように扱いますが、安全ルールは厳守させていただきます. ☕"
+                answer: "現金, 50万ウォン以上の貴金属, 腐敗しやすい食品, 危険物などはお預かりできません。お客様の大切な荷物をVIPのように扱いますが, 安全ルールは厳守させていただきます. ☕"
             },
             {
                 category: "safety",
@@ -598,132 +791,77 @@ export const ja = {
                 answer: "ほとんどの店舗は午前9時から午後9時まで営業しています。ただし、空港や提携先によって異なる場合がありますので、予約時に拠点情報を確認するのをお忘れなく！ 🍯"
             }
         ]
-    }
-};
-
-ja.seo.locations_title = '拠点案内 | ソウルで近くの荷物保管拠点を探す';
-ja.seo.locations_desc = '現在地に近い Beeliber の荷物保管拠点、営業時間、利用可能な保管・配送サービスを確認できます。';
-ja.seo.services_title = 'サービス案内 | 荷物保管・空港当日配送';
-ja.seo.services_desc = '荷物保管、空港当日配送、利用方法、サービス範囲をまとめて確認できます。';
-ja.seo.qna_title = 'よくある質問 | Beeliber';
-ja.seo.qna_desc = '予約、キャンセル・払い戻し、荷物の安全、拠点利用方法についてよくある質問を確認してください。';
-ja.terms_page.intro = '本規約は、Beeliber（以下「会社」）が提供する荷物保管、荷物配送予約連携、決済、予約照会、通知、カスタマーサポートなどの関連サービスについて、会社と利用者の権利・義務・責任を定めるものです。\n\n本規約はウェブサイト、モバイルウェブ、アプリ、および会社が運営する各種オンラインチャネルに共通して適用されます。';
-ja.privacy_page.intro = 'Beeliber はお客様の個人情報を大切にし、安心してサービスをご利用いただけるよう関連法令を遵守しています。特に QR コードによる安全な受け渡し認証と手荷物補償対応のため、以下のとおり個人情報処理方針を定めます。';
-ja.refund_page = {
-    title: 'キャンセル・払い戻しポリシー v1.0',
-    last_updated: '施行日: 2026-03-17',
-    agree_button: '確認して閉じる',
-    intro: '本ポリシーは、Beeliber サービスの予約キャンセル、変更、払い戻し、追加料金の基準を案内するものです。利用規約とあわせて適用されます。',
-    content: [
-        { title: '1. 適用範囲', text: '本ポリシーは、荷物保管予約、提携パートナー連携の配送予約、および付加サービスを含む予約に適用されます。' },
-        { title: '2. 変更およびキャンセル', text: '利用者はサービス開始前であれば、拠点状況、時間帯、荷物数、配送導線などの条件に応じて変更またはキャンセルを申請できます。' },
-        { title: '3. 払い戻し基準', text: 'サービス開始前のキャンセルは、原則として全額払い戻しの対象です。ただし、プロモーション商品など別途条件がある場合はその基準が優先されます。サービス開始後は実際に発生した運営費用に応じて全額または一部払い戻しとなる場合があります。' },
-        { title: '4. No-show', text: '予約時間に現れない場合、連絡が取れない場合、または現場で規定外の荷物であることが確認された場合は No-show とみなされ、実費が控除されることがあります。' },
-        { title: '5. 追加料金', text: '予約時間超過、荷物数やサイズ超過、特別保管、受け取り遅延、再配送依頼などの場合、追加料金が発生することがあります。' },
-        { title: '6. 未受取荷物', text: '予約された受け取り時刻や保管期間を過ぎても荷物が引き取られない場合、追加保管料が発生することがあります。' },
-        { title: '7. 不可抗力', text: '天災、交通統制、国家機関の措置、システム障害など不可抗力により、サービスが遅延・変更・中止される場合があります。' },
-        { title: '8. 返金方法', text: '返金は原則として元の決済手段で行われます。金融機関や決済会社の事情により反映時期が異なる場合があります。' },
-        { title: '9. 異議申立て', text: 'キャンセル、払い戻し、追加料金について異議がある場合は、関連記録を確認のうえカスタマーサポートで対応します。' }
-    ]
-};
-ja.servicedetails = {
-    delivery_title: '荷物なしで',
-    delivery_accent: '軽やかな到着',
-    delivery_desc: '駅近くの到着拠点に荷物を預ければ、ホテルロビーまで直接お届けします。手ぶらで旅を始めましょう。',
-    handsfree_title: '優雅で',
-    handsfree_accent: '完璧な出発',
-    handsfree_desc: 'チェックアウト後に荷物を預け、街を楽しみ、駅や空港へ向かう直前に荷物を受け取れば完了です。'
-};
-ja.services_page.status_update_label = 'ステータス更新';
-ja.services_page.safety_insurance_title = '安心補償保険';
-ja.services_page.safety_insurance_desc = '紛失・破損時は最大50万ウォンまで補償されます。';
-ja.terms = {
-    usage_title: '利用規約に同意',
-    privacy_title: '個人情報処理方針に同意',
-    insurance_title: '高価品および補償規定を確認',
-    agree_format: '{link}に同意します',
-    link_usage: '利用規約',
-    link_privacy: '個人情報処理方針',
-    link_insurance: '高価品および補償規定'
-};
-ja.staff_scan = {
-    no_scan_info: 'スキャンされた予約情報がありません。',
-    booking_not_found: '予約情報が見つかりません。',
-    load_error: 'データの読み込み中にエラーが発生しました。',
-    invalid_access: '無効なアクセスです。',
-    auth_required: 'スタッフ権限が必要です。\nまず管理者ログインを完了してください。',
-    admin_home: '管理者ホームへ',
-    go_login: 'ログインへ',
-    staff_mode: 'スタッフモード',
-    current_status: '現在の状態',
-    booking_id: '予約 ID',
-    service_type: 'サービス種類',
-    from: '出発 / 預け',
-    to: '到着 / 受取',
-    payment_details: '決済情報',
-    method: '決済手段',
-    discount: '割引',
-    total_amount: '合計金額',
-    update_status: 'ステータス変更',
-    confirm_update: "状態を「{status}」に変更しますか？",
-    changed: '状態が変更されました。',
-    failed: '状態の変更に失敗しました。',
-    confirm_pickup_checkin: '集荷 / 入庫確認',
-    storage_in_progress: '保管中',
-    delivery_arrival_complete: '配送 / 到着完了',
-    customer_pickup_complete: 'お客様受取（完了処理）',
-    already_completed: 'すでに完了した予約です。',
-    preview_image: '画像プレビュー',
-    statuses: {
-        pending: '受付待機',
-        confirmed: '予約確定',
-        transit: '移動中',
-        storage: '保管中',
-        arrived: '到着完了',
-        completed: '利用完了',
-        cancelled: 'キャンセル'
     },
-    payment_statuses: {
-        paid: '支払い完了',
-        unpaid: '未払い',
-        refunded: '払い戻し済み',
-        unknown: '未確認'
+    branch_admin: {
+        title: '拠点管理システム',
+        manual_booking: '手動予約 (ウォークイン)',
+        reservation_list: '予約一覧',
+        all_bookings: '全ての予約',
+        pending_bookings: '保留中',
+        active_bookings: '進行中',
+        completed_bookings: '完了',
+        no_bookings: '表示する予約がありません。',
+        refresh: '更新',
+        branch_info: '拠点情報',
+        manual_booking_btn: 'ウォークイン予約を追加',
+        search_placeholder: '名前またはコードで検索',
+        status_update_success: 'ステータスが更新されました。',
+        booking_created_success: '予約が作成されました。',
+        booking_id: '予約ID',
+        customer_name: 'お客様名',
+        service_type: 'サービス',
+        pickup_time: '受取時間',
+        status: '態',
+        actions: '管理',
+        view_details: '詳細表示',
+        update_status: 'ステータス更新'
+    },
+    location_names: {
+        'IN1T': '仁川空港 T1',
+        'IN2T': '仁川空港 T2',
+        'GMP': '金浦空港',
+        'HBO': '弘大バオ店',
+        'MYN': '延南店',
+        'MDD': '東大門店',
+        'MGH': '広蔵市場店',
+        'MMP': '麻浦支店',
+        'MGN': '江南駅店',
+        'MSIS': '江南新沙店',
+        'MSUS': '聖水駅店',
+        'MYS': 'ソウルドレゴンシティ店',
+        'MIT': '梨太院支店',
+        'MBX-001': '安国駅支店',
+        'MBX-002': '東大門DDP店',
+        'MBX-003': '鍾路支店',
+        'MBX-004': '忠武路支店',
+        'MBX-005': '聖水駅支店',
+        'MBX-006': '江南新沙支店',
+        'MBX-007': 'マネーボックス第一両替センター',
+        'MBX-008': '汝矣島支店',
+        'MBX-009': '明洞2号店',
+        'MBX-010': '梨太院支店',
+        'MBX-011': 'ソウル駅支店',
+        'MBX-012': '江南駅支店',
+        'MBX-013': '南大門支店',
+        'MBX-014': '仁寺洞支店',
+        'MBX-015': '弘大支店',
+        'MBX-016': '明洞店',
+        'MBX-017': '平沢支店',
+        'MBX-018': '松島支店',
+        'MBX-019': '水原支店',
+        'MBX-020': '雲西駅支店',
+        'MBX-021': '富平支店',
+        'MBX-022': '金浦支店',
+        'MBX-023': '昌原支店',
+        'MBX-024': '蔚山三山支店',
+        'MBX-025': '広安里支店',
+        'MBX-026': '釜山駅支店',
+        'MBX-027': '大邱支店',
+        'MBX-028': '金海空港支店',
+        'MBX-029': '南浦支店',
+        'MBX-030': '海雲台支店',
+        'MBX-031': '済州東門市場店',
+        'MBX-032': '済州支店',
+        'MBX-033': '光州支店'
     }
-};
-ja.booking_voucher = {
-    image_save_failed: '画像の保存に失敗しました。',
-    official_receipt: '公式予約確認書',
-    reservation_id: '予約番号',
-    issue_date: '発行日',
-    scan_to_verify: 'スキャンして確認',
-    show_to_staff: 'このバウチャーをスタッフに提示してください',
-    show_code_note: '拠点訪問時にこのコードをご提示ください。\n現場確認後、すぐに処理が進行します。',
-    directions_short: '道順',
-    branch_pickup_guide: '拠点・受取ガイド',
-    storage: '保管',
-    vat_included: 'VAT込み',
-    save_voucher: 'バウチャー保存',
-    home: 'ホームへ',
-    branch_address: '住所',
-    open_hours: '営業時間',
-    coupon_code: 'クーポンコード',
-    show_to_staff_short: '「スタッフに見せてください」',
-    coupon_small_note: '少額紙幣は優待対象外となる場合があります。',
-    touch_to_save_coupon: 'タップしてクーポン画像を保存',
-    quick_access_note: 'サービスカウンターですぐ確認できるよう、この画面をキャプチャするか PDF で保存してください。',
-    save_simple_qr: 'シンプル QR 画像を保存',
-    official_service_voucher: '公式サービスバウチャー'
-};
-ja.booking_voucher.moneybox_partner = '延南店 公式提携先';
-ja.booking_voucher.vip_coupon = 'VIP クーポン';
-ja.booking_voucher.currency_exchange = '両替特典';
-ja.booking_voucher.special_benefit = '特別優待';
-ja.booking_voucher.everyday_hours = '09:00 - 21:00（毎日）';
-ja.booking_voucher.address_specified = '住所指定';
-ja.tracking.name_placeholder = '予約者名を入力';
-ja.services_page.back = 'ホームに戻る';
-ja.size_simulator = {
-    ...(ja.size_simulator || {}),
-    size_s_range: '18〜20インチ',
-    size_s_desc: 'ハンドバッグ／小型機内持ち込み'
 };

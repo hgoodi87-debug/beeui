@@ -1,10 +1,16 @@
-import { db } from '../firebaseApp';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-
 /**
- * [스봉이] 감사 로그 액션 타입 정의
- * 보안 및 운영상의 중요 이벤트를 분류합니다.
+ * [스봉이] 감사 로그 서비스 — Supabase 전용 💅
+ * Firebase Firestore 완전 제거, Supabase REST API 사용
  */
+import { supabaseMutate } from './supabaseClient';
+
+let auditLogWriteDisabledForSession = false;
+let auditLogPermissionWarningShown = false;
+const shouldSkipDevAuditLogs =
+    import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_AUDIT_LOGS !== 'true';
+const isClientAuditLoggingEnabled =
+    import.meta.env.VITE_ENABLE_CLIENT_AUDIT_LOGS === 'true';
+
 export type AuditActionType = 
     | 'LOGIN' 
     | 'REFUND' 
@@ -14,6 +20,7 @@ export type AuditActionType =
     | 'RESTORE' 
     | 'CONFIG_CHANGE' 
     | 'MANUAL_BOOKING' 
+    | 'SETTLEMENT_CONFIRM'
     | 'DELETE';
 
 export interface AuditLogData {
@@ -21,18 +28,17 @@ export interface AuditLogData {
     actorName: string;
     actorEmail?: string;
     actionType: AuditActionType;
-    targetId?: string;      // 예약 ID, 관리자 ID 등
-    targetType?: string;    // 'BOOKING', 'ADMIN', 'SYSTEM' 등
-    details?: any;          // 변경 전/후 데이터 등
+    targetId?: string;
+    targetType?: string;
+    details?: any;
     ip?: string;
     userAgent?: string;
-    timestamp: any;
+    timestamp: string;
 }
 
 export const AuditService = {
     /**
-     * [스봉이] 핵심 감사 로그 기록 함수
-     * 어떤 관리자가 어떤 중요한 작업을 수행했는지 영구히 기록합니다. 🛡️
+     * [스봉이] 핵심 감사 로그 기록 함수 — Supabase audit_logs 테이블 직접 저장 🛡️
      */
     async logAction(
         actor: { id: string; name: string; email?: string },
@@ -40,22 +46,45 @@ export const AuditService = {
         target?: { id: string; type: string },
         details: any = {}
     ) {
+        if (!isClientAuditLoggingEnabled) {
+            return;
+        }
+
+        if (shouldSkipDevAuditLogs) {
+            return;
+        }
+
+        if (auditLogWriteDisabledForSession) {
+            return;
+        }
+
         try {
-            const logData: AuditLogData = {
-                actorId: actor.id,
-                actorName: actor.name,
-                actorEmail: actor.email,
-                actionType,
-                targetId: target?.id,
-                targetType: target?.type,
-                details,
-                timestamp: serverTimestamp(),
-                userAgent: navigator.userAgent
+            const logData = {
+                entity_type: target?.type || 'SYSTEM',
+                entity_id: target?.id || '',
+                action: actionType,
+                actor: `${actor.name}${actor.email ? ` (${actor.email})` : ''} [${actor.id}]`,
+                before_data: null,
+                after_data: details ? JSON.stringify(details) : null,
             };
 
-            await addDoc(collection(db, 'audit_logs'), logData);
+            await supabaseMutate('audit_logs', 'POST', logData);
+
             console.log(`[AuditLog] ${actionType} recorded successfully. 💅`);
-        } catch (e) {
+        } catch (e: any) {
+            const status = Number(e?.status || 0);
+            const code = String(e?.code || '');
+            const permissionDenied = status === 403 || code === '42501' || String(e?.message || '').includes('[403]');
+
+            if (permissionDenied) {
+                auditLogWriteDisabledForSession = true;
+                if (!auditLogPermissionWarningShown) {
+                    auditLogPermissionWarningShown = true;
+                    console.warn('[AuditLog] audit_logs 쓰기 권한이 없어 이번 세션에서는 감사 로그 기록을 중단합니다.');
+                }
+                return;
+            }
+
             console.error('[AuditLog] Failed to record action:', e);
             // 감사 로그 기록 실패는 치명적일 수 있으나, 서비스 중단은 막아야 함
         }

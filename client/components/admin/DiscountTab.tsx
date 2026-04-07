@@ -20,7 +20,7 @@ const DiscountTab: React.FC = () => {
 
     const handleSave = async () => {
         if (!form.code || form.amountPerBag === undefined) {
-            alert('코드와 할인 금액을 입력해주세요.');
+            alert('코드와 혜택 금액을 입력해주세요.');
             return;
         }
 
@@ -32,7 +32,7 @@ const DiscountTab: React.FC = () => {
                 allowedService: form.allowedService || 'ALL'
             } as DiscountCode);
             setForm({ code: '', amountPerBag: 0, description: '', isActive: true, allowedService: 'ALL' });
-            alert('할인 코드가 저장되었습니다.');
+            alert('혜택 코드가 저장되었습니다.');
         } catch (e) {
             console.error(e);
             alert('저장 실패');
@@ -42,7 +42,7 @@ const DiscountTab: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('정말로 이 할인 코드를 삭제하시겠습니까?')) return;
+        if (!confirm('정말로 이 혜택 코드를 삭제하시겠습니까?')) return;
         try {
             await StorageService.deleteDiscountCode(id);
         } catch (e) {
@@ -61,7 +61,7 @@ const DiscountTab: React.FC = () => {
 
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">할인 코드 관리 (Promo Codes)</h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">프로모션 코드 관리 (Promo Codes)</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 {/* 폼 섹션 */}
@@ -71,7 +71,7 @@ const DiscountTab: React.FC = () => {
                     </h3>
                     <div className="space-y-4">
                         <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">할인 코드명 (UPPERCASE)</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">프로모션 코드명 (UPPERCASE)</label>
                             <input
                                 value={form.code}
                                 onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })}
@@ -80,7 +80,7 @@ const DiscountTab: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">가방당 할인 금액 (₩)</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">가방당 혜택 금액 (₩)</label>
                             <input
                                 type="number"
                                 value={form.amountPerBag}
@@ -94,7 +94,7 @@ const DiscountTab: React.FC = () => {
                             <input
                                 value={form.description}
                                 onChange={e => setForm({ ...form, description: e.target.value })}
-                                placeholder="예: 신규 고객 이벤트 할인"
+                                placeholder="예: 신규 고객 이벤트 혜택"
                                 className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs"
                             />
                         </div>
@@ -165,7 +165,7 @@ const DiscountTab: React.FC = () => {
                             <div className="flex justify-between items-end">
                                 <div>
                                     <p className="text-xs text-gray-400 font-medium mb-1">{c.description || 'No description'}</p>
-                                    <p className="text-sm font-bold text-bee-grey">가방당 <span className="text-bee-black">₩{c.amountPerBag.toLocaleString()}</span> 할인</p>
+                                    <p className="text-sm font-bold text-bee-grey">가방당 <span className="text-bee-black">₩{c.amountPerBag.toLocaleString()}</span> 혜택</p>
                                 </div>
                                 <button
                                     onClick={() => setForm(c)}
@@ -178,7 +178,7 @@ const DiscountTab: React.FC = () => {
                     ))}
                     {codes.length === 0 && (
                         <div className="col-span-full py-20 text-center text-gray-400 font-bold bg-white rounded-[40px] border border-gray-100">
-                            등록된 할인 코드가 없습니다.
+                            등록된 혜택 코드가 없습니다.
                         </div>
                     )}
                 </div>

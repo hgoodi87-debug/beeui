@@ -1,7 +1,10 @@
 import React from 'react';
 import { BookingState, LocationOption, ServiceType, BookingStatus, SnsType } from '../../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../../src/constants/admin';
+import { COUNTRY_NAMES } from '../../src/constants/countries';
 import { StorageService } from '../../services/storageService';
+import { getSupabaseBaseUrl } from '../../services/supabaseRuntime';
+import { getActiveAdminRequestHeaders } from '../../services/adminAuthService';
 import {
     createEmptyBagSizes,
     getBagCategoriesForService,
@@ -25,25 +28,6 @@ interface BookingDetailModalProps {
     adminRole?: string;
 }
 
-const COUNTRY_NAMES: Record<string, string> = {
-    'KR': 'Korea 🇰🇷',
-    'US': 'USA 🇺🇸',
-    'JP': 'Japan 🇯🇵',
-    'CN': 'China 🇨🇳',
-    'TW': 'Taiwan 🇹🇼',
-    'HK': 'Hong Kong 🇰🇷',
-    'SG': 'Singapore 🇸🇬',
-    'TH': 'Thailand 🇹🇭',
-    'VN': 'Vietnam 🇻🇳',
-    'MY': 'Malaysia 🇲🇾',
-    'PH': 'Philippines 🇵🇭',
-    'ID': 'Indonesia 🇮🇩',
-    'FR': 'France 🇫🇷',
-    'DE': 'Germany 🇩🇪',
-    'GB': 'UK 🇬🇧',
-    'OTHER': 'Other 🌎'
-};
-
 const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
     selectedBooking,
     setSelectedBooking,
@@ -58,6 +42,48 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
 }) => {
     const [promoCode, setPromoCode] = React.useState('');
     const [isApplyingPromo, setIsApplyingPromo] = React.useState(false);
+    const [csPanelOpen, setCsPanelOpen] = React.useState(false);
+    const [csInquiry, setCsInquiry] = React.useState('');
+    const [csGenerating, setCsGenerating] = React.useState(false);
+    const [csToast, setCsToast] = React.useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+    const COUNTRY_TO_LANG: Record<string, string> = {
+        TW: 'zh-TW', HK: 'zh-HK', JP: 'ja', CN: 'zh', KR: 'ko',
+    };
+
+    const handleGenerateCsReply = async () => {
+        if (!csInquiry.trim()) return;
+        setCsGenerating(true);
+        setCsToast(null);
+        try {
+            const SUPABASE_URL = getSupabaseBaseUrl();
+            const headers = await getActiveAdminRequestHeaders();
+            const customerLang = COUNTRY_TO_LANG[selectedBooking?.country || ''] || 'en';
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-content-gen`, {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: 'cs_reply',
+                    entity_id: selectedBooking?.id || null,
+                    inquiry_body: csInquiry.trim(),
+                    customer_lang: customerLang,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            const policy = data.data?.policy_check;
+            const msg = policy && !policy.passed
+                ? `⚠ 정책 위반 감지 — AI 검수함에 저장됨`
+                : '✓ AI 답변 초안이 검수함에 저장되었습니다.';
+            setCsToast({ msg, type: policy && !policy.passed ? 'error' : 'success' });
+            setCsInquiry('');
+            setTimeout(() => { setCsToast(null); setCsPanelOpen(false); }, 3500);
+        } catch (e) {
+            setCsToast({ msg: `생성 실패: ${e}`, type: 'error' });
+        } finally {
+            setCsGenerating(false);
+        }
+    };
 
     if (!selectedBooking) return null;
 
@@ -130,6 +156,14 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     <input readOnly={adminRole !== 'super'} title="이메일" placeholder="이메일 입력" value={selectedBooking.userEmail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, userEmail: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm read-only:bg-gray-100" />
                                 </div>
                                 <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">국가 (Country)</label>
+                                    <select disabled={adminRole !== 'super'} title="국가 선택" value={selectedBooking.country || 'KR'} onChange={e => setSelectedBooking({ ...selectedBooking, country: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
+                                        {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
+                                            <option key={code} value={code}>{name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">연락처 (SNS)</label>
                                     <div className="flex gap-2">
                                         <select disabled={adminRole !== 'super'} title="SNS 종류" value={selectedBooking.snsType} onChange={e => setSelectedBooking({ ...selectedBooking, snsType: e.target.value as SnsType })} className="bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
@@ -139,12 +173,11 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">국가 (Country)</label>
-                                    <select disabled={adminRole !== 'super'} title="국가 선택" value={selectedBooking.country || 'KR'} onChange={e => setSelectedBooking({ ...selectedBooking, country: e.target.value })} className="w-full bg-white p-3 rounded-xl border border-gray-200 font-bold text-sm disabled:bg-gray-100">
-                                        {Object.entries(COUNTRY_NAMES).map(([code, name]) => (
-                                            <option key={code} value={code}>{name}</option>
-                                        ))}
-                                    </select>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">관할 지점 (Branch)</label>
+                                    <div className="w-full bg-gray-100 p-3 rounded-xl border border-gray-200 font-black text-xs text-bee-black flex items-center gap-2">
+                                        <i className="fa-solid fa-warehouse text-gray-400"></i>
+                                        {selectedBooking.branchName || '지점 정보 없음 🐝'}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -222,25 +255,36 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                             <div className="flex-1 space-y-4">
                                 <div className="relative pl-6 border-l-2 border-dashed border-gray-200">
                                     <div className="absolute top-0 left-[-6px] w-3 h-3 rounded-full bg-bee-yellow"></div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">출발지 (Pickup)</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                        {selectedBooking.serviceType === ServiceType.STORAGE ? '기점/입고지 (Pickup)' : '출발지 (Pickup)'}
+                                    </label>
                                     <select disabled={adminRole !== 'super'} title="출발 지점" value={selectedBooking.pickupLocation} onChange={e => setSelectedBooking({ ...selectedBooking, pickupLocation: e.target.value })} className="w-full bg-white p-2 mb-2 rounded-lg border border-gray-200 text-xs font-bold disabled:bg-gray-100">
                                         {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                        {/* [스봉이] 매칭되는 ID가 없는 레거시 데이터면 텍스트를 옵션에 살짝 끼워넣어드려요 💅 */}
+                                        {!locations.some(l => l.id === selectedBooking.pickupLocation) && selectedBooking.pickupLocation && (
+                                            <option value={selectedBooking.pickupLocation}>{selectedBooking.pickupLocation} (Legacy)</option>
+                                        )}
                                     </select>
                                     <input readOnly={adminRole !== 'super'} value={selectedBooking.pickupAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupAddress: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold mb-2 read-only:bg-gray-100" placeholder="주소" />
                                     <input readOnly={adminRole !== 'super'} value={selectedBooking.pickupAddressDetail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, pickupAddressDetail: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold read-only:bg-gray-100" placeholder="상세 주소" />
                                 </div>
-                                {selectedBooking.serviceType === ServiceType.DELIVERY && (
-                                    <div className="relative pl-6 border-l-2 border-dashed border-gray-200">
-                                        <div className="absolute bottom-0 left-[-6px] w-3 h-3 rounded-full bg-bee-black"></div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">도착지 (Dropoff)</label>
-                                        <select disabled={adminRole !== 'super'} title="도착 지점" value={selectedBooking.dropoffLocation} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffLocation: e.target.value })} className="w-full bg-white p-2 mb-2 rounded-lg border border-gray-200 text-xs font-bold disabled:bg-gray-100">
-                                            <option value="">- 선택 안함 -</option>
-                                            {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                                        </select>
-                                        <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddress: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold mb-2 read-only:bg-gray-100" placeholder="주소" />
-                                        <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddressDetail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddressDetail: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold read-only:bg-gray-100" placeholder="상세 주소" />
-                                    </div>
-                                )}
+                                
+                                <div className="relative pl-6 border-l-2 border-dashed border-gray-200">
+                                    <div className="absolute bottom-0 left-[-6px] w-3 h-3 rounded-full bg-bee-black"></div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+                                        {selectedBooking.serviceType === ServiceType.STORAGE ? '종점/반환지 (Return)' : '도착지 (Dropoff)'}
+                                    </label>
+                                    <select disabled={adminRole !== 'super'} title="도착 지점" value={selectedBooking.dropoffLocation} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffLocation: e.target.value })} className="w-full bg-white p-2 mb-2 rounded-lg border border-gray-200 text-xs font-bold disabled:bg-gray-100">
+                                        <option value="">- 선택 안함 -</option>
+                                        {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                        {/* [스봉이] 매칭되는 ID가 없는 레거시 데이터 fallback 💅 */}
+                                        {!locations.some(l => l.id === selectedBooking.dropoffLocation) && selectedBooking.dropoffLocation && (
+                                            <option value={selectedBooking.dropoffLocation}>{selectedBooking.dropoffLocation} (Legacy)</option>
+                                        )}
+                                    </select>
+                                    <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddress || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddress: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold mb-2 read-only:bg-gray-100" placeholder="주소" />
+                                    <input readOnly={adminRole !== 'super'} value={selectedBooking.dropoffAddressDetail || ''} onChange={e => setSelectedBooking({ ...selectedBooking, dropoffAddressDetail: e.target.value })} className="w-full bg-white p-2 rounded-lg border border-gray-200 text-xs font-bold read-only:bg-gray-100" placeholder="상세 주소" />
+                                </div>
                             </div>
                             <div className="min-w-[200px] flex flex-col gap-4">
                                 <div>
@@ -316,16 +360,68 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                     )}
                 </div>
 
+                {/* CS 답변 초안 패널 */}
+                {csPanelOpen && (
+                    <div className="px-8 pb-4 border-t border-gray-50 bg-gray-50/50 pt-4">
+                        <div className="bg-white rounded-2xl border border-bee-yellow/40 p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-black text-bee-black flex items-center gap-1.5">
+                                    <i className="fa-solid fa-robot text-bee-yellow"></i> AI CS 답변 초안 생성
+                                </p>
+                                <button onClick={() => setCsPanelOpen(false)} className="text-gray-400 hover:text-gray-700 text-xs">
+                                    <i className="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            {csToast && (
+                                <div className={`text-xs font-bold px-3 py-2 rounded-xl ${csToast.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                                    {csToast.msg}
+                                </div>
+                            )}
+                            <textarea
+                                value={csInquiry}
+                                onChange={e => setCsInquiry(e.target.value)}
+                                placeholder="고객 문의 내용을 붙여넣으세요..."
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-bold resize-none focus:outline-none focus:border-bee-yellow"
+                                rows={3}
+                            />
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] text-gray-400">
+                                    언어 자동감지: <span className="font-bold">{COUNTRY_TO_LANG[selectedBooking.country || ''] || 'en'}</span>
+                                    {` (국가: ${selectedBooking.country || '?'})`}
+                                </p>
+                                <button
+                                    onClick={handleGenerateCsReply}
+                                    disabled={csGenerating || !csInquiry.trim()}
+                                    className="bg-bee-yellow text-bee-black px-4 py-2 rounded-xl text-xs font-black hover:bg-bee-black hover:text-bee-yellow transition-all disabled:opacity-40 flex items-center gap-1.5"
+                                >
+                                    {csGenerating ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>}
+                                    생성
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Modal Footer */}
-                <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-end gap-4">
-                    <button onClick={() => handlePrintLabel(selectedBooking)} className="bg-white text-gray-600 border border-gray-200 px-6 py-4 rounded-2xl font-black text-sm hover:bg-gray-100 shadow-sm transition-all"><i className="fa-solid fa-print mr-2"></i> Label</button>
-                    <button onClick={handleUpdateBooking} disabled={isSaving} className="bg-bee-black text-bee-yellow px-8 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-xl disabled:opacity-50">
-                        {isSaving ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-check mr-2"></i>} Update
+                <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between gap-4">
+                    <button
+                        onClick={() => setCsPanelOpen(p => !p)}
+                        className={`flex items-center gap-2 px-5 py-4 rounded-2xl font-black text-sm transition-all ${csPanelOpen ? 'bg-bee-yellow text-bee-black' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                        title="AI CS 답변 초안 생성"
+                    >
+                        <i className="fa-solid fa-robot"></i>
+                        <span className="hidden sm:inline">CS 답변 초안</span>
                     </button>
-                    <button onClick={() => handleResendEmail(selectedBooking)} disabled={sendingEmailId === selectedBooking.id} className="bg-bee-yellow text-bee-black px-6 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-md disabled:opacity-50"><i className="fa-solid fa-envelope mr-2"></i> Resend Email</button>
-                    {handleRefund && (
-                        <button onClick={() => handleRefund(selectedBooking)} className="bg-red-50 text-red-500 border border-red-100 px-6 py-4 rounded-2xl font-black text-sm hover:bg-red-500 hover:text-white transition-all"><i className="fa-solid fa-rotate-left mr-2"></i> Refund</button>
-                    )}
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => handlePrintLabel(selectedBooking)} className="bg-white text-gray-600 border border-gray-200 px-6 py-4 rounded-2xl font-black text-sm hover:bg-gray-100 shadow-sm transition-all"><i className="fa-solid fa-print mr-2"></i> Label</button>
+                        <button onClick={handleUpdateBooking} disabled={isSaving} className="bg-bee-black text-bee-yellow px-8 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-xl disabled:opacity-50">
+                            {isSaving ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-check mr-2"></i>} Update
+                        </button>
+                        <button onClick={() => handleResendEmail(selectedBooking)} disabled={sendingEmailId === selectedBooking.id} className="bg-bee-yellow text-bee-black px-6 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-md disabled:opacity-50"><i className="fa-solid fa-envelope mr-2"></i> Resend Email</button>
+                        {handleRefund && (
+                            <button onClick={() => handleRefund(selectedBooking)} className="bg-red-50 text-red-500 border border-red-100 px-6 py-4 rounded-2xl font-black text-sm hover:bg-red-500 hover:text-white transition-all"><i className="fa-solid fa-rotate-left mr-2"></i> Refund</button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

@@ -13,22 +13,26 @@ export default defineConfig({
             return;
           }
 
-          if (id.includes('/firebase/')) {
-            return 'vendor-firebase';
-          }
-
-          if (id.includes('/@tanstack/')) {
-            return 'vendor-query';
-          }
+          if (id.includes('/@tanstack/')) return 'vendor-query';
+          if (id.includes('/framer-motion/')) return 'vendor-motion';
+          if (id.includes('/lucide-react/')) return 'vendor-icons';
+          if (id.includes('/react-dom/')) return 'vendor-react-dom';
+          if (id.includes('/@supabase/')) return 'vendor-supabase';
         }
       }
     }
   },
   server: {
     host: '0.0.0.0',
-    port: 5173
+    port: 5173,
+    proxy: {
+      '/supabase': {
+        target: process.env.VITE_SUPABASE_URL || 'https://localhost:54321',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/supabase/, '')
+      }
+    }
   },
-  // @ts-ignore - Vitest types might be missing in some environments
   test: {
     globals: true,
     environment: 'jsdom',

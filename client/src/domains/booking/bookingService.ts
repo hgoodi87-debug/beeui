@@ -9,9 +9,9 @@ export interface StorageRate {
 }
 
 export const STORAGE_RATES: Record<keyof BagSizes, StorageRate> = {
-    handBag: { hours4: 4000, hourlyAfter4h: 200, day1: 8000, extraDay: 6000, day7: 44000 },
-    carrier: { hours4: 5000, hourlyAfter4h: 250, day1: 10000, extraDay: 8000, day7: 58000 },
-    strollerBicycle: { hours4: 10000, hourlyAfter4h: 200, day1: 14000, extraDay: 10000, day7: 74000 },
+    handBag: { hours4: 4000, hourlyAfter4h: 1000, day1: 8000, extraDay: 6000, day7: 44000 },
+    carrier: { hours4: 5000, hourlyAfter4h: 1250, day1: 10000, extraDay: 8000, day7: 58000 },
+    strollerBicycle: { hours4: 10000, hourlyAfter4h: 2500, day1: 14000, extraDay: 10000, day7: 74000 },
 };
 
 export interface PriceResult {
@@ -84,9 +84,10 @@ const hasBusinessHoursBoundaryCrossed = (
         return true;
     }
 
-    const startMinutes = getKstMinutesOfDay(start);
     const endMinutes = getKstMinutesOfDay(end);
-    return startMinutes < openMinutes || endMinutes > closeMinutes;
+    // 같은 날(하루 안) 예약은 반납 시간이 영업 마감 이후일 때만 하루치 청구.
+    // 시작 시간이 영업 시작 전이어도 하루치로 업셀하지 않음 (1시간씩 카운트가 맞음).
+    return endMinutes > closeMinutes;
 };
 
 const getSingleBagStoragePrice = (hours: number, rate: StorageRate): number => {
@@ -96,15 +97,21 @@ const getSingleBagStoragePrice = (hours: number, rate: StorageRate): number => {
         return rate.hours4;
     }
 
-    if (roundedHours < 24) {
-        return rate.hours4 + ((roundedHours - 4) * rate.hourlyAfter4h);
+    if (roundedHours <= 24) {
+        // day1 요금을 상한으로 적용 (hourlyAfter4h가 높아서 day1 초과 방지)
+        return Math.min(rate.hours4 + ((roundedHours - 4) * rate.hourlyAfter4h), rate.day1);
     }
 
-    if (roundedHours === 24) {
-        return rate.day1;
+    const extraHours = roundedHours - 24;
+    const extraDays = Math.ceil(extraHours / 24);
+    const normalPrice = rate.day1 + (extraDays * rate.extraDay);
+
+    // 7일 패키지: extraDays >= 6 (총 7일 이상)이면 day7 패키지가 더 저렴
+    if (extraDays >= 6 && rate.day7 > 0) {
+        return Math.min(normalPrice, rate.day7);
     }
 
-    return rate.day1 + ((roundedHours - 24) * rate.hourlyAfter4h);
+    return normalPrice;
 };
 
 const getSingleBagBreakdown = (hours: number, t: { d: string; h: string }): string => {
@@ -114,15 +121,13 @@ const getSingleBagBreakdown = (hours: number, t: { d: string; h: string }): stri
         return `4${t.h}`;
     }
 
-    if (roundedHours < 24) {
-        return `4${t.h} + ${roundedHours - 4}${t.h}`;
+    if (roundedHours <= 24) {
+        const extraH = roundedHours - 4;
+        return extraH === 0 ? `4${t.h}` : `4${t.h} + ${extraH}${t.h}`;
     }
 
-    if (roundedHours === 24) {
-        return `1${t.d}`;
-    }
-
-    return `1${t.d} + ${roundedHours - 24}${t.h}`;
+    const extraDays = Math.ceil((roundedHours - 24) / 24);
+    return `1${t.d} + ${extraDays}${t.d}`;
 };
 
 const getBagLabel = (size: keyof BagSizes, lang: string): string => {

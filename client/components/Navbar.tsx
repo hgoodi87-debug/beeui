@@ -11,6 +11,7 @@ interface NavbarProps {
   onQnaClick?: () => void;
   onLoginClick?: () => void;
   onMyPageClick?: () => void;
+  onMenuClick?: () => void; // Added for side menu
   user: any;
   currentLang: string;
   onLangChange: (lang: string) => void;
@@ -26,7 +27,11 @@ const LANGUAGES = [
   { code: 'ja', name: 'JP', flag: 'jp' },
 ];
 
-const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartnersClick, onServicesClick, onTermsClick, onQnaClick, onLoginClick, onMyPageClick, user, currentLang, onLangChange, t }) => {
+const Navbar: React.FC<NavbarProps> = ({ 
+  onAdminClick, onLocationsClick, onPartnersClick, onServicesClick, 
+  onTermsClick, onQnaClick, onLoginClick, onMyPageClick, onMenuClick,
+  user, currentLang, onLangChange, t 
+}) => {
   const [scrolled, setScrolled] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
@@ -48,85 +53,75 @@ const Navbar: React.FC<NavbarProps> = ({ onAdminClick, onLocationsClick, onPartn
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const currentLangObj = LANGUAGES.find(l => l.code.toLowerCase() === currentLang.toLowerCase()) || LANGUAGES[0];
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[100] px-4 py-4 transition-all duration-300`}>
-      <div className={`max-w-[1200px] mx-auto flex items-center justify-between backdrop-blur-xl border border-white/10 rounded-full px-6 py-2 shadow-2xl transition-all duration-300 ${scrolled ? 'bg-black/60 shadow-lg' : 'bg-black/40'}`}>
+    <nav className="fixed top-0 left-0 right-0 z-[100] px-4 py-2 md:py-3 transition-all duration-500 pointer-events-none">
+      <div className={`max-w-[1200px] mx-auto flex items-center justify-between backdrop-blur-2xl border border-white/5 rounded-full px-6 py-1.5 shadow-2xl transition-all duration-500 pointer-events-auto ${scrolled ? 'bg-black/40 scale-[0.98]' : 'bg-black/20 scale-100'}`}>
 
         {/* Brand Logo Area */}
-        <div className="flex flex-col items-start group">
-          <div className="flex items-center gap-1 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <Logo size="sm" />
-          </div>
+        <div className="flex items-center cursor-pointer group scale-90 md:scale-95 origin-left" onClick={() => window.location.href = '/'}>
+          <Logo size="sm" className="group-hover:scale-105 transition-transform" />
         </div>
 
-        <div className="flex items-center gap-4 md:gap-8">
-
-          {/* Language Selector - Dropdown (Vertical Scroll) */}
+        <div className="flex items-center gap-1.5 md:gap-3">
+          {/* Language Selector - Ultra Slim Pill */}
           <div className="relative" ref={langMenuRef}>
             <button
               onClick={() => setIsLangOpen(!isLangOpen)}
-              className="flex items-center gap-2 bg-gray-100/50 hover:bg-gray-100 p-2 pl-3 pr-3 rounded-full transition-all backdrop-blur-sm"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 min-h-[44px] rounded-full transition-all border border-white/5 group"
             >
               <img
-                src={`https://flagcdn.com/w40/${LANGUAGES.find(l => l.code === currentLang)?.flag || 'kr'}.png`}
+                src={`https://flagcdn.com/w40/${currentLangObj.flag}.png`}
                 alt={currentLang}
-                className="w-4 h-auto rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
+                className="w-3.5 h-auto rounded-sm"
               />
-              <span className="text-[10px] font-black uppercase tracking-widest">{LANGUAGES.find(l => l.code === currentLang)?.name}</span>
-              <i className={`fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-300 ${isLangOpen ? 'rotate-180' : ''}`}></i>
+              <span className="hidden sm:inline text-[10px] font-black text-white/80 tracking-widest uppercase">{currentLangObj.name}</span>
             </button>
 
             {isLangOpen && (
-              <div className="absolute top-full mt-2 left-0 md:right-0 md:left-auto w-32 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col animate-fade-in-up max-h-[300px] overflow-y-auto custom-scrollbar">
+              <div className="absolute top-full mt-3 right-0 w-40 bg-black/90 backdrop-blur-3xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden flex flex-col py-2">
                 {LANGUAGES.map(lang => (
                   <button
                     key={lang.code}
                     onClick={() => { onLangChange(lang.code); setIsLangOpen(false); }}
-                    className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-all text-left w-full ${currentLang === lang.code ? 'bg-bee-yellow text-bee-black' : 'text-gray-500'}`}
+                    className={`flex items-center gap-3 px-5 py-2.5 hover:bg-white/5 transition-all text-left w-full ${currentLang.toLowerCase() === lang.code.toLowerCase() ? 'text-bee-yellow bg-white/5' : 'text-white/60'}`}
                   >
                     <img
                       src={`https://flagcdn.com/w40/${lang.flag}.png`}
                       alt={lang.name}
-                      className="w-4 h-auto rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
+                      className="w-3.5 h-auto rounded-sm opacity-80"
                     />
-                    <span className="text-xs font-black uppercase tracking-wider">{lang.name}</span>
-                    {currentLang === lang.code && <i className="fa-solid fa-check text-[10px] ml-auto"></i>}
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{lang.name}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
-          <div className="hidden lg:flex items-center gap-8">
-            <button onClick={onServicesClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.services}</button>
-            <button onClick={() => window.location.hash = '#tracking'} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.tracking}</button>
-            <button onClick={onPartnersClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">{t.partners}</button>
-            <button onClick={onQnaClick} className="text-xs font-black text-white/80 hover:text-bee-yellow uppercase tracking-widest transition-colors">Q&A</button>
-            <div className="w-px h-4 bg-gray-200"></div>
-            {user && !user.isAnonymous ? (
-              <button
-                onClick={onMyPageClick}
-                className="flex items-center gap-2 text-xs font-black text-bee-black hover:text-[#FF495C] transition-colors uppercase tracking-widest"
-              >
-                <i className="fa-solid fa-user-circle text-sm"></i>
-                {user.displayName || t.mypage || 'MY PAGE'}
-              </button>
-            ) : (
-              <button
-                onClick={onLoginClick}
-                className="text-xs font-black text-bee-black hover:text-[#FF495C] transition-colors uppercase tracking-widest"
-              >
-                {t.login || 'LOGIN'}
-              </button>
-            )}
-            <button onClick={() => window.location.pathname !== '/booking' && (window.history.pushState(null, '', '/booking'), window.dispatchEvent(new PopStateEvent('popstate')))} className="bg-bee-black text-bee-yellow px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md shadow-black/5">{t.book}</button>
-          </div>
+
+          <div className="w-px h-3 bg-white/10 mx-1 hidden md:block"></div>
+
+          {/* Login/MyPage - 로그인 비활성화 (활성화 요청 시 이 주석 제거) */}
+          {user && !user.isAnonymous && (
+            <button
+              onClick={onMyPageClick}
+              className="text-[11px] font-black text-white/90 hover:text-bee-yellow transition-colors tracking-tighter px-3 min-h-[44px] uppercase"
+            >
+              {t.mypage || 'MY'}
+            </button>
+          )}
+
+          {/* Hamburger Menu - Classic 3-Line Button */}
+          <button 
+            onClick={onMenuClick}
+            className="w-11 h-11 bg-bee-yellow flex flex-col items-center justify-center gap-[3px] rounded-xl hover:bg-white hover:scale-105 active:scale-95 transition-all shadow-xl ml-1"
+          >
+            <span className="w-4 h-[1.5px] bg-black rounded-full"></span>
+            <span className="w-4 h-[1.5px] bg-black rounded-full"></span>
+            <span className="w-4 h-[1.5px] bg-black rounded-full"></span>
+          </button>
         </div>
       </div>
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
-      `}</style>
     </nav>
   );
 };

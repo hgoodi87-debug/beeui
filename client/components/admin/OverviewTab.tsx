@@ -41,7 +41,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 (b.returnDate === todayKST || b.dropoffDate === todayKST)
             ).length,
             issueCount: activeBookings.filter(b => b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.auditNote).length,
-            unsettledCount: activeBookings.filter(b => b.status === BookingStatus.COMPLETED && !b.branchSettlementAmount).length,
+            unsettledCount: activeBookings.filter(b => b.status === BookingStatus.COMPLETED && b.settlementStatus !== 'CONFIRMED').length,
             settledAmount: revenueStats?.total || 0,
         };
     }, [activeBookings, todayBookings, todayKST, revenueStats]);
@@ -121,7 +121,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                         { label: '당일 입고/집하 확인', count: stats.expectedIn, icon: 'fa-box-open', color: 'yellow', tab: 'DELIVERY_BOOKINGS', status: 'PENDING' },
                         { label: '당일 출고/배송 처리', count: stats.expectedOut, icon: 'fa-paper-plane', color: 'blue', tab: 'DELIVERY_BOOKINGS', status: 'ACTIVE' },
                         { label: '긴급 이슈 대응', count: stats.issueCount, icon: 'fa-circle-exclamation', color: 'red', tab: 'DELIVERY_BOOKINGS', status: 'ISSUE' },
-                        { label: '미정산 건 금융 대조', count: stats.unsettledCount, icon: 'fa-coins', color: 'emerald', tab: 'DAILY_SETTLEMENT', status: 'ALL' },
+                        { label: '미정산 건 금융 대조', count: stats.unsettledCount, icon: 'fa-coins', color: 'emerald', tab: 'FINANCIAL_COMPARISON', status: 'ALL' },
                     ].map((task, idx) => (
                         <div 
                             key={idx}

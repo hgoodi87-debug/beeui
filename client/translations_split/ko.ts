@@ -10,7 +10,25 @@ export const ko = {
         qna_title: '자주 묻는 질문 | 빌리버',
         qna_desc: '예약, 취소·환불, 보관 안전, 지점 이용 방법까지 빌리버 FAQ를 확인하세요.'
     },
-    nav: { services: '서비스 소개', locations: '지점 안내', tracking: '배송 조회', partners: '제휴 문의', book: '지금 예약하기', terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서', admin_portal: '관리자 포털', login: '로그인', mypage: '마이페이지' },
+    nav: {
+        services: '서비스 소개',
+        locations: '지점 안내',
+        tracking: '배송 조회',
+        partners: '제휴 문의',
+        community: '커뮤니티',
+        about: '브랜드 스토리',
+        support_policy: '지원 및 운영정책',
+        terms: '이용약관',
+        privacy: '개인정보 처리방침',
+        help_center: '고객센터',
+        dashboard: '대시보드',
+        contact: '문의하기',
+        book: '지금 예약하기',
+        terms_label: '배송 업무 위탁 및 제3자(운송사) 정보 제공 동의서',
+        admin_portal: '관리자 포털',
+        login: '로그인',
+        mypage: '마이페이지'
+    },
     terms_page: {
         title: 'Beeliber 이용약관 v1.0',
         last_updated: '시행일: 2026년 3월 17일',
@@ -58,15 +76,15 @@ export const ko = {
         ]
     },
     hero: {
-        badge: '서울 여행 핸즈프리(Hands-free) 파트너 ✨',
-        title1: '가장 서울다운 여행,',
-        title2: '두 손 가볍게',
-        subtitle: '수하물은 빌리버에게 맡기고,\n당신은 오직 서울의 설레는 매 순간에만 집중하세요.',
+        badge: '서울 여행 짐보관·공항배송 파트너 🐝',
+        main_title_1: '체크아웃 후, 홀가분한',
+        main_title_2: '서울 여행의 완성',
+        subtitle: '홍대·명동·강남 등 40+ 거점 보관 ₩4,000~\n인천공항 당일 배송 ₩25,000~',
         btn_now: '지금 예약하기',
+        cta_storage: "가까운 보관소 찾기",
+        cta_delivery: "공항 배송 예약",
         track_booking: '내 예약 확인',
         book_branch: '가까운 지점 예약',
-        main_title_1: '가장 서울다운 여행,',
-        main_title_2: '두 손 가볍게',
         main_title_bags: '',
         main_title_city: '',
         live_label: '실시간 배송 피드',
@@ -85,7 +103,7 @@ export const ko = {
         check_info: '정보를 다시 확인해주세요.'
     },
     pain: {
-        headline: "무거운 캐리어는 빌리버가,\n당신의 손엔 서울의 낭만만 💅",
+        headline: "무거운 캐리어는 빌리버가,\n당신의 손엔 서울의\n낭만만 💅",
         sub_copy: "복잡한 서울 지하철 계단과 만원 버스 속 캐리어는 이제 그만.\n빌리버가 당신의 귀한 4.5시간을 자유로 채워드립니다.",
         point1: "악명 높은 지하철 계단은 당신의 적입니다",
         point2: "체크아웃 후 공항 가기 전까지 '짐 노예'가 되지 마세요",
@@ -93,59 +111,74 @@ export const ko = {
         badge_without: "Beeliber 없이 무겁게",
         badge_with: "Beeliber로 가볍게",
         quote_bad: "\"서울 다신 안 와...\"",
-        quote_good: "\"진작 쓸걸, 완전 신세계! ✨\""
+        quote_good: "\"진작 쓸걸, 완전 신세계! ✨\"",
+        after_caption: "짐은 빌리버에게. 지금 이 자유, ₩4,000부터.",
+        before_caption: "캐리어 끌고 계단·지하철·관광지를… 정말요?"
     },
     howitworks: {
-        headline: "단 3단계, 서울 여행의 새로운 공식",
+        headline: "수하물로부터 해방된,\n진정한 서울 여행의 시작.",
         badge_label: "SERVICE PROCESS",
-        step1: { title: "Drop (짐 맡기기)", desc: "홍대, 서울역 등 가까운 지점에\n당신의 무거운 짐을 가볍게 넘깁니다.", badge: "STEP 1. Drop" },
-        step2: { title: "Tour (서울 즐기기)", desc: "두 손 자유로운 상태로 핫플레이스,\n맛집, 카페 투어를 마음껏 즐깁니다.", badge: "STEP 2. Tour" },
-        step3: { title: "Meet (짐 찾기)", desc: "일정을 마치고 원하는 시간에\n가방과 기분 좋게 다시 만납니다.", badge: "STEP 3. Meet" }
+        step1: { title: "허브에서 짐 맡기기", desc: "입국 후 6개 허브 지점(09:00-13:00) 중 한 곳을 방문하세요. 짐을 맡기고 바로 투어를 시작하세요.", badge: "STEP 01" },
+        step2: { title: "실시간 위치 확인", desc: "배송 추적 링크를 받아보세요. 커피 한 잔의 여유를 즐기는 동안 당신의 짐은 안전하게 이동합니다.", badge: "STEP 02" },
+        step3: { title: "공항에서 짐 찾기", desc: "짐은 인천공항(16:00-21:00)에 미리 도착해 있습니다. 가벼운 몸으로 공항에서 짐을 받아 바로 출국하세요.", badge: "STEP 03" }
+    },
+    freedom: {
+        badge: "AFTER",
+        headline: "짐은 빌리버에게.<br /><span class=\"text-bee-yellow\">지금 이 자유,</span> ₩4,000부터.",
+        sub_copy: "무거운 짐 없이 가볍게, 서울의 낭만을 즐기세요. 💅✨"
     },
     trust: {
-        headline: "당신의 짐은, 우리에겐 VIP입니다.",
+        headline: "당신의 짐은,<br class=\"md:hidden\" /> 우리에겐 <span class=\"text-bee-yellow italic\">VIP</span>입니다.",
         badge_label: "Safe & Trust Beeliber",
         tracking: { title: "실시간 위치 알림", desc: "내 짐의 보관/배송 상태를 실시간 이메일로 확인하세요.", accent: "STATUS UPDATE" },
         insurance: { title: "프리미엄 안심 보험", desc: "분실/파손 걱정 끝! 최대 50만 원까지 보장되는 든든한 보험.", accent: "SECURED" },
-        seal: { title: "스마트 보안 시스템", desc: "CCTV와 전문 파트너가 당신의 짐을 24시간 안전하게 지킵니다.", accent: "SAFE CARE" },
+        seal: { title: "스마트 보안 시스템", desc: "CCTV와 전문 파트너가 당신의 짐을 안전하게 지킵니다.", accent: "SAFE CARE" },
         footer_label1: "마포/서울 공식 파트너십",
         footer_label2: "검증된 보관 거점",
         footer_label3: "이미 수만 명이 경험한 신뢰"
     },
     pricing: {
-        headline: "커피 몇 잔 값으로 즐기는,\n서울 여행의 완벽한 자유",
-        desc: "복잡한 크기 계산 없이\n합리적인 단일 요금을 제안합니다.",
-        airport_hotel: "서울 거점 짐 보관 (Day)",
-        extra_large: "인천공항 당일 배송",
-        price_standard: "₩5,000~",
-        price_extra: "₩20,000~",
-        features_standard: ["서울 주요 거점 지점 보관", "4시간/1일 단위 유연한 선택", "안전한 실내 보관 및 보안", "기본 파손 보험 포함"],
-        features_extra: ["서울 거점 ➔ 인천공항 당일 배송", "무거운 캐리어 전담 서비스", "배송 상태 실시간 알림", "기본 파손 보험 포함"],
-        flat_rate_label: "정찰제 요금 💰",
-        most_popular_label: "인기 서비스",
-        per_bag_label: "/ 1개 기준",
-        choose_service_btn: "예약하러 가기"
+        headline: "가장 투명한 가격,\n숨은 비용 없이",
+        desc: "역 코인락커와 다릅니다.\n사이즈 제한 없이, 보험 포함, 공항 배송까지.",
+        airport_hotel: "짐 보관 (M/L Size)",
+        extra_large: "인천공항 당일 배송 (XL Size)",
+        price_standard: "₩4,000",
+        price_extra: "₩25,000",
+        features_standard: ["4시간 기본 ₩4,000 / 1일 ₩8,000", "사이즈 제한 없음 (유모차도 OK)", "전 지점 보험 기본 포함", "예약·취소·변경 수수료 없음"],
+        features_extra: ["캐리어 1개 ₩25,000 / 핸드백 ₩10,000", "오전 맡기면 오후 공항 수령", "실시간 배송 상태 알림", "보험 포함 · 파손 최대 50만원 보상"],
+        flat_rate_label: "투명한 요금표 💰",
+        most_popular_label: "인기",
+        per_bag_label: "/ 1개",
+        choose_service_btn: "예약하러 가기",
+        badges: {
+            hour_day: "4H / 1DAY",
+            spots: "40+ 거점",
+            all_sizes: "모든 사이즈",
+            same_day: "당일 도착",
+            icn: "인천공항",
+            insured: "보험 적용"
+        }
     },
     reviews_section: {
-        headline: "짐 없는 서울 여행이 얼마나 달콤한지,\n이미 수많은 여행자가 경험하고 있습니다. ✨",
-        review1: "쇼핑하고 짐 맡긴 다음 성수동 카페 투어 신나게 했어요! - 민*지 ⭐️⭐️⭐️⭐️⭐️",
-        currently_closed: '현재 이 지점은 운영 종료 상태입니다.',
-        address_label: '주소',
-        hours_label: '운영시간',
-        nearby_pick: '주변 추천',
-        info_card_book: '지금 예약하기',
-        branch_info: '지점 정보',
-        storage_hub: '보관 허브',
-        open: '영업중',
-        close: '영업종료',
-        service_delivery: '배송',
-        service_storage: '보관',
-        review2: "서울역에서 공항으로 짐 보내고 몸만 가볍게 이동했어요. 최고! - James, UK ⭐️⭐️⭐️⭐️⭐️",
-        review3: "지하철 계단에서 캐리어 들고 사투 안 벌여도 되니까 너무 좋네요. - 이*한 ⭐️⭐️⭐️⭐️⭐️"
+        headline: "서울을 다녀간 여행자들의\n생생한 목소리를 확인하세요.",
+        verified_google: "검증된 구글 피드백",
+        people_experienced: "명의 사용자가 경험함",
+        reviews_count: "+개의 리뷰",
+        google_rating: "구글 평점",
+        safe_handling: "안전한 수하물 관리 보장",
+        review_1: { name: "Sarah", location: "USA", text: "DDP는 정말 환상적이었어요! 짐을 맡긴 덕분에 가볍게 건축물을 감상할 수 있었죠. ✨" },
+        review_2: { name: "Yuki", location: "Japan", text: "경복궁에서 한복을 입고 사진 찍는 게 꿈이었는데, 빌리버 덕분에 짐 걱정 없이 즐겼어요! 🌸" },
+        review_3: { name: "Emma", location: "UK", text: "남산타워까지 올라가는 길이 짐이 없어서 정말 다행이었어요. 서울 야경이 최고예요! 🗼" },
+        review_4: { name: "Li-Wei", location: "Taiwan", text: "북촌 한옥마을의 좁은 골목길을 무거운 캐리어 없이 걸으니 정말 힐링되더라고요. 🏠" },
+        review_5: { name: "Min-Ji", location: "Korea", text: "성수동 카페 투어할 때 짐이 짐이었는데, 빌리버로 보내버리니 세상 편하네요! ☕" },
+        review_6: { name: "Chen", location: "China", text: "광화문 광장의 웅장함을 짐 없이 온전히 느낄 수 있어서 너무 좋았습니다. 🛡️" },
+        review_7: { name: "Hans", location: "Germany", text: "익선동의 아기자기한 상점들을 구경할 때 짐이 없으니 정말 자유로웠어요. 10/10! 🎁" },
+        review_8: { name: "Sofia", location: "Italy", text: "한강공원에서 피크닉 할 때 짐을 미리 호텔로 보내길 정말 잘한 것 같아요. 🧺" }
     },
     final_cta: {
-        headline: "아직도 무거운 짐을 들고 계신가요?\n지금 바로 서울의 자유를 예약하세요.",
-        btn_airport_hotel: "짐 보관 지점 찾기",
+        headline: "아직도 캐리어 끌고 다니세요?\n지금 맡기고 자유롭게 여행하세요.",
+        sub: "예약 취소·변경 무료 · 선결제 없이 현장 결제 가능",
+        btn_airport_hotel: "가까운 보관소 찾기",
         btn_hotel_airport: "공항 배송 예약하기"
     },
     partnership: {
@@ -249,10 +282,9 @@ export const ko = {
         book_now_btn: "지금 예약하기",
         storage_pricing_title: "보관 요금표",
         storage_period: "기간",
-        promo_code: "할인 코드",
+        promo_code: "프로모션 코드",
         promo_code_placeholder: "프로모션 코드 입력",
-        apply: "적용",
-        discount_applied: "할인이 적용되었습니다.",
+        discount_applied: "혜택이 적용되었습니다.",
         invalid_promo_code: "유효하지 않은 코드입니다.",
         next: "다음 단계",
         book_now: "예약하기",
@@ -295,7 +327,6 @@ export const ko = {
         baggage_count: "짐 수량",
         final_total: "총 결제 금액",
         enter_coupon: "프로모션 코드 입력",
-        apply: "적용",
         terms_agree_1: "[필수] 서비스 이용약관 동의",
         terms_link: "보기",
         terms_agree_2: "[필수] 개인정보 처리방침 동의",
@@ -402,21 +433,11 @@ export const ko = {
         phone: '+82 010-2922-7731',
         back_to_top: "맨 위로"
     },
-    reviews_section: {
-        review_1: { name: "Sarah", location: "USA", text: "DDP는 정말 환상적이었어요! 짐을 맡긴 덕분에 가볍게 건축물을 감상할 수 있었죠. ✨" },
-        review_2: { name: "Yuki", location: "Japan", text: "경복궁에서 한복을 입고 사진 찍는 게 꿈이었는데, 빌리버 덕분에 짐 걱정 없이 즐겼어요! 🌸" },
-        review_3: { name: "Emma", location: "UK", text: "남산타워까지 올라가는 길이 짐이 없어서 정말 다행이었어요. 서울 야경이 최고예요! 🗼" },
-        review_4: { name: "Li-Wei", location: "Taiwan", text: "북촌 한옥마을의 좁은 골목길을 무거운 캐리어 없이 걸으니 정말 힐링되더라고요. 🏠" },
-        review_5: { name: "Min-Ji", location: "Korea", text: "성수동 카페 투어할 때 짐이 짐이었는데, 빌리버로 보내버리니 세상 편하네요! ☕" },
-        review_6: { name: "Chen", location: "China", text: "광화문 광장의 웅장함을 짐 없이 온전히 느낄 수 있어서 너무 좋았습니다. 🛡️" },
-        review_7: { name: "Hans", location: "Germany", text: "익선동의 아기자기한 상점들을 구경할 때 짐이 없으니 정말 자유로웠어요. 10/10! 🎁" },
-        review_8: { name: "Sofia", location: "Italy", text: "한강공원에서 피크닉 할 때 짐을 미리 호텔로 보내길 정말 잘한 것 같아요. 🧺" }
-    },
     locations_page: {
-        title: '빌리버 거점 안내', sidebar_title: 'Seoul Hub Network', sidebar_subtitle: '서울 핵심 거점 안내',
+        title: '빌리버 거점 안내', sidebar_title: 'Service Points', sidebar_subtitle: '서울 핵심 거점 안내',
         select_baggage_title: '가방 선택', bag_unit_4h: '/4시간~',
-        filter_all: '전체', filter_airport: '공항', filter_partner: '지점 파트너스', filter_city: '도심', back: '메인으로', no_results: '등록된 지점이 없습니다.',
-        info_card_delivery: '배송(Delivery)', info_card_storage: '보관(Storage)', info_card_book: '지금 예약하기',
+        filter_all: '전체', filter_airport: '공항', filter_partner: '지점 파트너스', filter_city: '도심', back: '메인으로', no_results: '이 지역에 이용 가능한 지점이 없습니다.', no_results_hint: '위에서 날짜를 선택하면 근처 보관 가능 지점을 확인할 수 있어요.',
+        info_card_delivery: '배송(Delivery)', info_card_storage: '보관(Storage)',
         book_delivery: '배송 예약하기', book_storage: '보관 예약하기',
         search_placeholder: '내 위치 검색 (예: 호텔명, 역 이름)', search_error: '검색에 실패했습니다.',
         badge_delivery: '배송', badge_same_day: '당일 배송', badge_scheduled: '예약 배송', badge_storage: '짐 보관',
@@ -477,7 +498,23 @@ export const ko = {
         label_facilities: '이용 가능 서비스',
         reservation_title: '예약하기',
         label_map_error: '지도 로드 실패',
-        find_my_location_short: '내 위치 찾기'
+        find_my_location_short: '내 위치',
+        nearest_3_info: '가까운 3개 지점만 표시 중 · {count}개는 지도에서 확인',
+        loading_branches: '지점 {current}/{total} 불러오는 중',
+        branch_info: '지점 정보',
+        storage_hub: '보관 허브',
+        open: '영업 중',
+        close: '마감',
+        address_label: '주소',
+        hours_label: '운영 시간',
+        nearby_pick: '주변 추천',
+        currently_closed: '현재 이 지점은 마감되었습니다.',
+        badge_pick_delivery: '보내는날', badge_ret_delivery: '받는날',
+        closest_label: '가장 가까운 ✨',
+        slot_closed: '마감',
+        premium_luggage_care: '프리미엄 짐케어',
+        image_alt: '빌리버 짐보관 배송 지점',
+        info_card_book: 'RESERVE'
     },
     manual: {
         title: '서비스 이용 안내', subtitle: 'How to use Beeliber', desc: '빌리버와 함께라면 무거운 짐 걱정 없이 여행을 즐길 수 있습니다.',
@@ -498,7 +535,7 @@ export const ko = {
         cta_title: '여행을 시작할까요?', cta_desc: '짐 없는 자유로운 여행을 경험하세요.', cta_btn: '예약하러 가기'
     },
     chatbot: {
-        header: 'Beeliber Bot', online: '온라인', welcome: '안녕하세요. 비리버 고객센터입니다. 무엇을 도와드릴까요?',
+        header: 'Beeliber Bot', online: '온라인', welcome: '안녕하세요. 빌리버 고객센터입니다. 무엇을 도와드릴까요?',
         placeholder: '문의 사항을 입력하세요.', tooltip: '도움말',
         quick_book: '지금 예약하기', quick_price: '요금 안내',
         start_chat: '상담 시작하기', name: '이름', email: '이메일',
@@ -596,11 +633,6 @@ export const ko = {
         persona_3_desc: "렌터카 없이 뚜벅이로 이동하시나요?\n숙소를 옮길 때마다 짐 버스킹 하지 마시고\n몸만 가볍게 순간이동하세요.",
         footer_msg: "Enjoy your light travel!"
     },
-    location_names: {
-        'IN1T': '인천공항 T1', 'IN2T': '인천공항 T2', 'GMP': '김포공항', 'SST': '서울역', 'MYN': '연남점', 'MYD': '명동점', 'INS': '인사동점', 'YS': '용산점', 'GN': '강남역점',
-        '인천공항 T1': '인천공항 T1', '인천공항 T2': '인천공항 T2', '김포공항': '김포공항', '서울역': '서울역', '연남점': '연남점', '명동점': '명동점', '인사동점': '인사동점', '용산점': '용산점', '강남점': '강남역점',
-        '홍대 바오': '홍대 바오', '강남역': '강남역', '동대문': '동대문', '성수': '성수', '강남 신사': '강남 신사', '홍대': '홍대'
-    },
     location_keywords: {
         '인천공항': '인천공항',
         '김포공항': '김포공항',
@@ -686,13 +718,69 @@ export const ko = {
         pending_bookings: '대기 중',
         active_bookings: '이동/보관 중',
         completed_bookings: '완료된 예약',
+        cancelled_bookings: '취소된 예약',
         no_bookings: '표시할 예약이 없습니다.',
         refresh: '새로고침',
         branch_info: '지점 정보',
         manual_booking_btn: '현장 수동 예약',
         search_placeholder: '고객명 또는 예약번호 검색',
         status_update_success: '상태가 변경되었습니다.',
-        booking_created_success: '수동 예약이 생성되었습니다.'
+        booking_created_success: '수동 예약이 생성되었습니다.',
+        booking_update_success: '예약 정보가 업데이트되었습니다.',
+        save_success: '저장되었습니다. ✨',
+        save_fail: '저장 실패',
+        delete_confirm: '정말 삭제하시겠습니까?',
+        name_placeholder: '이름',
+        password_placeholder: '비밀번호',
+        required_field: '필수 입력 항목입니다.',
+        revenue_calc: '정산 관리',
+        staff_manage: '직원 관리',
+        refund_confirm: '[최종 확인]\n정말로 반품(환불) 처리하시겠습니까?\n이 작업은 되돌릴 수 없습니다.',
+        refund_success: '반품(환불) 처리가 완료되었습니다.',
+        // New keys for BranchAdminPage UI
+        tabs: {
+            all: '전체',
+            pending: '요청',
+            active: '활동',
+            completed: '완료',
+            cancelled: '취소/환불',
+            staff: '직원 관리',
+            revenue: '정산 내역'
+        },
+        stats: {
+            total: '전체 예약',
+            pending: '요청됨',
+            active: '활성(이동/보관)',
+            completed: '완료됨'
+        },
+        search_period: '조회 기간',
+        export_btn: '내보내기',
+        loading_data: '데이터를 수사 중입니다...💅',
+        staff_section: {
+            title_add: '직원 등록',
+            title_edit: '직원 수정',
+            name: '이름',
+            job: '직책',
+            password: '비밀번호',
+            btn_add: '직원 추가 💅',
+            btn_edit: '수정 완료 ✨',
+            list_title: '직원 명단',
+            no_staff: '등록된 직원이 없습니다. 💅'
+        },
+        revenue_section: {
+            daily: '일간 정산',
+            monthly: '월간 정산',
+            total_est: '예상 정산액',
+            note: '실 결제 금액 바탕의 예상 기여 정산액 총합입니다.',
+            delivery_rate: '배송 요율',
+            storage_rate: '보관 요율',
+            no_data: '해당 기간의 정산 완료 건이 없습니다.',
+            table_no: '#',
+            table_info: '일시 / 예약정보',
+            table_type: '유형',
+            table_rate: '적용 요율',
+            table_amount: '수익(정산)액'
+        }
     },
     common: {
         confirm: '확인',
@@ -726,7 +814,7 @@ export const ko = {
         error_email: '이메일 또는 비밀번호가 올바르지 않습니다.'
     },
     signup_modal: {
-        promo: '지금 가입하고 2,000원 할인 쿠폰 받으세요!',
+        promo: '지금 가입하고 2,000원 웰컴 쿠폰 받으세요!',
         welcome: 'Beeliber에 오신 것을 환영합니다!',
         subtitle: '여행의 시작을 더욱 가볍게 만들어보세요.',
         signup_btn: '가입 완료하기',
@@ -752,7 +840,7 @@ export const ko = {
     },
     qna: {
         title: "자주 묻는 질문 (FAQ)",
-        subtitle: "비리버가 당신의 궁금증을 완벽하게 해결해 드립니다. 💅",
+        subtitle: "빌리버가 당신의 궁금증을 완벽하게 해결해 드립니다. 💅",
         categories: {
             general: "서비스 일반",
             booking: "예약 및 결제",
@@ -762,13 +850,13 @@ export const ko = {
         items: [
             {
                 category: "general",
-                question: "비리버(Beeliber)는 어떤 서비스인가요?",
-                answer: "비리버는 서울을 여행하는 분들을 위해 '짐 없는 자유'를 제공하는 전문 서비스입니다. 홍대, 서울역 등 주요 거점에 짐을 보관하거나, 보관한 짐을 인천공항으로 당일 배송해 드려요. 전국구 배송보다는 서울 중심의 짐 보관에 특화되어 있습니다. ✨"
+                question: "빌리버(Beeliber)는 어떤 서비스인가요?",
+                answer: "빌리버는 서울을 여행하는 분들을 위해 '짐 없는 자유'를 제공하는 전문 서비스입니다. 홍대, 서울역 등 주요 거점에 짐을 보관하거나, 보관한 짐을 인천공항으로 당일 배송해 드려요. 전국구 배송보다는 서울 중심의 짐 보관에 특화되어 있습니다. ✨"
             },
             {
                 category: "general",
                 question: "호텔에서 호텔로 배송도 되나요?",
-                answer: "현재 비리버는 '지점 중심'의 서비스를 제공하고 있습니다. 호텔 픽업보다는 가까운 비리버 지점(홍대, 서울역 등)에 짐을 맡기시거나 찾는 방식을 권장드려요. 지점에서 공항으로의 배송은 아주 완벽하게 지원합니다! 💅"
+                answer: "현재 빌리버는 '지점 중심'의 서비스를 제공하고 있습니다. 호텔 픽업보다는 가까운 빌리버 지점(홍대, 서울역 등)에 짐을 맡기시거나 찾는 방식을 권장드려요. 지점에서 공항으로의 배송은 아주 완벽하게 지원합니다! 💅"
             },
             {
                 category: "booking",
@@ -778,16 +866,16 @@ export const ko = {
             {
                 category: "safety",
                 question: "내 짐이 안전한지 어떻게 믿을 수 있나요?",
-                answer: "비리버는 검증된 전문 파트너 지점과만 협업합니다. 모든 보관 구역은 CCTV로 상시 모니터링되며, 배송 시에는 짐의 상태를 사진 찍어 이메일로 보내 드려요. 또한 모든 수하물은 기본적으로 보상 보험에 가입되어 있어 안심하셔도 됩니다. ✨"
+                answer: "빌리버는 검증된 전문 파트너 지점과만 협업합니다. 모든 보관 구역은 CCTV로 상시 모니터링되며, 배송 시에는 짐의 상태를 사진 찍어 이메일로 보내 드려요. 또한 모든 수하물은 기본적으로 보상 보험에 가입되어 있어 안심하셔도 됩니다. ✨"
             },
             {
                 category: "safety",
                 question: "파손이나 분실 시 보상은 어떻게 되나요?",
-                answer: "비리버는 모든 고객님께 기본 최대 50만 원의 보상 한도를 제공합니다. 고가 물품의 경우 예약 시 안심 보장 옵션을 선택하시면 최대 300만 원까지 보장 한도를 높일 수 있어요. 💅"
+                answer: "빌리버는 모든 고객님께 기본 최대 50만 원의 보상 한도를 제공합니다. 고가 물품의 경우 예약 시 안심 보장 옵션을 선택하시면 최대 300만 원까지 보장 한도를 높일 수 있어요. 💅"
             },
             {
                 category: "locations",
-                question: "비리버 지점은 어디에 있나요?",
+                question: "빌리버 지점은 어디에 있나요?",
                 answer: "현재 서울의 가장 핫한 지역인 홍대입구역(연남), 서울역, 명동, 인사동, 용산, 강남역 등 주요 거점에서 만나보실 수 있습니다. 자세한 위치는 '지점 안내' 페이지의 지도를 확인해 주세요! 📍"
             }
         ]
@@ -795,7 +883,7 @@ export const ko = {
     admin: {
         sidebar: {
             overview: '운영 개요',
-            logistics: '물류/예약 관리',
+            logistics: '배송/예약 관리',
             locations: '지점/거점 관리',
             settlement: '정산 원장',
             reports: '비즈니스 리포트',
@@ -924,81 +1012,127 @@ export const ko = {
             cancel_filter_to: '까지',
             cancel_count_suffix: '건 조회됨'
         }
-    }
-};
-
-ko.staff_scan = {
-    no_scan_info: '스캔된 예약 정보가 없습니다.',
-    booking_not_found: '예약 정보를 찾을 수 없습니다.',
-    load_error: '데이터 로드 중 오류가 발생했습니다.',
-    invalid_access: '잘못된 접근입니다.',
-    auth_required: '스태프 권한이 필요합니다.\n먼저 관리자 로그인을 완료해주세요.',
-    admin_home: '관리자 홈으로',
-    go_login: '로그인하러 가기',
-    staff_mode: '스태프 모드',
-    current_status: '현재 상태',
-    booking_id: '예약 ID',
-    service_type: '서비스 유형',
-    from: '출발 / 맡김',
-    to: '도착 / 찾기',
-    payment_details: '결제 정보',
-    method: '결제 수단',
-    discount: '할인',
-    total_amount: '총 결제 금액',
-    update_status: '상태 변경',
-    confirm_update: "상태를 '{status}'(으)로 변경하시겠습니까?",
-    changed: '상태가 변경되었습니다.',
-    failed: '상태 변경에 실패했습니다.',
-    confirm_pickup_checkin: '픽업/입고 확인',
-    storage_in_progress: '보관 중',
-    delivery_arrival_complete: '배송/도착 완료',
-    customer_pickup_complete: '고객 수령 (완료 처리)',
-    already_completed: '이미 완료된 예약입니다.',
-    preview_image: '이미지 미리보기',
-    statuses: {
-        pending: '대기',
-        confirmed: '예약 확정',
-        transit: '이동 중',
-        storage: '보관 중',
-        arrived: '도착 완료',
-        completed: '이용 완료',
-        cancelled: '취소'
     },
-    payment_statuses: {
-        paid: '결제 완료',
-        unpaid: '미결제',
-        refunded: '환불 완료',
-        unknown: '미확인'
+    staff_scan: {
+        no_scan_info: '스캔된 예약 정보가 없습니다.',
+        booking_not_found: '예약 정보를 찾을 수 없습니다.',
+        load_error: '데이터 로드 중 오류가 발생했습니다.',
+        invalid_access: '잘못된 접근입니다.',
+        auth_required: '스태프 권한이 필요합니다.\n먼저 관리자 로그인을 완료해주세요.',
+        admin_home: '관리자 홈으로',
+        go_login: '로그인하러 가기',
+        staff_mode: '스태프 모드',
+        current_status: '현재 상태',
+        booking_id: '예약 ID',
+        service_type: '서비스 유형',
+        from: '출발 / 맡김',
+        to: '도착 / 찾기',
+        payment_details: '결제 정보',
+        method: '결제 수단',
+        discount: '할인',
+        total_amount: '총 결제 금액',
+        update_status: '상태 변경',
+        confirm_update: "상태를 '{status}'(으)로 변경하시겠습니까?",
+        changed: '상태가 변경되었습니다.',
+        failed: '상태 변경에 실패했습니다.',
+        confirm_pickup_checkin: '픽업/입고 확인',
+        storage_in_progress: '보관 중',
+        delivery_arrival_complete: '배송/도착 완료',
+        customer_pickup_complete: '고객 수령 (완료 처리)',
+        already_completed: '이미 완료된 예약입니다.',
+        preview_image: '이미지 미리보기',
+        statuses: {
+            pending: '대기',
+            confirmed: '예약 확정',
+            transit: '이동 중',
+            storage: '보관 중',
+            arrived: '도착 완료',
+            completed: '이용 완료',
+            cancelled: '취소'
+        },
+        payment_statuses: {
+            paid: '결제 완료',
+            unpaid: '미결제',
+            refunded: '환불 완료',
+            unknown: '미확인'
+        }
+    },
+    booking_voucher: {
+        image_save_failed: '이미지 저장에 실패했습니다.',
+        official_receipt: '공식 예약 확인서',
+        reservation_id: '예약 번호',
+        issue_date: '발급 일자',
+        scan_to_verify: '스캔하여 확인',
+        show_to_staff: '본 바우처를 직원에게 제시하세요',
+        show_code_note: '지점 방문 시 본 코드를 제시해 주세요.\n현장 확인 후 즉시 처리가 진행됩니다.',
+        directions_short: '길찾기',
+        branch_pickup_guide: '지점 및 픽업 안내',
+        storage: '보관',
+        vat_included: 'VAT 포함',
+        save_voucher: '바우처 저장',
+        home: '홈으로',
+        branch_address: '주소',
+        open_hours: '운영 시간',
+        coupon_code: '쿠폰 코드',
+        show_to_staff_short: '"직원에게 보여주세요"',
+        coupon_small_note: '금액이 작은 권종은 우대가 어려울 수 있습니다.',
+        touch_to_save_coupon: '터치하여 쿠폰 이미지 저장',
+        quick_access_note: '서비스 카운터에서 빠르게 확인할 수 있도록 이 화면을 캡처하거나 PDF로 저장해 주세요.',
+        save_simple_qr: '심플 QR 이미지 저장',
+        official_service_voucher: '공식 서비스 바우처',
+        moneybox_partner: '연남점 공식 제휴처',
+        vip_coupon: 'VIP 쿠폰',
+        currency_exchange: '환전 혜택',
+        special_benefit: '특별 우대',
+        everyday_hours: '09:00 - 21:00 (매일)',
+        address_specified: '주소 별도 지정'
+    },
+    location_names: {
+        'IN1T': '인천공항 T1',
+        'IN2T': '인천공항 T2',
+        'GMP': '김포공항',
+        'HBO': '홍대 바오점',
+        'MYN': '연남점',
+        'MDD': '동대문점',
+        'MGH': '광장시장점',
+        'MMP': '마포지점',
+        'MGN': '강남역점',
+        'MSIS': '강남 신사점',
+        'MSUS': '성수역점',
+        'MYS': '서울 드래곤 시티점',
+        'MIT': '이태원지점',
+        'MBX-001': '안국역지점',
+        'MBX-002': '동대문DDP점',
+        'MBX-003': '종로지점',
+        'MBX-004': '충무로지점',
+        'MBX-005': '성수역점',
+        'MBX-006': '강남신사점',
+        'MBX-007': '머니박스 제일환전센터',
+        'MBX-008': '여의도지점',
+        'MBX-009': '명동2호점',
+        'MBX-010': '이태원지점',
+        'MBX-011': '서울역지점',
+        'MBX-012': '강남역지점',
+        'MBX-013': '남대문지점',
+        'MBX-014': '인사동지점',
+        'MBX-015': '홍대지점',
+        'MBX-016': '명동점',
+        'MBX-017': '평택지점',
+        'MBX-018': '송도지점',
+        'MBX-019': '수원지점',
+        'MBX-020': '운서역지점',
+        'MBX-021': '부평지점',
+        'MBX-022': '김포지점',
+        'MBX-023': '창원지점',
+        'MBX-024': '울산삼산지점',
+        'MBX-025': '광안리지점',
+        'MBX-026': '부산역지점',
+        'MBX-027': '대구지점',
+        'MBX-028': '김해공항지점',
+        'MBX-029': '남포지점',
+        'MBX-030': '해운대지점',
+        'MBX-031': '제주동문시장점',
+        'MBX-032': '제주지점',
+        'MBX-033': '광주지점'
     }
 };
-
-ko.booking_voucher = {
-    image_save_failed: '이미지 저장에 실패했습니다.',
-    official_receipt: '공식 예약 확인서',
-    reservation_id: '예약 번호',
-    issue_date: '발급 일자',
-    scan_to_verify: '스캔하여 확인',
-    show_to_staff: '본 바우처를 직원에게 제시하세요',
-    show_code_note: '지점 방문 시 본 코드를 제시해 주세요.\n현장 확인 후 즉시 처리가 진행됩니다.',
-    directions_short: '길찾기',
-    branch_pickup_guide: '지점 및 픽업 안내',
-    storage: '보관',
-    vat_included: 'VAT 포함',
-    save_voucher: '바우처 저장',
-    home: '홈으로',
-    branch_address: '주소',
-    open_hours: '운영 시간',
-    coupon_code: '쿠폰 코드',
-    show_to_staff_short: '"직원에게 보여주세요"',
-    coupon_small_note: '금액이 작은 권종은 우대가 어려울 수 있습니다.',
-    touch_to_save_coupon: '터치하여 쿠폰 이미지 저장',
-    quick_access_note: '서비스 카운터에서 빠르게 확인할 수 있도록 이 화면을 캡처하거나 PDF로 저장해 주세요.',
-    save_simple_qr: '심플 QR 이미지 저장',
-    official_service_voucher: '공식 서비스 바우처'
-};
-ko.booking_voucher.moneybox_partner = '연남점 공식 제휴처';
-ko.booking_voucher.vip_coupon = 'VIP 쿠폰';
-ko.booking_voucher.currency_exchange = '환전 혜택';
-ko.booking_voucher.special_benefit = '특별 우대';
-ko.booking_voucher.everyday_hours = '09:00 - 21:00 (매일)';
-ko.booking_voucher.address_specified = '주소 별도 지정';

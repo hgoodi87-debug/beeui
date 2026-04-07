@@ -1,0 +1,81 @@
+import React, { useMemo } from 'react';
+import { BookingState, BookingStatus, LocationOption, ServiceType } from '../../types';
+
+interface BranchHeaderProps {
+    currentBranch: LocationOption | undefined;
+    branchId: string;
+    bookings: BookingState[];
+}
+
+const BranchHeader: React.FC<BranchHeaderProps> = ({ currentBranch, branchId, bookings }) => {
+    const stats = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const todayBookings = bookings.filter(b => (b.pickupDate || '').split('T')[0] === today);
+
+        const thisMonth = today.slice(0, 7);
+        const completedThisMonth = bookings.filter(b =>
+            b.status === BookingStatus.COMPLETED &&
+            (b.pickupDate || '').slice(0, 7) === thisMonth
+        );
+
+        const deliveryRate = currentBranch?.commissionRates?.delivery ?? 0;
+        const storageRate = currentBranch?.commissionRates?.storage ?? 0;
+        const monthlyCommission = completedThisMonth.reduce((sum, b) => {
+            const price = (b as any).settlementHardCopyAmount ?? b.finalPrice ?? 0;
+            const rate = b.serviceType === ServiceType.DELIVERY ? deliveryRate : storageRate;
+            return sum + Math.floor(price * (rate / 100));
+        }, 0);
+
+        return {
+            total: bookings.length,
+            pending: bookings.filter(b => b.status === BookingStatus.PENDING).length,
+            active: bookings.filter(b => [BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any)).length,
+            completed: bookings.filter(b => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CONFIRMED).length,
+            todayCount: todayBookings.length,
+            monthlyCommission,
+            deliveryRate,
+            storageRate,
+        };
+    }, [bookings, currentBranch]);
+
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div className="col-span-2 md:col-span-1 bg-bee-black text-white p-5 rounded-3xl">
+                <div className="text-[10px] font-black text-bee-yellow uppercase tracking-widest mb-1">TODAY</div>
+                <div className="text-3xl font-black text-bee-yellow">{stats.todayCount}</div>
+                <div className="text-[10px] text-gray-400 font-bold mt-1">오늘 예약</div>
+            </div>
+            {[
+                { label: '전체', count: stats.total, icon: 'fa-list', color: 'text-gray-500' },
+                { label: '대기', count: stats.pending, icon: 'fa-clock', color: 'text-amber-500' },
+                { label: '활성', count: stats.active, icon: 'fa-truck-fast', color: 'text-blue-500' },
+                { label: '완료', count: stats.completed, icon: 'fa-check-double', color: 'text-green-500' },
+            ].map((stat, idx) => (
+                <div key={idx} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                        <i className={`fa-solid ${stat.icon} ${stat.color} text-xs`}></i>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</span>
+                    </div>
+                    <div className="text-2xl font-black text-bee-black">{stat.count}</div>
+                </div>
+            ))}
+            <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm relative overflow-hidden">
+                <div className="absolute -right-3 -bottom-3 opacity-5 pointer-events-none">
+                    <i className="fa-solid fa-coins text-5xl text-emerald-500"></i>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                    <i className="fa-solid fa-coins text-emerald-500 text-xs"></i>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">이달 커미션</span>
+                </div>
+                <div className="text-lg font-black text-emerald-600 tabular-nums">₩{stats.monthlyCommission.toLocaleString()}</div>
+                <div className="flex gap-2 mt-1.5">
+                    <span className="text-[8px] font-black text-blue-400">배송 {stats.deliveryRate}%</span>
+                    <span className="text-[8px] text-gray-200">|</span>
+                    <span className="text-[8px] font-black text-green-400">보관 {stats.storageRate}%</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default BranchHeader;

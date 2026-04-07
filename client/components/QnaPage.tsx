@@ -23,12 +23,13 @@ const QnaPage: React.FC<QnaPageProps> = ({ onBack, t, lang }) => {
     window.scrollTo(0, 0);
     const loadQna = async () => {
       try {
-        const data = await StorageService.getQnaPolicy();
+        const timeout = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('QnA fetch timeout')), 5000));
+        const data = await Promise.race([StorageService.getQnaPolicy(), timeout]);
         if (data && data.items && data.items.length > 0) {
           setDbQna(data);
         }
       } catch (e) {
-        console.error("Failed to fetch Q&A from DB:", e);
+        console.warn("Q&A DB fetch failed, using static fallback:", e);
       } finally {
         setIsLoading(false);
       }

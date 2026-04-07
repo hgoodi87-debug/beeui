@@ -4,7 +4,7 @@ import { BookingState, ServiceType, BookingStatus, SnsType, BagSizes, LocationOp
 import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
 import { RecaptchaService } from '../services/recaptchaService';
-import { calculateStoragePrice, STORAGE_RATES } from '../utils/pricing';
+import { calculateDeliveryStoragePrice, calculateStoragePrice } from '../utils/pricing';
 import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { Clock } from 'lucide-react';
 import {
@@ -319,27 +319,23 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({ lang, t, preSelectedBooki
       const deliveryBagSizes = sanitizeDeliveryBagSizes(booking.bagSizes);
       const deliveryBase = (deliveryBagSizes.handBag * (activePrices.handBag || 0)) +
         (deliveryBagSizes.carrier * (activePrices.carrier || 0));
-      const pickupMidnight = Date.parse(`${booking.pickupDate}T00:00:00+09:00`);
-      const dropoffMidnight = Date.parse(`${booking.dropoffDate}T00:00:00+09:00`);
-      const diffDays =
-        Number.isFinite(pickupMidnight) && Number.isFinite(dropoffMidnight) && dropoffMidnight > pickupMidnight
-          ? Math.floor((dropoffMidnight - pickupMidnight) / (24 * 60 * 60 * 1000))
-          : 0;
-      const storageFee =
-        diffDays > 0
-          ? diffDays * (
-              (deliveryBagSizes.handBag * STORAGE_RATES.handBag.extraDay) +
-              (deliveryBagSizes.carrier * STORAGE_RATES.carrier.extraDay)
-            )
-          : 0;
+      const deliveryStorage = calculateDeliveryStoragePrice(
+        booking.pickupDate,
+        booking.dropoffDate,
+        deliveryBagSizes,
+        lang
+      );
+      const storageFee = deliveryStorage.total;
       const deliveryBagCount = getTotalBags(deliveryBagSizes);
       const discount = appliedCoupon ? appliedCoupon.amountPerBag * deliveryBagCount : 0;
       const subtotal = Math.max(0, deliveryBase + storageFee - discount);
       return {
         total: subtotal + originSurcharge + destSurcharge,
         discount,
-        durationText: diffDays > 0 ? `${diffDays}${lang.startsWith('ko') ? '일' : 'd'} storage` : '',
-        breakdown: diffDays > 0 ? `${diffDays}${lang.startsWith('ko') ? '일 보관료 포함' : 'd storage incl.'}` : '',
+        durationText: deliveryStorage.durationText,
+        breakdown: deliveryStorage.storageDays > 0
+          ? (lang.startsWith('ko') ? `선보관 ${deliveryStorage.storageDays}일 요금 포함` : `${deliveryStorage.storageDays}d pre-delivery storage incl.`)
+          : '',
         originSurcharge,
         destSurcharge
       };

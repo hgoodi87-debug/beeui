@@ -1,6 +1,7 @@
 
 import React, { useMemo } from 'react';
-import { BookingState, BookingStatus, ServiceType } from '../../types';
+import { BookingState, BookingStatus, LocationOption, ServiceType } from '../../types';
+import { COUNTRY_NAMES } from '../../src/constants/countries';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
 
@@ -21,6 +22,7 @@ import {
 
 interface ReportsTabProps {
     bookings: BookingState[];
+    locations?: LocationOption[];
     startDate: string;
     endDate: string;
     onStartDateChange: (date: string) => void;
@@ -29,28 +31,10 @@ interface ReportsTabProps {
 
 const COLORS = ['#FACC15', '#3B82F6', '#10B981', '#F87171', '#A78BFA', '#FB923C', '#2DD4BF'];
 
-const COUNTRY_NAMES: Record<string, string> = {
-    'KR': 'Korea 🇰🇷',
-    'US': 'USA 🇺🇸',
-    'JP': 'Japan 🇯🇵',
-    'CN': 'China 🇨🇳',
-    'TW': 'Taiwan 🇹🇼',
-    'HK': 'Hong Kong 🇭🇰',
-    'SG': 'Singapore 🇸🇬',
-    'TH': 'Thailand 🇹🇭',
-    'VN': 'Vietnam 🇻🇳',
-    'MY': 'Malaysia 🇲🇾',
-    'PH': 'Philippines 🇵🇭',
-    'ID': 'Indonesia 🇮🇩',
-    'FR': 'France 🇫🇷',
-    'DE': 'Germany 🇩🇪',
-    'GB': 'UK 🇬🇧',
-    'OTHER': 'Other 🌎'
-};
-
-const ReportsTab: React.FC<ReportsTabProps> = ({ 
-    bookings, 
-    startDate, 
+const ReportsTab: React.FC<ReportsTabProps> = ({
+    bookings,
+    locations = [],
+    startDate,
     endDate,
     onStartDateChange,
     onEndDateChange
@@ -156,14 +140,39 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
 
         const totalCountryCount = Object.values(countryStats).reduce((a, b) => a + b, 0);
 
+        // 지점별 커미션 집계
+        const branchCommissionMap: Record<string, { name: string; total: number; delivery: number; storage: number; deliveryCount: number; storageCount: number; commDeliveryRate: number; commStorageRate: number }> = {};
+        validBookings.filter(b => b.status === BookingStatus.COMPLETED).forEach(b => {
+            const bName = b.branchName || '본사/직접';
+            if (!branchCommissionMap[bName]) {
+                const loc = locations.find(l => l.id === b.branchId || l.name === bName || l.shortCode === b.branchCode);
+                branchCommissionMap[bName] = {
+                    name: bName,
+                    total: 0, delivery: 0, storage: 0,
+                    deliveryCount: 0, storageCount: 0,
+                    commDeliveryRate: loc?.commissionRates?.delivery ?? 0,
+                    commStorageRate: loc?.commissionRates?.storage ?? 0,
+                };
+            }
+            const entry = branchCommissionMap[bName];
+            const price = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
+            const isDelivery = b.serviceType === ServiceType.DELIVERY;
+            const commRate = isDelivery ? entry.commDeliveryRate : entry.commStorageRate;
+            const commAmt = Math.floor(price * (commRate / 100));
+            entry.total += commAmt;
+            if (isDelivery) { entry.delivery += commAmt; entry.deliveryCount += 1; }
+            else { entry.storage += commAmt; entry.storageCount += 1; }
+        });
+        const branchCommission = Object.values(branchCommissionMap).sort((a, b) => b.total - a.total);
+
         return {
             daily: Object.values(daily).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(-31), // 넉넉하게 31일치 💅
             monthly: monthlyList,
             yearly: Object.values(yearly).sort((a: any, b: any) => a.year.localeCompare(b.year)),
             serviceDistribution: Object.values(serviceDistribution),
             countryDistribution: Object.entries(countryStats)
-                .map(([code, value]) => ({ 
-                    name: COUNTRY_NAMES[code] || code, 
+                .map(([code, value]) => ({
+                    name: COUNTRY_NAMES[code] || code,
                     value,
                     percent: totalCountryCount > 0 ? Math.round((value / totalCountryCount) * 100) : 0
                 }))
@@ -177,10 +186,11 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
             countGrowth,
             avgOrderValue: cumulativeCount > 0 ? Math.floor(cumulativeRevenue / cumulativeCount) : 0,
             activeDays: Object.keys(daily).length,
-            totalCountryCount
+            totalCountryCount,
+            branchCommission,
         };
 
-    }, [bookings, startDate, endDate]);
+    }, [bookings, locations, startDate, endDate]);
 
     return (
         <div className="space-y-10 md:space-y-12 animate-fade-in-up pb-10">
@@ -477,12 +487,96 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
                             ))}
                         </div>
 
-                        <button className="w-full py-4 bg-gray-50 text-[10px] font-black text-gray-300 uppercase tracking-widest rounded-2xl border border-gray-100 hover:bg-bee-black hover:text-bee-yellow hover:border-bee-black transition-all">
-                            View Full Channel Report
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const csvRows = ['결제수단,건수'];
+                                stats.paymentDistribution.sort((a: any, b: any) => b.value - a.value).forEach((p: any) => {
+                                    csvRows.push(`${p.name},${p.value}`);
+                                });
+                                const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `channel-report-${startDate}-${endDate}.csv`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="w-full py-4 bg-bee-black text-[10px] font-black text-white uppercase tracking-widest rounded-2xl border border-bee-black hover:bg-bee-yellow hover:text-bee-black hover:border-bee-yellow transition-all shadow-lg"
+                        >
+                            <i className="fa-solid fa-download mr-2"></i> Channel Report CSV
                         </button>
                     </div>
                 </div>
             </section>
+
+            {/* 🏪 Branch Commission Section */}
+            {stats.branchCommission.length > 0 && (
+                <section className="space-y-6">
+                    <div className="flex items-center gap-3 px-2">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                            <i className="fa-solid fa-store text-xs"></i>
+                        </div>
+                        <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">Branch Commission</h2>
+                        <span className="px-3 py-1 bg-gray-50 text-[9px] font-black text-gray-400 rounded-lg border border-gray-100 uppercase italic">완료 예약 기준</span>
+                    </div>
+
+                    <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50/50 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
+                                <tr>
+                                    <th className="px-8 py-5">지점명</th>
+                                    <th className="px-8 py-5 text-center">배송 요율</th>
+                                    <th className="px-8 py-5 text-center">보관 요율</th>
+                                    <th className="px-8 py-5 text-right">배송 정산</th>
+                                    <th className="px-8 py-5 text-right">보관 정산</th>
+                                    <th className="px-8 py-5 text-right font-black text-bee-black">총 커미션</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {stats.branchCommission.map((b, idx) => (
+                                    <tr key={b.name} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black ${idx === 0 ? 'bg-bee-black text-bee-yellow' : 'bg-gray-100 text-gray-500'}`}>
+                                                    {idx + 1}
+                                                </div>
+                                                <div>
+                                                    <div className="font-black text-bee-black text-sm">{b.name}</div>
+                                                    <div className="text-[9px] font-bold text-gray-400">{b.deliveryCount + b.storageCount}건 완료</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5 text-center">
+                                            <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black">
+                                                {b.commDeliveryRate}%
+                                                <span className="text-blue-300 ml-1">({b.deliveryCount}건)</span>
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5 text-center">
+                                            <span className="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black">
+                                                {b.commStorageRate}%
+                                                <span className="text-green-300 ml-1">({b.storageCount}건)</span>
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5 text-right font-bold text-blue-500 text-sm tabular-nums">₩{b.delivery.toLocaleString()}</td>
+                                        <td className="px-8 py-5 text-right font-bold text-green-500 text-sm tabular-nums">₩{b.storage.toLocaleString()}</td>
+                                        <td className="px-8 py-5 text-right">
+                                            <div className="font-black text-bee-black text-base tabular-nums">₩{b.total.toLocaleString()}</div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                <tr className="bg-gray-50/80 border-t-2 border-gray-200">
+                                    <td colSpan={5} className="px-8 py-4 font-black text-gray-600 text-xs uppercase tracking-widest">합계</td>
+                                    <td className="px-8 py-4 text-right font-black text-bee-black text-lg tabular-nums">
+                                        ₩{stats.branchCommission.reduce((s, b) => s + b.total, 0).toLocaleString()}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
 
             {/* 🗓️ Detailed Historical Timeline Section */}
             <section className="space-y-6">

@@ -5,37 +5,32 @@ import { LocationOption } from '../types';
 
 interface UseLocationsOptions {
     enabled?: boolean;
+    includeInactive?: boolean;
 }
 
 /**
  * Hook: useLocations
- * Fetches and subscribes to available branch locations in real-time.
- * Synchronizes Firestore onSnapshot with TanStack Query cache.
+ * Fetches branch locations via Supabase and subscribes to real-time updates.
+ * Syncs with TanStack Query cache on each update.
  */
-export const useLocations = ({ enabled = true }: UseLocationsOptions = {}) => {
+export const useLocations = ({ enabled = true, includeInactive = false }: UseLocationsOptions = {}) => {
     const queryClient = useQueryClient();
 
     const query = useQuery<LocationOption[]>({
-        queryKey: ['locations'],
-        queryFn: async () => {
-            console.log('[DAL] Initial fetch for locations...');
-            return await StorageService.getLocations();
-        },
-        staleTime: Infinity, // Rely on real-time updates after initial fetch
+        queryKey: ['locations', includeInactive ? 'all' : 'active'],
+        queryFn: () => StorageService.getLocations({ includeInactive }),
+        staleTime: Infinity,
         enabled,
     });
 
     useEffect(() => {
-        if (!enabled) {
-            return;
-        }
+        if (!enabled) return;
 
-        console.log('[DAL] Subscribing to locations real-time...');
         const unsubscribe = StorageService.subscribeLocations((data) => {
-            queryClient.setQueryData(['locations'], data);
-        });
+            queryClient.setQueryData(['locations', includeInactive ? 'all' : 'active'], data);
+        }, { includeInactive });
         return () => unsubscribe();
-    }, [enabled, queryClient]);
+    }, [enabled, includeInactive, queryClient]);
 
     return query;
 };

@@ -1,98 +1,151 @@
-
 import React from "react";
 import { motion } from "framer-motion";
-import { QrCode, Coffee, Plane } from "lucide-react";
+import { MapPin, Search as SearchIcon, Briefcase } from "lucide-react";
 
 interface LandingHowItWorksProps {
     t: any;
 }
 
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.3,
+            delayChildren: 0.2
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.8
+        }
+    }
+};
+
 const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
     const steps = [
         {
-            icon: <QrCode className="w-10 h-10" />,
+            icon: <MapPin className="w-8 h-8" />,
             title: t.howitworks.step1.title,
             desc: t.howitworks.step1.desc,
-            badge: t.howitworks.step1.badge || "STEP 1. Drop",
-            img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EB%A7%A1%EA%B8%B0.png?alt=media&token=6ed1959e-b28e-48f5-a07f-3ccf611bfdc9"
+            badge: t.howitworks.step1.badge,
+            color: "bg-bee-yellow",
+            textColor: "text-bee-black"
         },
         {
-            icon: <Coffee className="w-10 h-10" />,
+            icon: <SearchIcon className="w-8 h-8" />,
             title: t.howitworks.step2.title,
             desc: t.howitworks.step2.desc,
-            badge: t.howitworks.step2.badge || "STEP 2. Enjoy",
-            img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EB%B0%98%ED%8F%AC%20%ED%95%9C%EA%B0%95%EA%B3%B5%EC%9B%90.jpeg?alt=media&token=96d6f70c-dde8-4a6e-ae90-7be885db1b91"
+            badge: t.howitworks.step2.badge,
+            color: "bg-bee-yellow",
+            textColor: "text-bee-black"
         },
         {
-            icon: <Plane className="w-10 h-10" />,
+            icon: <Briefcase className="w-8 h-8" />,
             title: t.howitworks.step3.title,
             desc: t.howitworks.step3.desc,
-            badge: t.howitworks.step3.badge || "STEP 3. Meet",
-            img: "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F%EA%B3%B5%ED%95%AD.png?alt=media&token=a3024250-0f39-44fe-a755-99777d5a55b7"
+            badge: t.howitworks.step3.badge,
+            color: "bg-bee-yellow",
+            textColor: "text-bee-black"
         }
     ];
 
     return (
-        <section className="py-32 md:py-64 bg-bee-light/30 overflow-hidden relative">
-            {/* Connection Vector Path (Background) */}
-            <svg className="absolute top-1/2 left-0 w-full h-24 hidden lg:block opacity-10 pointer-events-none" viewBox="0 0 1200 100">
-                <path d="M0,50 Q300,0 600,50 T1200,50" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="10 10" className="text-bee-black" />
-            </svg>
+        <section className="py-10 md:py-20 bg-[#F8F8F5] overflow-hidden relative">
+            {/* Background Texture & Soft Gradients for Premium Feel */}
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white to-transparent" />
+            <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-bee-yellow/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-black/5 rounded-full blur-[100px] pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
-                <div className="text-center mb-24 md:mb-40">
-                    <motion.span
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="inline-block px-5 py-2 rounded-full bg-bee-yellow/10 text-[11px] font-black tracking-[0.3em] text-bee-yellow uppercase mb-8 font-outfit"
+                <motion.div 
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-100px" }}
+                    variants={containerVariants}
+                    className="text-center mb-8 md:mb-12 px-4"
+                >
+                    <motion.h2 
+                        variants={itemVariants}
+                        className="text-2xl md:text-5xl font-display font-black tracking-[-0.04em] text-bee-black leading-[1.1] mb-3 md:mb-5 break-keep"
                     >
-                        {t.howitworks?.badge_label || "MAGIC PROCESS"}
-                    </motion.span>
-                    <h2 className="text-4xl md:text-7xl font-display font-black tracking-tighter text-bee-black leading-[1.1] mb-10 break-keep px-4">
-                        {t.howitworks.headline}
-                    </h2>
-                </div>
+                        {t.howitworks.headline.split('\n').map((line: string, i: number) => (
+                            <React.Fragment key={i}>
+                                <span className={line.includes('Beeliber') || i === 0 ? "text-[#EBB200]" : "text-bee-black opacity-90"}>
+                                    {line}
+                                </span>
+                                {i < t.howitworks.headline.split('\n').length - 1 && <br />}
+                            </React.Fragment>
+                        ))}
+                    </motion.h2>
+                    <motion.p 
+                        variants={itemVariants}
+                        className="text-black/30 text-[9px] md:text-xs font-black tracking-[0.3em] uppercase"
+                    >
+                        {t.howitworks.subtitle || "The Beeliber Guide"}
+                    </motion.p>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-20">
-                    {steps.map((step, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 50 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.2, duration: 0.8 }}
-                            className="flex flex-col items-center text-center group"
-                        >
-                            {/* Image Container with Badge */}
-                            <div className="relative w-full aspect-[4/5] rounded-[3rem] overflow-hidden mb-12 shadow-2xl">
-                                <img
-                                    src={step.img}
-                                    alt={step.title}
-                                    loading="lazy"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s]"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-bee-black/60 to-transparent" />
-                                <div className="absolute top-8 left-8">
-                                    <div className="px-5 py-2 bg-bee-yellow text-bee-black font-black text-[12px] tracking-widest rounded-2xl shadow-xl">
-                                        {step.badge}
+                {/* Timeline Layout (Desktop & Mobile) */}
+                <div className="relative">
+                    {/* Vertical Line */}
+                    <div className="absolute left-[16px] md:left-1/2 top-4 bottom-4 w-[1px] md:w-[2px] bg-gradient-to-b from-bee-yellow via-bee-yellow/20 to-transparent md:-translate-x-1/2" />
+
+                    {/* Step Cards Container */}
+                    <div className="flex flex-col gap-4 md:gap-10 relative">
+                        {steps.map((step, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 15 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{ duration: 0.6, ease: [0, 0.55, 0.45, 1], delay: i * 0.05 }}
+                                className={`flex flex-row items-start md:items-center gap-4 md:gap-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} relative`}
+                            >
+                                {/* Content Side */}
+                                <div className={`w-full md:w-1/2 flex pl-8 md:pl-0 ${i % 2 === 0 ? 'md:justify-end md:pr-12' : 'md:justify-start md:pl-12'}`}>
+                                    <div className={`bg-white p-3 md:p-6 rounded-[1rem] md:rounded-[1.5rem] shadow-[0_8px_20px_-6px_rgba(0,0,0,0.03)] border border-black/5 max-w-sm w-full md:hover:translate-y-[-3px] md:hover:border-bee-yellow/50 transition-all duration-500 relative group overflow-hidden`}>
+                                        <div className="flex flex-col gap-2 md:gap-3 relative z-10">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-1 h-1 rounded-full bg-bee-yellow animate-pulse" />
+                                                    <span className="text-[8px] md:text-[9px] font-black tracking-[0.15em] text-bee-yellow uppercase italic">{step.badge}</span>
+                                                </div>
+                                                <div className="md:hidden w-6 h-6 rounded-lg bg-bee-yellow/10 flex items-center justify-center text-bee-yellow">
+                                                    {React.cloneElement(step.icon as React.ReactElement, { className: "w-3 h-3" } as any)}
+                                                </div>
+                                            </div>
+                                            
+                                            <h3 className="text-sm md:text-xl font-display font-black text-bee-black tracking-tight leading-tight">{step.title}</h3>
+                                            <p className="text-[9px] md:text-[14px] text-black/50 font-medium leading-relaxed break-keep">
+                                                {step.desc}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-20 h-20 bg-white/20 backdrop-blur-3xl rounded-3xl flex items-center justify-center text-white border border-white/20 shadow-2xl group-hover:bg-bee-yellow group-hover:text-bee-black transition-all duration-500 scale-110">
-                                    {step.icon}
-                                </div>
-                            </div>
 
-                            <h3 className="text-3xl md:text-4xl font-display font-black text-bee-black mb-6 tracking-tighter">
-                                {step.title}
-                            </h3>
-                            <p className="text-lg text-bee-black/80 font-bold font-outfit leading-relaxed break-keep max-w-[280px] whitespace-pre-line">
-                                {step.desc}
-                            </p>
-                        </motion.div>
-                    ))}
+                                {/* Center Icon */}
+                                <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex w-12 h-12 rounded-full bg-white items-center justify-center text-bee-yellow shadow-[0_8px_20px_rgba(0,0,0,0.05)] z-20 border border-black/5 group-hover:scale-110 transition-all duration-500">
+                                    {React.cloneElement(step.icon as React.ReactElement, { className: "w-5 h-5" } as any)}
+                                </div>
+                                <div className="md:hidden absolute left-[10px] top-4 w-3 h-3 rounded-full bg-bee-yellow border-[2px] border-white shadow-sm z-20" />
+
+                                {/* Spacer for desktop */}
+                                <div className="w-full md:w-1/2 hidden md:block" />
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </div>
+
+            {/* Bottom transition */}
+            <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
         </section>
     );
 };

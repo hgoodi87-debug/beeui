@@ -18,8 +18,11 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
   const [activeSubTab, setActiveSubTab] = React.useState<'BASIC' | 'PERMISSIONS' | 'SECURITY' | 'HISTORY'>('BASIC');
   const [formData, setFormData] = React.useState<Partial<AdminUser>>({});
   const [showPassword, setShowPassword] = React.useState(false);
+  const isCreatingEmployee = !employee?.id;
 
   React.useEffect(() => {
+    setActiveSubTab('BASIC');
+    setShowPassword(false);
     if (employee) {
       setFormData({ ...employee });
     } else {
@@ -80,6 +83,30 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
       detail: '로그인 ID 또는 내부 인증 이메일이 없으면 명부 전용 상태로 남습니다.',
     };
   }, [formData]);
+
+  const selectedBranchLocationId = React.useMemo(() => {
+    if (!formData.branchId && !formData.branchCode) return '';
+
+    const directMatch = locations.find((location) => location.id === formData.branchId);
+    if (directMatch) return directMatch.id;
+
+    const branchToken = String(formData.branchCode || formData.branchId || '').trim().toLowerCase();
+    if (!branchToken) return '';
+
+    return locations.find((location) =>
+      String(location.branchCode || '').trim().toLowerCase() === branchToken
+      || String(location.shortCode || '').trim().toLowerCase() === branchToken
+    )?.id || '';
+  }, [formData.branchCode, formData.branchId, locations]);
+
+  const selectableLocations = React.useMemo(() => {
+    return [...locations].sort((a, b) => {
+      const aInactive = a.isActive === false ? 1 : 0;
+      const bInactive = b.isActive === false ? 1 : 0;
+      if (aInactive !== bInactive) return aInactive - bInactive;
+      return (a.name || '').localeCompare(b.name || '', 'ko');
+    });
+  }, [locations]);
 
   return (
     <AnimatePresence>
@@ -187,7 +214,7 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
                         value={formData.loginId || ''} 
                         onChange={e => setFormData({ ...formData, loginId: e.target.value })}
                         className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all" 
-                        placeholder={formData.branchId ? `${formData.branchId}` : '직접 입력'}
+                        placeholder={formData.branchCode || formData.branchId || '직접 입력'}
                         title="로그인 ID 입력"
                       />
                     </div>
@@ -207,6 +234,33 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
                     지점 계정은 로그인 ID를 지점 ID로 쓰면 되고요. 본사/슈퍼관리자는 직접 원하는 로그인 ID를 넣으면 됩니다. 이메일은 내부 인증 연결용으로만 씁니다, 아시겠어요?
                   </div>
 
+                  {isCreatingEmployee && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 ml-1">초기 비밀번호</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={formData.password || ''}
+                          onChange={e => setFormData({ ...formData, password: e.target.value })}
+                          className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all tracking-widest"
+                          placeholder="••••••••"
+                          title="신규 비밀번호 입력"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          title="비밀번호 표시/숨기기"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-bee-black transition-all"
+                        >
+                          <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                        </button>
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-400 leading-relaxed">
+                        신규 직원 초대는 초기 비밀번호가 꼭 필요합니다. 이제 기본 정보 탭에서 바로 같이 설정할 수 있어요.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 ml-1">기관 분류</label>
@@ -222,13 +276,24 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 ml-1">소속 지점</label>
                       <select 
-                        value={formData.branchId || ''} 
-                        onChange={e => setFormData({ ...formData, branchId: e.target.value })}
+                        value={selectedBranchLocationId} 
+                        onChange={e => {
+                          const nextLocation = locations.find((location) => location.id === e.target.value);
+                          setFormData({
+                            ...formData,
+                            branchId: nextLocation?.id || '',
+                            branchCode: nextLocation?.branchCode || nextLocation?.shortCode || '',
+                          });
+                        }}
                         title="소속 지점 선택"
                         className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none"
                       >
                         <option value="">본사 (HQ)</option>
-                        {locations.filter(l => l.isActive).map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
+                        {selectableLocations.map(loc => (
+                          <option key={loc.id} value={loc.id}>
+                            {loc.name}{loc.isActive === false ? ' (비활성)' : ''}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>

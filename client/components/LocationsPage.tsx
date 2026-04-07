@@ -26,6 +26,7 @@ interface LocationsPageProps {
   onLangChange: (lang: string) => void;
   user: any;
   initialLocationId?: string;
+  initialServiceType?: string;
 }
 
 const LocationsPage: React.FC<LocationsPageProps> = ({
@@ -34,12 +35,15 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   t,
   lang,
   user,
-  initialLocationId
+  initialLocationId,
+  initialServiceType
 }) => {
-  const { data: rawLocations = [] } = useLocations();
+  const { data: rawLocations = [], isLoading: isLocationsLoading } = useLocations();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState<LocationOption | null>(null);
-  const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>('STORAGE');
+  const [currentService, setCurrentService] = useState<'SAME_DAY' | 'SCHEDULED' | 'STORAGE'>(
+    initialServiceType === 'DELIVERY' || initialServiceType === 'SAME_DAY' ? 'SAME_DAY' : 'STORAGE'
+  );
   const [bookingDate, setBookingDate] = useState(formatKSTDate());
   const [bookingTime, setBookingTime] = useState('09:00');
   const [returnDate, setReturnDate] = useState(formatKSTDate());
@@ -168,11 +172,10 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
       try {
         const { lat, lng, timestamp } = JSON.parse(cached);
         if (Date.now() - timestamp < CACHE_TTL) {
-          console.log("[스봉이] 캐시된 위치를 찾았어요! ✨", { lat, lng });
           setUserLocation({ lat, lng });
         }
       } catch (e) {
-        console.warn("[스봉이] 캐시 데이터가 좀 이상하네요? 🙄", e);
+        // 캐시 파싱 실패 시 무시 (geolocation으로 재수집)
       }
     }
     
@@ -185,7 +188,6 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
               };
-              console.log("[스봉이] 사용자 실시간 위치 수집 성공! 🐝✨", newLoc);
               setUserLocation(newLoc);
               
               // [스봉이] 신선한 위치 정보는 캐시에 저장! 💅
@@ -195,9 +197,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
               }));
             }
           },
-          (error) => {
-            console.warn("[스봉이] 위치 수집 실패.. 🙄", error);
-          },
+          () => { /* geolocation 거부 또는 오류 — 기본값 사용 */ },
           { timeout: 10000, maximumAge: 300000, enableHighAccuracy: true } // maximumAge 5분으로 늘려 부하 절감
         );
       }
@@ -224,9 +224,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   const locations = useMemo(() => {
     let sortedData = [...rawLocations];
     if (userLocation && userLocation.lat && userLocation.lng) {
-      console.log("[스봉이] 사용자 위치 기반 영롱한 정렬 시작 💅✨");
       sortedData = sortedData.map(loc => {
-        // [스봉이] 위경도 데이터가 부실하면 정렬에서 밀어버려야죠 💅
         if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') {
           return { ...loc, distance: 99999 };
         }
@@ -379,6 +377,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
             onBaggageChange={handleBaggageChange}
             deliveryPrices={deliveryPrices}
             onBack={onBack}
+            isLoading={isLocationsLoading}
           />
         </div>
 

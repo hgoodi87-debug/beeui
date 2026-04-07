@@ -3,16 +3,20 @@ import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Smartphone, ChevronRight, MapPin } from "lucide-react";
 import { Branch } from "../../types";
+import LandingGoogleReviewsStrip from "./LandingGoogleReviewsStrip";
+
+const ORIGINAL_HERO_IMAGE_URL = "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b";
 
 interface LandingHeroProps {
     t: any;
+    lang: string;
     onNavigate: (view: any) => void;
     onTrackClick: () => void;
     branchCode?: string;
     branchData?: Branch;
 }
 
-const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, branchCode, branchData }) => {
+const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackClick, branchCode, branchData }) => {
     const { scrollY } = useScroll();
 
     // Parallax effects for typography
@@ -20,141 +24,88 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, onNavigate, onTrackClick, 
     const opacity = useTransform(scrollY, [0, 300], [1, 0]);
 
     return (
-        <section className="relative h-[100dvh] flex items-center justify-center overflow-hidden bg-black">
+        <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-black">
 
-            {/* 1. LAYER: Cinematic Background (High-Performance Image) */}
+            {/* 1. LAYER: Cinematic Background */}
             <div className="absolute inset-0 z-0 overflow-hidden bg-black">
                 <img
-                    src="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b"
-                    alt="Cinematic Seoul Background"
-                    className="absolute inset-0 w-full h-full object-cover object-center opacity-80 brightness-[0.7] contrast-[1.1] scale-105"
+                    src={ORIGINAL_HERO_IMAGE_URL}
+                    alt="빌리버 비전 배경"
+                    className="absolute inset-0 w-full h-full object-cover object-center opacity-70 brightness-[0.6] scale-105"
                     loading="eager"
-                    data-priority="high"
-                    onError={(e) => {
-                        e.currentTarget.src = "/hero_main.jpg";
-                    }}
+                    fetchPriority="high"
                 />
-
-                {/* Cinematic Overlays: To maintain premium aesthetic */}
-                <div className="absolute inset-0 cinematic-overlay z-[2] bg-black/40" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 z-[3]" />
-                <div className="luxury-grain-overlay opacity-20" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-[1] pointer-events-none" />
             </div>
 
-            {/* 2. LAYER: Macro-Typography (Advanced Reveal Animations) */}
-            <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 pointer-events-none -mt-16 md:-mt-24">
+            {/* 2. LAYER: Content */}
+            <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 pointer-events-none -mt-48 md:-mt-56">
                 <motion.div
                     style={{ y: y1, opacity }}
                     className="flex flex-col items-center text-center"
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                        hidden: {},
-                        visible: {
-                            transition: {
-                                staggerChildren: 0.1,
-                                delayChildren: 0.1
-                            }
-                        }
-                    }}
                 >
                     <motion.div
-                        variants={{
-                            hidden: { opacity: 0, scale: 0.8, filter: 'blur(10px)' },
-                            visible: { opacity: 1, scale: 1, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
-                        }}
-                        className="mb-6 md:mb-8 flex flex-col items-center gap-3"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8"
                     >
                         {branchData && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="px-4 py-2 rounded-2xl bg-bee-yellow text-bee-black shadow-xl shadow-bee-yellow/20 flex items-center gap-2 mb-2"
-                            >
+                            <div className="px-5 py-2.5 rounded-2xl bg-bee-yellow text-bee-black shadow-2xl shadow-bee-yellow/20 flex items-center gap-2 mb-4">
                                 <MapPin size={14} className="animate-pulse" />
-                                <span className="text-[11px] font-black tracking-wider uppercase">
+                                <span className="text-[11px] font-black tracking-widest uppercase">
                                     {branchData.name} {branchData.ownerName ? `| ${branchData.ownerName}` : ''}
                                 </span>
-                            </motion.div>
+                            </div>
                         )}
-                        <span className="inline-block px-4 py-1.5 rounded-full border border-white/20 text-white/80 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] backdrop-blur-md bg-black/20 shadow-lg">
+                        <span className="inline-block px-5 py-2 rounded-full border border-white/10 text-white/90 text-[10px] md:text-xs font-bold uppercase tracking-[0.5em] backdrop-blur-md bg-white/5">
                             {t.hero.badge || "Global Logistics Excellence"}
                         </span>
                     </motion.div>
 
-                    <div className="overflow-hidden pb-2 mb-2">
-                        <motion.h1
-                            variants={{
-                                hidden: { y: "100%", opacity: 0 },
-                                visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
-                            }}
-                            className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
-                        >
-                            {t.hero.main_title_1 || t.hero.title1} {t.hero.main_title_bags && t.hero.main_title_bags.trim() !== "" && (
-                                <span className="text-bee-yellow">{t.hero.main_title_bags}</span>
-                            )}
-                        </motion.h1>
-                    </div>
-                    <div className="overflow-hidden pb-4">
-                        <motion.div
-                            variants={{
-                                hidden: { y: "100%", opacity: 0 },
-                                visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
-                            }}
-                            className="macro-type text-[clamp(1.8rem,8vw,4.5rem)] font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal"
-                        >
-                            {t.hero.main_title_2 || t.hero.title2} {t.hero.main_title_city && t.hero.main_title_city.trim() !== "" && (
-                                <span>{t.hero.main_title_city}</span>
-                            )}
-                        </motion.div>
-                    </div>
+                    <h1 className="flex flex-col items-center">
+                        <span className="macro-type block text-[clamp(1.5rem,6vw,3.5rem)] font-black text-white leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal drop-shadow-2xl">
+                            {t.hero.main_title_1}
+                        </span>
+                        <span className="macro-type block text-[clamp(1.5rem,6vw,3.5rem)] font-black text-white leading-[1.1] md:leading-[1.2] tracking-tighter mt-2 break-keep whitespace-normal drop-shadow-2xl">
+                            {t.hero.main_title_2}
+                        </span>
+                    </h1>
 
-                    <motion.p
-                        variants={{
-                            hidden: { opacity: 0, y: 20, filter: 'blur(5px)' },
-                            visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: "easeOut" } }
-                        }}
-                        className="text-white/90 text-base md:text-xl font-medium mt-6 md:mt-10 max-w-2xl mx-auto break-keep leading-relaxed drop-shadow-lg whitespace-pre-line px-4"
-                    >
+                    <p className="text-white/70 text-base md:text-xl font-medium mt-8 max-w-2xl mx-auto break-keep leading-relaxed opacity-90">
                         {t.hero.subtitle}
-                    </motion.p>
+                    </p>
                 </motion.div>
             </div>
 
-            {/* 3. LAYER: Bento Grid Widgets (The Micro-Trust) - REMOVED per user request */}
+            {/* 3. CTA Area */}
+            <div className="absolute bottom-52 md:bottom-64 inset-x-0 z-40 flex items-center justify-center px-6 pointer-events-none">
+                <div className="flex flex-row gap-4 pointer-events-auto">
+                    <motion.button
+                        whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onNavigate('LOCATIONS_STORE')}
+                        className="w-[170px] md:w-[240px] py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-[12px] md:text-base shadow-2xl shadow-bee-yellow/20 transition-all uppercase tracking-widest flex items-center justify-center"
+                    >
+                        {t.hero.cta_storage || "STORE"}
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onNavigate('LOCATIONS_DELIVER')}
+                        className="w-[170px] md:w-[240px] py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-[12px] md:text-base shadow-2xl shadow-bee-yellow/20 transition-all uppercase tracking-widest flex items-center justify-center"
+                    >
+                        {t.hero.cta_delivery || "DELIVER"}
+                    </motion.button>
+                </div>
+            </div>
 
-            {/* 4. CTA: Apple-style 심플 버튼 & Micro-interaction */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute bottom-12 md:bottom-20 inset-x-0 z-40 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-5 px-6"
-            >
-                <motion.button
-                    whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={() => onNavigate('LOCATIONS')}
-                    className="w-full sm:w-[280px] group relative py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-xl flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(255,203,5,0.25)] overflow-hidden"
-                >
-                    <span className="relative z-10">{t.hero.btn_now || "BOOK NOW & FREE YOUR HANDS"}</span>
-                    <ChevronRight className="relative z-10 w-4 h-4 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
-                </motion.button>
-
-                <motion.button
-                    whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.15)" }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={onTrackClick}
-                    className="w-full sm:w-[280px] group py-4 md:py-5 bg-white/5 text-white font-black rounded-full text-sm md:text-xl flex items-center justify-center gap-3 border border-white/10 backdrop-blur-xl shadow-xl"
-                >
-                    <Smartphone className="w-4 h-4 md:w-6 md:h-6 text-bee-yellow group-hover:scale-110 transition-transform" />
-                    <span>{t.hero.track_booking}</span>
-                </motion.button>
-            </motion.div>
-
-            {/* Bottom Gradient Fade */}
-            <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-black to-transparent z-[5]" />
+            {/* 4. Google Reviews Strip - VISIBLE IMMEDIATELY at bottom 💅 */}
+            <div className="absolute bottom-0 left-0 right-0 z-50">
+                <div className="bg-gradient-to-t from-black to-transparent h-40 absolute bottom-0 inset-x-0 z-0" />
+                <div className="relative z-10 scale-[0.9] md:scale-100 origin-bottom">
+                    <LandingGoogleReviewsStrip />
+                </div>
+            </div>
 
         </section>
     );

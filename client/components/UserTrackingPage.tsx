@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookingState, BookingStatus, ServiceType } from '../types';
 import { StorageService } from '../services/storageService';
-import { ChevronLeft, Search, Package, MapPin, Clock, CreditCard, X, AlertCircle, Trash2, Sparkles, ArrowRight } from 'lucide-react';
+import { ChevronLeft, Search, Package, MapPin, Clock, CreditCard, X, AlertCircle, Trash2, MapPinned, ArrowRight } from 'lucide-react';
 import SEO from './SEO';
 
 interface UserTrackingPageProps {
@@ -82,7 +82,7 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
         if (!selectedBooking?.id) return;
         setIsCancelling(true);
         try {
-            await StorageService.cancelBooking(selectedBooking.id);
+            await StorageService.cancelBooking(selectedBooking.id, { name, email });
             alert(t.refund.alert_cancel_success);
             setShowRefundModal(false);
             // Refresh search
@@ -266,26 +266,15 @@ const UserTrackingPage: React.FC<UserTrackingPageProps> = ({ onBack, t, lang }) 
 
                                         {/* Footer Actions */}
                                         <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6">
-                                            {/* Nearby Tips Button 💅 */}
+                                            {/* Nearby Pickup Spots Button 💅 */}
                                             <button
                                                 onClick={() => {
-                                                    const branchToSlug: Record<string, string> = {
-                                                        'HBO': 'hongdae',
-                                                        'MYN': 'hongdae',
-                                                        'MBX-011': 'seoul-station',
-                                                        'MBX-005': 'seongsu',
-                                                        'MBX-001': 'bukchon',
-                                                        'MBX-016': 'myeongdong',
-                                                        'MBX-009': 'myeongdong'
-                                                    };
-                                                    const retrievalLocId = booking.serviceType === ServiceType.DELIVERY ? booking.dropoffLocation : booking.pickupLocation;
-                                                    const slug = branchToSlug[retrievalLocId];
-                                                    navigate(slug ? `/tips/${slug}` : '/tips');
+                                                    navigate(`/${lang}/locations`);
                                                 }}
                                                 className="flex items-center gap-3 px-6 py-3 bg-bee-yellow/10 text-bee-black border border-bee-yellow/20 rounded-2xl hover:bg-bee-yellow/20 transition-all font-black text-[10px] uppercase tracking-widest"
                                             >
-                                                <Sparkles size={14} className="text-bee-yellow fill-bee-yellow" />
-                                                Nearby Tips 💅
+                                                <MapPinned size={14} className="text-bee-yellow" />
+                                                {lang === 'ko' ? '가까운 지점 보기' : 'Nearby Pickup Spots'}
                                                 <ArrowRight size={14} />
                                             </button>
 

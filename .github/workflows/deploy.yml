@@ -19,6 +19,12 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Validate Supabase Environment
+        run: node scripts/validate-env.mjs
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
       # Build script also generates prerendered route HTML and __spa-fallback.html
       - name: Build
         run: npm run build:seo
@@ -26,9 +32,11 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_ADMIN_AUTH_PROVIDER: ${{ vars.VITE_ADMIN_AUTH_PROVIDER }}
           VITE_TOSS_PAYMENTS_ENABLED: 'false'
           VITE_TOSS_PAYMENTS_MOCK_MODE: 'false'
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
       - name: Prepare Firebase credentials
         shell: bash

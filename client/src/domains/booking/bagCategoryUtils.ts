@@ -23,9 +23,9 @@ const EMPTY_BAG_SIZES: BagSizes = { handBag: 0, carrier: 0, strollerBicycle: 0 }
 export const DEFAULT_DELIVERY_PRICES: PriceSettings = { handBag: 10000, carrier: 25000, strollerBicycle: 0 };
 
 export const DEFAULT_STORAGE_TIERS: StorageTier[] = [
-    { id: 'st-4h', label: '4시간 기본 (Base 4h)', prices: { handBag: 4000, carrier: 5000, strollerBicycle: 10000 } },
-    { id: 'st-1d', label: '첫 1일 (24시간)', prices: { handBag: 8000, carrier: 10000, strollerBicycle: 14000 } },
-    { id: 'st-week', label: '추가 1일 (Extra Day)', prices: { handBag: 6000, carrier: 8000, strollerBicycle: 10000 } }
+    { id: 'st-4h', label: '4시간 기본 (Base 4h)', prices: { handBag: 4000, carrier: 5000, strollerBicycle: 6000 } },
+    { id: 'st-1d', label: '첫 1일 (24시간)', prices: { handBag: 6000, carrier: 8000, strollerBicycle: 10000 } },
+    { id: 'st-week', label: '추가 1일 (Extra Day)', prices: { handBag: 4000, carrier: 6000, strollerBicycle: 8000 } }
 ];
 
 const BAG_CATEGORY_CONFIGS: Record<BagCategoryId, BagCategoryConfig> = {

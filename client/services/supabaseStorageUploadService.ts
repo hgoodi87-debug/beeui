@@ -1,5 +1,6 @@
 import { getActiveAdminRequestHeaders } from './adminAuthService';
 import { StorageService } from './storageService';
+import { getSupabaseBaseUrl, getSupabaseConfig, resolveSupabaseEndpoint } from './supabaseRuntime';
 
 export type StorageUploadProvider = 'firebase' | 'supabase';
 
@@ -12,8 +13,8 @@ export type StorageBucketKind =
 
 export type StorageEntityType =
   | 'branding'
-  | 'branch'
   | 'notice'
+  | 'branch'
   | 'booking'
   | 'bag'
   | 'claim'
@@ -55,7 +56,7 @@ export interface SignedUploadResponse {
 
 interface ManagedUploadOptions {
   file: File | Blob;
-  firebasePath: string;
+  storagePath: string;
   signedUploadRequest?: SignedUploadRequest;
   fallbackReason?: string;
 }
@@ -63,9 +64,11 @@ interface ManagedUploadOptions {
 const STORAGE_UPLOAD_PROVIDER =
   import.meta.env.VITE_STORAGE_UPLOAD_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
-const SIGNED_UPLOAD_ENDPOINT = import.meta.env.VITE_SUPABASE_STORAGE_SIGNED_UPLOAD_ENDPOINT?.trim() || '';
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || '';
+const SUPABASE_URL = getSupabaseBaseUrl();
+const SIGNED_UPLOAD_ENDPOINT = import.meta.env.VITE_SUPABASE_STORAGE_SIGNED_UPLOAD_ENDPOINT?.trim()
+  ? resolveSupabaseEndpoint(import.meta.env.VITE_SUPABASE_STORAGE_SIGNED_UPLOAD_ENDPOINT, '/functions/v1/signed-upload')
+  : (SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/signed-upload` : '');
+const SUPABASE_PUBLISHABLE_KEY = getSupabaseConfig().anonKey;
 
 const ALLOWED_PUBLIC_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp', 'svg']);
 const ALLOWED_PRIVATE_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp', 'heic', 'heif']);
@@ -175,21 +178,39 @@ const buildSupabasePublicObjectUrl = (bucketId: StorageBucketKind, objectPath: s
   return `${SUPABASE_URL}/storage/v1/object/public/${bucketId}/${encodedPath}`;
 };
 
+const resolveSignedUploadTargetUrl = (uploadUrl: string) => {
+  if (!uploadUrl || !SUPABASE_URL.startsWith('/')) {
+    return uploadUrl;
+  }
+
+  try {
+    const parsed = new URL(uploadUrl);
+    const proxiedPath = parsed.pathname.startsWith('/storage/v1/')
+      ? parsed.pathname
+      : parsed.pathname.startsWith('/object/upload/sign/')
+        ? `/storage/v1${parsed.pathname}`
+        : parsed.pathname;
+    return `${SUPABASE_URL}${proxiedPath}${parsed.search}`;
+  } catch {
+    return uploadUrl;
+  }
+};
+
 const uploadManagedAsset = async ({
   file,
-  firebasePath,
+  storagePath,
   signedUploadRequest,
   fallbackReason,
 }: ManagedUploadOptions) => {
   const shouldUseSupabase = Boolean(signedUploadRequest) && isSupabaseStorageUploadEnabled();
 
   if (!shouldUseSupabase) {
-    return StorageService.uploadFile(file, firebasePath);
+    return StorageService.uploadFile(file, storagePath);
   }
 
   if (fallbackReason) {
     console.info(`[StorageUpload] ${fallbackReason} Firebase 업로드로 유지합니다.`);
-    return StorageService.uploadFile(file, firebasePath);
+    return StorageService.uploadFile(file, storagePath);
   }
 
   const signedUpload = await requestSupabaseSignedUpload(signedUploadRequest!);
@@ -257,14 +278,14 @@ export const buildNoticeSignedUploadRequest = (
     originalFileName?: string;
   }
 ): SignedUploadRequest => ({
-  bucketKind: 'backoffice-private',
+  bucketKind: 'brand-public',
   entityType: 'notice',
   entityId: options.noticeId,
-  domain: 'notice',
+  assetCategory: 'notice-image',
   contentType: file.type || 'application/octet-stream',
   fileExtension: inferFileExtension(options.originalFileName || ('name' in file ? file.name : ''), file.type),
   metadata: {
-    domain: 'notice',
+    assetCategory: 'notice-image',
     originalFileName: options.originalFileName || ('name' in file ? file.name : null),
   },
 });
@@ -273,7 +294,7 @@ export const uploadHeroManagedAsset = async (
   file: File | Blob,
   options: {
     assetCategory: 'hero-image' | 'hero-mobile-image' | 'hero-video';
-    firebasePath: string;
+    storagePath: string;
     entityId?: string;
     originalFileName?: string;
   }
@@ -289,7 +310,7 @@ export const uploadHeroManagedAsset = async (
 
   return uploadManagedAsset({
     file,
-    firebasePath: options.firebasePath,
+    storagePath: options.storagePath,
     signedUploadRequest,
     fallbackReason:
       options.assetCategory === 'hero-video'
@@ -301,7 +322,7 @@ export const uploadHeroManagedAsset = async (
 export const uploadBranchManagedAsset = async (
   file: File | Blob,
   options: {
-    firebasePath: string;
+    storagePath: string;
     branchCode: string;
     branchType: 'hub' | 'partner';
     assetCategory: 'main' | 'pickup' | 'thumb' | 'cover';
@@ -311,7 +332,7 @@ export const uploadBranchManagedAsset = async (
 ) =>
   uploadManagedAsset({
     file,
-    firebasePath: options.firebasePath,
+    storagePath: options.storagePath,
     signedUploadRequest: buildBranchAssetSignedUploadRequest(file, {
       branchCode: options.branchCode,
       branchType: options.branchType,
@@ -324,20 +345,18 @@ export const uploadBranchManagedAsset = async (
 export const uploadNoticeManagedAsset = async (
   file: File | Blob,
   options: {
-    firebasePath: string;
+    storagePath: string;
     noticeId?: string;
     originalFileName?: string;
   }
 ) =>
   uploadManagedAsset({
     file,
-    firebasePath: options.firebasePath,
+    storagePath: options.storagePath,
     signedUploadRequest: buildNoticeSignedUploadRequest(file, {
       noticeId: options.noticeId,
       originalFileName: options.originalFileName,
     }),
-    fallbackReason:
-      '공지 이미지는 아직 private 버킷 표시용 signed read URL 계약이 없어',
   });
 
 export const requestSupabaseSignedUpload = async (
@@ -367,6 +386,8 @@ export const requestSupabaseSignedUpload = async (
     const message =
       typeof body === 'object' && body && 'message' in body
         ? String((body as { message?: string }).message)
+        : typeof body === 'object' && body && 'error' in body
+          ? String((body as { error?: string }).error)
         : 'Supabase signed upload URL 발급에 실패했습니다.';
     throw new Error(message);
   }
@@ -387,7 +408,7 @@ export const uploadWithSignedUrl = async (
   file: File | Blob,
   signedUpload: SignedUploadResponse
 ) => {
-  const response = await fetch(signedUpload.uploadUrl, {
+  const response = await fetch(resolveSignedUploadTargetUrl(signedUpload.uploadUrl), {
     method: signedUpload.method || 'PUT',
     headers: {
       'Content-Type': file.type || 'application/octet-stream',

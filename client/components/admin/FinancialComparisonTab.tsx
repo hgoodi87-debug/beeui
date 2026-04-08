@@ -232,7 +232,7 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                 try {
                     await mutateFinancialBooking(booking, {
                         supabaseMethod: 'PATCH',
-                        supabaseBody: { settlement_status: 'deleted' },
+                        supabaseBody: { settlement_status: 'DELETED' },
                     });
                     successCount++;
                 } catch (e) {
@@ -419,7 +419,7 @@ const FinancialComparisonTab: React.FC<FinancialComparisonTabProps> = ({
                                                                 try {
                                                                     await mutateFinancialBooking(b, {
                                                                         supabaseMethod: 'PATCH',
-                                                                        supabaseBody: { settlement_status: 'deleted' },
+                                                                        supabaseBody: { settlement_status: 'DELETED' },
                                                                     });
                                                                     await AuditService.logAction(currentActor, 'DELETE', { id: b.id, type: 'BOOKING' }, { method: 'INDIVIDUAL_SOFT_DELETE_UNSETTLED' });
                                                                     await queryClient.invalidateQueries({ queryKey: ['bookings'] });

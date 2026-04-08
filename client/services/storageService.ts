@@ -690,7 +690,7 @@ const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
     if (Array.isArray(rows) && rows.length > 0) {
       return rows.map((row) => {
         const camel = snakeToCamel(row);
-        if (row.settlement_status === 'deleted') {
+        if (row.settlement_status === 'DELETED' || row.settlement_status === 'deleted') {
           camel.isDeleted = true;
         }
         return camel as unknown as BookingState;
@@ -703,7 +703,7 @@ const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
     );
     return (fallbackRows || []).map((row) => {
       const camel = snakeToCamel(row);
-      if (row.settlement_status === 'deleted') {
+      if (row.settlement_status === 'DELETED' || row.settlement_status === 'deleted') {
         camel.isDeleted = true;
       }
       return camel as unknown as BookingState;
@@ -715,7 +715,7 @@ const loadSupabaseAdminBookings = async (): Promise<BookingState[]> => {
     );
     return (rows || []).map((row) => {
       const camel = snakeToCamel(row);
-      if (row.settlement_status === 'deleted') {
+      if (row.settlement_status === 'DELETED' || row.settlement_status === 'deleted') {
         camel.isDeleted = true;
       }
       return camel as unknown as BookingState;
@@ -972,6 +972,14 @@ export const StorageService = {
     try {
       console.log("[StorageService] Saving booking to Supabase...");
 
+      // 지점 수수료 및 정산액 자동 계산
+      const commDelivery = safeBooking.pickupLoc?.commissionRates?.delivery ?? 0;
+      const commStorage  = safeBooking.pickupLoc?.commissionRates?.storage  ?? 0;
+      const isDelivery   = safeBooking.serviceType === 'DELIVERY';
+      const effectiveCommRate = isDelivery ? commDelivery : commStorage;
+      const finalPriceNum = isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice);
+      const branchSettlementAmt = Math.round(finalPriceNum * effectiveCommRate);
+
       const bookingData = {
         sns_channel: safeBooking.snsChannel || null,
         sns_id: safeBooking.snsId || null,
@@ -980,6 +988,7 @@ export const StorageService = {
         pickup_address_detail: safeBooking.pickupAddressDetail || null,
         pickup_date: safeBooking.pickupDate || null,
         pickup_time: safeBooking.pickupTime || null,
+        insurance_fee: safeBooking.insuranceFee || 0,
         pickup_location_id: safeBooking.pickupLoc?.supabaseId || null,
         dropoff_address: safeBooking.dropoffAddress || null,
         dropoff_address_detail: safeBooking.dropoffAddressDetail || null,
@@ -991,8 +1000,12 @@ export const StorageService = {
         insurance_level: safeBooking.insuranceLevel || null,
         insurance_bag_count: safeBooking.insuranceBagCount || null,
         use_insurance: safeBooking.useInsurance || false,
+        branch_commission_delivery: commDelivery,
+        branch_commission_storage: commStorage,
+        branch_settlement_amount: branchSettlementAmt,
+        settlement_status: 'PENDING',
         base_price: isNaN(Number(safeBooking.price)) ? 0 : Number(safeBooking.price),
-        final_price: isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice),
+        final_price: finalPriceNum,
         promo_code: safeBooking.promoCode || null,
         discount_amount: safeBooking.discountAmount || 0,
         payment_method: safeBooking.paymentMethod || null,
@@ -1230,7 +1243,7 @@ export const StorageService = {
       'pickup_address_detail', 'pickup_image_url', 'pickup_date', 'pickup_time',
       'dropoff_location_id', 'dropoff_address', 'dropoff_address_detail', 'dropoff_date',
       'delivery_time', 'return_date', 'return_time', 'insurance_level', 'insurance_bag_count',
-      'use_insurance', 'base_price', 'final_price', 'promo_code', 'discount_amount',
+      'use_insurance', 'insurance_fee', 'base_price', 'final_price', 'promo_code', 'discount_amount',
       'weight_surcharge_5kg', 'weight_surcharge_10kg', 'payment_method', 'payment_provider',
       'payment_order_id', 'payment_key', 'payment_receipt_url', 'payment_approved_at',
       'branch_commission_delivery', 'branch_commission_storage', 'branch_settlement_amount',

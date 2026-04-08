@@ -73,6 +73,7 @@ export interface BookingState {
     insuranceLevel?: 1 | 2 | 3;
     insuranceBagCount?: number;
     useInsurance?: boolean;
+    insuranceFee?: number;        // 보험료 확정액 (DB insurance_fee 컬럼)
     isDeleted?: boolean;
     recaptchaToken?: string;
     weightSurcharge5kg?: number;

@@ -27,17 +27,26 @@ export enum AdminPaymentStatus {
 }
 
 /**
- * [스봉이] 정산 상태 (Settlement Status)
- * 마감 업무의 핵심이 되는 상태값입니다.
+ * 정산 상태 (Settlement Status) — DB booking_details.settlement_status 값과 1:1 매핑
+ * 화면 표시는 SETTLEMENT_STATUS_LABEL 맵을 사용할 것.
  */
 export enum SettlementStatus {
-    NONE = '미반영',
-    WAITING = '정산대기',
-    CONFIRMED = '정산확정',
-    ON_HOLD = '정산보류',
-    MONTHLY_INCLUDED = '월정산반영',
-    PAID_OUT = '지급완료'
+    PENDING          = 'PENDING',
+    CONFIRMED        = 'CONFIRMED',
+    ON_HOLD          = 'ON_HOLD',
+    MONTHLY_INCLUDED = 'MONTHLY_INCLUDED',
+    PAID_OUT         = 'PAID_OUT',
+    DELETED          = 'DELETED',
 }
+
+export const SETTLEMENT_STATUS_LABEL: Record<SettlementStatus, string> = {
+    [SettlementStatus.PENDING]:          '정산대기',
+    [SettlementStatus.CONFIRMED]:        '정산확정',
+    [SettlementStatus.ON_HOLD]:          '정산보류',
+    [SettlementStatus.MONTHLY_INCLUDED]: '월정산반영',
+    [SettlementStatus.PAID_OUT]:         '지급완료',
+    [SettlementStatus.DELETED]:          '정산제외',
+};
 
 export interface AdminStats {
     todayBookings: number;

@@ -43,7 +43,7 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
 
     const payoutCandidateIds = useMemo(() =>
         bookings
-            .filter(b => b.paymentStatus === 'paid' && b.status !== BookingStatus.REFUNDED && b.settlementStatus !== '정산확정')
+            .filter(b => b.paymentStatus === 'paid' && b.status !== BookingStatus.REFUNDED && b.settlementStatus !== 'CONFIRMED')
             .map(b => b.id),
         [bookings]
     );
@@ -381,8 +381,8 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                                                 <td className="px-6 py-4 text-center font-bold">1 건</td>
                                                 <td className="px-6 py-4 text-right font-black">₩{((b.finalPrice || 0) * 0.7).toLocaleString()}</td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className={`text-[10px] font-black uppercase ${b.settlementStatus === '정산확정' ? 'text-emerald-500' : 'text-orange-400'}`}>
-                                                        {b.settlementStatus === '정산확정' ? 'CONFIRMED' : 'PENDING'}
+                                                    <span className={`text-[10px] font-black uppercase ${b.settlementStatus === 'CONFIRMED' ? 'text-emerald-500' : 'text-orange-400'}`}>
+                                                        {b.settlementStatus === 'CONFIRMED' ? '정산확정' : '정산대기'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">

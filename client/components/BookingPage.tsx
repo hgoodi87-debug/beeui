@@ -537,16 +537,43 @@ const BookingPage: React.FC<BookingPageProps> = ({
         }).format(date);
     }, [lang]);
 
+    const isValidEmail = (email: string) =>
+        /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+
+    const normalizeContactValue = (value?: string) => String(value || '').trim();
+
     const handleBook = async () => {
         if (!booking.pickupLocation) {
             alert(tBooking.select_storage || 'Please select a location.');
             return;
         }
+
+        const normalizedBagSizes = booking.serviceType === ServiceType.DELIVERY
+            ? sanitizeDeliveryBagSizes(booking.bagSizes)
+            : sanitizeBagSizes(booking.bagSizes);
+        const totalBags = getTotalBags(normalizedBagSizes);
+        if (totalBags <= 0) {
+            alert(lang.startsWith('ko') ? '짐을 1개 이상 선택해 주세요.' : 'Please select at least one bag.');
+            return;
+        }
+
+        const normalizedUserName = normalizeContactValue(booking.userName);
+        const normalizedUserEmail = normalizeContactValue(booking.userEmail || user?.email).toLowerCase();
+        const normalizedSnsId = normalizeContactValue(booking.snsId);
+
         if (!isMember) {
-            if (!booking.userName || !booking.userEmail || !booking.snsId) {
+            if (!normalizedUserName || !normalizedUserEmail || !normalizedSnsId) {
                 alert(tBooking.alert_fill_info || 'Please fill in your information.');
                 return;
             }
+        }
+        if (normalizedUserEmail && !isValidEmail(normalizedUserEmail)) {
+            alert(lang.startsWith('ko') ? '이메일 형식을 확인해 주세요.' : 'Please enter a valid email address.');
+            return;
+        }
+        if (!isMember && normalizedSnsId.length < 2) {
+            alert(lang.startsWith('ko') ? '연락 가능한 SNS ID를 입력해 주세요.' : 'Please enter a reachable SNS ID.');
+            return;
         }
         if (!booking.agreedToTerms || !booking.agreedToPrivacy || !booking.agreedToHighValue) {
             alert(tBooking.alert_agree_terms || 'Please agree to the terms.');
@@ -558,15 +585,22 @@ const BookingPage: React.FC<BookingPageProps> = ({
         }
 
         // 단시간 중복 예약 감지 (10분 이내 동일 이메일+날짜+지점)
-        const email = booking.userEmail || user?.email;
-        if (email && booking.pickupDate && booking.pickupLocation) {
+        const email = normalizedUserEmail;
+        if (email && booking.pickupDate && pickupLoc?.supabaseId) {
             try {
                 const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
                 const rows = await supabaseGet<Array<Record<string, unknown>>>(
-                    `booking_details?user_email=eq.${encodeURIComponent(email)}&pickup_date=eq.${booking.pickupDate}&pickup_location_id=eq.${encodeURIComponent(booking.pickupLocation)}&created_at=gte.${encodeURIComponent(since)}&select=id,reservation_code,created_at&limit=1`
+                    `booking_details?user_email=eq.${encodeURIComponent(email)}&pickup_date=eq.${booking.pickupDate}&pickup_location_id=eq.${encodeURIComponent(pickupLoc.supabaseId)}&created_at=gte.${encodeURIComponent(since)}&select=id,reservation_code,created_at&limit=1`
                 );
                 if (Array.isArray(rows) && rows.length > 0) {
-                    pendingBookingRef.current = { ...booking as BookingState };
+                    pendingBookingRef.current = {
+                        ...booking as BookingState,
+                        userName: normalizedUserName || booking.userName || '',
+                        userEmail: email,
+                        snsId: normalizedSnsId || booking.snsId || '',
+                        bagSizes: normalizedBagSizes,
+                        bags: totalBags,
+                    };
                     setShowDupeConfirm(true);
                     return;
                 }
@@ -575,7 +609,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
             }
         }
 
-        await proceedBooking(booking as BookingState);
+        await proceedBooking({
+            ...booking as BookingState,
+            userName: normalizedUserName || booking.userName || '',
+            userEmail: email,
+            snsId: normalizedSnsId || booking.snsId || '',
+            bagSizes: normalizedBagSizes,
+            bags: totalBags,
+        });
     };
 
     // 중복 확인 후 실제 예약 진행
@@ -588,6 +629,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
             pickupLoc: pickupLoc,
             returnLoc: booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined,
             price: priceDetails.base + priceDetails.originSurcharge + priceDetails.destSurcharge + priceDetails.insuranceFee,
+            insuranceFee: priceDetails.insuranceFee,
+            promoCode: appliedCoupon?.code,
             discountCode: appliedCoupon?.code,
             discountAmount: priceDetails.discount,
             finalPrice: priceDetails.total,
@@ -730,6 +773,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                 pickupLoc: pickupLoc_,
                 returnLoc: dropoffLoc_,
                 price: priceDetails.base + priceDetails.originSurcharge + priceDetails.destSurcharge + priceDetails.insuranceFee,
+                promoCode: appliedCoupon?.code,
                 discountCode: appliedCoupon?.code,
                 discountAmount: priceDetails.discount,
                 finalPrice: priceDetails.total,

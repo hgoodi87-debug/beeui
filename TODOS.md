@@ -1,7 +1,67 @@
 # TODOS — 빌리버 개선 항목 통합
 
 작업 완료 후 다음 단계를 위한 기술 부채 · SEO · AI 기능 개선 목록.
-마지막 갱신: 2026-04-07
+마지막 갱신: 2026-04-08
+
+---
+
+## 정산 시스템 후속 작업 (plan-eng-review 결과)
+
+### [A1] 정산 상태 전이 DB 레벨 검증 (HIGH)
+
+**What:** `settlement_status` 전이 규칙을 PostgreSQL trigger 또는 application layer에서 강제.
+예: `PAID_OUT → PENDING` 역전이 방지.
+
+**Why:** 현재는 CHECK 제약(허용값)만 있고, 전이 경로 검증 없음. 실수로 `PAID_OUT` 상태를 `PENDING`으로 되돌려도 DB가 허용함.
+
+**Option A (추천):** PostgreSQL BEFORE UPDATE trigger로 허용 전이 행렬 체크
+**Option B:** `storageService.ts` application layer에서 전이 검증 함수 추가
+
+**Effort:** M (CC: ~15분) **Priority:** P2
+**Depends on:** 없음
+
+---
+
+### [A2] CRON_SECRET + app.cron_secret 설정 (CRITICAL — 수동 작업)
+
+**What:** Supabase에서 두 군데 설정 필요:
+1. `Dashboard → Project Settings → Secrets` → `CRON_SECRET = <랜덤 32자 이상 문자열>`
+2. `Dashboard → Database → SQL Editor`:
+   ```sql
+   ALTER DATABASE postgres SET "app.cron_secret" = '<동일한 값>';
+   ```
+
+**Why:** pg_cron이 `x-cron-secret` 헤더 없이 호출하면 Edge Function이 401 반환.
+설정하지 않으면 `daily-settlement-summary`가 매일 조용히 실패.
+
+**Effort:** XS (5분) **Priority:** P1 (즉시 실행)
+**Depends on:** 없음
+
+---
+
+### [C3] storageService.ts 소문자 'deleted' 방어 코드 명시화 (LOW)
+
+**What:** `client/services/storageService.ts:693,706,718` — `|| row.settlement_status === 'deleted'` 조건에 주석 추가.
+
+**Why:** 마이그레이션으로 DB값은 모두 대문자로 정규화됨. 이 체크는 이제 방어 목적.
+명시적 주석 없으면 미래 개발자가 해당 조건이 살아있는 코드라 오해할 수 있음.
+
+**Effort:** XS **Priority:** P3
+
+---
+
+### [T1] VAT 단위 테스트 실행 환경 구성 (MEDIUM)
+
+**What:** `supabase/functions/_shared/vat.test.ts` 실행:
+```bash
+deno install  # Deno 설치 후
+deno test supabase/functions/_shared/vat.test.ts
+```
+또는 CI에 `deno test` 스텝 추가.
+
+**Why:** 테스트 파일은 작성됨. Deno 미설치로 로컬 실행 불가.
+
+**Effort:** XS **Priority:** P2
 
 ---
 

@@ -14,6 +14,41 @@ export const STORAGE_RATES: Record<keyof BagSizes, StorageRate> = {
     strollerBicycle: { hours4: 10000, hourlyAfter4h: 2500, day1: 14000, extraDay: 10000, day7: 74000 },
 };
 
+/**
+ * 운영 정책 설정(localStorage)에서 요금을 읽어 StorageRate로 변환.
+ * 정책 설정이 없으면 STORAGE_RATES 폴백.
+ * hourlyAfter4h = (day1 - hours4) / 4  (4h→8h 4시간 구간 기준)
+ */
+const getEffectiveStorageRates = (): Record<keyof BagSizes, StorageRate> => {
+    try {
+        if (typeof localStorage === 'undefined') return STORAGE_RATES;
+        const raw = localStorage.getItem('beeliber_storage_tiers');
+        if (!raw) return STORAGE_RATES;
+        const tiers = JSON.parse(raw) as Array<{ id: string; prices: Record<string, number> }>;
+        const t4h = tiers.find(t => t.id === 'st-4h')?.prices;
+        const t1d = tiers.find(t => t.id === 'st-1d')?.prices;
+        const tweek = tiers.find(t => t.id === 'st-week')?.prices;
+        if (!t4h || !t1d || !tweek) return STORAGE_RATES;
+
+        const toRate = (size: keyof BagSizes): StorageRate => {
+            const hours4 = t4h[size] ?? STORAGE_RATES[size].hours4;
+            const day1 = t1d[size] ?? STORAGE_RATES[size].day1;
+            const extraDay = tweek[size] ?? STORAGE_RATES[size].extraDay;
+            // hourlyAfter4h: 4h→8h 구간(4시간)에 day1에 도달하도록 계산
+            const hourlyAfter4h = Math.max(0, Math.round((day1 - hours4) / 4));
+            return { hours4, hourlyAfter4h, day1, extraDay, day7: STORAGE_RATES[size].day7 };
+        };
+
+        return {
+            handBag: toRate('handBag'),
+            carrier: toRate('carrier'),
+            strollerBicycle: toRate('strollerBicycle'),
+        };
+    } catch {
+        return STORAGE_RATES;
+    }
+};
+
 export interface PriceResult {
     total: number;
     breakdown: string;
@@ -93,15 +128,22 @@ const hasBusinessHoursBoundaryCrossed = (
 const getSingleBagStoragePrice = (hours: number, rate: StorageRate): number => {
     const roundedHours = Math.max(1, Math.ceil(hours));
 
+    // ≤4h: 기본 요금
     if (roundedHours <= 4) {
         return rate.hours4;
     }
 
-    if (roundedHours <= 24) {
-        // day1 요금을 상한으로 적용 (hourlyAfter4h가 높아서 day1 초과 방지)
-        return Math.min(rate.hours4 + ((roundedHours - 4) * rate.hourlyAfter4h), rate.day1);
+    // 5h~7h: 기본 + 1시간당 hourlyAfter4h 추가
+    if (roundedHours < 8) {
+        return rate.hours4 + ((roundedHours - 4) * rate.hourlyAfter4h);
     }
 
+    // 8h~24h: 1일 요금
+    if (roundedHours <= 24) {
+        return rate.day1;
+    }
+
+    // 25h+: 1일 + 추가일 요금
     const extraHours = roundedHours - 24;
     const extraDays = Math.ceil(extraHours / 24);
     const normalPrice = rate.day1 + (extraDays * rate.extraDay);
@@ -121,9 +163,13 @@ const getSingleBagBreakdown = (hours: number, t: { d: string; h: string }): stri
         return `4${t.h}`;
     }
 
-    if (roundedHours <= 24) {
+    if (roundedHours < 8) {
         const extraH = roundedHours - 4;
-        return extraH === 0 ? `4${t.h}` : `4${t.h} + ${extraH}${t.h}`;
+        return `4${t.h} + ${extraH}${t.h}`;
+    }
+
+    if (roundedHours <= 24) {
+        return `1${t.d}`;
     }
 
     const extraDays = Math.ceil((roundedHours - 24) / 24);
@@ -185,11 +231,14 @@ export const calculateBookingStoragePrice = (
     let totalPrice = 0;
     const breakdownParts: string[] = [];
 
+    // 운영 정책 설정값 읽기 (localStorage → 폴백: STORAGE_RATES)
+    const effectiveRates = getEffectiveStorageRates();
+
     (Object.keys(bags) as Array<keyof BagSizes>).forEach((size) => {
         const count = bags[size];
         if (count === 0) return;
 
-        const rate = STORAGE_RATES[size];
+        const rate = effectiveRates[size];
         const bagPrice = getSingleBagStoragePrice(chargeableHours, rate) * count;
         const explanation = `${getBagLabel(size, lang)} x ${count} (${getSingleBagBreakdown(chargeableHours, t)})`;
 

@@ -1679,17 +1679,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         const hr = hRate[size];
         const dr = dRate[size];
         const edr = extraDayRate[size];
-        const hourlyAfter4h = Math.max(0, Math.round((dr - hr) / 20));
+        // hourlyAfter4h: 4h→8h 구간(4시간)에 dr에 도달하도록 계산
+        const hourlyAfter4h = Math.max(0, Math.round((dr - hr) / 4));
 
         if (targetH <= 4) {
           return hr;
         }
 
-        if (targetH < 24) {
+        if (targetH < 8) {
           return hr + (Math.ceil(targetH - 4) * hourlyAfter4h);
         }
 
-        if (targetH === 24) {
+        if (targetH <= 24) {
           return dr;
         }
 

@@ -1,13 +1,15 @@
-const DEFAULT_SUPABASE_HOSTED_URL = 'https://xpnfjolqiffduedwtxey.supabase.co';
-const FALLBACK_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbmZqb2xxaWZmZHVlZHd0eGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzEyOTQsImV4cCI6MjA5MDE0NzI5NH0.60fV5WzgBcF1WEetrBwy58yAs-lOtbPk2M57_0Lt3-E';
+// 빌리버 운영 프로젝트 (fzvfyeskdivulazjjpgr, ap-northeast-1, ACTIVE_HEALTHY)
+const DEFAULT_SUPABASE_HOSTED_URL = 'https://fzvfyeskdivulazjjpgr.supabase.co';
+const FALLBACK_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6dmZ5ZXNrZGl2dWxhempqcGdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzc3MjcsImV4cCI6MjA4OTY1MzcyN30.K-sFDk2KXB42onDo-2gKXPIA3hWImTtfGUfB6WTC-gg';
 
-const LEGACY_PROJECT_ID = 'fzvfyeskdivulazjjpgr';
+// 구 프로젝트 ID — 환경변수에 이 값이 들어오면 현재 운영 URL로 교체
+const LEGACY_PROJECT_ID = 'xpnfjolqiffduedwtxey';
 
 export const getSupabaseConfig = () => {
   const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
 
-  // 레거시 프로젝트(fzvf...)가 감지되면 운영 프로젝트(xpnf...)로 전환
+  // 구 프로젝트 URL이 들어오면 현재 운영 프로젝트로 교체
   const isLegacyUrl = envUrl.includes(LEGACY_PROJECT_ID);
   // 상대경로(/supabase)는 Vite 개발서버 프록시 전용 — 프로덕션 빌드에서는 하드코딩 URL로 폴백
   const isDevProxy = envUrl.startsWith('/') && import.meta.env.PROD;

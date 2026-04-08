@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.0.0] - 2026-04-08
+
+### Added
+- **정산 시스템 Phase 1~3 완성**: 데이터 정합성 검증 → 월마감·지점지급·크레딧·부분환불 체계 → Supabase Edge Functions 자동화 배포까지 3단계 완전 구현
+- **완료 처리 시 정산 자동 확정**: 예약 완료 처리 시 미정산 금융대조로 자동 이동, 정산 확정 후 원래 탭으로 복귀
+- **크레딧 계정 시스템**: 부분 환불·크레딧 발행·지점 정산 지급 흐름 DB 지원
+
+### Fixed
+- **예약하기 버튼 오류 수정**: `pickup/dropoff_location_id`에 short_code 대신 Supabase UUID 사용 — Postgres `22P02` 오류 근본 해결
+- **LocationMap 앱 크래시 수정 (CRITICAL)**: Naver Maps API 500 시 `window.naver.maps`가 null — `window.naver?.maps` null 가드 추가, 지점 카드 클릭 시 전체 화면 오류 방지
+- **가격 정책 로직 수정**: 8시간 이상 = 1일 요금, hourlyAfter4h = (1일-4시간) / 4 공식 적용, localStorage 운영 정책값 반영
+- **지점 필터링**: INITIAL_LOCATIONS 미등록 미운영 지점 노출 방지, 사용자 위치 기준 가까운 지점 3개 우선 노출 (모바일 포함)
+- **관리자 대시보드**: 이동 노선 UUID → 지점명 변환 표시, 정산 확정 후 잘못된 탭 이동 수정
+
+### Changed
+- **보관 안내 텍스트 다국어 번역 추가**: `storage_notice_title` / `storage_notice_desc` 키 6개 언어(ko/zh-TW/zh-HK/zh/en/ja) 전체 추가 — 영어 fallback 제거
+
 ## [1.2.1.0] - 2026-04-07
 
 ### Added

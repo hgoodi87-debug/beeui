@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { BookingState, BookingStatus, LocationOption } from '../../types';
+import { BookingState, BookingStatus, LocationOption, ServiceType } from '../../types';
 
 interface BranchRevenueTabProps {
     bookings: BookingState[];
@@ -27,8 +27,11 @@ const BranchRevenueTab: React.FC<BranchRevenueTabProps> = ({ bookings, currentBr
             }
             return bDate.getFullYear() === targetYear && bDate.getMonth() === targetMonth && bDate.getDate() === targetDay;
         }).map(b => {
-            const finalPrice = typeof b.finalPrice === 'number' ? b.finalPrice : parseInt(String(b.finalPrice || '0').replace(/[^0-9]/g, ''), 10);
-            const isDelivery = !branchIdentifiers.has(b.dropoffLocation || '') || b.pickupLocation !== b.dropoffLocation;
+            // 정산 금액: 관리자가 확정한 branch_settlement_amount 우선, 없으면 final_price
+            const settlementBase = (b as any).branchSettlementAmount || b.finalPrice || 0;
+            const finalPrice = typeof settlementBase === 'number' ? settlementBase : parseInt(String(settlementBase).replace(/[^0-9]/g, ''), 10);
+            // serviceType 기반으로 배송/보관 판단 (위치 비교 방식 제거)
+            const isDelivery = b.serviceType === ServiceType.DELIVERY;
             const commRate = isDelivery ? (currentBranch?.commissionRates?.delivery || 0) : (currentBranch?.commissionRates?.storage || 0);
             const commissionAmount = Math.floor(finalPrice * (commRate / 100));
             return { ...b, calculatedFinalPrice: finalPrice, commissionRate: commRate, commissionAmount, isDelivery };
@@ -36,7 +39,7 @@ const BranchRevenueTab: React.FC<BranchRevenueTabProps> = ({ bookings, currentBr
 
         const total = items.reduce((sum, item) => sum + item.commissionAmount, 0);
         const totalSales = items.reduce((sum, item) => sum + item.calculatedFinalPrice, 0);
-        return { total, totalSales, items: items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()) };
+        return { total, totalSales, items: items.sort((a, b) => new Date(b.pickupDate || b.createdAt || 0).getTime() - new Date(a.pickupDate || a.createdAt || 0).getTime()) };
     }, [bookings, period, date, currentBranch, branchIdentifiers]);
 
     const navigate = (dir: number) => {

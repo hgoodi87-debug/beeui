@@ -21,7 +21,8 @@ const BranchHeader: React.FC<BranchHeaderProps> = ({ currentBranch, branchId, bo
         const deliveryRate = currentBranch?.commissionRates?.delivery ?? 0;
         const storageRate = currentBranch?.commissionRates?.storage ?? 0;
         const monthlyCommission = completedThisMonth.reduce((sum, b) => {
-            const price = (b as any).settlementHardCopyAmount ?? b.finalPrice ?? 0;
+            // 정산 금액: branch_settlement_amount 우선, 없으면 settlement_hard_copy_amount, 없으면 final_price
+            const price = (b as any).branchSettlementAmount ?? (b as any).settlementHardCopyAmount ?? b.finalPrice ?? 0;
             const rate = b.serviceType === ServiceType.DELIVERY ? deliveryRate : storageRate;
             return sum + Math.floor(price * (rate / 100));
         }, 0);

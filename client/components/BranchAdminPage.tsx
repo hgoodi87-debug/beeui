@@ -44,7 +44,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
     const [bookings, setBookings] = useState<BookingState[]>([]);
     const [locations, setLocations] = useState<LocationOption[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<TabKey>('ALL');
+    const [activeTab, setActiveTab] = useState<TabKey>('ACTIVE');
     const [selectedBooking, setSelectedBooking] = useState<BookingState | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +71,14 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         return () => { unsubscribeBookings(); unsubscribeAdmins(); };
     }, [branchId]);
 
-    const currentBranch = useMemo(() => locations.find(l => l.id === branchId), [locations, branchId]);
+    const currentBranch = useMemo(() =>
+        locations.find(l =>
+            l.id === branchId ||
+            l.shortCode === branchId ||
+            (l as any).branchCode === branchId ||
+            (l as any).branch_code === branchId
+        ),
+    [locations, branchId]);
 
     const branchIdentifiers = useMemo(() => {
         const ids = new Set<string>();
@@ -104,7 +111,17 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                 b.id?.toLowerCase().includes(searchTerm.toLowerCase());
             if (!matchesSearch) return false;
 
-            if (activeTab === 'ALL') return true;
+            if (activeTab === 'ALL') {
+                // 완료/취소는 최근 30일 이내만 표시 (ALL 탭 정리)
+                if ([BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.REFUNDED].includes(b.status as any)) {
+                    const bDateStr = (b.pickupDate || b.createdAt || '').split('T')[0];
+                    if (!bDateStr) return false;
+                    const daysAgo30 = new Date();
+                    daysAgo30.setDate(daysAgo30.getDate() - 30);
+                    return new Date(bDateStr) >= daysAgo30;
+                }
+                return true;
+            }
             if (activeTab === 'PENDING') return b.status === BookingStatus.PENDING;
             if (activeTab === 'ACTIVE') return [BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any);
             if (activeTab === 'COMPLETED') {

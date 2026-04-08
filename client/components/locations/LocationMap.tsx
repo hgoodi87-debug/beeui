@@ -123,7 +123,7 @@ const LocationMap: React.FC<LocationMapProps> = React.memo(({
     }, [branches, selectedBranch, currentService, lang, onLocationSelect, isMapReady]);
 
     useEffect(() => {
-        if (selectedBranch && selectedBranch.lat && selectedBranch.lng && mapRef.current && isMapReady) {
+        if (selectedBranch && selectedBranch.lat && selectedBranch.lng && mapRef.current && isMapReady && window.naver?.maps) {
             const moveLatLon = new window.naver.maps.LatLng(selectedBranch.lat, selectedBranch.lng);
             mapRef.current.setZoom(16, false);
             mapRef.current.panTo(moveLatLon);

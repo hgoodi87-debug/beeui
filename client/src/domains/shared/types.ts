@@ -254,3 +254,36 @@ export interface AdminRevenueMonthlySummary {
     unconfirmedAmount: number;
     partnerPayoutTotal: number;
 }
+
+export interface MonthlyClosing {
+    id?: string;
+    month: string;               // 'YYYY-MM-DD' (월 기준일)
+    totalRevenue: number;
+    confirmedAmount: number;
+    unconfirmedAmount: number;
+    partnerPayoutTotal: number;
+    netProfit: number;
+    bookingCount: number;
+    isClosed: boolean;
+    closedAt?: string;
+    closedBy?: string;
+    notes?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface BranchPayout {
+    id?: string;
+    branchId?: string;
+    branchName?: string;
+    periodStart: string;         // 'YYYY-MM-DD'
+    periodEnd: string;
+    totalAmount: number;
+    bookingCount: number;
+    paymentMethod?: 'bank_transfer' | 'cash' | 'other';
+    bankAccount?: string;
+    paidAt?: string;
+    paidBy?: string;
+    notes?: string;
+    createdAt?: string;
+}

@@ -74,6 +74,7 @@ export interface BookingState {
     insuranceBagCount?: number;
     useInsurance?: boolean;
     insuranceFee?: number;        // 보험료 확정액 (DB insurance_fee 컬럼)
+    creditUsed?: number;          // 예약 시 사용된 크레딧 금액 (DB credit_used 컬럼)
     isDeleted?: boolean;
     recaptchaToken?: string;
     weightSurcharge5kg?: number;

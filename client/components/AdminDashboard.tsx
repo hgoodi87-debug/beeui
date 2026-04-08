@@ -1552,8 +1552,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
     const shouldSettle = status === BookingStatus.COMPLETED;
+    const isRefundOrCancel = status === BookingStatus.REFUNDED || status === BookingStatus.CANCELLED;
     const settledAt = shouldSettle ? new Date().toISOString() : undefined;
     const settledBy = currentActor.name;
+    const newSettlementStatus = shouldSettle ? 'CONFIRMED' : isRefundOrCancel ? 'ON_HOLD' : undefined;
 
     // [스봉이] 일괄 처리도 성급하게! UI부터 확 바꿔버릴게요. 💅
     if (previousBookings) {
@@ -1563,7 +1565,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           ? {
             ...b,
             status,
-            ...(shouldSettle ? { settlementStatus: 'CONFIRMED', settledAt, settledBy } : {})
+            ...(shouldSettle ? { settlementStatus: 'CONFIRMED', settledAt, settledBy } : {}),
+            ...(isRefundOrCancel ? { settlementStatus: 'ON_HOLD' } : {}),
           }
           : b)
       );
@@ -1571,13 +1574,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
     setIsBatchUpdating(true);
     try {
+      const batchSettlementBody: Record<string, unknown> = {
+        ...(newSettlementStatus ? { settlement_status: newSettlementStatus } : {}),
+        ...(shouldSettle ? { settled_at: settledAt, settled_by: settledBy } : {}),
+      };
       const results = await Promise.allSettled(
         selectedBookingIds.map((id) =>
           mutateBookingRecord(id, {
             supabaseMethod: 'PATCH',
-            supabaseBody: shouldSettle
-              ? { settlement_status: 'CONFIRMED', settled_at: settledAt, settled_by: settledBy }
-              : { settlement_status: status },
+            supabaseBody: batchSettlementBody,
             reservationBody: shouldSettle ? { ops_status: 'completed', updated_at: settledAt } : undefined,
           })
         )
@@ -1603,26 +1608,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const updateStatus = async (id: string, status: BookingStatus, auditNote?: string) => {
     const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
     const shouldSettle = status === BookingStatus.COMPLETED;
+    const isRefundOrCancel = status === BookingStatus.REFUNDED || status === BookingStatus.CANCELLED;
     const settledAt = shouldSettle ? new Date().toISOString() : undefined;
     const settledBy = currentActor.name;
 
-    // [스봉이] 사장님 성격 급하신 거 아니까 UI부터 바로 바꿔드릴게요. 낙관적으로 가자고요! ✨
+    // 정산 상태 결정: COMPLETED→CONFIRMED / 취소·환불→ON_HOLD / 그 외→변경 없음
+    const newSettlementStatus = shouldSettle ? 'CONFIRMED'
+      : isRefundOrCancel ? 'ON_HOLD'
+      : undefined;
+
     if (previousBookings) {
       queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
         old?.map(b => (b.id === id || b.reservationCode === id)
           ? {
             ...b,
             status,
-            ...(shouldSettle ? { settlementStatus: 'CONFIRMED', settledAt, settledBy } : {})
+            ...(shouldSettle ? { settlementStatus: 'CONFIRMED', settledAt, settledBy } : {}),
+            ...(isRefundOrCancel ? { settlementStatus: 'ON_HOLD' } : {}),
           }
           : b)
       );
     }
 
     try {
-      const updateData: Record<string, unknown> = shouldSettle
-        ? { settlement_status: 'CONFIRMED', settled_at: settledAt, settled_by: settledBy }
-        : { settlement_status: status };
+      const updateData: Record<string, unknown> = {
+        ...(newSettlementStatus ? { settlement_status: newSettlementStatus } : {}),
+        ...(shouldSettle ? { settled_at: settledAt, settled_by: settledBy } : {}),
+      };
       if (auditNote) (updateData as any).notes = auditNote;
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
@@ -1871,11 +1883,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleBulkPayoutConfirm = async (bookingIds: string[]) => {
     if (bookingIds.length === 0) return;
     try {
+      // 1) 예약 settlement_status → PAID_OUT 업데이트
       const results = await Promise.allSettled(
         bookingIds.map(id =>
           mutateBookingRecord(id, {
             supabaseMethod: 'PATCH',
-            supabaseBody: { settlement_status: '정산확정' },
+            supabaseBody: { settlement_status: 'PAID_OUT' },
           })
         )
       );
@@ -1883,12 +1896,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       if (failures.length > 0) {
         throw (failures[0] as PromiseRejectedResult).reason;
       }
+
+      // 2) branch_payouts 지급 이력 생성
+      const targetBookings = bookings.filter(b => b.id && bookingIds.includes(b.id));
+      const totalAmount = targetBookings.reduce((sum, b) => sum + (b.branchSettlementAmount || 0), 0);
+      const today = new Date().toISOString().split('T')[0];
+      await StorageService.saveBranchPayout({
+        branchName: targetBookings[0]?.branchName || '(일괄)',
+        periodStart: today,
+        periodEnd: today,
+        totalAmount,
+        bookingCount: bookingIds.length,
+        paymentMethod: 'bank_transfer',
+        paidAt: new Date().toISOString(),
+        paidBy: currentActor.name,
+        notes: `일괄 지급 확정 ${bookingIds.length}건`,
+      });
+
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      await AuditService.logAction(currentActor, 'UPDATE', { id: 'bulk-payout', type: 'SETTLEMENT' }, { method: 'BULK_PAYOUT_CONFIRM', count: bookingIds.length });
-      alert(`${bookingIds.length}건 정산 확정 완료되었습니다.`);
+      await AuditService.logAction(currentActor, 'UPDATE', { id: 'bulk-payout', type: 'SETTLEMENT' }, { method: 'BULK_PAYOUT_CONFIRM', count: bookingIds.length, totalAmount });
+      alert(`${bookingIds.length}건 지급 확정 완료. 총 ₩${totalAmount.toLocaleString()}`);
     } catch (e) {
       console.error(e);
       alert('정산처리 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleSettlementClose = async (month: string) => {
+    try {
+      // 해당 월 집계 스냅샷 생성
+      const monthStats = accountingMonthlyStats?.find(s => s.month?.startsWith(month));
+      const monthStart = `${month}-01`;
+      const closing = {
+        month: monthStart,
+        totalRevenue: monthStats?.totalRevenue ?? 0,
+        confirmedAmount: monthStats?.confirmedAmount ?? 0,
+        unconfirmedAmount: monthStats?.unconfirmedAmount ?? 0,
+        partnerPayoutTotal: monthStats?.partnerPayoutTotal ?? 0,
+        netProfit: (monthStats?.confirmedAmount ?? 0) - (monthStats?.partnerPayoutTotal ?? 0),
+        bookingCount: monthStats?.activeBookingCount ?? 0,
+        isClosed: true,
+        closedAt: new Date().toISOString(),
+        closedBy: currentActor.name,
+      };
+      await StorageService.saveMonthlyClosing(closing);
+      await AuditService.logAction(currentActor, 'UPDATE', { id: month, type: 'MONTHLY_CLOSING' }, { action: 'CLOSE' });
+      alert(`${month} 월 정산 마감이 완료되었습니다.`);
+    } catch (e) {
+      console.error(e);
+      alert('월 마감 처리 중 오류가 발생했습니다.');
     }
   };
 
@@ -2818,6 +2874,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               monthlyControlStats={monthlyControlStats}
               accountingMonthlyStats={accountingMonthlyStats}
               onBulkPayoutConfirm={handleBulkPayoutConfirm}
+              onSettlementClose={handleSettlementClose}
             />
           )}
 

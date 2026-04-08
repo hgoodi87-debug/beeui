@@ -362,7 +362,7 @@ const writeBatch = (_db: any) => {
     commit: async () => { await Promise.allSettled(ops.map(op => op())); },
   };
 };
-import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice, AdminRevenueDailySummary, AdminRevenueMonthlySummary } from "../types";
+import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice, AdminRevenueDailySummary, AdminRevenueMonthlySummary, MonthlyClosing, BranchPayout } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 // (Duplicate imports removed successfully 💅)
 import {
@@ -989,6 +989,7 @@ export const StorageService = {
         pickup_date: safeBooking.pickupDate || null,
         pickup_time: safeBooking.pickupTime || null,
         insurance_fee: safeBooking.insuranceFee || 0,
+        credit_used: safeBooking.creditUsed || 0,
         pickup_location_id: safeBooking.pickupLoc?.supabaseId || null,
         dropoff_address: safeBooking.dropoffAddress || null,
         dropoff_address_detail: safeBooking.dropoffAddressDetail || null,
@@ -1243,7 +1244,7 @@ export const StorageService = {
       'pickup_address_detail', 'pickup_image_url', 'pickup_date', 'pickup_time',
       'dropoff_location_id', 'dropoff_address', 'dropoff_address_detail', 'dropoff_date',
       'delivery_time', 'return_date', 'return_time', 'insurance_level', 'insurance_bag_count',
-      'use_insurance', 'insurance_fee', 'base_price', 'final_price', 'promo_code', 'discount_amount',
+      'use_insurance', 'insurance_fee', 'credit_used', 'base_price', 'final_price', 'promo_code', 'discount_amount',
       'weight_surcharge_5kg', 'weight_surcharge_10kg', 'payment_method', 'payment_provider',
       'payment_order_id', 'payment_key', 'payment_receipt_url', 'payment_approved_at',
       'branch_commission_delivery', 'branch_commission_storage', 'branch_settlement_amount',
@@ -2072,6 +2073,48 @@ export const StorageService = {
       (row) => snakeToCamel(row) as unknown as AdminRevenueMonthlySummary,
       10000
     );
+  },
+
+  // --- Monthly Closings ---
+
+  getMonthlyClosings: async (): Promise<MonthlyClosing[]> => {
+    if (!isSupabaseDataEnabled()) return [];
+    const rows = await supabaseGet<Array<Record<string, unknown>>>(
+      'monthly_closings?select=*&order=month.desc&limit=60'
+    );
+    return (rows || []).map(r => snakeToCamel(r) as unknown as MonthlyClosing);
+  },
+
+  saveMonthlyClosing: async (closing: MonthlyClosing): Promise<MonthlyClosing> => {
+    const payload = camelToSnake(JSON.parse(JSON.stringify(closing)) as Record<string, unknown>);
+    if (closing.id) {
+      const result = await supabaseMutate<Array<Record<string, unknown>>>(
+        `monthly_closings?id=eq.${encodeURIComponent(closing.id)}`, 'PATCH', payload
+      );
+      return snakeToCamel((Array.isArray(result) ? result[0] : result) as Record<string, unknown>) as unknown as MonthlyClosing;
+    }
+    const result = await supabaseMutate<Array<Record<string, unknown>>>(
+      'monthly_closings', 'POST', payload
+    );
+    return snakeToCamel((Array.isArray(result) ? result[0] : result) as Record<string, unknown>) as unknown as MonthlyClosing;
+  },
+
+  // --- Branch Payouts ---
+
+  getBranchPayouts: async (): Promise<BranchPayout[]> => {
+    if (!isSupabaseDataEnabled()) return [];
+    const rows = await supabaseGet<Array<Record<string, unknown>>>(
+      'branch_payouts?select=*&order=created_at.desc&limit=200'
+    );
+    return (rows || []).map(r => snakeToCamel(r) as unknown as BranchPayout);
+  },
+
+  saveBranchPayout: async (payout: Omit<BranchPayout, 'id' | 'createdAt'>): Promise<BranchPayout> => {
+    const payload = camelToSnake(JSON.parse(JSON.stringify(payout)) as Record<string, unknown>);
+    const result = await supabaseMutate<Array<Record<string, unknown>>>(
+      'branch_payouts', 'POST', payload
+    );
+    return snakeToCamel((Array.isArray(result) ? result[0] : result) as Record<string, unknown>) as unknown as BranchPayout;
   },
 
   // --- Admins (HR) ---

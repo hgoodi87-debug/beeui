@@ -654,6 +654,23 @@ export const SEO_LOCATIONS: SeoLocation[] = [
         },
         faqs: [],
         relatedBranchIds: ['MBX-008'],
+        touristSpots: [
+            {
+                id: 'yeouido-han-river-park',
+                category: 'nature',
+                lat: 37.5284,
+                lng: 126.9321,
+                name: { ko: '여의도 한강공원', en: 'Yeouido Han River Park', ja: '汝矣島漢江公園', zh: '汝矣岛汉江公园', 'zh-TW': '汝矣島漢江公園', 'zh-HK': '여의도 한강공원' },
+                description: {
+                    ko: '서울의 낭만이 가득한 한강공원입니다. 💅',
+                    en: 'Romantic riverside park in Seoul. 💅',
+                    ja: 'ソウルのロマンがつまった漢江公園. 💅',
+                    zh: '充满首尔浪漫气息的汉江公园. 💅',
+                    'zh-TW': '充滿首爾浪漫氣息的漢江公園. 💅',
+                    'zh-HK': '充滿 首爾 浪漫 氣息 의 漢江 公園. 💅'
+                }
+            }
+        ],
     },
     {
         slug: 'seongsu',
@@ -769,23 +786,6 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                     'zh-HK': '聚集眾多網紅咖啡館與復古精品店的聖水核心地帶。 ✨',
                 },
             },
-        ],
-        touristSpots: [
-            {
-                id: 'yeouido-han-river-park',
-                category: 'nature',
-                lat: 37.5284,
-                lng: 126.9321,
-                name: { ko: '여의도 한강공원', en: 'Yeouido Han River Park', ja: '汝矣島漢江公園', zh: '汝矣岛汉江公园', 'zh-TW': '汝矣島漢江公園', 'zh-HK': '여의도 한강공원' },
-                description: {
-                    ko: '서울의 낭만이 가득한 한강공원입니다. 💅',
-                    en: 'Romantic riverside park in Seoul. 💅',
-                    ja: 'ソウルのロマンがつまった漢江公園. 💅',
-                    zh: '充满首尔浪漫气息的汉江公园. 💅',
-                    'zh-TW': '充滿首爾浪漫氣息的漢江公園. 💅',
-                    'zh-HK': '充滿 首爾 浪漫 氣息 의 漢江 公園. 💅'
-                }
-            }
         ]
     },
     {

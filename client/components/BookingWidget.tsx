@@ -4,7 +4,7 @@ import { BookingState, ServiceType, BookingStatus, SnsType, BagSizes, LocationOp
 import { LOCATIONS as INITIAL_LOCATIONS } from '../constants';
 import { StorageService } from '../services/storageService';
 import { RecaptchaService } from '../services/recaptchaService';
-import { calculateDeliveryStoragePrice, calculateStoragePrice } from '../utils/pricing';
+import { calculateDeliveryStoragePrice, calculateStoragePrice, STORAGE_RATES } from '../utils/pricing';
 import { formatKSTDate, isPastKSTTime, getLocalizedDate, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr } from '../utils/dateUtils';
 import { Clock } from 'lucide-react';
 import {

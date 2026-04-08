@@ -2,7 +2,7 @@
  * 일자별 + 결제수단별 예약 현황 Word 문서 내보내기
  * HTML-as-Word 방식 (추가 라이브러리 불필요)
  */
-import type { BookingState } from '../types';
+import { BookingStatus, type BookingState } from '../types';
 
 const PAYMENT_LABELS: Record<string, string> = {
   card:    '카드',
@@ -43,7 +43,7 @@ function buildDaySummaries(bookings: BookingState[], startDate: string, endDate:
 
   const activeBookings = bookings.filter(b => {
     if (b.isDeleted) return false;
-    if (b.status === 'CANCELLED' || b.status === 'REFUNDED') return false;
+    if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) return false;
     const d = new Date(b.pickupDate || '');
     return d >= start && d <= end;
   });

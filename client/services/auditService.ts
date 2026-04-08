@@ -21,6 +21,7 @@ export type AuditActionType =
     | 'CONFIG_CHANGE' 
     | 'MANUAL_BOOKING' 
     | 'SETTLEMENT_CONFIRM'
+    | 'UPDATE'
     | 'DELETE';
 
 export interface AuditLogData {

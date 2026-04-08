@@ -44,7 +44,8 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
     const payoutCandidateIds = useMemo(() =>
         bookings
             .filter(b => b.paymentStatus === 'paid' && b.status !== BookingStatus.REFUNDED && b.settlementStatus !== 'CONFIRMED')
-            .map(b => b.id),
+            .map(b => b.id)
+            .filter((id): id is string => Boolean(id)),
         [bookings]
     );
 

@@ -275,7 +275,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const pendingBookingRef = useRef<BookingState | null>(null);
     const paypalContainerRef = useRef<HTMLDivElement>(null);
     const paypalRenderedRef = useRef(false);
-    const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: string; finalBooking: any } | null>(null);
+    const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: ServiceType; finalBooking: any } | null>(null);
     const [paypalLoadError, setPaypalLoadError] = useState(false);
 
     // 💅 BookingSuccess 첩크 미리 로딩 (lazy 플리커 방지)
@@ -767,7 +767,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
         const dropoffLoc_ = booking.serviceType === ServiceType.DELIVERY ? dropoffLoc : undefined;
         latestPayPalCtxRef.current = {
             priceTotal: priceDetails.total,
-            serviceType: booking.serviceType,
+            serviceType: booking.serviceType || ServiceType.STORAGE,
             finalBooking: {
                 ...booking,
                 pickupLoc: pickupLoc_,

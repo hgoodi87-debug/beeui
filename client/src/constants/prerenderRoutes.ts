@@ -1,4 +1,4 @@
-import { SEO_LOCATIONS } from './seoLocations.ts';
+import { SEO_LOCATIONS } from './seoLocations';
 
 export type PrerenderRouteGroup =
   | 'core-static'

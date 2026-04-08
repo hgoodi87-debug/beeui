@@ -42,12 +42,12 @@ export const PAYMENT_STATUS_CONFIG: Record<AdminPaymentStatus, { color: string; 
 };
 
 export const SETTLEMENT_STATUS_CONFIG: Record<SettlementStatus, { color: string; label: string }> = {
-    [SettlementStatus.NONE]: { color: ADMIN_COLORS.NEUTRAL, label: '미반영' },
-    [SettlementStatus.WAITING]: { color: ADMIN_COLORS.WARNING, label: '정산대기' },
+    [SettlementStatus.PENDING]: { color: ADMIN_COLORS.WARNING, label: '정산대기' },
     [SettlementStatus.CONFIRMED]: { color: ADMIN_COLORS.SUCCESS, label: '정산확정' },
     [SettlementStatus.ON_HOLD]: { color: ADMIN_COLORS.PURPLE, label: '정산보류' },
     [SettlementStatus.MONTHLY_INCLUDED]: { color: ADMIN_COLORS.INFO, label: '월정산반영' },
     [SettlementStatus.PAID_OUT]: { color: ADMIN_COLORS.SUCCESS, label: '지급완료' },
+    [SettlementStatus.DELETED]: { color: ADMIN_COLORS.ERROR, label: '정산제외' },
 };
 
 export const FINANCIAL_CONFIG = {

@@ -20,6 +20,18 @@ interface StatisticsParams {
     revenueMonthlySummaries?: AdminRevenueMonthlySummary[];
 }
 
+interface AccountingMonthlyStat {
+    month: string;
+    count: number;
+    total: number;
+    cumulative: number;
+    totalRevenue: number;
+    confirmedAmount: number;
+    unconfirmedAmount: number;
+    partnerPayoutTotal: number;
+    activeBookingCount: number;
+}
+
 const toSafeNumber = (value: unknown): number => Number(value || 0) || 0;
 
 const sumSummaryField = <
@@ -333,6 +345,11 @@ export const useAdminStats = ({
                     count: summary.activeBookingCount,
                     total: summary.totalRevenue,
                     cumulative: 0,
+                    totalRevenue: summary.totalRevenue,
+                    confirmedAmount: summary.confirmedAmount,
+                    unconfirmedAmount: summary.unconfirmedAmount,
+                    partnerPayoutTotal: summary.partnerPayoutTotal,
+                    activeBookingCount: summary.activeBookingCount,
                 }));
 
             let monthlyAcc = 0;
@@ -348,7 +365,7 @@ export const useAdminStats = ({
         }
 
         const statsMap: Record<string, { date: string, count: number, total: number, cumulative: number }> = {};
-        const monthMap: Record<string, { month: string, count: number, total: number, cumulative: number }> = {};
+        const monthMap: Record<string, AccountingMonthlyStat> = {};
         const start = new Date(revenueStartDate);
         const end = new Date(revenueEndDate);
         end.setHours(23, 59, 59, 999);
@@ -366,9 +383,30 @@ export const useAdminStats = ({
 
             if (dateKey !== 'Unknown') {
                 const monthKey = dateKey.slice(0, 7);
-                if (!monthMap[monthKey]) monthMap[monthKey] = { month: monthKey, count: 0, total: 0, cumulative: 0 };
+                if (!monthMap[monthKey]) {
+                    monthMap[monthKey] = {
+                        month: monthKey,
+                        count: 0,
+                        total: 0,
+                        cumulative: 0,
+                        totalRevenue: 0,
+                        confirmedAmount: 0,
+                        unconfirmedAmount: 0,
+                        partnerPayoutTotal: 0,
+                        activeBookingCount: 0,
+                    };
+                }
+                const amount = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
                 monthMap[monthKey].count++;
-                monthMap[monthKey].total += (b.settlementHardCopyAmount ?? b.finalPrice ?? 0);
+                monthMap[monthKey].activeBookingCount++;
+                monthMap[monthKey].total += amount;
+                monthMap[monthKey].totalRevenue += amount;
+                if (b.settlementStatus === 'CONFIRMED') {
+                    monthMap[monthKey].confirmedAmount += amount;
+                } else {
+                    monthMap[monthKey].unconfirmedAmount += amount;
+                }
+                monthMap[monthKey].partnerPayoutTotal += b.branchSettlementAmount ?? 0;
             }
         });
 

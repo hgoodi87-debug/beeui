@@ -7,6 +7,8 @@ import {
     getBagCategoryCount,
     getBagCategoryLabel,
     getStoragePriceForCategory,
+    getTotalBags,
+    sanitizeBagSizes,
     sanitizeDeliveryBagSizes,
 } from '../../src/domains/booking/bagCategoryUtils';
 
@@ -60,8 +62,8 @@ const ManualBookingModal: React.FC<ManualBookingModalProps> = ({
                                     const currentBagSizes = manualBookingForm.bagSizes || createEmptyBagSizes();
                                     const nextBagSizes = val === ServiceType.DELIVERY
                                         ? sanitizeDeliveryBagSizes(currentBagSizes)
-                                        : currentBagSizes;
-                                    const totalBags = Object.values(nextBagSizes).reduce((sum, count) => Number(sum) + Number(count), 0);
+                                        : sanitizeBagSizes(currentBagSizes);
+                                    const totalBags = getTotalBags(nextBagSizes);
                                     const next = {
                                         ...manualBookingForm,
                                         serviceType: val,

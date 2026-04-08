@@ -271,8 +271,11 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
   }, [locations, deferredSearchTerm, currentService]);
 
   const listLocations = useMemo(() => {
-    return filteredLocations;
-  }, [filteredLocations]);
+    // 검색 중이거나 사용자 위치 없으면 전체 표시
+    if (deferredSearchTerm || !userLocation) return filteredLocations;
+    // 사용자 위치 기준 가까운 3개만 노출 (이미 distance 순 정렬됨)
+    return filteredLocations.slice(0, 3);
+  }, [filteredLocations, deferredSearchTerm, userLocation]);
 
   useEffect(() => {
     const normalizedSearch = deferredSearchTerm.trim();

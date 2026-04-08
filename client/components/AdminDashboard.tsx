@@ -1617,6 +1617,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       : isRefundOrCancel ? 'ON_HOLD'
       : undefined;
 
+    // ops_status 매핑: booking_details.ops_status에 직접 기입 (reservation 없는 신규 예약 포함)
+    const opsStatusMap: Partial<Record<BookingStatus, string>> = {
+      [BookingStatus.CONFIRMED]: 'pickup_ready',
+      [BookingStatus.STORAGE]:   'pickup_completed',
+      [BookingStatus.TRANSIT]:   'in_transit',
+      [BookingStatus.ARRIVED]:   'arrived_at_destination',
+      [BookingStatus.COMPLETED]: 'completed',
+      [BookingStatus.CANCELLED]: 'cancelled',
+      [BookingStatus.REFUNDED]:  'refunded',
+    };
+    const newOpsStatus = opsStatusMap[status] ?? null;
+
     if (previousBookings) {
       queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
         old?.map(b => (b.id === id || b.reservationCode === id)
@@ -1634,6 +1646,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const updateData: Record<string, unknown> = {
         ...(newSettlementStatus ? { settlement_status: newSettlementStatus } : {}),
         ...(shouldSettle ? { settled_at: settledAt, settled_by: settledBy } : {}),
+        ...(newOpsStatus !== null ? { ops_status: newOpsStatus } : {}),
       };
       if (auditNote) (updateData as any).notes = auditNote;
       await mutateBookingRecord(id, {
@@ -1643,12 +1656,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       });
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id, type: 'BOOKING' }, { status, detail: auditNote });
 
-      // [스봉이] 데이터 정합성을 위해 쿼리 무효화도 잊지 않았어요. 💅
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       return true;
     } catch (e) {
       console.error(e);
-      // [스봉이] 서버에 문제 생기면 슬쩍 다시 돌려놓을게요... 비밀이에요! 🙄
       if (previousBookings) queryClient.setQueryData(['bookings'], previousBookings);
       return false;
     }

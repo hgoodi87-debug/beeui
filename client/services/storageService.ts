@@ -599,6 +599,9 @@ const sortBookingsByPickupDateDesc = (items: BookingState[]) =>
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// O(1) INITIAL_LOCATIONS 존재 여부 조회 — polling 콜백에서 O(n²) 방지
+const INITIAL_LOCATION_ID_SET = new Set(INITIAL_LOCATIONS.map(l => l.id));
+
 const isUuidLike = (value?: string | null) => UUID_PATTERN.test(String(value || '').trim());
 
 const normalizeAdminBranchReference = (value?: string | null): string | undefined => {
@@ -1348,7 +1351,7 @@ export const StorageService = {
         (items) => {
           const filtered = items
             // INITIAL_LOCATIONS에 없는 지점 제외 (미운영 / 설정 미완료)
-            .filter(loc => INITIAL_LOCATIONS.find(l => l.id === (loc as any).id))
+            .filter(loc => INITIAL_LOCATION_ID_SET.has((loc as any).id))
             .map(enrichLocation)
             .filter((item) => shouldIncludeLocation(item, includeInactive));
           // 폴링 결과가 비어 있으면 콜백 스킵 (INITIAL_LOCATIONS 폴백 유지)
@@ -1412,7 +1415,7 @@ export const StorageService = {
               (loc as any).id = String(row.short_code);
             }
             // INITIAL_LOCATIONS에 없는 지점은 미운영 / 설정 미완료 → 제외
-            if (!INITIAL_LOCATIONS.find(l => l.id === (loc as any).id)) return [];
+            if (!INITIAL_LOCATION_ID_SET.has((loc as any).id)) return [];
             return [enrichLoc(loc)];
           });
           console.log('[Storage] Loaded', supabaseLocs.length, 'locations from Supabase ✅');

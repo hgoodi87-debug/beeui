@@ -1694,7 +1694,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       let price = (bags.handBag * deliveryPrices.handBag) + (bags.carrier * deliveryPrices.carrier);
       // Insurance Surcharge (Only if useInsurance is true)
       if (form.useInsurance && form.insuranceLevel && form.insuranceBagCount) {
-        price += (Number(form.insuranceLevel) * 10000 * Number(form.insuranceBagCount));
+        price += (5000 * Number(form.insuranceLevel) * Math.max(1, Number(form.insuranceBagCount) || 1));
       }
 
       // Apply Manual Discount
@@ -1773,7 +1773,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     try {
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
-        supabaseBody: { settlement_status: 'deleted' },
+        supabaseBody: { settlement_status: 'DELETED' },
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'SOFT_DELETE' });
@@ -1820,7 +1820,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         targetBookings.map((booking) =>
           mutateBookingRecord(booking.id!, {
             supabaseMethod: 'PATCH',
-            supabaseBody: { settlement_status: 'deleted' },
+            supabaseBody: { settlement_status: 'DELETED' },
           })
         )
       );
@@ -1856,7 +1856,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     try {
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
-        supabaseBody: { settlement_status: null },
+        supabaseBody: { settlement_status: 'PENDING' },
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'RESTORE', { id, type: 'BOOKING' }, { method: 'RESTORE' });
@@ -1898,7 +1898,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
 
       // 2) branch_payouts 지급 이력 생성
-      const targetBookings = bookings.filter(b => b.id && bookingIds.includes(b.id));
+      const bookingIdSet = new Set(bookingIds);
+      const targetBookings = bookings.filter(b => (b.id && bookingIdSet.has(b.id)) || (b.reservationCode && bookingIdSet.has(b.reservationCode)));
       const totalAmount = targetBookings.reduce((sum, b) => sum + (b.branchSettlementAmount || 0), 0);
       const today = new Date().toISOString().split('T')[0];
       await StorageService.saveBranchPayout({

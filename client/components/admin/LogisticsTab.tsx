@@ -92,6 +92,9 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
         return dateStr !== todayKST;
     };
 
+    const findLocName = (id: string | undefined) =>
+        locations.find(l => l.id === id || l.supabaseId === id || l.shortCode === id)?.name || id || '-';
+
     const paymentBadgeLabel = (booking: BookingState) =>
         booking.paymentStatus === 'paid' ? '결제완료' : '결제대기';
 
@@ -310,18 +313,18 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                             <div className="flex items-center gap-3">
                                                 <div className="flex flex-col">
                                                     <span className="text-[9px] font-black text-gray-400 uppercase">FROM</span>
-                                                    <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
+                                                    <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{findLocName(b.pickupLocation)}</span>
                                                 </div>
                                                 <i className="fa-solid fa-arrow-right-long text-bee-yellow/50 text-[10px]"></i>
                                                 <div className="flex flex-col text-right">
                                                     <span className="text-[9px] font-black text-gray-400 uppercase">TO</span>
-                                                    <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation || '-'}</span>
+                                                    <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{findLocName(b.dropoffLocation)}</span>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col">
                                                 <span className="text-[9px] font-black text-gray-400 uppercase">Center</span>
-                                                <span className="text-[11px] font-bold text-bee-black">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
+                                                <span className="text-[11px] font-bold text-bee-black">{findLocName(b.pickupLocation)}</span>
                                             </div>
                                         )}
                                     </td>
@@ -515,19 +518,19 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     <div className="flex items-center gap-4">
                                         <div className="flex-1">
                                             <span className="text-[8px] font-black text-gray-400 uppercase block mb-1">FROM</span>
-                                            <span className="font-black text-xs text-bee-black block truncate">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
+                                            <span className="font-black text-xs text-bee-black block truncate">{findLocName(b.pickupLocation)}</span>
                                         </div>
                                         <i className="fa-solid fa-arrow-right-long text-bee-yellow text-xs opacity-50"></i>
                                         <div className="flex-1 text-right">
                                             <span className="text-[8px] font-black text-gray-400 uppercase block mb-1">TO</span>
-                                            <span className="font-black text-xs text-bee-black block truncate">{locations.find(l => l.id === b.dropoffLocation)?.name || b.dropoffLocation || '-'}</span>
+                                            <span className="font-black text-xs text-bee-black block truncate">{findLocName(b.dropoffLocation)}</span>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-center">
                                             <span className="text-[8px] font-black text-gray-400 uppercase">Center</span>
-                                            <span className="font-black text-xs text-bee-black">{locations.find(l => l.id === b.pickupLocation)?.name || b.pickupLocation}</span>
+                                            <span className="font-black text-xs text-bee-black">{findLocName(b.pickupLocation)}</span>
                                         </div>
                                         <div className="flex justify-between items-center border-t border-gray-100 pt-2">
                                             <span className="text-[8px] font-black text-gray-400 uppercase">Schedule</span>

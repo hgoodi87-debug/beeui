@@ -2760,7 +2760,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               locations={locations}
               t={t}
               currentActor={currentActor}
-              onSettleComplete={() => setActiveTab(prevTab as any)}
+              onSettleComplete={() => { /* 정산 완료 후 금융 대조 탭에 머무름 */ }}
             />
           )}
 

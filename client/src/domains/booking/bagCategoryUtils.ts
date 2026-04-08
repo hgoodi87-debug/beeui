@@ -23,7 +23,7 @@ const EMPTY_BAG_SIZES: BagSizes = { handBag: 0, carrier: 0, strollerBicycle: 0 }
 export const DEFAULT_DELIVERY_PRICES: PriceSettings = { handBag: 10000, carrier: 25000, strollerBicycle: 0 };
 
 // 가격 정책: 4h 기본 → +1h마다 hourly 추가 → 8h 이상 = 1일 요금
-// hourlyAfter4h = (day1 - hours4) / 4  (4h→8h 구간이 4시간)
+// hourlyAfter4h는 bookingService.ts의 STORAGE_RATES 정책값을 따른다.
 export const DEFAULT_STORAGE_TIERS: StorageTier[] = [
     { id: 'st-4h', label: '4시간 기본 (Base 4h)', prices: { handBag: 4000, carrier: 5000, strollerBicycle: 10000 } },
     { id: 'st-1d', label: '1일 요금 (8h 이상)', prices: { handBag: 8000, carrier: 10000, strollerBicycle: 14000 } },

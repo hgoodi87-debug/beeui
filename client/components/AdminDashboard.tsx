@@ -19,6 +19,7 @@ import { useExpenditures } from '../src/domains/admin/hooks/useExpenditures';
 import { useAdminRevenueDailySummaries } from '../src/domains/admin/hooks/useAdminRevenueDailySummaries';
 import { useAdminRevenueMonthlySummaries } from '../src/domains/admin/hooks/useAdminRevenueMonthlySummaries';
 import { sendMessageToGemini } from '../services/geminiService';
+import { STORAGE_RATES } from '../src/domains/booking/bookingService';
 import DailyDetailModal from './admin/DailyDetailModal';
 import BookingSidePanel from './admin/BookingSidePanel';
 import ManualBookingModal from './admin/ManualBookingModal';
@@ -94,7 +95,6 @@ const RoadmapTab = lazy(() => import('./admin/RoadmapTab'));
 const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
 const AIReviewTab = lazy(() => import('./admin/AIReviewTab'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
-const FinancialComparisonTab = lazy(() => import('./admin/FinancialComparisonTab'));
 
 const AdminTabFallback: React.FC = () => (
   <div className="rounded-[32px] border border-dashed border-gray-200 bg-white/80 px-6 py-10 text-center text-sm font-bold text-gray-400 shadow-sm">
@@ -166,11 +166,6 @@ const isSupabaseBookingDetailId = (value?: string | null) =>
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, adminRole = 'staff', adminEmail, scanId, lang, t }) => {
   const currentActor = { id: adminName || 'unknown', name: adminName || 'unknown', email: adminEmail };
   const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
-  const [prevTab, setPrevTab] = React.useState<string>('DELIVERY_BOOKINGS');
-  const setActiveTabWithHistory = React.useCallback((tab: string) => {
-    setPrevTab(activeTab);
-    setActiveTab(tab as any);
-  }, [activeTab, setActiveTab]);
   const needsAdminDirectory = Boolean(scanId) || activeTab === 'HR' || activeTab === 'OPERATIONS';
   const needsInquiryData = activeTab === 'PARTNERSHIP_INQUIRIES';
   const needsSettlementData = ['OVERVIEW', 'DAILY_SETTLEMENT', 'ACCOUNTING', 'MONTHLY_SETTLEMENT'].includes(activeTab);
@@ -358,8 +353,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     options: {
       supabaseMethod: 'PATCH' | 'DELETE';
       supabaseBody?: Record<string, unknown>;
+      reservationBody?: Record<string, unknown>;
     }
   ) => {
+    const cachedBooking = allBookings.find(b => b.id === id || b.reservationCode === id);
+    const reservationId = String((cachedBooking as any)?.reservationId || '').trim();
+
+    if (options.reservationBody && reservationId) {
+      await supabaseMutate(`reservations?id=eq.${encodeURIComponent(reservationId)}`, 'PATCH', options.reservationBody);
+    }
+
     const bookingDetailId = await resolveBookingDetailId(id);
     await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);
   };
@@ -1548,12 +1551,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!window.confirm(`${selectedBookingIds.length}건의 예약을 '${statusLabel}' 상태로 일괄 변경할까요?`)) return;
 
     const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
+    const shouldSettle = status === BookingStatus.COMPLETED;
+    const settledAt = shouldSettle ? new Date().toISOString() : undefined;
+    const settledBy = currentActor.name;
 
     // [스봉이] 일괄 처리도 성급하게! UI부터 확 바꿔버릴게요. 💅
     if (previousBookings) {
       const selectedIdsSet = new Set(selectedBookingIds);
       queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
-        old?.map(b => selectedIdsSet.has(b.id || '') || selectedIdsSet.has(b.reservationCode || '') ? { ...b, status } : b)
+        old?.map(b => selectedIdsSet.has(b.id || '') || selectedIdsSet.has(b.reservationCode || '')
+          ? {
+            ...b,
+            status,
+            ...(shouldSettle ? { settlementStatus: 'CONFIRMED', settledAt, settledBy } : {})
+          }
+          : b)
       );
     }
 
@@ -1563,7 +1575,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         selectedBookingIds.map((id) =>
           mutateBookingRecord(id, {
             supabaseMethod: 'PATCH',
-            supabaseBody: { settlement_status: status },
+            supabaseBody: shouldSettle
+              ? { settlement_status: 'CONFIRMED', settled_at: settledAt, settled_by: settledBy }
+              : { settlement_status: status },
+            reservationBody: shouldSettle ? { ops_status: 'completed', updated_at: settledAt } : undefined,
           })
         )
       );
@@ -1587,34 +1602,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const updateStatus = async (id: string, status: BookingStatus, auditNote?: string) => {
     const previousBookings = queryClient.getQueryData<BookingState[]>(['bookings']);
+    const shouldSettle = status === BookingStatus.COMPLETED;
+    const settledAt = shouldSettle ? new Date().toISOString() : undefined;
+    const settledBy = currentActor.name;
 
     // [스봉이] 사장님 성격 급하신 거 아니까 UI부터 바로 바꿔드릴게요. 낙관적으로 가자고요! ✨
     if (previousBookings) {
       queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
-        old?.map(b => (b.id === id || b.reservationCode === id) ? { ...b, status } : b)
+        old?.map(b => (b.id === id || b.reservationCode === id)
+          ? {
+            ...b,
+            status,
+            ...(shouldSettle ? { settlementStatus: 'CONFIRMED', settledAt, settledBy } : {})
+          }
+          : b)
       );
     }
 
     try {
-      const updateData: Record<string, unknown> = { settlement_status: status };
+      const updateData: Record<string, unknown> = shouldSettle
+        ? { settlement_status: 'CONFIRMED', settled_at: settledAt, settled_by: settledBy }
+        : { settlement_status: status };
       if (auditNote) (updateData as any).notes = auditNote;
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
         supabaseBody: updateData,
+        reservationBody: shouldSettle ? { ops_status: 'completed', updated_at: settledAt } : undefined,
       });
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id, type: 'BOOKING' }, { status, detail: auditNote });
 
       // [스봉이] 데이터 정합성을 위해 쿼리 무효화도 잊지 않았어요. 💅
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
-
-      // 완료 처리 시 미정산 건 금융 대조 탭으로 이동
-      if (status === BookingStatus.COMPLETED) {
-        setActiveTabWithHistory('FINANCIAL_COMPARISON');
-      }
+      return true;
     } catch (e) {
       console.error(e);
       // [스봉이] 서버에 문제 생기면 슬쩍 다시 돌려놓을게요... 비밀이에요! 🙄
       if (previousBookings) queryClient.setQueryData(['bookings'], previousBookings);
+      return false;
     }
   };
 
@@ -1679,8 +1703,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         const hr = hRate[size];
         const dr = dRate[size];
         const edr = extraDayRate[size];
-        // hourlyAfter4h: 4h→8h 구간(4시간)에 dr에 도달하도록 계산
-        const hourlyAfter4h = Math.max(0, Math.round((dr - hr) / 4));
+        const hourlyAfter4h = STORAGE_RATES[size].hourlyAfter4h;
 
         if (targetH <= 4) {
           return hr;
@@ -2078,7 +2101,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     if (!selectedBooking || !selectedBooking.id) return;
     setIsSaving(true);
     try {
-      await StorageService.updateBooking(selectedBooking.id!, { ...selectedBooking, updatedAt: new Date().toISOString() });
+      const shouldSettle = selectedBooking.status === BookingStatus.COMPLETED;
+      const updatedAt = new Date().toISOString();
+      const settledAt = shouldSettle ? updatedAt : undefined;
+      const settledBy = currentActor.name;
+
+      await StorageService.updateBooking(selectedBooking.id!, { ...selectedBooking, updatedAt });
+      if (shouldSettle) {
+        await mutateBookingRecord(selectedBooking.id!, {
+          supabaseMethod: 'PATCH',
+          supabaseBody: { settlement_status: 'CONFIRMED', settled_at: settledAt, settled_by: settledBy },
+          reservationBody: { ops_status: 'completed', updated_at: settledAt },
+        });
+      }
       await AuditService.logAction(currentActor, 'STATUS_CHANGE', { id: selectedBooking.id!, type: 'BOOKING' }, { status: selectedBooking.status, detail: 'Manual Full Update' });
       alert('예약 정보가 성공적으로 업데이트되었습니다. 💅');
       setSelectedBooking(null);
@@ -2392,7 +2427,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             <nav className="space-y-1">
               {[
                 { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
-                { id: 'FINANCIAL_COMPARISON', label: '미정산 건 금융 대조', icon: 'fa-coins' },
                 { id: 'ACCOUNTING', label: '통합 매출 결산', icon: 'fa-receipt' },
                 { id: 'REPORTS', label: '분석 리포트', icon: 'fa-chart-line' },
               ].map(item => (
@@ -2550,7 +2584,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'DELIVERY_BOOKINGS', label: t.admin?.sidebar?.logistics || '배송 예약 관리', icon: 'fa-truck-fast' },
                         { id: 'STORAGE_BOOKINGS', label: t.admin?.sidebar?.logistics || '보관 예약 관리', icon: 'fa-warehouse' },
                         { id: 'DAILY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '일일 시재 정산', icon: 'fa-calendar-check' },
-                        { id: 'FINANCIAL_COMPARISON', label: '미정산 건 금융 대조', icon: 'fa-coins' },
                         { id: 'ACCOUNTING', label: t.admin?.sidebar?.accounting || '매출 결산 보고', icon: 'fa-receipt' },
                         { id: 'MONTHLY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '월 정산 통제판', icon: 'fa-vault' },
                         { id: 'LOCATIONS', label: t.admin?.sidebar?.locations || '전 지점 마스터 관리', icon: 'fa-location-dot' },
@@ -2684,7 +2717,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               handlePrintLabel={handlePrintLabel}
               handleSoftDelete={handleSoftDelete}
               setSelectedBooking={setSelectedBooking}
-              adminRole={adminRole}
               onAddManual={() => setIsManualBooking(true)}
               cancelStartDate={cancelStartDate}
               setCancelStartDate={setCancelStartDate}
@@ -2751,16 +2783,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               deleteExpenditure={deleteExpenditure}
               setSelectedBooking={setSelectedBooking}
               t={t}
-            />
-          )}
-
-          {activeTab === 'FINANCIAL_COMPARISON' && (
-            <FinancialComparisonTab
-              bookings={bookings}
-              locations={locations}
-              t={t}
-              currentActor={currentActor}
-              onSettleComplete={() => { /* 정산 완료 후 금융 대조 탭에 머무름 */ }}
             />
           )}
 
@@ -2983,9 +3005,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         if (!scannedBooking.id) return;
                         setIsSaving(true);
                         try {
-                          await StorageService.updateBooking(scannedBooking.id, { status: item.status });
+                          const statusUpdated = await updateStatus(scannedBooking.id, item.status);
+                          if (!statusUpdated) {
+                            alert('상태 변경 실패');
+                            return;
+                          }
                           // scannedBooking is local state for the modal, keep it updated for UI
-                          setScannedBooking({ ...scannedBooking, status: item.status });
+                          const settledAt = item.status === BookingStatus.COMPLETED ? new Date().toISOString() : undefined;
+                          setScannedBooking({
+                            ...scannedBooking,
+                            status: item.status,
+                            ...(item.status === BookingStatus.COMPLETED ? {
+                              settlementStatus: 'CONFIRMED',
+                              settledAt,
+                              settledBy: currentActor.name,
+                            } : {}),
+                          });
                           alert(`상태가 [${item.label}] (으)로 변경되었습니다.`);
                         } catch (e) {
                           console.error(e);

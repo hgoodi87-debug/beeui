@@ -15,7 +15,7 @@
 │  /:lang/*    │  /admin/*                    │
 ├──────────────┼──────────────────────────────┤
 │ Landing      │ AdminLoginPage               │
-│ Locations    │ AdminDashboard (20개 탭)      │
+│ Locations    │ AdminDashboard (19개 탭)      │
 │ Booking      │ BranchAdminPage              │
 │ Payment      │ StaffScanPage                │
 │ Success      │                              │
@@ -165,9 +165,11 @@ client/src/domains/
               ▼
 [4] 결제 분기 ─────────────────────────
     │
-    ├─ finalPrice = 0 → 바로 예약 저장
+    ├─ 현재 운영: 현장 결제 / 별도 안내
+    │   └─ VITE_DIRECT_BOOKING_MODE 기본값 기준 바로 예약 저장
     │
-    └─ finalPrice > 0 → Toss 결제
+    └─ 향후 활성화: Toss / PayPal 온라인 결제
+        ├─ TossPayments 인증 완료 후 환경변수로 활성화
         ├─ createTossPaymentSession()
         ├─ requestTossCardPayment() → Toss 결제창
         ├─ 성공 → /payments/toss/success
@@ -206,9 +208,9 @@ client/src/domains/
 
 ```
 STORAGE_RATES:
-  핸드백:  4시간 4,000원 / 시간당 200원 / 1일 8,000원 / 추가일 6,000원 / 7일 44,000원
-  캐리어:  4시간 5,000원 / 시간당 250원 / 1일 10,000원 / 추가일 8,000원 / 7일 58,000원
-  유모차:  4시간 10,000원 / 시간당 200원 / 1일 14,000원 / 추가일 10,000원 / 7일 74,000원
+  핸드백:  4시간 4,000원 / 4시간 초과 시간당 1,000원 / 1일 8,000원 / 추가일 6,000원 / 7일 44,000원
+  캐리어:  4시간 5,000원 / 4시간 초과 시간당 1,000원 / 1일 10,000원 / 추가일 8,000원 / 7일 58,000원
+  유모차:  4시간 10,000원 / 4시간 초과 시간당 2,500원 / 1일 14,000원 / 추가일 10,000원 / 7일 74,000원
 ```
 
 **계산 흐름**:
@@ -330,7 +332,7 @@ PENDING → CONFIRMED → STORAGE → TRANSIT → ARRIVED → COMPLETED
 | **거점 타입** | location/types.ts | 70 | LocationOption 정의 |
 | **공통 타입** | shared/types.ts | 250 | ServiceType, BagSizes |
 | **번역** | translations_split/*.ts | 326KB | 6개 언어 |
-| **관리자** | AdminDashboard.tsx | 3,000+ | 20개 탭 대시보드 |
+| **관리자** | AdminDashboard.tsx | 3,000+ | 19개 탭 대시보드 |
 | **랜딩** | LandingRenewal.tsx | — | 12개 섹션 조합 |
 | **웹훅** | on-booking-created/index.ts | 267 | 코드생성+이메일+알림 |
 | **스토어** | store/bookingStore.ts | 36 | 예약 Zustand 스토어 |
@@ -367,13 +369,12 @@ LandingRenewal
 | 4 | DailySettlementTab | 일일 정산 | super/hq/finance |
 | 5 | AccountingTab | 회계 | super/hq/finance |
 | 6 | MonthlySettlementTab | 월별 정산 | super/hq/finance |
-| 7 | FinancialComparisonTab | 재무 비교 | super/hq/finance |
-| 8 | NoticeTab | 공지 관리 | super/hq |
-| 9 | PartnershipTab | 제휴 관리 | super/hq |
-| 10 | HRTab | 인사 관리 | super/hq |
-| 11 | SystemTab | 시스템 설정 | super |
-| 12 | ChatTab | 채팅 관리 | super/hq/cs |
-| 13 | DiscountTab | 할인 관리 | super/hq |
-| 14 | ReportsTab | 리포트 | super/hq |
-| 15 | OperationsConsole | 운영 콘솔 | super/hq/ops |
-| 16-20 | Editor Tabs | 약관/개인정보/QnA 편집 | super/hq |
+| 7 | NoticeTab | 공지 관리 | super/hq |
+| 8 | PartnershipTab | 제휴 관리 | super/hq |
+| 9 | HRTab | 인사 관리 | super/hq |
+| 10 | SystemTab | 시스템 설정 | super |
+| 11 | ChatTab | 채팅 관리 | super/hq/cs |
+| 12 | DiscountTab | 할인 관리 | super/hq |
+| 13 | ReportsTab | 리포트 | super/hq |
+| 14 | OperationsConsole | 운영 콘솔 | super/hq/ops |
+| 15-19 | Editor Tabs | 약관/개인정보/QnA 편집 | super/hq |

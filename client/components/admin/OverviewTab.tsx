@@ -116,12 +116,11 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                     <span className="w-2 h-6 bg-bee-yellow rounded-full"></span>
                     실물 운영 우선순위 (Priority P0) ☕
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
                     {[
                         { label: '당일 입고/집하 확인', count: stats.expectedIn, icon: 'fa-box-open', color: 'yellow', tab: 'DELIVERY_BOOKINGS', status: 'PENDING' },
                         { label: '당일 출고/배송 처리', count: stats.expectedOut, icon: 'fa-paper-plane', color: 'blue', tab: 'DELIVERY_BOOKINGS', status: 'ACTIVE' },
                         { label: '긴급 이슈 대응', count: stats.issueCount, icon: 'fa-circle-exclamation', color: 'red', tab: 'DELIVERY_BOOKINGS', status: 'ISSUE' },
-                        { label: '미정산 건 금융 대조', count: stats.unsettledCount, icon: 'fa-coins', color: 'emerald', tab: 'FINANCIAL_COMPARISON', status: 'ALL' },
                     ].map((task, idx) => (
                         <div 
                             key={idx}

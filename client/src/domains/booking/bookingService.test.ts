@@ -18,7 +18,7 @@ describe('calculateBookingStoragePrice', () => {
     it('4시간 초과 24시간 미만은 1시간 단위로 추가한다 (day1 상한)', () => {
         // 9:00 → 14:00 = 5시간
         // handBag: min(4000 + 1*1000, 8000) = 5000
-        // carrier:  min(5000 + 1*1250, 10000) = 6250
+        // carrier:  min(5000 + 1*1000, 10000) = 6000
         const result = calculateBookingStoragePrice(
             makeDate('2026-03-23T09:00'),
             makeDate('2026-03-23T14:00'),

@@ -120,7 +120,6 @@ export type AdminTab =
     | 'ROADMAP' 
     | 'CHATS' 
     | 'DAILY_SETTLEMENT'
-    | 'FINANCIAL_COMPARISON'
     | 'ACCOUNTING'
     | 'MONTHLY_SETTLEMENT'
     | 'REPORTS'

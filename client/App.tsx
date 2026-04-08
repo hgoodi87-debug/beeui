@@ -384,7 +384,7 @@ const App: React.FC = () => {
 
       // Google Ads 전환 이벤트
       fireBookingConversion({
-        value: confirmedBooking.totalPrice ?? 0,
+        value: Number(confirmedBooking.finalPrice ?? confirmedBooking.price ?? 0),
         currency: 'KRW',
         transactionId: confirmedBooking.id,
       });

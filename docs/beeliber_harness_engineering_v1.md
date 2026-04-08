@@ -67,7 +67,7 @@
 │ AI 생성, 자동 검사, 승인, 배포 통제                   │
 ├──────────────────────┼───────────────────────────────┤
 │ Layer 5. Admin       │ beeliber_ui_map + stitch_qa   │
-│ 20개 탭 대시보드, 운영보드, 이슈센터, 규칙관리         │
+│ 19개 탭 대시보드, 운영보드, 이슈센터, 규칙관리         │
 ├──────────────────────┼───────────────────────────────┤
 │ Layer 6. Eval        │ beeliber_eval                 │
 │ KPI, 실패 원인, 지점별/기사별/AI 성능 측정            │
@@ -96,7 +96,7 @@
 **보관 요금** (bookingService.ts):
 ```
 핸드백:  4h 4,000 / 시간당 200 / 1일 8,000 / 추가일 6,000 / 7일 44,000
-캐리어:  4h 5,000 / 시간당 250 / 1일 10,000 / 추가일 8,000 / 7일 58,000
+캐리어:  4h 5,000 / 4시간 초과 시간당 1,000 / 1일 10,000 / 추가일 8,000 / 7일 58,000
 유모차:  4h 10,000 / 시간당 200 / 1일 14,000 / 추가일 10,000 / 7일 74,000
 ```
 
@@ -214,9 +214,9 @@ client/                          ← React SPA (Vite + TypeScript)
 ├── App.tsx                      ← 전체 라우팅 (25+ 사용자 + 4 관리자)
 ├── components/
 │   ├── BookingPage.tsx          ← 예약 폼 4단계 (1,352줄)
-│   ├── AdminDashboard.tsx       ← 관리자 대시보드 (3,000+줄, 20탭)
+│   ├── AdminDashboard.tsx       ← 관리자 대시보드 (3,000+줄, 19탭)
 │   ├── LandingRenewal.tsx       ← 랜딩 페이지 (12개 섹션)
-│   ├── admin/                   ← 관리자 탭 컴포넌트 (20개)
+│   ├── admin/                   ← 관리자 탭 컴포넌트 (19개)
 │   └── landing/                 ← 랜딩 섹션 컴포넌트 (12개)
 ├── src/
 │   ├── domains/                 ← DDD 도메인 구조
@@ -259,7 +259,7 @@ functions/                       ← Firebase Functions (레거시, 운영 중)
 
 ---
 
-## 8. 관리자 대시보드 (실 구현, 20탭)
+## 8. 관리자 대시보드 (실 구현, 19탭)
 
 | # | 탭 | 컴포넌트 | 역할 |
 |---|-----|---------|------|
@@ -269,18 +269,17 @@ functions/                       ← Firebase Functions (레거시, 운영 중)
 | 4 | Daily Settlement | DailySettlementTab | 일일 정산 |
 | 5 | Accounting | AccountingTab | 회계 상세 |
 | 6 | Monthly Settlement | MonthlySettlementTab | 월별 정산 |
-| 7 | Financial Comparison | FinancialComparisonTab | 재무 비교 |
-| 8 | Notice | NoticeTab | 공지 CRUD |
-| 9 | Partnership | PartnershipTab | 제휴 관리 |
-| 10 | HR | HRTab | 직원/역할 관리 |
-| 11 | System | SystemTab | 시스템 설정 |
-| 12 | Cloud | CloudTab | 클라우드 설정 |
-| 13 | Chat | ChatTab | 채팅 관리 |
-| 14 | Discount | DiscountTab | 할인 코드 CRUD |
-| 15 | Reports | ReportsTab | 리포트 |
-| 16 | Roadmap | RoadmapTab | 로드맵 |
-| 17 | Operations | OperationsConsole | 운영 콘솔 |
-| 18-20 | Editors | Privacy/Terms/QnaEditorTab | 약관 편집 |
+| 7 | Notice | NoticeTab | 공지 CRUD |
+| 8 | Partnership | PartnershipTab | 제휴 관리 |
+| 9 | HR | HRTab | 직원/역할 관리 |
+| 10 | System | SystemTab | 시스템 설정 |
+| 11 | Cloud | CloudTab | 클라우드 설정 |
+| 12 | Chat | ChatTab | 채팅 관리 |
+| 13 | Discount | DiscountTab | 할인 코드 CRUD |
+| 14 | Reports | ReportsTab | 리포트 |
+| 15 | Roadmap | RoadmapTab | 로드맵 |
+| 16 | Operations | OperationsConsole | 운영 콘솔 |
+| 17-19 | Editors | Privacy/Terms/QnaEditorTab | 약관 편집 |
 
 > 70+ 버튼/핸들러 전수 검사 완료 (2026-03-31). 코드 레벨 broken 0건.
 

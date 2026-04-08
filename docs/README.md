@@ -1,6 +1,6 @@
 # Docs Index
 
-> 업데이트: 2026-04-07  
+> 업데이트: 2026-04-08
 > 목적: 실제 존재하는 문서만 유지. 작업 참조 순서대로 정렬.
 
 ---
@@ -39,6 +39,7 @@
 | 문서 | 내용 | 최종수정 |
 |---|---|---|
 | [`SEO_GEO_STRATEGY_2026.md`](SEO_GEO_STRATEGY_2026.md) | 2026 다국어 SEO 전체 전략 (zh-TW 우선, 6개 언어) | 2026-04-07 |
+| [`SEO_GEO_KEYWORD_PLAN_20260408.md`](SEO_GEO_KEYWORD_PLAN_20260408.md) | Google 검색 조사 기반 SEO/GEO 키워드·랜딩 매칭 실행안 | 2026-04-08 |
 | [`SEO_GEO_REPORT_20260407.md`](SEO_GEO_REPORT_20260407.md) | SEO 완료 11개 항목 + 미완료 5개 현황 보고 | 2026-04-07 |
 | [`GOOGLE_ADS_STRATEGY_REPORT_20260407.md`](GOOGLE_ADS_STRATEGY_REPORT_20260407.md) | 구글 애즈 기술 인프라 + 키워드 전략 + 캠페인 설계 | 2026-04-07 |
 

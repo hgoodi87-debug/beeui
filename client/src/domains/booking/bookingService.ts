@@ -10,14 +10,14 @@ export interface StorageRate {
 
 export const STORAGE_RATES: Record<keyof BagSizes, StorageRate> = {
     handBag: { hours4: 4000, hourlyAfter4h: 1000, day1: 8000, extraDay: 6000, day7: 44000 },
-    carrier: { hours4: 5000, hourlyAfter4h: 1250, day1: 10000, extraDay: 8000, day7: 58000 },
+    carrier: { hours4: 5000, hourlyAfter4h: 1000, day1: 10000, extraDay: 8000, day7: 58000 },
     strollerBicycle: { hours4: 10000, hourlyAfter4h: 2500, day1: 14000, extraDay: 10000, day7: 74000 },
 };
 
 /**
  * 운영 정책 설정(localStorage)에서 요금을 읽어 StorageRate로 변환.
  * 정책 설정이 없으면 STORAGE_RATES 폴백.
- * hourlyAfter4h = (day1 - hours4) / 4  (4h→8h 4시간 구간 기준)
+ * 4시간 초과 시간당 요금은 STORAGE_RATES 정책값을 따른다.
  */
 const getEffectiveStorageRates = (): Record<keyof BagSizes, StorageRate> => {
     try {
@@ -34,8 +34,7 @@ const getEffectiveStorageRates = (): Record<keyof BagSizes, StorageRate> => {
             const hours4 = t4h[size] ?? STORAGE_RATES[size].hours4;
             const day1 = t1d[size] ?? STORAGE_RATES[size].day1;
             const extraDay = tweek[size] ?? STORAGE_RATES[size].extraDay;
-            // hourlyAfter4h: 4h→8h 구간(4시간)에 day1에 도달하도록 계산
-            const hourlyAfter4h = Math.max(0, Math.round((day1 - hours4) / 4));
+            const hourlyAfter4h = STORAGE_RATES[size].hourlyAfter4h;
             return { hours4, hourlyAfter4h, day1, extraDay, day7: STORAGE_RATES[size].day7 };
         };
 

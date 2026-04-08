@@ -12,8 +12,24 @@ import { calcMonthlyVat } from "../_shared/vat.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GOOGLE_CHAT_WEBHOOK_URL = Deno.env.get("GOOGLE_CHAT_WEBHOOK_URL") || "";
+// pg_cron 호출 또는 수동 호출 시 공유 시크릿으로 인증
+// Supabase Dashboard → Project Settings → Secrets 에서 CRON_SECRET 등록
+const CRON_SECRET = Deno.env.get("CRON_SECRET") || "";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const JSON_HEADERS = { ...CORS, "Content-Type": "application/json" };
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
 
 /** KST 기준 어제 날짜 (YYYY-MM-DD) */
 function getYesterdayKST(): string {
@@ -27,26 +43,53 @@ function krw(amount: number): string {
   return `₩${Math.round(amount).toLocaleString("ko-KR")}`;
 }
 
+function parseBearer(req: Request): string {
+  return (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+}
+
+function isAuthorizedRequest(req: Request): boolean {
+  const cronHeader = req.headers.get("x-cron-secret") || "";
+  const bearerToken = parseBearer(req);
+
+  const hasValidCronSecret =
+    Boolean(CRON_SECRET)
+    && (cronHeader === CRON_SECRET || bearerToken === CRON_SECRET);
+  const hasValidServiceRole =
+    Boolean(SUPABASE_SERVICE_ROLE_KEY)
+    && bearerToken === SUPABASE_SERVICE_ROLE_KEY;
+
+  return hasValidCronSecret || hasValidServiceRole;
+}
+
+function isValidDateOnly(value: string): boolean {
+  if (!DATE_ONLY_RE.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
 serve(async (req) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      },
-    });
+    return new Response(null, { headers: CORS });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
+  // ── 인증: CRON_SECRET 또는 service_role Bearer ─────────────────────
+  if (!isAuthorizedRequest(req)) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
   // 날짜 결정: body.date → 어제 KST 순서
   let targetDate = getYesterdayKST();
-  if (req.method === "POST") {
-    try {
-      const body = await req.json().catch(() => ({}));
-      if (body?.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-        targetDate = body.date;
-      }
-    } catch (_) { /* ignore */ }
+  const body = await req.json().catch(() => ({}));
+  if (body?.date != null) {
+    if (typeof body.date !== "string" || !isValidDateOnly(body.date)) {
+      return jsonResponse({ error: "date는 YYYY-MM-DD 형식이어야 합니다." }, 400);
+    }
+    targetDate = body.date;
   }
 
   // ── 전일 매출 집계 조회 ──────────────────────────────────────────
@@ -57,10 +100,7 @@ serve(async (req) => {
 
   if (error) {
     console.error("[daily-settlement-summary] 조회 오류:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "정산 요약 조회에 실패했습니다." }, 500);
   }
 
   // ── 지점별 + 전체 합산 ─────────────────────────────────────────
@@ -152,6 +192,6 @@ serve(async (req) => {
   // ── 응답 ────────────────────────────────────────────────────────
   return new Response(
     JSON.stringify({ date: targetDate, totals, vat, netProfit, branchRows: rows }),
-    { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } },
+    { headers: JSON_HEADERS },
   );
 });

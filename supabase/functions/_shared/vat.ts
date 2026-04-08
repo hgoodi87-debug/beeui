@@ -14,19 +14,25 @@
  * 간이과세자 기준 매출 2,400만원 미만 시 면제 여부는 운영팀 확인 필요.
  */
 
+const normalizeWonAmount = (amount: number): number => {
+  if (!Number.isFinite(amount)) return 0;
+  return Math.max(0, Math.round(amount));
+};
+
 /** 부가세 포함 금액에서 공급가액 계산 (원 단위 버림) */
 export function getSupplyPrice(vatIncludedPrice: number): number {
-  return Math.floor(vatIncludedPrice / 1.1);
+  return Math.floor(normalizeWonAmount(vatIncludedPrice) / 1.1);
 }
 
 /** 부가세 포함 금액에서 VAT액 계산 */
 export function getVatAmount(vatIncludedPrice: number): number {
-  return vatIncludedPrice - getSupplyPrice(vatIncludedPrice);
+  const safePrice = normalizeWonAmount(vatIncludedPrice);
+  return safePrice - getSupplyPrice(safePrice);
 }
 
 /** 공급가액에서 VAT 포함 가격 계산 (원 단위 반올림) */
 export function addVat(supplyPrice: number): number {
-  return Math.round(supplyPrice * 1.1);
+  return Math.round(normalizeWonAmount(supplyPrice) * 1.1);
 }
 
 /** 월별 VAT 요약 계산 */
@@ -39,7 +45,12 @@ export function calcMonthlyVat(params: {
   supplyPrice: number;
   vatAmount: number;
 } {
-  const taxableRevenue = params.totalRevenue - params.cancelledTotal - params.refundedTotal;
+  const taxableRevenue = Math.max(
+    0,
+    normalizeWonAmount(params.totalRevenue)
+      - normalizeWonAmount(params.cancelledTotal)
+      - normalizeWonAmount(params.refundedTotal),
+  );
   const supplyPrice = getSupplyPrice(taxableRevenue);
   const vatAmount = getVatAmount(taxableRevenue);
   return { taxableRevenue, supplyPrice, vatAmount };

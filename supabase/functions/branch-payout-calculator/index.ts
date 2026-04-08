@@ -7,7 +7,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { authenticateAdminRequest } from "../_shared/admin-auth.ts";
+import { authenticateAdminRequest, isUuid, normalizeText } from "../_shared/admin-auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,28 +28,57 @@ interface PayoutCalcRow {
   booking_ids: string[];
 }
 
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidDateOnly(value: string): boolean {
+  if (!DATE_ONLY_RE.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
 
   // ── 인증 검증 (어드민만 허용) ─────────────────────────────────
+  let auth;
   try {
-    await authenticateAdminRequest(req);
+    auth = await authenticateAdminRequest(req);
   } catch (_err) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
   // ── 파라미터 파싱 ────────────────────────────────────────────
   const body = await req.json().catch(() => ({}));
-  const { period_start, period_end, branch_id, create_payout = false, paid_by } = body;
+  const period_start = normalizeText(body?.period_start);
+  const period_end = normalizeText(body?.period_end);
+  const branch_id = normalizeText(body?.branch_id) || null;
+  const create_payout = body?.create_payout === true;
+  const actorName = normalizeText(auth.adminContext.name || auth.adminContext.email) || "admin";
 
   if (!period_start || !period_end) {
-    return new Response(
-      JSON.stringify({ error: "period_start, period_end 필수" }),
-      { status: 400, headers: { ...CORS, "Content-Type": "application/json" } },
-    );
+    return jsonResponse({ error: "period_start, period_end 필수" }, 400);
+  }
+  if (!isValidDateOnly(period_start) || !isValidDateOnly(period_end)) {
+    return jsonResponse({ error: "period_start, period_end는 YYYY-MM-DD 형식이어야 합니다." }, 400);
+  }
+  if (period_start > period_end) {
+    return jsonResponse({ error: "period_start는 period_end보다 늦을 수 없습니다." }, 400);
+  }
+  if (branch_id && !isUuid(branch_id)) {
+    return jsonResponse({ error: "branch_id 형식 오류" }, 400);
+  }
+  if (body?.create_payout != null && typeof body.create_payout !== "boolean") {
+    return jsonResponse({ error: "create_payout은 boolean이어야 합니다." }, 400);
   }
 
   // ── CONFIRMED + payout_id 없는 예약 조회 ─────────────────────
@@ -69,10 +98,8 @@ serve(async (req) => {
   const { data: bookings, error: fetchErr } = await query;
 
   if (fetchErr) {
-    return new Response(JSON.stringify({ error: fetchErr.message }), {
-      status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    console.error("[branch-payout-calculator] 예약 조회 오류:", fetchErr);
+    return jsonResponse({ error: "지급 대상 예약 조회에 실패했습니다." }, 500);
   }
 
   // ── 지점별 집계 ────────────────────────────────────────────────
@@ -99,6 +126,7 @@ serve(async (req) => {
 
   // ── create_payout=true → branch_payouts 레코드 생성 ──────────
   const payoutRecords: Array<{ branch_id: string | null; payout_id: string }> = [];
+  const payoutErrors: Array<{ branch_id: string | null; step: "insert" | "update" | "rollback" }> = [];
 
   if (create_payout && results.length > 0) {
     for (const row of results) {
@@ -116,36 +144,59 @@ serve(async (req) => {
           booking_count: row.booking_count,
           payment_method: "bank_transfer",
           paid_at: new Date().toISOString(),
-          paid_by: paid_by || "admin",
+          paid_by: actorName,
         })
         .select("id")
         .single();
 
       if (payoutErr || !payout) {
         console.error("[branch-payout-calculator] payout 생성 오류:", payoutErr);
+        payoutErrors.push({ branch_id: row.branch_id, step: "insert" });
         continue;
       }
 
       // booking_details.payout_id + settlement_status 업데이트
-      await supabase
+      const { error: updateErr } = await supabase
         .from("booking_details")
         .update({ payout_id: payout.id, settlement_status: "PAID_OUT" })
         .in("id", row.booking_ids);
+
+      if (updateErr) {
+        console.error("[branch-payout-calculator] 예약 지급 연결 오류:", updateErr);
+        payoutErrors.push({ branch_id: row.branch_id, step: "update" });
+
+        const { error: rollbackErr } = await supabase
+          .from("branch_payouts")
+          .delete()
+          .eq("id", payout.id);
+        if (rollbackErr) {
+          console.error("[branch-payout-calculator] payout 롤백 오류:", rollbackErr);
+          payoutErrors.push({ branch_id: row.branch_id, step: "rollback" });
+        }
+        continue;
+      }
 
       payoutRecords.push({ branch_id: row.branch_id, payout_id: payout.id });
     }
   }
 
-  return new Response(
-    JSON.stringify({
+  if (payoutErrors.length > 0) {
+    return jsonResponse({
+      error: "일부 지점 지급 확정에 실패했습니다.",
+      failures: payoutErrors,
+      payout_records: payoutRecords,
+    }, 500);
+  }
+
+  return jsonResponse(
+    {
       period_start,
       period_end,
       total_bookings: (bookings ?? []).length,
       total_payout: results.reduce((s, r) => s + r.total_amount, 0),
       branches: results,
-      payout_created: create_payout,
+      payout_created: payoutRecords.length > 0,
       payout_records: payoutRecords,
-    }),
-    { headers: { ...CORS, "Content-Type": "application/json" } },
+    },
   );
 });

@@ -8,7 +8,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { authenticateAdminRequest } from "../_shared/admin-auth.ts";
+import { authenticateAdminRequest, isUuid, normalizeText } from "../_shared/admin-auth.ts";
 import { calcMonthlyVat } from "../_shared/vat.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -21,6 +21,9 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
+
+const VALID_MODES = new Set(["bookings", "summary"]);
+const MONTH_RE = /^\d{1,2}$/;
 
 /** CSV 셀 이스케이프 */
 function esc(value: unknown): string {
@@ -38,6 +41,9 @@ function csvRow(cols: unknown[]): string {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  if (req.method !== "GET") {
+    return new Response("Method not allowed", { status: 405, headers: CORS });
+  }
 
   // ── 인증 ──────────────────────────────────────────────────────
   try {
@@ -50,21 +56,28 @@ serve(async (req) => {
   const url = new URL(req.url);
   const yearParam  = url.searchParams.get("year");
   const monthParam = url.searchParams.get("month");
-  const branchId   = url.searchParams.get("branch_id") || null;
-  const mode       = url.searchParams.get("mode") || "bookings"; // bookings | summary
+  const branchId   = normalizeText(url.searchParams.get("branch_id")) || null;
+  const mode       = normalizeText(url.searchParams.get("mode")) || "bookings"; // bookings | summary
 
   if (!yearParam || !monthParam) {
     return new Response("year, month 쿼리 파라미터 필수", { status: 400, headers: CORS });
   }
 
-  const year  = parseInt(yearParam);
-  const month = parseInt(monthParam);
-  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+  const year  = parseInt(yearParam, 10);
+  const month = parseInt(monthParam, 10);
+  if (!/^\d{4}$/.test(yearParam) || !MONTH_RE.test(monthParam) || isNaN(year) || year < 2020 || year > 2100 || isNaN(month) || month < 1 || month > 12) {
     return new Response("year/month 형식 오류", { status: 400, headers: CORS });
+  }
+  if (!VALID_MODES.has(mode)) {
+    return new Response("mode는 bookings 또는 summary만 허용됩니다.", { status: 400, headers: CORS });
+  }
+  if (branchId && !isUuid(branchId)) {
+    return new Response("branch_id 형식 오류", { status: 400, headers: CORS });
   }
 
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-  const endDate   = new Date(year, month, 0).toISOString().split("T")[0]; // 말일
+  const endDate   = new Date(Date.UTC(year, month, 0)).toISOString().split("T")[0]; // 말일
+  const MAX_ROWS  = 10_000; // Edge Function 메모리 보호용 최대 행 수
 
   // ── mode=summary: 월별 요약 뷰 ───────────────────────────────
   if (mode === "summary") {
@@ -76,7 +89,8 @@ serve(async (req) => {
 
     const { data: summaryRows, error: summaryErr } = await summaryQ;
     if (summaryErr) {
-      return new Response(summaryErr.message, { status: 500, headers: CORS });
+      console.error("[monthly-settlement-export] summary 조회 오류:", summaryErr);
+      return new Response("월별 정산 요약 조회에 실패했습니다.", { status: 500, headers: CORS });
     }
 
     const headers = [
@@ -129,13 +143,15 @@ serve(async (req) => {
     .gte("pickup_date", startDate)
     .lte("pickup_date", endDate)
     .eq("is_deleted", false)
-    .order("pickup_date", { ascending: true });
+    .order("pickup_date", { ascending: true })
+    .limit(MAX_ROWS);
 
   if (branchId) query = query.eq("branch_id", branchId);
 
   const { data: bookings, error: bookingErr } = await query;
   if (bookingErr) {
-    return new Response(bookingErr.message, { status: 500, headers: CORS });
+    console.error("[monthly-settlement-export] bookings 조회 오류:", bookingErr);
+    return new Response("월별 예약 정산 조회에 실패했습니다.", { status: 500, headers: CORS });
   }
 
   const headers = [
@@ -160,7 +176,12 @@ serve(async (req) => {
     ])
   );
 
-  const csv = [csvRow(headers), ...rows].join("\r\n");
+  const truncated = (bookings?.length ?? 0) >= MAX_ROWS;
+  const csv = [
+    csvRow(headers),
+    ...rows,
+    ...(truncated ? [`# 경고: 최대 ${MAX_ROWS}건 제한으로 일부 데이터가 누락되었을 수 있습니다.`] : []),
+  ].join("\r\n");
   const filename = `beeliber_settlement_${yearParam}${String(month).padStart(2, "0")}.csv`;
 
   return new Response("\uFEFF" + csv, {

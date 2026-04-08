@@ -1883,40 +1883,65 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   const handleBulkPayoutConfirm = async (bookingIds: string[]) => {
     if (bookingIds.length === 0) return;
     try {
-      // 1) 예약 settlement_status → PAID_OUT 업데이트
-      const results = await Promise.allSettled(
-        bookingIds.map(id =>
-          mutateBookingRecord(id, {
-            supabaseMethod: 'PATCH',
-            supabaseBody: { settlement_status: 'PAID_OUT' },
-          })
-        )
+      const bookingIdSet = new Set(bookingIds);
+      const targetBookings = bookings.filter(b =>
+        (b.id && bookingIdSet.has(b.id)) || (b.reservationCode && bookingIdSet.has(b.reservationCode))
       );
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        throw (failures[0] as PromiseRejectedResult).reason;
+      const today = new Date().toISOString().split('T')[0];
+      const now = new Date().toISOString();
+
+      // 지점별로 그룹핑
+      const byBranch = new Map<string, typeof targetBookings>();
+      for (const b of targetBookings) {
+        const key = b.branchId || b.branchName || '__none__';
+        if (!byBranch.has(key)) byBranch.set(key, []);
+        byBranch.get(key)!.push(b);
       }
 
-      // 2) branch_payouts 지급 이력 생성
-      const bookingIdSet = new Set(bookingIds);
-      const targetBookings = bookings.filter(b => (b.id && bookingIdSet.has(b.id)) || (b.reservationCode && bookingIdSet.has(b.reservationCode)));
-      const totalAmount = targetBookings.reduce((sum, b) => sum + (b.branchSettlementAmount || 0), 0);
-      const today = new Date().toISOString().split('T')[0];
-      await StorageService.saveBranchPayout({
-        branchName: targetBookings[0]?.branchName || '(일괄)',
-        periodStart: today,
-        periodEnd: today,
-        totalAmount,
-        bookingCount: bookingIds.length,
-        paymentMethod: 'bank_transfer',
-        paidAt: new Date().toISOString(),
-        paidBy: currentActor.name,
-        notes: `일괄 지급 확정 ${bookingIds.length}건`,
-      });
+      let totalPaid = 0;
+      // 지점별: branch_payouts 먼저 생성 → payout.id 획득 → 예약 PAID_OUT 업데이트
+      for (const [, branchBookings] of byBranch) {
+        const branchTotal = branchBookings.reduce((sum, b) => sum + (b.branchSettlementAmount || 0), 0);
+        totalPaid += branchTotal;
+        const first = branchBookings[0];
+
+        // 1) 지급 이력 먼저 생성 (audit trail 확보)
+        const payout = await StorageService.saveBranchPayout({
+          branchId: first.branchId,
+          branchName: first.branchName || '(미분류)',
+          periodStart: today,
+          periodEnd: today,
+          totalAmount: branchTotal,
+          bookingCount: branchBookings.length,
+          paymentMethod: 'bank_transfer',
+          paidAt: now,
+          paidBy: currentActor.name,
+          notes: `일괄 지급 확정 ${branchBookings.length}건`,
+        });
+
+        // 2) 예약 PAID_OUT + payout_id 링크
+        const results = await Promise.allSettled(
+          branchBookings
+            .filter(b => Boolean(b.id))
+            .map(b => mutateBookingRecord(b.id!, {
+              supabaseMethod: 'PATCH',
+              supabaseBody: { settlement_status: 'PAID_OUT', payout_id: payout.id },
+            }))
+        );
+        const failures = results.filter(r => r.status === 'rejected');
+        if (failures.length > 0) {
+          throw (failures[0] as PromiseRejectedResult).reason;
+        }
+      }
 
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      await AuditService.logAction(currentActor, 'UPDATE', { id: 'bulk-payout', type: 'SETTLEMENT' }, { method: 'BULK_PAYOUT_CONFIRM', count: bookingIds.length, totalAmount });
-      alert(`${bookingIds.length}건 지급 확정 완료. 총 ₩${totalAmount.toLocaleString()}`);
+      await AuditService.logAction(
+        currentActor,
+        'UPDATE',
+        { id: 'bulk-payout', type: 'SETTLEMENT' },
+        { method: 'BULK_PAYOUT_CONFIRM', count: bookingIds.length, totalAmount: totalPaid, branchCount: byBranch.size }
+      );
+      alert(`${bookingIds.length}건 지급 확정 완료. 총 ₩${totalPaid.toLocaleString()}`);
     } catch (e) {
       console.error(e);
       alert('정산처리 중 오류가 발생했습니다.');
@@ -1934,7 +1959,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         confirmedAmount: monthStats?.confirmedAmount ?? 0,
         unconfirmedAmount: monthStats?.unconfirmedAmount ?? 0,
         partnerPayoutTotal: monthStats?.partnerPayoutTotal ?? 0,
-        netProfit: (monthStats?.confirmedAmount ?? 0) - (monthStats?.partnerPayoutTotal ?? 0),
+        netProfit: (monthStats?.totalRevenue ?? 0) - (monthStats?.partnerPayoutTotal ?? 0),
         bookingCount: monthStats?.activeBookingCount ?? 0,
         isClosed: true,
         closedAt: new Date().toISOString(),

@@ -25,6 +25,8 @@ END $$;
 -- cron 잡 등록
 -- 시크릿 키는 app.cron_secret 설정값을 사용
 -- (운영 환경에서는 Dashboard의 Cron Jobs UI 사용 권장)
+-- app.supabase_url 은 Supabase 내부에서 자동 주입됨 (프로젝트 URL)
+-- 하드코딩 URL을 제거하여 스테이징/프로덕션 환경 이식성 확보
 SELECT cron.schedule(
   'daily-settlement-summary',
   '0 17 * * *',   -- 매일 17:00 UTC = 02:00 KST
@@ -39,7 +41,7 @@ SELECT cron.schedule(
       body := '{}'::jsonb
     )
     $cron$,
-    'https://fzvfyeskdivulazjjpgr.supabase.co/functions/v1/daily-settlement-summary'
+    current_setting('app.supabase_url', true) || '/functions/v1/daily-settlement-summary'
   )
 );
 

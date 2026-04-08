@@ -51,14 +51,8 @@ function isAuthorizedRequest(req: Request): boolean {
   const cronHeader = req.headers.get("x-cron-secret") || "";
   const bearerToken = parseBearer(req);
 
-  const hasValidCronSecret =
-    Boolean(CRON_SECRET)
-    && (cronHeader === CRON_SECRET || bearerToken === CRON_SECRET);
-  const hasValidServiceRole =
-    Boolean(SUPABASE_SERVICE_ROLE_KEY)
-    && bearerToken === SUPABASE_SERVICE_ROLE_KEY;
-
-  return hasValidCronSecret || hasValidServiceRole;
+  // CRON_SECRET 전용 — service_role key를 Bearer로 수락하지 않음 (키 유출 시 남용 방지)
+  return Boolean(CRON_SECRET) && (cronHeader === CRON_SECRET || bearerToken === CRON_SECRET);
 }
 
 function isValidDateOnly(value: string): boolean {

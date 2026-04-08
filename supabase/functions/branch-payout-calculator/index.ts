@@ -65,6 +65,15 @@ serve(async (req) => {
   const create_payout = body?.create_payout === true;
   const actorName = normalizeText(auth.adminContext.name || auth.adminContext.email) || "admin";
 
+  // create_payout=true 는 재무/본사/슈퍼어드민만 허용
+  if (create_payout) {
+    const role = auth.adminContext.role as string | undefined;
+    const ALLOWED_ROLES = ["finance", "finance_staff", "hq_admin", "super_admin", "super"];
+    if (!role || !ALLOWED_ROLES.includes(role)) {
+      return jsonResponse({ error: "Forbidden — 재무/본사 관리자만 지급 확정 가능합니다." }, 403);
+    }
+  }
+
   if (!period_start || !period_end) {
     return jsonResponse({ error: "period_start, period_end 필수" }, 400);
   }

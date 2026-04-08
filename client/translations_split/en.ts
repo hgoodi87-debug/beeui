@@ -755,7 +755,9 @@ export const en = {
         currency_exchange: 'Currency Exchange',
         special_benefit: 'Special Benefit',
         everyday_hours: '09:00 - 21:00 (Everyday)',
-        address_specified: 'Address Specified'
+        address_specified: 'Address Specified',
+        storage_notice_title: 'Storage Info',
+        storage_notice_desc: 'Pick the start and return schedule, and your storage time will be calculated automatically.'
     },
     chatbot: {
         header: 'Beeliber Bot',

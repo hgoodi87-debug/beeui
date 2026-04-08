@@ -1085,7 +1085,9 @@ export const ko = {
         currency_exchange: '환전 혜택',
         special_benefit: '특별 우대',
         everyday_hours: '09:00 - 21:00 (매일)',
-        address_specified: '주소 별도 지정'
+        address_specified: '주소 별도 지정',
+        storage_notice_title: '보관 안내',
+        storage_notice_desc: '날짜와 시간을 선택하시면 보관 시간이 자동으로 계산됩니다.'
     },
     location_names: {
         'IN1T': '인천공항 T1',

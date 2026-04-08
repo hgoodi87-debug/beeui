@@ -571,7 +571,9 @@ export const ja = {
         currency_exchange: '両替特典',
         special_benefit: '特別優待',
         everyday_hours: '09:00 - 21:00（毎日）',
-        address_specified: '住所指定'
+        address_specified: '住所指定',
+        storage_notice_title: '保管について',
+        storage_notice_desc: '日程と時間を選択すると、保管時間が自動で計算されます。'
     },
     size_simulator: {
         size_s_range: '18〜20インチ',

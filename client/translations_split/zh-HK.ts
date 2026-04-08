@@ -656,7 +656,9 @@ export const zhHK = {
         currency_exchange: '換匯優惠',
         special_benefit: '特別禮遇',
         everyday_hours: '09:00 - 21:00（每日）',
-        address_specified: '已經填寫地址'
+        address_specified: '已經填寫地址',
+        storage_notice_title: '行李寄存說明',
+        storage_notice_desc: '選擇日期與時間後，寄存時間將自動計算。'
     },
     size_simulator: {
         header_title: "BEE 尺寸對照",

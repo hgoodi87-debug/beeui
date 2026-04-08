@@ -313,7 +313,8 @@
         || (path.startsWith('/storage/') ? (storageFallback[urlLang] || storageFallback['zh-tw']) : null)
         || (path.startsWith('/delivery/') ? (deliveryFallback[urlLang] || deliveryFallback['zh-tw']) : null)
         || routeMetaI18n['/'][urlLang] || routeMetaI18n['/']['zh-tw'];
-      const canonicalUrl = siteUrl + rawPath;
+      const canonicalPath = langMatch ? rawPath : ('/zh-tw' + (path === '/' ? '' : path));
+      const canonicalUrl = siteUrl + canonicalPath;
       const langSuffix = path === '/' ? '' : path;
 
       const setNamedMeta = function (name, content) {

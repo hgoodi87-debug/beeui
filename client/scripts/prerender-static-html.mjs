@@ -17,14 +17,26 @@ const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, '../dist');
 const fallbackFileName = '__spa-fallback.html';
 
+const LANGS = [
+  { code: 'zh-tw', hreflang: 'zh-TW', htmlLang: 'zh-TW' },
+  { code: 'zh-hk', hreflang: 'zh-HK', htmlLang: 'zh-HK' },
+  { code: 'en', hreflang: 'en', htmlLang: 'en' },
+  { code: 'ja', hreflang: 'ja', htmlLang: 'ja' },
+  { code: 'zh', hreflang: 'zh-CN', htmlLang: 'zh-CN' },
+  { code: 'ko', hreflang: 'ko', htmlLang: 'ko' },
+];
+
+const buildLangUrl = (langCode, routePath) => {
+  const suffix = routePath === '/' ? '' : routePath;
+  return `${SITE_URL}/${langCode}${suffix}`;
+};
+
 const buildAlternateLinks = (routePath) => [
-  { hrefLang: 'ko-KR', href: `${SITE_URL}${routePath}` },
-  { hrefLang: 'en', href: `${SITE_URL}${routePath}?lang=en` },
-  { hrefLang: 'ja-JP', href: `${SITE_URL}${routePath}?lang=ja` },
-  { hrefLang: 'zh-CN', href: `${SITE_URL}${routePath}?lang=zh` },
-  { hrefLang: 'zh-TW', href: `${SITE_URL}${routePath}?lang=zh-TW` },
-  { hrefLang: 'zh-HK', href: `${SITE_URL}${routePath}?lang=zh-HK` },
-  { hrefLang: 'x-default', href: `${SITE_URL}${routePath}` },
+  ...LANGS.map(({ code, hreflang }) => ({
+    hrefLang: hreflang,
+    href: buildLangUrl(code, routePath),
+  })),
+  { hrefLang: 'x-default', href: buildLangUrl('zh-tw', routePath) },
 ];
 
 const locationMetaMap = new Map(SEO_BUILD_LOCATIONS.map((location) => [location.slug, location]));
@@ -60,12 +72,12 @@ const resolveRouteMeta = (routePath) => {
   return null;
 };
 
-const renderRouteHtml = (html, routePath, meta) => {
+const renderRouteHtml = (html, routePath, meta, lang) => {
   const dom = new JSDOM(html);
   const { document } = dom.window;
-  const canonicalUrl = `${SITE_URL}${routePath}`;
+  const canonicalUrl = buildLangUrl(lang.code, routePath);
 
-  document.documentElement.setAttribute('lang', 'ko');
+  document.documentElement.setAttribute('lang', lang.htmlLang);
   document.title = meta.title;
 
   ensureMeta(document, 'name', 'description').setAttribute('content', meta.description);
@@ -105,14 +117,17 @@ const renderRouteHtml = (html, routePath, meta) => {
   return dom.serialize();
 };
 
-const writeRouteHtml = async (html, routePath) => {
-  const outputPath =
-    routePath === '/'
-      ? path.join(distDir, 'index.html')
-      : path.join(distDir, routePath.replace(/^\//, ''), 'index.html');
+const writeRouteHtml = async (html, routePath, langCode) => {
+  const routeSuffix = routePath === '/' ? '' : routePath.replace(/^\//, '');
+  const indexOutputPath = path.join(distDir, langCode, routeSuffix, 'index.html');
+  const cleanUrlOutputPath = routeSuffix
+    ? path.join(distDir, langCode, `${routeSuffix}.html`)
+    : path.join(distDir, `${langCode}.html`);
 
-  await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  await fs.writeFile(outputPath, html, 'utf8');
+  await fs.mkdir(path.dirname(indexOutputPath), { recursive: true });
+  await fs.writeFile(indexOutputPath, html, 'utf8');
+  await fs.mkdir(path.dirname(cleanUrlOutputPath), { recursive: true });
+  await fs.writeFile(cleanUrlOutputPath, html, 'utf8');
 };
 
 const main = async () => {
@@ -127,9 +142,11 @@ const main = async () => {
     if (!meta) {
       continue;
     }
-    const renderedHtml = renderRouteHtml(baseHtml, route.path, meta);
-    await writeRouteHtml(renderedHtml, route.path);
-    generatedCount += 1;
+    for (const lang of LANGS) {
+      const renderedHtml = renderRouteHtml(baseHtml, route.path, meta, lang);
+      await writeRouteHtml(renderedHtml, route.path, lang.code);
+      generatedCount += 1;
+    }
   }
 
   console.log(

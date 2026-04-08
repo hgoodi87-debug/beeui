@@ -2,19 +2,19 @@ const baseUrl = (process.env.SEO_PREVIEW_BASE_URL || 'http://localhost:4177').re
 
 const checks = [
   {
-    path: '/locations',
+    path: '/ko/locations',
     expectedTitle: '지점 안내 | 빌리버 서울 짐보관 지점 찾기',
-    expectedCanonical: 'https://bee-liber.com/locations',
+    expectedCanonical: 'https://bee-liber.com/ko/locations',
   },
   {
-    path: '/storage/hongdae',
-    expectedTitle: '홍대입구역 &amp; 연남동 짐보관 | Beeliber 핸즈프리 💅',
-    expectedCanonical: 'https://bee-liber.com/storage/hongdae',
+    path: '/ko/storage/hongdae',
+    expectedTitle: '홍대입구역 &amp; 연남동 짐보관 | Beeliber 핸즈프리',
+    expectedCanonical: 'https://bee-liber.com/ko/storage/hongdae',
   },
   {
-    path: '/delivery/hongdae',
+    path: '/ko/delivery/hongdae',
     expectedTitle: '홍대입구역 &amp; 연남동 당일 짐배송 | 빌리버',
-    expectedCanonical: 'https://bee-liber.com/delivery/hongdae',
+    expectedCanonical: 'https://bee-liber.com/ko/delivery/hongdae',
   },
   {
     path: '/robots.txt',
@@ -22,7 +22,7 @@ const checks = [
   },
   {
     path: '/sitemap.xml',
-    expectedText: 'https://bee-liber.com/delivery/hongdae',
+    expectedText: 'https://bee-liber.com/ko/delivery/hongdae',
   },
 ];
 

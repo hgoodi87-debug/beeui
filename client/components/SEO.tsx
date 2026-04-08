@@ -16,6 +16,7 @@ interface SEOProps {
     schema?: object;
     ogImage?: string; // 💅 동적 OG 이미지 지원 추가
     ogType?: 'website' | 'article'; // 💅 페이지 성격에 따른 타입 지원
+    noIndex?: boolean;
 }
 
 const SEO: React.FC<SEOProps> = ({
@@ -26,15 +27,22 @@ const SEO: React.FC<SEOProps> = ({
     path = '',
     schema,
     ogImage: customOgImage,
-    ogType = 'website'
+    ogType = 'website',
+    noIndex = false
 }) => {
     // 💅 [스봉이] 언어 접두사를 제거하여 순수 경로만 추출합니다. (e.g., /ko/services -> /services)
     const rawPath = path.split('?')[0] || '/';
     const langPattern = /^\/(ko|en|zh-tw|zh-hk|ja|zh)(\/|$)/i;
     const cleanPath = rawPath.replace(langPattern, '/').replace(/\/$/, '') || '/';
+    const normalizedLang = ['ko', 'en', 'zh-tw', 'zh-hk', 'ja', 'zh'].includes(lang.toLowerCase())
+        ? lang.toLowerCase()
+        : 'zh-tw';
+    const canonicalPath = langPattern.test(rawPath)
+        ? (rawPath.replace(/\/$/, '') || '/')
+        : `/${normalizedLang}${cleanPath === '/' ? '' : cleanPath}`;
 
-    const canonicalUrl = `${SITE_URL}${rawPath}`;
-    const currentUrl = `${SITE_URL}${path}`;
+    const canonicalUrl = `${SITE_URL}${canonicalPath}`;
+    const currentUrl = canonicalUrl;
     // lang 기반 다국어 메타 → 없으면 한국어 fallback → 없으면 하드코딩 fallback
     const localizedMeta = getLocalizedRouteMeta(lang, cleanPath);
     const routeDefault = localizedMeta ?? STATIC_ROUTE_META[cleanPath];
@@ -56,6 +64,7 @@ const SEO: React.FC<SEOProps> = ({
             <title>{metaTitle}</title>
             <meta name="description" content={metaDescription} />
             <meta name="keywords" content={metaKeywords} />
+            <meta name="robots" content={noIndex ? 'noindex, follow' : 'index, follow'} />
             <link rel="canonical" href={canonicalUrl} />
 
             {/* Open Graph / Facebook */}

@@ -10,6 +10,7 @@ interface StorageLandingPageProps {
     lang: string;
     onBack: () => void;
     onBook: (locationId: string) => void;
+    mode?: 'storage' | 'delivery';
 }
 
 type LangKey = 'ko' | 'en' | 'ja' | 'zh' | 'zh-TW' | 'zh-HK';
@@ -117,10 +118,111 @@ const CATEGORY_ICON: Record<string, string> = {
     nature: '🌿',
 };
 
-const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, onBook }) => {
+const cleanTitleText = (value: string) =>
+    value
+        .replace(/[💅✨]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+const getAreaLabel = (location: typeof SEO_LOCATIONS[number], lk: LangKey) => {
+    const title = location.titles[lk] || location.titles.en || location.slug;
+    return cleanTitleText(title.split('|')[0] || title)
+        .replace(/\s*(짐보관|Luggage Storage|Storage|荷物預かり|行李寄放|行李寄存).*$/i, '')
+        .trim() || location.slug;
+};
+
+const buildDeliveryMeta = (location: typeof SEO_LOCATIONS[number], lk: LangKey) => {
+    const area = getAreaLabel(location, lk);
+    const metaByLang: Record<LangKey, { title: string; description: string; keywords: string }> = {
+        'zh-TW': {
+            title: `${area} 機場當日行李配送 | Beeliber`,
+            description: `從${area}寄送行李到仁川機場T1·T2。退房後先去逛街，當天在機場取回行李。`,
+            keywords: `${area} 行李配送, 仁川機場行李配送, 首爾行李配送, 韓國行李寄放`,
+        },
+        'zh-HK': {
+            title: `${area} 機場即日行李配送 | Beeliber`,
+            description: `從${area}寄送行李到仁川機場T1·T2。退房後先去行街，即日在機場取回行李。`,
+            keywords: `${area} 行李配送, 仁川機場行李配送, 首爾行李配送, 韓國行李寄存`,
+        },
+        en: {
+            title: `${area} Airport Luggage Delivery | Beeliber`,
+            description: `Send luggage from ${area} to Incheon Airport T1 or T2 on the same day. Explore after check-out and pick up your bags at the airport.`,
+            keywords: `${area} luggage delivery, Incheon airport luggage delivery, Seoul luggage delivery, same-day airport luggage delivery`,
+        },
+        ja: {
+            title: `${area} 空港当日荷物配送 | Beeliber`,
+            description: `${area}から仁川空港T1·T2まで当日荷物配送。チェックアウト後は身軽に観光し、空港で荷物を受け取れます。`,
+            keywords: `${area} 荷物配送, 仁川空港 荷物配送, ソウル 荷物配送, 当日配送`,
+        },
+        zh: {
+            title: `${area} 机场当日行李配送 | Beeliber`,
+            description: `从${area}寄送行李到仁川机场T1·T2。退房后轻松逛街，当天在机场取回行李。`,
+            keywords: `${area} 行李配送, 仁川机场行李配送, 首尔行李配送, 韩国行李寄存`,
+        },
+        ko: {
+            title: `${area} 공항 당일 짐배송 | 빌리버`,
+            description: `${area}에서 인천공항 T1·T2까지 당일 짐배송을 예약하세요. 체크아웃 후 가볍게 이동하고 공항에서 캐리어를 찾을 수 있습니다.`,
+            keywords: `${area} 짐배송, 인천공항 짐배송, 서울 당일 짐배송, 공항 캐리어 배송`,
+        },
+    };
+
+    return metaByLang[lk] || metaByLang.en;
+};
+
+const buildDeliveryFaqs = (location: typeof SEO_LOCATIONS[number], lk: LangKey) => {
+    const area = getAreaLabel(location, lk);
+    return [
+        {
+            question: lk === 'ko' ? `${area}에서 인천공항으로 당일 짐배송이 가능한가요?`
+                : lk === 'en' ? `Can I send luggage from ${area} to Incheon Airport on the same day?`
+                : lk === 'ja' ? `${area}から仁川空港へ当日荷物配送できますか？`
+                : `${area}可以當日配送行李到仁川機場嗎？`,
+            answer: {
+                ko: `${area} 인근 빌리버 지점에 짐을 맡기면 인천공항 T1·T2 출국장 수령 지점으로 당일 배송할 수 있습니다. 예약 시 날짜와 공항 터미널을 확인하세요.`,
+                en: `Yes. Drop off your bags at a Beeliber branch near ${area}, then pick them up at the Incheon Airport T1 or T2 departure hall on the same day.`,
+                ja: `はい。${area}近くのBeeliber拠点に荷物を預けると、同日中に仁川空港T1·T2の出発ロビーで受け取れます。`,
+                zh: `可以。将行李交给${area}附近的Beeliber据点后，当天可在仁川机场T1·T2出境大厅取回。`,
+                'zh-TW': `可以。將行李交給${area}附近的Beeliber據點後，當天可在仁川機場T1·T2出境大廳取回。`,
+                'zh-HK': `可以。將行李交給${area}附近的Beeliber據點後，即日可在仁川機場T1·T2出境大堂取回。`,
+            },
+        },
+        {
+            question: lk === 'ko' ? '캐리어 외 짐도 배송할 수 있나요?'
+                : lk === 'en' ? 'Can I send bags other than suitcases?'
+                : lk === 'ja' ? 'スーツケース以外も配送できますか？'
+                : '行李箱以外也可以配送嗎？',
+            answer: {
+                ko: '캐리어, 쇼핑백, 손가방은 배송할 수 있습니다. 유모차와 자전거는 배송이 아닌 지점 보관만 가능합니다.',
+                en: 'Suitcases, shopping bags, and handbags are accepted for delivery. Strollers and bicycles are storage-only.',
+                ja: 'スーツケース、ショッピングバッグ、ハンドバッグは配送できます。ベビーカーと自転車は保管のみ対応しています。',
+                zh: '行李箱、购物袋、手提包可以配送。婴儿车与自行车仅支持据点寄存。',
+                'zh-TW': '行李箱、購物袋、手提包可以配送。嬰兒車與自行車僅支援據點寄放。',
+                'zh-HK': '行李箱、購物袋、手提包可以配送。嬰兒車與單車只支援據點寄存。',
+            },
+        },
+        {
+            question: lk === 'ko' ? '공항에서 어디서 수령하나요?'
+                : lk === 'en' ? 'Where do I pick up my bags at the airport?'
+                : lk === 'ja' ? '空港ではどこで受け取れますか？'
+                : '在機場哪裡取回行李？',
+            answer: {
+                ko: '인천공항 T1은 3층 출국장 A카운터, T2는 3층 출국장 H카운터 기준으로 안내합니다. 실제 수령 지점은 예약 안내에서 다시 확인하세요.',
+                en: 'For Incheon Airport, we guide travelers to T1 3F Departure Hall A Counter or T2 3F Departure Hall H Counter. Confirm the final pickup point in your booking notice.',
+                ja: '仁川空港T1は3階出発ロビーAカウンター、T2は3階出発ロビーHカウンターを基準にご案内します。予約案内で最終受け取り場所をご確認ください。',
+                zh: '仁川机场T1为3楼出境大厅A柜台，T2为3楼出境大厅H柜台。请在预约通知中再次确认实际取件点。',
+                'zh-TW': '仁川機場T1為3樓出境大廳A櫃台，T2為3樓出境大廳H櫃台。請在預約通知中再次確認實際取件點。',
+                'zh-HK': '仁川機場T1為3樓出境大堂A櫃台，T2為3樓出境大堂H櫃台。請在預約通知中再次確認實際取件點。',
+            },
+        },
+    ];
+};
+
+const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, onBook, mode = 'storage' }) => {
     const { slug } = useParams<{ slug: string }>();
     const lk = getLangKey(lang);
     const ui = UI_TEXT[lk];
+    const isDelivery = mode === 'delivery';
+    const pagePath = `/${mode}/${slug || ''}`;
 
     const location = SEO_LOCATIONS.find((loc) => loc.slug === slug);
 
@@ -132,7 +234,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
     if (!location) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-[#111] to-[#1a1a1a] flex flex-col items-center justify-center px-6 text-white">
-                <SEO lang={lang} path={`/storage/${slug || ''}`} />
+                <SEO lang={lang} path={pagePath} noIndex />
                 <p className="text-2xl font-bold mb-3">{ui.notFound}</p>
                 <p className="text-white/60 mb-8 text-center">{ui.notFoundDesc}</p>
                 <button
@@ -146,16 +248,36 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
         );
     }
 
-    const title = location.titles[lk] || location.titles['en'];
-    const description = location.descriptions[lk] || location.descriptions['en'];
-    const intro = location.intros[lk] || location.intros['en'];
-    const keywords = location.keywords[lk] || location.keywords['en'];
+    const deliveryMeta = buildDeliveryMeta(location, lk);
+    const title = isDelivery ? deliveryMeta.title : location.titles[lk] || location.titles.en;
+    const description = isDelivery ? deliveryMeta.description : location.descriptions[lk] || location.descriptions.en;
+    const intro = isDelivery
+        ? description
+        : location.intros[lk] || location.intros.en;
+    const keywords = isDelivery ? deliveryMeta.keywords : location.keywords[lk] || location.keywords.en;
+    const faqs = isDelivery ? buildDeliveryFaqs(location, lk) : location.faqs;
+    const steps = isDelivery
+        ? {
+            'zh-TW': ['線上預約行李配送與機場航廈', '到達據點交付行李', '在仁川機場取回行李'],
+            'zh-HK': ['網上預約行李配送與機場航廈', '到達據點交付行李', '在仁川機場取回行李'],
+            en: ['Book delivery and airport terminal online', 'Drop off your bags at the branch', 'Pick up at Incheon Airport'],
+            ja: ['オンラインで配送と空港ターミナルを予約', '拠点で荷物を預ける', '仁川空港で受け取り'],
+            zh: ['线上预约行李配送与机场航站楼', '到达据点交付行李', '在仁川机场取回行李'],
+            ko: ['온라인으로 배송과 공항 터미널 예약', '지점에서 짐 맡기기', '인천공항에서 짐 수령'],
+        }[lk]
+        : [ui.step1, ui.step2, ui.step3];
+    const serviceLabel = isDelivery
+        ? ({ 'zh-TW': '機場行李配送', 'zh-HK': '機場行李配送', en: 'Airport Luggage Delivery', ja: '空港荷物配送', zh: '机场行李配送', ko: '공항 짐배송' }[lk])
+        : 'Beeliber';
+    const ctaLabel = isDelivery
+        ? ({ 'zh-TW': '預約機場配送', 'zh-HK': '預約機場配送', en: 'Book Airport Delivery', ja: '空港配送を予約', zh: '预约机场配送', ko: '공항 배송 예약하기' }[lk])
+        : ui.bookNow;
 
     // JSON-LD: FAQPage + LocalBusiness 배열 → @graph로 묶어서 주입
     const localBusinessList = LOCAL_BUSINESS_SCHEMAS[location.slug] || [];
-    const faqEntity = location.faqs.length > 0 ? {
+    const faqEntity = faqs.length > 0 ? {
         '@type': 'FAQPage',
-        mainEntity: location.faqs.map((faq) => ({
+        mainEntity: faqs.map((faq) => ({
             '@type': 'Question',
             name: faq.question,
             acceptedAnswer: { '@type': 'Answer', text: faq.answer[lk] || faq.answer['en'] },
@@ -184,7 +306,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                 description={description}
                 keywords={keywords}
                 lang={lang}
-                path={`/storage/${slug}`}
+                path={pagePath}
                 schema={combinedSchema}
             />
 
@@ -207,7 +329,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                     <motion.div {...fadeUp}>
                         <div className="flex items-center gap-2 mb-3">
                             <Luggage size={18} className="text-[#FFD700]" />
-                            <span className="text-[#FFD700] text-sm font-medium">Beeliber</span>
+                            <span className="text-[#FFD700] text-sm font-medium">{serviceLabel}</span>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">{title}</h1>
                         <p className="text-white/70 text-base leading-relaxed mb-8">{description}</p>
@@ -216,7 +338,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                             onClick={() => onBook(location.relatedBranchIds[0] || '')}
                             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#FFD700] text-black font-bold text-base hover:bg-[#FFE44D] transition-colors shadow-lg shadow-[#FFD700]/20"
                         >
-                            {ui.bookNow}
+                            {ctaLabel}
                         </button>
                     </motion.div>
                 </div>
@@ -238,7 +360,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                         {ui.howToUse}
                     </h2>
                     <div className="space-y-4">
-                        {[ui.step1, ui.step2, ui.step3].map((step, i) => (
+                        {steps.map((step, i) => (
                             <div key={i} className="flex items-start gap-4">
                                 <div className="w-8 h-8 rounded-full bg-[#FFD700] text-black font-bold text-sm flex items-center justify-center shrink-0">
                                     {i + 1}
@@ -284,11 +406,11 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                 )}
 
                 {/* FAQ */}
-                {location.faqs.length > 0 && (
+                {faqs.length > 0 && (
                     <motion.section {...fadeUp}>
                         <h2 className="text-xl font-bold mb-6">{ui.faq}</h2>
                         <div className="space-y-4">
-                            {location.faqs.map((faq, i) => {
+                            {faqs.map((faq, i) => {
                                 const answer = faq.answer[lk] || faq.answer['en'];
                                 return (
                                     <div key={i} className="rounded-2xl bg-white/5 border border-white/10 p-5">
@@ -307,7 +429,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                         onClick={() => onBook(location.relatedBranchIds[0] || '')}
                         className="inline-flex items-center gap-2 px-10 py-4 rounded-full bg-[#FFD700] text-black font-bold text-base hover:bg-[#FFE44D] transition-colors shadow-lg shadow-[#FFD700]/20"
                     >
-                        {ui.bookNow}
+                        {ctaLabel}
                     </button>
                 </motion.div>
             </div>

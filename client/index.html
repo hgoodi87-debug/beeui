@@ -74,12 +74,7 @@
       "@type": "Country",
       "name": "South Korea"
     },
-    "description": "首爾主要據點行李寄放及仁川機場當日配送服務。Seoul luggage storage & same-day airport delivery service.",
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "1280"
-    }
+    "description": "首爾主要據點行李寄放及仁川機場當日配送服務。Seoul luggage storage & same-day airport delivery service."
   }
   </script>
   <script type="application/ld+json">
@@ -128,33 +123,16 @@
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": 37.5563, 
-      "longitude": 126.9227 
+      "latitude": 37.5563,
+      "longitude": 126.9227
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": 4.9,
+      "reviewCount": 1280,
+      "bestRating": 5,
+      "worstRating": 1
     }
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "호텔에서 공항으로 당일 짐 배송이 가능한가요?",
-        "acceptedAnswer": {
-        "@type": "Answer",
-          "text": "네, 빌리버는 서울 주요 거점과 인천공항을 연결하는 당일 짐배송 서비스를 제공합니다. 무거운 짐은 맡기고 가벼운 여행을 즐기세요."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "짐 보관 서비스는 안전한가요?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "모든 보관 예약은 실시간 CCTV와 스마트 보안 씰로 보호됩니다. 글로벌 수준의 안심 보험이 기본 적용되어 소중한 짐을 안전하게 지킵니다."
-        }
-      }
-    ]
   }
   </script>
 
@@ -452,13 +430,15 @@
   <!-- Naver Analytics (wcs_do) 🌲 -->
   <script type="text/javascript" src="https://wcs.naver.net/wcslog.js" defer></script>
   <script type="text/javascript">
-    if(!window.wcs) var wcs = {};
     if(!window.wcs_add) window.wcs_add = {};
     window.wcs_add["wa"] = "19236166ab9bc90";
-    if (window.wcs) {
-      window.wcs_do();
-      console.log("%c🌲 [스봉이 리포트] 네이버 애널리틱스 수집 중... 💅", "color: #2DB400; font-weight: bold;");
-    }
+    // defer 로드 후 실행 — wcslog.js 로드 완료 시점에 호출
+    window.addEventListener('load', function() {
+      if (typeof window.wcs_do === 'function') {
+        window.wcs_do();
+        console.log("%c🌲 [스봉이 리포트] 네이버 애널리틱스 수집 중... 💅", "color: #2DB400; font-weight: bold;");
+      }
+    });
   </script>
 
   <script type="module" src="/index.tsx"></script>

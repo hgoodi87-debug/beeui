@@ -57,35 +57,61 @@ const buildHreflangLinks = (routePath) => {
   return links.join('\n');
 };
 
+// Core routes: homepage + main service pages (high crawl priority)
+const CORE_ROUTE_PATHS = new Set(['/', '/locations', '/services', '/qna', '/tracking', '/partnership', '/vision', '/terms', '/privacy', '/refund', '/manual', '/mypage', '/booking']);
+
 const sortedRoutes = [...ALL_PRERENDER_ROUTES].sort((a, b) => {
   if (a.path === '/') return -1;
   if (b.path === '/') return 1;
   return a.path.localeCompare(b.path);
 });
 
-// Generate URLs: for each route, create one <url> per language with hreflang links
-const urlEntries = [];
+const coreRoutes = sortedRoutes.filter((r) => CORE_ROUTE_PATHS.has(r.path));
+const locationRoutes = sortedRoutes.filter((r) => !CORE_ROUTE_PATHS.has(r.path));
 
-for (const route of sortedRoutes) {
-  for (const { code } of LANGS) {
-    const loc = buildLangUrl(code, route.path);
-    urlEntries.push(`  <url>
+const buildUrlEntries = (routes) => {
+  const entries = [];
+  for (const route of routes) {
+    for (const { code } of LANGS) {
+      const loc = buildLangUrl(code, route.path);
+      entries.push(`  <url>
     <loc>${escapeXml(loc)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${routeChangeFreq(route.path)}</changefreq>
     <priority>${routePriority(route.path)}</priority>
 ${buildHreflangLinks(route.path)}
   </url>`);
+    }
   }
-}
+  return entries;
+};
 
-const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+const buildSitemapXml = (entries) => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${urlEntries.join('\n')}
+${entries.join('\n')}
 </urlset>
 `;
 
+const coreEntries = buildUrlEntries(coreRoutes);
+const locationEntries = buildUrlEntries(locationRoutes);
+
+const sitemapIndexXml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-core.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-locations.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+</sitemapindex>
+`;
+
 await fs.mkdir(publicDir, { recursive: true });
-await fs.writeFile(sitemapPath, sitemapXml, 'utf8');
-console.log(`[generate-sitemap] Wrote ${urlEntries.length} URLs (${sortedRoutes.length} routes x ${LANGS.length} langs) to ${sitemapPath}`);
+// sitemap.xml = sitemap index (Google discovers core + locations separately)
+await fs.writeFile(sitemapPath, sitemapIndexXml, 'utf8');
+await fs.writeFile(path.join(publicDir, 'sitemap-core.xml'), buildSitemapXml(coreEntries), 'utf8');
+await fs.writeFile(path.join(publicDir, 'sitemap-locations.xml'), buildSitemapXml(locationEntries), 'utf8');
+console.log(`[generate-sitemap] Core: ${coreEntries.length} URLs, Locations: ${locationEntries.length} URLs → sitemap index`);

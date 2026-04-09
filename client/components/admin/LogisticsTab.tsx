@@ -79,6 +79,16 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
 }) => {
     const [batchSelectValue, setBatchSelectValue] = React.useState('');
 
+    const fmtCreatedAt = (createdAt?: string) => {
+        if (!createdAt) return '-';
+        const kst = new Date(new Date(createdAt).getTime() + 9 * 60 * 60 * 1000);
+        const mo = String(kst.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(kst.getUTCDate()).padStart(2, '0');
+        const hh = String(kst.getUTCHours()).padStart(2, '0');
+        const mm = String(kst.getUTCMinutes()).padStart(2, '0');
+        return `${mo}/${dd} ${hh}:${mm}`;
+    };
+
     // [스봉이] KST 기준 오늘 날짜 계산 센스있게 해드려요 💅✨
     const todayKST = React.useMemo(() => {
         const now = new Date();
@@ -306,6 +316,10 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                             <span className="text-[10px] text-gray-400 font-bold">
                                                 {adminRole === 'super' ? b.userEmail : maskEmail(b.userEmail || '')}
                                             </span>
+                                            <span className="text-[9px] text-gray-300 font-bold mt-0.5 flex items-center gap-1">
+                                                <i className="fa-regular fa-clock text-[8px]"></i>
+                                                {fmtCreatedAt(b.createdAt)}
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
@@ -502,6 +516,10 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     <h4 className="font-black text-lg text-bee-black group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>
                                         {adminRole === 'super' ? b.userName : maskName(b.userName || '')}
                                     </h4>
+                                    <span className="text-[9px] text-gray-300 font-bold flex items-center gap-1 mt-0.5">
+                                        <i className="fa-regular fa-clock text-[8px]"></i>
+                                        접수 {fmtCreatedAt(b.createdAt)}
+                                    </span>
                                 </div>
                                 <select
                                     value={b.status}

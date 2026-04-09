@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@400;500;700;900&display=swap');
+/* Google Fonts (Montserrat, Outfit) loaded via <link> in index.html to avoid render-blocking @import */
 
 @tailwind base;
 @tailwind components;

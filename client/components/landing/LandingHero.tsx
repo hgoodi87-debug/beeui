@@ -62,7 +62,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
                         </span>
                     </motion.div>
 
-                    <h1 className="flex flex-col items-center">
+                    <h1 className="flex flex-col items-center" style={{ minHeight: 'clamp(4.5rem,18vw,11rem)' }}>
                         <span className="macro-type block text-[clamp(1.5rem,6vw,3.5rem)] font-black text-white leading-[1.1] md:leading-[1.2] tracking-tighter break-keep whitespace-normal drop-shadow-2xl">
                             {t.hero.main_title_1}
                         </span>

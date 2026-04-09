@@ -28,6 +28,10 @@ interface LogisticsTabProps {
     setCancelStartDate?: (d: string) => void;
     cancelEndDate?: string;
     setCancelEndDate?: (d: string) => void;
+    completedStartDate?: string;
+    setCompletedStartDate?: (d: string) => void;
+    completedEndDate?: string;
+    setCompletedEndDate?: (d: string) => void;
     searchStartDate: string;
     setSearchStartDate: (d: string) => void;
     searchEndDate: string;
@@ -66,6 +70,10 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     setCancelStartDate,
     cancelEndDate,
     setCancelEndDate,
+    completedStartDate,
+    setCompletedStartDate,
+    completedEndDate,
+    setCompletedEndDate,
     searchStartDate,
     setSearchStartDate,
     searchEndDate,
@@ -207,6 +215,39 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                     )}
                 </div>
             </div>
+
+            {/* 완료 이력 날짜 필터 UI */}
+            {activeStatusTab === 'COMPLETED' && setCompletedStartDate && setCompletedEndDate && (
+                <div className="bg-bee-yellow/10 border border-bee-yellow/30 rounded-[28px] px-6 py-4 flex flex-nowrap items-center gap-4 overflow-x-auto no-scrollbar animate-fade-in-up">
+                    <div className="flex shrink-0 items-center gap-2 text-bee-black">
+                        <i className="fa-solid fa-flag-checkered text-sm text-bee-yellow"></i>
+                        <span className="text-[10px] font-black uppercase tracking-widest">완료 이력 조회 구간</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                        <input
+                            type="date"
+                            title="완료 시작일"
+                            value={completedStartDate}
+                            onChange={e => setCompletedStartDate(e.target.value)}
+                            className="text-xs font-black bg-white border border-bee-yellow/30 rounded-xl px-3 py-2 outline-none focus:border-bee-yellow transition-colors cursor-pointer text-bee-black"
+                        />
+                        <span className="text-[10px] font-bold text-gray-400">에서</span>
+                        <input
+                            type="date"
+                            title="완료 종료일"
+                            value={completedEndDate}
+                            onChange={e => setCompletedEndDate(e.target.value)}
+                            className="text-xs font-black bg-white border border-bee-yellow/30 rounded-xl px-3 py-2 outline-none focus:border-bee-yellow transition-colors cursor-pointer text-bee-black"
+                        />
+                        <span className="text-[10px] font-bold text-gray-400">까지</span>
+                    </div>
+                    <div className="ml-auto flex shrink-0 items-center gap-2">
+                        <div className="text-[10px] font-black text-bee-black bg-white px-3 py-1.5 rounded-xl border border-bee-yellow/30">
+                            {filteredBookings.length}건 완료
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 취소/환불 날짜 필터 UI */}
             {(activeStatusTab === 'CANCELLED' || activeStatusTab === 'ISSUE') && setCancelStartDate && setCancelEndDate && (

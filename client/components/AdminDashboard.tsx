@@ -552,6 +552,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
     return kst.toISOString().split('T')[0];
   });
+  // 완료 이력 날짜 범위 (기본: 최근 7일)
+  const [completedStartDate, setCompletedStartDate] = useState(() => {
+    const d = new Date();
+    const kst = new Date(d.getTime() + (9 * 60 * 60 * 1000));
+    kst.setDate(kst.getDate() - 7);
+    return kst.toISOString().split('T')[0];
+  });
+  const [completedEndDate, setCompletedEndDate] = useState(() => {
+    const now = new Date();
+    const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    return kst.toISOString().split('T')[0];
+  });
   const [cashClosing, setCashClosing] = useState({
     actualCash: 0,
     notes: ''
@@ -878,7 +890,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       if (activeTab === 'STORAGE_BOOKINGS' && b.serviceType !== ServiceType.STORAGE) return false;
 
       // 3. 취소/환불/완료: 날짜 구간 필터 적용
-      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED || b.status === BookingStatus.COMPLETED) {
+      if (b.status === BookingStatus.COMPLETED) {
+        const d = b.pickupDate || '';
+        return d >= completedStartDate && d <= completedEndDate;
+      }
+      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.REFUNDED) {
         const d = b.pickupDate || '';
         return d >= cancelStartDate && d <= cancelEndDate;
       }
@@ -917,7 +933,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       { id: 'CANCELLED' as StatusTab, label: '취소/환불', count: cancelCount },
       { id: 'ISSUE' as StatusTab, label: '클레임/이슈', count: issueCount },
     ];
-  }, [bookings, activeTab, todayKST, cancelStartDate, cancelEndDate]);
+  }, [bookings, activeTab, todayKST, cancelStartDate, cancelEndDate, completedStartDate, completedEndDate]);
 
   // Filter Bookings for Current Tab
   const filteredBookings = useMemo(() => {
@@ -956,9 +972,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           // DONE_STATUSES 기본 숨김 필터 건너뜀 + 최근 30일 범위 적용
           const isDoneTab = activeStatusTab === 'COMPLETED' || activeStatusTab === 'CANCELLED' || activeStatusTab === 'ISSUE';
           if (isDoneTab) {
-            // 완료/취소/이슈 탭: cancelStartDate~cancelEndDate 범위만 표시
+            // 완료 탭: completedStartDate~completedEndDate 범위 / 취소·이슈 탭: cancelStartDate~cancelEndDate 범위
             const bookingDate = b.pickupDate || '';
-            if (bookingDate < cancelStartDate || bookingDate > cancelEndDate) return false;
+            if (activeStatusTab === 'COMPLETED') {
+              if (bookingDate < completedStartDate || bookingDate > completedEndDate) return false;
+            } else {
+              if (bookingDate < cancelStartDate || bookingDate > cancelEndDate) return false;
+            }
           } else {
             // 날짜 필터 없을 때: 진행중 목록에서 과거 완료/취소/환불 기본 숨김
             const ss = String(b.settlementStatus || '');
@@ -988,7 +1008,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       }
       return true;
     });
-  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate, searchStartDate, searchEndDate]);
+  }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate, completedStartDate, completedEndDate, searchStartDate, searchEndDate]);
 
   // Daily Statistics Calculation (Aggregated by pickupDate)
   const dailyStats = useMemo(() => {
@@ -2824,6 +2844,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               setCancelStartDate={setCancelStartDate}
               cancelEndDate={cancelEndDate}
               setCancelEndDate={setCancelEndDate}
+              completedStartDate={completedStartDate}
+              setCompletedStartDate={setCompletedStartDate}
+              completedEndDate={completedEndDate}
+              setCompletedEndDate={setCompletedEndDate}
               searchStartDate={searchStartDate}
               setSearchStartDate={setSearchStartDate}
               searchEndDate={searchEndDate}

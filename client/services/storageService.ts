@@ -1257,11 +1257,8 @@ export const StorageService = {
       'email_sent_at', 'nametag_id', 'bags', 'bag_summary', 'admin_note', 'ops_status',
     ]);
     const allUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
-    // booking_details 테이블에는 'status' 컬럼이 없고 'settlement_status'가 상태 필드
-    if ('status' in allUpdates) {
-      allUpdates['settlement_status'] = allUpdates['status'];
-      delete allUpdates['status'];
-    }
+    // status는 UI 합성 필드 — BOOKING_DETAILS_COLUMNS에 없으므로 자동 필터됨
+    // settlement_status는 정산 처리 시 mutateBookingRecord로 별도 명시적 업데이트
     // auditNote → audit_note (camelToSnake) → 실제 DB 컬럼명은 admin_note
     if ('audit_note' in allUpdates) {
       allUpdates['admin_note'] = allUpdates['audit_note'];

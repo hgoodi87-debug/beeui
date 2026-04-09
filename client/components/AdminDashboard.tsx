@@ -952,14 +952,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           if (searchStartDate && bookingDate < searchStartDate) return false;
           if (searchEndDate && bookingDate > searchEndDate) return false;
         } else {
-          // 날짜 필터 없을 때: 과거 완료/취소/환불 기본 숨김
-          const ss = String(b.settlementStatus || '');
-          if (DONE_STATUSES.has(effectiveStatus) || DONE_STATUSES.has(ss)) return false;
+          // 완료/취소/환불 탭에서는 해당 상태 아이템을 명시적으로 보여줘야 하므로
+          // DONE_STATUSES 기본 숨김 필터 건너뜀 + 최근 30일 범위 적용
+          const isDoneTab = activeStatusTab === 'COMPLETED' || activeStatusTab === 'CANCELLED' || activeStatusTab === 'ISSUE';
+          if (isDoneTab) {
+            // 완료/취소/이슈 탭: cancelStartDate~cancelEndDate 범위만 표시
+            const bookingDate = b.pickupDate || '';
+            if (bookingDate < cancelStartDate || bookingDate > cancelEndDate) return false;
+          } else {
+            // 날짜 필터 없을 때: 진행중 목록에서 과거 완료/취소/환불 기본 숨김
+            const ss = String(b.settlementStatus || '');
+            if (DONE_STATUSES.has(effectiveStatus) || DONE_STATUSES.has(ss)) return false;
 
-          // 진행중 상태 중 과거 날짜도 숨김 (단, PENDING/CONFIRMED/TRANSIT/STORAGE/ARRIVED는 날짜 무관 표시)
-          const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-          const isStatusIncomplete = incompleteStatuses.includes(effectiveStatus as any);
-          if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+            // 진행중 상태 중 과거 날짜도 숨김 (단, PENDING/CONFIRMED/TRANSIT/STORAGE/ARRIVED는 날짜 무관 표시)
+            const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+            const isStatusIncomplete = incompleteStatuses.includes(effectiveStatus as any);
+            if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+          }
         }
       }
 

@@ -7,12 +7,13 @@
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
   <!-- Performance Optimization: Preconnect to critical origins -->
-  <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
-  <link rel="preconnect" href="https://flagcdn.com" />
   <link rel="preconnect" href="https://www.googletagmanager.com" />
-  <link rel="preconnect" href="https://connect.facebook.net" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <!-- Hero LCP image preload -->
+  <link rel="preload" as="image" fetchpriority="high"
+    href="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b" />
 
   <!-- SEO Meta Tags — x-default: zh-TW (주요 고객 대만·홍콩 90%) -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -73,12 +74,7 @@
       "@type": "Country",
       "name": "South Korea"
     },
-    "description": "首爾主要據點行李寄放及仁川機場當日配送服務。Seoul luggage storage & same-day airport delivery service.",
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "1280"
-    }
+    "description": "首爾主要據點行李寄放及仁川機場當日配送服務。Seoul luggage storage & same-day airport delivery service."
   }
   </script>
   <script type="application/ld+json">
@@ -127,33 +123,16 @@
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": 37.5563, 
-      "longitude": 126.9227 
+      "latitude": 37.5563,
+      "longitude": 126.9227
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": 5.0,
+      "reviewCount": 5,
+      "bestRating": 5,
+      "worstRating": 1
     }
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "호텔에서 공항으로 당일 짐 배송이 가능한가요?",
-        "acceptedAnswer": {
-        "@type": "Answer",
-          "text": "네, 빌리버는 서울 주요 거점과 인천공항을 연결하는 당일 짐배송 서비스를 제공합니다. 무거운 짐은 맡기고 가벼운 여행을 즐기세요."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "짐 보관 서비스는 안전한가요?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "모든 보관 예약은 실시간 CCTV와 스마트 보안 씰로 보호됩니다. 글로벌 수준의 안심 보험이 기본 적용되어 소중한 짐을 안전하게 지킵니다."
-        }
-      }
-    ]
   }
   </script>
 
@@ -169,11 +148,30 @@
   <meta name="twitter:description" content="弘大、聖水、明洞等主要據點寄放行李，仁川機場當日配送。退房後輕鬆暢遊首爾！" />
   <meta name="twitter:image" content="https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b" />
 
-  <link rel="stylesheet" as="style" crossorigin
-    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts (Montserrat + Outfit): async load -->
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@400;500;700;900&display=swap"
+    onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@400;500;700;900&display=swap" /></noscript>
+  <!-- Pretendard: async load (non-blocking) -->
+  <link rel="preload" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" /></noscript>
+  <!-- Material Symbols: async load -->
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" /></noscript>
+  <!-- Font Awesome: async load (non-blocking) -->
+  <link rel="preload" as="style"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" /></noscript>
 
   <!-- reCAPTCHA Enterprise: lazy loaded on first booking interaction -->
 
@@ -313,7 +311,8 @@
         || (path.startsWith('/storage/') ? (storageFallback[urlLang] || storageFallback['zh-tw']) : null)
         || (path.startsWith('/delivery/') ? (deliveryFallback[urlLang] || deliveryFallback['zh-tw']) : null)
         || routeMetaI18n['/'][urlLang] || routeMetaI18n['/']['zh-tw'];
-      const canonicalUrl = siteUrl + rawPath;
+      const canonicalPath = langMatch ? rawPath : ('/zh-tw' + (path === '/' ? '' : path));
+      const canonicalUrl = siteUrl + canonicalPath;
       const langSuffix = path === '/' ? '' : path;
 
       const setNamedMeta = function (name, content) {
@@ -389,12 +388,12 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-g9tUkuPJ.js"></script>
+  <script type="module" crossorigin src="/assets/index-Br08qxv_.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-react-dom-B-4pjoWT.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-motion-BUt1lcWJ.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-RvhTvX1M.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-query-N1jjWJFK.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-CI8NRYp4.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-lW-BdeD9.css">
 </head>
 
 <body class="antialiased">
@@ -435,15 +434,17 @@
   <div id="root"></div>
   
   <!-- Naver Analytics (wcs_do) 🌲 -->
-  <script type="text/javascript" src="https://wcs.naver.net/wcslog.js"></script>
+  <script type="text/javascript" src="https://wcs.naver.net/wcslog.js" defer></script>
   <script type="text/javascript">
-    if(!window.wcs) var wcs = {};
     if(!window.wcs_add) window.wcs_add = {};
     window.wcs_add["wa"] = "19236166ab9bc90";
-    if (window.wcs) {
-      window.wcs_do();
-      console.log("%c🌲 [스봉이 리포트] 네이버 애널리틱스 수집 중... 💅", "color: #2DB400; font-weight: bold;");
-    }
+    // defer 로드 후 실행 — wcslog.js 로드 완료 시점에 호출
+    window.addEventListener('load', function() {
+      if (typeof window.wcs_do === 'function') {
+        window.wcs_do();
+        console.log("%c🌲 [스봉이 리포트] 네이버 애널리틱스 수집 중... 💅", "color: #2DB400; font-weight: bold;");
+      }
+    });
   </script>
 
 </body>

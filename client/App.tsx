@@ -34,14 +34,13 @@ const ChatBot = lazy(() => import('./components/ChatBot'));
 const VisionPage = lazy(() => import('./components/VisionPage'));
 const RefundPage = lazy(() => import('./components/RefundPage'));
 const StorageLandingPage = lazy(() => import('./components/StorageLandingPage'));
+const KioskPage = lazy(() => import('./components/KioskPage'));
 import { useParams } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import SEO from './components/SEO';
-// [스봉이] 어드민 번역은 필요할 때만 불러오도록 리팩토링 했어요. 💅✨
-// import { ko as adminKoTranslations } from './translations_split/ko';
 
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
@@ -709,6 +708,9 @@ const App: React.FC = () => {
                   <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={adminT} lang={ADMIN_LANG} locations={bookingLocations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/admin/scan" element={<AnimatedRoute><StaffScanPage onBack={() => adminInfo.name ? navigate(adminHomePath) : navigate('/admin')} adminName={adminInfo.name} t={adminT} lang={ADMIN_LANG} /></AnimatedRoute>} />
                   <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => adminInfo.name ? navigate(adminHomePath) : navigate('/admin')} adminName={adminInfo.name} t={adminT} lang={ADMIN_LANG} /></AnimatedRoute>} />
+
+                  {/* KIOSK — 인증 불필요, 현장 전용 */}
+                  <Route path="/kiosk/:branchSlug" element={<KioskPage />} />
 
                   {/* FALLBACK & REDIRECTS */}
                   <Route path="/" element={<Navigate to={`/${lang}`} replace />} />

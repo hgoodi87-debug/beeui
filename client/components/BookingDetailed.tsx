@@ -357,7 +357,8 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
             line: 'Line',
             instagram: 'Instagram',
             whatsapp: 'WhatsApp',
-            wechat: 'WeChat'
+            wechat: 'WeChat',
+            threads: 'Threads'
         };
         finalBooking.snsType = channelMap[booking.snsChannel || 'kakao'] || 'None';
 
@@ -555,7 +556,7 @@ const BookingDetailed: React.FC<BookingDetailedProps> = ({
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.booking?.sns || 'SNS Channel'}</label>
                                             <div className="flex gap-2">
-                                                {['kakao', 'line', 'whatsapp', 'wechat'].map(ch => (
+                                                {['kakao', 'line', 'whatsapp', 'wechat', 'threads'].map(ch => (
                                                     <button
                                                         key={ch}
                                                         onClick={() => setBooking(prev => ({ ...prev, snsChannel: ch as any }))}

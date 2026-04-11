@@ -11,6 +11,104 @@ import { supabaseMutate } from '../services/supabaseClient';
 const BranchStaffTab = lazy(() => import('./branch/BranchStaffTab'));
 const BranchRevenueTab = lazy(() => import('./branch/BranchRevenueTab'));
 
+// ─── 키오스크 현황 (인라인 — 별도 파일 불필요) ────────────────────────────
+import { loadTodayLog, loadBranchBySlug, loadAllActiveBranches, KioskStorageLog, KioskBranch, todayStr, updateStorageLog } from '../services/kioskDb';
+
+const BranchKioskPanel: React.FC<{ branchId: string }> = ({ branchId }) => {
+    const [entries, setEntries] = useState<KioskStorageLog[]>([]);
+    const [kioskBranch, setKioskBranch] = useState<KioskBranch | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        (async () => {
+            const today = todayStr();
+            const rows = await loadTodayLog(branchId, today);
+            setEntries(rows);
+            // 슬러그 찾기 (branch_id로 역조회)
+            const all = await loadAllActiveBranches();
+            setKioskBranch(all.find(b => b.branch_id === branchId) ?? null);
+            setLoading(false);
+        })();
+    }, [branchId]);
+
+    const active = entries.filter(e => !e.done);
+    const done = entries.filter(e => e.done);
+    const revenue = entries.reduce((sum, e) => sum + (e.original_price - (e.discount ?? 0)), 0);
+
+    const handleDone = async (entry: KioskStorageLog) => {
+        await updateStorageLog(entry.id, { done: true });
+        setEntries(prev => prev.map(e => e.id === entry.id ? { ...e, done: true } : e));
+    };
+
+    if (loading) return <div className="py-10 flex justify-center"><div className="w-6 h-6 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin" /></div>;
+
+    return (
+        <div className="space-y-4">
+            {/* 키오스크 URL */}
+            {kioskBranch && (
+                <div className="bg-bee-yellow/10 border border-bee-yellow/30 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm">
+                    <i className="fa-solid fa-tablet-screen-button text-bee-yellow" />
+                    <span className="text-gray-600 font-bold">현장 키오스크:</span>
+                    <a href={`/kiosk/${encodeURIComponent(kioskBranch.slug)}`} target="_blank" rel="noreferrer"
+                        className="font-black text-bee-black underline underline-offset-2">
+                        /kiosk/{kioskBranch.slug}
+                    </a>
+                </div>
+            )}
+
+            {/* 오늘 통계 */}
+            <div className="grid grid-cols-3 gap-3">
+                {[
+                    { label: '보관중', value: active.length, color: 'text-amber-500' },
+                    { label: '반납완료', value: done.length, color: 'text-green-500' },
+                    { label: '오늘수익', value: `₩${revenue.toLocaleString()}`, color: 'text-bee-black' },
+                ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-center">
+                        <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">{label}</p>
+                        <p className={`font-black text-xl ${color}`}>{value}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* 보관 목록 */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="font-black text-sm">오늘 접수 현황 <span className="text-gray-400 font-bold ml-1">{todayStr()}</span></h3>
+                    <span className="text-xs text-gray-400 font-bold">{entries.length}건</span>
+                </div>
+                {entries.length === 0 ? (
+                    <p className="text-center text-gray-300 py-10 text-sm">오늘 접수 내역이 없습니다</p>
+                ) : (
+                    <div className="divide-y divide-gray-50">
+                        {entries.map((e) => (
+                            <div key={e.id} className={`flex items-center gap-4 px-5 py-3.5 ${e.done ? 'opacity-50' : ''}`}>
+                                <span className="w-9 h-9 rounded-full bg-bee-yellow flex items-center justify-center text-bee-black font-black text-sm flex-shrink-0">
+                                    {e.tag}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-sm text-bee-black">
+                                        {e.row_label} ·{' '}
+                                        {e.small_qty > 0 && `소형 ${e.small_qty}개`}{e.small_qty > 0 && e.carrier_qty > 0 && ' · '}{e.carrier_qty > 0 && `캐리어 ${e.carrier_qty}개`}
+                                    </p>
+                                    <p className="text-gray-400 text-xs">{e.start_time} → {e.pickup_time} · {(e.original_price - (e.discount ?? 0)).toLocaleString()}원 · {e.payment}</p>
+                                </div>
+                                {!e.done ? (
+                                    <button onClick={() => handleDone(e)}
+                                        className="text-xs font-bold text-bee-black border border-gray-200 rounded-full px-3 py-1.5 hover:border-bee-yellow hover:text-bee-black transition-colors flex-shrink-0">
+                                        반납완료
+                                    </button>
+                                ) : (
+                                    <span className="text-green-500 text-xs font-bold flex-shrink-0"><i className="fa-solid fa-check mr-1" />완료</span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 interface BranchAdminPageProps {
     branchId: string;
     adminRole?: string;
@@ -23,7 +121,7 @@ const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 const isSupabaseBookingDetailId = (value?: string | null) =>
     BOOKING_DETAIL_UUID_PATTERN.test(String(value || '').trim());
 
-type TabKey = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'STAFF' | 'REVENUE';
+type TabKey = 'ALL' | 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'STAFF' | 'REVENUE' | 'KIOSK';
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
     { key: 'ALL', label: '전체', icon: 'fa-list' },
@@ -33,6 +131,7 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
     { key: 'CANCELLED', label: '취소/환불', icon: 'fa-ban' },
     { key: 'STAFF', label: '직원', icon: 'fa-users' },
     { key: 'REVENUE', label: '정산', icon: 'fa-coins' },
+    { key: 'KIOSK', label: '키오스크', icon: 'fa-tablet-screen-button' },
 ];
 
 const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranchId, adminRole = 'staff', lang, t, onBack }) => {
@@ -253,7 +352,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     };
 
-    const isBookingTab = !['STAFF', 'REVENUE'].includes(activeTab);
+    const isBookingTab = !['STAFF', 'REVENUE', 'KIOSK'].includes(activeTab);
 
     return (
         <div className="min-h-screen bg-gray-50 text-bee-black font-sans">
@@ -338,6 +437,10 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                         <Suspense fallback={<div className="p-10 text-center text-gray-300">Loading...</div>}>
                             <BranchRevenueTab bookings={bookings} currentBranch={currentBranch} branchIdentifiers={branchIdentifiers} />
                         </Suspense>
+                    ) : activeTab === 'KIOSK' ? (
+                        <div className="p-4">
+                            <BranchKioskPanel branchId={branchId} />
+                        </div>
                     ) : (
                         /* Booking table - mobile card + desktop table hybrid */
                         <>

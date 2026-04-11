@@ -217,7 +217,7 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">SNS 연락처 ({selectedBooking.snsType})</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">SNS 연락처 ({selectedBooking.snsType || selectedBooking.snsChannel || 'None'})</label>
                                         <input 
                                             title="SNS ID" 
                                             value={(isUnmasked || adminRole === 'super') ? (selectedBooking.snsId || '') : maskId(selectedBooking.snsId || '')} 

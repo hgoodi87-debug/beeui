@@ -95,6 +95,7 @@ const RoadmapTab = lazy(() => import('./admin/RoadmapTab'));
 const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
 const AIReviewTab = lazy(() => import('./admin/AIReviewTab'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
+const KioskTab = lazy(() => import('./admin/KioskTab'));
 
 const AdminTabFallback: React.FC = () => (
   <div className="rounded-[32px] border border-dashed border-gray-200 bg-white/80 px-6 py-10 text-center text-sm font-bold text-gray-400 shadow-sm">
@@ -1810,6 +1811,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const handleSoftDelete = async (id: string) => {
     if (!confirm('예약 내역을 휴지통으로 이동하시겠습니까?')) return;
+    // Optimistic update: 네트워크 완료 전 즉시 캐시에서 삭제 처리 → ISSUE 탭에서 즉시 사라짐
+    queryClient.setQueryData<BookingState[]>(['bookings'], (prev = []) =>
+      prev.map(b => b.id === id ? { ...b, isDeleted: true, settlementStatus: 'deleted' as any } : b)
+    );
     try {
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
@@ -1818,6 +1823,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await AuditService.logAction(currentActor, 'DELETE', { id, type: 'BOOKING' }, { method: 'SOFT_DELETE' });
     } catch (e) {
+      // 실패 시 optimistic update 롤백
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       console.error(e);
       alert("삭제 실패");
     }
@@ -2526,6 +2533,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 { id: 'OVERVIEW', label: '운영 현황 상황판', icon: 'fa-chart-pie' },
                 { id: 'DELIVERY_BOOKINGS', label: '배송 예약 관리', icon: 'fa-truck-fast' },
                 { id: 'STORAGE_BOOKINGS', label: '보관 예약 관리', icon: 'fa-warehouse' },
+                { id: 'KIOSK', label: '현장 키오스크', icon: 'fa-display' },
               ].map(item => (
                 <button
                   key={item.id}
@@ -2705,6 +2713,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'OVERVIEW', label: t.admin?.sidebar?.overview || '통합 현황판', icon: 'fa-chart-pie' },
                         { id: 'DELIVERY_BOOKINGS', label: t.admin?.sidebar?.logistics || '배송 예약 관리', icon: 'fa-truck-fast' },
                         { id: 'STORAGE_BOOKINGS', label: t.admin?.sidebar?.logistics || '보관 예약 관리', icon: 'fa-warehouse' },
+                        { id: 'KIOSK', label: '현장 키오스크', icon: 'fa-display' },
                         { id: 'DAILY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '일일 시재 정산', icon: 'fa-calendar-check' },
                         { id: 'ACCOUNTING', label: t.admin?.sidebar?.accounting || '매출 결산 보고', icon: 'fa-receipt' },
                         { id: 'MONTHLY_SETTLEMENT', label: t.admin?.sidebar?.settlement || '월 정산 통제판', icon: 'fa-vault' },
@@ -3041,6 +3050,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
           {activeTab === 'CHATS' && (
             <ChatTab />
+          )}
+
+          {activeTab === 'KIOSK' && (
+            <Suspense fallback={<AdminTabFallback />}>
+              <KioskTab />
+            </Suspense>
           )}
           </Suspense>
         </main>

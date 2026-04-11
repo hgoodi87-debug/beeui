@@ -1347,8 +1347,6 @@ export const StorageService = {
         buildSupabaseLocationsPath(includeInactive),
         (items) => {
           const filtered = items
-            // INITIAL_LOCATIONS에 없는 지점 제외 (미운영 / 설정 미완료)
-            .filter(loc => INITIAL_LOCATION_ID_SET.has((loc as any).id))
             .map(enrichLocation)
             .filter((item) => shouldIncludeLocation(item, includeInactive));
           // 폴링 결과가 비어 있으면 콜백 스킵 (INITIAL_LOCATIONS 폴백 유지)
@@ -1411,8 +1409,6 @@ export const StorageService = {
             if (row.short_code) {
               (loc as any).id = String(row.short_code);
             }
-            // INITIAL_LOCATIONS에 없는 지점은 미운영 / 설정 미완료 → 제외
-            if (!INITIAL_LOCATION_ID_SET.has((loc as any).id)) return [];
             return [enrichLoc(loc)];
           });
           console.log('[Storage] Loaded', supabaseLocs.length, 'locations from Supabase ✅');

@@ -9,6 +9,7 @@ export enum SnsType {
     KAKAOTALK = 'KakaoTalk',
     WHATSAPP = 'WhatsApp',
     WECHAT = 'WeChat',
+    THREADS = 'Threads',
     NONE = 'None'
 }
 
@@ -127,7 +128,8 @@ export type AdminTab =
     | 'TERMS_EDITOR'
     | 'QNA_EDITOR'
     | 'TRASH'
-    | 'AI_REVIEW';
+    | 'AI_REVIEW'
+    | 'KIOSK';
 
 export interface TranslatedLocationData {
     name_en: string;

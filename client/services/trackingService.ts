@@ -37,9 +37,6 @@ export const trackEvent = (eventName: string, params?: Record<string, any>) => {
     window.wcs_do();
   }
 
-  // 4. TODO: CAPI (Server-side) 연결부 🚀
-  // 여기서 백엔드 API를 호출하여 서버에서도 이벤트를 쏴줘야 합니다.
-
   return eventId;
 };
 

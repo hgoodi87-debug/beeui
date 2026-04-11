@@ -211,12 +211,16 @@ cd ~/.claude/skills/gstack && ./setup
 | **4차** | AI 흐름 + AI 검수함 + KPI 대시보드 |
 | **5차** | 재배차 추천 + ETA 예측 + 이상탐지 |
 
+## 완료 이력
+
+`DONE.md` — 해결된 버그·작업 목록. **세션 시작 시 먼저 확인하고, 이미 완료된 이슈는 재조사하지 말 것.**
+
 ## 현재 진행 중인 주요 이니셔티브
 
 | 우선순위 | 이니셔티브 | 상태 | 참조 문서 |
 |---|---|---|---|
 | 1 | Supabase 마이그레이션 | Phase 0 진단 중 | `beeliber_supabase` |
-| 2 | 다국어 SEO 개선 | 전략 수립 완료, 구현 대기 | `beeliber_seo` |
+| 2 | 다국어 SEO 개선 | 사이트맵·JSON-LD·canonical 완료 / 콘텐츠·hreflang 보강 대기 | `beeliber_seo` |
 | 3 | Toss Payments 실배포 | 코드 준비 완료, 환경변수 대기 | `beeliber_payments` |
 | 4 | 랜딩페이지 리뉴얼 | 진행 중 | `beeliber_design` |
 
@@ -236,6 +240,13 @@ firebase deploy   # 전체 배포
 - 번역 파일: `client/translations_split/`
 - SEO 컴포넌트: `client/components/SEO.tsx`
 - Supabase Edge Functions: `supabase/functions/`
+
+## 컨텍스트 효율화 규칙
+
+1. **세션 시작 시** `DONE.md`를 읽고 완료된 이슈 목록을 파악할 것
+2. 버그 조사 전 `DONE.md`에서 해당 파일·이슈가 이미 해결됐는지 확인할 것
+3. 완료된 이슈는 재조사·재독 없이 `DONE.md`의 핵심 메모를 직접 인용할 것
+4. 새 작업 완료 시 `DONE.md`에 항목 추가할 것
 
 ## Skill routing
 
@@ -282,3 +293,23 @@ Key routing rules:
 > **검수 4인방 병렬 호출 규칙**: 구현 완료 후 `/review` 또는 `/ship` 직전에
 > 비평이·검수이-코드·검수이-UX·검수이-비즈를 Agent tool로 **동시 4개** 호출.
 > 코드 변경 없는 문서·기획 작업은 비평이 + 검수이-비즈만 호출.
+
+---
+
+## MCP 서버 연동 (외부 서비스)
+
+| MCP | 서버명 | 용도 | 상태 |
+|-----|--------|------|------|
+| **Slack** | `slack` | 배포/장애/리뷰 알림 전송·조회 | ⚠️ Bot Token 설정 필요 |
+| **Google Drive** | `gdrive` | PRD, 브랜드가이드, 기획문서 참조 | ⚠️ OAuth 확인 필요 |
+| **GitHub** | `github` | 이슈/PR 티켓 상태 관리 | ✅ 설정됨 |
+| **GA4 Analytics** | `analytics` | 예약·전환 수치 확인 | ⚠️ Property ID 설정 필요 |
+
+설정 가이드: `docs/MCP_SETUP_GUIDE.md`
+
+### MCP 활용 규칙
+
+- **배포 후**: Slack `#deploy` 채널에 자동 알림 (`mcp__slack__*`)
+- **기획 작업 전**: Drive에서 PRD·브랜드가이드 최신본 확인
+- **이슈 수정 시**: GitHub 이슈 상태 업데이트 (`mcp__github__*`)
+- **주간 회고**: GA4에서 전주 예약 전환율 조회 후 `/retro`에 포함

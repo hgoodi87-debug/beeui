@@ -96,6 +96,7 @@ const OperationsConsole = lazy(() => import('./admin/OperationsConsole'));
 const AIReviewTab = lazy(() => import('./admin/AIReviewTab'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
 const KioskTab = lazy(() => import('./admin/KioskTab'));
+const GoogleAnalyticsTab = lazy(() => import('./admin/GoogleAnalyticsTab'));
 
 const AdminTabFallback: React.FC = () => (
   <div className="rounded-[32px] border border-dashed border-gray-200 bg-white/80 px-6 py-10 text-center text-sm font-bold text-gray-400 shadow-sm">
@@ -2566,6 +2567,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
                 { id: 'ACCOUNTING', label: '통합 매출 결산', icon: 'fa-receipt' },
                 { id: 'REPORTS', label: '분석 리포트', icon: 'fa-chart-line' },
+                { id: 'GOOGLE_ANALYTICS', label: '구글 데이터', icon: 'fa-magnifying-glass-chart' },
               ].map(item => (
                 <button
                   key={item.id}
@@ -2973,6 +2975,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               onStartDateChange={setRevenueStartDate}
               onEndDateChange={setRevenueEndDate}
             />
+          )}
+
+          {activeTab === 'GOOGLE_ANALYTICS' && (
+            <Suspense fallback={<AdminTabFallback />}>
+              <GoogleAnalyticsTab />
+            </Suspense>
           )}
 
           {activeTab === 'AI_REVIEW' && (

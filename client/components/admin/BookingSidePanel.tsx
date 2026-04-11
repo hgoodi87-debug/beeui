@@ -218,14 +218,34 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">SNS 연락처 ({selectedBooking.snsType || selectedBooking.snsChannel || 'None'})</label>
-                                        <input 
-                                            title="SNS ID" 
-                                            value={(isUnmasked || adminRole === 'super') ? (selectedBooking.snsId || '') : maskId(selectedBooking.snsId || '')} 
-                                            onChange={e => setSelectedBooking({ ...selectedBooking, snsId: e.target.value })} 
+                                        <input
+                                            title="SNS ID"
+                                            value={(isUnmasked || adminRole === 'super') ? (selectedBooking.snsId || '') : maskId(selectedBooking.snsId || '')}
+                                            onChange={e => setSelectedBooking({ ...selectedBooking, snsId: e.target.value })}
                                             disabled={!isUnmasked && adminRole !== 'super'}
-                                            className="w-full bg-gray-50 p-4 rounded-2xl border-none font-black text-sm focus:ring-2 focus:ring-bee-yellow outline-none disabled:opacity-70" 
+                                            className="w-full bg-gray-50 p-4 rounded-2xl border-none font-black text-sm focus:ring-2 focus:ring-bee-yellow outline-none disabled:opacity-70"
                                         />
                                     </div>
+                                    {selectedBooking.utmSource && (
+                                        <div>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">유입 채널</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="px-3 py-1.5 bg-bee-yellow/20 text-bee-black font-black text-xs rounded-xl">
+                                                    {selectedBooking.utmSource}
+                                                </span>
+                                                {selectedBooking.utmMedium && (
+                                                    <span className="px-3 py-1.5 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl">
+                                                        {selectedBooking.utmMedium}
+                                                    </span>
+                                                )}
+                                                {selectedBooking.utmCampaign && (
+                                                    <span className="px-3 py-1.5 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl">
+                                                        {selectedBooking.utmCampaign}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

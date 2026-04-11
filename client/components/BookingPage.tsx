@@ -19,6 +19,7 @@ import {
 import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
 import { supabaseGet } from '../services/supabaseClient';
+import { getAdParams } from '../src/utils/gads';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
 import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd } from '../services/paypalService';
 import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr, add2MonthsToDateStr } from '../utils/dateUtils';
@@ -649,7 +650,18 @@ const BookingPage: React.FC<BookingPageProps> = ({
             branchCommissionRates: customerBranchRates,
             paymentMethod: isDirectBookingMode ? 'cash' : 'card',
             paymentStatus: priceDetails.total > 0 ? 'pending' : 'paid',
-            paymentProvider: isDirectBookingMode ? 'manual' : 'toss'
+            paymentProvider: isDirectBookingMode ? 'manual' : 'toss',
+            // 어느 채널에서 왔는지 — sessionStorage에 captureAdParams()가 저장해둔 값
+            ...(() => {
+                const a = getAdParams();
+                return {
+                    utmSource: a.utm_source || undefined,
+                    utmMedium: a.utm_medium || undefined,
+                    utmCampaign: a.utm_campaign || undefined,
+                    utmContent: a.utm_content || undefined,
+                    utmTerm: a.utm_term || undefined,
+                };
+            })(),
         };
 
         const channelMap: Record<string, any> = {

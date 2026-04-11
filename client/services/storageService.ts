@@ -1049,6 +1049,12 @@ export const StorageService = {
             s.strollerBicycle > 0 ? `유모차/자전거 ${s.strollerBicycle}개` : '',
           ].filter(Boolean).join(', ');
         })(),
+        // UTM 채널 어트리뷰션
+        utm_source: safeBooking.utmSource || null,
+        utm_medium: safeBooking.utmMedium || null,
+        utm_campaign: safeBooking.utmCampaign || null,
+        utm_content: safeBooking.utmContent || null,
+        utm_term: safeBooking.utmTerm || null,
       };
 
       const result = await supabaseMutate<Array<Record<string, unknown>>>(
@@ -1260,6 +1266,7 @@ export const StorageService = {
       'service_type', 'user_name', 'user_email', 'pickup_location', 'dropoff_location',
       'reservation_code', 'agreed_to_terms', 'agreed_to_privacy', 'agreed_to_high_value',
       'email_sent_at', 'nametag_id', 'bags', 'bag_summary', 'admin_note', 'ops_status',
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
     ]);
     const allUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);
     // status는 UI 합성 필드 — BOOKING_DETAILS_COLUMNS에 없으므로 자동 필터됨

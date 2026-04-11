@@ -165,6 +165,43 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
         });
         const branchCommission = Object.values(branchCommissionMap).sort((a, b) => b.total - a.total);
 
+        // UTM 채널 어트리뷰션 집계
+        const utmSourceMap: Record<string, { source: string; count: number; revenue: number }> = {};
+        const utmCampaignMap: Record<string, { source: string; campaign: string; medium: string; count: number; revenue: number }> = {};
+        let utmTrackedCount = 0;
+
+        validBookings.forEach(b => {
+            const price = b.finalPrice ?? 0;
+            if (b.utmSource) {
+                utmTrackedCount++;
+                if (!utmSourceMap[b.utmSource]) {
+                    utmSourceMap[b.utmSource] = { source: b.utmSource, count: 0, revenue: 0 };
+                }
+                utmSourceMap[b.utmSource].count++;
+                utmSourceMap[b.utmSource].revenue += price;
+
+                if (b.utmCampaign) {
+                    const key = `${b.utmSource}__${b.utmCampaign}`;
+                    if (!utmCampaignMap[key]) {
+                        utmCampaignMap[key] = {
+                            source: b.utmSource,
+                            campaign: b.utmCampaign,
+                            medium: b.utmMedium || '-',
+                            count: 0, revenue: 0,
+                        };
+                    }
+                    utmCampaignMap[key].count++;
+                    utmCampaignMap[key].revenue += price;
+                }
+            }
+        });
+
+        const utmSources = Object.values(utmSourceMap).sort((a, b) => b.count - a.count);
+        const utmCampaigns = Object.values(utmCampaignMap).sort((a, b) => b.count - a.count);
+        const utmCoverageRate = validBookings.length > 0
+            ? Math.round((utmTrackedCount / validBookings.length) * 100)
+            : 0;
+
         return {
             daily: Object.values(daily).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(-31), // 넉넉하게 31일치 💅
             monthly: monthlyList,
@@ -188,6 +225,10 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
             activeDays: Object.keys(daily).length,
             totalCountryCount,
             branchCommission,
+            utmSources,
+            utmCampaigns,
+            utmTrackedCount,
+            utmCoverageRate,
         };
 
     }, [bookings, locations, startDate, endDate]);
@@ -577,6 +618,132 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
                     </div>
                 </section>
             )}
+
+            {/* 📡 채널 어트리뷰션 섹션 */}
+            <section className="space-y-6">
+                <div className="flex items-center gap-3 px-2">
+                    <div className="w-8 h-8 rounded-xl bg-bee-yellow flex items-center justify-center text-bee-black shadow-lg">
+                        <i className="fa-solid fa-satellite-dish text-xs"></i>
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">채널 어트리뷰션</h2>
+                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                            UTM 추적 예약 {stats.utmTrackedCount}건
+                            <span className="ml-2 px-2 py-0.5 bg-gray-100 rounded-full">
+                                커버리지 {stats.utmCoverageRate}%
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                {stats.utmSources.length === 0 ? (
+                    <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-12 text-center">
+                        <div className="text-4xl mb-4">📡</div>
+                        <p className="font-black text-gray-400 text-sm">아직 UTM 데이터가 없습니다.</p>
+                        <p className="text-xs text-gray-300 mt-2">SNS 링크에 <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono">?utm_source=xiaohongshu</code> 를 붙이면 쌓이기 시작합니다.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* 채널별 도넛 차트 */}
+                        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-8">
+                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">채널별 예약 수</p>
+                            <ResponsiveContainer width="100%" height={220}>
+                                <PieChart>
+                                    <Pie
+                                        data={stats.utmSources}
+                                        dataKey="count"
+                                        nameKey="source"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={55}
+                                        outerRadius={90}
+                                        paddingAngle={3}
+                                    >
+                                        {stats.utmSources.map((_, i) => (
+                                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(v: any, name: any) => [`${v}건`, name]}
+                                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', fontSize: 12, fontWeight: 700 }}
+                                    />
+                                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs font-bold text-gray-600">{v}</span>} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* 채널별 매출 테이블 */}
+                        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+                            <table className="w-full text-left">
+                                <thead className="bg-gray-50/50 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
+                                    <tr>
+                                        <th className="px-7 py-5">채널</th>
+                                        <th className="px-7 py-5 text-center">예약</th>
+                                        <th className="px-7 py-5 text-right">매출</th>
+                                        <th className="px-7 py-5 text-right">건당</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {stats.utmSources.map((s, i) => (
+                                        <tr key={s.source} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-7 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                                                    <span className="font-black text-bee-black text-sm">{s.source}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-7 py-4 text-center">
+                                                <span className="px-2.5 py-1 bg-gray-100 rounded-full text-[10px] font-black text-gray-500 group-hover:bg-bee-yellow group-hover:text-bee-black transition-all">
+                                                    {s.count}건
+                                                </span>
+                                            </td>
+                                            <td className="px-7 py-4 text-right font-black text-bee-black text-sm tabular-nums">
+                                                ₩{s.revenue.toLocaleString()}
+                                            </td>
+                                            <td className="px-7 py-4 text-right text-xs font-bold text-gray-400 tabular-nums">
+                                                ₩{s.count > 0 ? Math.floor(s.revenue / s.count).toLocaleString() : 0}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* 캠페인별 상세 */}
+                {stats.utmCampaigns.length > 0 && (
+                    <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-8 py-6 border-b border-gray-50">
+                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">캠페인별 성과</p>
+                        </div>
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50/50 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
+                                <tr>
+                                    <th className="px-8 py-4">채널</th>
+                                    <th className="px-8 py-4">캠페인</th>
+                                    <th className="px-8 py-4">매체</th>
+                                    <th className="px-8 py-4 text-center">예약</th>
+                                    <th className="px-8 py-4 text-right">매출</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {stats.utmCampaigns.slice(0, 20).map((c, i) => (
+                                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-8 py-3.5">
+                                            <span className="px-2.5 py-1 bg-bee-yellow/20 text-bee-black font-black text-xs rounded-lg">{c.source}</span>
+                                        </td>
+                                        <td className="px-8 py-3.5 font-bold text-bee-black text-sm">{c.campaign}</td>
+                                        <td className="px-8 py-3.5 text-xs text-gray-400 font-bold">{c.medium}</td>
+                                        <td className="px-8 py-3.5 text-center text-xs font-black text-gray-600">{c.count}건</td>
+                                        <td className="px-8 py-3.5 text-right font-black text-bee-black text-sm tabular-nums">₩{c.revenue.toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
 
             {/* 🗓️ Detailed Historical Timeline Section */}
             <section className="space-y-6">

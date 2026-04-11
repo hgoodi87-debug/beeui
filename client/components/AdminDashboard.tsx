@@ -900,9 +900,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         return d >= cancelStartDate && d <= cancelEndDate;
       }
 
-      // 4. 진행중 상태는 날짜 무관 표시
-      const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-      if (incompleteStatuses.includes(b.status as any)) return true;
+      // 4. 진행중 상태 처리
+      // TRANSIT/STORAGE/ARRIVED: 날짜 무관 항상 표시 (이미 진행 중)
+      const alwaysActiveStatuses = [BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+      if (alwaysActiveStatuses.includes(b.status as any)) return true;
+      // PENDING/CONFIRMED: 오늘 이후 날짜만 표시 (지난 날짜 숨김)
+      if (b.status === BookingStatus.PENDING || b.status === BookingStatus.CONFIRMED) {
+        return !b.pickupDate || b.pickupDate >= todayKST;
+      }
 
       // 5. 그 외: 오늘 날짜만
       return b.pickupDate === todayKST;
@@ -985,10 +990,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             const ss = String(b.settlementStatus || '');
             if (DONE_STATUSES.has(effectiveStatus) || DONE_STATUSES.has(ss)) return false;
 
-            // 진행중 상태 중 과거 날짜도 숨김 (단, PENDING/CONFIRMED/TRANSIT/STORAGE/ARRIVED는 날짜 무관 표시)
-            const incompleteStatuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
-            const isStatusIncomplete = incompleteStatuses.includes(effectiveStatus as any);
-            if (!isStatusIncomplete && b.pickupDate && b.pickupDate < todayKST) return false;
+            // 진행중 상태 중 과거 날짜 숨김 처리
+            // TRANSIT/STORAGE/ARRIVED: 날짜 무관 항상 표시 (이미 진행 중)
+            const alwaysShowStatuses = [BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
+            const isAlwaysShow = alwaysShowStatuses.includes(effectiveStatus as any);
+            // PENDING/CONFIRMED: 과거 날짜면 숨김 (오늘 이후만 표시)
+            if (!isAlwaysShow && b.pickupDate && b.pickupDate < todayKST) return false;
           }
         }
       }

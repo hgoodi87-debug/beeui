@@ -3,6 +3,10 @@
  * 메인 Supabase(xpnf...) 연동 + 오프라인 큐
  */
 import { supabaseGet, supabaseMutate } from './supabaseClient';
+import { getSupabaseConfig } from './supabaseRuntime';
+
+// 키오스크는 인증 불필요 — anon key로 직접 접근 (관리자 JWT 우회)
+const _ANON = getSupabaseConfig().anonKey;
 
 // ─── 테이블 이름 ──────────────────────────────────────────────────────────
 export const KIOSK_TABLES = {
@@ -133,7 +137,7 @@ export const flushOfflineQueue = async (): Promise<number> => {
           ...entry.payload,
           commission_rate: 0,
           source: 'kiosk',
-        });
+        }, _ANON);
         flushed++;
       } catch {
         remaining.push(entry);
@@ -151,7 +155,8 @@ export const flushOfflineQueue = async (): Promise<number> => {
 export const loadBranchBySlug = async (slug: string): Promise<KioskBranch | null> => {
   try {
     const rows = await supabaseGet<KioskBranch[]>(
-      `${KIOSK_TABLES.branches}?slug=eq.${encodeURIComponent(slug)}&is_active=eq.true&limit=1`
+      `${KIOSK_TABLES.branches}?slug=eq.${encodeURIComponent(slug)}&is_active=eq.true&limit=1`,
+      _ANON
     );
     return rows?.[0] ?? null;
   } catch (e) {
@@ -163,7 +168,8 @@ export const loadBranchBySlug = async (slug: string): Promise<KioskBranch | null
 export const loadAllActiveBranches = async (): Promise<KioskBranch[]> => {
   try {
     return await supabaseGet<KioskBranch[]>(
-      `${KIOSK_TABLES.branches}?is_active=eq.true&order=branch_name.asc`
+      `${KIOSK_TABLES.branches}?is_active=eq.true&order=branch_name.asc`,
+      _ANON
     );
   } catch {
     return [];
@@ -175,7 +181,8 @@ export const loadSettings = async (branchId: string): Promise<KioskCfg> => {
   try {
     // branch + default 동시 조회
     const rows = await supabaseGet<Array<{ branch_id: string; key: string; value: unknown }>>(
-      `${KIOSK_TABLES.settings}?branch_id=in.(${encodeURIComponent(branchId)},default)`
+      `${KIOSK_TABLES.settings}?branch_id=in.(${encodeURIComponent(branchId)},default)`,
+      _ANON
     );
 
     const merged: Record<string, unknown> = {};
@@ -223,7 +230,7 @@ export const insertStorageLog = async (
 ): Promise<KioskStorageLog | null> => {
   const body = { ...payload, commission_rate: 0, source: 'kiosk' };
   try {
-    const result = await supabaseMutate<KioskStorageLog[]>(KIOSK_TABLES.log, 'POST', body);
+    const result = await supabaseMutate<KioskStorageLog[]>(KIOSK_TABLES.log, 'POST', body, _ANON);
     return result?.[0] ?? null;
   } catch (e) {
     console.error('[kioskDb] insertStorageLog failed, queuing offline:', e);
@@ -236,13 +243,14 @@ export const updateStorageLog = async (
   id: number,
   patch: Partial<KioskStorageLog>
 ): Promise<void> => {
-  await supabaseMutate(`${KIOSK_TABLES.log}?id=eq.${id}`, 'PATCH', patch);
+  await supabaseMutate(`${KIOSK_TABLES.log}?id=eq.${id}`, 'PATCH', patch, _ANON);
 };
 
 export const loadTodayLog = async (branchId: string, date: string): Promise<KioskStorageLog[]> => {
   try {
     return await supabaseGet<KioskStorageLog[]>(
-      `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=eq.${date}&order=tag.asc`
+      `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=eq.${date}&order=tag.asc`,
+      _ANON
     );
   } catch {
     return [];
@@ -256,7 +264,8 @@ export const loadLogRange = async (
 ): Promise<KioskStorageLog[]> => {
   try {
     return await supabaseGet<KioskStorageLog[]>(
-      `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=gte.${fromDate}&date=lte.${toDate}&order=date.desc,tag.asc`
+      `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=gte.${fromDate}&date=lte.${toDate}&order=date.desc,tag.asc`,
+      _ANON
     );
   } catch {
     return [];

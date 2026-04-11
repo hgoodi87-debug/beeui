@@ -15,6 +15,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
             icon: Luggage,
             title: t.pricing.airport_hotel,
             price: t.pricing.price_standard,
+            unit: t.pricing?.unit_standard || t.pricing?.per_bag_label || "/ UNIT",
             features: t.pricing.features_standard || ["All sizes up to 28\"", "Airport ↔ Hotel Delivery", "Real-time Tracking", "Basic Insurance"],
             popular: true,
             serviceBadge: null,
@@ -28,6 +29,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
             icon: Package,
             title: t.pricing.extra_large,
             price: t.pricing.price_extra,
+            unit: t.pricing?.unit_extra || t.pricing?.per_bag_label || "/ UNIT",
             features: t.pricing.features_extra || ["Over 28\", Golf Bags, etc.", "Heavy Duty Handling", "Same-day Delivery", "Global Insurance"],
             popular: false,
             serviceBadge: null,
@@ -98,7 +100,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
                             <h3 className="text-sm md:text-3xl font-display font-black text-bee-black mb-2 md:mb-4 tracking-tight leading-tight">{item.title}</h3>
                             <div className="flex items-baseline flex-wrap gap-1 mb-4 md:mb-10">
                                 <span className="text-xl md:text-6xl font-display font-black tracking-tighter text-bee-black whitespace-nowrap">{item.price}</span>
-                                <span className="text-bee-muted font-black text-[8px] md:text-xs uppercase tracking-[0.05em] md:tracking-widest">{t.pricing?.per_bag_label || "/ UNIT"}</span>
+                                <span className="text-bee-muted font-black text-[8px] md:text-xs uppercase tracking-[0.05em] md:tracking-widest">{item.unit}</span>
                             </div>
 
                             <ul className="space-y-2 md:space-y-4 mb-6 md:mb-12 flex-grow overflow-hidden">

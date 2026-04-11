@@ -374,6 +374,11 @@ import {
   sanitizeDeliveryBagSizes
 } from '../src/domains/booking/bagCategoryUtils';
 
+// --- In-memory cache (세션 내 중복 Supabase 왕복 방지, TTL 5분) ---
+const SETTINGS_CACHE_TTL_MS = 5 * 60 * 1000;
+let _storageTiersCache: { data: ReturnType<typeof normalizeStorageTiers>; ts: number } | null = null;
+let _deliveryPricesCache: { data: PriceSettings; ts: number } | null = null;
+
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
 const KEYS = {
   CLOUD_CONFIG: 'beeliber_integration_config',
@@ -1551,6 +1556,10 @@ export const StorageService = {
 
   // --- Storage Tiers ---
   getStorageTiers: async (): Promise<StorageTier[] | null> => {
+    if (_storageTiersCache && Date.now() - _storageTiersCache.ts < SETTINGS_CACHE_TTL_MS) {
+      return _storageTiersCache.data;
+    }
+
     // Supabase 우선: app_settings에서 storage_tiers 조회
     if (isSupabaseDataEnabled()) {
       try {
@@ -1559,7 +1568,9 @@ export const StorageService = {
         );
         if (rows?.[0]?.value?.tiers) {
           console.log("[Storage] Loaded storage tiers from Supabase ✅");
-          return normalizeStorageTiers(rows[0].value.tiers);
+          const result = normalizeStorageTiers(rows[0].value.tiers);
+          _storageTiersCache = { data: result, ts: Date.now() };
+          return result;
         }
       } catch (e) {
         console.warn("[Storage] Supabase storage tiers failed, falling back:", e);
@@ -1570,7 +1581,9 @@ export const StorageService = {
       const snap = await getDoc(doc(db, "settings", "storage_tiers"));
       if (snap.exists()) {
         const data = snap.data();
-        return normalizeStorageTiers(data.tiers || null);
+        const result = normalizeStorageTiers(data.tiers || null);
+        _storageTiersCache = { data: result, ts: Date.now() };
+        return result;
       }
       return null;
     } catch (e) {
@@ -1580,6 +1593,7 @@ export const StorageService = {
   },
 
   saveStorageTiers: async (tiers: StorageTier[]): Promise<void> => {
+    _storageTiersCache = null;
     const normalizedTiers = tiers.map((tier) => ({ ...tier, prices: normalizeStorageTierPrices(tier.prices) }));
     if (isSupabaseDataEnabled()) {
       try {
@@ -1624,6 +1638,10 @@ export const StorageService = {
 
   // --- Price Settings ---
   getDeliveryPrices: async (): Promise<PriceSettings | null> => {
+    if (_deliveryPricesCache && Date.now() - _deliveryPricesCache.ts < SETTINGS_CACHE_TTL_MS) {
+      return _deliveryPricesCache.data;
+    }
+
     // Supabase 우선: app_settings에서 delivery_prices 조회
     if (isSupabaseDataEnabled()) {
       try {
@@ -1632,7 +1650,9 @@ export const StorageService = {
         );
         if (rows?.[0]?.value) {
           console.log("[Storage] Loaded delivery prices from Supabase ✅");
-          return normalizeDeliveryPrices(rows[0].value as PriceSettings);
+          const result = normalizeDeliveryPrices(rows[0].value as PriceSettings);
+          _deliveryPricesCache = { data: result, ts: Date.now() };
+          return result;
         }
       } catch (e) {
         console.warn("[Storage] Supabase delivery prices failed, falling back:", e);
@@ -1642,7 +1662,9 @@ export const StorageService = {
     try {
       const snap = await getDoc(doc(db, "settings", "delivery_prices"));
       if (snap.exists()) {
-        return normalizeDeliveryPrices(snap.data() as PriceSettings);
+        const result = normalizeDeliveryPrices(snap.data() as PriceSettings);
+        _deliveryPricesCache = { data: result, ts: Date.now() };
+        return result;
       }
       return null;
     } catch (e) {
@@ -1652,6 +1674,7 @@ export const StorageService = {
   },
 
   saveDeliveryPrices: async (prices: PriceSettings): Promise<void> => {
+    _deliveryPricesCache = null;
     const normalized = normalizeDeliveryPrices(prices);
     if (isSupabaseDataEnabled()) {
       try {

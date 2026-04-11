@@ -36,7 +36,7 @@ const RefundPage = lazy(() => import('./components/RefundPage'));
 const StorageLandingPage = lazy(() => import('./components/StorageLandingPage'));
 const KioskPage = lazy(() => import('./components/KioskPage'));
 import { useParams } from 'react-router-dom';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary, { PageErrorFallback } from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
@@ -49,6 +49,10 @@ import { useLocations } from './src/domains/location/hooks/useLocations';
 import { useCurrentUser } from './src/domains/user/hooks/useCurrentUser';
 
 import { useAppStore } from './src/store/appStore';
+
+// 언어 스위치 시 번역 모듈 재로드 방지 (동적 import는 모듈 캐시가 있지만,
+// setT(null) 플리커를 막기 위해 로드된 객체를 메모리에 보관)
+const _translationCache = new Map<string, any>();
 import { useBookingStore } from './src/store/bookingStore';
 
 const EMPTY_ADMIN_INFO = { name: '', jobTitle: '', role: 'staff', email: '', branchId: '', loginAt: 0 };
@@ -181,10 +185,18 @@ const App: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+    const langKey = lang?.toLowerCase() || 'ko';
+
+    // 이미 로드된 번역이면 즉시 설정 (null 플리커 없음)
+    if (_translationCache.has(langKey)) {
+      setT(_translationCache.get(langKey));
+      return;
+    }
+
     const loadTranslations = async () => {
       try {
         let loadedT;
-        switch (lang?.toLowerCase()) {
+        switch (langKey) {
           case 'en': { const m = await import('./translations_split/en'); loadedT = m.en; break; }
           case 'zh':
           case 'zh-cn': { const m = await import('./translations_split/zh'); loadedT = m.zh; break; }
@@ -194,11 +206,13 @@ const App: React.FC = () => {
           case 'ko':
           default: { const m = await import('./translations_split/ko'); loadedT = m.ko; break; }
         }
+        _translationCache.set(langKey, loadedT);
         if (isMounted) setT(loadedT);
       } catch (error) {
         console.error("Failed to load translation:", error);
         if (isMounted) {
           const fallback = await import('./translations_split/ko');
+          _translationCache.set('ko', fallback.ko);
           setT(fallback.ko);
         }
       }
@@ -640,7 +654,7 @@ const App: React.FC = () => {
   const isDarkBg = location.pathname === '/' || location.pathname.startsWith('/branch/') || location.pathname.split('/').length <= 2;
 
   return (
-    <div className={`w-full font-sans selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden ${isDarkBg ? 'bg-black' : 'bg-slate-50'}`}>
+    <div className={`relative w-full font-sans selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden ${isDarkBg ? 'bg-black' : 'bg-slate-50'}`}>
       <LoaderOverlay show={isInitialLoad || !t} />
 
       {t && (
@@ -661,9 +675,9 @@ const App: React.FC = () => {
                   <Route path="/:urlLang" element={<LangRouteLayout setLang={setLang} lang={lang} />}>
                     <Route index element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
                     <Route path="branch/:code" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
-                    <Route path="services" element={<AnimatedRoute><ServicesPage onBack={() => navigate(`/${lang}`)} t={t.services_page} landingT={t.landing_renewal} pricingT={t.pricing} /></AnimatedRoute>} />
-                    <Route path="locations" element={<AnimatedRoute><LocationsPage onBack={() => navigate(`/${lang}`)} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={changeLanguage} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as string | undefined} /></AnimatedRoute>} />
-                    <Route path="booking" element={<AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate(`/${lang}/locations`)} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute>} />
+                    <Route path="services" element={<ErrorBoundary fallback={<PageErrorFallback lang={lang} />}><AnimatedRoute><ServicesPage onBack={() => navigate(`/${lang}`)} t={t.services_page} landingT={t.landing_renewal} pricingT={t.pricing} /></AnimatedRoute></ErrorBoundary>} />
+                    <Route path="locations" element={<ErrorBoundary fallback={<PageErrorFallback lang={lang} />}><AnimatedRoute><LocationsPage onBack={() => navigate(`/${lang}`)} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={changeLanguage} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as string | undefined} /></AnimatedRoute></ErrorBoundary>} />
+                    <Route path="booking" element={<ErrorBoundary fallback={<PageErrorFallback lang={lang} />}><AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate(`/${lang}/locations`)} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute></ErrorBoundary>} />
                     <Route path="payments/toss/success" element={<AnimatedRoute fade><TossPaymentSuccessPage lang={lang} onBookingReady={handlePaidBookingReady} onBackToBooking={() => navigate(`/${lang}/booking`, { replace: true })} /></AnimatedRoute>} />
                     <Route path="payments/toss/fail" element={<AnimatedRoute fade><TossPaymentFailPage lang={lang} onBackToBooking={() => navigate(`/${lang}/booking`, { replace: true })} /></AnimatedRoute>} />
                     <Route path="booking-success" element={<AnimatedRoute fade><BookingSuccess booking={lastBooking} locations={bookingLocations} onBack={() => navigate(`/${lang}`)} t={t} lang={lang} /></AnimatedRoute>} />
@@ -673,7 +687,7 @@ const App: React.FC = () => {
                     <Route path="terms" element={<AnimatedRoute><TermsPage onBack={() => navigate(`/${lang}`)} t={t} /></AnimatedRoute>} />
                     <Route path="privacy" element={<AnimatedRoute><PrivacyPage onBack={() => navigate(`/${lang}`)} t={t} /></AnimatedRoute>} />
                     <Route path="refund" element={<AnimatedRoute><RefundPage onBack={() => navigate(`/${lang}/privacy`)} t={t} /></AnimatedRoute>} />
-                    <Route path="qna" element={<AnimatedRoute><QnaPage onBack={() => navigate(`/${lang}`)} t={t} lang={lang} /></AnimatedRoute>} />
+                    <Route path="qna" element={<ErrorBoundary fallback={<PageErrorFallback lang={lang} />}><AnimatedRoute><QnaPage onBack={() => navigate(`/${lang}`)} t={t} lang={lang} /></AnimatedRoute></ErrorBoundary>} />
                     <Route path="vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
                     <Route path="storage/:slug" element={<AnimatedRoute><StorageLandingPage lang={lang} onBack={() => navigate(`/${lang}/locations`)} onBook={(locationId) => { navigate(`/${lang}/locations`); }} /></AnimatedRoute>} />
                     <Route path="delivery/:slug" element={<AnimatedRoute><StorageLandingPage mode="delivery" lang={lang} onBack={() => navigate(`/${lang}/locations`)} onBook={(locationId) => { navigate(`/${lang}/locations`); }} /></AnimatedRoute>} />

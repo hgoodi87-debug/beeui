@@ -1023,11 +1023,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             if (DONE_STATUSES.has(effectiveStatus) || DONE_STATUSES.has(ss)) return false;
 
             // 진행중 상태 중 과거 날짜 숨김 처리
-            // TRANSIT/STORAGE/ARRIVED: 날짜 무관 항상 표시 (이미 진행 중)
             const alwaysShowStatuses = [BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED];
             const isAlwaysShow = alwaysShowStatuses.includes(effectiveStatus as any);
-            // PENDING/CONFIRMED: 과거 날짜면 숨김 (오늘 이후만 표시)
-            if (!isAlwaysShow && b.pickupDate && b.pickupDate < todayKST) return false;
+            if (isAlwaysShow) {
+              // TRANSIT/STORAGE/ARRIVED: 종료일(returnDate or dropoffDate)이 어제 이전이면 숨김
+              // 종료일이 없으면 pickupDate 기준
+              const endDate = b.returnDate || b.dropoffDate || b.pickupDate || '';
+              if (endDate && endDate < todayKST) return false;
+            } else {
+              // PENDING/CONFIRMED: pickupDate가 어제 이전이면 숨김
+              if (b.pickupDate && b.pickupDate < todayKST) return false;
+            }
           }
         }
       }

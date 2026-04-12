@@ -127,8 +127,14 @@ const fromDB = (r: any): Entry => ({
 // ─── 메인 ─────────────────────────────────────────────────────────────────
 type SubView = 'checkin' | 'admin' | 'settings';
 
-const KioskTab: React.FC = () => {
-  const [view, setView] = useState<SubView>('checkin');
+interface KioskTabProps {
+  initialBranchSlug?: string;
+  /** 장부 전용 모드: 보관장부·설정만 표시, 지점 선택 숨김, 기본 뷰 = admin */
+  logMode?: boolean;
+}
+
+const KioskTab: React.FC<KioskTabProps> = ({ initialBranchSlug, logMode = false }) => {
+  const [view, setView] = useState<SubView>(logMode ? 'admin' : 'checkin');
   const [lang, setLang] = useState<Lang>('ko');
   const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -144,9 +150,16 @@ const KioskTab: React.FC = () => {
   useEffect(() => {
     loadAllActiveBranches().then((list) => {
       setBranches(list);
-      if (list.length > 0) setSelectedBranch(list[0]);
+      if (list.length > 0) {
+        if (initialBranchSlug) {
+          const match = list.find((b) => b.slug === initialBranchSlug || b.branch_id === initialBranchSlug);
+          setSelectedBranch(match ?? list[0]);
+        } else {
+          setSelectedBranch(list[0]);
+        }
+      }
     });
-  }, []);
+  }, [initialBranchSlug]);
 
   const branchId = selectedBranch?.branch_id ?? selectedBranch?.slug ?? 'default';
 
@@ -196,63 +209,67 @@ const KioskTab: React.FC = () => {
     );
   }
 
-  const subTabs: { id: SubView; label: string; icon: string }[] = [
+  const allSubTabs: { id: SubView; label: string; icon: string }[] = [
     { id: 'checkin',  label: lang === 'ko' ? '현장 접수'    : lang === 'zh' ? '现场接收' : 'Check-in',    icon: 'fa-clipboard-check' },
     { id: 'admin',   label: lang === 'ko' ? '보관 장부'    : lang === 'zh' ? '存放记录' : 'Storage Log', icon: 'fa-table-list' },
     { id: 'settings', label: lang === 'ko' ? '키오스크 설정' : lang === 'zh' ? '设置'    : 'Settings',    icon: 'fa-sliders' },
   ];
+  const subTabs = logMode
+    ? allSubTabs.filter(t => t.id === 'admin' || t.id === 'settings')
+    : allSubTabs;
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* ── 페이지 헤더 ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">현장 키오스크</h1>
-          <p className="text-sm text-gray-400 font-medium mt-0.5">짐보관 현장 접수 · 관리 · 설정</p>
-        </div>
-        {/* 지점 선택 + 언어 선택 */}
-        <div className="flex items-center gap-3">
-          {branches.length > 1 && (
-            <select
-              value={selectedBranch?.id ?? ''}
-              onChange={(e) => {
-                const b = branches.find((br) => br.id === e.target.value);
-                if (b) setSelectedBranch(b);
-              }}
-              className="bg-gray-100 rounded-full px-4 py-2 text-sm font-bold text-bee-black border-none outline-none"
-            >
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.branch_name}</option>
-              ))}
-            </select>
-          )}
-          <div className="flex items-center bg-gray-100 rounded-full p-1">
-            {(['ko', 'en', 'zh'] as Lang[]).map(l => (
-              <button key={l} onClick={() => setLang(l)}
-                className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
-                  lang === l ? 'bg-bee-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
-                }`}>
-                {l === 'ko' ? '한국어' : l === 'en' ? 'English' : '中文'}
-              </button>
-            ))}
+      {/* ── 페이지 헤더 + 지점 선택 — 장부 모드에서는 전체 숨김 ── */}
+      {!logMode && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-black tracking-tight">현장 키오스크</h1>
+              <p className="text-sm text-gray-400 font-medium mt-0.5">짐보관 현장 접수 · 관리 · 설정</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {branches.length > 1 && (
+                <select
+                  value={selectedBranch?.id ?? ''}
+                  onChange={(e) => {
+                    const b = branches.find((br) => br.id === e.target.value);
+                    if (b) setSelectedBranch(b);
+                  }}
+                  className="bg-gray-100 rounded-full px-4 py-2 text-sm font-bold text-bee-black border-none outline-none"
+                >
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>{b.branch_name}</option>
+                  ))}
+                </select>
+              )}
+              <div className="flex items-center bg-gray-100 rounded-full p-1">
+                {(['ko', 'en', 'zh'] as Lang[]).map(l => (
+                  <button key={l} onClick={() => setLang(l)}
+                    className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${
+                      lang === l ? 'bg-bee-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                    }`}>
+                    {l === 'ko' ? '한국어' : l === 'en' ? 'English' : '中文'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* 키오스크 URL 안내 */}
-      {selectedBranch && (
-        <div className="bg-bee-yellow/10 border border-bee-yellow/30 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm">
-          <i className="fa-solid fa-tablet-screen-button text-bee-yellow" />
-          <span className="text-gray-600">현장 키오스크 URL:</span>
-          <a
-            href={`/kiosk/${encodeURIComponent(selectedBranch.slug)}`}
-            target="_blank"
-            rel="noreferrer"
-            className="font-black text-bee-black underline underline-offset-2"
-          >
-            /kiosk/{selectedBranch.slug}
-          </a>
-        </div>
+          {selectedBranch && (
+            <div className="bg-bee-yellow/10 border border-bee-yellow/30 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm">
+              <i className="fa-solid fa-tablet-screen-button text-bee-yellow" />
+              <span className="text-gray-600">현장 키오스크 URL:</span>
+              <a
+                href={`/kiosk/${encodeURIComponent(selectedBranch.slug)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-black text-bee-black underline underline-offset-2"
+              >
+                /kiosk/{selectedBranch.slug}
+              </a>
+            </div>
+          )}
+        </>
       )}
 
       {/* ── 서브탭 (언더라인 스타일) ── */}

@@ -28,7 +28,7 @@ import {
 } from '../services/kioskDb';
 
 // ─── i18n ─────────────────────────────────────────────────────────────────
-type Lang = 'ko' | 'en' | 'zh';
+type Lang = 'ko' | 'en' | 'zh' | 'zh-TW' | 'zh-HK' | 'ja';
 const LABELS: Record<Lang, Record<string, string>> = {
   ko: {
     small: '소형 가방', small_desc: '토트백 · 배낭 · 소형 캐리어',
@@ -101,6 +101,78 @@ const LABELS: Record<Lang, Record<string, string>> = {
     qr_sub: '在 bee-liber.com 查询', reset: '重新开始',
     from_4h: '小行李最少存放4小时',
     select_bags: '请输入行李数量', select_dur: '请选择存放时间',
+  },
+  'zh-TW': {
+    small: '小型行李', small_desc: '手提包 · 背包 · 小型行李箱',
+    carrier: '大型行李箱', carrier_desc: '旅行箱 · 大型行李',
+    col1: '行李數量', col2: '寄存時間', col3: '確認預訂',
+    duration: '小時', start: '開始', pickup: '取件', total: '合計',
+    submit: '辦理寄存',
+    payment_cash: '現金', payment_card: '刷卡', payment_pending: '未付款',
+    select_payment: '付款方式',
+    notice_title: '注意事項',
+    admin_title: '管理員模式', admin_password: '密碼',
+    admin_enter: '進入', admin_wrong: '密碼錯誤',
+    today_log: '今日接待記錄',
+    offline_warn: '目前離線', offline_queued: '筆等待同步',
+    syncing: '同步中...', synced: '已同步',
+    done: '已取件', mark_done: '標記已取件',
+    pcs: '件', loading: '載入中...', not_found: '找不到該分店',
+    discount: '折扣',
+    success_msg: '辦理完成！', success_sub: 'Booking confirmed',
+    tag: '標籤', zone: '區域',
+    delivery_btn: '預約機場配送', qr_scan: '請掃描QR碼',
+    qr_sub: '在 bee-liber.com 查詢', reset: '重新開始',
+    from_4h: '小行李最少寄存4小時',
+    select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間',
+  },
+  'zh-HK': {
+    small: '細型行李', small_desc: '手袋 · 背囊 · 小型行李箱',
+    carrier: '大型行李箱', carrier_desc: '旅行喼 · 大型行李',
+    col1: '行李數量', col2: '寄存時間', col3: '確認預約',
+    duration: '小時', start: '開始', pickup: '取件', total: '合計',
+    submit: '辦理寄存',
+    payment_cash: '現金', payment_card: '刷卡', payment_pending: '未付款',
+    select_payment: '付款方式',
+    notice_title: '注意事項',
+    admin_title: '管理員模式', admin_password: '密碼',
+    admin_enter: '進入', admin_wrong: '密碼錯誤',
+    today_log: '今日接待記錄',
+    offline_warn: '目前離線', offline_queued: '筆等待同步',
+    syncing: '同步中...', synced: '已同步',
+    done: '已取件', mark_done: '標記已取件',
+    pcs: '件', loading: '載入中...', not_found: '搵唔到該分店',
+    discount: '折扣',
+    success_msg: '辦理完成！', success_sub: 'Booking confirmed',
+    tag: '標籤', zone: '區域',
+    delivery_btn: '預約機場送遞', qr_scan: '請掃描QR碼',
+    qr_sub: '喺 bee-liber.com 查詢', reset: '重新開始',
+    from_4h: '細行李最少寄存4小時',
+    select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間',
+  },
+  ja: {
+    small: '小型バッグ', small_desc: 'トートバッグ · リュック · 小型スーツケース',
+    carrier: '大型スーツケース', carrier_desc: '旅行用スーツケース · 大型荷物',
+    col1: '荷物の数', col2: '預け時間', col3: '受付確認',
+    duration: '時間', start: '預け開始', pickup: '受取予定', total: '合計',
+    submit: '受付する',
+    payment_cash: '現金', payment_card: 'カード', payment_pending: '未払い',
+    select_payment: 'お支払い方法',
+    notice_title: 'ご案内',
+    admin_title: '管理者モード', admin_password: 'パスワード',
+    admin_enter: '入室', admin_wrong: 'パスワードが違います',
+    today_log: '本日の受付状況',
+    offline_warn: 'オフライン中', offline_queued: '件待機中',
+    syncing: '同期中...', synced: '同期完了',
+    done: '返却完了', mark_done: '返却済みにする',
+    pcs: '個', loading: '読み込み中...', not_found: '店舗が見つかりません',
+    discount: '割引',
+    success_msg: '受付完了しました！', success_sub: 'Booking confirmed',
+    tag: 'タグ', zone: 'ゾーン',
+    delivery_btn: '空港配送を予約', qr_scan: '紛失防止QRスキャン',
+    qr_sub: 'bee-liber.com で確認', reset: '最初から',
+    from_4h: '小型バッグは4時間以上からお預かりします',
+    select_bags: '荷物の数を入力してください', select_dur: '預け時間を選択してください',
   },
 };
 
@@ -757,10 +829,9 @@ const KioskPage: React.FC = () => {
   }
 
   // ─── 메인 폼 — 3컬럼 ──────────────────────────────────────────────────
+  // 현재 현금만 운영 중 — 카드 제외, 미수금은 어드민 전용
   const paymentOptions: { value: PaymentMethod; label: string }[] = [
     { value: '현금', label: t.payment_cash },
-    { value: '카드', label: t.payment_card },
-    // '미수금'은 어드민 전용 — 손님 화면에 노출하지 않음
   ];
 
   const startT = timeStr();
@@ -769,8 +840,8 @@ const KioskPage: React.FC = () => {
     <div className="h-screen bg-[#f9f9f9] flex flex-col overflow-hidden">
       {showAdmin && <AdminPanel {...adminPanelProps} />}
 
-      {/* 헤더 */}
-      <header className="bg-[#111111] px-8 py-3 flex items-center justify-between flex-shrink-0">
+      {/* 헤더 — 글래스 */}
+      <header className="bg-black/30 backdrop-blur-xl border-b border-white/10 px-8 py-3 flex items-center justify-between flex-shrink-0">
         <button onPointerDown={handleLogoPointerDown} onPointerUp={handleLogoPointerUp} onPointerLeave={handleLogoPointerUp} className="select-none">
           <p className="text-[#F5C842] font-black text-lg tracking-[0.18em]">BEELIBER</p>
           <p className="text-white/40 text-xs">{lang === 'ko' ? branch?.branch_name : branch?.branch_name_en ?? branch?.branch_name}</p>
@@ -782,16 +853,23 @@ const KioskPage: React.FC = () => {
               <span className="text-orange-400 text-xs font-bold">{t.offline_warn}</span>
             </div>
           )}
-          <div className="flex gap-1.5">
-            {(['ko', 'en', 'zh'] as Lang[]).map((l) => (
+          <div className="flex gap-1">
+            {([
+              ['ko',    'KO'],
+              ['en',    'EN'],
+              ['zh',    'ZH'],
+              ['zh-TW', '繁'],
+              ['zh-HK', '粵'],
+              ['ja',    'JA'],
+            ] as [Lang, string][]).map(([l, label]) => (
               <button key={l} onClick={() => setLang(l)}
-                className={`px-3 py-1.5 rounded-full text-xs font-black transition-all ${lang === l ? 'bg-[#F5C842] text-[#111111]' : 'text-white/40 ring-1 ring-white/20'}`}>
-                {l === 'ko' ? 'KO' : l === 'en' ? 'EN' : 'ZH'}
+                className={`px-2.5 py-1.5 rounded-full text-xs font-black transition-all ${lang === l ? 'bg-[#F5C842] text-[#111111]' : 'text-white/40 ring-1 ring-white/20 hover:text-white/70'}`}>
+                {label}
               </button>
             ))}
           </div>
           <button
-            onClick={() => setShowAdmin(true)}
+            onClick={() => navigate(`/kiosk/${branchSlug}/log`)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white/60 hover:bg-[#F5C842] hover:text-[#111111] transition-all text-xs font-black"
             title="보관 장부"
           >
@@ -1027,18 +1105,11 @@ const KioskPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 결제 방법 */}
+            {/* 결제 방법 — 현금 고정 */}
             <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
               <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">{t.select_payment}</p>
-              <div className="flex gap-2">
-                {paymentOptions.map((opt) => (
-                  <button key={opt.value} onClick={() => setPayment(opt.value)}
-                    className={`flex-1 py-3 rounded-full font-black text-sm transition-all active:scale-[0.98] ${
-                      payment === opt.value ? 'bg-[#111111] text-white' : 'bg-[#f5f5f5] text-gray-600'
-                    }`}>
-                    {opt.label}
-                  </button>
-                ))}
+              <div className="w-full py-3 rounded-full bg-[#111111] text-white font-black text-sm text-center">
+                {t.payment_cash}
               </div>
             </div>
 

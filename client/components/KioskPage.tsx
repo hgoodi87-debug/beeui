@@ -618,6 +618,11 @@ const KioskPage: React.FC = () => {
   const [payment, setPayment] = useState<PaymentMethod>('현금');
   const [discount, setDiscount] = useState(0);
 
+  // ── 주문 번호 카운터 (1~100 순환) ──────────────────────────────────────
+  const [nextTag, setNextTag] = useState(1);
+  const [editingTag, setEditingTag] = useState(false);
+  const [tagInputVal, setTagInputVal] = useState('1');
+
   // 성공 화면
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [resultTag, setResultTag] = useState(0);
@@ -649,6 +654,13 @@ const KioskPage: React.FC = () => {
       setCfg(settings);
       const entries = await loadTodayLog(b.branch_id ?? slug, todayStr());
       setTodayLog(entries);
+      // 오늘 최대 태그 +1 로 카운터 초기화 (100 초과 시 1 로 순환)
+      if (entries.length > 0) {
+        const maxTag = Math.max(...entries.map((e) => e.tag));
+        const initial = maxTag >= 100 ? 1 : maxTag + 1;
+        setNextTag(initial);
+        setTagInputVal(String(initial));
+      }
       setLoading(false);
     })();
   }, [branchSlug]);
@@ -686,7 +698,12 @@ const KioskPage: React.FC = () => {
     const pickupTime = addHours(startTime, duration);
     const pickupTs = Date.now() + duration * 60 * 60 * 1000;
     const currentLog = await loadTodayLog(branch.branch_id ?? branch.slug, today);
-    const { tag, rowLabel } = assignTagAndRow(currentLog, cfg);
+    const { rowLabel } = assignTagAndRow(currentLog, cfg);
+    const tag = nextTag;
+    // 카운터 advance (100→1 순환)
+    const advancedTag = nextTag >= 100 ? 1 : nextTag + 1;
+    setNextTag(advancedTag);
+    setTagInputVal(String(advancedTag));
     const payload = {
       branch_id: branch.branch_id ?? branch.slug,
       date: today, tag,
@@ -704,7 +721,7 @@ const KioskPage: React.FC = () => {
     setOfflineCount(getOfflineQueueSize());
     setSubmitting(false);
     setStep('success');
-  }, [branch, cfg, smallQty, carrierQty, duration, originalPrice, discount, payment, canSubmit]);
+  }, [branch, cfg, smallQty, carrierQty, duration, originalPrice, discount, payment, canSubmit, nextTag]);
 
   const resetForm = () => {
     setStep('form');
@@ -846,6 +863,52 @@ const KioskPage: React.FC = () => {
           <p className="text-[#F5C842] font-black text-lg tracking-[0.18em]">BEELIBER</p>
           <p className="text-white/40 text-xs">{lang === 'ko' ? branch?.branch_name : branch?.branch_name_en ?? branch?.branch_name}</p>
         </button>
+
+        {/* 주문 번호 카운터 */}
+        <div className="flex flex-col items-center select-none">
+          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-0.5">NEXT ORDER</p>
+          {editingTag ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={tagInputVal}
+                onChange={(e) => setTagInputVal(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const v = Math.min(100, Math.max(1, parseInt(tagInputVal) || 1));
+                    setNextTag(v);
+                    setTagInputVal(String(v));
+                    setEditingTag(false);
+                  }
+                  if (e.key === 'Escape') setEditingTag(false);
+                }}
+                autoFocus
+                className="w-16 text-center text-xl font-black bg-white/10 text-white rounded-xl px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#F5C842]"
+              />
+              <button
+                onClick={() => {
+                  const v = Math.min(100, Math.max(1, parseInt(tagInputVal) || 1));
+                  setNextTag(v);
+                  setTagInputVal(String(v));
+                  setEditingTag(false);
+                }}
+                className="px-3 py-1.5 bg-[#F5C842] text-[#111111] rounded-xl font-black text-xs"
+              >확인</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setTagInputVal(String(nextTag)); setEditingTag(true); }}
+              className="flex items-baseline gap-0.5 hover:opacity-80 transition-opacity group"
+              title="탭하여 번호 수정"
+            >
+              <span className="text-white/30 text-sm font-black">#</span>
+              <span className="text-[#F5C842] text-3xl font-black tabular-nums leading-none">{String(nextTag).padStart(2, '0')}</span>
+              <i className="fa-solid fa-pen-to-square text-white/20 text-[10px] ml-1 group-hover:text-white/50 transition-colors" />
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           {!isOnline && (
             <div className="flex items-center gap-1.5 bg-orange-500/20 rounded-full px-3 py-1">

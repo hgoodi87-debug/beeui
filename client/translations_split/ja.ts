@@ -573,7 +573,11 @@ export const ja = {
         everyday_hours: '09:00 - 21:00（毎日）',
         address_specified: '住所指定',
         storage_notice_title: '保管について',
-        storage_notice_desc: '日程と時間を選択すると、保管時間が自動で計算されます。'
+        storage_notice_desc: '日程と時間を選択すると、保管時間が自動で計算されます。',
+        social_cta_title: '体験をシェアしよう',
+        social_cta_desc: '小紅書にレビューを投稿すると、次回予約時に₩2,000クレジットをプレゼント。',
+        social_cta_btn: '小紅書にレビューを書く',
+        social_cta_note: '投稿後、予約番号とレビューリンクをメールにお送りください。確認後、クレジットを付与いたします。'
     },
     size_simulator: {
         size_s_range: '18〜20インチ',

@@ -199,6 +199,38 @@ deno test supabase/functions/_shared/vat.test.ts
 
 ---
 
+## 키오스크 후속 작업 (plan-eng-review 2026-04-11)
+
+### [K1] 오프라인 큐 내구성 개선 (MEDIUM)
+
+**What:** 현재 오프라인 큐는 `localStorage` 기반. 브라우저 재시작 또는 강제 종료 시 미전송 접수 데이터 유실 가능.
+
+**Why:** Wi-Fi 불안정한 현장 키오스크 특성상, 손님 접수 후 오프라인 상태에서 직원이 실수로 브라우저를 닫으면 데이터가 사라짐. 실제 사고 발생 시 수동 복구 불가.
+
+**How:** `localStorage` → IndexedDB 전환, 또는 Service Worker의 Background Sync API 활용. `kioskDb.ts` `enqueueOffline/flushOfflineQueue` 교체.
+
+**Effort:** M (CC: ~30분) **Priority:** P2
+**Depends on:** 현장 운영 후 실제 유실 빈도 확인 시 우선 작업
+
+---
+
+### [K2] kiosk_branches.branch_id NULL 점검 (SMALL)
+
+**What:** 신규 지점 추가 시 `branch_id`가 null이면 한국어 slug('연남' 등)이 `kiosk_storage_log.branch_id`로 저장됨. 이후 관리자 대시보드 조회 시 매핑 불일치 가능.
+
+**Why:** `KioskPage.tsx`에서 `branch.branch_id ?? branch.slug` 패턴 사용. branch_id가 항상 채워져 있으면 문제 없지만, 방어 없이 실수 가능.
+
+**How:** Supabase SQL Editor에서 검증:
+```sql
+SELECT id, slug, branch_id FROM kiosk_branches WHERE branch_id IS NULL;
+```
+결과 있으면 branch_id 채워넣기.
+
+**Effort:** XS (5분) **Priority:** P1 (신규 지점 추가할 때마다 체크)
+**Depends on:** 없음
+
+---
+
 ## 성과 목표 (SEO KPI)
 
 | 지표 | 현재 | 3개월 목표 | 6개월 목표 |

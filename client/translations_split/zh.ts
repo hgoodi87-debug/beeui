@@ -646,7 +646,11 @@ export const zh = {
         everyday_hours: '09:00 - 21:00（每日）',
         address_specified: '已填写地址',
         storage_notice_title: '行李寄存说明',
-        storage_notice_desc: '选择日期与时间后，寄存时间将自动计算。'
+        storage_notice_desc: '选择日期与时间后，寄存时间将自动计算。',
+        social_cta_title: '分享您的体验',
+        social_cta_desc: '在小红书发布使用心得，下次预约即享 ₩2,000 积分回馈。',
+        social_cta_btn: '在小红书写评价',
+        social_cta_note: '发布后，请将预约编号与帖子链接发送至我们的邮箱，确认后积分将立即到账。'
     },
     size_simulator: {
         header_title: "BEE 尺寸对照",

@@ -757,7 +757,11 @@ export const en = {
         everyday_hours: '09:00 - 21:00 (Everyday)',
         address_specified: 'Address Specified',
         storage_notice_title: 'Storage Info',
-        storage_notice_desc: 'Pick the start and return schedule, and your storage time will be calculated automatically.'
+        storage_notice_desc: 'Pick the start and return schedule, and your storage time will be calculated automatically.',
+        social_cta_title: 'Share Your Experience',
+        social_cta_desc: 'Post a review on Xiaohongshu and receive ₩2,000 credit toward your next booking.',
+        social_cta_btn: 'Write a Review on Xiaohongshu',
+        social_cta_note: 'After posting, send your booking code and review link to our email and we\'ll apply the credit.'
     },
     chatbot: {
         header: 'Beeliber Bot',

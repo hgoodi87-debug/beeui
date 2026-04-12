@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Package, Luggage, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
 interface LandingPricingProps {
     t: any;
@@ -12,32 +12,22 @@ interface LandingPricingProps {
 const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) => {
     const prices = [
         {
-            icon: Luggage,
+            image: "/images/bags/carrier-photo.png",
             title: t.pricing.airport_hotel,
             price: t.pricing.price_standard,
             unit: t.pricing?.unit_standard || t.pricing?.per_bag_label || "/ UNIT",
             features: t.pricing.features_standard || ["All sizes up to 28\"", "Airport ↔ Hotel Delivery", "Real-time Tracking", "Basic Insurance"],
             popular: true,
-            serviceBadge: null,
-            serviceBadges: [
-                { label: t.pricing?.badges?.hour_day || "4H / 1DAY", color: "bg-bee-yellow text-bee-black" },
-                { label: t.pricing?.badges?.spots || "40+ SPOTS", color: "bg-bee-black text-white" },
-                { label: t.pricing?.badges?.all_sizes || "ALL SIZES", color: "bg-white text-bee-black border border-bee-black/10" },
-            ]
+            badge: t.pricing?.most_popular_label || "BEST",
         },
         {
-            icon: Package,
+            image: "/images/bee-mascot-nobg.png",
             title: t.pricing.extra_large,
             price: t.pricing.price_extra,
             unit: t.pricing?.unit_extra || t.pricing?.per_bag_label || "/ UNIT",
             features: t.pricing.features_extra || ["Over 28\", Golf Bags, etc.", "Heavy Duty Handling", "Same-day Delivery", "Global Insurance"],
             popular: false,
-            serviceBadge: null,
-            serviceBadges: [
-                { label: t.pricing?.badges?.same_day || "SAME-DAY", color: "bg-bee-yellow text-bee-black" },
-                { label: t.pricing?.badges?.icn || "ICN AIRPORT", color: "bg-bee-black text-white" },
-                { label: t.pricing?.badges?.insured || "INSURED", color: "bg-white text-bee-black border border-bee-black/10" },
-            ]
+            badge: null,
         }
     ];
 
@@ -76,25 +66,22 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
                             className={`relative p-5 md:p-14 rounded-[2rem] md:rounded-[3.5rem] border-2 transition-all duration-500 overflow-hidden shrink-0 flex flex-col ${item.popular ? 'border-bee-yellow bg-bee-light/30 shadow-2xl md:scale-105 z-10' : 'border-bee-yellow bg-white'
                                 }`}
                         >
-                            {/* 서비스 배지 영역 */}
-                            <div className="absolute top-4 right-4 md:top-8 md:right-8 flex flex-wrap gap-1 justify-end max-w-[80%]">
-                                {item.popular && (
+                            {/* 단일 배지 */}
+                            {item.badge && (
+                                <div className="absolute top-4 right-4 md:top-8 md:right-8">
                                     <span className="px-2 py-0.5 md:px-4 md:py-1.5 bg-bee-yellow text-bee-black font-black text-[7px] md:text-[10px] tracking-wider rounded-full shadow-lg uppercase whitespace-nowrap">
-                                        {t.pricing?.most_popular_label || "BEST"}
+                                        {item.badge}
                                     </span>
-                                )}
-                                {item.serviceBadges?.map((badge: { label: string; color: string }, idx: number) => (
-                                    <span
-                                        key={idx}
-                                        className={`px-2 py-0.5 md:px-4 md:py-1.5 font-black text-[7px] md:text-[10px] tracking-wider rounded-full shadow-sm uppercase whitespace-nowrap ${badge.color}`}
-                                    >
-                                        {badge.label}
-                                    </span>
-                                ))}
-                            </div>
+                                </div>
+                            )}
 
-                            <div className={`w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-3xl flex items-center justify-center mb-4 md:mb-10 ${item.popular ? 'bg-bee-black text-bee-yellow' : 'bg-bee-light text-bee-black'}`}>
-                                <item.icon className="w-5 h-5 md:w-8 md:h-8" />
+                            {/* 품목 이미지 */}
+                            <div className="mb-4 md:mb-8 flex items-center justify-start">
+                                <img
+                                    src={item.image}
+                                    alt={item.title}
+                                    className={`object-contain ${i === 1 ? 'w-20 h-20 md:w-36 md:h-36 drop-shadow-lg' : 'w-16 h-16 md:w-28 md:h-28 drop-shadow-md'}`}
+                                />
                             </div>
 
                             <h3 className="text-sm md:text-3xl font-display font-black text-bee-black mb-2 md:mb-4 tracking-tight leading-tight">{item.title}</h3>

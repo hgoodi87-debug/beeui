@@ -65,7 +65,6 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
                 <li><a href={buildHref()} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('USER'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.home || "Home"}</a></li>
                 <li><a href={buildHref('/locations')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('LOCATIONS'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.locations || "Branch Locations"}</a></li>
                 <li><a href={buildHref('/services')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('SERVICES'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.pricing || "Pricing"}</a></li>
-                <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">{t.footer?.tips || "Travel Tips"}</a></li>
                 <li><a href={buildHref('/vision')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('VISION'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">Brand Vision</a></li>
                 <li><a href={buildHref('/qna')} onClick={(e) => { e.preventDefault(); scrollToTop(); onNavigate?.('QNA'); }} className="block py-2.5 hover:text-bee-yellow transition-colors">Q&A</a></li>
               </ul>

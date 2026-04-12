@@ -23,6 +23,7 @@ import { STORAGE_RATES } from '../src/domains/booking/bookingService';
 import DailyDetailModal from './admin/DailyDetailModal';
 import BookingSidePanel from './admin/BookingSidePanel';
 import ManualBookingModal from './admin/ManualBookingModal';
+import QRScanModal from './admin/QRScanModal';
 import { useAdminStats } from '../src/domains/admin/hooks/useAdminStats';
 import {
   createEmptyBagSizes,
@@ -97,6 +98,7 @@ const AIReviewTab = lazy(() => import('./admin/AIReviewTab'));
 const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
 const KioskTab = lazy(() => import('./admin/KioskTab'));
 const GoogleAnalyticsTab = lazy(() => import('./admin/GoogleAnalyticsTab'));
+const ChannelAnalyticsTab = lazy(() => import('./admin/ChannelAnalyticsTab'));
 
 const AdminTabFallback: React.FC = () => (
   <div className="rounded-[32px] border border-dashed border-gray-200 bg-white/80 px-6 py-10 text-center text-sm font-bold text-gray-400 shadow-sm">
@@ -128,6 +130,7 @@ interface AdminDashboardProps {
   adminRole?: string;
   adminEmail?: string;
   scanId?: string;
+  initialTab?: string;
   lang: string;
   t: any;
 }
@@ -165,9 +168,13 @@ const BOOKING_DETAIL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 const isSupabaseBookingDetailId = (value?: string | null) =>
   BOOKING_DETAIL_UUID_PATTERN.test(String(value || '').trim());
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, adminRole = 'staff', adminEmail, scanId, lang, t }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, adminName, jobTitle, adminRole = 'staff', adminEmail, scanId, initialTab, lang, t }) => {
   const currentActor = { id: adminName || 'unknown', name: adminName || 'unknown', email: adminEmail };
   const { activeTab, setActiveTab, activeStatusTab, setActiveStatusTab, globalBranchFilter, setGlobalBranchFilter } = useAdminStore();
+  // URL ?tab= 파라미터로 특정 탭 바로 열기
+  React.useEffect(() => {
+    if (initialTab) setActiveTab(initialTab as any);
+  }, [initialTab]);
   const needsAdminDirectory = Boolean(scanId) || activeTab === 'HR' || activeTab === 'OPERATIONS';
   const needsInquiryData = activeTab === 'PARTNERSHIP_INQUIRIES';
   const needsSettlementData = ['OVERVIEW', 'DAILY_SETTLEMENT', 'ACCOUNTING', 'MONTHLY_SETTLEMENT'].includes(activeTab);
@@ -244,6 +251,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
   // QR Scan Handling
   const [scannedBooking, setScannedBooking] = useState<BookingState | null>(null);
   const [isScanDetailVisible, setIsScanDetailVisible] = useState(false);
+  const [isQRScanOpen, setIsQRScanOpen] = useState(false);
+
+  const handleQRDetected = async (bookingId: string) => {
+    setIsQRScanOpen(false);
+    // 로드된 예약에서 먼저 찾기
+    const found = bookings.find(b => b.id === bookingId || b.reservationCode === bookingId);
+    if (found) {
+      setScannedBooking(found);
+      setIsScanDetailVisible(true);
+      return;
+    }
+    // 없으면 직접 로드
+    try {
+      const loaded = await StorageService.getBooking(bookingId);
+      if (loaded) {
+        setScannedBooking(loaded);
+        setIsScanDetailVisible(true);
+      } else {
+        alert('예약 정보를 찾을 수 없습니다: ' + bookingId);
+      }
+    } catch {
+      alert('예약 조회 실패. 예약 ID를 확인해 주세요.');
+    }
+  };
 
   useEffect(() => {
     if (scanId) {
@@ -2567,6 +2598,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 { id: 'DAILY_SETTLEMENT', label: '일일 시재 정산', icon: 'fa-calendar-check' },
                 { id: 'ACCOUNTING', label: '통합 매출 결산', icon: 'fa-receipt' },
                 { id: 'REPORTS', label: '분석 리포트', icon: 'fa-chart-line' },
+                { id: 'CHANNEL_ANALYTICS', label: '채널 분석', icon: 'fa-route' },
                 { id: 'GOOGLE_ANALYTICS', label: '구글 데이터', icon: 'fa-magnifying-glass-chart' },
               ].map(item => (
                 <button
@@ -2650,9 +2682,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           {onStaffMode && (
             <button
               onClick={onStaffMode}
-              className="w-full flex items-center justify-center gap-2 p-3 bg-bee-yellow text-bee-black hover:bg-white rounded-xl text-xs font-black transition-all shadow-lg"
+              className="w-full flex items-center justify-center gap-2 p-3 bg-bee-yellow text-bee-black hover:bg-amber-400 rounded-xl text-xs font-black transition-all shadow-lg"
             >
-              <i className="fa-solid fa-qrcode"></i> 스태프 모드 전환
+              <i className="fa-solid fa-camera"></i> QR 스캔 (스태프)
             </button>
           )}
 
@@ -2977,6 +3009,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
             />
           )}
 
+          {activeTab === 'CHANNEL_ANALYTICS' && (
+            <Suspense fallback={<AdminTabFallback />}>
+              <ChannelAnalyticsTab
+                bookings={bookings}
+                startDate={revenueStartDate}
+                endDate={revenueEndDate}
+                onStartDateChange={setRevenueStartDate}
+                onEndDateChange={setRevenueEndDate}
+              />
+            </Suspense>
+          )}
+
           {activeTab === 'GOOGLE_ANALYTICS' && (
             <Suspense fallback={<AdminTabFallback />}>
               <GoogleAnalyticsTab />
@@ -3110,6 +3154,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         isSaving={isSaving}
       />
 
+      {/* QR 카메라 스캐너 모달 */}
+      {isQRScanOpen && (
+        <QRScanModal
+          onDetect={handleQRDetected}
+          onClose={() => setIsQRScanOpen(false)}
+        />
+      )}
+
       {/* 3. QUICK SCAN STATUS MODAL */}
       {isScanDetailVisible && scannedBooking && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
@@ -3146,11 +3198,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 </div>
               </div>
 
+              {/* 결제 금액 */}
+              <div className="bg-gray-50 rounded-2xl px-5 py-3 flex items-center justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">결제 금액</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-black text-bee-black">
+                    {(scannedBooking.finalPrice ?? scannedBooking.price ?? 0).toLocaleString()}
+                    <span className="text-xs font-bold text-gray-400 ml-1">KRW</span>
+                  </span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${scannedBooking.paymentStatus === 'paid' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {scannedBooking.paymentStatus === 'paid' ? '결제완료' : '미결제'}
+                  </span>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <h3 className="text-xs font-black text-center text-gray-400 uppercase tracking-widest">상태 즉시 변경</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { status: BookingStatus.PENDING, label: '접수완료', icon: 'fa-check' },
+                    { status: BookingStatus.CONFIRMED, label: '예약완료', icon: 'fa-calendar-check' },
+                    { status: BookingStatus.STORAGE, label: '보관중', icon: 'fa-box-archive' },
                     { status: BookingStatus.TRANSIT, label: '이동중', icon: 'fa-truck-moving' },
                     { status: BookingStatus.ARRIVED, label: '목적지도착', icon: 'fa-location-dot' },
                     { status: BookingStatus.COMPLETED, label: '완료', icon: 'fa-flag-checkered' }

@@ -1089,7 +1089,11 @@ export const ko = {
         everyday_hours: '09:00 - 21:00 (매일)',
         address_specified: '주소 별도 지정',
         storage_notice_title: '보관 안내',
-        storage_notice_desc: '날짜와 시간을 선택하시면 보관 시간이 자동으로 계산됩니다.'
+        storage_notice_desc: '날짜와 시간을 선택하시면 보관 시간이 자동으로 계산됩니다.',
+        social_cta_title: '경험을 나눠주세요',
+        social_cta_desc: '샤오홍슈에 후기를 올리면 다음 예약 시 ₩2,000 크레딧을 드립니다.',
+        social_cta_btn: '샤오홍슈에 후기 쓰기',
+        social_cta_note: '후기 작성 후 예약번호와 링크를 이메일로 보내주시면 확인 후 크레딧 지급합니다.'
     },
     location_names: {
         'IN1T': '인천공항 T1',

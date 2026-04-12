@@ -123,21 +123,55 @@ export const getOfflineQueueSize = (): number => {
   }
 };
 
+// concurrent flush 방지 guard
+let _isFlushing = false;
+
 export const flushOfflineQueue = async (): Promise<number> => {
+  if (_isFlushing) return 0;
+  _isFlushing = true;
   try {
     const queue: OfflineEntry[] = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
     if (queue.length === 0) return 0;
+
+    // 현재 날짜의 DB 로그를 읽어 태그 재배정에 활용
+    let liveLog: KioskStorageLog[] = [];
+    if (queue.length > 0) {
+      const branchId = queue[0].payload.branch_id;
+      const date = queue[0].payload.date;
+      try {
+        liveLog = await supabaseGet<KioskStorageLog[]>(
+          `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=eq.${date}&order=tag.asc`,
+          _ANON
+        );
+      } catch {
+        // 조회 실패 시 빈 배열로 진행 (DB가 없으면 태그 재배정 불가 — 그래도 시도)
+      }
+    }
 
     let flushed = 0;
     const remaining: OfflineEntry[] = [];
 
     for (const entry of queue) {
       try {
-        await supabaseMutate(`${KIOSK_TABLES.log}`, 'POST', {
+        // 태그 재배정: 오프라인 중 DB에 이미 삽입된 태그와 충돌 방지
+        const usedTags = new Set(liveLog.map((e) => e.tag));
+        let newTag = entry.payload.tag;
+        // stale tag가 이미 사용 중이면 다음 빈 번호로 재배정
+        if (usedTags.has(newTag)) {
+          newTag = 1;
+          while (usedTags.has(newTag)) newTag++;
+        }
+
+        const body = {
           ...entry.payload,
+          tag: newTag,
           commission_rate: 0,
           source: 'kiosk',
-        }, _ANON);
+        };
+        const result = await supabaseMutate<KioskStorageLog[]>(`${KIOSK_TABLES.log}`, 'POST', body, _ANON);
+        if (result?.[0]) {
+          liveLog.push(result[0]); // 성공한 항목을 liveLog에 추가해 다음 항목이 피하도록
+        }
         flushed++;
       } catch {
         remaining.push(entry);
@@ -148,6 +182,8 @@ export const flushOfflineQueue = async (): Promise<number> => {
     return flushed;
   } catch {
     return 0;
+  } finally {
+    _isFlushing = false;
   }
 };
 
@@ -225,18 +261,50 @@ export const upsertSetting = async (
 };
 
 // ─── Storage Log CRUD ─────────────────────────────────────────────────────
+
+/**
+ * 태그 중복 시 자동 재배정 후 재시도 (최대 3회)
+ * UNIQUE(branch_id, date, tag) 제약 위반 시 다음 빈 번호로 교체
+ */
 export const insertStorageLog = async (
   payload: Omit<KioskStorageLog, 'id' | 'created_at'>
 ): Promise<KioskStorageLog | null> => {
   const body = { ...payload, commission_rate: 0, source: 'kiosk' };
-  try {
-    const result = await supabaseMutate<KioskStorageLog[]>(KIOSK_TABLES.log, 'POST', body, _ANON);
-    return result?.[0] ?? null;
-  } catch (e) {
-    console.error('[kioskDb] insertStorageLog failed, queuing offline:', e);
-    enqueueOffline(body);
-    return null;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const result = await supabaseMutate<KioskStorageLog[]>(KIOSK_TABLES.log, 'POST', body, _ANON);
+      return result?.[0] ?? null;
+    } catch (e: unknown) {
+      const isUniqueViolation =
+        typeof e === 'object' && e !== null &&
+        ('code' in e ? (e as { code?: string }).code === '23505' : false);
+
+      if (isUniqueViolation && attempt < 2) {
+        // 태그 재배정: 현재 로그 조회 후 다음 빈 번호 배정
+        try {
+          const current = await supabaseGet<KioskStorageLog[]>(
+            `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(body.branch_id)}&date=eq.${body.date}&order=tag.asc`,
+            _ANON
+          );
+          const used = new Set(current.map((r) => r.tag));
+          let nextTag = 1;
+          while (used.has(nextTag)) nextTag++;
+          body.tag = nextTag;
+          console.warn(`[kioskDb] 태그 충돌 → ${nextTag}번으로 재배정 (시도 ${attempt + 1})`);
+        } catch {
+          break; // 재조회 실패 시 오프라인 큐로
+        }
+      } else {
+        console.error('[kioskDb] insertStorageLog failed, queuing offline:', e);
+        enqueueOffline(body);
+        return null;
+      }
+    }
   }
+
+  enqueueOffline(body);
+  return null;
 };
 
 export const updateStorageLog = async (

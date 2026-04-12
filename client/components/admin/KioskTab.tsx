@@ -114,7 +114,6 @@ const ROW_COLORS: Record<string, string> = {
 };
 const pad = (v: number) => String(v).padStart(2, '0');
 const fmt = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const tdy = () => new Date().toISOString().slice(0, 10);
 const timeToMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const fromDB = (r: any): Entry => ({
   id: r.id, date: r.date, tag: r.tag,

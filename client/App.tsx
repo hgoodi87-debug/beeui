@@ -717,11 +717,11 @@ const App: React.FC = () => {
                       navigate(nextPath, { replace: true });
                     })();
                   }} onCancel={() => navigate('/')} />} />
-                  <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} lang={ADMIN_LANG} t={adminT} /></AnimatedRoute></AdminGuard>} />
+                  <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} initialTab={new URLSearchParams(location.search).get('tab') || undefined} lang={ADMIN_LANG} t={adminT} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={ADMIN_LANG} t={adminT} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={adminT} lang={ADMIN_LANG} locations={bookingLocations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />
-                  <Route path="/admin/scan" element={<AnimatedRoute><StaffScanPage onBack={() => adminInfo.name ? navigate(adminHomePath) : navigate('/admin')} adminName={adminInfo.name} t={adminT} lang={ADMIN_LANG} /></AnimatedRoute>} />
-                  <Route path="/staff/scan" element={<AnimatedRoute><StaffScanPage onBack={() => adminInfo.name ? navigate(adminHomePath) : navigate('/admin')} adminName={adminInfo.name} t={adminT} lang={ADMIN_LANG} /></AnimatedRoute>} />
+                  <Route path="/admin/scan" element={<AdminAccessGuard><AnimatedRoute><StaffScanPage onBack={() => adminInfo.name ? navigate(adminHomePath) : navigate('/admin')} adminName={adminInfo.name} t={adminT} lang={ADMIN_LANG} /></AnimatedRoute></AdminAccessGuard>} />
+                  <Route path="/staff/scan" element={<AdminAccessGuard><AnimatedRoute><StaffScanPage onBack={() => adminInfo.name ? navigate(adminHomePath) : navigate('/admin')} adminName={adminInfo.name} t={adminT} lang={ADMIN_LANG} /></AnimatedRoute></AdminAccessGuard>} />
 
                   {/* KIOSK — 인증 불필요, 현장 전용 */}
                   <Route path="/kiosk/:branchSlug" element={<KioskPage />} />

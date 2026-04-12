@@ -19,9 +19,9 @@ import {
 import { LocationOption, LocationType, ServiceType, BookingState, BookingStatus, BagSizes, PriceSettings, StorageTier } from '../types';
 import { StorageService } from '../services/storageService';
 import { supabaseGet } from '../services/supabaseClient';
-import { getAdParams } from '../src/utils/gads';
+import { getAdParams, inferChannelFromReferrer } from '../src/utils/gads';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
-import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd } from '../services/paypalService';
+import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd, warmPayPalFunction } from '../services/paypalService';
 import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr, add2MonthsToDateStr } from '../utils/dateUtils';
 import { COUNTRY_NAMES } from '../src/constants/countries';
 import { calculateDeliveryStoragePrice, STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
@@ -278,6 +278,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const paypalRenderedRef = useRef(false);
     const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: ServiceType; finalBooking: any } | null>(null);
     const [paypalLoadError, setPaypalLoadError] = useState(false);
+    const [paypalValidationMsg, setPaypalValidationMsg] = useState('');
 
     // 💅 BookingSuccess 첩크 미리 로딩 (lazy 플리커 방지)
     const prefetchBookingSuccess = () => {
@@ -651,12 +652,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
             paymentMethod: isDirectBookingMode ? 'cash' : 'card',
             paymentStatus: priceDetails.total > 0 ? 'pending' : 'paid',
             paymentProvider: isDirectBookingMode ? 'manual' : 'toss',
-            // 어느 채널에서 왔는지 — sessionStorage에 captureAdParams()가 저장해둔 값
+            // 어느 채널에서 왔는지 — localStorage에 captureAdParams()가 저장해둔 값 (14일 TTL)
             ...(() => {
                 const a = getAdParams();
+                // UTM 없으면 referrer로 채널 자동 추론
+                const utmSource = a.utm_source || (a._referrer ? inferChannelFromReferrer(a._referrer) : undefined);
+                const utmMedium = a.utm_medium || (a._referrer ? 'referrer' : undefined);
                 return {
-                    utmSource: a.utm_source || undefined,
-                    utmMedium: a.utm_medium || undefined,
+                    utmSource,
+                    utmMedium,
                     utmCampaign: a.utm_campaign || undefined,
                     utmContent: a.utm_content || undefined,
                     utmTerm: a.utm_term || undefined,
@@ -713,28 +717,32 @@ const BookingPage: React.FC<BookingPageProps> = ({
         }
     };
 
-    // PayPal 버튼 초기화
+    // PayPal 버튼 초기화 — priceDetails.total > 0 일 때만 컨테이너 div가 DOM에 존재
     useEffect(() => {
-        if (!isPayPalEnabled() || isDirectBookingMode) return;
+        if (!isPayPalEnabled() || priceDetails.total <= 0) return;
 
-        loadPayPalSDK().then(() => {
+        // Edge Function 콜드 스타트 예방: SDK 로딩과 동시에 ping 발송
+        warmPayPalFunction();
+
+        loadPayPalSDK(lang).then(() => {
             if (paypalRenderedRef.current || !paypalContainerRef.current) return;
-            paypalContainerRef.current.innerHTML = '';
-            paypalRenderedRef.current = true;
 
-            window.paypal.Buttons({
-                style: { layout: 'horizontal', color: 'gold', shape: 'rect', label: 'paypal', height: 48 },
+            const buttonsConfig = {
+                style: { layout: 'vertical' as const, color: 'gold' as const, shape: 'rect' as const, label: 'paypal' as const, height: 48 },
                 createOrder: async () => {
+                    // latestPayPalCtxRef는 매 렌더마다 갱신 — stale closure 없음
                     const ctx = latestPayPalCtxRef.current;
                     if (!ctx || ctx.priceTotal <= 0) throw new Error('결제 금액이 없습니다.');
-                    if (!booking.userName || !booking.userEmail) {
-                        alert('이름과 이메일을 먼저 입력해 주세요.');
+                    const fb = ctx.finalBooking;
+                    if (!fb.userName || !fb.userEmail) {
+                        setPaypalValidationMsg(lang === 'ko' ? '이름과 이메일을 먼저 입력해 주세요.' : 'Please enter your name and email first.');
                         throw new Error('폼 미완성');
                     }
-                    if (!booking.agreedToTerms || !booking.agreedToPrivacy || !booking.agreedToHighValue) {
-                        alert('이용약관에 동의해 주세요.');
+                    if (!fb.agreedToTerms || !fb.agreedToPrivacy || !fb.agreedToHighValue) {
+                        setPaypalValidationMsg(lang === 'ko' ? '이용약관에 동의해 주세요.' : 'Please agree to the terms.');
                         throw new Error('약관 미동의');
                     }
+                    setPaypalValidationMsg('');
                     const desc = ctx.serviceType === 'DELIVERY' ? 'Beeliber Airport Delivery' : 'Beeliber Luggage Storage';
                     return createPayPalOrder(ctx.priceTotal, desc);
                 },
@@ -760,17 +768,37 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     }
                 },
                 onError: (err: any) => {
-                    console.error('[PayPal]', err);
-                    alert('PayPal 결제 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                    console.error('[PayPal] onError:', err);
+                    const msg = err?.message || String(err);
+                    // 폼 검증 오류는 버튼 유지 — alert는 createOrder에서 이미 처리됨
+                    if (msg === '폼 미완성' || msg === '약관 미동의' || msg === '결제 금액이 없습니다.') return;
+                    setPaypalLoadError(true);
                 },
-            }).render(paypalContainerRef.current);
+            };
+
+            const buttons = window.paypal.Buttons(buttonsConfig);
+
+            // isEligible() 이 false 면 현재 계정/지역에서 Buttons 위젯 사용 불가
+            if (typeof buttons.isEligible === 'function' && !buttons.isEligible()) {
+                console.error('[PayPal] Buttons.isEligible() = false — 계정 승인 상태 또는 지역 제한 확인 필요');
+                setPaypalLoadError(true);
+                return;
+            }
+
+            paypalContainerRef.current.innerHTML = '';
+            paypalRenderedRef.current = true;
+
+            buttons.render(paypalContainerRef.current).catch((e: any) => {
+                console.error('[PayPal] render() 실패:', e);
+                paypalRenderedRef.current = false;
+                setPaypalLoadError(true);
+            });
         }).catch((e) => {
-            // [W-3] SDK 로드 실패 시 사용자에게 에러 상태 노출
             console.error('[PayPal] SDK load failed:', e);
             setPaypalLoadError(true);
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isDirectBookingMode]);
+    }, [priceDetails.total]);
 
     // PayPal 버튼에 최신 컨텍스트 주입 (ref 업데이트 — 리렌더 없음)
     useEffect(() => {
@@ -1468,7 +1496,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         </div>
                                     )}
                                     <label className="flex items-center gap-4 group cursor-pointer">
-                                        <div className="relative">
+                                        <div className="relative w-5 h-5 flex-shrink-0">
                                             <input
                                                 type="checkbox"
                                                 checked={booking.agreedToTerms}
@@ -1488,7 +1516,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </label>
 
                                     <label className="flex items-center gap-4 group cursor-pointer">
-                                        <div className="relative">
+                                        <div className="relative w-5 h-5 flex-shrink-0">
                                             <input
                                                 type="checkbox"
                                                 checked={booking.agreedToPrivacy}
@@ -1508,7 +1536,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </label>
 
                                     <label className="flex items-center gap-4 group cursor-pointer">
-                                        <div className="relative">
+                                        <div className="relative w-5 h-5 flex-shrink-0">
                                             <input
                                                 type="checkbox"
                                                 checked={booking.agreedToHighValue}
@@ -1540,40 +1568,20 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </ul>
                                 </div>
 
-                                <motion.button
-                                    whileHover={{ scale: 1.02, y: -2 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={handleBook}
-                                    disabled={isSubmitting}
-                                    className="w-full mt-8 py-4 bg-bee-yellow text-bee-black font-black text-lg rounded-2xl shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                    {isSubmitting ? (
-                                        <div className="w-5 h-5 border-2 border-bee-black border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                        <>
-                                            {isMockPaymentMode
-                                                ? (lang === 'ko' ? '결제 흐름 테스트하기' : 'TEST PAYMENT FLOW')
-                                                : (lang === 'ko' ? '예약 바로 확정하기' : (tBooking.book_now || 'COMPLETE BOOKING'))} <ArrowRight size={20} />
-                                        </>
-                                    )}
-                                </motion.button>
-
-                                {/* PayPal 버튼 — Toss 대기 기간 임시 결제 수단 */}
-                                {isPayPalEnabled() && !isDirectBookingMode && priceDetails.total > 0 && (
-                                    <div className="mt-4">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <div className="flex-1 h-px bg-gray-200" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                                                {lang === 'ko' ? '또는 해외 카드' : 'or pay with'}
-                                            </span>
-                                            <div className="flex-1 h-px bg-gray-200" />
+                                {/* PayPal 활성화 시: PayPal + 현금결제 버튼 */}
+                                {isPayPalEnabled() && priceDetails.total > 0 ? (
+                                    <div className="mt-8">
+                                        <p className="text-center text-xs font-black text-gray-500 mb-1">
+                                            {lang === 'ko' ? '아래 버튼으로 결제 후 예약이 확정됩니다' : 'Pay below to confirm your booking'}
+                                        </p>
+                                        <div className="text-center text-[11px] text-gray-400 font-bold mb-3">
+                                            USD ${krwToUsd(priceDetails.total)} (≈ ₩{priceDetails.total.toLocaleString()})
                                         </div>
-                                        <div className="text-center text-[10px] text-gray-400 font-bold mb-2">
-                                            {lang === 'ko'
-                                                ? `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`
-                                                : `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()})`}
-                                        </div>
-                                        {/* [W-3] PayPal SDK 로드 실패 시 안내 메시지 */}
+                                        {paypalValidationMsg && (
+                                            <p className="text-xs text-red-500 font-bold text-center mb-2">
+                                                {paypalValidationMsg}
+                                            </p>
+                                        )}
                                         {paypalLoadError ? (
                                             <p className="text-xs text-red-500 font-bold text-center py-3">
                                                 {lang === 'ko'
@@ -1583,7 +1591,48 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         ) : (
                                             <div ref={paypalContainerRef} id="paypal-button-container" />
                                         )}
+
+                                        {/* 현금결제 폴백 — PayPal 오류 시 현장 결제용 */}
+                                        <div className="mt-3 border-t border-gray-100 pt-3">
+                                            <p className="text-center text-[10px] text-gray-400 mb-2">
+                                                {lang === 'ko' ? '현장에서 직접 결제하시겠어요?' : lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK' ? '想在現場直接付款嗎？' : lang === 'ja' ? '現場で直接お支払いますか？' : 'Prefer to pay on-site?'}
+                                            </p>
+                                            <motion.button
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={handleBook}
+                                                disabled={isSubmitting}
+                                                className="w-full py-3 bg-gray-100 text-gray-600 font-black text-sm rounded-2xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            >
+                                                {isSubmitting ? (
+                                                    <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        💵 {lang === 'ko' ? '현금으로 현장 결제' : lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK' ? '現場現金付款' : lang === 'ja' ? '現場で現金払い' : 'Pay Cash On-Site'}
+                                                    </>
+                                                )}
+                                            </motion.button>
+                                        </div>
                                     </div>
+                                ) : (
+                                    /* PayPal 비활성 시: 기존 직접예약 버튼 */
+                                    <motion.button
+                                        whileHover={{ scale: 1.02, y: -2 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={handleBook}
+                                        disabled={isSubmitting}
+                                        className="w-full mt-8 py-4 bg-bee-yellow text-bee-black font-black text-lg rounded-2xl shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {isSubmitting ? (
+                                            <div className="w-5 h-5 border-2 border-bee-black border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                {isMockPaymentMode
+                                                    ? (lang === 'ko' ? '결제 흐름 테스트하기' : 'TEST PAYMENT FLOW')
+                                                    : (lang === 'ko' ? '예약 바로 확정하기' : (tBooking.book_now || 'COMPLETE BOOKING'))} <ArrowRight size={20} />
+                                            </>
+                                        )}
+                                    </motion.button>
                                 )}
                             </div>
                         </div>

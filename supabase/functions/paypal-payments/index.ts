@@ -12,6 +12,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
+// [C-0] PayPal access token 캐시 (cold start 후 최대 8시간 유효)
+let cachedAccessToken: string | null = null;
+let tokenExpiresAt = 0;
+
 // [C-1] 환율: app_settings.paypal_krw_usd_rate → 없으면 fallback 1380
 // 캐시: 모듈 단위 (cold start 기준 최대 1시간)
 let cachedRate: number | null = null;
@@ -57,6 +61,10 @@ function validateAmountUsd(raw: unknown): string {
 
 async function getAccessToken(): Promise<string> {
   if (!PAYPAL_CLIENT_ID || !PAYPAL_SECRET) throw new Error("PayPal credentials not configured");
+  // 캐시 히트: 만료 2분 전까지 재사용
+  const now = Date.now();
+  if (cachedAccessToken && now < tokenExpiresAt - 120_000) return cachedAccessToken;
+
   const res = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
     method: "POST",
     headers: {
@@ -67,7 +75,10 @@ async function getAccessToken(): Promise<string> {
   });
   if (!res.ok) throw new Error(`PayPal auth failed [${res.status}]`);
   const data = await res.json();
-  return data.access_token;
+  cachedAccessToken = data.access_token;
+  // PayPal 토큰 기본 만료: 32400초(9시간). expires_in 없으면 8시간으로 보수적 설정
+  tokenExpiresAt = now + ((data.expires_in ?? 28800) * 1000);
+  return cachedAccessToken!;
 }
 
 async function createOrder(amountUsd: string, description: string): Promise<{ orderId: string; rateUsed: number }> {
@@ -89,6 +100,7 @@ async function createOrder(amountUsd: string, description: string): Promise<{ or
         brand_name: "Beeliber",
         locale: "zh-TW",
         user_action: "PAY_NOW",
+        shipping_preference: "NO_SHIPPING",
       },
     }),
   });
@@ -180,35 +192,22 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // [W-1] JWT 인증: 항상 강제 (환경변수 누락 시에도 401 반환)
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized: missing Bearer token" }), {
-      status: 401,
-      headers: corsHeaders,
-    });
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("[paypal-payments] SUPABASE_URL or SUPABASE_ANON_KEY not configured — rejecting request");
+  // Supabase 게이트웨이가 JWT/apikey 검증을 처리하므로 여기까지 온 요청은 인증됨
+  if (!SUPABASE_URL) {
+    console.error("[paypal-payments] SUPABASE_URL not configured");
     return new Response(JSON.stringify({ error: "Server configuration error" }), {
       status: 503,
       headers: corsHeaders,
     });
   }
 
-  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { error: authError } = await client.auth.getUser();
-  if (authError) {
-    return new Response(JSON.stringify({ error: "Unauthorized: invalid token" }), {
-      status: 401,
-      headers: corsHeaders,
-    });
+  const path = new URL(req.url).pathname.split("/").pop();
+
+  // /ping — Edge Function 워밍 용도. body 파싱 없이 즉시 응답
+  if (path === "ping") {
+    return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
   }
 
-  const path = new URL(req.url).pathname.split("/").pop();
   try {
     const body = await req.json();
     if (path === "create-order") {

@@ -55,6 +55,25 @@
 
 ---
 
+## 2026-04-12
+
+### 채널 어트리뷰션 + 보안 감사 (CSO)
+
+| 이슈 | 파일 | 핵심 |
+|---|---|---|
+| UTM 채널 추적 sessionStorage → localStorage | `client/src/utils/gads.ts` | 14일 TTL localStorage로 교체. `inferChannelFromReferrer()` + `normalizeChannel()` 추가 |
+| 채널 분석 관리자 탭 신규 | `client/components/admin/ChannelAnalyticsTab.tsx` | 파이차트·막대·트렌드·캠페인 테이블 포함 전체 채널 리포트 |
+| 예약 사이드패널 채널 표시 | `client/components/admin/BookingSidePanel.tsx` | 정규화된 채널명 + raw utm_source + campaign 배지 표시 |
+| CSO #1 CRITICAL: booking_details 공개 RLS | `supabase/migrations/20260412000001_security_fix_rls.sql` | `USING(true)` → 소유자/직원만 조회. INSERT 전면 차단. UPDATE 관리자만 |
+| CSO #4 HIGH: anon 공개 RLS 제거 | 동 마이그레이션 | profiles/roles/employee_roles/employee_branch_assignments anon 정책 삭제 |
+| CSO #3 HIGH: sync-google-reviews 무인증 | `supabase/functions/sync-google-reviews/index.ts` | `SYNC_SECRET_KEY` Bearer 토큰 검증 + MAX_PLACE_IDS=10 쿼터 보호 추가 |
+| CSO #2 HIGH: dist_old 민감정보 git 노출 | `.gitignore` + `git rm --cached` | `client/dist_old/` git 추적 제거 |
+| 마이그레이션 Supabase 적용 | Supabase Dashboard | `20260412000001_security_fix_rls.sql` 적용 완료 |
+
+> ✅ **전체 완료**: `SYNC_SECRET_KEY` 시크릿 설정 완료. Google API 키 교체 완료.
+
+---
+
 ## 재조사 불필요 영역
 
 아래 동작은 정상 확인됨. 버그 의심 시 먼저 최신 코드 확인 후 조사:

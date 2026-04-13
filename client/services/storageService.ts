@@ -2661,14 +2661,13 @@ export const StorageService = {
 
   // --- Real-time Chat ---
   saveChatMessage: async (message: ChatMessage): Promise<void> => {
+    // Supabase는 fire-and-forget (hang 방지 — RLS/스키마 오류로 pending 걸리면 Gemini 호출 블로킹됨)
     if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate('chat_messages', 'POST', {
-          session_id: message.sessionId, role: message.role || 'user',
-          text: message.text || '', user_name: message.userName || null,
-          user_email: message.userEmail || null, is_read: message.isRead ?? false,
-        });
-      } catch (e) { console.warn("[Storage] Supabase chat msg save failed:", e); }
+      supabaseMutate('chat_messages', 'POST', {
+        session_id: message.sessionId, role: message.role || 'user',
+        text: message.text || '', user_name: message.userName || null,
+        user_email: message.userEmail || null, is_read: message.isRead ?? false,
+      }).catch(e => console.warn("[Storage] Supabase chat msg save failed:", e));
     }
     try {
       const msgRef = collection(db, "chats");
@@ -2677,14 +2676,13 @@ export const StorageService = {
   },
 
   saveChatSession: async (session: ChatSession): Promise<void> => {
+    // Supabase는 fire-and-forget (스키마 오류로 hang 방지)
     if (isSupabaseDataEnabled()) {
-      try {
-        await supabaseMutate('chat_sessions', 'POST', {
-          session_id: session.sessionId, user_name: session.userName || null,
-          user_email: session.userEmail || null, last_message: session.lastMessage || null,
-          is_bot_disabled: session.isBotDisabled ?? false, unread_count: session.unreadCount || 0,
-        });
-      } catch (e) { console.warn("[Storage] Supabase chat session save failed:", e); }
+      supabaseMutate('chat_sessions', 'POST', {
+        session_id: session.sessionId, user_name: session.userName || null,
+        user_email: session.userEmail || null, last_message: session.lastMessage || null,
+        is_bot_disabled: session.isBotDisabled ?? false, unread_count: session.unreadCount || 0,
+      }).catch(e => console.warn("[Storage] Supabase chat session save failed:", e));
     }
     try {
       const sessionRef = doc(db, "chat_sessions", session.sessionId);

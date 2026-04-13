@@ -62,7 +62,8 @@ export const sanitizeSegment = (value: unknown) =>
     .replace(/^-|-$/g, "");
 
 export const isUuid = (value: unknown) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+  // v1-v5 (RFC 4122 standard) + v7 (Supabase 기본 UUID 포맷) 허용
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     normalizeText(value),
   );
 

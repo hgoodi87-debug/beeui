@@ -2261,7 +2261,11 @@ export const StorageService = {
               branchCode: branchCode || matchedLocation?.branchCode || undefined,
               branchName: matchedLocation?.name || assignedBranch?.name || undefined,
               orgType: String(row.org_type || '').trim() as AdminUser['orgType'],
-              status: String(row.employment_status || 'active').trim() as AdminUser['status'],
+              status: (() => {
+                const s = String(row.employment_status || 'active').trim();
+                // 'inactive'는 Edge Function VALID_STATUSES에 없음 — 'invited'로 정규화
+                return s === 'inactive' ? 'invited' : s;
+              })() as AdminUser['status'],
               security: security as AdminUser['security'],
               memo: String(row.memo || '').trim() || undefined,
               syncStatus: {

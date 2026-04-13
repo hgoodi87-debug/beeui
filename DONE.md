@@ -130,6 +130,18 @@
 
 ---
 
+## 2026-04-13 (후속 3)
+
+### 직원 소속지점 수정 불가 버그 수정
+
+| 이슈 | 파일 | 핵심 |
+|---|---|---|
+| 직원 소속지점 저장 실패 (400 "계정 상태 값이 올바르지 않습니다.") | `client/services/storageService.ts` | **원인**: `getAdmins()` → `employees.employment_status = 'inactive'` 그대로 반환. Edge Function `validateInput`의 `VALID_STATUSES`에 `'inactive'` 없음 → 400 에러. **수정**: `getAdmins()` 에서 `'inactive'` → `'invited'` 정규화 |
+| `isUuid` Supabase v7 UUID 불인식 | `supabase/functions/_shared/admin-auth.ts` | 기존 패턴 `[1-5]`가 v7 UUID의 version digit `7`을 거부 → `loadAdminFromSupabase`에서 employee UUID로 직접 조회 불가. 패턴을 `[0-9a-f]{4}` (폭넓게)로 완화 |
+| Edge Function 재배포 | `admin-account-sync` | `supabase functions deploy admin-account-sync --no-verify-jwt` 재배포 완료 |
+
+---
+
 ## 재조사 불필요 영역
 
 아래 동작은 정상 확인됨. 버그 의심 시 먼저 최신 코드 확인 후 조사:

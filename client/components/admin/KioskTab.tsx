@@ -58,7 +58,7 @@ const T: Record<Lang, Record<string, string>> = {
     del: '삭제하시겠습니까?', empty: '데이터가 없습니다', pcs: '개', from4: '4시간부터 가능',
     find_title: '가방 찾기', find_placeholder: '태그 번호 (예: 7)', find_btn: '검색',
     a_title: '보관 장부', a_date: '날짜', a_stat: '상태',
-    f_all: '전체', f_wait: '대기', f_over: '초과', f_done: '완료',
+    f_all: '전체', f_wait: '대기', f_over: '초과', f_done: '완료', f_active: '보관중',
     set_price: '가격 설정', set_ops: '운영 설정', set_notices: '안내 메시지',
     set_disc: '할인 설정', set_rows: '구역 배치 규칙 (A~G)', set_pass: '보안 설정',
     save_btn: '설정 저장', saved: '저장되었습니다',
@@ -79,7 +79,7 @@ const T: Record<Lang, Record<string, string>> = {
     del: 'Delete?', empty: 'No data', pcs: '', from4: 'from 4hr',
     find_title: 'Find Luggage', find_placeholder: 'Tag number (e.g. 7)', find_btn: 'Search',
     a_title: 'Storage Log', a_date: 'Date', a_stat: 'Status',
-    f_all: 'All', f_wait: 'Waiting', f_over: 'Overdue', f_done: 'Done',
+    f_all: 'All', f_wait: 'Waiting', f_over: 'Overdue', f_done: 'Done', f_active: 'Active',
     set_price: 'Price Settings', set_ops: 'Operations', set_notices: 'Notice Messages',
     set_disc: 'Discount', set_rows: 'Zone Rules (A~G)', set_pass: 'Security',
     save_btn: 'Save Settings', saved: 'Saved',
@@ -100,7 +100,7 @@ const T: Record<Lang, Record<string, string>> = {
     del: '确认删除？', empty: '暂无数据', pcs: '件', from4: '4小时起',
     find_title: '找行李', find_placeholder: '标签号 (如: 7)', find_btn: '查找',
     a_title: '存放记录', a_date: '日期', a_stat: '状态',
-    f_all: '全部', f_wait: '等待', f_over: '超时', f_done: '完成',
+    f_all: '全部', f_wait: '等待', f_over: '超时', f_done: '完成', f_active: '保管中',
     set_price: '价格设置', set_ops: '运营设置', set_notices: '提示信息',
     set_disc: '折扣设置', set_rows: '区域规则 (A~G)', set_pass: '安全设置',
     save_btn: '保存设置', saved: '已保存',
@@ -650,6 +650,7 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
   const filtered = entries.filter(e => {
     if (filterDate && e.date !== filterDate) return false;
     const ov = !e.done && e.pickupTs < now;
+    if (filterStat === 'active' && e.done) return false;       // 보관중 = 대기+초과
     if (filterStat === 'wait' && (e.done || ov)) return false;
     if (filterStat === 'over' && (e.done || !ov)) return false;
     if (filterStat === 'done' && !e.done) return false;
@@ -713,6 +714,8 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
 
   const handleUf = async (id: number, field: string, value: any) => {
     await updateStorageLog(id, { [field]: value } as any);
+    // 완료 체크 → '완료' 필터로 자동 이동 / 체크 해제 → '보관중' 필터로 복귀
+    if (field === 'done') setFilterStat(value ? 'done' : 'active');
     onUpdate();
   };
 
@@ -826,7 +829,7 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
               className="border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:border-bee-yellow outline-none" />
           </div>
           <div className="flex gap-1 bg-gray-100 rounded-full p-1">
-            {(['all','wait','over','done'] as const).map(s => (
+            {(['all','active','done'] as const).map(s => (
               <button key={s} onClick={() => setFilterStat(s)}
                 className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${
                   filterStat === s ? 'bg-bee-black text-bee-yellow' : 'text-gray-400 hover:text-gray-700'

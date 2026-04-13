@@ -910,6 +910,12 @@ const KioskPage: React.FC = () => {
                 max={100}
                 value={tagInputVal}
                 onChange={(e) => setTagInputVal(e.target.value)}
+                onBlur={() => {
+                  const v = Math.min(100, Math.max(1, parseInt(tagInputVal) || 1));
+                  setNextTag(v);
+                  setTagInputVal(String(v));
+                  setEditingTag(false);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const v = Math.min(100, Math.max(1, parseInt(tagInputVal) || 1));

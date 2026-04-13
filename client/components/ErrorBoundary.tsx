@@ -19,6 +19,17 @@ class ErrorBoundary extends Component<Props, State> {
     };
 
     public static getDerivedStateFromError(error: Error): State {
+        // 청크 로드 실패(배포 후 해시 변경) → 즉시 강제 새로고침
+        const msg = error.message || '';
+        if (
+            msg.includes('Failed to fetch dynamically imported module') ||
+            msg.includes('Importing a module script failed') ||
+            msg.includes('error loading dynamically imported module')
+        ) {
+            window.location.reload();
+            // reload 중에도 state 반환은 필요
+            return { hasError: false, error: null };
+        }
         return { hasError: true, error };
     }
 

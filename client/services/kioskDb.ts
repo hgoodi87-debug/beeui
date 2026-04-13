@@ -325,6 +325,18 @@ export const loadTodayLog = async (branchId: string, date: string): Promise<Kios
   }
 };
 
+export const loadLogById = async (id: number): Promise<KioskStorageLog | null> => {
+  try {
+    const rows = await supabaseGet<KioskStorageLog[]>(
+      `${KIOSK_TABLES.log}?id=eq.${id}&limit=1`,
+      _ANON
+    );
+    return rows?.[0] ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export const loadLogRange = async (
   branchId: string,
   fromDate: string,

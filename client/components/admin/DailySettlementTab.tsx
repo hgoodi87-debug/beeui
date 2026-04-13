@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CashClosing, Expenditure, BookingState, BookingStatus } from '../../types';
+import { loadAllActiveBranches, loadLogRange, KioskStorageLog } from '../../services/kioskDb';
 
 interface DailySettlementTabProps {
     revenueEndDate: string;
@@ -40,6 +41,34 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
     setSelectedBooking,
     t
 }) => {
+    // 키오스크 정산
+    const [kioskLogs, setKioskLogs] = useState<KioskStorageLog[]>([]);
+    const [kioskLoading, setKioskLoading] = useState(false);
+
+    useEffect(() => {
+        if (!revenueEndDate) return;
+        setKioskLoading(true);
+        (async () => {
+            try {
+                const branches = await loadAllActiveBranches();
+                const all: KioskStorageLog[] = [];
+                for (const b of branches) {
+                    const logs = await loadLogRange(b.id, revenueEndDate, revenueEndDate);
+                    all.push(...logs);
+                }
+                setKioskLogs(all);
+            } finally {
+                setKioskLoading(false);
+            }
+        })();
+    }, [revenueEndDate]);
+
+    const kioskStats = useMemo(() => {
+        const gross = kioskLogs.reduce((s, l) => s + l.original_price, 0);
+        const disc  = kioskLogs.reduce((s, l) => s + (l.discount ?? 0), 0);
+        return { count: kioskLogs.length, gross, disc, net: gross - disc };
+    }, [kioskLogs]);
+
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm relative overflow-hidden group">
@@ -166,6 +195,43 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                 <div className="col-span-2 bg-gray-50/30 p-6 rounded-[32px] border border-gray-100 flex items-center justify-center border-dashed">
                     <p className="text-[11px] font-black text-gray-300 italic">위 금액은 총 매출액에 합산되지 않은 제외 항목입니다. 💅</p>
                 </div>
+            </div>
+
+            {/* 🐝 키오스크 정산 요약 */}
+            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-black flex items-center gap-2 text-bee-black">
+                        <span className="w-6 h-6 bg-bee-yellow rounded-lg flex items-center justify-center text-[10px]">🐝</span>
+                        키오스크 정산 <span className="text-gray-300 font-serif italic text-xs">Kiosk Settlement</span>
+                    </h3>
+                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{revenueEndDate}</span>
+                </div>
+                {kioskLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                        <div className="w-5 h-5 border-2 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+                        <span className="ml-2 text-[11px] font-black text-gray-300">불러오는 중…</span>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="bg-bee-yellow/5 p-4 rounded-[24px] border border-bee-yellow/20 flex flex-col gap-1">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">보관 건수</p>
+                            <p className="text-xl font-black text-bee-black tabular-nums">{kioskStats.count}<span className="text-xs font-bold text-gray-400 ml-1">건</span></p>
+                        </div>
+                        <div className="bg-gray-50/50 p-4 rounded-[24px] border border-gray-100 flex flex-col gap-1">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">매출 합계</p>
+                            <p className="text-xl font-black text-bee-black tabular-nums">₩{kioskStats.gross.toLocaleString()}</p>
+                        </div>
+                        <div className="bg-red-50/50 p-4 rounded-[24px] border border-red-100 flex flex-col gap-1">
+                            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest">총 할인</p>
+                            <p className="text-xl font-black text-red-500 tabular-nums">-₩{kioskStats.disc.toLocaleString()}</p>
+                        </div>
+                        <div className="bg-bee-black p-4 rounded-[24px] flex flex-col gap-1 relative overflow-hidden">
+                            <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-bee-yellow opacity-5 rounded-full"></div>
+                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">실수익 (Net)</p>
+                            <p className="text-xl font-black italic text-bee-yellow tabular-nums">₩{kioskStats.net.toLocaleString()}</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">

@@ -481,7 +481,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     <p className="text-white/50 text-xs mt-1">소형 가방</p>
                   </div>
                   <div className="bg-white/10 rounded-2xl p-5 text-center">
-                    <img src="/images/bags/carrier-photo.png" alt="캐리어" className="w-10 h-10 object-contain mx-auto mb-2 opacity-80" />
+                    <picture><source srcSet="/images/bags/carrier-photo.webp" type="image/webp" /><img src="/images/bags/carrier-photo.png" alt="캐리어" className="w-10 h-10 object-contain mx-auto mb-2 opacity-80" /></picture>
                     <p className="text-white font-black text-3xl tabular-nums">{stats.carrierTotal}</p>
                     <p className="text-white/50 text-xs mt-1">대형 캐리어</p>
                   </div>
@@ -1120,8 +1120,7 @@ const KioskPage: React.FC = () => {
                         <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px]">{carrierQty}</span>
                       </div>
                     )}
-                    <img src="/images/bags/carrier-photo.png" alt={t.carrier}
-                      className="w-10 h-10 lg:w-14 lg:h-14 object-contain flex-shrink-0" />
+                    <picture><source srcSet="/images/bags/carrier-photo.webp" type="image/webp" /><img src="/images/bags/carrier-photo.png" alt={t.carrier} className="w-10 h-10 lg:w-14 lg:h-14 object-contain flex-shrink-0" /></picture>
                     <div className="text-center">
                       <p className="font-black text-sm text-[#111111] leading-tight">{t.carrier}</p>
                       <p className="text-[10px] text-[#111111]/50 mt-1 leading-tight">{t.carrier_desc}</p>

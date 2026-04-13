@@ -35,12 +35,15 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         className="relative rounded-[3rem] shadow-2xl aspect-[4/3] md:aspect-[3/2]"
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-yellow/10 group">
-                            <img
-                                src="/images/landing/after.jpg"
-                                alt="빌리버 서비스를 이용해 짐 없이 가볍게 한강을 산책하는 자유로운 모습"
-                                loading="lazy"
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s]"
-                            />
+                            <picture>
+                                <source srcSet="/images/landing/after.webp" type="image/webp" />
+                                <img
+                                    src="/images/landing/after.jpg"
+                                    alt="빌리버 서비스를 이용해 짐 없이 가볍게 한강을 산책하는 자유로운 모습"
+                                    loading="lazy"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s]"
+                                />
+                            </picture>
                             {/* After 캡션 */}
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
                                 <span className="inline-block px-3 py-1 bg-bee-yellow text-bee-black text-[10px] md:text-xs font-black rounded-full mb-2">AFTER</span>
@@ -57,12 +60,15 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                         className="relative rounded-[3rem] shadow-2xl aspect-[4/3] md:aspect-[3/2]"
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-black group">
-                            <img
-                                src="/images/landing/before.jpg"
-                                alt="캐리어를 들고 지하철 계단을 오르는 여행자의 모습"
-                                loading="lazy"
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s] grayscale group-hover:grayscale-0"
-                            />
+                            <picture>
+                                <source srcSet="/images/landing/before.webp" type="image/webp" />
+                                <img
+                                    src="/images/landing/before.jpg"
+                                    alt="캐리어를 들고 지하철 계단을 오르는 여행자의 모습"
+                                    loading="lazy"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s] grayscale group-hover:grayscale-0"
+                                />
+                            </picture>
                             {/* Before 캡션 */}
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
                                 <span className="inline-block px-3 py-1 bg-white/20 text-white text-[10px] md:text-xs font-black rounded-full mb-2 backdrop-blur-sm">BEFORE</span>

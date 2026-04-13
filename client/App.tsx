@@ -37,9 +37,11 @@ const StorageLandingPage = lazy(() => import('./components/StorageLandingPage'))
 const KioskPage = lazy(() => import('./components/KioskPage'));
 const KioskLogPage = lazy(() => import('./components/KioskLogPage'));
 const KioskVoucherPage = lazy(() => import('./components/KioskVoucherPage'));
+const KioskStaffReturnPage = lazy(() => import('./components/KioskStaffReturnPage'));
 import { useParams } from 'react-router-dom';
 import ErrorBoundary, { PageErrorFallback } from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
+import LanguagePopup from './components/LanguagePopup';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import SEO from './components/SEO';
@@ -394,6 +396,8 @@ const App: React.FC = () => {
       };
 
       setLastBooking(confirmedBooking);
+      // 예약 완료 후 언어 팝업을 다시 노출하기 위해 플래그 초기화
+      sessionStorage.removeItem('beeliber_lang_popup_seen');
       navigate(`/${lang}/booking-success`);
       console.log("[App] Booking saved to Supabase successfully.", confirmedBooking);
 
@@ -729,6 +733,7 @@ const App: React.FC = () => {
                   <Route path="/kiosk/:branchSlug" element={<KioskPage />} />
                   <Route path="/kiosk/:branchSlug/log" element={<KioskLogPage />} />
                   <Route path="/kiosk/voucher" element={<KioskVoucherPage />} />
+                  <Route path="/kiosk/staff-return" element={<KioskStaffReturnPage />} />
 
                   {/* FALLBACK & REDIRECTS */}
                   <Route path="/" element={<Navigate to={`/${lang}`} replace />} />
@@ -759,6 +764,11 @@ const App: React.FC = () => {
           {/* Legacy MyPage Handler - Now integrated into Router but keeping this as safe check if needed */}
 
           <NoticePopup t={t} />
+          <LanguagePopup
+            key={location.pathname.includes('booking-success') ? 'booking-success' : 'default'}
+            t={t}
+            onLangChange={changeLanguage}
+          />
           <LoginModal
             isOpen={showLoginModal}
             t={t}

@@ -13,6 +13,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
     const prices = [
         {
             image: "/images/bags/carrier-photo.png",
+            imageWebp: "/images/bags/carrier-photo.webp",
             title: t.pricing.airport_hotel,
             price: t.pricing.price_standard,
             unit: t.pricing?.unit_standard || t.pricing?.per_bag_label || "/ UNIT",
@@ -23,6 +24,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
         },
         {
             image: "/images/bee-mascot-nobg.png",
+            imageWebp: "/images/bee-mascot-nobg.webp",
             title: t.pricing.extra_large,
             price: t.pricing.price_extra,
             unit: t.pricing?.unit_extra || t.pricing?.per_bag_label || "/ UNIT",
@@ -79,11 +81,14 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
 
                             {/* 품목 이미지 */}
                             <div className="mb-4 md:mb-8 flex items-center justify-start">
-                                <img
-                                    src={item.image}
-                                    alt={item.title}
-                                    className={`object-contain ${i === 1 ? 'w-20 h-20 md:w-36 md:h-36 drop-shadow-lg' : 'w-16 h-16 md:w-28 md:h-28 drop-shadow-md'}`}
-                                />
+                                <picture>
+                                    <source srcSet={item.imageWebp} type="image/webp" />
+                                    <img
+                                        src={item.image}
+                                        alt={item.title}
+                                        className={`object-contain ${i === 1 ? 'w-20 h-20 md:w-36 md:h-36 drop-shadow-lg' : 'w-16 h-16 md:w-28 md:h-28 drop-shadow-md'}`}
+                                    />
+                                </picture>
                             </div>
 
                             <h3 className="text-sm md:text-3xl font-display font-black text-bee-black mb-2 md:mb-4 tracking-tight leading-tight">{item.title}</h3>

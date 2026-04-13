@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
+import { QRCodeSVG } from 'qrcode.react';
 import { loadLogById, updateStorageLog, KioskStorageLog, addHours } from '../services/kioskDb';
 
 const POLL_INTERVAL = 5000;
@@ -378,6 +379,26 @@ const KioskVoucherPage: React.FC = () => {
               <span className="font-black text-[#111111] text-xl tabular-nums">{netPrice.toLocaleString()}원</span>
             </div>
           </div>
+
+          {/* 직원 스캔용 QR 코드 */}
+          {!isDone && (
+            <div className="mx-6 mb-4 mt-1 border border-[#f0f0f0] rounded-2xl px-5 py-4 flex items-center gap-4 bg-[#fafafa]">
+              <div className="flex-shrink-0 p-1 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <QRCodeSVG
+                  value={`${window.location.origin}/kiosk/staff-return?id=${log.id}`}
+                  size={72}
+                  bgColor="#ffffff"
+                  fgColor="#111111"
+                  level="M"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">직원 전용</p>
+                <p className="text-[#111111] font-black text-sm leading-tight">QR 스캔으로 반납 처리</p>
+                <p className="text-gray-400 text-[11px] mt-0.5 leading-tight">직원이 이 QR을 스캔하면<br />반납 완료 처리 화면으로 이동합니다</p>
+              </div>
+            </div>
+          )}
 
           {/* 날짜 + 지점 */}
           <div className="px-6 py-3 bg-[#f9f9f9] rounded-b-[28px] flex items-center justify-between">

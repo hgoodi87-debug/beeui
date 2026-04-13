@@ -8,6 +8,19 @@
         ],
         "cleanUrls": true,
         "trailingSlash": false,
+        "redirects": [
+            { "source": "/privacy", "destination": "/zh-tw/privacy", "type": 301 },
+            { "source": "/terms", "destination": "/zh-tw/terms", "type": 301 },
+            { "source": "/refund", "destination": "/zh-tw/refund", "type": 301 },
+            { "source": "/qna", "destination": "/zh-tw/qna", "type": 301 },
+            { "source": "/services", "destination": "/zh-tw/services", "type": 301 },
+            { "source": "/locations", "destination": "/zh-tw/locations", "type": 301 },
+            { "source": "/vision", "destination": "/zh-tw/vision", "type": 301 },
+            { "source": "/tracking", "destination": "/zh-tw/tracking", "type": 301 },
+            { "source": "/partnership", "destination": "/zh-tw/partnership", "type": 301 },
+            { "source": "/storage/:slug", "destination": "/zh-tw/storage/:slug", "type": 301 },
+            { "source": "/delivery/:slug", "destination": "/zh-tw/delivery/:slug", "type": 301 }
+        ],
         "rewrites": [
             {
                 "source": "**",

@@ -6,6 +6,7 @@ import { COUNTRY_NAMES } from '../../src/constants/countries';
 import { StorageService } from '../../services/storageService';
 import { AuditService } from '../../services/auditService';
 import { maskName, maskEmail, maskPhone, maskId } from '../../src/utils/maskUtils';
+import { normalizeChannel } from '../../src/utils/gads';
 import {
     createEmptyBagSizes,
     getBagCategoriesForService,
@@ -226,26 +227,36 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                             className="w-full bg-gray-50 p-4 rounded-2xl border-none font-black text-sm focus:ring-2 focus:ring-bee-yellow outline-none disabled:opacity-70"
                                         />
                                     </div>
-                                    {selectedBooking.utmSource && (
-                                        <div>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">유입 채널</label>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">유입 채널</label>
+                                        {selectedBooking.utmSource ? (
                                             <div className="flex flex-wrap gap-2">
-                                                <span className="px-3 py-1.5 bg-bee-yellow/20 text-bee-black font-black text-xs rounded-xl">
+                                                <span className="px-3 py-1.5 bg-bee-yellow/20 text-bee-black font-black text-xs rounded-xl flex items-center gap-1.5">
+                                                    <i className="fa-solid fa-route text-[10px]" />
+                                                    {normalizeChannel(selectedBooking.utmSource, selectedBooking.utmMedium)}
+                                                </span>
+                                                <span className="px-3 py-1.5 bg-gray-100 text-gray-500 font-bold text-xs rounded-xl font-mono">
                                                     {selectedBooking.utmSource}
                                                 </span>
                                                 {selectedBooking.utmMedium && (
-                                                    <span className="px-3 py-1.5 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl">
+                                                    <span className="px-3 py-1.5 bg-gray-100 text-gray-500 font-bold text-xs rounded-xl">
                                                         {selectedBooking.utmMedium}
                                                     </span>
                                                 )}
                                                 {selectedBooking.utmCampaign && (
-                                                    <span className="px-3 py-1.5 bg-gray-100 text-gray-600 font-bold text-xs rounded-xl">
+                                                    <span className="px-2 py-1 bg-blue-50 text-blue-600 font-bold text-xs rounded-xl flex items-center gap-1">
+                                                        <i className="fa-solid fa-flag text-[9px]" />
                                                         {selectedBooking.utmCampaign}
                                                     </span>
                                                 )}
                                             </div>
-                                        </div>
-                                    )}
+                                        ) : (
+                                            <span className="px-3 py-1.5 bg-gray-50 text-gray-400 font-bold text-xs rounded-xl inline-flex items-center gap-1.5">
+                                                <i className="fa-solid fa-link-slash text-[10px]" />
+                                                Direct / 미추적
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

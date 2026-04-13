@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import { BookingState, BookingStatus, LocationOption, ServiceType } from '../../types';
 import { COUNTRY_NAMES } from '../../src/constants/countries';
+import { normalizeChannel } from '../../src/utils/gads';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
 
@@ -165,7 +166,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
         });
         const branchCommission = Object.values(branchCommissionMap).sort((a, b) => b.total - a.total);
 
-        // UTM 채널 어트리뷰션 집계
+        // UTM 채널 어트리뷰션 집계 (normalizeChannel 기반 그룹화)
         const utmSourceMap: Record<string, { source: string; count: number; revenue: number }> = {};
         const utmCampaignMap: Record<string, { source: string; campaign: string; medium: string; count: number; revenue: number }> = {};
         let utmTrackedCount = 0;
@@ -174,17 +175,18 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
             const price = b.finalPrice ?? 0;
             if (b.utmSource) {
                 utmTrackedCount++;
-                if (!utmSourceMap[b.utmSource]) {
-                    utmSourceMap[b.utmSource] = { source: b.utmSource, count: 0, revenue: 0 };
+                const channelGroup = normalizeChannel(b.utmSource, b.utmMedium);
+                if (!utmSourceMap[channelGroup]) {
+                    utmSourceMap[channelGroup] = { source: channelGroup, count: 0, revenue: 0 };
                 }
-                utmSourceMap[b.utmSource].count++;
-                utmSourceMap[b.utmSource].revenue += price;
+                utmSourceMap[channelGroup].count++;
+                utmSourceMap[channelGroup].revenue += price;
 
                 if (b.utmCampaign) {
-                    const key = `${b.utmSource}__${b.utmCampaign}`;
+                    const key = `${channelGroup}__${b.utmCampaign}`;
                     if (!utmCampaignMap[key]) {
                         utmCampaignMap[key] = {
-                            source: b.utmSource,
+                            source: channelGroup,
                             campaign: b.utmCampaign,
                             medium: b.utmMedium || '-',
                             count: 0, revenue: 0,

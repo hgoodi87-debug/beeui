@@ -32,7 +32,31 @@ const LocationMap: React.FC<LocationMapProps> = React.memo(({
     const prevPanTrigger = useRef(panToUserTrigger ?? 0);
 
     useEffect(() => {
-        if (!searchAddress || !mapRef.current || !window.naver || !window.naver.maps || !window.naver.maps.Service || !isMapReady) return;
+        // 검색어 지우면 마커 제거
+        if (!searchAddress) {
+            if (searchMarkerRef.current) {
+                searchMarkerRef.current.setMap(null);
+                searchMarkerRef.current = null;
+            }
+            return;
+        }
+        if (!mapRef.current || !window.naver?.maps || !isMapReady) return;
+
+        // 1순위: 필터된 지점 중 좌표가 있는 첫 번째 지점으로 바로 이동
+        const firstBranch = branches.find(b => b.lat && b.lng);
+        if (firstBranch) {
+            if (searchMarkerRef.current) {
+                searchMarkerRef.current.setMap(null);
+                searchMarkerRef.current = null;
+            }
+            const latLng = new window.naver.maps.LatLng(firstBranch.lat, firstBranch.lng);
+            mapRef.current.panTo(latLng);
+            mapRef.current.setZoom(15);
+            return;
+        }
+
+        // 2순위: 매칭 지점 없을 때만 지오코더로 폴백
+        if (!window.naver.maps.Service) return;
 
         window.naver.maps.Service.geocode({
             query: searchAddress
@@ -65,7 +89,7 @@ const LocationMap: React.FC<LocationMapProps> = React.memo(({
                 zIndex: 150
             });
         });
-    }, [searchAddress, isMapReady]);
+    }, [searchAddress, branches, isMapReady]);
 
     useEffect(() => {
         if (!panToUserTrigger || panToUserTrigger === prevPanTrigger.current) return;

@@ -71,6 +71,35 @@
 | 마이그레이션 Supabase 적용 | Supabase Dashboard | `20260412000001_security_fix_rls.sql` 적용 완료 |
 
 > ✅ **전체 완료**: `SYNC_SECRET_KEY` 시크릿 설정 완료. Google API 키 교체 완료.
+>
+> **잔여 권고사항 조치 (2026-04-12 추가):**
+> - `rls_audit()` DB 함수: `20260412000003_rls_audit_function.sql`
+> - `check-rls-health` Edge Function 배포 완료
+> - Google API 키 IP 제한 가이드: `빌리버_Google_API키_IP제한_가이드.md`
+>
+> **종합 RLS 수정 (20260412000004) — DB 적용 완료:**
+> - booking_details `p_booking_details_r/u` 공개 정책 잔존 확인 후 삭제 (오늘 마이그레이션에서 누락됐던 것)
+> - app_settings ALL 공개 → 관리자 전용
+> - employees 전 직원 PII 공개 → 관리자+본인만
+> - discount_codes 공개 생성 → 관리자 전용
+> - user_coupons 타인 쿠폰 조회 → 본인+관리자만
+> - locations, cms_*, daily_closings, delivery_assignments, expenditures, google_reviews, system_notices 공개 쓰기 전부 차단
+> - chat_sessions/messages 전체 공개 → 세션 소유자+CS 직원만
+> - branch_prospects SELECT 관리자만 / INSERT 공개 유지
+> - reservation_items, storage_assets, beeliber 정책 없던 테이블 정책 추가
+> - 잔존 공개 쓰기: kiosk_settings만 (키오스크 PIN 보호로 의도적 유지)
+
+---
+
+## 2026-04-13
+
+### 현금결제 예약 저장 버그 수정
+
+| 이슈 | 파일 | 핵심 |
+|---|---|---|
+| 현장결제 버튼 클릭 시 예약 저장 실패 (42501 RLS) | `supabase/migrations/20260413000001~20260414000001` | `20260412000001_security_fix_rls.sql`의 `deny_direct_insert_booking_details WITH CHECK(false)` 정책이 모든 anon INSERT 차단. `20260414000001_force_fix_booking_insert.sql`로 모든 INSERT 정책 초기화 후 `allow_public_insert_booking_details WITH CHECK(true)` 단일 정책 재설정. 마이그레이션 push 후 anon INSERT HTTP 201 확인 |
+| MCP Supabase 프로젝트 불일치 | — | MCP는 `fzvfyeskdivulazjjpgr`에 연결되지만 실제 프로덕션은 `xpnfjolqiffduedwtxey`. 중간 수정 시도(20260413000001, 000002)는 잘못된 프로젝트에 적용됨. `supabase db push --linked`로 올바른 프로젝트에 적용 필요 |
+| 랜딩페이지 버튼 텍스트 변경 | `LandingPricing.tsx` + 6개 번역 파일 | "예약하러" → 보관하기(btn_storage) / 배송하기(btn_delivery). 6개 언어 모두 적용 |
 
 ---
 

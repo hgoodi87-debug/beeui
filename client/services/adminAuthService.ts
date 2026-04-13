@@ -48,7 +48,7 @@ const supabaseUrl = config.url;
 const supabasePublishableKey = config.anonKey;
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
-const ADMIN_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const ADMIN_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30일 (롤링)
 const ACCESS_TOKEN_FALLBACK_TTL_MS = 55 * 60 * 1000;
 const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 const SUPABASE_DATA_SCHEMA = 'public';
@@ -472,7 +472,7 @@ export const ensureActiveAdminSession = async () => {
       userId: authResponse.user?.id || currentSession.userId,
       email: authResponse.user?.email || currentSession.email,
       provider: 'supabase',
-      savedAt: currentSession.savedAt,
+      savedAt: Date.now(), // 갱신 성공 시 TTL 윈도우 초기화 (롤링 세션)
       expiresAt: resolveSessionExpiry(
         Date.now(),
         authResponse.expires_in ? Date.now() + authResponse.expires_in * 1000 : undefined

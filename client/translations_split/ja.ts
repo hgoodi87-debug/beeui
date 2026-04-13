@@ -130,6 +130,8 @@ export const ja = {
         most_popular_label: "一番人気",
         per_bag_label: "/ 個",
         choose_service_btn: "サービスを選択",
+        btn_storage: "今すぐ預ける",
+        btn_delivery: "今すぐ配送",
         badges: {
             hour_day: "4H / 1DAY",
             spots: "40+ 拠点",

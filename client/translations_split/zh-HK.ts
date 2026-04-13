@@ -109,6 +109,8 @@ export const zhHK = {
         most_popular_label: "人氣服務",
         per_bag_label: "/ 件",
         choose_service_btn: "選擇服務",
+        btn_storage: "立即寄存",
+        btn_delivery: "立即配送",
         badges: {
             hour_day: "4小時 / 1天",
             spots: "40+ 據點",

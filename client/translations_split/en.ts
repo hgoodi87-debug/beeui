@@ -131,6 +131,8 @@ export const en = {
         most_popular_label: "MOST POPULAR",
         per_bag_label: "/ Bag",
         choose_service_btn: "CHOOSE SERVICE",
+        btn_storage: "STORE BAGS",
+        btn_delivery: "SHIP BAGS",
         badges: {
             hour_day: "4H / 1DAY",
             spots: "40+ SPOTS",

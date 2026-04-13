@@ -152,6 +152,8 @@ export const ko = {
         unit_standard: "/ 4시간",
         unit_extra: "/ 1건",
         choose_service_btn: "예약하러 가기",
+        btn_storage: "보관하기",
+        btn_delivery: "배송하기",
         badges: {
             hour_day: "4H / 1DAY",
             spots: "40+ 거점",

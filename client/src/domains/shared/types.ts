@@ -129,7 +129,8 @@ export type AdminTab =
     | 'QNA_EDITOR'
     | 'TRASH'
     | 'AI_REVIEW'
-    | 'KIOSK';
+    | 'KIOSK'
+    | 'CHANNEL_ANALYTICS';
 
 export interface TranslatedLocationData {
     name_en: string;

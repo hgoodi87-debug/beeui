@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BookingState, Expenditure, CashClosing, AdminTab } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { exportKoreanAccountingXLSX } from '../../utils/accountingExport';
 import { exportPaymentMethodWordDoc } from '../../utils/wordExport';
+import { loadAllActiveBranches, loadLogRange, KioskStorageLog } from '../../services/kioskDb';
 
 
 interface AccountingTabProps {
@@ -24,7 +25,7 @@ interface AccountingTabProps {
     t: any;
 }
 
-type SubTab = 'revenue' | 'expenditure' | 'calendar';
+type SubTab = 'revenue' | 'expenditure' | 'calendar' | 'kiosk';
 
 const AccountingTab: React.FC<AccountingTabProps> = ({
     revenueStartDate,
@@ -45,6 +46,47 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     t
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
+
+    // 키오스크 정산 데이터
+    const [kioskLogs, setKioskLogs] = useState<KioskStorageLog[]>([]);
+    const [kioskLoading, setKioskLoading] = useState(false);
+
+    useEffect(() => {
+        if (activeSubTab !== 'kiosk') return;
+        setKioskLoading(true);
+        (async () => {
+            try {
+                const branches = await loadAllActiveBranches();
+                const all: KioskStorageLog[] = [];
+                for (const b of branches) {
+                    const logs = await loadLogRange(b.id, revenueStartDate, revenueEndDate);
+                    all.push(...logs);
+                }
+                setKioskLogs(all);
+            } finally {
+                setKioskLoading(false);
+            }
+        })();
+    }, [activeSubTab, revenueStartDate, revenueEndDate]);
+
+    const kioskStats = useMemo(() => {
+        const gross = kioskLogs.reduce((s, l) => s + l.original_price, 0);
+        const disc  = kioskLogs.reduce((s, l) => s + (l.discount ?? 0), 0);
+        const net   = gross - disc;
+        const dailyMap = new Map<string, { count: number; gross: number; disc: number; net: number }>();
+        for (const l of kioskLogs) {
+            const d = dailyMap.get(l.date) ?? { count: 0, gross: 0, disc: 0, net: 0 };
+            d.count++;
+            d.gross += l.original_price;
+            d.disc  += l.discount ?? 0;
+            d.net   += l.original_price - (l.discount ?? 0);
+            dailyMap.set(l.date, d);
+        }
+        const daily = Array.from(dailyMap.entries())
+            .map(([date, v]) => ({ date, ...v }))
+            .sort((a, b) => b.date.localeCompare(a.date));
+        return { count: kioskLogs.length, gross, disc, net, daily };
+    }, [kioskLogs]);
 
     // Calendar logic
     const calendarDays = useMemo(() => {
@@ -146,6 +188,12 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'calendar' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                         >
                             매출 캘린더
+                        </button>
+                        <button
+                            onClick={() => setActiveSubTab('kiosk')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'kiosk' ? 'bg-bee-yellow text-bee-black shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                        >
+                            🐝 키오스크 정산
                         </button>
                     </div>
                 </div>
@@ -612,6 +660,87 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     </motion.div>
                                 );
                             })}
+                        </div>
+                    </div>
+                )}
+                {activeSubTab === 'kiosk' && (
+                    <div className="space-y-6">
+                        {/* KPI 카드 4칸 */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {[
+                                { label: '총 보관 건수',  val: `${kioskStats.count}건`,                  icon: 'fa-box',           color: 'text-amber-500',  bg: 'hover:border-amber-300' },
+                                { label: '총 원가',       val: `₩${kioskStats.gross.toLocaleString()}`,  icon: 'fa-tag',           color: 'text-blue-500',   bg: 'hover:border-blue-300' },
+                                { label: '총 할인액',     val: `₩${kioskStats.disc.toLocaleString()}`,   icon: 'fa-scissors',      color: 'text-red-400',    bg: 'hover:border-red-300' },
+                                { label: '실 수납액',     val: `₩${kioskStats.net.toLocaleString()}`,    icon: 'fa-won-sign',      color: 'text-emerald-500',bg: 'hover:border-emerald-300' },
+                            ].map(card => (
+                                <div key={card.label} className={`bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between transition-all ${card.bg}`}>
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">{card.label}</p>
+                                        <h3 className={`text-xl font-black italic ${card.color}`}>{card.val}</h3>
+                                    </div>
+                                    <i className={`fa-solid ${card.icon} ${card.color} text-xs mt-3 opacity-50`}></i>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* 일별 정산 테이블 */}
+                        <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-black flex items-center gap-2">
+                                    <i className="fa-solid fa-store text-amber-400"></i> 키오스크 일별 정산
+                                </h3>
+                                <span className="text-[10px] font-black text-gray-300 uppercase">{revenueStartDate} ~ {revenueEndDate}</span>
+                            </div>
+
+                            {kioskLoading ? (
+                                <div className="flex items-center justify-center py-16">
+                                    <div className="w-8 h-8 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin" />
+                                </div>
+                            ) : (
+                                <div className="overflow-hidden rounded-[32px] border border-gray-50">
+                                    <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                                        <table className="w-full text-left">
+                                            <thead className="sticky top-0 bg-bee-black text-[10px] font-black uppercase text-bee-yellow z-10">
+                                                <tr>
+                                                    <th className="px-6 py-4">날짜</th>
+                                                    <th className="px-6 py-4 text-right">건수</th>
+                                                    <th className="px-6 py-4 text-right">원가</th>
+                                                    <th className="px-6 py-4 text-right">할인</th>
+                                                    <th className="px-6 py-4 text-right">실수납</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50 text-xs">
+                                                {kioskStats.daily.map(d => (
+                                                    <tr key={d.date} className="hover:bg-amber-50/30 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-1.5 h-4 rounded-full bg-amber-100 group-hover:bg-amber-400 transition-colors"></div>
+                                                                <span className="font-black text-gray-700">{d.date}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right font-bold text-gray-400">{d.count}건</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-gray-500">₩{d.gross.toLocaleString()}</td>
+                                                        <td className="px-6 py-4 text-right font-bold text-red-400">{d.disc > 0 ? `-₩${d.disc.toLocaleString()}` : '—'}</td>
+                                                        <td className="px-6 py-4 text-right font-black text-bee-black">₩{d.net.toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                                {kioskStats.daily.length === 0 && (
+                                                    <tr><td colSpan={5} className="px-6 py-20 text-center text-gray-300 font-black italic">해당 기간의 키오스크 데이터가 없습니다.</td></tr>
+                                                )}
+                                                {kioskStats.daily.length > 0 && (
+                                                    <tr className="bg-gray-50 font-black">
+                                                        <td className="px-6 py-4 text-gray-500 uppercase text-[10px] tracking-widest">합계</td>
+                                                        <td className="px-6 py-4 text-right text-gray-700">{kioskStats.count}건</td>
+                                                        <td className="px-6 py-4 text-right text-gray-700">₩{kioskStats.gross.toLocaleString()}</td>
+                                                        <td className="px-6 py-4 text-right text-red-500">{kioskStats.disc > 0 ? `-₩${kioskStats.disc.toLocaleString()}` : '—'}</td>
+                                                        <td className="px-6 py-4 text-right text-emerald-600 text-sm">₩{kioskStats.net.toLocaleString()}</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

@@ -19,6 +19,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
             features: t.pricing.features_standard || ["All sizes up to 28\"", "Airport ↔ Hotel Delivery", "Real-time Tracking", "Basic Insurance"],
             popular: true,
             badge: t.pricing?.most_popular_label || "BEST",
+            btn: t.pricing?.btn_storage || "보관하기",
         },
         {
             image: "/images/bee-mascot-nobg.png",
@@ -28,6 +29,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
             features: t.pricing.features_extra || ["Over 28\", Golf Bags, etc.", "Heavy Duty Handling", "Same-day Delivery", "Global Insurance"],
             popular: false,
             badge: null,
+            btn: t.pricing?.btn_delivery || "배송하기",
         }
     ];
 
@@ -109,7 +111,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
                                 className={`w-full py-3 md:py-8 rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-2xl tracking-[0.05em] md:tracking-[0.1em] transition-all shadow-xl flex items-center justify-center gap-1.5 md:gap-3 cursor-pointer ${item.popular ? 'bg-bee-black text-bee-yellow hover:bg-bee-yellow hover:text-bee-black' : 'bg-bee-yellow text-bee-black hover:bg-bee-black hover:text-bee-yellow'
                                     }`}
                             >
-                                {t.pricing?.choose_service_btn?.split(' ')[0] || "BOOK"} <span className="text-xs md:text-3xl">➔</span>
+                                {item.btn} <span className="text-xs md:text-3xl">➔</span>
                             </motion.a>
                         </motion.div>
                     ))}

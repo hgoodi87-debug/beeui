@@ -88,7 +88,7 @@ export const sendMessageToGemini = async (
     if (!apiKey) throw new Error("API_KEY_MISSING");
 
     const ai = new GoogleGenerativeAI(apiKey);
-    const modelName = 'gemini-2.0-flash-exp';
+    const modelName = 'gemini-2.5-flash';
     const model = ai.getGenerativeModel({
       model: modelName,
       systemInstruction: getSystemInstruction(lang),
@@ -130,7 +130,7 @@ export const translateText = async (text: string, targetLang: string): Promise<s
     if (!apiKey) return text;
 
     const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `Translate the following text to ${targetLang === 'ko' ? 'Korean' : targetLang === 'en' ? 'English' : targetLang}. Return ONLY the translated text without any explanation or quotes. Text: "${text}"`;
 

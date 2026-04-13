@@ -35,6 +35,7 @@ const VisionPage = lazy(() => import('./components/VisionPage'));
 const RefundPage = lazy(() => import('./components/RefundPage'));
 const StorageLandingPage = lazy(() => import('./components/StorageLandingPage'));
 const KioskPage = lazy(() => import('./components/KioskPage'));
+const KioskLogPage = lazy(() => import('./components/KioskLogPage'));
 import { useParams } from 'react-router-dom';
 import ErrorBoundary, { PageErrorFallback } from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
@@ -725,6 +726,7 @@ const App: React.FC = () => {
 
                   {/* KIOSK — 인증 불필요, 현장 전용 */}
                   <Route path="/kiosk/:branchSlug" element={<KioskPage />} />
+                  <Route path="/kiosk/:branchSlug/log" element={<KioskLogPage />} />
 
                   {/* FALLBACK & REDIRECTS */}
                   <Route path="/" element={<Navigate to={`/${lang}`} replace />} />

@@ -131,10 +131,15 @@ interface KioskTabProps {
   initialBranchSlug?: string;
   /** 장부 전용 모드: 보관장부·설정만 표시, 지점 선택 숨김, 기본 뷰 = admin */
   logMode?: boolean;
+  /** 외부에서 뷰 제어 (logMode에서 KioskLogPage 헤더 탭 연동) */
+  activeView?: SubView;
+  onViewChange?: (v: SubView) => void;
 }
 
-const KioskTab: React.FC<KioskTabProps> = ({ initialBranchSlug, logMode = false }) => {
-  const [view, setView] = useState<SubView>(logMode ? 'admin' : 'checkin');
+const KioskTab: React.FC<KioskTabProps> = ({ initialBranchSlug, logMode = false, activeView, onViewChange }) => {
+  const [viewInner, setViewInner] = useState<SubView>(logMode ? 'admin' : 'checkin');
+  const view = activeView ?? viewInner;
+  const setView = (v: SubView) => { setViewInner(v); onViewChange?.(v); };
   const [lang, setLang] = useState<Lang>('ko');
   const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -272,21 +277,23 @@ const KioskTab: React.FC<KioskTabProps> = ({ initialBranchSlug, logMode = false 
         </>
       )}
 
-      {/* ── 서브탭 (언더라인 스타일) ── */}
-      <div className="flex gap-8 border-b border-gray-200">
-        {subTabs.map(tab => (
-          <button key={tab.id}
-            onClick={() => { setView(tab.id); if (tab.id === 'admin') loadData(); }}
-            className={`pb-3 text-sm font-bold transition-all border-b-[3px] -mb-px flex items-center gap-2 ${
-              view === tab.id
-                ? 'border-bee-yellow text-bee-black'
-                : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'
-            }`}>
-            <i className={`fa-solid ${tab.icon} text-xs`}></i>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* ── 서브탭 — logMode에서는 헤더에 올라가므로 숨김 ── */}
+      {!logMode && (
+        <div className="flex gap-8 border-b border-gray-200">
+          {subTabs.map(tab => (
+            <button key={tab.id}
+              onClick={() => { setView(tab.id); if (tab.id === 'admin') loadData(); }}
+              className={`pb-3 text-sm font-bold transition-all border-b-[3px] -mb-px flex items-center gap-2 ${
+                view === tab.id
+                  ? 'border-bee-yellow text-bee-black'
+                  : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'
+              }`}>
+              <i className={`fa-solid ${tab.icon} text-xs`}></i>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── 서브뷰 ── */}
       {view === 'checkin'  && <CheckinView  lang={lang} t={t} cfg={cfg} assignRow={assignRow} onSubmitDone={loadData} branchId={branchId} />}
@@ -716,20 +723,20 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 짐 찾기 */}
-      <div className="bg-bee-black rounded-[30px] p-8">
-        <div className="flex items-center gap-3 mb-5">
-          <i className="fa-solid fa-magnifying-glass text-bee-yellow text-lg"></i>
-          <h3 className="font-black text-white text-lg">{t('find_title')}</h3>
+      <div className="bg-bee-black rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <i className="fa-solid fa-magnifying-glass text-bee-yellow"></i>
+          <h3 className="font-black text-white text-sm">{t('find_title')}</h3>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <input type="number" value={findTag} onChange={e => setFindTag(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleFind(); }}
             placeholder={t('find_placeholder')}
-            className="flex-1 bg-white/10 border-2 border-white/10 rounded-full px-6 py-3.5 text-xl font-black text-white text-center outline-none focus:border-bee-yellow transition-colors placeholder:text-white/20" />
+            className="flex-1 bg-white/10 border-2 border-white/10 rounded-full px-4 py-2.5 text-lg font-black text-white text-center outline-none focus:border-bee-yellow transition-colors placeholder:text-white/20" />
           <button onClick={handleFind}
-            className="px-7 py-3.5 bg-bee-yellow text-bee-black font-black rounded-full hover:bg-amber-400 transition-colors flex-shrink-0">
+            className="px-5 py-2.5 bg-bee-yellow text-bee-black font-black rounded-full hover:bg-amber-400 transition-colors flex-shrink-0 text-sm">
             {t('find_btn')}
           </button>
         </div>
@@ -737,49 +744,47 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
       </div>
 
       {/* 통계 6칸 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {[
-          { label: t('st_total'),  val: stats.total,  icon: 'fa-inbox',          color: 'text-blue-500' },
-          { label: t('active'),    val: stats.active,  icon: 'fa-box-open',       color: 'text-indigo-500' },
-          { label: t('st_done'),   val: stats.done,    icon: 'fa-circle-check',   color: 'text-green-500' },
-          { label: t('st_over'),   val: stats.over,    icon: 'fa-clock',          color: 'text-red-500' },
+          { label: t('st_total'),  val: stats.total,  icon: 'fa-inbox',           color: 'text-blue-500' },
+          { label: t('active'),    val: stats.active,  icon: 'fa-box-open',        color: 'text-indigo-500' },
+          { label: t('st_done'),   val: stats.done,    icon: 'fa-circle-check',    color: 'text-green-500' },
+          { label: t('st_over'),   val: stats.over,    icon: 'fa-clock',           color: 'text-red-500' },
           { label: t('st_rev'),    val: `₩${stats.rev.toLocaleString()}`, icon: 'fa-won-sign', color: 'text-amber-500' },
           { label: t('st_unpaid'), val: stats.unpaid,  icon: 'fa-money-bill-wave', color: 'text-orange-500' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm text-center">
-            <i className={`fa-solid ${s.icon} ${s.color} text-lg mb-2 block`}></i>
-            <p className="text-2xl font-black text-bee-black leading-none mb-1">{s.val}</p>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">{s.label}</p>
+          <div key={s.label} className="bg-white rounded-xl p-3 shadow-sm text-center">
+            <i className={`fa-solid ${s.icon} ${s.color} text-sm mb-1 block`}></i>
+            <p className="text-lg font-black text-bee-black leading-none mb-0.5">{s.val}</p>
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* 구역별 현황 + 오늘 요약 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 구역별 현황 */}
-        <div className="bg-white rounded-[30px] shadow-sm p-6">
-          <h3 className="font-black text-bee-black mb-5 flex items-center gap-2">
-            <i className="fa-solid fa-table-columns text-bee-yellow text-sm"></i>
+        <div className="bg-white rounded-2xl shadow-sm p-4">
+          <h3 className="font-black text-bee-black mb-4 flex items-center gap-2 text-sm">
+            <i className="fa-solid fa-table-columns text-bee-yellow text-xs"></i>
             구역별 현황
           </h3>
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
             {cfg.row_rules.rows.map(rule => {
               const rowItems = todayEntries.filter(e => e.rowLabel === rule.label);
               const active = rowItems.filter(e => !e.done).length;
               const pct = Math.round((active / rule.max) * 100);
               return (
-                <div key={rule.label} className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-white text-sm flex-shrink-0"
+                <div key={rule.label} className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-md flex items-center justify-center font-black text-white text-xs flex-shrink-0"
                     style={{ background: ROW_COLORS[rule.label] ?? '#999' }}>{rule.label}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between text-[11px] font-bold text-gray-500 mb-1">
-                      <span className="truncate">
-                        {rowItems.filter(e=>!e.done).map(e=>`#${e.tag}`).join(' ')||'—'}
-                      </span>
+                    <div className="flex justify-between text-[10px] font-bold text-gray-500 mb-1">
+                      <span className="truncate">{rowItems.filter(e=>!e.done).map(e=>`#${e.tag}`).join(' ')||'—'}</span>
                       <span className="flex-shrink-0 ml-2">{active}/{rule.max}</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div className="h-2 rounded-full transition-all"
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div className="h-1.5 rounded-full transition-all"
                         style={{ width: `${pct}%`, background: ROW_COLORS[rule.label] ?? '#999' }} />
                     </div>
                   </div>
@@ -790,46 +795,40 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
         </div>
 
         {/* 오늘 요약 */}
-        <div className="bg-white rounded-[30px] shadow-sm p-6">
-          <h3 className="font-black text-bee-black mb-5 flex items-center gap-2">
-            <i className="fa-solid fa-chart-simple text-bee-yellow text-sm"></i>
+        <div className="bg-white rounded-2xl shadow-sm p-4">
+          <h3 className="font-black text-bee-black mb-4 flex items-center gap-2 text-sm">
+            <i className="fa-solid fa-chart-simple text-bee-yellow text-xs"></i>
             오늘 요약
           </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-              <span className="text-sm font-semibold text-gray-500">소형 가방</span>
-              <span className="font-black">{todayEntries.reduce((s,e)=>s+e.smallQty,0)}개</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-              <span className="text-sm font-semibold text-gray-500">캐리어</span>
-              <span className="font-black">{todayEntries.reduce((s,e)=>s+e.carrierQty,0)}개</span>
-            </div>
-            <div className="h-px bg-gray-100 my-2" />
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-              <span className="text-sm font-semibold text-gray-500">미수금</span>
-              <span className="font-black text-amber-600">{stats.unpaid}건</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-bee-black rounded-xl">
-              <span className="text-sm font-semibold text-white/60">총 수익</span>
-              <span className="font-black text-bee-yellow">₩{stats.rev.toLocaleString()}</span>
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: '소형 가방', val: `${todayEntries.reduce((s,e)=>s+e.smallQty,0)}개` },
+              { label: '캐리어',    val: `${todayEntries.reduce((s,e)=>s+e.carrierQty,0)}개` },
+              { label: '미수금',    val: `${stats.unpaid}건`, warn: true },
+              { label: '총 수익',   val: `₩${stats.rev.toLocaleString()}`, dark: true },
+            ].map(r => (
+              <div key={r.label} className={`flex justify-between items-center px-3 py-2 rounded-lg ${r.dark ? 'bg-bee-black' : 'bg-gray-50'}`}>
+                <span className={`text-xs font-semibold ${r.dark ? 'text-white/60' : 'text-gray-500'}`}>{r.label}</span>
+                <span className={`font-black text-sm ${r.dark ? 'text-bee-yellow' : r.warn ? 'text-amber-600' : ''}`}>{r.val}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* 전체 목록 테이블 */}
-      <div className="bg-white rounded-[30px] shadow-sm overflow-hidden">
-        <div className="flex flex-wrap gap-3 items-center p-6 border-b border-gray-100">
-          <h3 className="font-black text-base flex-1">{t('a_title')}</h3>
+      {/* 전체 목록 — 3열 카드 */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex flex-wrap gap-3 items-center px-4 py-3 border-b border-gray-100">
+          <h3 className="font-black text-sm flex-1">{t('a_title')}</h3>
           <div className="flex items-center gap-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('a_date')}</label>
+            <label className="text-[10px] font-black text-gray-400 uppercase">{t('a_date')}</label>
             <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-bold focus:border-bee-yellow outline-none" />
+              className="border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:border-bee-yellow outline-none" />
           </div>
           <div className="flex gap-1 bg-gray-100 rounded-full p-1">
             {(['all','wait','over','done'] as const).map(s => (
               <button key={s} onClick={() => setFilterStat(s)}
-                className={`px-4 py-1.5 rounded-full text-xs font-black transition-all ${
+                className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${
                   filterStat === s ? 'bg-bee-black text-bee-yellow' : 'text-gray-400 hover:text-gray-700'
                 }`}>
                 {t(`f_${s}`)}
@@ -837,84 +836,74 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
             ))}
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="bg-bee-black">
-              <tr>
-                {['날짜','태그','열','유형','시작','픽업예정','상태','초과','원가','할인','최종','결제','픽업','메모',''].map(h => (
-                  <th key={h} className="px-3 py-3 text-center text-bee-yellow font-bold whitespace-nowrap text-[11px]">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={15} className="text-center py-16 text-gray-400 font-bold">{t('empty')}</td></tr>
-              ) : filtered.map(e => {
-                const ov = !e.done && e.pickupTs < now;
-                const rowBg = e.done ? 'bg-green-50/60' : ov ? 'bg-red-50/60' : '';
-                const types = [e.smallQty>0?`${t('ts')} ${e.smallQty}`:'', e.carrierQty>0?`${t('tc')} ${e.carrierQty}`:''].filter(Boolean);
-                const fn = e.originalPrice - (e.discount||0);
-                const discOpts: number[] = [0];
-                for (let v = cfg.discount.unit; v < e.originalPrice; v += cfg.discount.unit) discOpts.push(v);
-                if (cfg.discount.allow_free && e.originalPrice > 0) discOpts.push(e.originalPrice);
-                return (
-                  <tr key={e.id} className={`${rowBg} hover:bg-gray-50 border-b border-gray-100 transition-colors`}>
-                    <td className="px-3 py-2.5 text-center whitespace-nowrap text-gray-500">{e.date}</td>
-                    <td className="px-3 py-2.5 text-center font-black text-bee-black">#{e.tag}</td>
-                    <td className="px-3 py-2.5 text-center">
-                      {e.rowLabel ? (
-                        <span className="inline-flex w-7 h-7 rounded-lg items-center justify-center font-black text-white text-[10px]"
-                          style={{ background: ROW_COLORS[e.rowLabel]??'#999' }}>{e.rowLabel}</span>
-                      ) : '—'}
-                    </td>
-                    <td className="px-3 py-2.5 text-center text-gray-600">{types.join(' ')}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-500">{e.startTime}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-500">{e.pickupTime}</td>
-                    <td className="px-3 py-2.5 text-center">
+
+        {filtered.length === 0 ? (
+          <div className="py-16 text-center text-gray-400 font-bold text-sm">{t('empty')}</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+            {filtered.map(e => {
+              const ov = !e.done && e.pickupTs < now;
+              const types = [e.smallQty>0?`소형 ${e.smallQty}`:'', e.carrierQty>0?`캐리어 ${e.carrierQty}`:''].filter(Boolean).join(' + ');
+              const fn = e.originalPrice - (e.discount||0);
+              const discOpts: number[] = [0];
+              for (let v = cfg.discount.unit; v < e.originalPrice; v += cfg.discount.unit) discOpts.push(v);
+              if (cfg.discount.allow_free && e.originalPrice > 0) discOpts.push(e.originalPrice);
+              return (
+                <div key={e.id} className={`rounded-2xl overflow-hidden border ${
+                  e.done ? 'bg-green-50 border-green-100' : ov ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'
+                } shadow-sm`}>
+                  {/* 카드 헤더 */}
+                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-inherit">
+                    {e.rowLabel ? (
+                      <span className="w-6 h-6 rounded-md flex items-center justify-center font-black text-white text-xs flex-shrink-0"
+                        style={{ background: ROW_COLORS[e.rowLabel]??'#999' }}>{e.rowLabel}</span>
+                    ) : <span className="w-6 h-6 rounded-md bg-gray-200 flex-shrink-0" />}
+                    <span className="font-black text-bee-black text-sm">#{e.tag}</span>
+                    <span className="text-[10px] text-gray-400 ml-auto">{e.date}</span>
+                  </div>
+                  {/* 카드 바디 */}
+                  <div className="px-3 py-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">{types || '—'}</span>
                       {e.done
-                        ? <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold">{t('f_done')}</span>
+                        ? <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">{t('f_done')}</span>
                         : ov
-                        ? <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-bold">{t('f_over')}</span>
-                        : <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold">{t('f_wait')}</span>}
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      {ov ? <span className="text-red-600 font-bold whitespace-nowrap">{overStr(e)}</span> : '—'}
-                    </td>
-                    <td className="px-3 py-2.5 text-center font-bold whitespace-nowrap">{e.originalPrice.toLocaleString()}원</td>
-                    <td className="px-3 py-2.5 text-center">
-                      <select value={e.discount} onChange={ev => handleUf(e.id,'discount',+ev.target.value)}
-                        className="border border-gray-200 rounded-lg px-1.5 py-1 text-xs focus:border-bee-yellow outline-none">
-                        {discOpts.map(v => <option key={v} value={v}>{v===0?t('no_disc'):v===e.originalPrice?t('free'):`${v.toLocaleString()}원`}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-3 py-2.5 text-center font-black whitespace-nowrap">{fn.toLocaleString()}원</td>
-                    <td className="px-3 py-2.5 text-center">
-                      <select value={e.payment} onChange={ev => handleUf(e.id,'payment',ev.target.value)}
-                        className="border border-gray-200 rounded-lg px-1.5 py-1 text-xs focus:border-bee-yellow outline-none">
-                        <option value="미수금">{t('up')}</option>
-                        <option value="완료">{t('pd')}</option>
-                      </select>
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      <input type="checkbox" checked={e.done} onChange={ev => handleUf(e.id,'done',ev.target.checked)}
-                        className="w-4 h-4 accent-bee-yellow cursor-pointer" />
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      <input value={e.memo} onChange={ev => handleUf(e.id,'memo',ev.target.value)}
-                        className="w-20 border border-gray-200 rounded-lg px-1.5 py-1 text-xs focus:border-bee-yellow outline-none" placeholder="..." />
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      <button onClick={() => { if (confirm(t('del'))) { supabaseMutate(`${KIOSK_TABLES.log}?id=eq.${e.id}`, 'DELETE').then(()=>onUpdate()); } }}
-                        className="w-7 h-7 rounded-full bg-gray-100 text-gray-300 hover:bg-red-50 hover:text-red-400 flex items-center justify-center transition-colors">
-                        <i className="fa-solid fa-xmark text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                        ? <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">{overStr(e)}</span>
+                        : <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">{t('f_wait')}</span>
+                      }
+                    </div>
+                    <p className="text-[11px] text-gray-500">{e.startTime} → {e.pickupTime}</p>
+                    <div className="flex items-center gap-1 text-xs">
+                      {e.discount > 0 && <span className="text-gray-300 line-through">{e.originalPrice.toLocaleString()}</span>}
+                      {e.discount > 0 && <span className="text-red-400 text-[10px]">-{e.discount.toLocaleString()}</span>}
+                      <span className="font-black text-bee-black">₩{fn.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  {/* 카드 푸터 컨트롤 */}
+                  <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border-t border-gray-100">
+                    <select value={e.payment} onChange={ev => handleUf(e.id,'payment',ev.target.value)}
+                      className="flex-1 border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] focus:border-bee-yellow outline-none bg-white">
+                      <option value="미수금">{t('up')}</option>
+                      <option value="완료">{t('pd')}</option>
+                    </select>
+                    <select value={e.discount} onChange={ev => handleUf(e.id,'discount',+ev.target.value)}
+                      className="border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] focus:border-bee-yellow outline-none bg-white w-14">
+                      {discOpts.map(v => <option key={v} value={v}>{v===0?'할인없음':v===e.originalPrice?'무료':`-${v}`}</option>)}
+                    </select>
+                    <input type="checkbox" checked={e.done} onChange={ev => handleUf(e.id,'done',ev.target.checked)}
+                      className="w-4 h-4 accent-bee-yellow cursor-pointer" title="반납완료" />
+                    <input value={e.memo} onChange={ev => handleUf(e.id,'memo',ev.target.value)}
+                      className="w-14 border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] focus:border-bee-yellow outline-none bg-white" placeholder="메모" />
+                    <button onClick={() => { if (confirm(t('del'))) { supabaseMutate(`${KIOSK_TABLES.log}?id=eq.${e.id}`, 'DELETE').then(()=>onUpdate()); } }}
+                      className="w-6 h-6 rounded-full bg-white text-gray-300 hover:bg-red-50 hover:text-red-400 flex items-center justify-center transition-colors border border-gray-200 flex-shrink-0">
+                      <i className="fa-solid fa-xmark text-[9px]"></i>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

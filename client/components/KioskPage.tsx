@@ -6,6 +6,7 @@
  * - Beeliber Onyx & Gold 디자인 시스템
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Logo from './Logo';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   KioskBranch,
@@ -52,7 +53,7 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_btn: '공항 배송 예약하기', qr_scan: '분실 방지 QR 스캔',
     qr_sub: 'bee-liber.com에서 조회', reset: '처음으로',
     from_4h: '소형 가방은 4시간부터 보관 가능합니다',
-    select_bags: '짐을 입력해주세요', select_dur: '보관 시간을 선택해주세요',
+    select_bags: '짐을 입력해주세요', select_dur: '보관 시간을 선택해주세요', touch_add: '터치로 추가',
   },
   en: {
     small: 'Small Bag', small_desc: 'Tote · Backpack · Small Carry-on',
@@ -76,7 +77,7 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_btn: 'Book Airport Delivery', qr_scan: 'Scan QR to track luggage',
     qr_sub: 'Track at bee-liber.com', reset: 'Start Over',
     from_4h: 'Minimum 4 hours for small bags',
-    select_bags: 'Please enter bag count', select_dur: 'Please select duration',
+    select_bags: 'Please enter bag count', select_dur: 'Please select duration', touch_add: 'Tap to add',
   },
   zh: {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型拉杆箱',
@@ -100,7 +101,7 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_btn: '预约机场配送', qr_scan: '请扫描QR码',
     qr_sub: '在 bee-liber.com 查询', reset: '重新开始',
     from_4h: '小行李最少存放4小时',
-    select_bags: '请输入行李数量', select_dur: '请选择存放时间',
+    select_bags: '请输入行李数量', select_dur: '请选择存放时间', touch_add: '点击添加',
   },
   'zh-TW': {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型行李箱',
@@ -124,7 +125,7 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_btn: '預約機場配送', qr_scan: '請掃描QR碼',
     qr_sub: '在 bee-liber.com 查詢', reset: '重新開始',
     from_4h: '小行李最少寄存4小時',
-    select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間',
+    select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間', touch_add: '點擊新增',
   },
   'zh-HK': {
     small: '細型行李', small_desc: '手袋 · 背囊 · 小型行李箱',
@@ -148,7 +149,7 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_btn: '預約機場送遞', qr_scan: '請掃描QR碼',
     qr_sub: '喺 bee-liber.com 查詢', reset: '重新開始',
     from_4h: '細行李最少寄存4小時',
-    select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間',
+    select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間', touch_add: '點擊新增',
   },
   ja: {
     small: '小型バッグ', small_desc: 'トートバッグ · リュック · 小型スーツケース',
@@ -172,7 +173,7 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_btn: '空港配送を予約', qr_scan: '紛失防止QRスキャン',
     qr_sub: 'bee-liber.com で確認', reset: '最初から',
     from_4h: '小型バッグは4時間以上からお預かりします',
-    select_bags: '荷物の数を入力してください', select_dur: '預け時間を選択してください',
+    select_bags: '荷物の数を入力してください', select_dur: '預け時間を選択してください', touch_add: 'タップして追加',
   },
 };
 
@@ -618,6 +619,9 @@ const KioskPage: React.FC = () => {
   const [payment, setPayment] = useState<PaymentMethod>('현금');
   const [discount, setDiscount] = useState(0);
 
+  // ── 언어 드롭다운 ────────────────────────────────────────────────────
+  const [isLangOpen, setIsLangOpen] = useState(false);
+
   // ── 주문 번호 카운터 (1~100 순환) ──────────────────────────────────────
   const [nextTag, setNextTag] = useState(1);
   const [editingTag, setEditingTag] = useState(false);
@@ -854,19 +858,50 @@ const KioskPage: React.FC = () => {
   const startT = timeStr();
 
   return (
-    <div className="h-screen bg-[#f9f9f9] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#f5f5f7] flex flex-col overflow-hidden">
       {showAdmin && <AdminPanel {...adminPanelProps} />}
 
-      {/* 헤더 — 글래스 */}
-      <header className="bg-black/30 backdrop-blur-xl border-b border-white/10 px-8 py-3 flex items-center justify-between flex-shrink-0">
-        <button onPointerDown={handleLogoPointerDown} onPointerUp={handleLogoPointerUp} onPointerLeave={handleLogoPointerUp} className="select-none">
-          <p className="text-[#F5C842] font-black text-lg tracking-[0.18em]">BEELIBER</p>
-          <p className="text-white/40 text-xs">{lang === 'ko' ? branch?.branch_name : branch?.branch_name_en ?? branch?.branch_name}</p>
+      {/* ✦ 배경 파티클 — 여성 고객 감성 골드 스파클 */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden>
+        {([
+          { ch: '✦', l: '7%',  delay: '0s',    dur: '7.5s',  size: 10, gold: true  },
+          { ch: '✧', l: '19%', delay: '2.4s',  dur: '9.2s',  size: 7,  gold: false },
+          { ch: '✦', l: '31%', delay: '1.1s',  dur: '6.8s',  size: 9,  gold: true  },
+          { ch: '✿', l: '44%', delay: '3.6s',  dur: '8.4s',  size: 8,  gold: false },
+          { ch: '✧', l: '56%', delay: '0.6s',  dur: '7.9s',  size: 7,  gold: true  },
+          { ch: '✦', l: '67%', delay: '4.3s',  dur: '6.3s',  size: 11, gold: false },
+          { ch: '✿', l: '79%', delay: '1.8s',  dur: '10s',   size: 8,  gold: true  },
+          { ch: '✧', l: '89%', delay: '2.9s',  dur: '7.1s',  size: 9,  gold: false },
+          { ch: '✦', l: '24%', delay: '5.2s',  dur: '8.8s',  size: 7,  gold: true  },
+          { ch: '✿', l: '63%', delay: '3.1s',  dur: '9.6s',  size: 8,  gold: false },
+        ] as { ch: string; l: string; delay: string; dur: string; size: number; gold: boolean }[]).map((p, i) => (
+          <span key={i} style={{
+            position: 'absolute',
+            bottom: '-2%',
+            left: p.l,
+            fontSize: p.size,
+            color: p.gold ? 'rgba(245,200,66,0.28)' : 'rgba(180,140,255,0.18)',
+            animation: `kiosk-float ${p.dur} ${p.delay} ease-in-out infinite`,
+            userSelect: 'none',
+          }}>{p.ch}</span>
+        ))}
+      </div>
+
+      {/* 헤더 — 랜딩 Navbar와 동일한 글래스 pill */}
+      <header className="relative z-20 bg-black/60 backdrop-blur-2xl border-b border-white/5 px-4 py-2 flex items-center justify-between flex-shrink-0">
+        {/* 로고 */}
+        <button
+          onPointerDown={handleLogoPointerDown}
+          onPointerUp={handleLogoPointerUp}
+          onPointerLeave={handleLogoPointerUp}
+          className="select-none scale-90 origin-left"
+        >
+          <Logo size="sm" />
         </button>
 
         {/* 주문 번호 카운터 */}
         <div className="flex flex-col items-center select-none">
-          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-0.5">NEXT ORDER</p>
+          <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">NEXT ORDER</p>
           {editingTag ? (
             <div className="flex items-center gap-2">
               <input
@@ -909,323 +944,344 @@ const KioskPage: React.FC = () => {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* 우측: 오프라인 경고 + 언어 드롭다운 + 장부 햄버거 */}
+        <div className="flex items-center gap-2">
           {!isOnline && (
             <div className="flex items-center gap-1.5 bg-orange-500/20 rounded-full px-3 py-1">
               <i className="fa-solid fa-wifi-slash text-orange-400 text-xs" />
               <span className="text-orange-400 text-xs font-bold">{t.offline_warn}</span>
             </div>
           )}
-          <div className="flex gap-1">
-            {([
-              ['ko',    'KO'],
-              ['en',    'EN'],
-              ['zh',    'ZH'],
-              ['zh-TW', '繁'],
-              ['zh-HK', '粵'],
-              ['ja',    'JA'],
-            ] as [Lang, string][]).map(([l, label]) => (
-              <button key={l} onClick={() => setLang(l)}
-                className={`px-2.5 py-1.5 rounded-full text-xs font-black transition-all ${lang === l ? 'bg-[#F5C842] text-[#111111]' : 'text-white/40 ring-1 ring-white/20 hover:text-white/70'}`}>
-                {label}
-              </button>
-            ))}
+
+          {/* 언어 드롭다운 — Navbar와 동일한 구조 */}
+          <div className="relative">
+            <button
+              onClick={() => setIsLangOpen(v => !v)}
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 min-h-[44px] rounded-full transition-all border border-white/5"
+            >
+              <img
+                src={`https://flagcdn.com/w40/${({ ko:'kr', en:'us', zh:'cn', 'zh-TW':'tw', 'zh-HK':'hk', ja:'jp' } as Record<Lang,string>)[lang]}.png`}
+                alt={lang}
+                className="w-3.5 h-auto rounded-sm"
+              />
+              <span className="text-[10px] font-black text-white/80 tracking-widest uppercase">
+                {({ ko:'KR', en:'EN', zh:'CN', 'zh-TW':'TW', 'zh-HK':'HK', ja:'JP' } as Record<Lang,string>)[lang]}
+              </span>
+            </button>
+
+            {isLangOpen && (
+              <div className="absolute top-full mt-2 right-0 bg-black/90 backdrop-blur-3xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden py-2 z-50" style={{ width: '172px' }}>
+                {/* 2열 그리드 */}
+                <div className="grid grid-cols-2 gap-px px-2">
+                  {([
+                    ['ko',    'kr', 'KR', '한국어'],
+                    ['en',    'us', 'EN', 'English'],
+                    ['zh',    'cn', 'CN', '简体中文'],
+                    ['zh-TW', 'tw', 'TW', '繁體中文'],
+                    ['zh-HK', 'hk', 'HK', '粵語'],
+                    ['ja',    'jp', 'JP', '日本語'],
+                  ] as [Lang, string, string, string][]).map(([code, flag, label, name]) => (
+                    <button
+                      key={code}
+                      onClick={() => { setLang(code); setIsLangOpen(false); }}
+                      className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl hover:bg-white/10 transition-all ${lang === code ? 'bg-white/10 text-[#F5C842]' : 'text-white/60'}`}
+                    >
+                      <img src={`https://flagcdn.com/w40/${flag}.png`} alt={label} className="w-5 h-auto rounded-sm opacity-90" />
+                      <span className="text-[10px] font-black tracking-widest">{label}</span>
+                      <span className="text-[8px] font-medium text-white/40 leading-none">{name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* 장부 — Navbar 햄버거와 동일 */}
           <button
             onClick={() => navigate(`/kiosk/${branchSlug}/log`)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white/60 hover:bg-[#F5C842] hover:text-[#111111] transition-all text-xs font-black"
+            className="w-11 h-11 bg-[#F5C842] flex flex-col items-center justify-center gap-[3px] rounded-xl hover:bg-white hover:scale-105 active:scale-95 transition-all shadow-xl"
             title="보관 장부"
           >
-            <i className="fa-solid fa-book text-xs" />
-            <span>장부</span>
+            <span className="w-4 h-[1.5px] bg-black rounded-full" />
+            <span className="w-4 h-[1.5px] bg-black rounded-full" />
+            <span className="w-4 h-[1.5px] bg-black rounded-full" />
           </button>
         </div>
       </header>
 
-      {/* 오늘 접수 현황 — 상단 미니 패널 */}
+      {/* 오늘 접수 현황 */}
       {todayLog.length > 0 && (
-        <div className="bg-[#111111] border-b border-white/10 px-4 py-2 flex items-center gap-3 overflow-x-auto flex-shrink-0">
+        <div className="bg-white border-b border-black/[0.06] px-4 py-1.5 flex items-center gap-3 overflow-x-auto flex-shrink-0">
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[#F5C842] font-black text-xs tracking-widest uppercase">TODAY</span>
-            <span className="bg-[#F5C842] text-[#111111] font-black text-xs px-2 py-0.5 rounded-full">
+            <span className="text-[#111111]/40 font-black text-[10px] tracking-[0.2em] uppercase">TODAY</span>
+            <span className="bg-[#F5C842] text-[#111111] font-black text-[10px] px-2 py-0.5 rounded-full">
               {todayLog.filter(e => !e.done).length}건
             </span>
           </div>
-          <div className="w-px h-4 bg-white/20 flex-shrink-0" />
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="w-px h-3 bg-black/10 flex-shrink-0" />
+          <div className="flex gap-1.5 overflow-x-auto">
             {todayLog.slice().reverse().map((e) => (
               <div key={e.id ?? e.tag}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
-                  e.done ? 'bg-white/10 text-white/30' : 'bg-[#F5C842]/15 text-[#F5C842]'
+                className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                  e.done ? 'bg-black/[0.04] text-black/25' : 'bg-[#F5C842]/15 text-[#111111]'
                 }`}>
                 <span className="font-black">#{e.tag}</span>
-                <span className="text-white/40">{e.row_label}</span>
+                <span className="opacity-50">{e.row_label}</span>
                 <span>{e.duration}h</span>
-                {e.done && <span className="text-white/30">✓</span>}
+                {e.done && <span className="opacity-40">✓</span>}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* 세로 중앙 정렬 메인 */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-lg mx-auto w-full px-5 py-5 flex flex-col gap-5">
+      {/* ── 메인: 모바일 스크롤 세로 | PC(lg+) 좌우 2패널 ───────────── */}
+      <main className="flex-1 overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row">
 
-          {/* ── ① 짐 수량 ──────────────────────────────────────────────── */}
-          <section className="flex flex-col gap-3">
-            <ColHeader num={1} label={t.col1} />
+        {/* ─── 패널 A: ① 짐 + ② 시간 ─────────────────────────────── */}
+        <div className="flex flex-col gap-3 px-4 pt-3 pb-2
+                        lg:flex-1 lg:overflow-y-auto lg:pt-6 lg:pb-6 lg:pl-6 lg:pr-4 lg:gap-5">
 
-            {/* 가로 카드형 품목 선택 */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* 소형 가방 카드 */}
+          {/* ① 짐 수량 */}
+          <div className="flex flex-col gap-2 lg:flex-shrink-0 lg:gap-3">
+            {/* 섹션 헤더 — 노란 뱃지 */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-[#F5C842] flex items-center justify-center font-black text-xs lg:text-sm text-[#111111]">1</span>
+              <span className="font-black text-[#111111] text-sm lg:text-base">{t.col1}</span>
+            </div>
+
+            {/* 가방 카드 그리드 */}
+            <div className="grid grid-cols-2 gap-2 lg:gap-3">
+
+              {/* 소형 가방 — portrait 카드 */}
               {(() => {
                 const active = smallQty > 0;
                 return (
                   <div
                     onClick={() => setSmallQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
-                    className={`relative rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 flex flex-col items-center gap-2 cursor-pointer select-none transition-all active:scale-[0.97] ${
-                      active ? 'bg-[#F5C842] ring-2 ring-[#F5C842]' : 'bg-white'
-                    }`}
+                    className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-all active:scale-[0.97]
+                      flex flex-col items-center justify-between p-4 pt-5 min-h-[155px]
+                      lg:h-[200px] lg:min-h-0 lg:justify-center lg:gap-2 lg:p-4 lg:pt-5
+                      ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
                   >
-                    {/* 수량 뱃지 */}
                     {active && (
-                      <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#111111] flex items-center justify-center">
-                        <span className="text-[#F5C842] font-black text-xs">{smallQty}</span>
+                      <div className="absolute top-2 right-2 w-4 h-4 lg:w-5 lg:h-5 rounded-full bg-[#111111] flex items-center justify-center">
+                        <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px]">{smallQty}</span>
                       </div>
                     )}
-                    <img src="/images/bags/hand-bag-photo.png" alt={t.small} className="w-16 h-16 object-contain drop-shadow-sm" />
+                    <img src="/images/bags/hand-bag-photo.png" alt={t.small}
+                      className="w-10 h-10 lg:w-14 lg:h-14 object-contain flex-shrink-0" />
                     <div className="text-center">
-                      <p className={`font-black text-sm leading-tight ${active ? 'text-[#111111]' : 'text-[#111111]'}`}>{t.small}</p>
-                      <p className={`text-[10px] mt-0.5 ${active ? 'text-[#111111]/60' : 'text-gray-400'}`}>{t.small_desc}</p>
+                      <p className="font-black text-sm text-[#111111] leading-tight">{t.small}</p>
+                      <p className="text-[10px] text-[#111111]/50 mt-1 leading-tight">{t.small_desc}</p>
                     </div>
-                    {/* 카운터 조작 */}
-                    {active && (
-                      <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => setSmallQty((v) => Math.max(0, v - 1))}
-                          className="w-8 h-8 rounded-full bg-[#111111]/15 flex items-center justify-center text-base font-black text-[#111111] active:scale-95">−</button>
-                        <span className="text-lg font-black text-[#111111] w-6 text-center tabular-nums">{smallQty}</span>
-                        <button onClick={() => setSmallQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
-                          className="w-8 h-8 rounded-full bg-[#111111]/20 flex items-center justify-center text-base font-black text-[#111111] active:scale-95">+</button>
+                    {!active ? (
+                      <div className="w-full py-1.5 bg-black/[0.06] rounded-full text-[11px] font-bold text-[#111111]/50 text-center">
+                        {t.touch_add}
                       </div>
-                    )}
-                    {!active && (
-                      <div className="mt-1 px-4 py-1 rounded-full bg-[#f5f5f5] text-gray-400 text-xs font-bold">터치로 추가</div>
+                    ) : (
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => setSmallQty((v) => Math.max(0, v - 1))}
+                          className="w-8 h-8 rounded-full bg-[#111111]/15 flex items-center justify-center font-black text-[#111111] active:scale-95">−</button>
+                        <span className="font-black text-[#111111] text-lg tabular-nums w-6 text-center">{smallQty}</span>
+                        <button onClick={() => setSmallQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
+                          className="w-8 h-8 rounded-full bg-[#111111]/20 flex items-center justify-center font-black text-[#111111] active:scale-95">+</button>
+                      </div>
                     )}
                   </div>
                 );
               })()}
 
-              {/* 대형 캐리어 카드 */}
+              {/* 대형 캐리어 — portrait 카드 */}
               {(() => {
                 const active = carrierQty > 0;
                 return (
                   <div
                     onClick={() => setCarrierQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
-                    className={`relative rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-4 flex flex-col items-center gap-2 cursor-pointer select-none transition-all active:scale-[0.97] ${
-                      active ? 'bg-[#111111] ring-2 ring-[#111111]' : 'bg-white'
-                    }`}
+                    className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-all active:scale-[0.97]
+                      flex flex-col items-center justify-between p-4 pt-5 min-h-[155px]
+                      lg:h-[200px] lg:min-h-0 lg:justify-center lg:gap-2 lg:p-4 lg:pt-5
+                      ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
                   >
-                    {/* 수량 뱃지 */}
                     {active && (
-                      <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#F5C842] flex items-center justify-center">
-                        <span className="text-[#111111] font-black text-xs">{carrierQty}</span>
+                      <div className="absolute top-2 right-2 w-4 h-4 lg:w-5 lg:h-5 rounded-full bg-[#111111] flex items-center justify-center">
+                        <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px]">{carrierQty}</span>
                       </div>
                     )}
-                    <img src="/images/bags/carrier-photo.png" alt={t.carrier} className="w-16 h-16 object-contain drop-shadow-sm" />
+                    <img src="/images/bags/carrier-photo.png" alt={t.carrier}
+                      className="w-10 h-10 lg:w-14 lg:h-14 object-contain flex-shrink-0" />
                     <div className="text-center">
-                      <p className={`font-black text-sm leading-tight ${active ? 'text-white' : 'text-[#111111]'}`}>{t.carrier}</p>
-                      <p className={`text-[10px] mt-0.5 ${active ? 'text-white/50' : 'text-gray-400'}`}>{t.carrier_desc}</p>
+                      <p className="font-black text-sm text-[#111111] leading-tight">{t.carrier}</p>
+                      <p className="text-[10px] text-[#111111]/50 mt-1 leading-tight">{t.carrier_desc}</p>
                     </div>
-                    {/* 카운터 조작 */}
-                    {active && (
-                      <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => setCarrierQty((v) => Math.max(0, v - 1))}
-                          className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-base font-black text-white active:scale-95">−</button>
-                        <span className="text-lg font-black text-white w-6 text-center tabular-nums">{carrierQty}</span>
-                        <button onClick={() => setCarrierQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
-                          className="w-8 h-8 rounded-full bg-[#F5C842]/30 flex items-center justify-center text-base font-black text-white active:scale-95">+</button>
+                    {!active ? (
+                      <div className="w-full py-1.5 bg-black/[0.06] rounded-full text-[11px] font-bold text-[#111111]/50 text-center">
+                        {t.touch_add}
                       </div>
-                    )}
-                    {!active && (
-                      <div className="mt-1 px-4 py-1 rounded-full bg-[#f5f5f5] text-gray-400 text-xs font-bold">터치로 추가</div>
+                    ) : (
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => setCarrierQty((v) => Math.max(0, v - 1))}
+                          className="w-8 h-8 rounded-full bg-[#111111]/15 flex items-center justify-center font-black text-[#111111] active:scale-95">−</button>
+                        <span className="font-black text-[#111111] text-lg tabular-nums w-6 text-center">{carrierQty}</span>
+                        <button onClick={() => setCarrierQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
+                          className="w-8 h-8 rounded-full bg-[#111111]/20 flex items-center justify-center font-black text-[#111111] active:scale-95">+</button>
+                      </div>
                     )}
                   </div>
                 );
               })()}
             </div>
 
-            {/* 안내사항 */}
-            {cfg.notices[lang]?.length > 0 && (
-              <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">{t.notice_title}</p>
-                <ul className="space-y-1.5">
-                  {cfg.notices[lang].map((n, i) => (
-                    <li key={i} className="text-xs text-gray-600 flex items-start gap-2">
-                      <span className="text-[#F5C842] flex-shrink-0">•</span>{n}
-                    </li>
-                  ))}
-                </ul>
+            {/* 안내사항 — 별도 카드 */}
+            {(cfg.notices[lang]?.length > 0 || (smallQty > 0 && carrierQty === 0 && duration > 0 && duration < 4)) && (
+              <div className="bg-white rounded-2xl px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex-shrink-0">
+                <p className="font-bold text-xs text-[#111111] mb-2">{t.notice_title}</p>
+                {cfg.notices[lang]?.map((n, i) => (
+                  <p key={i} className="text-[11px] text-gray-500 flex items-start gap-1.5 mt-1">
+                    <span className="text-[#F5C842] flex-shrink-0 mt-px">•</span>
+                    <span>{n}</span>
+                  </p>
+                ))}
+                {smallQty > 0 && carrierQty === 0 && duration > 0 && duration < 4 && (
+                  <p className="text-orange-400 text-[11px] font-bold flex items-start gap-1.5 mt-1">
+                    <span className="flex-shrink-0 mt-px">•</span>
+                    <span>{t.from_4h}</span>
+                  </p>
+                )}
               </div>
             )}
+          </div>
 
-            {/* 소형 4h 제한 알림 */}
-            {smallQty > 0 && carrierQty === 0 && duration > 0 && duration < 4 && (
-              <div className="bg-orange-50 rounded-[16px] p-3">
-                <p className="text-orange-500 text-xs font-bold">{t.from_4h}</p>
-              </div>
-            )}
-          </section>
-
-          {/* ── ② 보관 시간 ─────────────────────────────────────────────── */}
-          <section className="flex flex-col gap-3">
-            <ColHeader num={2} label={t.col2} />
-
-            <div className="grid grid-cols-3 gap-2.5">
-              {cfg.operations.duration_options.map((h) => {
+          {/* ② 보관 시간 */}
+          <div className="flex flex-col gap-2 flex-shrink-0 lg:gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-[#F5C842] flex items-center justify-center font-black text-xs lg:text-sm text-[#111111]">2</span>
+              <span className="font-black text-[#111111] text-sm lg:text-base">{t.col2}</span>
+            </div>
+            <div className="grid grid-cols-3 lg:grid-cols-6 gap-2.5">
+              {cfg.operations.duration_options.map((h, idx) => {
                 const isDisabled = smallQty > 0 && carrierQty === 0 && h < 4;
                 const isSelected = duration === h;
                 const previewPrice = calcPrice(smallQty, carrierQty, h, cfg.prices);
-                // 시간대별 색상
-                const palette = h <= 2
-                  ? { idle: 'bg-sky-50 text-sky-600', sel: 'bg-sky-400 text-white', badge: 'bg-sky-100 text-sky-700', badgeSel: 'bg-white/20 text-white' }
-                  : h <= 4
-                  ? { idle: 'bg-teal-50 text-teal-600', sel: 'bg-teal-400 text-white', badge: 'bg-teal-100 text-teal-700', badgeSel: 'bg-white/20 text-white' }
-                  : h <= 5
-                  ? { idle: 'bg-amber-50 text-amber-600', sel: 'bg-[#F5C842] text-[#111111]', badge: 'bg-amber-100 text-amber-700', badgeSel: 'bg-[#111]/10 text-[#111]/70' }
-                  : h <= 6
-                  ? { idle: 'bg-orange-50 text-orange-500', sel: 'bg-orange-400 text-white', badge: 'bg-orange-100 text-orange-600', badgeSel: 'bg-white/20 text-white' }
-                  : h <= 7
-                  ? { idle: 'bg-rose-50 text-rose-500', sel: 'bg-rose-400 text-white', badge: 'bg-rose-100 text-rose-600', badgeSel: 'bg-white/20 text-white' }
-                  : { idle: 'bg-violet-50 text-violet-600', sel: 'bg-violet-400 text-white', badge: 'bg-violet-100 text-violet-700', badgeSel: 'bg-white/20 text-white' };
+                const PASTEL_BG   = ['bg-blue-50','bg-violet-50','bg-emerald-50','bg-rose-50','bg-amber-50','bg-sky-50'];
+                const PASTEL_TEXT = ['text-blue-500','text-violet-500','text-emerald-500','text-rose-500','text-amber-500','text-sky-500'];
+                const PASTEL_SUB  = ['text-blue-400','text-violet-400','text-emerald-400','text-rose-400','text-amber-400','text-sky-400'];
+                const pi = idx % 6;
                 return (
                   <button key={h} disabled={isDisabled} onClick={() => setDuration(h)}
-                    className={`rounded-[16px] font-black transition-all active:scale-[0.97] shadow-[0_2px_12px_rgba(0,0,0,0.06)] flex flex-col items-center justify-center gap-1 py-3 ${
-                      isDisabled ? 'bg-[#f0f0f0] text-gray-300 cursor-not-allowed'
-                      : isSelected ? palette.sel
-                      : palette.idle
+                    className={`rounded-xl lg:rounded-2xl font-black transition-all active:scale-[0.97]
+                      flex flex-col items-center justify-center gap-0 py-2 lg:py-4 ${
+                      isDisabled ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                      : isSelected ? 'bg-[#F5C842] shadow-[0_4px_12px_rgba(245,200,66,0.4)] text-[#111111]'
+                      : `${PASTEL_BG[pi]} shadow-[0_1px_4px_rgba(0,0,0,0.04)]`
                     }`}>
-                    <span className="text-xl font-black tabular-nums">{h}</span>
-                    <span className="text-[10px] font-bold opacity-70">{t.duration}</span>
+                    <div className="flex items-baseline gap-0.5">
+                      <span className={`text-xl lg:text-2xl font-black tabular-nums leading-none ${isSelected ? 'text-[#111111]' : PASTEL_TEXT[pi]}`}>{h}</span>
+                      <span className={`text-[9px] lg:text-[10px] font-bold ${isSelected ? 'text-[#111111]/60' : PASTEL_SUB[pi]}`}>{t.duration}</span>
+                    </div>
                     {!isDisabled && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        isSelected ? palette.badgeSel : palette.badge
-                      }`}>
-                        {previewPrice > 0 ? `${previewPrice.toLocaleString()}원` : '-'}
+                      <span className={`text-[8px] lg:text-[9px] font-bold tabular-nums mt-0.5 ${isSelected ? 'text-[#111111]/50' : PASTEL_SUB[pi]}`}>
+                        {previewPrice > 0 ? `${previewPrice.toLocaleString()}원` : '—'}
                       </span>
                     )}
                   </button>
                 );
               })}
             </div>
+          </div>
 
-            {/* 가격 미리보기 바 */}
-            {duration > 0 && (smallQty + carrierQty > 0) && (
-              <div className="bg-white rounded-[16px] px-5 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wide">{t.total}</p>
-                  <p className="text-[#111111] font-black text-xl">{originalPrice.toLocaleString()}원</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-gray-400 text-xs">{t.pickup}</p>
-                  <p className="text-[#111111] font-bold">{addHours(startT, duration)}</p>
-                </div>
+          {/* ③ 모바일 전용 — 접수 확인 */}
+          <div className="lg:hidden flex flex-col gap-2 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-[#111111] flex items-center justify-center font-black text-xs text-[#F5C842]">3</span>
+              <span className="font-black text-[#111111] text-sm">{t.col3}</span>
+            </div>
+            <div className="bg-white rounded-2xl px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-xs">
+                <div className="flex justify-between"><span className="text-gray-400">{t.small}</span><span className="font-bold text-[#111111]">{smallQty}{t.pcs}</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">{t.carrier}</span><span className="font-bold text-[#111111]">{carrierQty}{t.pcs}</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">{t.col2}</span><span className="font-bold text-[#111111]">{duration > 0 ? `${duration}${t.duration}` : '—'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">{t.pickup}</span><span className="font-bold text-[#111111]">{duration > 0 ? addHours(startT, duration) : '—'}</span></div>
               </div>
-            )}
-          </section>
-
-          {/* ── ③ 접수 확인 ─────────────────────────────────────────────── */}
-          <section className="flex flex-col gap-3">
-            <ColHeader num={3} label={t.col3} />
-
-            {/* 요약 카드 */}
-            <div className="bg-white rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
-              <div className="space-y-2.5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{t.small}</span>
-                  <span className="font-bold text-[#111111]">{smallQty}{t.pcs}</span>
+              <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-400 text-xs">{t.select_payment}</span>
+                  <span className="bg-[#111111] text-white text-xs font-black px-3 py-1 rounded-full">{t.payment_cash}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{t.carrier}</span>
-                  <span className="font-bold text-[#111111]">{carrierQty}{t.pcs}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{t.col2}</span>
-                  <span className="font-bold text-[#111111]">{duration > 0 ? `${duration}${t.duration}` : '—'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{t.start}</span>
-                  <span className="font-bold text-[#111111]">{startT}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{t.pickup}</span>
-                  <span className="font-bold text-[#111111]">{duration > 0 ? addHours(startT, duration) : '—'}</span>
-                </div>
-                <div className="pt-2.5 border-t border-[#f0f0f0] flex justify-between items-center">
-                  <span className="text-gray-400 font-bold">{t.total}</span>
-                  <span className="font-black text-[#111111] text-xl">{originalPrice.toLocaleString()}원</span>
-                </div>
+                <span className="font-black text-[#111111] text-base tabular-nums">{originalPrice.toLocaleString()}원</span>
               </div>
             </div>
-
-            {/* 결제 방법 — 현금 고정 */}
-            <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
-              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">{t.select_payment}</p>
-              <div className="w-full py-3 rounded-full bg-[#111111] text-white font-black text-sm text-center">
-                {t.payment_cash}
-              </div>
-            </div>
-
-            {/* 할인 */}
             {cfg.discount.unit > 0 && (
-              <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2.5">{t.discount}</p>
-                <div className="flex items-center gap-3">
+              <div className="bg-white rounded-2xl px-4 py-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
+                <span className="text-gray-400 text-xs font-bold">{t.discount}</span>
+                <div className="flex items-center gap-1.5">
                   <button onClick={() => setDiscount((d) => Math.max(0, d - cfg.discount.unit))}
-                    className="w-11 h-11 rounded-full bg-[#f0f0f0] text-[#111111] font-black text-xl active:scale-95">−</button>
-                  <span className="flex-1 text-center font-black text-[#111111] text-lg">{discount.toLocaleString()}원</span>
-                  <button onClick={() => {
-                    const max = cfg.discount.allow_free ? originalPrice : originalPrice - cfg.discount.unit;
-                    setDiscount((d) => Math.min(max, d + cfg.discount.unit));
-                  }} className="w-11 h-11 rounded-full bg-[#F5C842] text-[#111111] font-black text-xl active:scale-95">+</button>
+                    className="w-7 h-7 rounded-full bg-gray-100 text-[#111111] font-black text-sm active:scale-95">−</button>
+                  <span className="font-black text-[#111111] text-sm tabular-nums min-w-[44px] text-center">{discount.toLocaleString()}원</span>
+                  <button onClick={() => { const max = cfg.discount.allow_free ? originalPrice : originalPrice - cfg.discount.unit; setDiscount((d) => Math.min(max, d + cfg.discount.unit)); }}
+                    className="w-7 h-7 rounded-full bg-[#F5C842] text-[#111111] font-black text-sm active:scale-95">+</button>
+                  {discount > 0 && <span className="font-black text-[#111111] text-xs tabular-nums ml-1">→ {finalPrice.toLocaleString()}원</span>}
                 </div>
-                {discount > 0 && (
-                  <div className="flex justify-between mt-2.5 pt-2.5 border-t border-[#f0f0f0] text-sm">
-                    <span className="text-gray-400">{t.total}</span>
-                    <span className="font-black text-[#111111]">{finalPrice.toLocaleString()}원</span>
-                  </div>
-                )}
               </div>
             )}
-
-            {/* 접수하기 버튼 */}
-            <div className="pb-6">
-              {!canSubmit && (
-                <p className="text-center text-xs text-gray-400 mb-2">
-                  {smallQty + carrierQty === 0 ? t.select_bags : t.select_dur}
-                </p>
-              )}
-              <button disabled={!canSubmit || submitting} onClick={handleSubmit}
-                className={`w-full py-5 rounded-full font-black text-lg transition-all active:scale-[0.98] ${
-                  canSubmit && !submitting
-                    ? 'bg-[#F5C842] text-[#111111] shadow-[0_8px_32px_rgba(245,200,66,0.4)]'
-                    : 'bg-[#e0e0e0] text-gray-400 cursor-not-allowed'
-                }`}>
-                {submitting
-                  ? <span className="inline-flex items-center gap-2"><i className="fa-solid fa-spinner animate-spin" /> 처리 중...</span>
-                  : t.submit}
-              </button>
-            </div>
-          </section>
+            {!canSubmit && <p className="text-center text-[10px] text-gray-400">{smallQty + carrierQty === 0 ? t.select_bags : t.select_dur}</p>}
+            <button disabled={!canSubmit || submitting} onClick={handleSubmit}
+              className={`w-full py-3 rounded-full font-black text-sm transition-all active:scale-[0.98] ${canSubmit && !submitting ? 'bg-[#F5C842] text-[#111111] shadow-[0_6px_20px_rgba(245,200,66,0.45)] kiosk-cta-shimmer' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+              {submitting ? <span className="inline-flex items-center gap-2"><i className="fa-solid fa-spinner animate-spin" /> 처리 중...</span> : t.submit}
+            </button>
+          </div>
 
         </div>
+
+        {/* ─── 패널 B: ③ 접수 확인 (PC 전용 사이드바) ────────────── */}
+        <div className="hidden lg:flex flex-col justify-center gap-4 w-[360px] border-l border-black/[0.06] py-8 px-8">
+          <div className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-[#111111] flex items-center justify-center font-black text-sm text-[#F5C842]">3</span>
+            <span className="font-black text-[#111111] text-base">{t.col3}</span>
+          </div>
+          <div className="bg-white rounded-2xl px-6 py-5 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm mb-4">
+              <div className="flex justify-between"><span className="text-gray-400">{t.small}</span><span className="font-bold text-[#111111]">{smallQty}{t.pcs}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">{t.carrier}</span><span className="font-bold text-[#111111]">{carrierQty}{t.pcs}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">{t.col2}</span><span className="font-bold text-[#111111]">{duration > 0 ? `${duration}${t.duration}` : '—'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">{t.pickup}</span><span className="font-bold text-[#111111]">{duration > 0 ? addHours(startT, duration) : '—'}</span></div>
+            </div>
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400 text-xs">{t.select_payment}</span>
+                <span className="bg-[#111111] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full">{t.payment_cash}</span>
+              </div>
+              <span className="font-black text-[#111111] text-2xl tabular-nums">{originalPrice.toLocaleString()}원</span>
+            </div>
+          </div>
+          {cfg.discount.unit > 0 && (
+            <div className="bg-white rounded-2xl px-5 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
+              <span className="text-gray-400 text-xs font-bold">{t.discount}</span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setDiscount((d) => Math.max(0, d - cfg.discount.unit))}
+                  className="w-8 h-8 rounded-full bg-gray-100 text-[#111111] font-black text-sm active:scale-95">−</button>
+                <span className="font-black text-[#111111] text-sm tabular-nums min-w-[52px] text-center">{discount.toLocaleString()}원</span>
+                <button onClick={() => { const max = cfg.discount.allow_free ? originalPrice : originalPrice - cfg.discount.unit; setDiscount((d) => Math.min(max, d + cfg.discount.unit)); }}
+                  className="w-8 h-8 rounded-full bg-[#F5C842] text-[#111111] font-black text-sm active:scale-95">+</button>
+                {discount > 0 && <span className="font-black text-[#111111] text-sm tabular-nums ml-1">→ {finalPrice.toLocaleString()}원</span>}
+              </div>
+            </div>
+          )}
+          {!canSubmit && <p className="text-center text-xs text-gray-400">{smallQty + carrierQty === 0 ? t.select_bags : t.select_dur}</p>}
+          <button disabled={!canSubmit || submitting} onClick={handleSubmit}
+            className={`w-full py-4 rounded-full font-black text-base transition-all active:scale-[0.98] ${canSubmit && !submitting ? 'bg-[#F5C842] text-[#111111] shadow-[0_8px_28px_rgba(245,200,66,0.45)] kiosk-cta-shimmer' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+            {submitting ? <span className="inline-flex items-center gap-2"><i className="fa-solid fa-spinner animate-spin" /> 처리 중...</span> : t.submit}
+          </button>
+        </div>
+
       </main>
 
       {/* 온라인 인디케이터 */}
-      <div className="fixed bottom-4 right-5 flex items-center gap-1.5 pointer-events-none">
+      <div className="fixed bottom-3 right-4 flex items-center gap-1.5 pointer-events-none">
         <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-green-400' : 'bg-red-400 animate-pulse'}`} />
-        <span className="text-gray-400 text-[10px]">{isOnline ? 'online' : 'offline'}</span>
-        {syncStatus === 'syncing' && <span className="text-gray-400 text-[10px] ml-1">{t.syncing}</span>}
+        <span className="text-gray-400 text-[9px]">{isOnline ? 'online' : 'offline'}</span>
+        {syncStatus === 'syncing' && <span className="text-gray-400 text-[9px] ml-1">{t.syncing}</span>}
       </div>
     </div>
   );

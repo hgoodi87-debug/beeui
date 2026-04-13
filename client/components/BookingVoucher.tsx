@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BookingState, ServiceType, LocationOption } from '../types';
 import html2canvas from 'html2canvas';
+import { trackEvent } from '../services/trackingService';
 
 interface BookingVoucherProps {
     booking: BookingState;
@@ -530,6 +531,43 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                 <i className="fa-solid fa-circle-info mr-1 text-bee-yellow"></i>
                 {voucherText.quick_access_note || 'Please capture this screen or use the PDF save function for quick access at the service counter.'}
             </p>
+
+            {/* 소셜 플라이휠 CTA — Phase 1 */}
+            <div className="max-w-sm mx-auto w-full mb-6 rounded-[24px] bg-[#FF2442]/5 border border-[#FF2442]/15 p-5">
+                <div className="flex items-center gap-3 mb-3">
+                    {/* 小紅書 icon (SVG wordmark color) */}
+                    <div className="w-9 h-9 rounded-xl bg-[#FF2442] flex items-center justify-center shrink-0 shadow-sm">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 3.5c1.38 0 2.5 1.12 2.5 2.5S13.38 10.5 12 10.5 9.5 9.38 9.5 8 10.62 5.5 12 5.5zM7 17.5c0-2.76 2.24-5 5-5s5 2.24 5 5H7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-black text-bee-black uppercase tracking-wider">
+                            {voucherText.social_cta_title || 'Share Your Experience'}
+                        </p>
+                        <p className="text-[10px] text-bee-black/60 font-bold leading-snug mt-0.5">
+                            {voucherText.social_cta_desc || 'Post a review on Xiaohongshu and receive ₩2,000 credit.'}
+                        </p>
+                    </div>
+                </div>
+                <a
+                    href={`https://www.xiaohongshu.com/search_result?keyword=beeliber&source=web_explore_feed&utm_source=xhs_voucher&utm_medium=review_cta&utm_campaign=social_flywheel&utm_content=${encodeURIComponent(booking.reservationCode || booking.id || '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackEvent('social_cta_click', {
+                        platform: 'xiaohongshu',
+                        reservation_code: booking.reservationCode || booking.id,
+                        lang,
+                    })}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-[16px] bg-[#FF2442] text-white font-black text-[11px] uppercase tracking-widest transition-all hover:opacity-90 active:scale-95 shadow-sm"
+                >
+                    <i className="fa-solid fa-pen-to-square text-[10px]"></i>
+                    {voucherText.social_cta_btn || 'Write a Review on Xiaohongshu'}
+                </a>
+                <p className="text-[9px] text-bee-black/40 font-bold text-center mt-2 leading-relaxed px-1">
+                    {voucherText.social_cta_note || 'After posting, send your booking code and link to receive your credit.'}
+                </p>
+            </div>
 
             {/* Actions Area */}
             <div className="mt-8 space-y-4 max-w-sm mx-auto w-full">

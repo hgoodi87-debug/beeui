@@ -105,7 +105,9 @@ export const zh = {
         flat_rate_label: "统一费用 💰",
         most_popular_label: "人气服务",
         per_bag_label: "/ 件",
-        choose_service_btn: "选择服务"
+        choose_service_btn: "选择服务",
+        btn_storage: "立即寄存",
+        btn_delivery: "立即配送"
     },
     reviews_section: {
         headline: "Beeliber将证明，没有行李的旅程有多美。",

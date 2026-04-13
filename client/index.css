@@ -425,6 +425,39 @@ h1, h2, h3, h4, h5, h6 {
   animation: infinite-scroll 60s linear infinite;
 }
 
+/* ── 키오스크 파티클 플로팅 ── */
+@keyframes kiosk-float {
+  0%   { transform: translateY(0) rotate(0deg) scale(0.6); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateY(-48vh) rotate(280deg) scale(1); }
+  92%  { opacity: 0.35; }
+  100% { transform: translateY(-96vh) rotate(560deg) scale(0.7); opacity: 0; }
+}
+
+/* ── 키오스크 CTA shimmer sweep ── */
+@keyframes kiosk-shimmer-sweep {
+  0%   { left: -70%; }
+  100% { left: 130%; }
+}
+
+.kiosk-cta-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.kiosk-cta-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -70%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: kiosk-shimmer-sweep 2.2s ease-in-out infinite;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 .animate-marquee-slide:hover {
   animation-play-state: paused;
 }

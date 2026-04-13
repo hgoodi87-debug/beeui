@@ -494,13 +494,18 @@ export const ensureActiveAdminSession = async () => {
 };
 
 export const getActiveAdminRequestHeaders = async (): Promise<Record<string, string>> => {
+  const { anonKey } = getSupabaseConfig();
   const headers: Record<string, string> = {
     'X-Admin-Auth-Provider': getAdminAuthProvider(),
+    apikey: anonKey,
+    // Authorization에 anon key → Supabase 게이트웨이 통과
+    // (ES256 user token을 Authorization에 보내면 HS256 검증 실패로 401)
+    Authorization: `Bearer ${anonKey}`,
   };
 
   const supabaseAccessToken = (await ensureActiveAdminSession())?.accessToken || getActiveAdminAccessToken();
   if (supabaseAccessToken) {
-    headers.Authorization = `Bearer ${supabaseAccessToken}`;
+    // user token은 커스텀 헤더로 전달 → Edge Function이 내부에서 검증
     headers['X-Supabase-Access-Token'] = supabaseAccessToken;
   }
 

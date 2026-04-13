@@ -103,6 +103,19 @@
 
 ---
 
+## 2026-04-13 (후속)
+
+### 챗봇 메시지 렌더링 수정
+
+| 이슈 | 파일 | 커밋 | 핵심 |
+|---|---|---|---|
+| 채팅창 항상 비어있음 (Gemini 응답도 안 보임) | `client/components/ChatBot.tsx` | 3a903ba, 2b2798c | **원인 2개**: ① geminiService 히스토리 첫 turn이 'model'로 시작해 Gemini API 오류 → 제거 수정 ② Firestore 어댑터가 Supabase `chat_messages`로 라우팅, timestamp 컬럼 없어 오류 → 메시지 Firestore 미저장 → subscribeChatMessages 빈 배열 반환 → UI 빈 화면 |
+| 수정 1: storageService Supabase fire-and-forget | `client/services/storageService.ts` | 3a903ba | saveChatMessage/saveChatSession Supabase 호출 `.catch()` 비동기로 변경. Gemini 호출 블로킹 방지 |
+| 수정 2: ChatBot 로컬 state 즉시 업데이트 | `client/components/ChatBot.tsx` | 2b2798c | processMessage에서 `setMessages(prev => [...prev, msg])` 즉시 호출. 환영 메시지도 `setMessages([welcomeMsg])` 추가. subscribeChatMessages 콜백: `msgs.length > 0 ? msgs : prev` (빈 구독 결과로 로컬 덮어쓰기 방지) |
+| 검증 결과 | — | — | Gemini API 200 응답 확인. 환영 메시지·사용자 메시지·봇 응답 모두 렌더링 정상. 예약 안내(Hongdae 보관 방법·가격 안내)까지 완전 동작 |
+
+---
+
 ## 재조사 불필요 영역
 
 아래 동작은 정상 확인됨. 버그 의심 시 먼저 최신 코드 확인 후 조사:

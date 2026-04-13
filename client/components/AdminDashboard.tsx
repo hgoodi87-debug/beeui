@@ -585,11 +585,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
     return kst.toISOString().split('T')[0];
   });
-  // 완료 이력 날짜 범위 (기본: 최근 7일)
+  // 완료 이력 날짜 범위 (기본: 오늘만 — 날짜 필터로 과거 이력 조회)
   const [completedStartDate, setCompletedStartDate] = useState(() => {
-    const d = new Date();
-    const kst = new Date(d.getTime() + (9 * 60 * 60 * 1000));
-    kst.setDate(kst.getDate() - 7);
+    const now = new Date();
+    const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
     return kst.toISOString().split('T')[0];
   });
   const [completedEndDate, setCompletedEndDate] = useState(() => {

@@ -988,6 +988,16 @@ export const StorageService = {
       const finalPriceNum = isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice);
       const branchSettlementAmt = Math.round(finalPriceNum * effectiveCommRate);
 
+      // nametag_id를 INSERT 전에 미리 생성 (INSERT 후 PATCH 불필요 — SELECT 권한 없이도 동작)
+      let nametagIdForInsert: string | null = safeBooking.nametagId || null;
+      if (!nametagIdForInsert && safeBooking.branchId) {
+        try {
+          nametagIdForInsert = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
+        } catch (e) {
+          console.warn("[StorageService] nametag_id 사전 생성 실패 (무시):", e);
+        }
+      }
+
       const bookingData = {
         sns_channel: safeBooking.snsChannel || null,
         sns_id: safeBooking.snsId || null,
@@ -1055,33 +1065,18 @@ export const StorageService = {
         utm_campaign: safeBooking.utmCampaign || null,
         utm_content: safeBooking.utmContent || null,
         utm_term: safeBooking.utmTerm || null,
+        // nametag_id를 INSERT에 포함 — SELECT 권한 없이도 동작하도록 별도 PATCH 제거
+        nametag_id: nametagIdForInsert,
       };
 
-      const result = await supabaseMutate<Array<Record<string, unknown>>>(
+      // return=minimal: RETURNING 없이 INSERT → anon SELECT 권한 불필요 (HTTP 204)
+      await supabaseMutate<null>(
         'booking_details',
         'POST',
-        bookingData
+        bookingData,
+        undefined,
+        'return=minimal'
       );
-
-      const created = Array.isArray(result) && result[0] ? result[0] : null;
-      const bookingId = String(created?.id || '');
-
-      // nametag_id만 별도 PATCH (bags/bag_summary는 INSERT에 이미 포함)
-      if (bookingId) {
-        try {
-          let nametagId = safeBooking.nametagId || null;
-          if (!nametagId && safeBooking.branchId) {
-            nametagId = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
-          }
-          await supabaseMutate(
-            `booking_details?id=eq.${bookingId}`,
-            'PATCH',
-            { nametag_id: nametagId }
-          );
-        } catch (e) {
-          console.warn("[StorageService] bags/bag_summary/nametag_id PATCH 실패 (무시):", e);
-        }
-      }
 
       console.log("[StorageService] Booking saved to Supabase ✅");
       // DB INSERT 트리거(trigger_on_booking_created)가 이메일+채팅 알림을 처리합니다.
@@ -1089,7 +1084,7 @@ export const StorageService = {
 
       return {
         ...safeBooking,
-        id: bookingId || safeBooking.id,
+        id: safeBooking.id,
         reservationCode,
         status: '접수완료' as any,
       };

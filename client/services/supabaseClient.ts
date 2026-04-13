@@ -129,7 +129,8 @@ export async function supabaseMutate<T>(
   path: string,
   method: 'POST' | 'PATCH' | 'DELETE',
   body?: unknown,
-  accessToken?: string
+  accessToken?: string,
+  prefer: 'return=representation' | 'return=minimal' = 'return=representation'
 ): Promise<T | null> {
   const resolvedAccessToken = await resolveAccessToken(accessToken);
   const headers: Record<string, string> = {
@@ -138,7 +139,7 @@ export async function supabaseMutate<T>(
     'Content-Type': 'application/json',
     'Accept-Profile': SUPABASE_DATA_SCHEMA,
     'Content-Profile': SUPABASE_DATA_SCHEMA,
-    'Prefer': 'return=representation',
+    'Prefer': prefer,
   };
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {

@@ -632,6 +632,7 @@ const KioskPage: React.FC = () => {
   const [resultTag, setResultTag] = useState(0);
   const [resultRow, setResultRow] = useState('A');
   const [resultStartTime, setResultStartTime] = useState('');
+  const [resultLogId, setResultLogId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [todayLog, setTodayLog] = useState<KioskStorageLog[]>([]);
@@ -717,7 +718,8 @@ const KioskPage: React.FC = () => {
       done: false, memo: '', row_label: rowLabel,
       source: 'kiosk' as const, commission_rate: 0,
     };
-    await insertStorageLog(payload);
+    const saved = await insertStorageLog(payload);
+    setResultLogId(saved?.id ?? null);
     setResultTag(tag);
     setResultRow(rowLabel);
     setResultStartTime(startTime);
@@ -731,7 +733,7 @@ const KioskPage: React.FC = () => {
     setStep('form');
     setSmallQty(0); setCarrierQty(0); setDuration(0);
     setPayment('현금'); setDiscount(0);
-    setResultTag(0); setResultRow('A');
+    setResultTag(0); setResultRow('A'); setResultLogId(null);
   };
 
   const handleAdminLogin = () => {
@@ -745,7 +747,10 @@ const KioskPage: React.FC = () => {
   };
 
   const deliveryUrl = `${window.location.origin}/ko/booking?from=kiosk&pickup=${branch?.branch_id ?? ''}&bags=${smallQty}&carriers=${carrierQty}&kiosk_tag=${resultTag}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(deliveryUrl)}&size=220x220&bgcolor=ffffff&color=111111&margin=10`;
+  const voucherUrl = resultLogId
+    ? `${window.location.origin}/kiosk/voucher?id=${resultLogId}`
+    : deliveryUrl;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(voucherUrl)}&size=220x220&bgcolor=ffffff&color=111111&margin=10`;
 
   // ─── 로딩 ─────────────────────────────────────────────────────────────
   if (loading) return (

@@ -94,8 +94,15 @@ export const sendMessageToGemini = async (
       systemInstruction: getSystemInstruction(lang),
     });
 
+    // Gemini Chat API requires history to start with 'user' and alternate user/model.
+    // Strip any leading 'model' turns (e.g. welcome message) to avoid API errors.
+    let cleanHistory = history.filter(h => h.role === 'user' || h.role === 'model');
+    while (cleanHistory.length > 0 && cleanHistory[0].role === 'model') {
+      cleanHistory = cleanHistory.slice(1);
+    }
+
     const chat = model.startChat({
-      history: history.map(h => ({
+      history: cleanHistory.map(h => ({
         role: h.role,
         parts: [{ text: h.text }]
       }))

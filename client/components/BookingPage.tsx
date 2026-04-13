@@ -517,6 +517,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     }, [booking.bagSizes, booking.agreedToPremium, booking.insuranceLevel, pickupLoc, dropoffLoc, deliveryPrices, storageTiers, booking.serviceType, booking.pickupDate, booking.pickupTime, booking.dropoffDate, booking.deliveryTime, lang, appliedCoupon, parseKstDateTime]);
 
     const tBooking = t.booking || {};
+    const tVoucher = t.booking_voucher || {};
     const getCompactScheduleDate = React.useCallback((dateStr: string) => {
         if (!dateStr) {
             return lang.startsWith('ko') ? '날짜 선택' : 'Select date';
@@ -1093,10 +1094,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         <div className="w-10 h-10 bg-bee-yellow/10 rounded-2xl flex items-center justify-center">
                                                             <Info className="text-bee-yellow" size={20} />
                                                         </div>
-                                                        <h4 className="font-black italic uppercase tracking-wider text-gray-900">{tBooking.storage_notice_title || 'STORAGE NOTICE'}</h4>
+                                                        <h4 className="font-black italic uppercase tracking-wider text-gray-900">{tVoucher.storage_notice_title || tBooking.storage_notice_title || 'STORAGE NOTICE'}</h4>
                                                     </div>
                                                     <p className="text-xs sm:text-sm font-bold text-gray-500 leading-relaxed">
-                                                        {tBooking.storage_notice_desc || 'Pick the start and return schedule, and storage time will be calculated automatically.'}
+                                                        {tVoucher.storage_notice_desc || tBooking.storage_notice_desc || 'Pick the start and return schedule, and storage time will be calculated automatically.'}
                                                     </p>
                                                 </div>
                                                 <div className="rounded-[1.55rem] border border-gray-100 bg-gray-50/90 p-3.5 sm:p-4">

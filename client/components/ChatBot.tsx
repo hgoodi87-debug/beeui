@@ -85,8 +85,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
     useEffect(() => {
         if (!isOpen || !sessionId) return;
         const unsubscribe = StorageService.subscribeChatMessages(sessionId, (msgs) => {
-            setMessages(msgs);
-            // If we find existing messages, we consider info as submitted even if state was false
+            // 구독 결과가 있으면 사용, 없으면 로컬 state 유지
+            // (Firestore 저장 실패 시 빈 배열로 덮어쓰는 문제 방지)
+            setMessages(prev => msgs.length > 0 ? msgs : prev);
             if (msgs.length > 0 && !isInfoSubmitted) {
                 setIsInfoSubmitted(true);
             }
@@ -115,6 +116,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                 userName: userInfo.name,
                 userEmail: userInfo.email
             };
+            // 로컬 state 즉시 업데이트 (Firestore 저장 성공 여부와 무관하게 렌더링)
+            setMessages([welcomeMsg]);
             StorageService.saveChatMessage(welcomeMsg);
         }
     }, [t, messages.length, isInfoSubmitted]);
@@ -186,6 +189,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
             userEmail: userInfo.email
         };
 
+        // 로컬 state 즉시 업데이트 (Firestore 저장 성공 여부와 무관하게 즉시 렌더링)
+        setMessages(prev => [...prev, userMsg]);
+
         await StorageService.saveChatMessage(userMsg);
 
         const chatText = hiddenPrompt ? (t?.notify_template?.replace('{userText}', userText) || `[챗봇 알림] 고객이 '${userText}' 버튼을 클릭했습니다.`) : userText;
@@ -224,6 +230,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
                     userName: 'Bee AI',
                     userEmail: 'ai@beeliber.com'
                 };
+                // 로컬 state 즉시 업데이트
+                setMessages(prev => [...prev, aiMsg]);
                 await StorageService.saveChatMessage(aiMsg);
                 sendToGoogleChat('model', cleanText);
             }

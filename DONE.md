@@ -116,6 +116,20 @@
 
 ---
 
+## 2026-04-13 (후속 2)
+
+### 알림·바우처 미발송 버그 수정
+
+| 이슈 | 파일 | 핵심 |
+|---|---|---|
+| 4월 12일 이후 예약 바우처·알림 미발송 | `on-booking-created` Edge Function | **원인**: 2026-04-12 이후 `on-booking-created` Edge Function이 HTTP 404 반환. `supabase functions list`엔 ACTIVE 표시됐으나 실제 호출 불가 상태. 재배포로 해결 |
+| Edge Function 재배포 | `supabase/functions/on-booking-created/index.ts` | `supabase functions deploy on-booking-created --no-verify-jwt` 재배포 후 HTTP 400→200 정상 응답 확인 |
+| DB 트리거 Vault 의존성 제거 | `supabase/migrations/20260415000001_fix_booking_trigger_vault.sql` | `trigger_on_booking_created()` 함수: Vault에 `supabase_service_role_key` 없어도 `no-verify-jwt` 배포된 Edge Function을 호출하도록 수정. Vault 있으면 인증 포함, 없으면 무인증 호출 |
+| 누락 예약 재발송 | DB 직접 호출 | `a892e0d2` (dbcjsaud@gmail.com) 수동 재트리거 완료. 실제 고객 미발송 건 없음 확인 |
+| 트리거 정상 동작 검증 | — | 신규 INSERT → 5초 내 `email_sent_at` 자동 설정 + `reservation_code` 생성 확인. Google Chat 알림 200 응답 확인 |
+
+---
+
 ## 재조사 불필요 영역
 
 아래 동작은 정상 확인됨. 버그 의심 시 먼저 최신 코드 확인 후 조사:

@@ -764,11 +764,13 @@ const App: React.FC = () => {
           {/* Legacy MyPage Handler - Now integrated into Router but keeping this as safe check if needed */}
 
           <NoticePopup t={t} />
-          <LanguagePopup
-            key={location.pathname.includes('booking-success') ? 'booking-success' : 'default'}
-            t={t}
-            onLangChange={changeLanguage}
-          />
+          {/^\/kiosk\/[^/]+$/.test(location.pathname) && (
+            <LanguagePopup
+              key={location.pathname}
+              t={t}
+              onLangChange={changeLanguage}
+            />
+          )}
           <LoginModal
             isOpen={showLoginModal}
             t={t}

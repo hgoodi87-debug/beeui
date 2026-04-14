@@ -2,53 +2,44 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../src/store/appStore';
-import { Languages, X, Globe, ChevronRight } from 'lucide-react';
+import { Globe, X, Check } from 'lucide-react';
 
 interface LanguagePopupProps {
     t: any;
+    onLangChange?: (lang: string) => void;
 }
 
-const LanguagePopup: React.FC<LanguagePopupProps> = ({ t }) => {
+const LANGUAGES = [
+    { code: 'ko',    name: '한국어',          nativeName: '한국어',       flag: '🇰🇷' },
+    { code: 'en',    name: 'English',         nativeName: 'English',     flag: '🇺🇸' },
+    { code: 'zh',    name: '简体中文',         nativeName: '简体中文',     flag: '🇨🇳' },
+    { code: 'zh-TW', name: '繁體中文 (TW)',   nativeName: '繁體中文',     flag: '🇹🇼' },
+    { code: 'zh-HK', name: '繁體中文 (HK)',   nativeName: '繁體中文',     flag: '🇭🇰' },
+    { code: 'ja',    name: '日本語',           nativeName: '日本語',       flag: '🇯🇵' },
+];
+
+const detectBrowserLang = (): string => {
+    const b = navigator.language.toLowerCase();
+    if (b.includes('hk')) return 'zh-HK';
+    if (b.includes('tw')) return 'zh-TW';
+    if (b.startsWith('zh')) return 'zh';
+    if (b.startsWith('ja')) return 'ja';
+    if (b.startsWith('en')) return 'en';
+    return 'ko';
+};
+
+const LanguagePopup: React.FC<LanguagePopupProps> = ({ t, onLangChange }) => {
     const { lang, setLang } = useAppStore();
     const [isVisible, setIsVisible] = useState(false);
-    const [detectedLang, setDetectedLang] = useState<string | null>(null);
-
-    const languageMap: Record<string, { name: string; icon: string; code: string }> = {
-        'ko': { name: '한국어', icon: '🇰🇷', code: 'ko' },
-        'en': { name: 'English', icon: '🇺🇸', code: 'en' },
-        'ja': { name: '日本語', icon: '🇯🇵', code: 'ja' },
-        'zh-CN': { name: '简体中文', icon: '🇨🇳', code: 'zh-CN' },
-        'zh-HK': { name: '繁體中文 (HK)', icon: '🇭🇰', code: 'zh-HK' },
-        'zh-TW': { name: '繁體中文 (TW)', icon: '🇹🇼', code: 'zh-TW' },
-    };
+    const [detectedLang] = useState<string>(detectBrowserLang);
 
     useEffect(() => {
-        // Only run once per session or use a persistence check
         const hasSeenPopup = sessionStorage.getItem('beeliber_lang_popup_seen');
         if (hasSeenPopup) return;
 
-        const browserLang = navigator.language.toLowerCase();
-        let targetLang = 'ko';
-
-        if (browserLang.startsWith('en')) targetLang = 'en';
-        else if (browserLang.startsWith('ja')) targetLang = 'ja';
-        else if (browserLang.includes('hk')) targetLang = 'zh-HK';
-        else if (browserLang.includes('tw')) targetLang = 'zh-TW';
-        else if (browserLang.startsWith('zh')) targetLang = 'zh-CN';
-        else if (browserLang.startsWith('ko')) targetLang = 'ko';
-
-        // Simplify zh-CN if needed (project uses 'zh' for zh-CN)
-        const projectLang = targetLang === 'zh-CN' ? 'zh' : targetLang;
-
-        if (projectLang !== lang) {
-            setDetectedLang(projectLang);
-            // Wait a bit before showing
-            const timer = setTimeout(() => {
-                setIsVisible(true);
-            }, 1500);
-            return () => clearTimeout(timer);
-        }
-    }, [lang]);
+        const timer = setTimeout(() => setIsVisible(true), 1500);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleClose = () => {
         setIsVisible(false);
@@ -56,107 +47,99 @@ const LanguagePopup: React.FC<LanguagePopupProps> = ({ t }) => {
     };
 
     const handleSwitch = (newLang: string) => {
-        setLang(newLang);
+        if (onLangChange) {
+            onLangChange(newLang);
+        } else {
+            setLang(newLang);
+        }
         setIsVisible(false);
         sessionStorage.setItem('beeliber_lang_popup_seen', 'true');
     };
 
-    if (!isVisible || !detectedLang) return null;
-
-    const targetInfo = languageMap[detectedLang] || languageMap['en'];
+    if (!isVisible) return null;
 
     return (
         <AnimatePresence>
-            <div className="fixed bottom-10 left-10 z-[3000] hidden md:block">
-                <motion.div
-                    initial={{ opacity: 0, x: -50, scale: 0.9 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: -50, scale: 0.9 }}
-                    className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-black/5 p-6 w-[320px] backdrop-blur-xl bg-white/90"
-                >
-                    <button
-                        onClick={handleClose}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors"
-                        title="Close Language Suggestion"
-                    >
-                        <X size={18} />
-                    </button>
+            {/* Backdrop */}
+            <motion.div
+                key="lang-popup-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[2999] bg-black/50 backdrop-blur-sm"
+                onClick={handleClose}
+            />
 
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-bee-yellow rounded-2xl flex items-center justify-center shadow-lg shadow-bee-yellow/20">
-                            <Languages size={20} className="text-black" />
-                        </div>
-                        <div>
-                            <h4 className="text-sm font-black text-bee-black">Language Suggestion</h4>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Global Traveler Service</p>
-                        </div>
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                        It looks like your browser is set to <span className="font-bold text-bee-black">{targetInfo.name}</span>. Would you like to switch the language?
-                    </p>
-
-                    <div className="space-y-2">
-                        <button
-                            onClick={() => handleSwitch(detectedLang)}
-                            className="w-full bg-bee-yellow hover:bg-yellow-400 text-bee-black py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-between px-6 shadow-xl shadow-bee-yellow/10"
-                        >
-                            <span className="flex items-center gap-3">
-                                <span className="text-lg">{targetInfo.icon}</span>
-                                Switch to {targetInfo.name}
-                            </span>
-                            <ChevronRight size={16} />
-                        </button>
-                        <button
-                            onClick={handleClose}
-                            className="w-full bg-gray-50 hover:bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold text-sm transition-all text-center"
-                        >
-                            Keep using {languageMap[lang]?.name || lang}
-                        </button>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* Mobile Version */}
-            <div className="fixed inset-x-0 bottom-0 z-[3000] md:hidden p-6">
-                <motion.div
-                    initial={{ opacity: 0, y: 100 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 100 }}
-                    className="bg-white rounded-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)] p-8 border-t border-black/5"
-                >
-                    <div className="flex items-center justify-between mb-6">
+            {/* Centered Modal */}
+            <motion.div
+                key="lang-popup"
+                initial={{ opacity: 0, scale: 0.88, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.88, y: 24 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                className="fixed inset-0 z-[3000] flex items-center justify-center px-5 pointer-events-none"
+            >
+                <div className="bg-white rounded-[2rem] shadow-[0_32px_80px_rgba(0,0,0,0.25)] border border-black/5 overflow-hidden w-full max-w-md pointer-events-auto">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-7 py-6 border-b border-gray-100">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-bee-yellow rounded-2xl flex items-center justify-center">
-                                <Globe size={24} />
+                            <div className="w-11 h-11 bg-bee-yellow rounded-2xl flex items-center justify-center">
+                                <Globe size={20} className="text-bee-black" />
                             </div>
-                            <h4 className="text-lg font-black">{targetInfo.name} 지원</h4>
+                            <div>
+                                <p className="text-base font-black text-bee-black leading-tight">언어 선택</p>
+                                <p className="text-xs text-gray-400 font-medium">Select your language</p>
+                            </div>
                         </div>
-                        <button onClick={handleClose} className="p-2" title="Close Language Suggestion">
-                            <X size={24} />
-                        </button>
-                    </div>
-
-                    <p className="text-gray-600 mb-8 break-keep">
-                        브라우저 언어 설정에 맞춰 {targetInfo.name}로 서비스를 이용하시겠습니까?
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-4">
                         <button
                             onClick={handleClose}
-                            className="bg-gray-100 text-gray-500 py-5 rounded-3xl font-bold"
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-black transition-colors"
+                            title="Close"
                         >
-                            아니오
-                        </button>
-                        <button
-                            onClick={() => handleSwitch(detectedLang)}
-                            className="bg-bee-yellow text-bee-black py-5 rounded-3xl font-black shadow-lg shadow-bee-yellow/20"
-                        >
-                            네, 바꿀게요
+                            <X size={17} />
                         </button>
                     </div>
-                </motion.div>
-            </div>
+
+                    {/* Language Grid */}
+                    <div className="p-5 grid grid-cols-2 gap-2.5">
+                        {LANGUAGES.map((l) => {
+                            const isCurrent = lang === l.code;
+                            const isDetected = detectedLang === l.code;
+                            return (
+                                <button
+                                    key={l.code}
+                                    onClick={() => handleSwitch(l.code)}
+                                    className={`
+                                        flex items-center gap-3.5 px-5 py-4 rounded-2xl transition-all text-left relative
+                                        ${isCurrent
+                                            ? 'bg-bee-yellow text-bee-black shadow-md'
+                                            : 'bg-gray-50 hover:bg-gray-100 text-bee-black'}
+                                    `}
+                                >
+                                    <span className="text-3xl leading-none">{l.flag}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-black leading-tight truncate">{l.nativeName}</p>
+                                        {isDetected && !isCurrent && (
+                                            <p className="text-[9px] font-black text-bee-yellow bg-bee-black px-1.5 py-0.5 rounded-full inline-block mt-1 uppercase tracking-wide">
+                                                추천
+                                            </p>
+                                        )}
+                                    </div>
+                                    {isCurrent && (
+                                        <Check size={16} className="flex-shrink-0 text-bee-black" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Footer hint */}
+                    <p className="text-center text-[11px] text-gray-300 pb-5 font-medium">
+                        언제든지 상단 메뉴에서 변경할 수 있습니다
+                    </p>
+                </div>
+            </motion.div>
         </AnimatePresence>
     );
 };

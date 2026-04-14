@@ -130,7 +130,7 @@ export async function supabaseMutate<T>(
   method: 'POST' | 'PATCH' | 'DELETE',
   body?: unknown,
   accessToken?: string,
-  prefer: 'return=representation' | 'return=minimal' = 'return=representation'
+  prefer: 'return=representation' | 'return=minimal' | 'return=minimal,resolution=merge-duplicates' = 'return=representation'
 ): Promise<T | null> {
   const resolvedAccessToken = await resolveAccessToken(accessToken);
   const headers: Record<string, string> = {

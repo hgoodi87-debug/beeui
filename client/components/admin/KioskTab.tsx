@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { printKioskReceipt } from '../../utils/kioskPrint';
 import {
   KioskBranch,
   loadAllActiveBranches,
@@ -32,7 +33,7 @@ interface RowRule { label: string; start: string; end: string; max: number; }
 interface Cfg {
   prices: { small_4h: number; carrier_2h: number; carrier_4h: number; extra_per_hour: number };
   operations: { max_bags: number; close_hour: number; duration_options: number[] };
-  notices: { ko: string[]; en: string[]; zh: string[] };
+  notices: { ko: string[]; en: string[]; zh: string[]; 'zh-TW': string[]; 'zh-HK': string[]; ja: string[] };
   discount: { unit: number; allow_free: boolean };
   admin_password: string;
   row_rules: { rows: RowRule[] };
@@ -297,7 +298,7 @@ const KioskTab: React.FC<KioskTabProps> = ({ initialBranchSlug, logMode = false,
 
       {/* ── 서브뷰 ── */}
       {view === 'checkin'  && <CheckinView  lang={lang} t={t} cfg={cfg} assignRow={assignRow} onSubmitDone={loadData} branchId={branchId} />}
-      {view === 'admin'    && <AdminView    lang={lang} t={t} cfg={cfg} entries={entries} onUpdate={loadData} />}
+      {view === 'admin'    && <AdminView    lang={lang} t={t} cfg={cfg} entries={entries} onUpdate={loadData} branchName={selectedBranch?.branch_name} />}
       {view === 'settings' && <SettingsView lang={lang} t={t} cfg={cfg} setCfg={setCfg} saveCfgToDb={saveCfgToDb} />}
     </div>
   );
@@ -637,9 +638,9 @@ const CheckinView: React.FC<CheckinProps> = ({ lang, t, cfg, assignRow, onSubmit
 // ═══════════════════════════════════════════════════════════════════════════
 // ADMIN VIEW
 // ═══════════════════════════════════════════════════════════════════════════
-interface AdminViewProps { lang: Lang; t: (k:string)=>string; cfg: Cfg; entries: Entry[]; onUpdate: ()=>void; }
+interface AdminViewProps { lang: Lang; t: (k:string)=>string; cfg: Cfg; entries: Entry[]; onUpdate: ()=>void; branchName?: string; }
 
-const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
+const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branchName = '' }) => {
   const [filterDate, setFilterDate] = useState(tdy());
   const [filterStat, setFilterStat] = useState('all');
   const [findTag, setFindTag] = useState('');
@@ -712,7 +713,17 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
     );
   };
 
+  const _memoTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const handleUf = async (id: number, field: string, value: any) => {
+    if (field === 'memo') {
+      // Debounce memo: fire DB write only after 500ms of inactivity
+      clearTimeout(_memoTimers.current[id]);
+      _memoTimers.current[id] = setTimeout(async () => {
+        await updateStorageLog(id, { memo: value } as any);
+        onUpdate();
+      }, 500);
+      return;
+    }
     await updateStorageLog(id, { [field]: value } as any);
     // 완료 체크 → '완료' 필터로 자동 이동 / 체크 해제 → '보관중' 필터로 복귀
     if (field === 'done') setFilterStat(value ? 'done' : 'active');
@@ -897,6 +908,25 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate }) => {
                       className="w-4 h-4 accent-bee-yellow cursor-pointer" title="반납완료" />
                     <input value={e.memo} onChange={ev => handleUf(e.id,'memo',ev.target.value)}
                       className="w-14 border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] focus:border-bee-yellow outline-none bg-white" placeholder="메모" />
+                    <button
+                      onClick={() => printKioskReceipt({
+                        tag: e.tag,
+                        rowLabel: e.rowLabel,
+                        branchName,
+                        smallQty: e.smallQty,
+                        carrierQty: e.carrierQty,
+                        duration: e.duration,
+                        startTime: e.startTime,
+                        pickupTime: e.pickupTime,
+                        originalPrice: e.originalPrice,
+                        discount: e.discount,
+                        payment: e.payment,
+                        date: e.date,
+                      })}
+                      title="재출력"
+                      className="w-6 h-6 rounded-full bg-white text-gray-400 hover:bg-amber-50 hover:text-amber-500 flex items-center justify-center transition-colors border border-gray-200 flex-shrink-0">
+                      <i className="fa-solid fa-print text-[9px]"></i>
+                    </button>
                     <button onClick={() => { if (confirm(t('del'))) { supabaseMutate(`${KIOSK_TABLES.log}?id=eq.${e.id}`, 'DELETE').then(()=>onUpdate()); } }}
                       className="w-6 h-6 rounded-full bg-white text-gray-300 hover:bg-red-50 hover:text-red-400 flex items-center justify-center transition-colors border border-gray-200 flex-shrink-0">
                       <i className="fa-solid fa-xmark text-[9px]"></i>

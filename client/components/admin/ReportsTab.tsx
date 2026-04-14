@@ -1,9 +1,10 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { BookingState, BookingStatus, LocationOption, ServiceType } from '../../types';
 import { COUNTRY_NAMES } from '../../src/constants/countries';
 import { normalizeChannel } from '../../src/utils/gads';
 import { motion, AnimatePresence } from 'framer-motion';
+import { KioskStorageLog, loadAllLogsForRange } from '../../services/kioskDb';
 import {
 
     LineChart,
@@ -40,6 +41,55 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
     onStartDateChange,
     onEndDateChange
 }) => {
+    const [kioskLogs, setKioskLogs] = useState<KioskStorageLog[]>([]);
+
+    useEffect(() => {
+        if (!startDate || !endDate) return;
+        loadAllLogsForRange(startDate, endDate).then(setKioskLogs).catch(e => console.error('[ReportsTab] kioskLogs 로드 실패:', e));
+    }, [startDate, endDate]);
+
+    const kioskStats = useMemo(() => {
+        const validLogs = kioskLogs.filter(l => l.done);
+        const totalRevenue = validLogs.reduce((s, l) => s + (l.original_price - l.discount), 0);
+        const totalCount = validLogs.length;
+        const smallCount = validLogs.reduce((s, l) => s + l.small_qty, 0);
+        const carrierCount = validLogs.reduce((s, l) => s + l.carrier_qty, 0);
+
+        const paymentMap: Record<string, number> = {};
+        validLogs.forEach(l => {
+            paymentMap[l.payment] = (paymentMap[l.payment] || 0) + 1;
+        });
+
+        const branchMap: Record<string, { revenue: number; count: number }> = {};
+        validLogs.forEach(l => {
+            if (!branchMap[l.branch_id]) branchMap[l.branch_id] = { revenue: 0, count: 0 };
+            branchMap[l.branch_id].revenue += (l.original_price - l.discount);
+            branchMap[l.branch_id].count += 1;
+        });
+
+        const dailyMap: Record<string, { date: string; revenue: number; count: number }> = {};
+        validLogs.forEach(l => {
+            if (!dailyMap[l.date]) dailyMap[l.date] = { date: l.date, revenue: 0, count: 0 };
+            dailyMap[l.date].revenue += (l.original_price - l.discount);
+            dailyMap[l.date].count += 1;
+        });
+
+        return {
+            totalRevenue,
+            totalCount,
+            smallCount,
+            carrierCount,
+            avgRevenue: totalCount > 0 ? Math.floor(totalRevenue / totalCount) : 0,
+            paymentDist: Object.entries(paymentMap)
+                .map(([name, value]) => ({ name: name.toUpperCase() || 'CASH', value }))
+                .sort((a, b) => b.value - a.value),
+            branchDist: Object.entries(branchMap)
+                .map(([id, v]) => ({ id, ...v }))
+                .sort((a, b) => b.revenue - a.revenue),
+            daily: Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date)),
+        };
+    }, [kioskLogs]);
+
     const stats = useMemo(() => {
         const isReportableBooking = (booking: BookingState) => {
             if (booking.isDeleted) return false;
@@ -620,6 +670,136 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
                     </div>
                 </section>
             )}
+
+            {/* 🖥️ Kiosk Analytics Section */}
+            <section className="space-y-6">
+                <div className="flex items-center gap-3 px-2">
+                    <div className="w-8 h-8 rounded-xl bg-bee-black flex items-center justify-center text-bee-yellow shadow-lg">
+                        <i className="fa-solid fa-tablet-screen-button text-xs"></i>
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-bee-black uppercase tracking-tight">Kiosk Analytics</h2>
+                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">현장 키오스크 이용 고객 분석</p>
+                    </div>
+                </div>
+
+                {kioskStats.totalCount === 0 ? (
+                    <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-12 text-center">
+                        <div className="text-4xl mb-4">🖥️</div>
+                        <p className="font-black text-gray-400 text-sm">선택 기간에 키오스크 이용 내역이 없습니다.</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* KPI 카드 */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-bee-black p-6 rounded-[32px] shadow-sm">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">키오스크 수익</p>
+                                <h3 className="text-2xl font-black text-bee-yellow italic font-mono">₩{kioskStats.totalRevenue.toLocaleString()}</h3>
+                                <p className="mt-2 text-[10px] font-bold text-gray-500">완납 기준</p>
+                            </div>
+                            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">총 접수</p>
+                                <h3 className="text-2xl font-black text-bee-black italic">{kioskStats.totalCount.toLocaleString()}건</h3>
+                                <p className="mt-2 text-[10px] font-bold text-gray-300">완료 기준</p>
+                            </div>
+                            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">건당 평균</p>
+                                <h3 className="text-2xl font-black text-blue-500 italic font-mono">₩{kioskStats.avgRevenue.toLocaleString()}</h3>
+                            </div>
+                            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">짐 구성</p>
+                                <div className="flex items-end gap-2 mt-1">
+                                    <div className="text-center">
+                                        <p className="text-xl font-black text-bee-black">{kioskStats.smallCount}</p>
+                                        <p className="text-[9px] font-bold text-gray-400">소형</p>
+                                    </div>
+                                    <span className="text-gray-300 font-black mb-1">|</span>
+                                    <div className="text-center">
+                                        <p className="text-xl font-black text-bee-black">{kioskStats.carrierCount}</p>
+                                        <p className="text-[9px] font-bold text-gray-400">캐리어</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* 일별 트렌드 */}
+                            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                                <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                    <span className="w-1.5 h-3 bg-bee-yellow rounded-full"></span> 키오스크 일별 수익
+                                </h4>
+                                <div className="h-[220px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={kioskStats.daily}>
+                                            <defs>
+                                                <linearGradient id="kioskGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#FACC15" stopOpacity={0.15} />
+                                                    <stop offset="95%" stopColor="#FACC15" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#FAFAFA" />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: '#D1D5DB' }} tickFormatter={v => v.slice(5)} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: '#D1D5DB' }} />
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', padding: '16px' }}
+                                                itemStyle={{ fontWeight: 900, fontSize: '12px' }}
+                                                formatter={(v: any) => [`₩${Number(v).toLocaleString()}`, '수익']}
+                                            />
+                                            <Area type="monotone" dataKey="revenue" stroke="#FACC15" strokeWidth={3} fill="url(#kioskGrad)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* 결제 방법 + 지점별 */}
+                            <div className="space-y-4">
+                                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-3">
+                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <span className="w-1.5 h-3 bg-emerald-400 rounded-full"></span> 결제 수단
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {kioskStats.paymentDist.map((p, i) => (
+                                            <div key={p.name} className="flex items-center justify-between p-3 bg-gray-50/60 rounded-2xl">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black ${i === 0 ? 'bg-bee-black text-bee-yellow' : 'bg-white text-gray-400 border border-gray-100'}`}>
+                                                        {p.name.slice(0, 2)}
+                                                    </div>
+                                                    <span className="text-xs font-black text-bee-black">{p.name || 'CASH'}</span>
+                                                </div>
+                                                <span className="text-sm font-black text-bee-black font-mono">{p.value}건</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {kioskStats.branchDist.length > 1 && (
+                                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-3">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                            <span className="w-1.5 h-3 bg-blue-400 rounded-full"></span> 지점별 현황
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {kioskStats.branchDist.map((b, i) => (
+                                                <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50/60 rounded-2xl">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black ${i === 0 ? 'bg-bee-black text-bee-yellow' : 'bg-white text-gray-400 border border-gray-100'}`}>
+                                                            {i + 1}
+                                                        </div>
+                                                        <span className="text-xs font-black text-bee-black truncate max-w-[120px]">{b.id}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-sm font-black text-bee-black font-mono">₩{b.revenue.toLocaleString()}</p>
+                                                        <p className="text-[9px] font-bold text-gray-400">{b.count}건</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
+            </section>
 
             {/* 📡 채널 어트리뷰션 섹션 */}
             <section className="space-y-6">

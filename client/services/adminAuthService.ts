@@ -48,7 +48,7 @@ const supabaseUrl = config.url;
 const supabasePublishableKey = config.anonKey;
 const configuredProvider = import.meta.env.VITE_ADMIN_AUTH_PROVIDER === 'supabase' ? 'supabase' : 'firebase';
 const SUPABASE_ADMIN_SESSION_KEY = 'beeliber_supabase_admin_session';
-const ADMIN_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30일 (롤링)
+const ADMIN_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7일 (롤링)
 const ACCESS_TOKEN_FALLBACK_TTL_MS = 55 * 60 * 1000;
 const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 const SUPABASE_DATA_SCHEMA = 'public';
@@ -484,7 +484,16 @@ export const ensureActiveAdminSession = async () => {
   } catch (error) {
     console.warn('[AdminAuth] Supabase 관리자 세션 갱신 실패:', error);
 
-    if (isSessionPastKstWindow(currentSession.savedAt)) {
+    // 리프레시 토큰 자체가 무효화된 경우 → 즉시 세션 초기화 (재로그인 필요)
+    // 만료 TTL 무관하게 클리어해야 66회 반복 루프가 멈춤
+    const errorMsg = String(error instanceof Error ? error.message : error).toLowerCase();
+    const isTokenRevoked =
+      errorMsg.includes('refresh token not found') ||
+      errorMsg.includes('invalid refresh token') ||
+      errorMsg.includes('token has expired or') ||
+      errorMsg.includes('invalid_grant');
+
+    if (isSessionPastKstWindow(currentSession.savedAt) || isTokenRevoked) {
       clearStoredSupabaseAdminSession();
       return null;
     }
@@ -498,8 +507,13 @@ export const getActiveAdminRequestHeaders = async (): Promise<Record<string, str
   const headers: Record<string, string> = {
     'X-Admin-Auth-Provider': getAdminAuthProvider(),
     apikey: anonKey,
-    // Authorization에 anon key → Supabase 게이트웨이 통과
-    // (ES256 user token을 Authorization에 보내면 HS256 검증 실패로 401)
+    // Authorization에 anon key → Supabase 게이트웨이 통과 [의도된 설계]
+    // Supabase Edge Functions 게이트웨이는 HS256 JWT만 검증한다.
+    // 클라이언트 JWT는 ES256(비대칭키)이라 표준 Authorization 헤더로 보내면 401.
+    // 해결책: anon key(HS256)를 Authorization에, 실제 유저 JWT는 X-Supabase-Access-Token에.
+    // admin-auth.ts extractAccessToken()이 커스텀 헤더를 우선 읽으므로 인증 정상 동작.
+    // 신규 Edge Function은 반드시 admin-auth.ts authenticateAdminRequest() 또는
+    // SYNC_SECRET_KEY 게이트를 사용해야 한다 — raw Authorization 직접 읽기 금지.
     Authorization: `Bearer ${anonKey}`,
   };
 

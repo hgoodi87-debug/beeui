@@ -13,6 +13,8 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const SYNC_SECRET_KEY = Deno.env.get("SYNC_SECRET_KEY") || "";
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -22,6 +24,14 @@ function json(data: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+
+  // Auth gate: SYNC_SECRET_KEY required (same pattern as check-rls-health)
+  if (SYNC_SECRET_KEY) {
+    const authHeader = req.headers.get("authorization") || "";
+    if (authHeader !== `Bearer ${SYNC_SECRET_KEY}`) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+  }
 
   try {
     const propertyId = Deno.env.get("GA4_PROPERTY_ID");

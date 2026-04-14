@@ -67,7 +67,7 @@ export interface KioskCfg {
     close_hour: number;
     duration_options: number[];
   };
-  notices: { ko: string[]; en: string[]; zh: string[] };
+  notices: { ko: string[]; en: string[]; zh: string[]; 'zh-TW': string[]; 'zh-HK': string[]; ja: string[] };
   discount: { unit: number; allow_free: boolean };
   admin_password: string;
   row_rules: { rows: KioskRowRule[] };
@@ -80,6 +80,9 @@ export const DEFAULT_CFG: KioskCfg = {
     ko: ['저희 매장은 오후 9시까지 운영합니다.', '현금 결제만 가능합니다.'],
     en: ['We operate until 9PM.', 'Cash payment only.'],
     zh: ['营业至晚上9点。', '仅接受现金支付。'],
+    'zh-TW': ['營業至晚上9點。', '僅接受現金付款。'],
+    'zh-HK': ['營業至晚上9點。', '只接受現金付款。'],
+    ja: ['午後9時まで営業しております。', '現金払いのみとなります。'],
   },
   discount: { unit: 1000, allow_free: true },
   admin_password: '0000',
@@ -253,10 +256,14 @@ export const upsertSetting = async (
   key: string,
   value: unknown
 ): Promise<void> => {
+  // POST with Prefer:resolution=merge-duplicates = true upsert
+  // PATCH returns 204 silently when row doesn't exist yet (wrong for new branches)
   await supabaseMutate(
-    `${KIOSK_TABLES.settings}?branch_id=eq.${encodeURIComponent(branchId)}&key=eq.${encodeURIComponent(key)}`,
-    'PATCH',
-    { value, updated_at: new Date().toISOString() }
+    KIOSK_TABLES.settings,
+    'POST',
+    { branch_id: branchId, key, value, updated_at: new Date().toISOString() },
+    undefined,
+    'return=minimal,resolution=merge-duplicates'
   );
 };
 
@@ -345,6 +352,20 @@ export const loadLogRange = async (
   try {
     return await supabaseGet<KioskStorageLog[]>(
       `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=gte.${fromDate}&date=lte.${toDate}&order=date.desc,tag.asc`,
+      _ANON
+    );
+  } catch {
+    return [];
+  }
+};
+
+export const loadAllLogsForRange = async (
+  fromDate: string,
+  toDate: string
+): Promise<KioskStorageLog[]> => {
+  try {
+    return await supabaseGet<KioskStorageLog[]>(
+      `${KIOSK_TABLES.log}?date=gte.${fromDate}&date=lte.${toDate}&order=date.asc,tag.asc`,
       _ANON
     );
   } catch {

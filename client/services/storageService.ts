@@ -36,10 +36,8 @@ const generateSupabaseReservationCode = (booking: Partial<BookingState>): string
   const toCode = (value: unknown, fallback = 'UNK') => {
     const normalized = String(value || '').trim();
     if (!normalized) return fallback;
-    const isUuidLike = /^[0-9a-f]{8}-/i.test(normalized);
-    if (isUuidLike) {
-      return normalized.slice(0, 3).toUpperCase();
-    }
+    // UUID 형태면 앞 3자리만
+    if (/^[0-9a-f]{8}-/i.test(normalized)) return normalized.slice(0, 3).toUpperCase();
     return normalized.includes('-') ? normalized.toUpperCase() : normalized.slice(0, 3).toUpperCase();
   };
 
@@ -50,18 +48,21 @@ const generateSupabaseReservationCode = (booking: Partial<BookingState>): string
     'UNK'
   );
 
-  const destinationSource = booking.serviceType === 'DELIVERY'
-    ? 'ADDR'
-    : toCode(
+  const random = Math.floor(1000 + Math.random() * 9000);
+
+  if (booking.serviceType === 'DELIVERY') {
+    // 배송: 픽업지점-도착지점-랜덤4자리
+    const dropoffCode = toCode(
       booking.returnLoc?.shortCode ||
       booking.returnLoc?.id ||
-      booking.dropoffLocation ||
-      booking.pickupLocation,
-      'UNK'
+      booking.dropoffLocation,
+      'DST'
     );
+    return `${pickupCode}-${dropoffCode}-${random}`;
+  }
 
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `${pickupCode}-${destinationSource}-${random}`;
+  // 보관: 지점-랜덤4자리
+  return `${pickupCode}-${random}`;
 };
 
 const getBookingLocationLabel = (
@@ -992,7 +993,7 @@ export const StorageService = {
       let nametagIdForInsert: string | null = safeBooking.nametagId || null;
       if (!nametagIdForInsert && safeBooking.branchId) {
         try {
-          nametagIdForInsert = await StorageService.generateWeeklyNametagId(safeBooking.branchId);
+          nametagIdForInsert = String(await StorageService.generateWeeklyNametagId(safeBooking.branchId));
         } catch (e) {
           console.warn("[StorageService] nametag_id 사전 생성 실패 (무시):", e);
         }
@@ -1653,7 +1654,7 @@ export const StorageService = {
         if (rows?.[0]?.value) {
           console.log("[Storage] Loaded delivery prices from Supabase ✅");
           const result = normalizeDeliveryPrices(rows[0].value as PriceSettings);
-          _deliveryPricesCache = { data: result, ts: Date.now() };
+          if (result) _deliveryPricesCache = { data: result, ts: Date.now() };
           return result;
         }
       } catch (e) {
@@ -1665,7 +1666,7 @@ export const StorageService = {
       const snap = await getDoc(doc(db, "settings", "delivery_prices"));
       if (snap.exists()) {
         const result = normalizeDeliveryPrices(snap.data() as PriceSettings);
-        _deliveryPricesCache = { data: result, ts: Date.now() };
+        if (result) _deliveryPricesCache = { data: result, ts: Date.now() };
         return result;
       }
       return null;
@@ -2260,6 +2261,9 @@ export const StorageService = {
               branchId: matchedLocation?.id || assignedBranchId || undefined,
               branchCode: branchCode || matchedLocation?.branchCode || undefined,
               branchName: matchedLocation?.name || assignedBranch?.name || undefined,
+              permissions: Array.isArray((security as Record<string, unknown> | undefined)?.permissions)
+                ? (security as Record<string, unknown>).permissions as string[]
+                : undefined,
               orgType: String(row.org_type || '').trim() as AdminUser['orgType'],
               status: (() => {
                 const s = String(row.employment_status || 'active').trim();
@@ -2599,12 +2603,33 @@ export const StorageService = {
   },
 
   subscribeAdmins: (callback: (data: AdminUser[]) => void): (() => void) => {
-    return createRealtimeSubscription(
-      'admins-changes',
-      'admins',
-      StorageService.getAdmins,
-      callback
-    );
+    let active = true;
+    let inFlight = false;
+
+    const load = async () => {
+      if (!active || inFlight) return;
+      inFlight = true;
+      try {
+        const data = await StorageService.getAdmins();
+        if (active) {
+          callback(data);
+        }
+      } catch (error) {
+        console.warn('[Storage] admin directory subscription reload failed:', error);
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    void load();
+    const timer = setInterval(() => {
+      void load();
+    }, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   },
 
   // --- AI Translation Service (Gemini) ---

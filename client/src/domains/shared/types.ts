@@ -130,7 +130,8 @@ export type AdminTab =
     | 'TRASH'
     | 'AI_REVIEW'
     | 'KIOSK'
-    | 'CHANNEL_ANALYTICS';
+    | 'CHANNEL_ANALYTICS'
+    | 'GOOGLE_ANALYTICS';
 
 export interface TranslatedLocationData {
     name_en: string;

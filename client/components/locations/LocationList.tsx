@@ -36,6 +36,8 @@ interface LocationListProps {
     onBack?: () => void;
     onFindMyLocation?: () => void;
     isLoading?: boolean;
+    hiddenCount?: number;
+    onShowAll?: () => void;
 }
 
 const LocationList: React.FC<LocationListProps> = ({
@@ -46,7 +48,9 @@ const LocationList: React.FC<LocationListProps> = ({
     deliveryPrices,
     onBack,
     onFindMyLocation,
-    isLoading
+    isLoading,
+    hiddenCount = 0,
+    onShowAll,
 }) => {
     const INITIAL_BRANCH_RENDER_COUNT = 8;
     const SEARCH_BRANCH_RENDER_COUNT = 16;
@@ -566,12 +570,19 @@ const LocationList: React.FC<LocationListProps> = ({
                     </div>
                 )}
 
-                {filteredBranches.length > 0 && hiddenBranchCount > 0 && (
-                    <div className="px-4 md:px-6 pt-1">
+                {hiddenCount > 0 && onShowAll && (
+                    <div className="px-4 md:px-6 pt-1 flex items-center gap-2">
                         <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/70 backdrop-blur-md border border-white/40 shadow-sm text-[10px] md:text-[11px] font-black text-gray-500 uppercase tracking-[0.08em]">
                             <span className="w-1.5 h-1.5 rounded-full bg-bee-yellow" />
-                            {(t.locations_page?.nearest_3_info || 'Showing nearest 3 · {count} more on map').replace('{count}', String(hiddenBranchCount))}
+                            {(t.locations_page?.nearest_3_info || 'Showing nearest 3 · {count} more').replace('{count}', String(hiddenCount))}
                         </div>
+                        <button
+                            onClick={onShowAll}
+                            className="pointer-events-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-bee-black text-bee-yellow text-[10px] md:text-[11px] font-black uppercase tracking-tight shadow-md active:scale-95 transition-transform"
+                        >
+                            {t.locations_page?.show_all || 'All'}
+                            <ChevronRight className="w-3 h-3" />
+                        </button>
                     </div>
                 )}
 

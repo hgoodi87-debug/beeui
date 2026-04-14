@@ -87,7 +87,11 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
   const selectedBranchLocationId = React.useMemo(() => {
     if (!formData.branchId && !formData.branchCode) return '';
 
-    const directMatch = locations.find((location) => location.id === formData.branchId);
+    // shortCode(id) 직접 매칭 OR Supabase UUID(supabaseId) 매칭
+    const directMatch = locations.find((location) =>
+      location.id === formData.branchId ||
+      (location.supabaseId && location.supabaseId === formData.branchId)
+    );
     if (directMatch) return directMatch.id;
 
     const branchToken = String(formData.branchCode || formData.branchId || '').trim().toLowerCase();

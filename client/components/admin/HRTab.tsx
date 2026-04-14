@@ -39,9 +39,13 @@ const HRTab: React.FC<HRTabProps> = ({
     };
 
     const handleSave = async (data: Partial<AdminUser>) => {
-      setIsDetailOpen(false);
-      // [스봉이] setTimeout 따위의 운발에 의존하지 않고 데이터를 직접 꽂아버립니다. 💅
-      await saveAdmin(data);
+      // [스봉이] 저장 완료 확인 후 패널 닫기 — 실패 시 패널 유지해서 재시도 가능 💅
+      try {
+        await saveAdmin(data);
+        setIsDetailOpen(false);
+      } catch {
+        // saveAdmin이 이미 에러 alert를 표시함. 패널은 열린 채로 유지.
+      }
     };
 
     return (

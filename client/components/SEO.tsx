@@ -13,7 +13,7 @@ interface SEOProps {
     keywords?: string;
     lang?: string;
     path?: string;
-    schema?: object;
+    schema?: object | object[];
     ogImage?: string; // 💅 동적 OG 이미지 지원 추가
     ogType?: 'website' | 'article'; // 💅 페이지 성격에 따른 타입 지원
     noIndex?: boolean;
@@ -25,7 +25,7 @@ const SEO: React.FC<SEOProps> = ({
     keywords,
     lang = 'ko',
     path = '',
-    schema,
+    schema: schemaProp,
     ogImage: customOgImage,
     ogType = 'website',
     noIndex = false
@@ -56,6 +56,9 @@ const SEO: React.FC<SEOProps> = ({
     const metaDescription = description || defaultDescription;
     const metaKeywords = keywords || defaultKeywords;
     const ogImg = customOgImage || SEO_DEFAULT_OG_IMAGE;
+    const schemas = schemaProp
+        ? Array.isArray(schemaProp) ? schemaProp : [schemaProp]
+        : [];
 
     return (
         <Helmet>
@@ -85,12 +88,12 @@ const SEO: React.FC<SEOProps> = ({
             <meta name="twitter:description" content={metaDescription} />
             <meta name="twitter:image" content={ogImg} />
 
-            {/* Dynamic Schema Injection */}
-            {schema && (
-                <script type="application/ld+json">
-                    {JSON.stringify(schema)}
+            {/* Dynamic Schema Injection (단일 객체 또는 배열 모두 지원) */}
+            {schemas.map((s, i) => (
+                <script key={i} type="application/ld+json">
+                    {JSON.stringify(s)}
                 </script>
-            )}
+            ))}
 
             {/* Alternate Language Links (Hreflang) — sitemap.xml과 동일한 코드 사용 */}
             <link rel="alternate" hrefLang="ko" href={`${SITE_URL}/ko${cleanPath === '/' ? '' : cleanPath}`} />

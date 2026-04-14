@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { StorageService } from '../services/storageService';
 import LocationList from './locations/LocationList';
 import SEO from './SEO';
+import { getLocationsBreadcrumb } from '../src/constants/globalSchemas';
 import { BagSizes, LocationOption, ServiceType } from '../types';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
 import { formatKSTDate, isAllSlotsPast, addDaysToDateStr, getFirstAvailableSlot, isPastKSTTime } from '../utils/dateUtils';
@@ -270,12 +271,14 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
     return result;
   }, [locations, deferredSearchTerm, currentService]);
 
+  const [showAllLocations, setShowAllLocations] = useState(false);
+
   const listLocations = useMemo(() => {
-    // 검색 중이거나 사용자 위치 없으면 전체 표시
-    if (deferredSearchTerm || !userLocation) return filteredLocations;
-    // 사용자 위치 기준 가까운 3개만 노출 (이미 distance 순 정렬됨)
+    // 검색 중이거나 '전체 보기' 선택 시 전체 표시
+    if (deferredSearchTerm || showAllLocations) return filteredLocations;
+    // 가까운 3개만 노출 (위치 있으면 distance 순 정렬, 없으면 기본 순)
     return filteredLocations.slice(0, 3);
-  }, [filteredLocations, deferredSearchTerm, userLocation]);
+  }, [filteredLocations, deferredSearchTerm, showAllLocations]);
 
   useEffect(() => {
     const normalizedSearch = deferredSearchTerm.trim();
@@ -321,6 +324,7 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
         keywords={t.seo?.keywords}
         lang={lang}
         path="/locations"
+        schema={getLocationsBreadcrumb(lang)}
       />
       <div className="fixed inset-0 z-0 font-pretendard">
         {/* 1. Map as Full Background */}
@@ -356,16 +360,19 @@ const LocationsPage: React.FC<LocationsPageProps> = ({
             t={t}
             lang={lang}
             searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+            onSearchChange={(v) => { setSearchTerm(v); if (v) setShowAllLocations(false); }}
             onFindMyLocation={findMyLocation}
             filteredBranches={listLocations}
             totalBranchCount={filteredLocations.length}
+            hiddenCount={!deferredSearchTerm && !showAllLocations ? Math.max(0, filteredLocations.length - 3) : 0}
+            onShowAll={() => setShowAllLocations(true)}
             selectedBranch={selectedBranch}
             onBranchClick={handleBranchSelect}
             currentService={currentService}
             onServiceChange={setCurrentService}
             onReset={() => {
               setSearchTerm('');
+              setShowAllLocations(false);
               handleBranchSelect(null);
             }}
             bookingDate={bookingDate}

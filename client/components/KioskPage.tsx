@@ -641,6 +641,8 @@ const KioskPage: React.FC = () => {
   const [resultStartTime, setResultStartTime] = useState('');
   const [resultLogId, setResultLogId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // 자동 리셋 카운트다운 (성공 화면 → 30초 후 자동 초기화)
+  const [resetCountdown, setResetCountdown] = useState(30);
 
   const [todayLog, setTodayLog] = useState<KioskStorageLog[]>([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -694,6 +696,32 @@ const KioskPage: React.FC = () => {
     return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
   }, []);
 
+  // 자동 리셋: 성공 화면 진입 시 30초 카운트다운
+  useEffect(() => {
+    if (step !== 'success') {
+      setResetCountdown(30);
+      return;
+    }
+    setResetCountdown(30);
+    const id = setInterval(() => {
+      setResetCountdown(c => {
+        if (c <= 1) { clearInterval(id); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [step]);
+
+  // 카운트다운 0 → 폼 초기화
+  useEffect(() => {
+    if (step === 'success' && resetCountdown === 0) {
+      setStep('form');
+      setSmallQty(0); setCarrierQty(0); setDuration(0);
+      setPayment('현금'); setDiscount(0);
+      setResultTag(0); setResultRow('A'); setResultLogId(null);
+    }
+  }, [resetCountdown, step]);
+
   const handleLogoPointerDown = () => { logoLongPressRef.current = setTimeout(() => setShowAdmin(true), 3000); };
   const handleLogoPointerUp = () => { if (logoLongPressRef.current) clearTimeout(logoLongPressRef.current); };
 
@@ -735,10 +763,11 @@ const KioskPage: React.FC = () => {
     setSubmitting(false);
     setStep('success');
     // 접수 완료 즉시 영수증 자동 출력
-    printKioskReceipt({
+    void printKioskReceipt({
       tag,
       rowLabel,
       branchName: branch.branch_name,
+      branchSlug: branch.branch_name_en || branch.slug || '',
       smallQty,
       carrierQty,
       duration,
@@ -867,10 +896,11 @@ const KioskPage: React.FC = () => {
             </div>
             <p className="text-gray-400 text-sm">{t.qr_sub}</p>
             <button
-              onClick={() => printKioskReceipt({
+              onClick={() => void printKioskReceipt({
                 tag: resultTag,
                 rowLabel: resultRow,
                 branchName: branch?.branch_name ?? '',
+                branchSlug: branch?.branch_name_en || branch?.slug || '',
                 smallQty,
                 carrierQty,
                 duration,
@@ -885,8 +915,17 @@ const KioskPage: React.FC = () => {
               <i className="fa-solid fa-print" /> 재출력
             </button>
             <button onClick={resetForm}
-              className="w-full bg-[#111111] text-white font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform">
-              {t.reset}
+              className="w-full bg-[#111111] text-white font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform relative overflow-hidden">
+              {/* 카운트다운 진행 바 */}
+              <span
+                className="absolute inset-0 bg-white/10 transition-none"
+                style={{ width: `${(resetCountdown / 30) * 100}%`, transitionProperty: 'none' }}
+              />
+              <span className="relative z-10">
+                {resetCountdown <= 10
+                  ? `${t.reset} (${resetCountdown}s)`
+                  : t.reset}
+              </span>
             </button>
           </div>
         </main>

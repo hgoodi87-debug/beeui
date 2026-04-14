@@ -70,7 +70,7 @@ export default function ChannelAnalyticsTab({ bookings, startDate, endDate, onSt
         return bookings.filter(b => {
             if (!b.createdAt) return false;
             const d = b.createdAt.split('T')[0];
-            return d >= startDate && d <= endDate && b.bookingStatus !== BookingStatus.CANCELLED;
+            return d >= startDate && d <= endDate && b.status !== BookingStatus.CANCELLED;
         });
     }, [bookings, startDate, endDate]);
 

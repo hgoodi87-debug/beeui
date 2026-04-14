@@ -18,6 +18,8 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate, lang }
                     src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=2000" // 공항에서 손 흔들며 자유롭게 떠나는 뒷모습
                     alt="인천공항 짐배송 서비스를 이용해 두 손 가볍게 여행을 마무리하는 자유로운 모습"
                     loading="lazy"
+                    width="2000"
+                    height="1333"
                     className="w-full h-full object-cover brightness-[0.4]"
                 />
             </div>

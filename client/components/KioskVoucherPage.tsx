@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import { QRCodeSVG } from 'qrcode.react';
-import { loadLogById, updateStorageLog, KioskStorageLog, addHours } from '../services/kioskDb';
+import { loadLogById, KioskStorageLog, addHours } from '../services/kioskDb';
 
 const POLL_INTERVAL = 5000;
 
@@ -45,8 +45,6 @@ const KioskVoucherPage: React.FC = () => {
   const [log, setLog] = useState<KioskStorageLog | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [marking, setMarking] = useState(false);
-  const [markedDone, setMarkedDone] = useState(false);
   const [now, setNow] = useState(new Date());
   const [showDeliveryInfo, setShowDeliveryInfo] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -151,15 +149,6 @@ const KioskVoucherPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleMarkDone = async () => {
-    if (!log?.id || marking) return;
-    setMarking(true);
-    await updateStorageLog(log.id, { done: true });
-    setLog((prev) => prev ? { ...prev, done: true } : prev);
-    setMarkedDone(true);
-    setMarking(false);
   };
 
   if (loading) return (
@@ -476,30 +465,6 @@ const KioskVoucherPage: React.FC = () => {
           )}
         </div>
 
-        {/* 직원용 반납 처리 버튼 */}
-        {!isDone && (
-          <div className="space-y-2">
-            <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest">직원 전용</p>
-            <button
-              onClick={handleMarkDone}
-              disabled={marking}
-              className="w-full bg-green-500 text-white font-black py-4 rounded-[24px] text-base active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-            >
-              {marking ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  처리 중…
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-check-circle" />
-                  반납 완료 처리
-                </>
-              )}
-            </button>
-          </div>
-        )}
-
         {/* 이미지 저장 */}
         <button
           onClick={handleSaveImage}
@@ -520,7 +485,7 @@ const KioskVoucherPage: React.FC = () => {
         </button>
 
         {/* 완료 후 메시지 */}
-        {(isDone || markedDone) && (
+        {isDone && (
           <div className="bg-green-50 border border-green-100 rounded-[24px] px-6 py-5 text-center">
             <p className="text-green-600 font-black text-base mb-1">✓ 반납이 완료되었습니다</p>
             <p className="text-green-400 text-xs">이 바우처는 기록 보관용으로 유지됩니다</p>

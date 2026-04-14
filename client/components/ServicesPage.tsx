@@ -4,6 +4,7 @@ import { ShieldCheck, MapPin, Zap, PackageCheck, Smartphone, CheckCircle2, Box, 
 import TrackingWidget from './TrackingWidget';
 import Logo from './Logo';
 import SEO from './SEO';
+import { getServicesBreadcrumb } from '../src/constants/globalSchemas';
 import LandingPricing from './landing/LandingPricing';
 import { useAppStore } from '../src/store/appStore';
 
@@ -42,6 +43,7 @@ const ServicesPage: React.FC<ServicesPageProps> = ({ onBack, t, landingT, pricin
                 description={seoDescription}
                 lang={lang}
                 path="/services"
+                schema={getServicesBreadcrumb(lang)}
             />
             {/* Nav */}
             <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center transition-all duration-300">

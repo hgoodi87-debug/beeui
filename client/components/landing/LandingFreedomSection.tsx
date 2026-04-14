@@ -17,6 +17,8 @@ const LandingFreedomSection: React.FC<LandingFreedomSectionProps> = ({ t }) => {
                         alt="짐 없이 서울의 밤을 바라보는 자유로운 여행자"
                         className="w-full h-full object-cover brightness-[0.68] contrast-[1.08]"
                         loading="lazy"
+                        width="1920"
+                        height="1080"
                     />
                 </picture>
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/35 pointer-events-none" />

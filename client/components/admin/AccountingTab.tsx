@@ -198,8 +198,9 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                 </div>
             </div>
 
-            {/* Premium Summary Grid - Optimized Space */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Premium Summary Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {/* 총 매출 */}
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-bee-yellow transition-all">
                     <div>
                         <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">총 매출 (선택 기간)</p>
@@ -210,25 +211,44 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-red-400 transition-all">
+                {/* 고정비 */}
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-emerald-400 transition-all">
                     <div>
-                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5 line-clamp-1">총 지출</p>
-                        <h3 className="text-xl font-black italic text-red-500">₩{(revenueStats?.expenditure || 0).toLocaleString()}</h3>
+                        <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1.5 line-clamp-1">고정비</p>
+                        <h3 className="text-xl font-black italic text-emerald-600">₩{(revenueStats?.fixedExpenditure || 0).toLocaleString()}</h3>
                     </div>
-                    <div className="mt-4">
-                        <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden" title="매출 대비 지출 비중">
-                            <motion.div 
-                                className="bg-red-400 h-full" 
+                    <div className="mt-3 pt-2 border-t border-gray-50 space-y-0.5">
+                        <p className="text-[8px] font-black text-gray-300 uppercase tracking-tighter">월급 · 임대료 · 서버 · 구독료</p>
+                        <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden" title="총 지출 대비 고정비 비중">
+                            <motion.div
+                                className="bg-emerald-400 h-full"
                                 initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(((revenueStats?.expenditure || 0) / (revenueStats?.total || 1)) * 100, 100)}%` }}
+                                animate={{ width: `${Math.min(((revenueStats?.fixedExpenditure || 0) / (revenueStats?.expenditure || 1)) * 100, 100)}%` }}
                                 transition={{ duration: 1, ease: "easeOut" }}
                             />
                         </div>
-
-
                     </div>
                 </div>
 
+                {/* 유동비 */}
+                <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-amber-400 transition-all">
+                    <div>
+                        <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1.5 line-clamp-1">유동비</p>
+                        <h3 className="text-xl font-black italic text-amber-600">₩{(revenueStats?.variableExpenditure || 0).toLocaleString()}</h3>
+                    </div>
+                    <div className="mt-4">
+                        <div className="w-full bg-gray-50 h-1 rounded-full overflow-hidden" title="매출 대비 유동비 비중">
+                            <motion.div
+                                className="bg-amber-400 h-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(((revenueStats?.variableExpenditure || 0) / (revenueStats?.total || 1)) * 100, 100)}%` }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 순수익 */}
                 <div className="bg-bee-black p-5 rounded-[28px] shadow-lg flex flex-col justify-between relative overflow-hidden group/card hover:-translate-y-1 transition-all">
                     <div className="absolute top-0 right-0 p-3 opacity-10 text-bee-yellow group-hover/card:rotate-12 transition-transform">
                         <i className="fa-solid fa-chart-line text-2xl"></i>
@@ -240,6 +260,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     <p className="text-[8px] font-black text-emerald-400 mt-2 uppercase">마진율: {Math.round(((revenueStats?.netTotal || 0) / (revenueStats?.total || 1)) * 100)}%</p>
                 </div>
 
+                {/* 부가세 */}
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-blue-400 transition-all">
                     <div>
                         <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">부가세 별도 (예상)</p>
@@ -248,6 +269,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     <p className="text-[8px] font-black text-gray-300 mt-2 uppercase tracking-tighter">약 1/11 산출 기준</p>
                 </div>
 
+                {/* 당월 누적매출 */}
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-purple-400 transition-all col-span-2 md:col-span-1 lg:col-span-1">
                     <div>
                         <p className="text-[9px] font-black text-purple-400 uppercase tracking-widest mb-1.5 line-clamp-1">당월 누적매출</p>

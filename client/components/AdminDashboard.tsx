@@ -6,6 +6,7 @@ import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType,
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
 import { StorageService } from '../services/storageService';
 import { AuditService } from '../services/auditService';
+import { sendZPL, buildBookingLabelZPL } from '../services/zebraPrintService';
 import { uploadBranchManagedAsset, uploadHeroManagedAsset, uploadNoticeManagedAsset } from '../services/supabaseStorageUploadService';
 import { useBookings } from '../src/domains/booking/hooks/useBookings';
 import { useLocations } from '../src/domains/location/hooks/useLocations';
@@ -1513,7 +1514,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
    */
   const saveAdmin = async (data?: Partial<AdminUser>) => {
     const targetForm = data || adminForm;
-    const selectedLocation = locations.find((location) => location.id === targetForm.branchId);
+    const selectedLocation = locations.find((location) =>
+      location.id === targetForm.branchId ||
+      (location.supabaseId && location.supabaseId === targetForm.branchId)
+    );
     const normalizedBranchCode =
       targetForm.branchCode?.trim()
       || selectedLocation?.branchCode?.trim()
@@ -1553,14 +1557,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       };
 
       await StorageService.saveAdmin(cleanForm);
-      // [스봉이] 데이터 저장 후 캐시 무효화 💅
-      queryClient.invalidateQueries({ queryKey: ['admins'] });
+      const refreshedAdmins = await StorageService.getAdmins();
+      queryClient.setQueryData(['admins'], refreshedAdmins);
+      await queryClient.invalidateQueries({ queryKey: ['admins'] });
       
       setAdminForm({ name: '', jobTitle: '', password: '' });
       alert(targetForm.id ? '직원 정보가 수정되었습니다.' : '직원이 등록되었습니다.');
     } catch (e) {
       console.error("Failed to save admin", e);
       alert("직원 저장에 실패했습니다.");
+      throw e; // HRTab handleSave가 패널을 닫지 않도록 rethrow
     } finally {
       setIsSaving(false);
     }
@@ -1572,7 +1578,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     setIsSaving(true);
     try {
       const result = await StorageService.deduplicateAdmins();
-      queryClient.invalidateQueries({ queryKey: ['admins'] });
+      const refreshedAdmins = await StorageService.getAdmins();
+      queryClient.setQueryData(['admins'], refreshedAdmins);
+      await queryClient.invalidateQueries({ queryKey: ['admins'] });
       alert(`정리가 끝났어요! 총 ${result.total}명 중 ${result.removed}개의 중복 데이터를 털어버렸습니다. ✨`);
     } catch (error) {
       console.error("Deduplication error", error);
@@ -1601,8 +1609,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     setIsSaving(true);
     try {
       await StorageService.deleteAdmin(id);
-      // Force cache invalidation to ensure UI is in sync
-      queryClient.invalidateQueries({ queryKey: ['admins'] });
+      const refreshedAdmins = await StorageService.getAdmins();
+      queryClient.setQueryData(['admins'], refreshedAdmins);
+      await queryClient.invalidateQueries({ queryKey: ['admins'] });
       alert("삭제되었습니다.");
     } catch (e) {
       console.error("Delete error", e);
@@ -2065,209 +2074,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
   };
 
-  const handlePrintLabel = (booking: BookingState) => {
-    const originName = locations.find(l => l.id === booking.pickupLocation)?.name || booking.pickupLocation;
-    const destName = locations.find(l => l.id === booking.dropoffLocation)?.name || booking.dropoffLocation;
+  const handlePrintLabel = async (booking: BookingState) => {
+    const originName =
+      locations.find(l => l.id === booking.pickupLocation || l.shortCode === booking.pickupLocation)?.name ||
+      booking.pickupLocation || '-';
+    const destName = booking.serviceType === 'DELIVERY'
+      ? (locations.find(l => l.id === booking.dropoffLocation || l.shortCode === booking.dropoffLocation)?.name ||
+         booking.dropoffAddress || booking.dropoffLocation || '-')
+      : originName;
+    const codeLabel = booking.serviceType === 'DELIVERY' ? 'DELIVERY CODE' : 'STORAGE CODE';
+    const displayCode = booking.reservationCode || booking.id || '-';
 
-    const printWindow = window.open('', '', 'width=1200,height=800');
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Beeliber Label - ${booking.id}</title>
-          <style>
-            @page { 
-              size: 750mm 500mm landscape; 
-              margin: 0; 
-            }
-            * { box-sizing: border-box; }
-            body {
-              font-family: 'Inter', 'Apple SD Gothic Neo', sans-serif;
-              margin: 0;
-              padding: 30mm;
-              width: 750mm;
-              height: 500mm;
-              display: flex;
-              flex-direction: column;
-              background-color: #fff;
-              color: #000;
-              overflow: hidden;
-              /* 인쇄물 배율 설정 */
-              zoom: 0.1;
-              -moz-transform: scale(0.1);
-              -moz-transform-origin: 0 0;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              border-bottom: 15px solid #ffcb05;
-              padding-bottom: 15mm;
-              margin-bottom: 20mm;
-            }
-            .logo { font-size: 100px; font-weight: 1000; font-style: italic; letter-spacing: -5px; }
-            .service-type {
-              font-size: 60px;
-              font-weight: 900;
-              background: #000;
-              color: #ffcb05;
-              padding: 8mm 25mm;
-              border-radius: 30px;
-              text-transform: uppercase;
-            }
-
-            .main-content {
-              flex: 1;
-              display: grid;
-              grid-template-columns: 1.2fr 1fr;
-              gap: 30mm;
-            }
-
-            .info-box {
-              background: #fdfdfd;
-              border: 5px solid #f0f0f0;
-              border-radius: 60px;
-              padding: 20mm;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-            }
-
-            .label {
-              font-size: 32px;
-              color: #999;
-              font-weight: 900;
-              text-transform: uppercase;
-              letter-spacing: 8px;
-              margin-bottom: 10mm;
-            }
-            .value {
-              font-size: 85px;
-              font-weight: 1000;
-              line-height: 1.1;
-              word-break: break-all;
-            }
-
-            .highlight-value {
-              color: #ffcb05;
-              background: #000;
-              display: inline-block;
-              padding: 5mm 15mm;
-              border-radius: 20px;
-            }
-
-            .booking-id-section {
-              grid-column: span 2;
-              background: #ffcb05;
-              padding: 15mm;
-              border-radius: 50px;
-              text-align: center;
-              margin-top: 10mm;
-            }
-            .booking-id-label {
-              font-size: 32px;
-              font-weight: 900;
-              color: rgba(0,0,0,0.5);
-              letter-spacing: 15px;
-              margin-bottom: 5mm;
-            }
-            .booking-id-value {
-              font-size: 180px;
-              font-weight: 1000;
-              letter-spacing: -5px;
-              color: #000;
-            }
-
-            .footer {
-              margin-top: 20mm;
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-              border-top: 4px solid #f0f0f0;
-              padding-top: 10mm;
-              font-size: 28px;
-              font-weight: bold;
-              color: #bbb;
-              letter-spacing: 2px;
-            }
-
-            .route-info {
-              display: flex;
-              flex-direction: column;
-              gap: 10mm;
-            }
-            .route-step {
-               display: flex;
-               align-items: center;
-               gap: 10mm;
-            }
-            .route-dot {
-              width: 30px;
-              height: 30px;
-              border-radius: 50%;
-              background: #ffcb05;
-            }
-            .route-arrow { color: #ffcb05; font-size: 60px; margin-left: 20mm; margin-top: -5mm; margin-bottom: -5mm; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="logo">beeliber</div>
-            <div class="service-type">${booking.serviceType}</div>
-          </div>
-
-          <div class="main-content">
-            <div class="info-box">
-              <div class="info-group">
-                <div class="label">Customer</div>
-                <div class="value">${booking.userName}</div>
-              </div>
-              <div class="info-group" style="margin-top: 15mm;">
-                <div class="label">Schedule</div>
-                <div class="value">
-                  ${booking.pickupDate}<br/>
-                  <span class="highlight-value">${booking.pickupTime}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="info-box" style="border-left: 15px solid #ffcb05;">
-              <div class="label">Route</div>
-              <div class="route-info">
-                <div class="route-step">
-                   <div class="route-dot"></div>
-                   <div class="value">${originName}</div>
-                </div>
-                <div class="route-arrow">↓</div>
-                <div class="route-step">
-                   <div class="route-dot" style="background: #000;"></div>
-                   <div class="value">${destName}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="booking-id-section">
-                <div class="booking-id-label">DELIVERY CODE</div>
-                <div class="booking-id-value">${booking.id}</div>
-            </div>
-          </div>
-
-          <div class="footer">
-             <div>BEELIBER GLOBAL LOGISTICS</div>
-             <div>PRINTED: ${new Date().toLocaleString()}</div>
-          </div>
-
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() { window.close(); }
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    try {
+      const zpl = buildBookingLabelZPL({
+        serviceType: booking.serviceType || 'STORAGE',
+        customerName: booking.userName || '-',
+        pickupDate: booking.pickupDate || '-',
+        pickupTime: booking.pickupTime || '-',
+        originName,
+        destName,
+        codeLabel,
+        displayCode,
+        bags: booking.bags,
+        bagSummary: (booking as any).bagSummary,
+        dropoffDate: booking.dropoffDate || booking.returnDate,
+        nametagId: (booking as any).nametagId,
+        status: booking.status,
+        userEmail: booking.userEmail,
+      });
+      await sendZPL(zpl);
+    } catch (err: any) {
+      console.error('[ZebraPrint] 실패:', err);
+      alert(`라벨 프린터 오류: ${err?.message || err}\n\nZebra Browser Print 앱이 실행 중인지 확인해주세요.\nhttps://www.zebra.com → Support → Browser Print`);
+    }
   };
 
   const handleUpdateBooking = async () => {

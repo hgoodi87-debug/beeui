@@ -8,4 +8,26 @@ Disallow: /mypage
 Disallow: /booking-success
 Disallow: /payments/
 
+# AI 검색엔진 크롤러 명시 허용 (GEO 최적화)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot-Extended
+Allow: /
+
+User-agent: CCBot
+Disallow: /
+
 Sitemap: https://bee-liber.com/sitemap.xml

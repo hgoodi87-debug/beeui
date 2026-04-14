@@ -566,6 +566,8 @@ const upsertEmployee = async ({
     employment_status: mapEmploymentStatus(admin.status),
     security: sanitizeJson({
       ...(admin.security || {}),
+      // permissions 배열을 security JSONB에 저장 — employees 테이블에 별도 컬럼 없음
+      permissions: Array.isArray(admin.permissions) ? admin.permissions : undefined,
       synthetic_email: syntheticEmail,
     }),
     memo: normalizeText(admin.memo) || null,
@@ -633,8 +635,18 @@ const buildMergedAdmin = ({
     loginId:
       normalizeText(input.loginId || existingAdmin?.loginId || input.branchCode || existingAdmin?.branchCode)
       || undefined,
-    branchId: normalizeText(input.branchId || existingAdmin?.branchId) || undefined,
-    branchCode: normalizeText(input.branchCode || existingAdmin?.branchCode) || undefined,
+    // branchId = '' (본사 명시 선택) → branchCode도 함께 초기화. JSON 직렬화로 branchCode는 undefined로 제거되므로 || 폴백 금지
+    ...(input.branchId === '' ? {
+      branchId: undefined,
+      branchCode: undefined,
+    } : {
+      branchId: input.branchId != null
+        ? (normalizeText(input.branchId) || undefined)
+        : (normalizeText(existingAdmin?.branchId) || undefined),
+      branchCode: input.branchCode != null
+        ? (normalizeText(input.branchCode) || undefined)
+        : (normalizeText(existingAdmin?.branchCode) || undefined),
+    }),
     phone: normalizeText(input.phone || existingAdmin?.phone) || undefined,
     memo: normalizeText(input.memo || existingAdmin?.memo) || undefined,
     role: inferLegacyRole({ ...(existingAdmin || {}), ...(input || {}) }),
@@ -738,7 +750,7 @@ const loadAdminFromSupabase = async (adminId: string): Promise<Partial<AdminPayl
   const queries = [
     requestSupabaseTable<Record<string, unknown>>(
       "employees",
-      `select=id,profile_id,legacy_admin_doc_id,name,email,login_id,job_title,org_type,employment_status,memo&legacy_admin_doc_id=eq.${encodeURIComponent(normalizedId)}&limit=1`,
+      `select=id,profile_id,legacy_admin_doc_id,name,email,login_id,job_title,org_type,employment_status,security,memo&legacy_admin_doc_id=eq.${encodeURIComponent(normalizedId)}&limit=1`,
     ),
   ];
 
@@ -746,14 +758,14 @@ const loadAdminFromSupabase = async (adminId: string): Promise<Partial<AdminPayl
     queries.push(
       requestSupabaseTable<Record<string, unknown>>(
         "employees",
-        `select=id,profile_id,legacy_admin_doc_id,name,email,login_id,job_title,org_type,employment_status,memo&id=eq.${encodeURIComponent(normalizedId)}&limit=1`,
+        `select=id,profile_id,legacy_admin_doc_id,name,email,login_id,job_title,org_type,employment_status,security,memo&id=eq.${encodeURIComponent(normalizedId)}&limit=1`,
       ),
     );
   } else {
     queries.push(
       requestSupabaseTable<Record<string, unknown>>(
         "employees",
-        `select=id,profile_id,legacy_admin_doc_id,name,email,login_id,job_title,org_type,employment_status,memo&login_id=eq.${encodeURIComponent(normalizedId)}&limit=1`,
+        `select=id,profile_id,legacy_admin_doc_id,name,email,login_id,job_title,org_type,employment_status,security,memo&login_id=eq.${encodeURIComponent(normalizedId)}&limit=1`,
       ),
     );
   }
@@ -778,6 +790,10 @@ const loadAdminFromSupabase = async (adminId: string): Promise<Partial<AdminPayl
   const branchCode = normalizeText(primaryBranch?.branch?.branch_code);
   const legacyBranchId = await resolveLegacyLocationId(branchCode);
 
+  const securityJson = employee.security && typeof employee.security === "object"
+    ? employee.security as Record<string, unknown>
+    : {};
+
   return {
     id: normalizeText(employee.legacy_admin_doc_id || employee.id),
     employeeId: normalizeText(employee.id),
@@ -792,6 +808,8 @@ const loadAdminFromSupabase = async (adminId: string): Promise<Partial<AdminPayl
     role: mapSupabaseRoleToLegacyRole(normalizeText(primaryRole?.role?.code)),
     branchId: legacyBranchId || undefined,
     branchCode: branchCode || undefined,
+    permissions: Array.isArray(securityJson.permissions) ? securityJson.permissions as string[] : [],
+    security: securityJson,
   };
 };
 

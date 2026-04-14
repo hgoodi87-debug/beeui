@@ -26,8 +26,8 @@ const USE_CASE_LABELS: Record<string, string> = {
 
 // translation use_case 필드 라벨
 const TRANSLATION_FIELD_LABELS: Record<string, string> = {
-  en: '지점명 EN', ja: '지점명 JA', zh: '지점명 ZH',
-  zh_tw: '지점명 ZH-TW', zh_hk: '지점명 ZH-HK',
+  name_en: '지점명 EN', name_ja: '지점명 JA', name_zh: '지점명 ZH',
+  name_zh_tw: '지점명 ZH-TW', name_zh_hk: '지점명 ZH-HK',
   address_en: '주소 EN', address_ja: '주소 JA', address_zh: '주소 ZH',
   address_zh_tw: '주소 ZH-TW', address_zh_hk: '주소 ZH-HK',
   pickupGuide_en: '픽업 안내 EN', pickupGuide_ja: '픽업 안내 JA',

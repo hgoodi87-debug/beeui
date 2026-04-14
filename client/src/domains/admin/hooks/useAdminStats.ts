@@ -83,7 +83,9 @@ export const useAdminStats = ({
             const d = new Date(e.date);
             return d >= start && d <= end;
         });
-        const totalExp = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
+        const totalExp     = targetExps.reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
+        const fixedExp     = targetExps.filter((e: Expenditure) => e.costType === 'fixed').reduce((sum: number, e: Expenditure) => sum + (e.amount || 0), 0);
+        const variableExp  = totalExp - fixedExp;
 
         if (dailySummaryContext.hasSqlSummaries) {
             const totalRevenue = sumSummaryField(dailySummaryContext.filteredDailySummaries, 'totalRevenue');
@@ -104,6 +106,8 @@ export const useAdminStats = ({
                 paypal: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'paypalRevenue'),
                 count: sumSummaryField(dailySummaryContext.filteredDailySummaries, 'activeBookingCount'),
                 expenditure: totalExp,
+                fixedExpenditure: fixedExp,
+                variableExpenditure: variableExp,
                 netTotal: totalRevenue - totalExp,
                 vat: Math.round(totalRevenue / 11),
                 mtdRevenue,
@@ -148,6 +152,8 @@ export const useAdminStats = ({
             paypal: filterMethod('paypal'),
             count: targetBookings.length,
             expenditure: totalExp,
+            fixedExpenditure: fixedExp,
+            variableExpenditure: variableExp,
             netTotal: totalRevenue - totalExp,
             vat: Math.round(totalRevenue / 11),
             mtdRevenue,

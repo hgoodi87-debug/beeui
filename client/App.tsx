@@ -45,6 +45,7 @@ import LanguagePopup from './components/LanguagePopup';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import SEO from './components/SEO';
+import { BEELIBER_ORGANIZATION_SCHEMA, BEELIBER_SERVICE_SCHEMA } from './src/constants/globalSchemas';
 
 import { auth } from './firebaseApp';
 import { StorageService } from './services/storageService';
@@ -588,6 +589,9 @@ const App: React.FC = () => {
     </motion.div>
   );
 
+  // 전역 스키마: 지점 페이지가 아닌 경우 Organization + Service 스키마 주입
+  const globalSchemas = [BEELIBER_ORGANIZATION_SCHEMA, BEELIBER_SERVICE_SCHEMA];
+
   let branchSchema: any = undefined;
   if (customerBranch) {
     branchSchema = {
@@ -671,7 +675,7 @@ const App: React.FC = () => {
             keywords={t.seo?.keywords}
             lang={lang}
             path={location.pathname}
-            schema={branchSchema}
+            schema={branchSchema ? branchSchema : globalSchemas}
           />
           <ErrorBoundary>
             <Suspense fallback={<LoaderOverlay show={true} />}>

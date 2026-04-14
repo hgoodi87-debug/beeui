@@ -49,8 +49,8 @@ async function generateTranslations(locationData: {
 Brand voice: Premium, warm, trustworthy. Never use: cheap, discount, heavy, logistics.
 Translate all fields accurately and naturally for each locale.
 
-Return ONLY valid JSON with these keys:
-en, ja, zh, zh_tw, zh_hk,
+Return ONLY valid JSON with these exact keys:
+name_en, name_ja, name_zh, name_zh_tw, name_zh_hk,
 address_en, address_ja, address_zh, address_zh_tw, address_zh_hk,
 pickupGuide_en, pickupGuide_ja, pickupGuide_zh, pickupGuide_zh_tw, pickupGuide_zh_hk,
 description_en, description_ja, description_zh, description_zh_tw, description_zh_hk`;

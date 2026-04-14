@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { BookingState, Expenditure, CashClosing, AdminTab } from '../../types';
+import { BookingState, Expenditure, CashClosing, AdminTab, BankTransaction, BankTxType } from '../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { exportKoreanAccountingXLSX } from '../../utils/accountingExport';
 import { exportPaymentMethodWordDoc } from '../../utils/wordExport';
 import { loadAllActiveBranches, loadLogRange, KioskStorageLog } from '../../services/kioskDb';
+import { useBankTransactions, useBankTransactionsMutations } from '../../src/domains/admin/hooks/useBankTransactions';
 
 
 interface AccountingTabProps {
@@ -25,7 +26,7 @@ interface AccountingTabProps {
     t: any;
 }
 
-type SubTab = 'revenue' | 'expenditure' | 'calendar' | 'kiosk';
+type SubTab = 'revenue' | 'expenditure' | 'calendar' | 'kiosk' | 'bank';
 
 const AccountingTab: React.FC<AccountingTabProps> = ({
     revenueStartDate,
@@ -46,6 +47,43 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     t
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
+
+    // 통장 잔고 내역
+    const { data: bankTxs = [], isLoading: bankLoading } = useBankTransactions({ enabled: activeSubTab === 'bank' });
+    const { save: saveBankTx, remove: deleteBankTx } = useBankTransactionsMutations();
+    const [bankSaving, setBankSaving] = useState(false);
+    const emptyBankForm: Omit<BankTransaction, 'id' | 'createdAt' | 'createdBy'> = {
+        date: new Date().toISOString().slice(0, 10),
+        bankName: '',
+        accountAlias: '',
+        txType: 'deposit' as BankTxType,
+        amount: 0,
+        balance: 0,
+        description: '',
+    };
+    const [bankForm, setBankForm] = useState(emptyBankForm);
+
+    const bankStats = useMemo(() => {
+        const deposits = bankTxs.filter(t => t.txType === 'deposit').reduce((s, t) => s + t.amount, 0);
+        const withdrawals = bankTxs.filter(t => t.txType === 'withdrawal').reduce((s, t) => s + t.amount, 0);
+        const latestBalance = bankTxs.length > 0 ? bankTxs[0].balance : 0;
+        return { deposits, withdrawals, latestBalance, count: bankTxs.length };
+    }, [bankTxs]);
+
+    const handleSaveBankTx = async () => {
+        if (!bankForm.bankName || bankForm.amount <= 0) return;
+        setBankSaving(true);
+        try {
+            await saveBankTx({
+                ...bankForm,
+                createdBy: 'admin',
+                createdAt: new Date().toISOString(),
+            });
+            setBankForm(emptyBankForm);
+        } finally {
+            setBankSaving(false);
+        }
+    };
 
     // 키오스크 정산 데이터
     const [kioskLogs, setKioskLogs] = useState<KioskStorageLog[]>([]);
@@ -193,6 +231,12 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'kiosk' ? 'bg-bee-yellow text-bee-black shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                         >
                             🐝 키오스크 정산
+                        </button>
+                        <button
+                            onClick={() => setActiveSubTab('bank')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'bank' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                        >
+                            🏦 통장 잔고
                         </button>
                     </div>
                 </div>
@@ -798,6 +842,227 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* 🏦 통장 잔고 내역 */}
+                {activeSubTab === 'bank' && (
+                    <div className="space-y-6">
+                        {/* 요약 카드 */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col gap-1">
+                                <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">현재 잔액</p>
+                                <p className="text-xl font-black italic text-blue-600">₩{bankStats.latestBalance.toLocaleString()}</p>
+                                <p className="text-[8px] font-black text-gray-300 mt-1 uppercase">최근 기록 기준</p>
+                            </div>
+                            <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col gap-1">
+                                <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">총 입금</p>
+                                <p className="text-xl font-black italic text-emerald-600">₩{bankStats.deposits.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col gap-1">
+                                <p className="text-[9px] font-black text-red-400 uppercase tracking-widest">총 출금</p>
+                                <p className="text-xl font-black italic text-red-500">₩{bankStats.withdrawals.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-bee-black p-5 rounded-[28px] flex flex-col gap-1">
+                                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">기록 건수</p>
+                                <p className="text-xl font-black italic text-bee-yellow">{bankStats.count.toLocaleString()}<span className="text-xs text-gray-500 ml-1">건</span></p>
+                            </div>
+                        </div>
+
+                        {/* 입력 폼 */}
+                        <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                            <h3 className="text-lg font-black flex items-center gap-2">
+                                <i className="fa-solid fa-plus text-blue-500"></i> 거래 내역 입력
+                            </h3>
+                            <div className="bg-gray-50/50 p-6 rounded-[32px] border border-gray-50 space-y-5">
+                                {/* 1행: 날짜 / 은행명 / 계좌별칭 */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">거래일</label>
+                                        <input
+                                            type="date"
+                                            title="거래일"
+                                            value={bankForm.date}
+                                            onChange={e => setBankForm(f => ({ ...f, date: e.target.value }))}
+                                            className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-blue-200 transition-all shadow-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">은행명</label>
+                                        <input
+                                            type="text"
+                                            list="bank-name-list"
+                                            value={bankForm.bankName}
+                                            onChange={e => setBankForm(f => ({ ...f, bankName: e.target.value }))}
+                                            placeholder="국민, 신한, 우리…"
+                                            className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-blue-200 transition-all shadow-sm"
+                                        />
+                                        <datalist id="bank-name-list">
+                                            {['국민은행', '신한은행', '우리은행', 'IBK기업은행', 'KEB하나은행', '카카오뱅크', '토스뱅크', '농협은행'].map(b => (
+                                                <option key={b} value={b} />
+                                            ))}
+                                        </datalist>
+                                    </div>
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">계좌 별칭 (선택)</label>
+                                        <input
+                                            type="text"
+                                            value={bankForm.accountAlias || ''}
+                                            onChange={e => setBankForm(f => ({ ...f, accountAlias: e.target.value }))}
+                                            placeholder="예: 국민-운영 / 신한-급여"
+                                            className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-blue-200 transition-all shadow-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 2행: 구분 / 금액 / 잔액 */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">구분</label>
+                                        <div className="flex gap-2">
+                                            {([
+                                                { value: 'deposit',    label: '입금', icon: 'fa-arrow-down', color: 'emerald' },
+                                                { value: 'withdrawal', label: '출금', icon: 'fa-arrow-up',   color: 'red' },
+                                            ] as const).map(opt => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => setBankForm(f => ({ ...f, txType: opt.value }))}
+                                                    className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[10px] font-black transition-all border-2 ${
+                                                        bankForm.txType === opt.value
+                                                            ? opt.value === 'deposit'
+                                                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-md'
+                                                                : 'bg-red-500 text-white border-red-500 shadow-md'
+                                                            : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'
+                                                    }`}
+                                                >
+                                                    <i className={`fa-solid ${opt.icon} text-[9px]`}></i>
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">거래 금액 (₩)</label>
+                                        <input
+                                            type="number"
+                                            value={bankForm.amount || ''}
+                                            onChange={e => setBankForm(f => ({ ...f, amount: Number(e.target.value) }))}
+                                            placeholder="0"
+                                            className={`w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none transition-all shadow-sm ${bankForm.txType === 'deposit' ? 'focus:border-emerald-200 text-emerald-600' : 'focus:border-red-200 text-red-500'}`}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 text-left">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">거래 후 잔액 (₩)</label>
+                                        <input
+                                            type="number"
+                                            value={bankForm.balance || ''}
+                                            onChange={e => setBankForm(f => ({ ...f, balance: Number(e.target.value) }))}
+                                            placeholder="0"
+                                            className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-blue-200 transition-all shadow-sm text-blue-600"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 3행: 적요 + 저장 버튼 */}
+                                <div className="flex gap-4 items-end">
+                                    <div className="flex-1 space-y-2 text-left">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">적요 (거래 설명)</label>
+                                        <input
+                                            type="text"
+                                            value={bankForm.description}
+                                            onChange={e => setBankForm(f => ({ ...f, description: e.target.value }))}
+                                            placeholder="예: 카드대금 자동이체, 임대료, 직원급여…"
+                                            className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-blue-200 transition-all shadow-sm"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleSaveBankTx}
+                                        disabled={bankSaving || !bankForm.bankName || bankForm.amount <= 0}
+                                        className="flex items-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-600/20 whitespace-nowrap"
+                                    >
+                                        {bankSaving ? (
+                                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <i className="fa-solid fa-floppy-disk"></i>
+                                        )}
+                                        저장
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 내역 테이블 */}
+                        <div className="bg-white p-6 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-black flex items-center gap-2">
+                                    <i className="fa-solid fa-table-list text-blue-500"></i> 통장 거래 내역
+                                </h3>
+                                {bankLoading && (
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                        <span className="text-[9px] font-black text-gray-300 uppercase">불러오는 중</span>
+                                    </div>
+                                )}
+                                {!bankLoading && (
+                                    <span className="text-[10px] font-black text-gray-300 uppercase">{bankTxs.length}건</span>
+                                )}
+                            </div>
+                            <div className="overflow-hidden rounded-[32px] border border-gray-50">
+                                <div className="max-h-[560px] overflow-y-auto custom-scrollbar">
+                                    <table className="w-full text-left">
+                                        <thead className="sticky top-0 bg-gray-50 text-[10px] font-black uppercase text-gray-400 z-10">
+                                            <tr>
+                                                <th className="px-5 py-4">날짜</th>
+                                                <th className="px-5 py-4">은행 / 계좌</th>
+                                                <th className="px-5 py-4">적요</th>
+                                                <th className="px-5 py-4 text-right">입금</th>
+                                                <th className="px-5 py-4 text-right">출금</th>
+                                                <th className="px-5 py-4 text-right">잔액</th>
+                                                <th className="px-5 py-4"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50 text-xs">
+                                            {bankTxs.map(tx => (
+                                                <tr key={tx.id} className="hover:bg-blue-50/20 transition-colors group">
+                                                    <td className="px-5 py-4 font-black text-gray-700 whitespace-nowrap">{tx.date}</td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="font-black text-gray-800">{tx.bankName}</div>
+                                                        {tx.accountAlias && <div className="text-[9px] text-gray-400 mt-0.5">{tx.accountAlias}</div>}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-gray-500 max-w-[200px] truncate">{tx.description || '—'}</td>
+                                                    <td className="px-5 py-4 text-right font-black text-emerald-600">
+                                                        {tx.txType === 'deposit' ? `+₩${tx.amount.toLocaleString()}` : '—'}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-right font-black text-red-500">
+                                                        {tx.txType === 'withdrawal' ? `-₩${tx.amount.toLocaleString()}` : '—'}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-right font-black text-blue-600 tabular-nums">
+                                                        ₩{tx.balance.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <button
+                                                            onClick={() => tx.id && deleteBankTx(tx.id)}
+                                                            title="삭제"
+                                                            className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-all"
+                                                        >
+                                                            <i className="fa-solid fa-trash text-[10px]"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {!bankLoading && bankTxs.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={7} className="px-6 py-20 text-center text-gray-300 font-black italic">
+                                                        거래 내역이 없습니다. 위 폼에서 입력하세요.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

@@ -363,7 +363,7 @@ const writeBatch = (_db: any) => {
     commit: async () => { await Promise.allSettled(ops.map(op => op())); },
   };
 };
-import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice, AdminRevenueDailySummary, AdminRevenueMonthlySummary, MonthlyClosing, BranchPayout } from "../types";
+import { BookingState, BookingStatus, LocationOption, TermsPolicyData, PrivacyPolicyData, QnaData, HeroConfig, PriceSettings, GoogleCloudConfig, PartnershipInquiry, CashClosing, Expenditure, AdminUser, StorageTier, ChatMessage, DiscountCode, ChatSession, TranslatedLocationData, UserProfile, UserCoupon, BranchProspect, ProspectStatus, SystemNotice, AdminRevenueDailySummary, AdminRevenueMonthlySummary, MonthlyClosing, BranchPayout, BankTransaction } from "../types";
 import { LOCATIONS as INITIAL_LOCATIONS } from "../constants";
 // (Duplicate imports removed successfully 💅)
 import {
@@ -744,6 +744,11 @@ const loadSupabaseCashClosings = async (): Promise<CashClosing[]> => {
 const loadSupabaseExpenditures = async (): Promise<Expenditure[]> => {
   const rows = await supabaseGet<Array<Record<string, unknown>>>('expenditures?select=*&order=date.desc&limit=1000');
   return (rows || []).map((row) => snakeToCamel(row) as unknown as Expenditure);
+};
+
+const loadSupabaseBankTransactions = async (): Promise<BankTransaction[]> => {
+  const rows = await supabaseGet<Array<Record<string, unknown>>>('bank_transactions?select=*&order=date.desc,created_at.desc&limit=2000');
+  return (rows || []).map((row) => snakeToCamel(row) as unknown as BankTransaction);
 };
 
 
@@ -2049,6 +2054,38 @@ export const StorageService = {
       loadSupabaseExpenditures,
       callback
     );
+  },
+
+  // --- Bank Transactions (통장 잔고 내역) ---
+  getBankTransactions: async (): Promise<BankTransaction[]> => {
+    try {
+      const data = await loadSupabaseBankTransactions();
+      return data;
+    } catch (e) {
+      console.warn('[Storage] Supabase bank_transactions failed:', e);
+      return [];
+    }
+  },
+
+  saveBankTransaction: async (tx: BankTransaction): Promise<BankTransaction> => {
+    if (!isSupabaseDataEnabled()) throw new Error('Supabase not configured.');
+    const { camelToSnake, supabaseMutate } = await import('./supabaseClient');
+    const payload = camelToSnake(JSON.parse(JSON.stringify(tx)));
+    let rows: unknown;
+    if (tx.id) {
+      rows = await supabaseMutate(`bank_transactions?id=eq.${encodeURIComponent(tx.id)}`, 'PATCH', payload);
+    } else {
+      rows = await supabaseMutate('bank_transactions', 'POST', payload);
+    }
+    const persisted = Array.isArray(rows) ? rows[0] : rows;
+    return persisted ? (snakeToCamel(persisted as Record<string, unknown>) as unknown as BankTransaction) : tx;
+  },
+
+  deleteBankTransaction: async (id: string): Promise<void> => {
+    const nid = String(id || '').trim();
+    if (!nid || !isUuidLike(nid)) throw new Error('Valid UUID required');
+    const { supabaseMutate } = await import('./supabaseClient');
+    await supabaseMutate(`bank_transactions?id=eq.${encodeURIComponent(nid)}`, 'DELETE');
   },
 
   getAdminRevenueDailySummaries: async (): Promise<AdminRevenueDailySummary[]> => {

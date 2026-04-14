@@ -193,6 +193,21 @@ export interface Expenditure {
     createdAt: string;
 }
 
+export type BankTxType = 'deposit' | 'withdrawal'; // 입금 | 출금
+
+export interface BankTransaction {
+    id?: string;
+    date: string;               // 거래일 YYYY-MM-DD
+    bankName: string;           // 은행명
+    accountAlias?: string;      // 계좌 별칭 (예: 국민-운영)
+    txType: BankTxType;         // 입금 / 출금
+    amount: number;             // 거래금액
+    balance: number;            // 거래 후 잔액
+    description: string;        // 적요
+    createdBy: string;
+    createdAt: string;
+}
+
 export interface AdminRevenueDailySummary {
     date: string;
     branchId?: string;

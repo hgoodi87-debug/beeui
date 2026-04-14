@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.3.1.0] - 2026-04-14
+
+### Added
+- **키오스크 대용량 수용**: 100개 태그 슬롯 + 언어 팝업 중앙 모달 개편 + 바우처 픽업 사진 지원
+- **제브라 라벨 프린터 연동**: `zebraPrintService` 신규 — ZPL 코드 생성 + Zebra Browser Print API 전송, 직원 페이지 라벨 인쇄 버튼 연결
+- **키오스크 QR 반납 흐름 개선**: 고객 바우처에서 "직원 전용 반납 완료" 버튼 제거, 직원 관리 페이지(KIOSK 탭)에서만 반납 처리 가능
+
+### Fixed
+- **직원 소속지점 수정 불가 버그**: `employment_status 'inactive'` 정규화 + UUID v7 지원
+- **완료 탭 기본 날짜**: 과거 이력이 아닌 오늘 날짜로 기본 설정
+- **알림 함수**: `on-booking-created` 재배포 + Vault 의존성 제거
+- **직원 등록/수정 401 오류**: Edge Function 헤더 분리 수정
+- **챗봇 렌더링**: 메시지 로컬 state 즉시 업데이트로 깜빡임 수정
+- **익명 예약 INSERT 실패**: `return=minimal`로 SELECT 권한 의존성 제거
+- **현금 현장결제 오류**: `DIRECT_BOOKING_MODE=true` 설정 수정
+- **SEO 색인 실패 3건 수정**: 구글 서치콘솔 기준 canonical·hreflang 오류 수정
+- **배포 후 청크 해시 변경 시 자동 새로고침**: Error Boundary에서 구버전 청크 감지 시 자동 reload
+
+### Changed
+- **바우처 언어 팝업**: 키오스크 첫 페이지(`/kiosk/:slug`)에만 표시하도록 범위 축소
+- **WebP 이미지 최적화 + 성능 개선**: 키오스크 이미지 포맷 전환 및 초기 로딩 최적화
+
 ## [1.3.0.0] - 2026-04-08
 
 ### Added

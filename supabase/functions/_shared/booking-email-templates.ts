@@ -12,6 +12,9 @@ export interface VoucherEmailTemplateInput {
   finalPrice: number;
   bagSummary: string;
   nametagNumber?: string;
+  pickupImageUrl?: string;
+  pickupGuide?: string;
+  pickupMapUrl?: string;
   adminNote?: string;
 }
 
@@ -91,6 +94,16 @@ export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
             <tr><td style="padding:10px 0;color:#64748b;border-bottom:1px solid #f1f5f9;">수하물</td><td style="padding:10px 0;color:#111827;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:800;">${bagSummary}</td></tr>
             <tr><td style="padding:16px 0 0;color:#111827;font-weight:900;">결제 금액</td><td style="padding:16px 0 0;color:#111827;text-align:right;font-size:24px;font-weight:900;">${formatCurrency(input.finalPrice)}</td></tr>
           </table>
+          ${(input.pickupImageUrl || input.pickupGuide) ? `
+          <div style="margin-top:24px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:20px;overflow:hidden;">
+            <div style="padding:14px 18px;background:#111827;display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:11px;font-weight:900;color:#facc15;letter-spacing:0.14em;text-transform:uppercase;">📍 픽업 지점 안내</div>
+              ${input.pickupMapUrl ? `<a href="${escapeHtml(input.pickupMapUrl)}" style="font-size:11px;font-weight:900;color:#facc15;text-decoration:none;background:rgba(250,204,21,0.15);padding:5px 12px;border-radius:8px;border:1px solid rgba(250,204,21,0.3);">🗺 길찾기</a>` : ""}
+            </div>
+            ${input.pickupImageUrl ? `<img src="${escapeHtml(input.pickupImageUrl)}" alt="픽업 지점 사진" style="display:block;width:100%;max-height:240px;object-fit:cover;" />` : ""}
+            ${input.pickupGuide ? `<div style="padding:16px 18px;"><p style="margin:0;color:#374151;font-size:13px;font-weight:700;white-space:pre-line;line-height:1.7;">${escapeHtml(input.pickupGuide)}</p></div>` : ""}
+          </div>
+          ` : ""}
           ${input.adminNote ? `
           <div style="margin-top:20px;padding:16px 20px;background:#fffbeb;border:1px solid #fde68a;border-radius:18px;">
             <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">📋 운영 메모</div>

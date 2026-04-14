@@ -58,6 +58,40 @@ async function getLocationLabel(locationId: string | null, fallbackValue: unknow
   return data?.name || data?.name_en || fallback || lookupValue;
 }
 
+interface LocationInfo {
+  name: string;
+  pickupImageUrl: string;
+  pickupGuide: string;
+  lat: number | null;
+  lng: number | null;
+  address: string;
+}
+
+async function getLocationInfo(locationId: string | null, fallbackName: unknown): Promise<LocationInfo> {
+  const lookupValue = String(locationId || "").trim();
+  const fallback = String(fallbackName || "").trim();
+
+  if (!lookupValue || lookupValue === "custom") {
+    return { name: fallback || "주소 직접 입력", pickupImageUrl: "", pickupGuide: "", lat: null, lng: null, address: "" };
+  }
+
+  const { data } = await supabase
+    .from("locations")
+    .select("id, name, name_en, pickup_image_url, pickup_guide, lat, lng, address")
+    .or(`id.eq.${lookupValue},short_code.eq.${lookupValue}`)
+    .limit(1)
+    .maybeSingle();
+
+  return {
+    name: data?.name || data?.name_en || fallback || lookupValue,
+    pickupImageUrl: data?.pickup_image_url || "",
+    pickupGuide: data?.pickup_guide || "",
+    lat: data?.lat ?? null,
+    lng: data?.lng ?? null,
+    address: data?.address || "",
+  };
+}
+
 // 바우처 이메일 발송 (Gmail SMTP via Deno)
 async function sendVoucherEmail(booking: Record<string, unknown>) {
   const email = booking.user_email as string;
@@ -74,10 +108,11 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
 
   const reservationCode = booking.reservation_code || booking.id;
   const subject = `[Beeliber] 예약 확인 | Booking Confirmed - ${reservationCode}`;
-  const pickupLabel = await getLocationLabel(
+  const pickupInfo = await getLocationInfo(
     booking.pickup_location_id as string | null,
     booking.pickup_location,
   );
+  const pickupLabel = pickupInfo.name;
   const dropoffLabel = booking.service_type === "DELIVERY"
     ? await getLocationLabel(booking.dropoff_location_id as string | null, booking.dropoff_location)
     : pickupLabel;
@@ -93,6 +128,17 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
     <p>가벼운 여행 되세요! 🐝</p>
     <p>— beeliber · bee-liber.com</p>
   `;
+
+  // 네이버 지도 URL 생성 (픽업 지점 좌표 or 주소 기반)
+  const buildMapUrl = (info: LocationInfo) => {
+    if (info.lat && info.lng) {
+      return `https://map.naver.com/v5/search/${encodeURIComponent(info.address || info.name)}?c=${info.lng},${info.lat},15,0,0,0,dh`;
+    }
+    if (info.address) {
+      return `https://map.naver.com/v5/search/${encodeURIComponent(info.address)}`;
+    }
+    return "";
+  };
 
   try {
     // bag_summary 있으면 그걸 우선, 없으면 총 개수만
@@ -116,6 +162,9 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
       finalPrice: Number(booking.final_price || 0),
       bagSummary,
       nametagNumber: String(booking.nametag_number || ""),
+      pickupImageUrl: pickupInfo.pickupImageUrl || undefined,
+      pickupGuide: pickupInfo.pickupGuide || undefined,
+      pickupMapUrl: buildMapUrl(pickupInfo) || undefined,
       adminNote: typeof booking.admin_note === "string" && booking.admin_note.trim()
         ? booking.admin_note.trim()
         : typeof booking.audit_note === "string" && booking.audit_note.trim()

@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Logo from './Logo';
 import { useParams, useNavigate } from 'react-router-dom';
+import { printKioskReceipt } from '../utils/kioskPrint';
 import {
   KioskBranch,
   KioskCfg,
@@ -559,7 +560,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         <input type="number" value={localOps.max_bags}
                           onChange={(e) => setLocalOps((p) => ({ ...p, max_bags: Number(e.target.value) }))}
                           className="bg-white/10 rounded-xl px-3 py-2 text-white text-right font-black w-20 focus:outline-none focus:ring-2 focus:ring-[#F5C842] text-sm"
-                          min={1} max={20} />
+                          min={1} max={100} />
                         <span className="text-white/40 text-sm">개</span>
                       </div>
                     </div>
@@ -626,6 +627,12 @@ const KioskPage: React.FC = () => {
   const [nextTag, setNextTag] = useState(1);
   const [editingTag, setEditingTag] = useState(false);
   const [tagInputVal, setTagInputVal] = useState('1');
+
+  // ── 가방 수량 직접 입력 ──────────────────────────────────────────────
+  const [editingSmall, setEditingSmall] = useState(false);
+  const [editingCarrier, setEditingCarrier] = useState(false);
+  const [smallInputVal, setSmallInputVal] = useState('0');
+  const [carrierInputVal, setCarrierInputVal] = useState('0');
 
   // 성공 화면
   const [step, setStep] = useState<'form' | 'success'>('form');
@@ -727,6 +734,21 @@ const KioskPage: React.FC = () => {
     setOfflineCount(getOfflineQueueSize());
     setSubmitting(false);
     setStep('success');
+    // 접수 완료 즉시 영수증 자동 출력
+    printKioskReceipt({
+      tag,
+      rowLabel,
+      branchName: branch.branch_name,
+      smallQty,
+      carrierQty,
+      duration,
+      startTime,
+      pickupTime,
+      originalPrice,
+      discount,
+      payment,
+      date: today,
+    });
   }, [branch, cfg, smallQty, carrierQty, duration, originalPrice, discount, payment, canSubmit, nextTag]);
 
   const resetForm = () => {
@@ -844,6 +866,24 @@ const KioskPage: React.FC = () => {
               <img src={qrUrl} alt="QR" className="w-44 h-44 rounded-xl" />
             </div>
             <p className="text-gray-400 text-sm">{t.qr_sub}</p>
+            <button
+              onClick={() => printKioskReceipt({
+                tag: resultTag,
+                rowLabel: resultRow,
+                branchName: branch?.branch_name ?? '',
+                smallQty,
+                carrierQty,
+                duration,
+                startTime: resultStartTime,
+                pickupTime: addHours(resultStartTime, duration),
+                originalPrice,
+                discount,
+                payment,
+                date: todayStr(),
+              })}
+              className="w-full bg-[#F5C842] text-[#111111] font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+              <i className="fa-solid fa-print" /> 재출력
+            </button>
             <button onClick={resetForm}
               className="w-full bg-[#111111] text-white font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform">
               {t.reset}
@@ -1077,8 +1117,8 @@ const KioskPage: React.FC = () => {
                       ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
                   >
                     {active && (
-                      <div className="absolute top-2 right-2 w-4 h-4 lg:w-5 lg:h-5 rounded-full bg-[#111111] flex items-center justify-center">
-                        <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px]">{smallQty}</span>
+                      <div className="absolute top-2 right-2 min-w-[20px] h-5 lg:min-w-[24px] lg:h-6 rounded-full bg-[#111111] flex items-center justify-center px-1">
+                        <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px] tabular-nums">{smallQty}</span>
                       </div>
                     )}
                     <img src="/images/bags/hand-bag-photo.png" alt={t.small}
@@ -1095,7 +1135,31 @@ const KioskPage: React.FC = () => {
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => setSmallQty((v) => Math.max(0, v - 1))}
                           className="w-8 h-8 rounded-full bg-[#111111]/15 flex items-center justify-center font-black text-[#111111] active:scale-95">−</button>
-                        <span className="font-black text-[#111111] text-lg tabular-nums w-6 text-center">{smallQty}</span>
+                        {editingSmall ? (
+                          <input
+                            type="number"
+                            value={smallInputVal}
+                            onChange={(e) => setSmallInputVal(e.target.value)}
+                            onBlur={() => {
+                              const v = Math.min(cfg.operations.max_bags, Math.max(0, parseInt(smallInputVal) || 0));
+                              setSmallQty(v); setSmallInputVal(String(v)); setEditingSmall(false);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const v = Math.min(cfg.operations.max_bags, Math.max(0, parseInt(smallInputVal) || 0));
+                                setSmallQty(v); setSmallInputVal(String(v)); setEditingSmall(false);
+                              }
+                              if (e.key === 'Escape') { setSmallInputVal(String(smallQty)); setEditingSmall(false); }
+                            }}
+                            autoFocus
+                            className="w-12 text-center font-black text-[#111111] text-lg tabular-nums bg-transparent border-b-2 border-[#111111] focus:outline-none"
+                          />
+                        ) : (
+                          <span
+                            onClick={() => { setSmallInputVal(String(smallQty)); setEditingSmall(true); }}
+                            className="font-black text-[#111111] text-lg tabular-nums w-10 text-center cursor-text"
+                          >{smallQty}</span>
+                        )}
                         <button onClick={() => setSmallQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
                           className="w-8 h-8 rounded-full bg-[#111111]/20 flex items-center justify-center font-black text-[#111111] active:scale-95">+</button>
                       </div>
@@ -1116,8 +1180,8 @@ const KioskPage: React.FC = () => {
                       ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
                   >
                     {active && (
-                      <div className="absolute top-2 right-2 w-4 h-4 lg:w-5 lg:h-5 rounded-full bg-[#111111] flex items-center justify-center">
-                        <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px]">{carrierQty}</span>
+                      <div className="absolute top-2 right-2 min-w-[20px] h-5 lg:min-w-[24px] lg:h-6 rounded-full bg-[#111111] flex items-center justify-center px-1">
+                        <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px] tabular-nums">{carrierQty}</span>
                       </div>
                     )}
                     <picture><source srcSet="/images/bags/carrier-photo.webp" type="image/webp" /><img src="/images/bags/carrier-photo.png" alt={t.carrier} className="w-10 h-10 lg:w-14 lg:h-14 object-contain flex-shrink-0" /></picture>
@@ -1133,7 +1197,31 @@ const KioskPage: React.FC = () => {
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => setCarrierQty((v) => Math.max(0, v - 1))}
                           className="w-8 h-8 rounded-full bg-[#111111]/15 flex items-center justify-center font-black text-[#111111] active:scale-95">−</button>
-                        <span className="font-black text-[#111111] text-lg tabular-nums w-6 text-center">{carrierQty}</span>
+                        {editingCarrier ? (
+                          <input
+                            type="number"
+                            value={carrierInputVal}
+                            onChange={(e) => setCarrierInputVal(e.target.value)}
+                            onBlur={() => {
+                              const v = Math.min(cfg.operations.max_bags, Math.max(0, parseInt(carrierInputVal) || 0));
+                              setCarrierQty(v); setCarrierInputVal(String(v)); setEditingCarrier(false);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const v = Math.min(cfg.operations.max_bags, Math.max(0, parseInt(carrierInputVal) || 0));
+                                setCarrierQty(v); setCarrierInputVal(String(v)); setEditingCarrier(false);
+                              }
+                              if (e.key === 'Escape') { setCarrierInputVal(String(carrierQty)); setEditingCarrier(false); }
+                            }}
+                            autoFocus
+                            className="w-12 text-center font-black text-[#111111] text-lg tabular-nums bg-transparent border-b-2 border-[#111111] focus:outline-none"
+                          />
+                        ) : (
+                          <span
+                            onClick={() => { setCarrierInputVal(String(carrierQty)); setEditingCarrier(true); }}
+                            className="font-black text-[#111111] text-lg tabular-nums w-10 text-center cursor-text"
+                          >{carrierQty}</span>
+                        )}
                         <button onClick={() => setCarrierQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
                           className="w-8 h-8 rounded-full bg-[#111111]/20 flex items-center justify-center font-black text-[#111111] active:scale-95">+</button>
                       </div>

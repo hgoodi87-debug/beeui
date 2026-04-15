@@ -231,6 +231,155 @@ npm run build     # 빌드 검증 (작업 완료 후 필수)
 firebase deploy   # 전체 배포
 ```
 
+---
+
+## 데이터베이스 구조 (Supabase PostgreSQL — 2026-04-15 기준)
+
+**프로젝트 ID:** `fzvfyeskdivulazjjpgr` | **리전:** ap-northeast-1 | **총 테이블:** 57개
+
+> **연동 주의사항**
+> - `booking_details`와 `reservations`는 별개 테이블. `booking_details.reservation_id → reservations.id` (nullable FK)
+> - `kiosk_storage_log`의 PK는 `bigint` (UUID 아님). `branch_id`는 `text` 타입 (UUID 아님)
+> - `settlement_status` CHECK 제약: `PENDING|CONFIRMED|PAID_OUT|MONTHLY_INCLUDED|ON_HOLD|CANCELLED|REFUNDED|DELETED` — 소문자·한국어 불허
+> - `expenditures` 테이블의 실제 컬럼: `receipt_url`, `approved_by`, `notes`, `updated_at` 존재 (타입 코드와 다를 수 있음)
+> - `employees.profile_id → profiles.id` (UNIQUE FK) — 직원 조회 시 profiles 조인 필수
+> - `locations.branch_id → branches.id` (nullable) — 일부 지점은 branch_id 없음
+
+### 도메인별 테이블 구조
+
+#### 예약 · 주문
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `reservations` | uuid | `reservation_no`(UNIQUE), `customer_id`, `branch_id`, `service_id`, `status`, `ops_status`, `total_amount` | 새 예약 체계의 루트 |
+| `booking_details` | uuid | `reservation_id`(nullable), `service_type`, `pickup_date`, `pickup_location`, `dropoff_location`, `final_price`, `settlement_status`, `payment_method`, `bags`, `user_name`, `user_email` | 레거시 예약 + 정산 상태 |
+| `reservation_items` | uuid | `reservation_id`, `baggage_type_id`, `quantity`, `subtotal` | 예약 품목 상세 |
+| `payments` | uuid | `reservation_id`, `provider`, `payment_key`, `status`, `amount`, `paid_at` | 결제 기록 |
+| `delivery_assignments` | uuid | `reservation_id`, `driver_name`, `driver_phone`, `assigned_at`, `delivered_at` | 기사 배정 |
+| `proof_assets` | uuid | `reservation_id`, `asset_type`, `asset_url`, `verification_status` | 증빙 사진 |
+| `issue_tickets` | uuid | `reservation_id`, `issue_code`, `severity`, `status`, `title` | 이슈 센터 |
+
+#### 정산
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `booking_details.settlement_status` | — | `PENDING→CONFIRMED→PAID_OUT` | 예약별 정산 상태 |
+| `branch_payouts` | uuid | `branch_id`, `period_start`, `period_end`, `gross_amount`, `net_amount`, `status`, `payment_date` | 지점 지급 기록 |
+| `monthly_closings` | uuid | `month`(UNIQUE date), `total_revenue`, `confirmed_amount`, `is_closed`, `closed_by` | 월별 마감 |
+| `daily_closings` | uuid | `branch_id`, `date`, `total_revenue`, `actual_cash_on_hand`, `difference`, `closed_by` | 일마감 |
+| `bank_transactions` | uuid | `date`, `bank_name`, `account_alias`, `tx_type`(deposit/withdrawal), `amount`, `balance`, `description` | 통장 잔고 수동 입력 |
+| `expenditures` | uuid | `branch_id`, `date`, `category`, `amount`, `description`, `receipt_url`, `approved_by` | 지출 내역 |
+
+#### 키오스크
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `kiosk_branches` | uuid | `slug`(UNIQUE text), `branch_id`(text), `branch_name`, `is_active` | 키오스크 지점 매핑 |
+| `kiosk_storage_log` | **bigint** | `branch_id`(text), `date`, `tag`, `original_price`, `discount`, `payment`, `done`, `commission_rate` | 키오스크 거래 로그 |
+| `kiosk_settings` | text(key) | `key`, `value`(jsonb), `updated_at` | 키오스크 설정 |
+| `luggage_storage_log` | **bigint** | `date`, `tag`, `original_price`, `payment`, `done` | 레거시 보관 로그 |
+
+#### 지점 · 지역
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `branches` | uuid | `branch_code`, `name`, `branch_type`, `status`, `lat`, `lng`, `is_active`, `open_time`, `close_time` | 지점 마스터 |
+| `branch_types` | uuid | `code`(UNIQUE), `name` | 지점 유형 |
+| `locations` | uuid | `short_code`, `name`, `name_en/ja/zh/zh_tw`, `type`, `supports_delivery`, `supports_storage`, `branch_id`, `lat`, `lng`, `is_active` | 서비스 지역 |
+| `location_translations` | uuid | `location_id`, `lang`, `name`, `description`, `address` | 지역 다국어 |
+| `branch_prospects` | uuid | `name`, `status`, `potential_score`, `partnership_inquiry_id` | 지점 유치 후보 |
+| `service_rules` | uuid | `branch_id`, `service_id`, `baggage_type_id`, `allowed`, `requires_manual_review`, `phase_code` | 서비스 허용 규칙 |
+
+#### 고객 · 인증
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `customers` | uuid | `full_name`, `language_code`, `phone`, `email`, `nationality` | 고객 마스터 |
+| `profiles` | uuid | `email`, `display_name` (Supabase Auth 연동) | Auth 프로필 |
+| `credit_accounts` | uuid | `user_id`(UNIQUE→customers), `balance`, `monthly_allowance`, `used_this_month`, `reset_date` | 크레딧 잔액 |
+| `user_coupons` | uuid | `user_id`, `discount_code_id`, `used_at`, `used_for_reservation` | 쿠폰 사용 |
+| `discount_codes` | uuid | `code`(UNIQUE), `amount_per_bag`, `is_active`, `allowed_service` | 할인 코드 |
+
+#### 직원 · 권한
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `employees` | uuid | `profile_id`(UNIQUE→profiles), `name`, `email`, `login_id`, `employment_status`, `security`(jsonb), `job_title` | 직원 마스터 |
+| `employee_branch_assignments` | uuid | `employee_id`, `branch_id`, `assignment_type`, `is_primary`, `starts_on`, `ends_on` | 지점 배속 |
+| `employee_roles` | uuid | `employee_id`, `role_id` | 역할 배정 |
+| `roles` | uuid | `code`(UNIQUE), `name`, `is_system` | 역할 정의 |
+
+#### AI · CMS
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `ai_outputs` | uuid | `use_case`, `entity_id`, `generated_content`(jsonb), `status`, `reviewer_id` | AI 생성 콘텐츠 |
+| `ai_review_logs` | uuid | `ai_output_id`, `check_type`, `passed`, `flags`(jsonb) | AI 검수 로그 |
+| `cms_contents` | uuid | `slug`, `title_ko/en/ja/zh`, `body_ko/en/ja/zh`, `content_type`, `publish_status`, `fts_ko/fts_en` | 콘텐츠 CMS |
+| `cms_areas` | uuid | `area_slug`(UNIQUE), `area_name_ko/en`, `is_priority_area` | 지역 CMS |
+| `cms_themes` | uuid | `theme_slug`(UNIQUE), `theme_name_ko/en`, `is_active` | 테마 CMS |
+| `content_translations` | uuid | `content_id`, `content_type`, `field_name`, `language`, `value`, `is_machine_translated` | 콘텐츠 번역 |
+
+#### 운영 · 알림 · 감사
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `notifications` | uuid | `reservation_id`, `channel`, `template_code`, `recipient`, `status`, `sent_at` | 알림 (활성) |
+| `notifications_archive` | uuid | 동일 | 알림 아카이브 |
+| `audit_logs` | uuid | `entity_type`, `entity_id`, `action`, `actor`, `before_data`/`after_data`(jsonb) | 감사 로그 |
+| `operation_status_logs` | uuid | `reservation_id`, `from_status`, `to_status`, `changed_by` | 상태 변경 로그 |
+| `system_notices` | uuid | `title`, `category`, `is_active`, `start_date`, `end_date` | 시스템 공지 |
+
+#### 기타
+
+| 테이블 | PK 타입 | 핵심 컬럼 | 비고 |
+|--------|---------|-----------|------|
+| `storage_tiers` | uuid | `tier_code`(UNIQUE), `price_hand_bag`, `price_carrier`, `price_stroller_bicycle` | 보관 가격 티어 |
+| `baggage_types` | uuid | `code`(UNIQUE), `name`, `requires_manual_review` | 짐 종류 |
+| `services` | uuid | `code`(UNIQUE), `name`, `is_active` | 서비스 종류 |
+| `chat_sessions` | uuid | `session_id`(UNIQUE text), `user_name`, `user_email`, `is_bot_disabled` | 채팅 세션 |
+| `chat_messages` | uuid | `session_id`→chat_sessions, `role`, `content` | 채팅 메시지 |
+| `google_reviews` | uuid | `place_id`, `rating`, `text`, `is_featured`, `is_visible` | 구글 리뷰 |
+| `google_review_summary` | uuid | `place_id`(UNIQUE), `total_reviews`, `average_rating`, `last_synced_at` | 리뷰 요약 |
+| `legal_documents` | uuid | `doc_type`, `language`, `content`, `articles`(jsonb) | 약관·개인정보 |
+| `partnership_inquiries` | uuid | `company_name`, `status`, `assigned_admin_id` | 파트너십 문의 |
+| `app_settings` | uuid | `key`(UNIQUE text), `value`(jsonb) | 앱 전역 설정 |
+
+### Edge Functions (정산 자동화)
+
+| 함수명 | 트리거 | 역할 |
+|--------|--------|------|
+| `daily-settlement-summary` | pg_cron 매일 02:00 KST | 전일 예약 집계 → `daily_closings` 갱신 |
+| `monthly-settlement-export` | 관리자 수동 호출 | 월별 정산 데이터 집계·내보내기 |
+| `admin-account-sync` | 관리자 액션 | 직원 계정 동기화 |
+| `ai-content-gen` | AI 생성 요청 | CMS 콘텐츠 AI 생성 |
+
+### 주요 FK 관계 요약
+
+```
+customers ──< reservations ──< reservation_items
+                    │
+                    ├──< booking_details (settlement_status)
+                    ├──< payments
+                    ├──< delivery_assignments
+                    ├──< proof_assets
+                    ├──< issue_tickets
+                    ├──< notifications
+                    └──< operation_status_logs
+
+branches ──< locations
+         ──< employee_branch_assignments ──< employees ──< employee_roles ──< roles
+         ──< branch_payouts
+         ──< expenditures
+         ──< daily_closings
+
+kiosk_branches  (branch_id: text, slug: text — UUID 아님 주의)
+kiosk_storage_log (PK: bigint, branch_id: text — UUID 아님 주의)
+bank_transactions (독립, FK 없음)
+```
+
+---
+
 ## 중요 파일 위치
 
 - 예약 로직: `client/src/domains/booking/`

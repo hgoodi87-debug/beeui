@@ -70,6 +70,11 @@ const LABELS: Record<Lang, Record<string, string>> = {
     select_airport: '터미널을 선택해주세요',
     delivery_price_label: '배송 요금', back: '뒤로 가기',
     delivery_success: '배송 예약이 완료되었습니다!', delivery_success_sub: 'Delivery booking confirmed',
+    // 성공 화면
+    tag_unit: '번', bags_label: '짐', duration_label: '시간', reprint: '재출력', currency_unit: '원',
+    small_short: '소형', carrier_short: '캐리어',
+    delivery_airport_label: '도착 터미널', delivery_date_result: '배송 날짜', delivery_time_result: '배송 시간',
+    active_count_unit: '건',
   },
   en: {
     small: 'Small Bag', small_desc: 'Tote · Backpack · Small Carry-on',
@@ -103,6 +108,10 @@ const LABELS: Record<Lang, Record<string, string>> = {
     select_airport: 'Please select a terminal',
     delivery_price_label: 'Delivery Fee', back: 'Back',
     delivery_success: 'Delivery Booked!', delivery_success_sub: 'Delivery booking confirmed',
+    tag_unit: '', bags_label: 'Bags', duration_label: 'Duration', reprint: 'Reprint', currency_unit: '₩',
+    small_short: 'Small', carrier_short: 'Carrier',
+    delivery_airport_label: 'Terminal', delivery_date_result: 'Date', delivery_time_result: 'Time',
+    active_count_unit: '',
   },
   zh: {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型拉杆箱',
@@ -136,6 +145,10 @@ const LABELS: Record<Lang, Record<string, string>> = {
     select_airport: '请选择航站楼',
     delivery_price_label: '配送费用', back: '返回',
     delivery_success: '配送预约完成！', delivery_success_sub: 'Delivery booking confirmed',
+    tag_unit: '号', bags_label: '行李', duration_label: '存放时间', reprint: '重新打印', currency_unit: '₩',
+    small_short: '小型', carrier_short: '行李箱',
+    delivery_airport_label: '到达航站楼', delivery_date_result: '配送日期', delivery_time_result: '配送时间',
+    active_count_unit: '件',
   },
   'zh-TW': {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型行李箱',
@@ -169,6 +182,10 @@ const LABELS: Record<Lang, Record<string, string>> = {
     select_airport: '請選擇航廈',
     delivery_price_label: '配送費用', back: '返回',
     delivery_success: '配送預約完成！', delivery_success_sub: 'Delivery booking confirmed',
+    tag_unit: '號', bags_label: '行李', duration_label: '寄存時間', reprint: '重新列印', currency_unit: '₩',
+    small_short: '小型', carrier_short: '行李箱',
+    delivery_airport_label: '抵達航廈', delivery_date_result: '配送日期', delivery_time_result: '配送時間',
+    active_count_unit: '件',
   },
   'zh-HK': {
     small: '細型行李', small_desc: '手袋 · 背囊 · 小型行李箱',
@@ -202,6 +219,10 @@ const LABELS: Record<Lang, Record<string, string>> = {
     select_airport: '請選擇航廈',
     delivery_price_label: '配送費用', back: '返回',
     delivery_success: '配送預約完成！', delivery_success_sub: 'Delivery booking confirmed',
+    tag_unit: '號', bags_label: '行李', duration_label: '寄存時間', reprint: '重新列印', currency_unit: '₩',
+    small_short: '細型', carrier_short: '行李箱',
+    delivery_airport_label: '抵達航廈', delivery_date_result: '配送日期', delivery_time_result: '配送時間',
+    active_count_unit: '件',
   },
   ja: {
     small: '小型バッグ', small_desc: 'トートバッグ · リュック · 小型スーツケース',
@@ -235,6 +256,10 @@ const LABELS: Record<Lang, Record<string, string>> = {
     select_airport: 'ターミナルを選択してください',
     delivery_price_label: '配送料', back: '戻る',
     delivery_success: '配送予約が完了しました！', delivery_success_sub: 'Delivery booking confirmed',
+    tag_unit: '番', bags_label: '荷物', duration_label: '預け時間', reprint: '再印刷', currency_unit: '₩',
+    small_short: '小型', carrier_short: 'キャリー',
+    delivery_airport_label: '到着ターミナル', delivery_date_result: '配送日', delivery_time_result: '配送時間',
+    active_count_unit: '件',
   },
 };
 
@@ -647,16 +672,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         <span className="text-white/40 text-sm">시</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <label className="text-white/70 text-sm flex-1">지점 커미션 비율</label>
-                      <div className="flex items-center gap-2">
-                        <input type="number" value={localOps.commission_rate ?? 0}
-                          onChange={(e) => setLocalOps((p) => ({ ...p, commission_rate: Number(e.target.value) }))}
-                          className="bg-white/10 rounded-xl px-3 py-2 text-white text-right font-black w-20 focus:outline-none focus:ring-2 focus:ring-[#F5C842] text-sm"
-                          min={0} max={100} />
-                        <span className="text-white/40 text-sm">%</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <button onClick={saveSettings} disabled={saving}
@@ -850,7 +865,7 @@ const KioskPage: React.FC = () => {
         start_time: startTime, pickup_time: pickupTime, pickup_ts: pickupTs,
         duration, original_price: originalPrice, discount, payment,
         done: false, memo: '', row_label: rowLabel,
-        source: 'kiosk' as const, commission_rate: cfg.operations.commission_rate ?? 0,
+        source: 'kiosk' as const, commission_rate: 0,
       };
       const saved = await insertStorageLog(payload);
       setResultLogId(saved?.id ?? null);
@@ -954,8 +969,12 @@ const KioskPage: React.FC = () => {
                 <i className="fa-solid fa-check text-white text-xl" />
               </div>
               <div>
-                <h1 className="text-[#111111] font-black text-2xl">{t.success_msg}</h1>
-                <p className="text-gray-400 text-sm">{t.success_sub}</p>
+                <h1 className="text-[#111111] font-black text-2xl">
+                  {serviceMode === 'delivery' ? t.delivery_success : t.success_msg}
+                </h1>
+                <p className="text-gray-400 text-sm">
+                  {serviceMode === 'delivery' ? t.delivery_success_sub : t.success_sub}
+                </p>
               </div>
             </div>
             <div className="bg-white rounded-[24px] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
@@ -964,7 +983,7 @@ const KioskPage: React.FC = () => {
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">{t.tag}</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-5xl font-black text-[#111111] tabular-nums">{resultTag}</span>
-                    <span className="text-base font-bold text-gray-400">번</span>
+                    {t.tag_unit && <span className="text-base font-bold text-gray-400">{t.tag_unit}</span>}
                   </div>
                 </div>
                 <div className="bg-[#F5C842] rounded-xl px-5 py-3 text-right">
@@ -973,19 +992,51 @@ const KioskPage: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-gray-400">시간</span><span className="font-bold text-[#111111]">{duration}시간 ({startT} → {pickupT})</span></div>
-                <div className="flex justify-between"><span className="text-gray-400">짐</span>
+                {serviceMode === 'delivery' ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{t.delivery_airport_label}</span>
+                      <span className="font-bold text-[#111111]">
+                        {lang === 'ko' ? `인천공항 ${deliveryAirport}` : `Incheon Airport ${deliveryAirport}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{t.delivery_date_result}</span>
+                      <span className="font-bold text-[#111111]">{deliveryDate}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{t.delivery_time_result}</span>
+                      <span className="font-bold text-[#111111]">{deliveryTime}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t.duration_label}</span>
+                    <span className="font-bold text-[#111111]">{duration}{t.duration} ({startT} → {pickupT})</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-400">{t.bags_label}</span>
                   <span className="font-bold text-[#111111]">
-                    {smallQty > 0 ? `소형 ${smallQty}${t.pcs}` : ''}{smallQty > 0 && carrierQty > 0 ? ' · ' : ''}{carrierQty > 0 ? `캐리어 ${carrierQty}${t.pcs}` : ''}
+                    {smallQty > 0 ? `${t.small_short} ${smallQty}${t.pcs}` : ''}{smallQty > 0 && carrierQty > 0 ? ' · ' : ''}{carrierQty > 0 ? `${t.carrier_short} ${carrierQty}${t.pcs}` : ''}
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[#f0f0f0]"><span className="text-gray-400">{t.total}</span><span className="font-black text-[#111111]">{finalPrice.toLocaleString()}원</span></div>
+                <div className="flex justify-between pt-2 border-t border-[#f0f0f0]">
+                  <span className="text-gray-400">{t.total}</span>
+                  <span className="font-black text-[#111111]">
+                    {serviceMode === 'delivery'
+                      ? `${t.currency_unit}${deliveryTotalPrice.toLocaleString()}`
+                      : `${finalPrice.toLocaleString()}${t.currency_unit}`}
+                  </span>
+                </div>
               </div>
             </div>
+            {serviceMode !== 'delivery' && (
             <button onClick={() => navigate(`/ko/booking?from=kiosk&pickup=${branch ? getBranchId(branch) : ''}&bags=${smallQty}&carriers=${carrierQty}&kiosk_tag=${resultTag}`)}
               className="w-full bg-[#F5C842] text-[#111111] font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
               <i className="fa-solid fa-plane" />{t.delivery_btn}
             </button>
+            )}
           </div>
           <div className="bg-white p-8 flex flex-col items-center justify-center gap-4 border-l border-[#f0f0f0]">
             <p className="text-[#111111] font-black text-base text-center">{t.qr_scan}</p>
@@ -996,6 +1047,7 @@ const KioskPage: React.FC = () => {
               }
             </div>
             <p className="text-gray-400 text-sm">{t.qr_sub}</p>
+            {serviceMode !== 'delivery' && (
             <button
               onClick={() => void printKioskReceipt({
                 tag: resultTag,
@@ -1013,8 +1065,9 @@ const KioskPage: React.FC = () => {
                 date: todayStr(),
               })}
               className="w-full bg-[#F5C842] text-[#111111] font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
-              <i className="fa-solid fa-print" /> 재출력
+              <i className="fa-solid fa-print" /> {t.reprint}
             </button>
+            )}
             <button onClick={resetForm}
               className="w-full bg-[#111111] text-white font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform relative overflow-hidden">
               {/* 카운트다운 진행 바 */}
@@ -1263,7 +1316,7 @@ const KioskPage: React.FC = () => {
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-[#111111]/40 font-black text-[10px] tracking-[0.2em] uppercase">TODAY</span>
             <span className="bg-[#F5C842] text-[#111111] font-black text-[10px] px-2 py-0.5 rounded-full">
-              {todayLog.filter(e => !e.done).length}건
+              {todayLog.filter(e => !e.done).length}{t.active_count_unit}
             </span>
           </div>
           <div className="w-px h-3 bg-black/10 flex-shrink-0" />

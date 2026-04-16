@@ -176,7 +176,6 @@ export const flushOfflineQueue = async (): Promise<number> => {
         const body = {
           ...entry.payload,
           tag: newTag,
-          commission_rate: 0,
           source: 'kiosk',
         };
         const result = await supabaseMutate<KioskStorageLog[]>(`${KIOSK_TABLES.log}`, 'POST', body, _ANON);
@@ -246,7 +245,10 @@ export const loadSettings = async (branchId: string): Promise<KioskCfg> => {
 
     return {
       prices: (merged.prices as KioskCfg['prices']) ?? DEFAULT_CFG.prices,
-      operations: (merged.operations as KioskCfg['operations']) ?? DEFAULT_CFG.operations,
+      operations: {
+        ...DEFAULT_CFG.operations,
+        ...(merged.operations as Partial<KioskCfg['operations']> ?? {}),
+      },
       notices: (merged.notices as KioskCfg['notices']) ?? DEFAULT_CFG.notices,
       discount: (merged.discount as KioskCfg['discount']) ?? DEFAULT_CFG.discount,
       admin_password: typeof merged.admin_password === 'string'
@@ -285,7 +287,7 @@ export const upsertSetting = async (
 export const insertStorageLog = async (
   payload: Omit<KioskStorageLog, 'id' | 'created_at'>
 ): Promise<KioskStorageLog | null> => {
-  const body = { ...payload, commission_rate: 0, source: 'kiosk' };
+  const body = { ...payload, source: 'kiosk' };
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -527,6 +529,42 @@ export const changeAdminPin = async (
     return { ok: json.ok === true, error: json.error };
   } catch (e) {
     return { ok: false, error: String(e) };
+  }
+};
+
+// ─── 예약 조회 ────────────────────────────────────────────────────────────
+export interface KioskBookingLookup {
+  id: string;
+  reservation_code: string | null;
+  reservation_no: string | null;
+  user_name: string | null;
+  bags: number | null;
+  bag_sizes: { handBag: number; carrier: number; strollerBicycle: number } | null;
+  final_price: number | null;
+  payment_status: string | null; // 'paid' | 'pending'
+  payment_method: string | null;
+  service_type: string | null;
+  pickup_date: string | null;
+  pickup_time: string | null;
+  pickup_location_name: string | null;
+}
+
+/**
+ * 예약 코드 또는 예약번호로 booking_details 조회.
+ * admin_booking_list_v1 뷰는 anon SELECT 허용.
+ */
+export const lookupBookingByCode = async (code: string): Promise<KioskBookingLookup | null> => {
+  const upper = code.trim().toUpperCase();
+  if (!upper) return null;
+  try {
+    const rows = await supabaseGet<KioskBookingLookup[]>(
+      `admin_booking_list_v1?select=id,reservation_code,reservation_no,user_name,bags,bag_sizes,final_price,payment_status,payment_method,service_type,pickup_date,pickup_time,pickup_location_name&or=(reservation_code.eq.${encodeURIComponent(upper)},reservation_no.eq.${encodeURIComponent(upper)})&is_deleted=eq.false&limit=1`,
+      _ANON
+    );
+    return rows?.[0] ?? null;
+  } catch (e) {
+    console.error('[kioskDb] lookupBookingByCode error:', e);
+    return null;
   }
 };
 

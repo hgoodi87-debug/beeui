@@ -14,6 +14,7 @@ import {
   KioskBranch,
   KioskCfg,
   KioskStorageLog,
+  KioskBookingLookup,
   DEFAULT_CFG,
   loadBranchBySlug,
   loadSettings,
@@ -28,6 +29,7 @@ import {
   getBranchId,
   verifyAdminPin,
   changeAdminPin,
+  lookupBookingByCode,
   todayStr,
   timeStr,
   addHours,
@@ -75,6 +77,21 @@ const LABELS: Record<Lang, Record<string, string>> = {
     small_short: '소형', carrier_short: '캐리어',
     delivery_airport_label: '도착 터미널', delivery_date_result: '배송 날짜', delivery_time_result: '배송 시간',
     active_count_unit: '건',
+    // 예약 조회
+    walk_in_label: '현장 접수',
+    booking_lookup_btn: '예약건 확인',
+    booking_lookup_title: '예약 조회',
+    booking_code_ph: '예약번호 입력 (예: BL-20260416-001)',
+    booking_search: '조회',
+    booking_not_found: '예약을 찾을 수 없습니다. 예약번호를 다시 확인해주세요.',
+    booking_paid_badge: '결제완료',
+    booking_unpaid_badge: '결제대기',
+    booking_confirm_btn: '접수진행',
+    booking_code_header: '예약번호',
+    booking_customer: '고객명',
+    booking_retry: '다시 검색',
+    booking_success: '예약 접수 완료!',
+    booking_success_sub: 'Reservation checked in',
   },
   en: {
     small: 'Small Bag', small_desc: 'Tote · Backpack · Small Carry-on',
@@ -112,6 +129,20 @@ const LABELS: Record<Lang, Record<string, string>> = {
     small_short: 'Small', carrier_short: 'Carrier',
     delivery_airport_label: 'Terminal', delivery_date_result: 'Date', delivery_time_result: 'Time',
     active_count_unit: '',
+    walk_in_label: 'Walk-in',
+    booking_lookup_btn: 'Check Booking',
+    booking_lookup_title: 'Reservation Lookup',
+    booking_code_ph: 'Enter booking number',
+    booking_search: 'Search',
+    booking_not_found: 'Booking not found. Please check your booking number.',
+    booking_paid_badge: 'Paid',
+    booking_unpaid_badge: 'Unpaid',
+    booking_confirm_btn: 'Proceed Check-in',
+    booking_code_header: 'Booking No.',
+    booking_customer: 'Customer',
+    booking_retry: 'Search Again',
+    booking_success: 'Check-in Complete!',
+    booking_success_sub: 'Reservation checked in',
   },
   zh: {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型拉杆箱',
@@ -149,6 +180,20 @@ const LABELS: Record<Lang, Record<string, string>> = {
     small_short: '小型', carrier_short: '行李箱',
     delivery_airport_label: '到达航站楼', delivery_date_result: '配送日期', delivery_time_result: '配送时间',
     active_count_unit: '件',
+    walk_in_label: '现场办理',
+    booking_lookup_btn: '确认预约',
+    booking_lookup_title: '预约查询',
+    booking_code_ph: '输入预约号码',
+    booking_search: '查询',
+    booking_not_found: '未找到预约。请重新确认预约号码。',
+    booking_paid_badge: '已付款',
+    booking_unpaid_badge: '待付款',
+    booking_confirm_btn: '办理登记',
+    booking_code_header: '预约号码',
+    booking_customer: '客户姓名',
+    booking_retry: '重新搜索',
+    booking_success: '登记完成！',
+    booking_success_sub: 'Reservation checked in',
   },
   'zh-TW': {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型行李箱',
@@ -186,6 +231,20 @@ const LABELS: Record<Lang, Record<string, string>> = {
     small_short: '小型', carrier_short: '行李箱',
     delivery_airport_label: '抵達航廈', delivery_date_result: '配送日期', delivery_time_result: '配送時間',
     active_count_unit: '件',
+    walk_in_label: '現場辦理',
+    booking_lookup_btn: '確認預約',
+    booking_lookup_title: '預約查詢',
+    booking_code_ph: '輸入預約號碼',
+    booking_search: '查詢',
+    booking_not_found: '找不到預約。請重新確認預約號碼。',
+    booking_paid_badge: '已付款',
+    booking_unpaid_badge: '待付款',
+    booking_confirm_btn: '辦理登記',
+    booking_code_header: '預約號碼',
+    booking_customer: '客戶姓名',
+    booking_retry: '重新搜尋',
+    booking_success: '登記完成！',
+    booking_success_sub: 'Reservation checked in',
   },
   'zh-HK': {
     small: '細型行李', small_desc: '手袋 · 背囊 · 小型行李箱',
@@ -223,6 +282,20 @@ const LABELS: Record<Lang, Record<string, string>> = {
     small_short: '細型', carrier_short: '行李箱',
     delivery_airport_label: '抵達航廈', delivery_date_result: '配送日期', delivery_time_result: '配送時間',
     active_count_unit: '件',
+    walk_in_label: '現場辦理',
+    booking_lookup_btn: '確認預約',
+    booking_lookup_title: '預約查詢',
+    booking_code_ph: '輸入預約號碼',
+    booking_search: '查詢',
+    booking_not_found: '搵唔到預約。請重新確認預約號碼。',
+    booking_paid_badge: '已付款',
+    booking_unpaid_badge: '待付款',
+    booking_confirm_btn: '辦理登記',
+    booking_code_header: '預約號碼',
+    booking_customer: '客戶姓名',
+    booking_retry: '重新搜尋',
+    booking_success: '登記完成！',
+    booking_success_sub: 'Reservation checked in',
   },
   ja: {
     small: '小型バッグ', small_desc: 'トートバッグ · リュック · 小型スーツケース',
@@ -260,6 +333,20 @@ const LABELS: Record<Lang, Record<string, string>> = {
     small_short: '小型', carrier_short: 'キャリー',
     delivery_airport_label: '到着ターミナル', delivery_date_result: '配送日', delivery_time_result: '配送時間',
     active_count_unit: '件',
+    walk_in_label: '現地受付',
+    booking_lookup_btn: '予約確認',
+    booking_lookup_title: '予約照会',
+    booking_code_ph: '予約番号を入力',
+    booking_search: '検索',
+    booking_not_found: '予約が見つかりません。予約番号をご確認ください。',
+    booking_paid_badge: '支払済',
+    booking_unpaid_badge: '未払い',
+    booking_confirm_btn: '受付を進める',
+    booking_code_header: '予約番号',
+    booking_customer: 'お客様名',
+    booking_retry: '再検索',
+    booking_success: '受付完了！',
+    booking_success_sub: 'Reservation checked in',
   },
 };
 
@@ -713,11 +800,17 @@ const KioskPage: React.FC = () => {
 
   const [lang, setLang] = useState<Lang>('ko');
   const [showLangModal, setShowLangModal] = useState(true); // 시작 시 언어 선택 팝업
-  const [serviceMode, setServiceMode] = useState<'select' | 'storage' | 'delivery'>('select');
+  const [serviceMode, setServiceMode] = useState<'select' | 'storage' | 'delivery' | 'booking'>('select');
   // 배송 전용 상태
   const [deliveryAirport, setDeliveryAirport] = useState<'T1' | 'T2' | null>(null);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('');
+  // 예약 조회 전용 상태
+  const [bookingCode, setBookingCode] = useState('');
+  const [bookingResult, setBookingResult] = useState<KioskBookingLookup | null>(null);
+  const [bookingLookupStep, setBookingLookupStep] = useState<'input' | 'result'>('input');
+  const [bookingLookupLoading, setBookingLookupLoading] = useState(false);
+  const [bookingLookupError, setBookingLookupError] = useState('');
   const [smallQty, setSmallQty] = useState(0);
   const [carrierQty, setCarrierQty] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -825,6 +918,7 @@ const KioskPage: React.FC = () => {
       setPayment('현금'); setDiscount(0);
       setResultTag(0); setResultRow('A'); setResultLogId(null);
       setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime('');
+      setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError('');
       setShowLangModal(true);
     }
   }, [resetCountdown, step]);
@@ -887,7 +981,8 @@ const KioskPage: React.FC = () => {
     setPayment('현금'); setDiscount(0);
     setResultTag(0); setResultRow('A'); setResultLogId(null);
     setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime('');
-    setShowLangModal(true); // 다음 손님을 위해 언어 선택 팝업 재표시
+    setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError('');
+    setShowLangModal(true);
   };
 
   const handleAdminLogin = async () => {
@@ -901,6 +996,70 @@ const KioskPage: React.FC = () => {
     if (entry.id) await updateStorageLog(entry.id, { done: true });
     setTodayLog((prev) => prev.map((e) => (e.tag === entry.tag && e.date === entry.date ? { ...e, done: true } : e)));
   };
+
+  const handleBookingSearch = useCallback(async () => {
+    if (!bookingCode.trim()) return;
+    setBookingLookupLoading(true);
+    setBookingLookupError('');
+    try {
+      const result = await lookupBookingByCode(bookingCode.trim());
+      if (!result) {
+        setBookingLookupError(t.booking_not_found);
+      } else {
+        setBookingResult(result);
+        setBookingLookupStep('result');
+      }
+    } catch {
+      setBookingLookupError(t.booking_not_found);
+    } finally {
+      setBookingLookupLoading(false);
+    }
+  }, [bookingCode, t.booking_not_found]);
+
+  const handleBookingCheckin = useCallback(async () => {
+    if (!branch || !bookingResult) return;
+    setSubmitting(true);
+    try {
+      const bid = getBranchId(branch);
+      const today = todayStr();
+      const startTime = timeStr();
+      const currentLog = await loadTodayLog(bid, today);
+      const { tag, rowLabel } = assignTagAndRow(currentLog, cfg);
+      const bs = bookingResult.bag_sizes;
+      const sqty = (bs?.handBag ?? 0) + (bs?.strollerBicycle ?? 0) || (bookingResult.bags ?? 1);
+      const cqty = bs?.carrier ?? 0;
+      const payMethod: PaymentMethod = bookingResult.payment_status === 'paid' ? '카드' : '미수금';
+      const payload = {
+        branch_id: bid,
+        date: today, tag,
+        small_qty: sqty, carrier_qty: cqty,
+        start_time: startTime,
+        pickup_time: bookingResult.pickup_time ?? startTime,
+        pickup_ts: Date.now(),
+        duration: 0,
+        original_price: bookingResult.final_price ?? 0,
+        discount: 0,
+        payment: payMethod,
+        done: false,
+        memo: `예약접수 ${(bookingResult.reservation_code ?? bookingResult.reservation_no ?? '').trim()} ${(bookingResult.user_name ?? '').trim()}`.trim(),
+        row_label: rowLabel,
+        source: 'kiosk' as const,
+        commission_rate: 0,
+      };
+      const saved = await insertStorageLog(payload);
+      setResultLogId(saved?.id ?? null);
+      setResultTag(tag);
+      setResultRow(rowLabel);
+      setResultStartTime(startTime);
+      setTodayLog((prev) => [...prev, { ...payload, id: tag, created_at: new Date().toISOString() }]);
+      setOfflineCount(getOfflineQueueSize());
+      setStep('success');
+    } catch (e) {
+      console.error('[kiosk] booking checkin error:', e);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [branch, bookingResult, cfg]);
 
   const deliveryUrl = `${window.location.origin}/ko/booking?from=kiosk&pickup=${branch ? getBranchId(branch) : ''}&bags=${smallQty}&carriers=${carrierQty}&kiosk_tag=${resultTag}`;
   const voucherUrl = resultLogId
@@ -970,10 +1129,10 @@ const KioskPage: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-[#111111] font-black text-2xl">
-                  {serviceMode === 'delivery' ? t.delivery_success : t.success_msg}
+                  {serviceMode === 'delivery' ? t.delivery_success : serviceMode === 'booking' ? t.booking_success : t.success_msg}
                 </h1>
                 <p className="text-gray-400 text-sm">
-                  {serviceMode === 'delivery' ? t.delivery_success_sub : t.success_sub}
+                  {serviceMode === 'delivery' ? t.delivery_success_sub : serviceMode === 'booking' ? t.booking_success_sub : t.success_sub}
                 </p>
               </div>
             </div>
@@ -1009,26 +1168,56 @@ const KioskPage: React.FC = () => {
                       <span className="font-bold text-[#111111]">{deliveryTime}</span>
                     </div>
                   </>
+                ) : serviceMode === 'booking' && bookingResult ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{t.booking_code_header}</span>
+                      <span className="font-bold text-[#111111] tracking-wider">
+                        {bookingResult.reservation_code ?? bookingResult.reservation_no ?? '—'}
+                      </span>
+                    </div>
+                    {bookingResult.user_name && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">{t.booking_customer}</span>
+                        <span className="font-bold text-[#111111]">{bookingResult.user_name}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400">{t.total}</span>
+                      <span className="font-black text-[#111111]">{(bookingResult.final_price ?? 0).toLocaleString()}{t.currency_unit}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">결제</span>
+                      {bookingResult.payment_status === 'paid'
+                        ? <span className="font-bold text-green-600 flex items-center gap-1"><i className="fa-solid fa-circle-check text-xs" /> {t.booking_paid_badge}</span>
+                        : <span className="font-bold text-orange-500">{t.booking_unpaid_badge}</span>
+                      }
+                    </div>
+                  </>
                 ) : (
                   <div className="flex justify-between">
                     <span className="text-gray-400">{t.duration_label}</span>
                     <span className="font-bold text-[#111111]">{duration}{t.duration} ({startT} → {pickupT})</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{t.bags_label}</span>
-                  <span className="font-bold text-[#111111]">
-                    {smallQty > 0 ? `${t.small_short} ${smallQty}${t.pcs}` : ''}{smallQty > 0 && carrierQty > 0 ? ' · ' : ''}{carrierQty > 0 ? `${t.carrier_short} ${carrierQty}${t.pcs}` : ''}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-[#f0f0f0]">
-                  <span className="text-gray-400">{t.total}</span>
-                  <span className="font-black text-[#111111]">
-                    {serviceMode === 'delivery'
-                      ? `${t.currency_unit}${deliveryTotalPrice.toLocaleString()}`
-                      : `${finalPrice.toLocaleString()}${t.currency_unit}`}
-                  </span>
-                </div>
+                {serviceMode !== 'booking' && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t.bags_label}</span>
+                    <span className="font-bold text-[#111111]">
+                      {smallQty > 0 ? `${t.small_short} ${smallQty}${t.pcs}` : ''}{smallQty > 0 && carrierQty > 0 ? ' · ' : ''}{carrierQty > 0 ? `${t.carrier_short} ${carrierQty}${t.pcs}` : ''}
+                    </span>
+                  </div>
+                )}
+                {serviceMode !== 'booking' && (
+                  <div className="flex justify-between pt-2 border-t border-[#f0f0f0]">
+                    <span className="text-gray-400">{t.total}</span>
+                    <span className="font-black text-[#111111]">
+                      {serviceMode === 'delivery'
+                        ? `${t.currency_unit}${deliveryTotalPrice.toLocaleString()}`
+                        : `${finalPrice.toLocaleString()}${t.currency_unit}`}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             {serviceMode !== 'delivery' && (
@@ -1336,48 +1525,222 @@ const KioskPage: React.FC = () => {
         </div>
       )}
 
-      {/* ─── 서비스 선택 화면 ─────────────────────────────────────────────── */}
+      {/* ─── 서비스 선택 팝업 ─────────────────────────────────────────────── */}
       {serviceMode === 'select' && !showLangModal && (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="w-full max-w-2xl">
-            <p className="text-center text-[#111111] font-black text-2xl mb-2">{t.service_title}</p>
-            <p className="text-center text-gray-400 text-sm mb-10">Select Service · サービス選択 · 选择服务</p>
-            <div className="grid grid-cols-2 gap-6">
-              {/* 보관 */}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-[2.5rem] shadow-[0_32px_80px_rgba(0,0,0,0.35)] p-8 w-[480px] max-w-[92vw]">
+            <p className="font-black text-[#111111] text-xl text-center mb-6">{t.service_title}</p>
+
+            {/* 현장 접수 섹션 */}
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">{t.walk_in_label}</p>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {/* 짐 보관 */}
               <button
                 onClick={() => setServiceMode('storage')}
-                className="group flex flex-col items-center justify-center gap-5 bg-white rounded-[2.5rem] p-10 shadow-[0_4px_32px_rgba(0,0,0,0.08)] border-2 border-transparent hover:border-[#F5C842] active:scale-[0.97] transition-all"
+                className="group flex flex-col items-center gap-3 bg-[#fafafa] hover:bg-[#F5C842]/10 border-2 border-transparent hover:border-[#F5C842] rounded-2xl p-5 active:scale-[0.97] transition-all"
               >
-                <div className="w-24 h-24 rounded-full bg-[#F5C842]/10 group-hover:bg-[#F5C842]/20 flex items-center justify-center transition-all">
-                  <i className="fa-solid fa-box text-[#F5C842] text-4xl" />
+                <div className="w-14 h-14 rounded-full bg-[#F5C842]/15 group-hover:bg-[#F5C842]/25 flex items-center justify-center transition-all">
+                  <i className="fa-solid fa-box text-[#F5C842] text-2xl" />
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-[#111111] text-2xl mb-2">{t.storage_btn}</p>
-                  <p className="text-gray-400 text-sm font-medium whitespace-pre-line">{t.storage_desc}</p>
-                </div>
-                <div className="w-full py-3 bg-[#F5C842] rounded-2xl text-[#111111] font-black text-base text-center group-hover:shadow-[0_4px_16px_rgba(245,200,66,0.4)] transition-all">
-                  {t.storage_btn}
+                  <p className="font-black text-[#111111] text-base leading-tight">{t.storage_btn}</p>
+                  <p className="text-gray-400 text-[11px] mt-0.5 whitespace-pre-line leading-tight">{t.storage_desc}</p>
                 </div>
               </button>
-              {/* 배송 */}
+              {/* 공항 배송 */}
               <button
                 onClick={() => setServiceMode('delivery')}
-                className="group flex flex-col items-center justify-center gap-5 bg-[#111111] rounded-[2.5rem] p-10 shadow-[0_4px_32px_rgba(0,0,0,0.2)] border-2 border-transparent hover:border-[#F5C842] active:scale-[0.97] transition-all"
+                className="group flex flex-col items-center gap-3 bg-[#111111] hover:bg-[#1a1a1a] border-2 border-transparent hover:border-[#F5C842] rounded-2xl p-5 active:scale-[0.97] transition-all"
               >
-                <div className="w-24 h-24 rounded-full bg-[#F5C842]/10 group-hover:bg-[#F5C842]/20 flex items-center justify-center transition-all">
-                  <i className="fa-solid fa-plane text-[#F5C842] text-4xl" />
+                <div className="w-14 h-14 rounded-full bg-[#F5C842]/15 group-hover:bg-[#F5C842]/25 flex items-center justify-center transition-all">
+                  <i className="fa-solid fa-plane text-[#F5C842] text-2xl" />
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-white text-2xl mb-2">{t.delivery_btn2}</p>
-                  <p className="text-white/50 text-sm font-medium whitespace-pre-line">{t.delivery_desc}</p>
-                </div>
-                <div className="w-full py-3 bg-[#F5C842] rounded-2xl text-[#111111] font-black text-base text-center group-hover:shadow-[0_4px_16px_rgba(245,200,66,0.4)] transition-all">
-                  {t.delivery_btn2}
+                  <p className="font-black text-white text-base leading-tight">{t.delivery_btn2}</p>
+                  <p className="text-white/40 text-[11px] mt-0.5 whitespace-pre-line leading-tight">{t.delivery_desc}</p>
                 </div>
               </button>
             </div>
+
+            {/* 예약건 확인 구분선 */}
+            <div className="relative mb-5">
+              <div className="border-t border-gray-100" />
+              <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-white px-3 text-[10px] text-gray-300 font-bold tracking-widest uppercase">OR</span>
+            </div>
+
+            {/* 예약건 QR코드 버튼 */}
+            <button
+              onClick={() => { setServiceMode('booking'); setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError(''); }}
+              className="w-full flex items-center justify-center gap-3 bg-[#f4f4f4] hover:bg-[#ececec] border-2 border-transparent hover:border-[#111111]/20 rounded-2xl py-4 px-5 active:scale-[0.97] transition-all"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#111111]/8 flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-qrcode text-[#111111] text-lg" />
+              </div>
+              <div className="text-left">
+                <p className="font-black text-[#111111] text-base leading-tight">{t.booking_lookup_btn}</p>
+                <p className="text-gray-400 text-[11px] mt-0.5">예약번호로 접수 진행</p>
+              </div>
+              <i className="fa-solid fa-chevron-right text-gray-300 text-sm ml-auto" />
+            </button>
           </div>
         </div>
+      )}
+
+      {/* ─── 예약 조회 화면 ─────────────────────────────────────────────────── */}
+      {serviceMode === 'booking' && (
+        <main className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+          <div className="w-full max-w-lg">
+            {/* 뒤로 가기 */}
+            <button
+              onClick={() => { setServiceMode('select'); setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError(''); }}
+              className="flex items-center gap-2 text-gray-400 hover:text-[#111111] transition-all text-sm font-bold mb-6 w-fit"
+            >
+              <i className="fa-solid fa-chevron-left text-xs" />{t.back}
+            </button>
+
+            <h2 className="font-black text-[#111111] text-2xl mb-6 flex items-center gap-3">
+              <span className="w-9 h-9 rounded-full bg-[#F5C842] flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-qrcode text-[#111111] text-sm" />
+              </span>
+              {t.booking_lookup_title}
+            </h2>
+
+            {/* ── 입력 화면 ── */}
+            {bookingLookupStep === 'input' && (
+              <div className="flex flex-col gap-4">
+                <div className="bg-white rounded-2xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t.booking_code_header}</p>
+                  <input
+                    type="text"
+                    value={bookingCode}
+                    onChange={(e) => { setBookingCode(e.target.value.toUpperCase()); setBookingLookupError(''); }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleBookingSearch()}
+                    placeholder={t.booking_code_ph}
+                    className="w-full text-xl font-black text-[#111111] bg-transparent border-b-2 border-[#F5C842] pb-2 focus:outline-none placeholder:text-gray-200 placeholder:font-normal placeholder:text-base tracking-wider"
+                    autoFocus
+                  />
+                  {bookingLookupError && (
+                    <p className="text-red-500 text-sm mt-3 flex items-center gap-2">
+                      <i className="fa-solid fa-circle-exclamation" /> {bookingLookupError}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleBookingSearch}
+                  disabled={!bookingCode.trim() || bookingLookupLoading}
+                  className={`w-full py-4 rounded-full font-black text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                    bookingCode.trim() && !bookingLookupLoading
+                      ? 'bg-[#F5C842] text-[#111111] shadow-[0_8px_28px_rgba(245,200,66,0.45)]'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  {bookingLookupLoading
+                    ? <><i className="fa-solid fa-spinner animate-spin" /> 조회 중...</>
+                    : <><i className="fa-solid fa-magnifying-glass" /> {t.booking_search}</>
+                  }
+                </button>
+              </div>
+            )}
+
+            {/* ── 결과 화면 ── */}
+            {bookingLookupStep === 'result' && bookingResult && (
+              <div className="flex flex-col gap-4">
+                {/* 예약 정보 카드 */}
+                <div className="bg-white rounded-2xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
+                  {/* 헤더: 예약번호 + 결제 상태 뱃지 */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t.booking_code_header}</p>
+                      <p className="font-black text-[#111111] text-xl tracking-wider">
+                        {bookingResult.reservation_code ?? bookingResult.reservation_no ?? '—'}
+                      </p>
+                    </div>
+                    {bookingResult.payment_status === 'paid' ? (
+                      <span className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full px-4 py-1.5 font-bold text-sm flex-shrink-0">
+                        <i className="fa-solid fa-circle-check text-green-500" /> {t.booking_paid_badge}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-full px-4 py-1.5 font-bold text-sm flex-shrink-0">
+                        <i className="fa-solid fa-clock text-orange-400" /> {t.booking_unpaid_badge}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 상세 정보 */}
+                  <div className="space-y-3 text-sm">
+                    {bookingResult.user_name && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">{t.booking_customer}</span>
+                        <span className="font-bold text-[#111111]">{bookingResult.user_name}</span>
+                      </div>
+                    )}
+                    {bookingResult.service_type && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">서비스</span>
+                        <span className="font-bold text-[#111111]">{bookingResult.service_type === 'DELIVERY' ? t.delivery_btn2 : t.storage_btn}</span>
+                      </div>
+                    )}
+                    {(bookingResult.bags ?? 0) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">{t.bags_label}</span>
+                        <span className="font-bold text-[#111111]">
+                          {bookingResult.bag_sizes
+                            ? [
+                                bookingResult.bag_sizes.handBag > 0 ? `${t.small_short} ${bookingResult.bag_sizes.handBag}${t.pcs}` : '',
+                                bookingResult.bag_sizes.carrier > 0 ? `${t.carrier_short} ${bookingResult.bag_sizes.carrier}${t.pcs}` : '',
+                                bookingResult.bag_sizes.strollerBicycle > 0 ? `특수 ${bookingResult.bag_sizes.strollerBicycle}${t.pcs}` : '',
+                              ].filter(Boolean).join(' · ') || `${bookingResult.bags}${t.pcs}`
+                            : `${bookingResult.bags}${t.pcs}`
+                          }
+                        </span>
+                      </div>
+                    )}
+                    {bookingResult.pickup_date && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">{t.delivery_date_result}</span>
+                        <span className="font-bold text-[#111111]">{bookingResult.pickup_date}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between pt-3 border-t border-gray-100">
+                      <span className="text-gray-500 font-bold">{t.total}</span>
+                      <span className="font-black text-[#111111] text-xl tabular-nums">
+                        {bookingResult.payment_status === 'paid'
+                          ? `${t.currency_unit}${(bookingResult.final_price ?? 0).toLocaleString()}`
+                          : `${(bookingResult.final_price ?? 0).toLocaleString()}${t.currency_unit}`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 접수진행 버튼 */}
+                <button
+                  onClick={handleBookingCheckin}
+                  disabled={submitting}
+                  className={`w-full py-4 rounded-full font-black text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                    !submitting
+                      ? 'bg-[#F5C842] text-[#111111] shadow-[0_8px_28px_rgba(245,200,66,0.45)] kiosk-cta-shimmer'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  {submitting
+                    ? <><i className="fa-solid fa-spinner animate-spin" /> 처리 중...</>
+                    : <><i className="fa-solid fa-check-circle" /> {t.booking_confirm_btn}</>
+                  }
+                </button>
+
+                {/* 다시 검색 */}
+                <button
+                  onClick={() => { setBookingLookupStep('input'); setBookingResult(null); setBookingCode(''); }}
+                  className="w-full py-3 rounded-full border border-gray-200 text-gray-400 font-bold text-sm hover:border-gray-300 hover:text-gray-600 transition-all"
+                >
+                  {t.booking_retry}
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
       )}
 
       {/* ─── 배송 폼 ────────────────────────────────────────────────────────── */}

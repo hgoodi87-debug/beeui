@@ -329,6 +329,7 @@ export const ko = {
         booking_summary: "예약 요약",
         service_type: "서비스 유형",
         baggage_count: "짐 수량",
+        duration: "이용 시간",
         final_total: "총 결제 금액",
         enter_coupon: "프로모션 코드 입력",
         terms_agree_1: "[필수] 서비스 이용약관 동의",

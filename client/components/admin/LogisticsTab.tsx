@@ -369,17 +369,29 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                 <div className="flex flex-col">
                                                     <span className="text-[9px] font-black text-gray-400 uppercase">FROM</span>
                                                     <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{findLocName(b.pickupLocation)}</span>
+                                                    {(b.pickupDate || b.pickupTime) && (
+                                                        <span className="text-[9px] text-gray-400 mt-0.5 tabular-nums">{(b.pickupDate || '').split('T')[0]}{b.pickupTime ? ` ${b.pickupTime}` : ''}</span>
+                                                    )}
                                                 </div>
                                                 <i className="fa-solid fa-arrow-right-long text-bee-yellow/50 text-[10px]"></i>
                                                 <div className="flex flex-col text-right">
                                                     <span className="text-[9px] font-black text-gray-400 uppercase">TO</span>
                                                     <span className="text-[11px] font-bold text-bee-black truncate max-w-[100px]">{findLocName(b.dropoffLocation)}</span>
+                                                    {(b.returnDate || b.dropoffDate || b.returnTime || b.deliveryTime) && (
+                                                        <span className="text-[9px] text-gray-400 mt-0.5 tabular-nums">{((b.returnDate || b.dropoffDate) || '').split('T')[0]}{(b.returnTime || b.deliveryTime) ? ` ${b.returnTime || b.deliveryTime}` : ''}</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-gray-400 uppercase">Center</span>
+                                                <span className="text-[9px] font-black text-gray-400 uppercase">FROM</span>
                                                 <span className="text-[11px] font-bold text-bee-black">{findLocName(b.pickupLocation)}</span>
+                                                {(b.pickupDate || b.pickupTime) && (
+                                                    <span className="text-[9px] text-gray-400 mt-0.5 tabular-nums">{(b.pickupDate || '').split('T')[0]}{b.pickupTime ? ` ${b.pickupTime}` : ''}</span>
+                                                )}
+                                                {(b.returnDate || b.dropoffDate) && (
+                                                    <span className="text-[9px] text-gray-300 mt-1 tabular-nums">→ {((b.returnDate || b.dropoffDate) || '').split('T')[0]}{(b.returnTime || b.deliveryTime) ? ` ${b.returnTime || b.deliveryTime}` : ''}</span>
+                                                )}
                                             </div>
                                         )}
                                     </td>
@@ -402,7 +414,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`text-[11px] font-black ${isNotToday(b.pickupDate) ? 'text-amber-600' : 'text-bee-black'}`}>
-                                                        {b.pickupDate} ~ {b.dropoffDate || b.pickupDate}
+                                                        {b.pickupDate} ~ {b.returnDate || b.dropoffDate || b.pickupDate}
                                                     </span>
                                                     {isNotToday(b.pickupDate) && (
                                                         <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-black rounded uppercase tracking-tighter animate-pulse">
@@ -410,7 +422,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="text-[9px] font-bold text-gray-400 px-1.5 py-0.5 bg-gray-50 rounded-md w-fit">{b.pickupTime} - {b.deliveryTime} | {b.bags} Bags</div>
+                                                <div className="text-[9px] font-bold text-gray-400 px-1.5 py-0.5 bg-gray-50 rounded-md w-fit">{b.pickupTime} - {b.returnTime || b.deliveryTime || ''} | {b.bags} Bags</div>
                                             </div>
                                         )}
                                     </td>
@@ -439,6 +451,9 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                                 </div>
                                             )}
                                             <div className="text-sm font-black text-bee-black tracking-tighter mt-1 tabular-nums">₩{(b.finalPrice || 0).toLocaleString()}</div>
+                                            {(b as any).branchSettlementAmount > 0 && (
+                                                <div className="text-[9px] font-bold text-green-600 tabular-nums">커미션 ₩{Number((b as any).branchSettlementAmount).toLocaleString()}</div>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
@@ -578,22 +593,38 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                         <div className="flex-1">
                                             <span className="text-[8px] font-black text-gray-400 uppercase block mb-1">FROM</span>
                                             <span className="font-black text-xs text-bee-black block truncate">{findLocName(b.pickupLocation)}</span>
+                                            {(b.pickupDate || b.pickupTime) && (
+                                                <span className="text-[9px] text-gray-400 mt-0.5 block tabular-nums">{(b.pickupDate || '').split('T')[0]}{b.pickupTime ? ` ${b.pickupTime}` : ''}</span>
+                                            )}
                                         </div>
                                         <i className="fa-solid fa-arrow-right-long text-bee-yellow text-xs opacity-50"></i>
                                         <div className="flex-1 text-right">
                                             <span className="text-[8px] font-black text-gray-400 uppercase block mb-1">TO</span>
                                             <span className="font-black text-xs text-bee-black block truncate">{findLocName(b.dropoffLocation)}</span>
+                                            {(b.returnDate || b.dropoffDate || b.returnTime || b.deliveryTime) && (
+                                                <span className="text-[9px] text-gray-400 mt-0.5 block tabular-nums">{((b.returnDate || b.dropoffDate) || '').split('T')[0]}{(b.returnTime || b.deliveryTime) ? ` ${b.returnTime || b.deliveryTime}` : ''}</span>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-[8px] font-black text-gray-400 uppercase">Center</span>
-                                            <span className="font-black text-xs text-bee-black">{findLocName(b.pickupLocation)}</span>
+                                            <span className="text-[8px] font-black text-gray-400 uppercase">FROM</span>
+                                            <div className="text-right">
+                                                <span className="font-black text-xs text-bee-black block">{findLocName(b.pickupLocation)}</span>
+                                                {(b.pickupDate || b.pickupTime) && (
+                                                    <span className="text-[9px] text-gray-400 tabular-nums">{(b.pickupDate || '').split('T')[0]}{b.pickupTime ? ` ${b.pickupTime}` : ''}</span>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex justify-between items-center border-t border-gray-100 pt-2">
-                                            <span className="text-[8px] font-black text-gray-400 uppercase">Schedule</span>
-                                            <span className="font-black text-[10px] text-bee-black">{b.pickupDate} ~ {b.dropoffDate || b.pickupDate}</span>
+                                            <span className="text-[8px] font-black text-gray-400 uppercase">TO</span>
+                                            <div className="text-right">
+                                                <span className="font-black text-xs text-bee-black block">{findLocName(b.dropoffLocation || b.pickupLocation)}</span>
+                                                {(b.returnDate || b.dropoffDate) && (
+                                                    <span className="text-[9px] text-gray-400 tabular-nums">{((b.returnDate || b.dropoffDate) || '').split('T')[0]}{(b.returnTime || b.deliveryTime) ? ` ${b.returnTime || b.deliveryTime}` : ''}</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -661,7 +692,12 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                         </button>
                                     )}
                                 </div>
-                                <span className="font-black text-xl text-bee-black tracking-tighter tabular-nums">₩{(b.finalPrice || 0).toLocaleString()}</span>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="font-black text-xl text-bee-black tracking-tighter tabular-nums">₩{(b.finalPrice || 0).toLocaleString()}</span>
+                                    {(b as any).branchSettlementAmount > 0 && (
+                                        <span className="text-[10px] font-bold text-green-600 tabular-nums">커미션 ₩{Number((b as any).branchSettlementAmount).toLocaleString()}</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )) : (

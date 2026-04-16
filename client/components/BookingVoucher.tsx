@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookingState, ServiceType, LocationOption } from '../types';
-import html2canvas from 'html2canvas';
 import { trackEvent } from '../services/trackingService';
 
 interface BookingVoucherProps {
@@ -80,6 +79,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
     const handleSaveSimpleQR = async () => {
         if (!simpleQRRef.current) return;
         try {
+            const { default: html2canvas } = await import('html2canvas');
             const canvas = await html2canvas(simpleQRRef.current, {
                 scale: 3,
                 backgroundColor: '#ffffff',
@@ -99,6 +99,7 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
     const handleSaveCoupon = async () => {
         if (!couponRef.current) return;
         try {
+            const { default: html2canvas } = await import('html2canvas');
             const canvas = await html2canvas(couponRef.current, {
                 scale: 3,
                 backgroundColor: null,

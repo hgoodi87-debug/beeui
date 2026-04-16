@@ -2,6 +2,26 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * 에러를 GA4로 전송 (Sentry DSN 설정 전 임시 원격 로깅)
+ * window.SENTRY_DSN 환경변수 설정 시 Sentry로 자동 전환 가능
+ */
+const logErrorRemotely = (error: Error, context?: string) => {
+  try {
+    const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+    if (typeof gtag === 'function') {
+      gtag('event', 'exception', {
+        description: `[${context || 'unknown'}] ${error.message}`,
+        fatal: true,
+        error_name: error.name,
+        error_stack: error.stack?.slice(0, 500),
+      });
+    }
+  } catch {
+    // GA4 전송 실패는 무시
+  }
+};
+
 interface Props {
     children: ReactNode;
     fallback?: ReactNode;
@@ -35,6 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('Uncaught error:', error, errorInfo);
+        logErrorRemotely(error, errorInfo.componentStack?.split('\n')[1]?.trim());
     }
 
     public render() {

@@ -177,9 +177,15 @@ const makeEmployeeCode = (admin: Partial<AdminPayload>, resolvedBranchCode: stri
 };
 
 const buildSyntheticEmail = (admin: Partial<AdminPayload>) => {
+  // loginId가 있으면 단순 형식: {loginId}@staff.bee-liber.invalid
+  // 프론트엔드 resolveSupabaseLoginEmail의 makeSyntheticEmail과 반드시 일치해야 함
+  const loginIdToken = sanitizeAsciiToken(admin.loginId);
+  if (loginIdToken) {
+    return `${loginIdToken}@${DEFAULT_SYNTHETIC_EMAIL_DOMAIN}`;
+  }
+  // loginId 없을 때만 복잡한 형식 사용 (충돌 방지)
   const readableToken =
-    sanitizeAsciiToken(admin.loginId)
-    || sanitizeAsciiToken(admin.name)
+    sanitizeAsciiToken(admin.name)
     || sanitizeAsciiToken(admin.branchCode)
     || sanitizeAsciiToken(admin.branchId)
     || "staff";

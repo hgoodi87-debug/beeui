@@ -463,11 +463,13 @@ const normalizeBookingForDeliveryPolicy = (booking: BookingState): BookingState 
 
   const bagSizes = sanitizeDeliveryBagSizes(merged.bagSizes);
   const totalBags = getTotalBags(bagSizes);
+  // bagSizes가 모두 0인 경우(뷰 기본값) DB의 bags 값 우선 사용
+  const effectiveBags = totalBags > 0 ? totalBags : (merged.bags || 0);
 
   return {
     ...merged,
     bagSizes,
-    bags: totalBags,
+    bags: effectiveBags,
     insuranceBagCount: typeof merged.insuranceBagCount === 'number'
       ? Math.min(merged.insuranceBagCount, totalBags)
       : merged.insuranceBagCount,
@@ -992,7 +994,7 @@ export const StorageService = {
       const isDelivery   = safeBooking.serviceType === 'DELIVERY';
       const effectiveCommRate = isDelivery ? commDelivery : commStorage;
       const finalPriceNum = isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice);
-      const branchSettlementAmt = Math.round(finalPriceNum * effectiveCommRate);
+      const branchSettlementAmt = Math.round(finalPriceNum * effectiveCommRate / 100);
 
       // nametag_id를 INSERT 전에 미리 생성 (INSERT 후 PATCH 불필요 — SELECT 권한 없이도 동작)
       let nametagIdForInsert: string | null = safeBooking.nametagId || null;
@@ -1284,8 +1286,13 @@ export const StorageService = {
       console.warn('[Storage] updateBooking: 유효한 booking_details 컬럼이 없습니다. 업데이트 스킵.');
       return;
     }
-    await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, 'PATCH', supabaseUpdates);
-    console.log(`[Storage] Booking ${bookingDetailId} updated in Supabase ✅`);
+    // SECURITY DEFINER RPC로 RLS 우회 (has_any_role JWT 실패 방지 — locations와 동일 패턴)
+    await supabaseMutate(
+      `rpc/admin_update_booking_details`,
+      'POST',
+      { p_id: bookingDetailId, p_payload: supabaseUpdates }
+    );
+    console.log(`[Storage] Booking ${bookingDetailId} updated via RPC ✅`);
   },
 
   searchBookingsByEmail: async (email: string): Promise<BookingState[]> => {
@@ -1514,9 +1521,13 @@ export const StorageService = {
         commissionRateStorage,
         commission_rate_delivery,
         commission_rate_storage,
+        // 비-DB 필드 제거
+        availableServices,
+        contactNumber,
+        distance,
         ...locationWithoutCommissionObject
       } = safeLocation as LocationOption & Record<string, unknown>;
-      const { id, supabase_id, ...payload } = camelToSnake({
+      const { id, supabase_id, ...snakePayload } = camelToSnake({
         ...locationWithoutCommissionObject,
         commissionRateDelivery: commissionRates?.delivery ?? 0,
         commissionRateStorage: commissionRates?.storage ?? 0,
@@ -1524,24 +1535,30 @@ export const StorageService = {
         shortCode: locationCode || safeLocation.shortCode,
         branchCode: safeLocation.branchCode || locationCode,
       } as Record<string, unknown>);
-      delete (payload as Record<string, unknown>).commission_rates;
-      const shortCode = String(payload.short_code || '').trim();
-      let mutatedRows: unknown = null;
+      delete (snakePayload as Record<string, unknown>).commission_rates;
 
-      if (recordId) {
-        mutatedRows = await supabaseMutate(`locations?id=eq.${encodeURIComponent(recordId)}`, 'PATCH', payload);
-      } else if (shortCode) {
-        mutatedRows = await supabaseMutate(`locations?short_code=eq.${encodeURIComponent(shortCode)}`, 'PATCH', payload);
-      }
+      // ── SECURITY DEFINER RPC로 저장 (RLS 우회 + 내부 역할 검사) ──────────
+      // REST PATCH/POST는 RLS USING 절에 조용히 차단당해 INSERT 폴백이 발생하는 문제가 있음.
+      // RPC는 내부에서 has_any_role 검사 후 UPSERT, 명확한 에러 메시지 반환.
+      const rpcPayload = {
+        p_id: recordId || null,
+        p_short_code: String(snakePayload.short_code || '').trim() || null,
+        p_payload: snakePayload,
+      };
+      await supabaseMutate('rpc/admin_upsert_location', 'POST', rpcPayload);
 
-      const didUpdateExisting = Array.isArray(mutatedRows) ? mutatedRows.length > 0 : Boolean(mutatedRows);
-      if (!didUpdateExisting) {
-        await supabaseMutate('locations', 'POST', payload);
-      }
-
-      console.log("[Storage] Location saved to Supabase ✅");
+      console.log("[Storage] Location saved to Supabase via RPC ✅");
     } catch (e) {
       console.error("Cloud Save Failed (Location):", e);
+      // 권한 오류(42501) 감지: 사용자 친화적 메시지로 래핑
+      const err = e as Error & { code?: string; status?: number };
+      if (err.code === '42501' || err.status === 403 || err.message?.includes('권한') || err.message?.includes('permission denied')) {
+        const wrappedError = new Error(
+          `지점 수정 권한이 없습니다.\n\n현재 계정에 super_admin / hq_admin / hub_manager 역할이 필요합니다.\n올바른 관리자 계정으로 다시 로그인해주세요.\n\n(원본 오류: ${err.message})`
+        ) as Error & { code?: string };
+        wrappedError.code = 'supabase/permission-denied';
+        throw wrappedError;
+      }
       throw e;
     }
   },
@@ -2724,31 +2741,51 @@ export const StorageService = {
   saveChatMessage: async (message: ChatMessage): Promise<void> => {
     // Supabase는 fire-and-forget (hang 방지 — RLS/스키마 오류로 pending 걸리면 Gemini 호출 블로킹됨)
     if (isSupabaseDataEnabled()) {
+      // return=minimal: SELECT 후처리 없이 삽입만 (anon SELECT 정책 없어서 return=representation 사용 불가)
       supabaseMutate('chat_messages', 'POST', {
         session_id: message.sessionId, role: message.role || 'user',
         text: message.text || '', user_name: message.userName || null,
         user_email: message.userEmail || null, is_read: message.isRead ?? false,
-      }).catch(e => console.warn("[Storage] Supabase chat msg save failed:", e));
+      }, undefined, 'return=minimal').catch(e => console.warn("[Storage] Supabase chat msg save failed:", e));
+    } else {
+      try {
+        const msgRef = collection(db, "chats");
+        await addDoc(msgRef, { ...message, timestamp: message.timestamp || new Date().toISOString() });
+      } catch (e) { console.error("Failed to save chat message", e); }
     }
-    try {
-      const msgRef = collection(db, "chats");
-      await addDoc(msgRef, { ...message, timestamp: message.timestamp || new Date().toISOString() });
-    } catch (e) { console.error("Failed to save chat message", e); }
   },
 
   saveChatSession: async (session: ChatSession): Promise<void> => {
     // Supabase는 fire-and-forget (스키마 오류로 hang 방지)
     if (isSupabaseDataEnabled()) {
-      supabaseMutate('chat_sessions', 'POST', {
+      // INSERT 시도 → 409 중복 시 PATCH로 last_message 갱신
+      // (ON CONFLICT DO UPDATE는 anon SELECT 정책 미비로 RLS 실패 — 분리 방식 사용)
+      const payload = {
         session_id: session.sessionId, user_name: session.userName || null,
         user_email: session.userEmail || null, last_message: session.lastMessage || null,
         is_bot_disabled: session.isBotDisabled ?? false, unread_count: session.unreadCount || 0,
-      }).catch(e => console.warn("[Storage] Supabase chat session save failed:", e));
+      };
+      supabaseMutate('chat_sessions', 'POST', payload, undefined, 'return=minimal')
+        .catch(async (e: Error & { status?: number }) => {
+          if (e.status === 409) {
+            // 세션 이미 존재 — last_message 등 업데이트만
+            await supabaseMutate(
+              `chat_sessions?session_id=eq.${encodeURIComponent(session.sessionId)}`,
+              'PATCH',
+              { last_message: session.lastMessage || null, unread_count: session.unreadCount || 0 },
+              undefined,
+              'return=minimal'
+            ).catch(() => {}); // 재시도 실패는 무시
+          } else {
+            console.warn("[Storage] Supabase chat session save failed:", e);
+          }
+        });
+    } else {
+      try {
+        const sessionRef = doc(db, "chat_sessions", session.sessionId);
+        await setDoc(sessionRef, { ...session, timestamp: session.timestamp || new Date().toISOString() }, { merge: true });
+      } catch (e) { console.error("Failed to save chat session", e); }
     }
-    try {
-      const sessionRef = doc(db, "chat_sessions", session.sessionId);
-      await setDoc(sessionRef, { ...session, timestamp: session.timestamp || new Date().toISOString() }, { merge: true });
-    } catch (e) { console.error("Failed to save chat session", e); }
   },
 
   updateChatSession: async (sessionId: string, updates: Partial<ChatSession>): Promise<void> => {

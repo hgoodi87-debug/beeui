@@ -8,7 +8,7 @@ Disallow: /mypage
 Disallow: /booking-success
 Disallow: /payments/
 
-# AI 검색엔진 크롤러 명시 허용 (GEO 최적화)
+# GEO: AI 검색 봇 허용 (ChatGPT, Perplexity, Claude 등)
 User-agent: GPTBot
 Allow: /
 
@@ -24,9 +24,7 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: Googlebot-Extended
-Allow: /
-
+# AI 학습 크롤러 차단 (수집 목적)
 User-agent: CCBot
 Disallow: /
 

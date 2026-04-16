@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/validate-env.mjs && node scripts/generate-robots.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/prerender-static-html.mjs",
+    "build": "node scripts/validate-env.mjs && node scripts/generate-robots.mjs && node scripts/generate-sitemap.mjs && node scripts/generate-webp.mjs && vite build && node scripts/prerender-static-html.mjs",
+    "webp": "node scripts/generate-webp.mjs",
     "build:seo": "node scripts/validate-env.mjs && node scripts/generate-robots.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/prerender-static-html.mjs",
     "preview:seo": "node scripts/seo-preview-server.mjs",
     "verify:seo-preview": "node scripts/verify-prerender-preview.mjs",
@@ -43,6 +44,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.23",
+    "sharp": "^0.33.5",
     "jsdom": "^28.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",

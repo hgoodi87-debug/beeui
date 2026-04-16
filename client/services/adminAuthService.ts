@@ -97,6 +97,7 @@ const ADMIN_IDENTIFIER_EMAIL_FALLBACKS: Record<string, string> = {
   'swn': 'swn@bee-liber.com',
   'uso': 'uso@bee-liber.com',
   'uss': 'uss@bee-liber.com',
+  'myn': 'myn@bee-liber.com',
   'ydo': 'ydo@bee-liber.com',
   'yoo': 'yoo0912345@gmail.com',
   '강남 신사점': 'msis@bee-liber.com',
@@ -124,6 +125,8 @@ const ADMIN_IDENTIFIER_EMAIL_FALLBACKS: Record<string, string> = {
   '수원지점': 'swn@bee-liber.com',
   '안국역지점': 'ags@bee-liber.com',
   '여의도지점': 'ydo@bee-liber.com',
+  '연남': 'myn@bee-liber.com',
+  '연남점': 'myn@bee-liber.com',
   '용산': 'mys@bee-liber.com',
   '운서역지점': 'uso@bee-liber.com',
   '울산삼산지점': 'uss@bee-liber.com',
@@ -746,6 +749,26 @@ const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
   const normalizedIdentifier = normalizeAdminIdentifier(identifier);
   if (!normalizedIdentifier) return '';
 
+  // RPC 방식 우선: SECURITY DEFINER 함수로 RLS 우회 (anon도 호출 가능)
+  // comprehensive_rls_fix에서 employees 직접 조회가 막혔기 때문
+  try {
+    const rpcResponse = await supabaseRequest<string | null>(
+      '/rest/v1/rpc/resolve_admin_login_email',
+      {
+        method: 'POST',
+        body: JSON.stringify({ p_identifier: normalizedIdentifier }),
+      }
+    );
+    const resolvedEmail = normalizeAdminIdentifier(rpcResponse || '');
+    if (resolvedEmail) {
+      console.log('[AdminAuth] RPC 이메일 조회 성공');
+      return resolvedEmail;
+    }
+  } catch (rpcError) {
+    console.warn('[AdminAuth] RPC 조회 실패, 직접 테이블 조회 시도:', rpcError);
+  }
+
+  // 폴백: 직접 테이블 조회 (RPC가 없거나 실패할 경우, 권한이 있을 때만 동작)
   const normalizedLowerIdentifier = normalizeAdminIdentifierLower(identifier);
   const normalizedUpperIdentifier = normalizedIdentifier.toUpperCase();
 
@@ -806,10 +829,14 @@ const resolveAdminEmailFromPublicDirectory = async (identifier: string) => {
   return normalizeAdminIdentifier(candidates[0]?.row.email);
 };
 
+const makeSyntheticEmail = (identifier: string) =>
+  `${normalizeAdminIdentifierLower(identifier)}@staff.bee-liber.invalid`;
+
 const resolveSupabaseLoginEmail = async (identifier: string) => {
   const normalizedIdentifier = normalizeAdminIdentifier(identifier);
   if (!normalizedIdentifier) return '';
 
+  // 이메일 직접 입력
   if (normalizedIdentifier.includes('@')) {
     return normalizedIdentifier;
   }
@@ -818,11 +845,18 @@ const resolveSupabaseLoginEmail = async (identifier: string) => {
 
   try {
     const directoryEmail = await resolveAdminEmailFromPublicDirectory(normalizedIdentifier);
-    return preferAdminEmail(directoryEmail, fallbackEmail);
+    const resolved = preferAdminEmail(directoryEmail, fallbackEmail);
+    if (resolved) return resolved;
   } catch (error) {
     console.warn('[AdminAuth] 공개 직원 디렉터리 조회 실패:', error);
-    return fallbackEmail;
+    if (fallbackEmail) return fallbackEmail;
   }
+
+  // 최종 폴백: 합성 이메일 (ID로만 로그인)
+  // Supabase Auth에 {id}@staff.bee-liber.invalid 계정이 있으면 바로 로그인됨
+  const synthetic = makeSyntheticEmail(normalizedIdentifier);
+  console.log('[AdminAuth] 합성 이메일 폴백 적용:', synthetic);
+  return synthetic;
 };
 
 const loginWithSupabase = async (identifier: string, password: string): Promise<AdminAuthResult> => {
@@ -833,12 +867,6 @@ const loginWithSupabase = async (identifier: string, password: string): Promise<
     console.log('[AdminAuth] 이메일 직접 입력 — Supabase 직접 로그인');
   } else {
     resolvedEmail = await resolveSupabaseLoginEmail(identifier);
-  }
-
-  if (!resolvedEmail && !directEmailInput) {
-    const error = new Error('알 수 없는 관리자 ID입니다. 이메일로 직접 로그인하세요.') as Error & { code?: string };
-    error.code = 'supabase/unknown-admin-identifier';
-    throw error;
   }
 
   if (!resolvedEmail) {

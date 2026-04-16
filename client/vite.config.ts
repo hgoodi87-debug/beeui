@@ -6,6 +6,7 @@ export default defineConfig({
   build: {
     minify: 'terser',
     sourcemap: false,
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -13,6 +14,7 @@ export default defineConfig({
             return;
           }
 
+          if (id.includes('/html2canvas/')) return 'vendor-html2canvas';
           if (id.includes('/@tanstack/')) return 'vendor-query';
           if (id.includes('/framer-motion/')) return 'vendor-motion';
           if (id.includes('/lucide-react/')) return 'vendor-icons';

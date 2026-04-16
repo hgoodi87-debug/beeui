@@ -306,6 +306,7 @@ export const en = {
         booking_summary: "Booking Summary",
         service_type: "Service Type",
         baggage_count: "Baggage Count",
+        duration: "Duration",
         final_total: "Total",
         enter_coupon: "Enter promo code",
         terms_agree_1: "[Req] Agree to Terms of Service",

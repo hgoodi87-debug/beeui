@@ -110,7 +110,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
 
                             <motion.a
                                 href={`/${lang}/locations`}
-                                onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS'); }}
+                                onClick={(e) => { e.preventDefault(); onNavigate(i === 0 ? 'LOCATIONS_STORE' : 'LOCATIONS_DELIVER'); }}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 className={`w-full py-3 md:py-8 rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-2xl tracking-[0.05em] md:tracking-[0.1em] transition-all shadow-xl flex items-center justify-center gap-1.5 md:gap-3 cursor-pointer ${item.popular ? 'bg-bee-black text-bee-yellow hover:bg-bee-yellow hover:text-bee-black' : 'bg-bee-yellow text-bee-black hover:bg-bee-black hover:text-bee-yellow'

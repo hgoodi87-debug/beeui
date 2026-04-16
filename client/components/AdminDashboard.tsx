@@ -256,25 +256,70 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const handleQRDetected = async (bookingId: string) => {
     setIsQRScanOpen(false);
+
     // 로드된 예약에서 먼저 찾기
-    const found = bookings.find(b => b.id === bookingId || b.reservationCode === bookingId);
-    if (found) {
-      setScannedBooking(found);
-      setIsScanDetailVisible(true);
-      return;
-    }
-    // 없으면 직접 로드
-    try {
-      const loaded = await StorageService.getBooking(bookingId);
-      if (loaded) {
-        setScannedBooking(loaded);
-        setIsScanDetailVisible(true);
-      } else {
-        alert('예약 정보를 찾을 수 없습니다: ' + bookingId);
+    let target = bookings.find(b => b.id === bookingId || b.reservationCode === bookingId);
+    if (!target) {
+      try {
+        const loaded = await StorageService.getBooking(bookingId);
+        if (!loaded) { alert('예약 정보를 찾을 수 없습니다: ' + bookingId); return; }
+        target = loaded;
+      } catch {
+        alert('예약 조회 실패. 예약 ID를 확인해 주세요.');
+        return;
       }
-    } catch {
-      alert('예약 조회 실패. 예약 ID를 확인해 주세요.');
     }
+
+    // 이미 결제완료 + CONFIRMED 이상이면 상태 변경 스킵
+    const alreadyPaid = target.paymentStatus === 'paid';
+    const alreadyConfirmed = target.status !== BookingStatus.PENDING;
+
+    if (!alreadyPaid || !alreadyConfirmed) {
+      setIsSaving(true);
+      try {
+        const now = new Date().toISOString();
+        const updateBody: Record<string, unknown> = {};
+
+        // paymentStatus → paid
+        if (!alreadyPaid) updateBody.payment_status = 'paid';
+
+        // status → CONFIRMED (PENDING일 때만)
+        if (!alreadyConfirmed) {
+          updateBody.ops_status = 'pickup_ready';
+        }
+
+        await mutateBookingRecord(target.id!, {
+          supabaseMethod: 'PATCH',
+          supabaseBody: updateBody,
+          ...(!alreadyConfirmed ? { reservationBody: { updated_at: now } } : {}),
+        });
+
+        await AuditService.logAction(
+          currentActor,
+          'STATUS_CHANGE',
+          { id: target.id!, type: 'BOOKING' },
+          { detail: 'QR 스캔 — 결제완료 자동 전환' }
+        );
+
+        // 로컬 캐시 업데이트
+        target = {
+          ...target,
+          paymentStatus: 'paid',
+          ...(!alreadyConfirmed ? { status: BookingStatus.CONFIRMED } : {}),
+        };
+        queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
+          old?.map(b => (b.id === target!.id || b.reservationCode === target!.reservationCode)
+            ? target! : b)
+        );
+      } catch (e) {
+        console.error('QR 결제완료 전환 실패', e);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+
+    setScannedBooking(target);
+    setIsScanDetailVisible(true);
   };
 
   useEffect(() => {
@@ -398,7 +443,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     }
 
     const bookingDetailId = await resolveBookingDetailId(id);
-    await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, options.supabaseMethod, options.supabaseBody);
+
+    if (options.supabaseMethod === 'DELETE') {
+      await supabaseMutate(`booking_details?id=eq.${encodeURIComponent(bookingDetailId)}`, 'DELETE', undefined);
+    } else if (options.supabaseBody && Object.keys(options.supabaseBody).length > 0) {
+      // SECURITY DEFINER RPC로 RLS 우회 (has_any_role JWT 실패 방지 — locations와 동일 패턴)
+      await supabaseMutate(
+        `rpc/admin_update_booking_details`,
+        'POST',
+        { p_id: bookingDetailId, p_payload: options.supabaseBody }
+      );
+    }
   };
 
   // Detail Modal & Edit State
@@ -986,6 +1041,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       '완료', '취소됨', '환불완료', 'COMPLETED', 'CANCELLED', 'REFUNDED',
     ]);
 
+    const MS_24H = 24 * 60 * 60 * 1000;
     return bookings.filter(b => {
       // 1. Service Type Filter
       if (activeTab === 'DELIVERY_BOOKINGS' && b.serviceType !== ServiceType.DELIVERY) return false;
@@ -996,6 +1052,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         return b.isDeleted === true || b.settlementStatus === 'deleted';
       } else {
         if (b.isDeleted === true || b.settlementStatus === 'deleted') return false;
+
+        // 취소/환불건: 24시간 경과 후 자동 숨김
+        const effectSt = String(b.status || b.settlementStatus || '');
+        const isCancelledOrRefunded = [BookingStatus.CANCELLED, BookingStatus.REFUNDED, '취소됨', '환불완료'].includes(effectSt as any);
+        if (isCancelledOrRefunded) {
+          const ref = b.updatedAt || b.createdAt || '';
+          if (ref && Date.now() - new Date(ref).getTime() > MS_24H) return false;
+        }
+        // 노쇼(PENDING + pickupDate 24h 이상 경과): 자동 숨김
+        if (effectSt === BookingStatus.PENDING || effectSt === 'PENDING') {
+          const pickupStr = b.pickupDate || '';
+          if (pickupStr) {
+            const pickupMs = new Date(pickupStr).getTime();
+            if (!isNaN(pickupMs) && Date.now() - pickupMs > MS_24H) return false;
+          }
+        }
 
         const effectiveStatus = getEffectiveStatus(b);
 
@@ -1563,9 +1635,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       
       setAdminForm({ name: '', jobTitle: '', password: '' });
       alert(targetForm.id ? '직원 정보가 수정되었습니다.' : '직원이 등록되었습니다.');
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Failed to save admin", e);
-      alert("직원 저장에 실패했습니다.");
+      const msg = (e instanceof Error ? e.message : String(e)) || '알 수 없는 오류';
+      alert(`직원 저장에 실패했습니다.\n\n${msg}`);
       throw e; // HRTab handleSave가 패널을 닫지 않도록 rethrow
     } finally {
       setIsSaving(false);
@@ -2675,7 +2748,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           </div>
         </div>
 
-        <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-12 overflow-y-auto">
           <Suspense fallback={<AdminTabFallback />}>
           { activeTab === 'OPERATIONS' && (
             <OperationsConsole
@@ -3016,6 +3089,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               </div>
               <h2 className="text-2xl font-black text-bee-black">바우처 스캔 결과</h2>
               <p className="text-xs font-bold text-bee-black/60 uppercase tracking-widest mt-1">Booking ID: {scannedBooking.id}</p>
+              {scannedBooking.paymentStatus === 'paid' && (
+                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white rounded-full text-[11px] font-black">
+                  <i className="fa-solid fa-circle-check text-xs"></i> 결제완료 처리됨
+                </div>
+              )}
             </div>
 
             <div className="p-8 space-y-6">

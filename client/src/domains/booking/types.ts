@@ -37,6 +37,7 @@ export interface BookingState {
     returnTime?: string;
     bags: number;
     bagSizes: BagSizes;
+    bagSummary?: string;
     price: number;
     userName: string;
     userEmail: string;

@@ -392,6 +392,15 @@
 
     window.onerror = function (message, source, lineno, colno, error) {
       console.error("Critical:", message, source, lineno);
+      // GA4 에러 리포팅 (gtag 로드된 경우)
+      try {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'exception', {
+            description: '[window.onerror] ' + String(message).slice(0, 200),
+            fatal: true,
+          });
+        }
+      } catch(e) {}
       // 화이트 스크린 방지를 위한 최소한의 가시성 확보
       const root = document.getElementById('root');
       if (root && !root.innerHTML) {

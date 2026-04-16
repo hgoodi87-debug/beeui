@@ -239,3 +239,39 @@ SELECT id, slug, branch_id FROM kiosk_branches WHERE branch_id IS NULL;
 | zh-TW 오가닉 트래픽 | 미측정 | 500/월 | 2,000/월 |
 | "首爾 行李寄放" 순위 | 미순위 | Top 20 | Top 5 |
 | Core Web Vitals (mobile) | 미측정 | 모두 양호 | 모두 양호 |
+
+---
+
+## 키오스크 후속 작업 (plan-eng-review 2026-04-14 결과)
+
+### [K1] 키오스크 전용 Supabase Auth 계정 마이그레이션 (MEDIUM)
+
+**What:** 키오스크 디바이스가 anon key 대신 전용 Supabase Auth 계정으로 로그인.
+`localStorage`에 세션 영구 저장 후 RLS에서 `anon`/`authenticated` 명확히 분리.
+
+**Why:** 현재 anon key 기반 아키텍처에서 RLS 패치가 계속 쌓이고 있음.
+인증 기반으로 전환하면 admin_password 키 노출 문제 자체가 사라지고,
+설정 write 정책도 인증 사용자로만 제한 가능. Edge Function 의존도 줄어듦.
+
+**How to apply:** 1) `supabase auth admin createUser` 로 kiosk@bee-liber.com 계정 생성
+2) 각 지점 태블릿에서 최초 1회 로그인 (세션 영구 저장)
+3) RLS를 authenticated 기반으로 재작성
+
+**Effort:** L (CC: ~2h) **Priority:** P3 (현재 Edge Function 방향으로 안정화 후)
+**Depends on:** K2 Edge Function 완료 후
+
+---
+
+### [K2] 태블릿 hit target QA (HIGH — 현장 확인 필요)
+
+**What:** 실제 태블릿(10인치 전후)에서 3컬럼 레이아웃의 ± 버튼, 시간 선택 버튼 터치 정확도 검증.
+WCAG 최소 44px × 44px touch target 기준 충족 여부 확인.
+
+**Why:** 설계 문서에 "실제 태블릿에서 hit target 확인 필요"로 명시됐지만 미검증.
+작은 버튼이 외국인 여행객의 손가락 크기와 맞지 않으면 접수 오류 발생.
+
+**How to apply:** 현장에서 태블릿으로 1시간 이상 실 사용 테스트. 버튼 크기 피드백 수집.
+
+**Effort:** S (직접 QA) **Priority:** P2 (배포 직후)
+**Depends on:** 현장 배포 후
+

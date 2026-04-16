@@ -329,14 +329,17 @@ export const useAdminStats = ({
                 return summaryMonth <= end && summaryMonth >= new Date(start.getFullYear(), start.getMonth(), 1);
             });
 
-            const sortedDaily = [...dailySummaryContext.filteredDailySummaries]
-                .sort((a, b) => a.date.localeCompare(b.date))
-                .map((summary) => ({
-                    date: summary.date,
-                    count: summary.activeBookingCount,
-                    total: summary.totalRevenue,
-                    cumulative: 0,
-                }));
+            // 같은 date가 여러 번 나올 수 있으므로 그룹핑 후 합산
+            const dailyMap: Record<string, { date: string; count: number; total: number; cumulative: number }> = {};
+            for (const summary of dailySummaryContext.filteredDailySummaries) {
+                const key = summary.date;
+                if (!dailyMap[key]) {
+                    dailyMap[key] = { date: key, count: 0, total: 0, cumulative: 0 };
+                }
+                dailyMap[key].count += summary.activeBookingCount;
+                dailyMap[key].total += summary.totalRevenue;
+            }
+            const sortedDaily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
             let dailyAcc = 0;
             sortedDaily.forEach((summary) => {
@@ -344,19 +347,30 @@ export const useAdminStats = ({
                 summary.cumulative = dailyAcc;
             });
 
-            const sortedMonthly = [...filteredMonthlySummaries]
-                .sort((a, b) => a.month.localeCompare(b.month))
-                .map((summary) => ({
-                    month: summary.month.slice(0, 7),
-                    count: summary.activeBookingCount,
-                    total: summary.totalRevenue,
-                    cumulative: 0,
-                    totalRevenue: summary.totalRevenue,
-                    confirmedAmount: summary.confirmedAmount,
-                    unconfirmedAmount: summary.unconfirmedAmount,
-                    partnerPayoutTotal: summary.partnerPayoutTotal,
-                    activeBookingCount: summary.activeBookingCount,
-                }));
+            // 같은 month prefix(YYYY-MM)가 여러 번 나올 수 있으므로 그룹핑 후 합산
+            const monthlyMap: Record<string, {
+                month: string; count: number; total: number; cumulative: number;
+                totalRevenue: number; confirmedAmount: number; unconfirmedAmount: number;
+                partnerPayoutTotal: number; activeBookingCount: number;
+            }> = {};
+            for (const summary of filteredMonthlySummaries) {
+                const key = summary.month.slice(0, 7);
+                if (!monthlyMap[key]) {
+                    monthlyMap[key] = {
+                        month: key, count: 0, total: 0, cumulative: 0,
+                        totalRevenue: 0, confirmedAmount: 0, unconfirmedAmount: 0,
+                        partnerPayoutTotal: 0, activeBookingCount: 0,
+                    };
+                }
+                monthlyMap[key].count += summary.activeBookingCount;
+                monthlyMap[key].total += summary.totalRevenue;
+                monthlyMap[key].totalRevenue += summary.totalRevenue;
+                monthlyMap[key].confirmedAmount += summary.confirmedAmount;
+                monthlyMap[key].unconfirmedAmount += summary.unconfirmedAmount;
+                monthlyMap[key].partnerPayoutTotal += summary.partnerPayoutTotal;
+                monthlyMap[key].activeBookingCount += summary.activeBookingCount;
+            }
+            const sortedMonthly = Object.values(monthlyMap).sort((a, b) => a.month.localeCompare(b.month));
 
             let monthlyAcc = 0;
             sortedMonthly.forEach((summary) => {

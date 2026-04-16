@@ -5,33 +5,39 @@ interface BranchHeaderProps {
     currentBranch: LocationOption | undefined;
     branchId: string;
     bookings: BookingState[];
+    kioskSlug?: string | null;
+    onManualBooking?: () => void;
+    onExportCSV?: () => void;
+    onLogout?: () => void;
 }
 
-const BranchHeader: React.FC<BranchHeaderProps> = ({ currentBranch, branchId, bookings }) => {
+const BranchHeader: React.FC<BranchHeaderProps> = ({
+    currentBranch, branchId, bookings, kioskSlug, onManualBooking, onExportCSV, onLogout
+}) => {
     const stats = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];
         const todayBookings = bookings.filter(b => (b.pickupDate || '').split('T')[0] === today);
-
         const thisMonth = today.slice(0, 7);
         const completedThisMonth = bookings.filter(b =>
             b.status === BookingStatus.COMPLETED &&
             (b.pickupDate || '').slice(0, 7) === thisMonth
         );
-
         const deliveryRate = currentBranch?.commissionRates?.delivery ?? 0;
         const storageRate = currentBranch?.commissionRates?.storage ?? 0;
         const monthlyCommission = completedThisMonth.reduce((sum, b) => {
-            // 정산 금액: branch_settlement_amount 우선, 없으면 settlement_hard_copy_amount, 없으면 final_price
-            const price = (b as any).branchSettlementAmount ?? (b as any).settlementHardCopyAmount ?? b.finalPrice ?? 0;
+            // branchSettlementAmount = 이미 커미션율이 적용된 지점 지급 확정액
+            const bsa = (b as any).branchSettlementAmount;
+            if (bsa != null && Number(bsa) > 0) return sum + Math.round(Number(bsa));
+            // 미설정 시 전체 금액에 커미션율 적용
+            const fullPrice = Number((b as any).settlementHardCopyAmount ?? b.finalPrice ?? 0);
             const rate = b.serviceType === ServiceType.DELIVERY ? deliveryRate : storageRate;
-            return sum + Math.floor(price * (rate / 100));
+            return sum + Math.floor(fullPrice * (rate / 100));
         }, 0);
-
         return {
             total: bookings.length,
             pending: bookings.filter(b => b.status === BookingStatus.PENDING).length,
             active: bookings.filter(b => [BookingStatus.CONFIRMED, BookingStatus.TRANSIT, BookingStatus.STORAGE, BookingStatus.ARRIVED].includes(b.status as any)).length,
-            completed: bookings.filter(b => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CONFIRMED).length,
+            completed: bookings.filter(b => b.status === BookingStatus.COMPLETED).length,
             todayCount: todayBookings.length,
             monthlyCommission,
             deliveryRate,
@@ -39,41 +45,100 @@ const BranchHeader: React.FC<BranchHeaderProps> = ({ currentBranch, branchId, bo
         };
     }, [bookings, currentBranch]);
 
+    const branchName = currentBranch?.name || branchId;
+    const branchAddress = currentBranch?.address || '';
+
     return (
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-            <div className="col-span-2 md:col-span-1 bg-bee-black text-white p-5 rounded-3xl">
-                <div className="text-[10px] font-black text-bee-yellow uppercase tracking-widest mb-1">TODAY</div>
-                <div className="text-3xl font-black text-bee-yellow">{stats.todayCount}</div>
-                <div className="text-[10px] text-gray-400 font-bold mt-1">오늘 예약</div>
-            </div>
-            {[
-                { label: '전체', count: stats.total, icon: 'fa-list', color: 'text-gray-500' },
-                { label: '대기', count: stats.pending, icon: 'fa-clock', color: 'text-amber-500' },
-                { label: '활성', count: stats.active, icon: 'fa-truck-fast', color: 'text-blue-500' },
-                { label: '완료', count: stats.completed, icon: 'fa-check-double', color: 'text-green-500' },
-            ].map((stat, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-bee-black rounded-[2rem] overflow-hidden shadow-2xl shadow-black/20">
+            {/* Top section — branch identity + actions */}
+            <div className="px-6 md:px-8 pt-7 pb-5 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                        <i className={`fa-solid ${stat.icon} ${stat.color} text-xs`}></i>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</span>
+                        <span className="text-[9px] font-black text-bee-yellow/60 uppercase tracking-[0.3em]">Branch Admin</span>
+                        <span className="w-1 h-1 rounded-full bg-bee-yellow/30" />
+                        <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Dashboard</span>
                     </div>
-                    <div className="text-2xl font-black text-bee-black">{stat.count}</div>
+                    <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-tight truncate">
+                        {branchName}
+                    </h1>
+                    {branchAddress && (
+                        <p className="text-[11px] text-white/40 font-medium mt-1 truncate">
+                            <i className="fa-solid fa-location-dot mr-1.5 text-white/20" />{branchAddress}
+                        </p>
+                    )}
+                    {/* Commission badges */}
+                    <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] font-black text-blue-300">
+                            <i className="fa-solid fa-plane-departure text-[8px]" />
+                            배송 {stats.deliveryRate}%
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] font-black text-emerald-300">
+                            <i className="fa-solid fa-box text-[8px]" />
+                            보관 {stats.storageRate}%
+                        </span>
+                    </div>
                 </div>
-            ))}
-            <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm relative overflow-hidden">
-                <div className="absolute -right-3 -bottom-3 opacity-5 pointer-events-none">
-                    <i className="fa-solid fa-coins text-5xl text-emerald-500"></i>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap md:flex-nowrap">
+                    {kioskSlug && (
+                        <a
+                            href={`/kiosk/${encodeURIComponent(kioskSlug)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-bee-yellow text-bee-black font-black text-xs shadow-lg shadow-bee-yellow/30 hover:scale-[1.03] active:scale-95 transition-all"
+                        >
+                            <i className="fa-solid fa-tablet-screen-button text-sm" />
+                            키오스크 열기
+                        </a>
+                    )}
+                    {onManualBooking && (
+                        <button
+                            onClick={onManualBooking}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-white font-black text-xs hover:bg-white/15 transition-all"
+                        >
+                            <i className="fa-solid fa-plus text-sm" />
+                            수기 예약
+                        </button>
+                    )}
+                    {onExportCSV && (
+                        <button
+                            onClick={onExportCSV}
+                            title="CSV 내보내기"
+                            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:border-white/20 transition-all flex items-center justify-center"
+                        >
+                            <i className="fa-solid fa-download text-xs" />
+                        </button>
+                    )}
+                    {onLogout && (
+                        <button
+                            onClick={onLogout}
+                            title="로그아웃"
+                            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-red-400 hover:border-red-400/20 transition-all flex items-center justify-center"
+                        >
+                            <i className="fa-solid fa-arrow-right-from-bracket text-xs" />
+                        </button>
+                    )}
                 </div>
-                <div className="flex items-center gap-2 mb-2">
-                    <i className="fa-solid fa-coins text-emerald-500 text-xs"></i>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">이달 커미션</span>
-                </div>
-                <div className="text-lg font-black text-emerald-600 tabular-nums">₩{stats.monthlyCommission.toLocaleString()}</div>
-                <div className="flex gap-2 mt-1.5">
-                    <span className="text-[8px] font-black text-blue-400">배송 {stats.deliveryRate}%</span>
-                    <span className="text-[8px] text-gray-200">|</span>
-                    <span className="text-[8px] font-black text-green-400">보관 {stats.storageRate}%</span>
-                </div>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 md:grid-cols-5 border-t border-white/8">
+                {[
+                    { label: '오늘 예약', value: stats.todayCount, icon: 'fa-sun', accent: 'text-bee-yellow', bg: 'bg-bee-yellow/10' },
+                    { label: '전체', value: stats.total, icon: 'fa-layer-group', accent: 'text-white', bg: '' },
+                    { label: '대기', value: stats.pending, icon: 'fa-hourglass-half', accent: 'text-amber-400', bg: '' },
+                    { label: '활성', value: stats.active, icon: 'fa-bolt', accent: 'text-blue-400', bg: '' },
+                    { label: '이달 커미션', value: `₩${stats.monthlyCommission.toLocaleString()}`, icon: 'fa-coins', accent: 'text-emerald-400', bg: '', wide: true },
+                ].map(({ label, value, icon, accent, bg, wide }) => (
+                    <div key={label} className={`${wide ? 'col-span-2 md:col-span-1' : ''} ${bg} px-5 md:px-6 py-4 border-r border-white/8 last:border-r-0 flex flex-col gap-0.5`}>
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <i className={`fa-solid ${icon} text-[9px] ${accent} opacity-60`} />
+                            <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">{label}</span>
+                        </div>
+                        <span className={`text-xl md:text-2xl font-black tabular-nums leading-none ${accent}`}>{value}</span>
+                    </div>
+                ))}
             </div>
         </div>
     );

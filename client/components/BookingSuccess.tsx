@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import html2canvas from 'html2canvas';
 import { motion } from 'framer-motion';
 import { BookingState, LocationOption, LocationType } from '../types';
 import BookingVoucher from './BookingVoucher';
@@ -23,7 +22,8 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
         if (!voucherElement) return;
 
         try {
-            const canvas = await html2canvas(voucherElement, {
+            const { default: html2canvas } = await import('html2canvas');
+        const canvas = await html2canvas(voucherElement, {
                 scale: 2, // High quality
                 useCORS: true,
                 backgroundColor: '#ffffff'

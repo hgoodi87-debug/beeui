@@ -18,6 +18,26 @@ Disallow: /mypage
 Disallow: /booking-success
 Disallow: /payments/
 
+# GEO: AI 검색 봇 허용 (ChatGPT, Perplexity, Claude 등)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# AI 학습 크롤러 차단 (수집 목적)
+User-agent: CCBot
+Disallow: /
+
 Sitemap: ${SITE_URL}/sitemap.xml
 `;
 

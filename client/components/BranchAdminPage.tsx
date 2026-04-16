@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { SkeletonRow, SkeletonList } from './ui/Skeleton';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { sendZPL, buildBookingLabelZPL } from '../services/zebraPrintService';
@@ -151,7 +152,8 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
     const [isLoading, setIsLoading] = useState(true);
     const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
     const [refundingId, setRefundingId] = useState<string | null>(null);
-    const [staff, setStaff] = useState<any[]>([]);
+    const [allAdmins, setAllAdmins] = useState<any[]>([]);
+    const [kioskSlug, setKioskSlug] = useState<string | null>(null);
     const [completedStartDate, setCompletedStartDate] = useState<string>(() => {
         const d = new Date(); d.setMonth(d.getMonth() - 1);
         return d.toISOString().split('T')[0];
@@ -167,14 +169,20 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
             setIsLoading(false);
         });
         const unsubscribeAdmins = StorageService.subscribeAdmins((data) => {
-            setStaff(data.filter(a => a.branchId === branchId));
+            setAllAdmins(data);
         });
+        // 키오스크 슬러그 로드 (nav 버튼용)
+        loadAllActiveBranches().then(branches => {
+            const found = branches.find(b => b.branch_id === branchId);
+            if (found) setKioskSlug(found.slug);
+        }).catch(() => {});
         return () => { unsubscribeBookings(); unsubscribeAdmins(); };
     }, [branchId]);
 
     const currentBranch = useMemo(() =>
         locations.find(l =>
             l.id === branchId ||
+            (l as any).supabaseId === branchId ||
             l.shortCode === branchId ||
             (l as any).branchCode === branchId ||
             (l as any).branch_code === branchId
@@ -186,6 +194,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         ids.add(branchId);
         if (currentBranch) {
             if (currentBranch.id) ids.add(currentBranch.id);
+            if ((currentBranch as any).supabaseId) ids.add((currentBranch as any).supabaseId);
             if (currentBranch.shortCode) ids.add(currentBranch.shortCode);
             if ((currentBranch as any).branchCode) ids.add((currentBranch as any).branchCode);
             if ((currentBranch as any).branchId) ids.add((currentBranch as any).branchId);
@@ -194,7 +203,18 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         return ids;
     }, [branchId, currentBranch]);
 
+    // 지점 직원: branchIdentifiers에 포함되는 모든 admin을 해당 지점 직원으로 인식
+    const staff = useMemo(() =>
+        allAdmins.filter(a => {
+            const aBranchId = String(a.branchId || '').trim();
+            const aBranchCode = String(a.branchCode || '').trim();
+            return (aBranchId && branchIdentifiers.has(aBranchId)) ||
+                   (aBranchCode && branchIdentifiers.has(aBranchCode));
+        }),
+    [allAdmins, branchIdentifiers]);
+
     const filteredBookings = useMemo(() => {
+        const MS_24H = 24 * 60 * 60 * 1000;
         return bookings.filter(b => {
             const isInternalBee = (b.id?.toUpperCase().startsWith('BEE')) || (b.reservationCode?.toUpperCase().startsWith('BEE'));
             if (isInternalBee) return false;
@@ -205,6 +225,12 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                 branchIdentifiers.has(b.branchId || '') ||
                 branchIdentifiers.has((b as any).pickupLocationId || '');
             if (!isRelatedToBranch) return false;
+
+            // 취소/환불건: 24시간 경과 후 자동 숨김
+            if ([BookingStatus.CANCELLED, BookingStatus.REFUNDED].includes(b.status as any)) {
+                const ref = b.updatedAt || b.createdAt || '';
+                if (ref && Date.now() - new Date(ref).getTime() > MS_24H) return false;
+            }
 
             const matchesSearch =
                 b.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -236,6 +262,27 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         });
     }, [bookings, searchTerm, activeTab, completedStartDate, completedEndDate, branchIdentifiers]);
 
+    // bags가 0인 경우 bagSizes 합산으로 보완
+    const effectiveBags = (b: BookingState): number => {
+        if (b.bags && b.bags > 0) return b.bags;
+        const sz = (b as any).bagSizes;
+        if (!sz) return 0;
+        return (sz.handBag || 0) + (sz.carrier || 0) + (sz.strollerBicycle || 0);
+    };
+
+    // 예약별 커미션 금액
+    // branchSettlementAmount = 이미 커미션율이 적용된 지점 지급 확정액 → 그대로 사용
+    // 미설정 시 전체 금액(settlementHardCopyAmount || finalPrice)에 커미션율 적용
+    const bookingCommission = (b: BookingState): number => {
+        const bsa = (b as any).branchSettlementAmount;
+        if (bsa != null && Number(bsa) > 0) return Math.round(Number(bsa));
+        const fullPrice = Number((b as any).settlementHardCopyAmount ?? b.finalPrice ?? 0);
+        const deliveryRate = currentBranch?.commissionRates?.delivery ?? 0;
+        const storageRate = currentBranch?.commissionRates?.storage ?? 0;
+        const rate = b.serviceType === ServiceType.DELIVERY ? deliveryRate : storageRate;
+        return Math.floor(fullPrice * (rate / 100));
+    };
+
     const handleCompletedDateChange = (type: 'start' | 'end', val: string) => {
         const newStart = type === 'start' ? val : completedStartDate;
         const newEnd = type === 'end' ? val : completedEndDate;
@@ -250,8 +297,31 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
     const bt = t.branch_admin || {};
 
     const handleStatusUpdate = async (id: string, status: BookingStatus) => {
-        try { await StorageService.updateBooking(id, { status }); alert(bt.status_update_success || 'Status updated'); }
-        catch (e) { console.error(e); alert('Update failed'); }
+        const opsStatusMap: Partial<Record<BookingStatus, string>> = {
+            [BookingStatus.CONFIRMED]: 'pickup_ready',
+            [BookingStatus.STORAGE]:   'pickup_completed',
+            [BookingStatus.TRANSIT]:   'in_transit',
+            [BookingStatus.ARRIVED]:   'arrived_at_destination',
+            [BookingStatus.COMPLETED]: 'completed',
+            [BookingStatus.CANCELLED]: 'cancelled',
+            [BookingStatus.REFUNDED]:  'refunded',
+        };
+        const ops_status = opsStatusMap[status] ?? undefined;
+        const isCompleted = status === BookingStatus.COMPLETED;
+        const payload: Record<string, unknown> = { ...(ops_status ? { ops_status } : {}) };
+        if (isCompleted) {
+            payload.settlement_status = 'CONFIRMED';
+            payload.settled_at = new Date().toISOString();
+            payload.settled_by = '';
+        }
+        try {
+            await supabaseMutate('rpc/admin_update_booking_details', 'POST', {
+                p_id: id,
+                p_payload: payload,
+            });
+            // 낙관적 UI 업데이트 — Realtime이 늦을 경우에도 즉시 반영
+            setBookings(prev => prev.map(b => b.id === id ? { ...b, status, ...(isCompleted ? { settlementStatus: 'CONFIRMED' } : {}) } : b));
+        } catch (e) { console.error(e); alert('상태 변경 실패: ' + (e instanceof Error ? e.message : e)); }
     };
 
     const handleUpdateBooking = async () => {
@@ -350,7 +420,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                 destName,
                 codeLabel,
                 displayCode,
-                bags: booking.bags,
+                bags: effectiveBags(booking),
                 bagSummary: (booking as any).bagSummary,
                 dropoffDate: booking.dropoffDate || booking.returnDate,
                 nametagId: (booking as any).nametagId,
@@ -371,7 +441,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         const rows = bookings.map(b => {
             const pickupLoc = locations.find(l => l.id === b.pickupLocation || l.shortCode === b.pickupLocation)?.name || b.pickupLocation;
             const dropoffLoc = locations.find(l => l.id === b.dropoffLocation || l.shortCode === b.dropoffLocation)?.name || b.dropoffLocation;
-            return [b.id, b.status, `"${(b.userName || '').replace(/"/g, '""')}"`, b.pickupDate, b.returnDate || '-', `"${(pickupLoc || '').replace(/"/g, '""')}"`, `"${(dropoffLoc || '').replace(/"/g, '""')}"`, b.bags || 0, b.createdAt].join(',');
+            return [b.id, b.status, `"${(b.userName || '').replace(/"/g, '""')}"`, b.pickupDate, b.returnDate || '-', `"${(pickupLoc || '').replace(/"/g, '""')}"`, `"${(dropoffLoc || '').replace(/"/g, '""')}"`, effectiveBags(b), b.createdAt].join(',');
         });
         const blob = new Blob([BOM + headers.join(',') + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -383,79 +453,71 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
     const isBookingTab = !['STAFF', 'REVENUE', 'KIOSK'].includes(activeTab);
 
     return (
-        <div className="min-h-screen bg-gray-50 text-bee-black font-sans">
-            {/* Nav */}
-            <nav className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 z-40">
-                <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <button onClick={onBack} title="Back" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-bee-black">
-                            <i className="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <h1 className="text-lg md:text-xl font-black italic tracking-tighter">
-                            <span className="text-bee-yellow">BEE</span> ADMIN
-                            <span className="ml-2 text-[10px] font-black bg-bee-black text-bee-yellow px-2 py-0.5 rounded-full uppercase tracking-widest not-italic align-middle">
-                                {currentBranch?.name || branchId}
-                            </span>
-                        </h1>
-                    </div>
-                    <div className="flex gap-2 md:gap-3">
-                        <button onClick={() => navigate(`/admin/branch/${branchId}/booking`)} className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-bee-yellow text-bee-black font-black text-sm shadow-lg shadow-bee-yellow/20 hover:scale-105 transition-all">
-                            <i className="fa-solid fa-plus"></i> {bt.manual_booking_btn || '수기 예약'}
-                        </button>
-                        <button onClick={() => navigate(`/admin/branch/${branchId}/booking`)} className="md:hidden w-10 h-10 rounded-xl bg-bee-yellow text-bee-black flex items-center justify-center" title="수기 예약">
-                            <i className="fa-solid fa-plus"></i>
-                        </button>
-                        <button onClick={handleExportCSV} className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 text-gray-500 font-black text-sm hover:bg-gray-200 transition-all">
-                            <i className="fa-solid fa-download"></i> 내보내기
-                        </button>
-                        <button onClick={onBack} className="w-10 h-10 rounded-xl bg-gray-100 text-gray-400 hover:text-bee-black transition-colors flex items-center justify-center" title="로그아웃" aria-label="로그아웃">
-                            <i className="fa-solid fa-arrow-right-from-bracket"></i>
-                        </button>
-                    </div>
+        <div className="min-h-screen bg-[#F4F5F7] text-bee-black font-sans">
+            {/* Minimal sticky nav */}
+            <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100/80">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center gap-3">
+                    <button onClick={onBack} title="뒤로" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-bee-black flex-shrink-0">
+                        <i className="fa-solid fa-chevron-left text-sm"></i>
+                    </button>
+                    <span className="font-black text-[11px] tracking-[0.25em] text-gray-300 uppercase select-none">BEE ADMIN</span>
+                    <span className="text-gray-200 select-none">·</span>
+                    <span className="font-black text-sm text-bee-black truncate">{currentBranch?.name || '...'}</span>
                 </div>
             </nav>
 
-            <main className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-                {/* Stats header */}
-                <BranchHeader currentBranch={currentBranch} branchId={branchId} bookings={bookings} />
+            <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+                {/* Hero Header */}
+                <BranchHeader
+                    currentBranch={currentBranch}
+                    branchId={branchId}
+                    bookings={bookings}
+                    kioskSlug={kioskSlug}
+                    onManualBooking={() => navigate(`/admin/branch/${branchId}/booking`)}
+                    onExportCSV={handleExportCSV}
+                    onLogout={onBack}
+                />
 
                 {/* Tabs + Search */}
-                <div className="flex flex-col xl:flex-row gap-3 items-center justify-between">
-                    <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full xl:w-fit overflow-x-auto no-scrollbar">
+                <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
+                    <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full lg:w-fit overflow-x-auto no-scrollbar">
                         {TABS.map(tab => (
                             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                                className={`flex-1 md:flex-none px-4 md:px-5 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap flex items-center gap-1.5
-                                    ${activeTab === tab.key ? 'bg-bee-black text-bee-yellow shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}>
-                                <i className={`fa-solid ${tab.icon} text-[9px] hidden md:inline`}></i>
-                                {tab.label}
+                                className={`flex-none px-3.5 md:px-4 py-2 rounded-xl text-[11px] font-black transition-all whitespace-nowrap flex items-center gap-1.5
+                                    ${activeTab === tab.key
+                                        ? 'bg-bee-black text-bee-yellow shadow-md'
+                                        : 'text-gray-400 hover:text-gray-700'}`}>
+                                <i className={`fa-solid ${tab.icon} text-[9px]`}></i>
+                                <span className="hidden md:inline">{tab.label}</span>
+                                <span className="md:hidden">{tab.label}</span>
                             </button>
                         ))}
                     </div>
 
-                    <div className="flex gap-3 w-full xl:w-auto">
+                    <div className="flex gap-2 w-full lg:w-auto lg:ml-auto">
                         {activeTab === 'COMPLETED' && (
-                            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-gray-100 shadow-sm whitespace-nowrap overflow-x-auto">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:inline">기간</span>
-                                <input type="date" title="시작일" value={completedStartDate} onChange={e => handleCompletedDateChange('start', e.target.value)} className="bg-transparent text-bee-black font-bold text-xs outline-none cursor-pointer" />
-                                <span className="text-gray-300">-</span>
-                                <input type="date" title="종료일" value={completedEndDate} onChange={e => handleCompletedDateChange('end', e.target.value)} className="bg-transparent text-bee-black font-bold text-xs outline-none cursor-pointer" />
+                            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-sm whitespace-nowrap text-xs">
+                                <i className="fa-solid fa-calendar text-gray-300 text-[10px]"></i>
+                                <input type="date" title="시작일" value={completedStartDate} onChange={e => handleCompletedDateChange('start', e.target.value)} className="bg-transparent text-bee-black font-bold text-xs outline-none cursor-pointer w-28" />
+                                <span className="text-gray-200">–</span>
+                                <input type="date" title="종료일" value={completedEndDate} onChange={e => handleCompletedDateChange('end', e.target.value)} className="bg-transparent text-bee-black font-bold text-xs outline-none cursor-pointer w-28" />
                             </div>
                         )}
                         {isBookingTab && (
-                            <div className="relative flex-1 xl:w-80">
-                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-sm"></i>
-                                <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="예약자명, 예약코드 검색..." className="w-full bg-white pl-11 pr-4 py-3 rounded-2xl border border-gray-100 focus:border-bee-yellow shadow-sm outline-none font-bold text-sm" />
+                            <div className="relative flex-1 lg:w-72">
+                                <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 text-xs"></i>
+                                <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="예약자명, 예약코드..." className="w-full bg-white pl-9 pr-4 py-2.5 rounded-xl border border-gray-100 focus:border-bee-yellow shadow-sm outline-none font-bold text-xs" />
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
                     {isLoading ? (
-                        <div className="flex-1 flex flex-col items-center justify-center p-20 space-y-4">
-                            <div className="w-12 h-12 border-4 border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-gray-400 font-bold animate-pulse">데이터 로딩 중...</p>
+                        <div className="flex-1 flex flex-col items-center justify-center p-20 gap-4">
+                            <div className="w-8 h-8 border-[3px] border-bee-yellow border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest animate-pulse">Loading</p>
                         </div>
                     ) : activeTab === 'STAFF' ? (
                         <Suspense fallback={<div className="p-10 text-center text-gray-300">Loading...</div>}>
@@ -473,13 +535,15 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                         /* Booking table - mobile card + desktop table hybrid */
                         <>
                             {/* Mobile cards */}
-                            <div className="md:hidden p-4 space-y-3">
-                                {filteredBookings.sort((a, b) => new Date(b.pickupDate || b.createdAt || 0).getTime() - new Date(a.pickupDate || a.createdAt || 0).getTime()).map(b => (
-                                    <div key={b.id} onClick={() => setSelectedBooking(b)} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 active:scale-[0.98] transition-transform cursor-pointer">
-                                        <div className="flex justify-between items-start mb-3">
+                            <div className="md:hidden p-3 space-y-2">
+                                {isLoading ? (
+                                    <SkeletonList count={5} />
+                                ) : filteredBookings.sort((a, b) => new Date(b.pickupDate || b.createdAt || 0).getTime() - new Date(a.pickupDate || a.createdAt || 0).getTime()).map(b => (
+                                    <div key={b.id} onClick={() => setSelectedBooking(b)} className="bg-gray-50 p-4 rounded-xl active:scale-[0.98] transition-transform cursor-pointer">
+                                        <div className="flex justify-between items-start mb-2.5">
                                             <div>
-                                                <div className="font-black text-bee-black">{b.userName}</div>
-                                                <div className="text-[10px] font-mono text-gray-400 tracking-tighter">{b.reservationCode || b.id}</div>
+                                                <div className="font-black text-[13px] text-bee-black">{b.userName}</div>
+                                                <div className="text-[9px] font-mono text-gray-300 mt-0.5">{b.reservationCode || b.id}</div>
                                             </div>
                                             <select
                                                 value={b.status}
@@ -491,33 +555,45 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                                 {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <span className={`px-2 py-0.5 rounded-md text-[9px] font-black ${b.serviceType === ServiceType.DELIVERY ? 'bg-blue-50 text-blue-500' : 'bg-green-50 text-green-500'}`}>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`px-2 py-1 rounded-md text-[9px] font-black ${b.serviceType === ServiceType.DELIVERY ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-600'}`}>
                                                 {b.serviceType === ServiceType.DELIVERY ? '배송' : '보관'}
                                             </span>
-                                            <span className="text-gray-400">짐 {b.bags}개</span>
-                                            <span className="ml-auto text-gray-500 font-bold">{b.pickupDate} {b.pickupTime}</span>
+                                            <span className="text-[11px] font-bold text-gray-400">
+                                                {effectiveBags(b) > 0 ? `짐 ${effectiveBags(b)}개` : ((b as any).bagSummary || '짐 —')}
+                                            </span>
+                                            <div className="ml-auto text-right">
+                                                <div className="text-[10px] font-bold text-gray-500 tabular-nums">{(b.pickupDate || '').split('T')[0]} {b.pickupTime || ''}</div>
+                                                {(b.returnDate || b.dropoffDate) && <div className="text-[10px] text-gray-300 tabular-nums">→ {((b.returnDate || b.dropoffDate) || '').split('T')[0]}</div>}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
-                                {filteredBookings.length === 0 && (
-                                    <div className="py-16 text-center text-gray-300 text-sm">예약이 없습니다.</div>
+                                {!isLoading && filteredBookings.length === 0 && (
+                                    <div className="py-16 text-center">
+                                        <i className="fa-solid fa-inbox text-2xl text-gray-200 mb-2 block"></i>
+                                        <p className="text-[12px] font-bold text-gray-300">예약이 없습니다</p>
+                                    </div>
                                 )}
                             </div>
 
                             {/* Desktop table */}
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left">
-                                    <thead className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                        <tr>
-                                            <th className="px-8 py-5">예약 정보</th>
-                                            <th className="px-6 py-5">유형/짐</th>
-                                            <th className="px-6 py-5">상태</th>
-                                            <th className="px-6 py-5">날짜</th>
-                                            <th className="px-8 py-5 text-right">관리</th>
+                                    <thead className="border-b border-gray-50">
+                                        <tr className="text-[9px] font-black text-gray-300 uppercase tracking-[0.18em]">
+                                            <th className="px-6 py-4">예약자</th>
+                                            <th className="px-4 py-4">유형</th>
+                                            <th className="px-4 py-4">상태</th>
+                                            <th className="px-4 py-4">맡기는시간</th>
+                                            <th className="px-4 py-4">찾는시간</th>
+                                            <th className="px-4 py-4 text-right">짐</th>
+                                            <th className="px-4 py-4 text-right">커미션</th>
+                                            <th className="px-6 py-4 text-right"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody>
+                                        {isLoading && Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={8} />)}
                                         {filteredBookings.sort((a, b) => new Date(b.pickupDate || b.createdAt || 0).getTime() - new Date(a.pickupDate || a.createdAt || 0).getTime()).map((b, idx, arr) => {
                                             const bDate = (b.pickupDate || b.createdAt || '').split('T')[0];
                                             const prevDate = idx > 0 ? (arr[idx - 1].pickupDate || arr[idx - 1].createdAt || '').split('T')[0] : null;
@@ -525,44 +601,73 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                             return (
                                                 <React.Fragment key={b.id}>
                                                     {showDateHeader && (
-                                                        <tr className="bg-gray-50/50">
-                                                            <td colSpan={5} className="px-8 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">{bDate}</td>
+                                                        <tr>
+                                                            <td colSpan={8} className="px-6 pt-5 pb-1.5 text-[9px] font-black text-gray-300 uppercase tracking-widest">{bDate}</td>
                                                         </tr>
                                                     )}
-                                                    <tr className="hover:bg-gray-50/50 transition-colors group">
-                                                        <td className="px-8 py-5">
-                                                            <div className="font-black text-bee-black mb-1">{b.userName}</div>
-                                                            <div className="text-[10px] font-bold text-gray-400 font-mono tracking-tighter">{b.reservationCode || b.id}</div>
+                                                    <tr className="hover:bg-gray-50/60 transition-colors group border-b border-gray-50 last:border-b-0">
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-black text-[13px] text-bee-black leading-tight">{b.userName}</div>
+                                                            <div className="text-[10px] text-gray-300 font-mono mt-0.5">{b.reservationCode || b.id}</div>
                                                         </td>
-                                                        <td className="px-6 py-5 font-bold">
+                                                        <td className="px-4 py-4">
                                                             <div className="flex flex-col gap-1">
-                                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-md w-fit ${b.serviceType === ServiceType.DELIVERY ? 'bg-blue-50 text-blue-500' : 'bg-green-50 text-green-500'}`}>
+                                                                <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg w-fit ${b.serviceType === ServiceType.DELIVERY ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-600'}`}>
                                                                     {b.serviceType === ServiceType.DELIVERY ? '배송' : '보관'}
                                                                 </span>
                                                                 <div className="flex gap-1">
-                                                                    {branchIdentifiers.has(b.pickupLocation || '') && <span className="text-[8px] font-black bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded uppercase">Pick</span>}
-                                                                    {branchIdentifiers.has(b.dropoffLocation || '') && <span className="text-[8px] font-black bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded uppercase">Drop</span>}
+                                                                    {branchIdentifiers.has(b.pickupLocation || '') && <span className="text-[8px] font-black bg-orange-100 text-orange-500 px-1.5 py-0.5 rounded">Pick</span>}
+                                                                    {branchIdentifiers.has(b.dropoffLocation || '') && <span className="text-[8px] font-black bg-purple-100 text-purple-500 px-1.5 py-0.5 rounded">Drop</span>}
                                                                 </div>
-                                                                <span className="text-xs font-bold text-bee-black">짐 {b.bags}개</span>
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-5 font-bold">
+                                                        <td className="px-4 py-4">
                                                             <select
                                                                 value={b.status}
                                                                 onChange={e => handleStatusUpdate(b.id!, e.target.value as BookingStatus)}
-                                                                className={`text-[10px] font-black p-2 rounded-xl border-none outline-none cursor-pointer transition-colors ${getStatusStyle(b.status as BookingStatus)}`}
+                                                                className={`text-[10px] font-black px-2.5 py-1.5 rounded-lg border-none outline-none cursor-pointer transition-colors ${getStatusStyle(b.status as BookingStatus)}`}
                                                                 title="상태 변경" aria-label="상태 변경"
                                                             >
                                                                 {Object.values(BookingStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                                             </select>
                                                         </td>
-                                                        <td className="px-6 py-5">
-                                                            <div className="text-xs font-bold text-bee-black">{b.pickupDate}</div>
-                                                            <div className="text-[10px] text-gray-400">{b.pickupTime}</div>
+                                                        <td className="px-4 py-4">
+                                                            <div className="text-[10px] font-black text-gray-400 truncate max-w-[120px]">
+                                                                {locations.find(l => l.id === b.pickupLocation || l.shortCode === b.pickupLocation)?.name || (b as any).pickupLocationName || b.pickupLocation || '—'}
+                                                            </div>
+                                                            <div className="text-[12px] font-bold text-bee-black tabular-nums mt-0.5">{(b.pickupDate || '').split('T')[0]}</div>
+                                                            {b.pickupTime && <div className="text-[10px] text-gray-400 mt-0.5">{b.pickupTime}</div>}
                                                         </td>
-                                                        <td className="px-8 py-5 text-right">
-                                                            <button onClick={() => setSelectedBooking(b)} className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-bee-yellow transition-all flex items-center justify-center ml-auto" title="상세" aria-label="상세">
-                                                                <i className="fa-solid fa-eye text-xs"></i>
+                                                        <td className="px-4 py-4">
+                                                            {(b.returnDate || b.dropoffDate) ? (
+                                                                <>
+                                                                    <div className="text-[10px] font-black text-gray-400 truncate max-w-[120px]">
+                                                                        {locations.find(l => l.id === b.dropoffLocation || l.shortCode === b.dropoffLocation)?.name || (b as any).dropoffLocationName || b.dropoffLocation || '—'}
+                                                                    </div>
+                                                                    <div className="text-[12px] font-bold text-gray-600 tabular-nums mt-0.5">{((b.returnDate || b.dropoffDate) || '').split('T')[0]}</div>
+                                                                    {(b.returnTime || b.deliveryTime) && <div className="text-[10px] text-gray-400 mt-0.5">{b.returnTime || b.deliveryTime}</div>}
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-[11px] text-gray-200">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            {effectiveBags(b) > 0
+                                                                ? <span className="text-[12px] font-black text-gray-500">{effectiveBags(b)}<span className="text-[10px] font-bold text-gray-300 ml-0.5">개</span></span>
+                                                                : (b as any).bagSummary
+                                                                    ? <span className="text-[10px] text-gray-400">{(b as any).bagSummary}</span>
+                                                                    : <span className="text-[11px] text-gray-200">—</span>
+                                                            }
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            {bookingCommission(b) > 0
+                                                                ? <span className="text-[12px] font-black text-emerald-500">₩{bookingCommission(b).toLocaleString()}</span>
+                                                                : <span className="text-[11px] text-gray-200">—</span>
+                                                            }
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <button onClick={() => setSelectedBooking(b)} className="w-8 h-8 rounded-lg bg-gray-50 text-gray-300 hover:bg-bee-black hover:text-bee-yellow transition-all flex items-center justify-center ml-auto opacity-0 group-hover:opacity-100" title="상세" aria-label="상세">
+                                                                <i className="fa-solid fa-arrow-right text-[10px]"></i>
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -572,7 +677,10 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                     </tbody>
                                 </table>
                                 {filteredBookings.length === 0 && (
-                                    <div className="py-16 text-center text-gray-300 text-sm">예약이 없습니다.</div>
+                                    <div className="py-20 text-center">
+                                        <i className="fa-solid fa-inbox text-2xl text-gray-200 mb-3 block"></i>
+                                        <p className="text-[12px] font-bold text-gray-300">예약이 없습니다</p>
+                                    </div>
                                 )}
                             </div>
                         </>

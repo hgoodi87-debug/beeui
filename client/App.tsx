@@ -506,16 +506,15 @@ const App: React.FC = () => {
 
   const BranchAdminGuard = ({ children }: { children: React.ReactNode }) => {
     const hasAdminAccess = Boolean(adminInfo.name) && (!isSupabaseAdminAuthEnabled() || hasActiveAdminSession());
-    if (!hasAdminAccess) return <Navigate to="/admin" replace />;
+    if (!hasAdminAccess) return <Navigate to="/admin" replace state={{ from: `${location.pathname}${location.search}` }} />;
 
-    if (isDashboardAdmin(adminInfo.role, adminInfo.jobTitle)) {
-      return <Navigate to="/admin/dashboard" replace />;
-    }
-
-    const pathSegments = location.pathname.split('/');
-    const urlBranchId = pathSegments[3] || '';
-    if (adminInfo.branchId && urlBranchId !== adminInfo.branchId) {
-      return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
+    // branchId 없음(본사 직원) 또는 dashboard admin → 모든 지점 접근 허용
+    // branchId 있음(지점 직원) → 본인 지점 외 차단
+    if (!isDashboardAdmin(adminInfo.role, adminInfo.jobTitle) && adminInfo.branchId) {
+      const urlBranchId = location.pathname.split('/')[3] || '';
+      if (urlBranchId !== adminInfo.branchId) {
+        return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
+      }
     }
 
     return <>{children}</>;
@@ -528,8 +527,9 @@ const App: React.FC = () => {
     }
 
     if (!isDashboardAdmin(adminInfo.role, adminInfo.jobTitle)) {
+      // branchId 있는 직원 → 본인 지점으로 리다이렉트
       if (adminInfo.branchId) return <Navigate to={`/admin/branch/${adminInfo.branchId}`} replace />;
-      return <Navigate to="/admin" replace />;
+      // branchId 없는 직원 = 본사 직원 → 대시보드 접근 허용
     }
 
     return <>{children}</>;
@@ -707,9 +707,10 @@ const App: React.FC = () => {
 
                   {/* ADMIN */}
                   <Route path="/admin" element={<AdminLoginPage onLogin={(name, jobTitle, role, email, branchId) => {
-                    const info = { name, jobTitle, role, email: email || '', branchId: branchId || '', loginAt: Date.now() };
                     const fallbackPath = getAdminHomePath(role, jobTitle, branchId);
                     const nextPath = resolveAdminRedirectPath((location.state as { from?: string } | null)?.from, fallbackPath);
+
+                    const info = { name, jobTitle, role, email: email || '', branchId: branchId || '', loginAt: Date.now() };
 
                     flushSync(() => {
                       setAdminInfo(info);

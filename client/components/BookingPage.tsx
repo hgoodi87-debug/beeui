@@ -1432,6 +1432,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         <span className="text-gray-400 text-xs font-bold uppercase tracking-widest group-hover:text-bee-yellow transition-colors">{tBooking.baggage_count || 'Baggage Count'}</span>
                                         <span className="font-black text-lg">{booking.bags}</span>
                                     </div>
+                                    {booking.serviceType !== ServiceType.DELIVERY && (
+                                        <div className="flex justify-between items-center group">
+                                            <span className="text-gray-400 text-xs font-bold uppercase tracking-widest group-hover:text-bee-yellow transition-colors">{tBooking.duration || 'Duration'}</span>
+                                            <span className="font-black text-lg text-bee-yellow">
+                                                {priceDetails.durationText || '-'}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="h-px bg-white/10 my-2" />
                                     <div className="flex justify-between items-end group">
                                         <span className="text-gray-400 text-xs font-black uppercase tracking-[0.2em] group-hover:text-bee-yellow transition-colors">{tBooking.final_total || 'TOTAL'}</span>
@@ -1440,9 +1448,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 <span className="text-bee-yellow font-black italic text-3xl">₩</span>
                                                 <span className="text-4xl font-black italic tracking-tighter tabular-nums">{priceDetails.total.toLocaleString()}</span>
                                             </div>
-                                            {priceDetails.durationText && (
-                                                <p className="text-[10px] font-black text-bee-yellow italic uppercase tracking-widest mt-1 opacity-80">{priceDetails.durationText}</p>
-                                            )}
                                         </div>
                                     </div>
                                 </div>

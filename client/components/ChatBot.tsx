@@ -118,6 +118,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
             };
             // 로컬 state 즉시 업데이트 (Firestore 저장 성공 여부와 무관하게 렌더링)
             setMessages([welcomeMsg]);
+            // 세션 먼저 생성 후 메시지 저장 (FK 의존성)
+            StorageService.saveChatSession({
+                sessionId,
+                userName: userInfo.name,
+                userEmail: userInfo.email,
+                lastMessage: welcomeMsg.text,
+                timestamp: welcomeMsg.timestamp
+            });
             StorageService.saveChatMessage(welcomeMsg);
         }
     }, [t, messages.length, isInfoSubmitted]);
@@ -192,11 +200,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
         // 로컬 state 즉시 업데이트 (Firestore 저장 성공 여부와 무관하게 즉시 렌더링)
         setMessages(prev => [...prev, userMsg]);
 
-        await StorageService.saveChatMessage(userMsg);
-
-        const chatText = hiddenPrompt ? (t?.notify_template?.replace('{userText}', userText) || `[챗봇 알림] 고객이 '${userText}' 버튼을 클릭했습니다.`) : userText;
-        await sendToGoogleChat('user', chatText);
-
+        // 세션 먼저 upsert 후 메시지 저장 (FK 의존성)
         await StorageService.saveChatSession({
             sessionId,
             userName: userInfo.name,
@@ -204,6 +208,10 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
             lastMessage: userText,
             timestamp: userMsg.timestamp
         });
+        await StorageService.saveChatMessage(userMsg);
+
+        const chatText = hiddenPrompt ? (t?.notify_template?.replace('{userText}', userText) || `[챗봇 알림] 고객이 '${userText}' 버튼을 클릭했습니다.`) : userText;
+        await sendToGoogleChat('user', chatText);
 
         if (sessionMeta?.isBotDisabled) {
             setLoading(false);

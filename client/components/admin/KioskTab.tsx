@@ -13,6 +13,7 @@ import {
   loadLogRange,
   insertStorageLog,
   updateStorageLog,
+  deleteStorageLog,
   upsertSetting,
   assignTagAndRow,
   todayStr as tdy,
@@ -927,7 +928,7 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
                       className="w-6 h-6 rounded-full bg-white text-gray-400 hover:bg-amber-50 hover:text-amber-500 flex items-center justify-center transition-colors border border-gray-200 flex-shrink-0">
                       <i className="fa-solid fa-print text-[9px]"></i>
                     </button>
-                    <button onClick={() => { if (confirm(t('del'))) { supabaseMutate(`${KIOSK_TABLES.log}?id=eq.${e.id}`, 'DELETE').then(()=>onUpdate()); } }}
+                    <button onClick={() => { if (confirm(t('del'))) { deleteStorageLog(e.id).then(()=>onUpdate()).catch((err)=>alert(err.message || '삭제 실패')); } }}
                       className="w-6 h-6 rounded-full bg-white text-gray-300 hover:bg-red-50 hover:text-red-400 flex items-center justify-center transition-colors border border-gray-200 flex-shrink-0">
                       <i className="fa-solid fa-xmark text-[9px]"></i>
                     </button>

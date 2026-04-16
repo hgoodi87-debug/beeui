@@ -3,7 +3,7 @@ import { BookingState, Expenditure, CashClosing, AdminTab, BankTransaction, Bank
 import { motion, AnimatePresence } from 'framer-motion';
 import { exportKoreanAccountingXLSX } from '../../utils/accountingExport';
 import { exportPaymentMethodWordDoc } from '../../utils/wordExport';
-import { loadAllActiveBranches, loadLogRange, KioskStorageLog } from '../../services/kioskDb';
+import { loadAllLogsForRange, KioskStorageLog } from '../../services/kioskDb';
 import { useBankTransactions, useBankTransactionsMutations } from '../../src/domains/admin/hooks/useBankTransactions';
 
 
@@ -93,13 +93,8 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
         setKioskLoading(true);
         (async () => {
             try {
-                const branches = await loadAllActiveBranches();
-                const all: KioskStorageLog[] = [];
-                for (const b of branches) {
-                    const logs = await loadLogRange(b.id, revenueStartDate, revenueEndDate);
-                    all.push(...logs);
-                }
-                setKioskLogs(all);
+                const logs = await loadAllLogsForRange(revenueStartDate, revenueEndDate);
+                setKioskLogs(logs);
             } finally {
                 setKioskLoading(false);
             }
@@ -152,92 +147,100 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">통합 기간 실적 분석 및 재무 통계 🛡️</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 relative z-10">
-                    <div className="flex items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
-                        <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-3 relative z-10 w-full lg:w-auto">
+                    {/* 날짜 + 내보내기 버튼 */}
+                    <div className="flex flex-wrap items-center gap-2 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                             <input
                                 type="date"
                                 title="조회 시작일"
                                 value={revenueStartDate}
                                 onChange={e => setRevenueStartDate(e.target.value)}
-                                className="bg-white px-3 py-1.5 rounded-xl font-black text-[10px] border border-gray-100 outline-none focus:border-bee-black transition-all"
+                                className="bg-white px-3 py-1.5 rounded-xl font-black text-[10px] border border-gray-100 outline-none focus:border-bee-black transition-all flex-1 min-w-0"
                             />
-                            <span className="text-gray-300 font-black text-[10px]">~</span>
+                            <span className="text-gray-300 font-black text-[10px] shrink-0">~</span>
                             <input
                                 type="date"
                                 title="조회 종료일"
                                 value={revenueEndDate}
                                 onChange={e => setRevenueEndDate(e.target.value)}
-                                className="bg-white px-3 py-1.5 rounded-xl font-black text-[10px] border border-gray-100 outline-none focus:border-bee-black transition-all"
+                                className="bg-white px-3 py-1.5 rounded-xl font-black text-[10px] border border-gray-100 outline-none focus:border-bee-black transition-all flex-1 min-w-0"
                             />
                         </div>
-                        <button
-                            onClick={handleExportCSV}
-                            title="CSV 내보내기 (간편)"
-                            className="w-8 h-8 bg-gray-100 text-gray-500 rounded-xl text-[10px] flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sm"
-                        >
-                            <i className="fa-solid fa-file-csv"></i>
-                        </button>
-                        <button
-                            onClick={() => exportKoreanAccountingXLSX({
-                                revenueStats,
-                                accountingDailyStats,
-                                accountingMonthlyStats,
-                                expenditures,
-                                startDate: revenueStartDate,
-                                endDate: revenueEndDate,
-                            })}
-                            title="한국 회계처리 양식 XLSX 다운로드 (손익계산서 · 매출 거래장 · 지출 거래장 · 통합 계정원장)"
-                            className="flex items-center gap-2 px-4 py-2 bg-bee-black text-bee-yellow rounded-xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-md shadow-black/10 whitespace-nowrap"
-                        >
-                            <i className="fa-solid fa-file-spreadsheet"></i>
-                            회계장부 XLSX
-                        </button>
-                        <button
-                            onClick={() => exportPaymentMethodWordDoc({
-                                bookings,
-                                startDate: revenueStartDate,
-                                endDate: revenueEndDate,
-                            })}
-                            title="일자별 결제수단 현황 Word 문서 다운로드"
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-md shadow-blue-600/20 whitespace-nowrap"
-                        >
-                            <i className="fa-solid fa-file-word"></i>
-                            결제수단별 Word
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                onClick={handleExportCSV}
+                                title="CSV 내보내기 (간편)"
+                                className="w-8 h-8 bg-gray-100 text-gray-500 rounded-xl text-[10px] flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-sm"
+                            >
+                                <i className="fa-solid fa-file-csv"></i>
+                            </button>
+                            <button
+                                onClick={() => exportKoreanAccountingXLSX({
+                                    revenueStats,
+                                    accountingDailyStats,
+                                    accountingMonthlyStats,
+                                    expenditures,
+                                    startDate: revenueStartDate,
+                                    endDate: revenueEndDate,
+                                })}
+                                title="한국 회계처리 양식 XLSX 다운로드"
+                                className="flex items-center gap-1.5 px-3 py-2 bg-bee-black text-bee-yellow rounded-xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-md shadow-black/10 whitespace-nowrap"
+                            >
+                                <i className="fa-solid fa-file-spreadsheet"></i>
+                                <span className="hidden sm:inline">회계장부 XLSX</span>
+                                <span className="sm:hidden">XLSX</span>
+                            </button>
+                            <button
+                                onClick={() => exportPaymentMethodWordDoc({
+                                    bookings,
+                                    startDate: revenueStartDate,
+                                    endDate: revenueEndDate,
+                                })}
+                                title="일자별 결제수단 현황 Word 문서 다운로드"
+                                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black hover:scale-105 active:scale-95 transition-all shadow-md shadow-blue-600/20 whitespace-nowrap"
+                            >
+                                <i className="fa-solid fa-file-word"></i>
+                                <span className="hidden sm:inline">결제수단별 Word</span>
+                                <span className="sm:hidden">Word</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="flex bg-gray-50/80 p-1 rounded-2xl border border-gray-100">
-                        <button
-                            onClick={() => setActiveSubTab('revenue')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'revenue' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
-                        >
-                            매출 요약
-                        </button>
-                        <button
-                            onClick={() => setActiveSubTab('expenditure')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'expenditure' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
-                        >
-                            지출 내역
-                        </button>
-                        <button
-                            onClick={() => setActiveSubTab('calendar')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'calendar' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
-                        >
-                            매출 캘린더
-                        </button>
-                        <button
-                            onClick={() => setActiveSubTab('kiosk')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'kiosk' ? 'bg-bee-yellow text-bee-black shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
-                        >
-                            🐝 키오스크 정산
-                        </button>
-                        <button
-                            onClick={() => setActiveSubTab('bank')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all ${activeSubTab === 'bank' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
-                        >
-                            🏦 통장 잔고
-                        </button>
+                    {/* 서브탭 — 모바일에서 가로 스크롤 */}
+                    <div className="overflow-x-auto no-scrollbar">
+                        <div className="flex bg-gray-50/80 p-1 rounded-2xl border border-gray-100 w-max min-w-full">
+                            <button
+                                onClick={() => setActiveSubTab('revenue')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'revenue' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                            >
+                                매출 요약
+                            </button>
+                            <button
+                                onClick={() => setActiveSubTab('expenditure')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'expenditure' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                            >
+                                지출 내역
+                            </button>
+                            <button
+                                onClick={() => setActiveSubTab('calendar')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'calendar' ? 'bg-bee-black text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                            >
+                                매출 캘린더
+                            </button>
+                            <button
+                                onClick={() => setActiveSubTab('kiosk')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'kiosk' ? 'bg-bee-yellow text-bee-black shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                            >
+                                🐝 키오스크 정산
+                            </button>
+                            <button
+                                onClick={() => setActiveSubTab('bank')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'bank' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                            >
+                                🏦 통장 잔고
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -355,7 +358,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                     </div>
                     <div className="bg-bee-black p-4 rounded-[24px] flex flex-col gap-1 relative overflow-hidden">
                         <div className="absolute -bottom-3 -right-3 w-12 h-12 bg-bee-yellow opacity-5 rounded-full"></div>
-                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">실수익 (Net)</p>
+                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">순수익</p>
                         <p className="text-xl font-black italic text-bee-yellow tabular-nums">₩{kioskStats.net.toLocaleString()}</p>
                     </div>
                 </div>
@@ -364,7 +367,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
             {/* Date Range Selector removed from here and moved to header */}
 
             {/* Payment Method Matrix - Premium Card Style */}
-            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+            <div className="bg-white p-5 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
                 <div className="flex items-center justify-between">
                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                         <i className="fa-solid fa-credit-card text-bee-blue"></i> 결제 수단별 매출 분석
@@ -609,7 +612,8 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         </div>
 
                         <div className="overflow-hidden rounded-[32px] border border-gray-50">
-                            <table className="w-full text-left">
+                            <div className="overflow-x-auto">
+                            <table className="w-full min-w-[480px] text-left">
                                 <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-400">
                                     <tr>
                                         <th className="px-6 py-4">일자</th>
@@ -664,6 +668,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     )}
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -769,10 +774,9 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         {/* KPI 카드 4칸 */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
-                                { label: '총 보관 건수',  val: `${kioskStats.count}건`,                  icon: 'fa-box',           color: 'text-amber-500',  bg: 'hover:border-amber-300' },
-                                { label: '총 원가',       val: `₩${kioskStats.gross.toLocaleString()}`,  icon: 'fa-tag',           color: 'text-blue-500',   bg: 'hover:border-blue-300' },
-                                { label: '총 할인액',     val: `₩${kioskStats.disc.toLocaleString()}`,   icon: 'fa-scissors',      color: 'text-red-400',    bg: 'hover:border-red-300' },
-                                { label: '실 수납액',     val: `₩${kioskStats.net.toLocaleString()}`,    icon: 'fa-won-sign',      color: 'text-emerald-500',bg: 'hover:border-emerald-300' },
+                                { label: '총 보관 건수',    val: `${kioskStats.count}건`,                        icon: 'fa-box',           color: 'text-amber-500',  bg: 'hover:border-amber-300' },
+                                { label: '총 원가',         val: `₩${kioskStats.gross.toLocaleString()}`,        icon: 'fa-tag',           color: 'text-blue-500',   bg: 'hover:border-blue-300' },
+                                { label: '순수익',          val: `₩${kioskStats.net.toLocaleString()}`,          icon: 'fa-won-sign',      color: 'text-emerald-500',bg: 'hover:border-emerald-300' },
                             ].map(card => (
                                 <div key={card.label} className={`bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between transition-all ${card.bg}`}>
                                     <div>
@@ -807,7 +811,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                                     <th className="px-6 py-4 text-right">건수</th>
                                                     <th className="px-6 py-4 text-right">원가</th>
                                                     <th className="px-6 py-4 text-right">할인</th>
-                                                    <th className="px-6 py-4 text-right">실수납</th>
+                                                    <th className="px-6 py-4 text-right">순수익</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50 text-xs">

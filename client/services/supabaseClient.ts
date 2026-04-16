@@ -52,6 +52,30 @@ export const getSupabaseDataDiagnosis = async () => {
   };
 };
 
+const RETRY_MAX = 3;
+const RETRY_BASE_DELAY_MS = 1000;
+const REQUEST_TIMEOUT_MS = 30000;
+
+/**
+ * 지수 백오프 재시도 — 4xx는 즉시 포기, 5xx·네트워크 오류만 재시도
+ */
+const withRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < RETRY_MAX; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      const status = (error as { status?: number })?.status;
+      if (status && status >= 400 && status < 500) throw error; // 클라이언트 오류 즉시 포기
+      if (attempt < RETRY_MAX - 1) {
+        await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY_MS * Math.pow(2, attempt)));
+      }
+    }
+  }
+  throw lastError;
+};
+
 const buildSupabaseHttpError = async (response: Response, label: string) => {
   const text = await response.text();
   let details: unknown = text;
@@ -115,11 +139,17 @@ export async function supabaseGet<T>(path: string, accessToken?: string): Promis
     'Accept-Profile': SUPABASE_DATA_SCHEMA,
   };
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers });
-  if (!res.ok) {
-    throw await buildSupabaseHttpError(res, `Supabase GET /${path}`);
-  }
-  return res.json();
+  return withRetry(async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers, signal: controller.signal });
+      if (!res.ok) throw await buildSupabaseHttpError(res, `Supabase GET /${path}`);
+      return res.json() as Promise<T>;
+    } finally {
+      clearTimeout(timer);
+    }
+  });
 }
 
 /**
@@ -142,11 +172,19 @@ export async function supabaseMutate<T>(
     'Prefer': prefer,
   };
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!res.ok) {
     throw await buildSupabaseHttpError(res, `Supabase ${method} /${path}`);

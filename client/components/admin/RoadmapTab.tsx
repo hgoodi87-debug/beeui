@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, CheckCircle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { LocationOption, LocationType } from '../../types';
 
 interface RoadmapTabProps {
@@ -10,6 +11,7 @@ interface RoadmapTabProps {
 }
 
 const RoadmapTab: React.FC<RoadmapTabProps> = ({ t, lang, locations = [] }) => {
+    const navigate = useNavigate();
     // Define the roadmap sections
     const roadmapSections = [
         {
@@ -99,8 +101,13 @@ const RoadmapTab: React.FC<RoadmapTabProps> = ({ t, lang, locations = [] }) => {
     };
 
     const handleRouteClick = (path: string) => {
-        // Navigate in a new window/tab
-        window.open(path, '_blank');
+        // 어드민 내부 경로는 같은 탭에서 SPA 네비게이션 (새 탭 시 인증 상태 유실 방지)
+        // 고객용 외부 경로는 새 탭으로 오픈
+        if (path.startsWith('/admin') || path.startsWith('/staff')) {
+            navigate(path);
+        } else {
+            window.open(path, '_blank');
+        }
     };
 
     return (

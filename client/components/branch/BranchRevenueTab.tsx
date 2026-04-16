@@ -21,23 +21,35 @@ const BranchRevenueTab: React.FC<BranchRevenueTabProps> = ({ bookings, currentBr
             const isInternalBee = (b.id?.toUpperCase().startsWith('BEE')) || (b.reservationCode?.toUpperCase().startsWith('BEE'));
             if (isInternalBee) return false;
 
-            const bDate = new Date(b.createdAt || b.pickupDate);
+            const bDate = new Date(b.pickupDate || b.createdAt);
             if (period === 'MONTHLY') {
                 return bDate.getFullYear() === targetYear && bDate.getMonth() === targetMonth;
             }
             return bDate.getFullYear() === targetYear && bDate.getMonth() === targetMonth && bDate.getDate() === targetDay;
         }).map(b => {
-            // 정산 금액: 관리자가 확정한 branch_settlement_amount 우선, 없으면 final_price
-            const settlementBase = (b as any).branchSettlementAmount || b.finalPrice || 0;
-            const finalPrice = typeof settlementBase === 'number' ? settlementBase : parseInt(String(settlementBase).replace(/[^0-9]/g, ''), 10);
-            // serviceType 기반으로 배송/보관 판단 (위치 비교 방식 제거)
+            const finalPrice = typeof b.finalPrice === 'number' ? b.finalPrice : parseInt(String(b.finalPrice || 0).replace(/[^0-9]/g, ''), 10);
             const isDelivery = b.serviceType === ServiceType.DELIVERY;
             const commRate = isDelivery ? (currentBranch?.commissionRates?.delivery || 0) : (currentBranch?.commissionRates?.storage || 0);
-            const commissionAmount = Math.floor(finalPrice * (commRate / 100));
-            return { ...b, calculatedFinalPrice: finalPrice, commissionRate: commRate, commissionAmount, isDelivery };
+            // DB에 저장된 정산액 우선, 없으면 현재 요율로 계산
+            const settlementAmount = b.branchSettlementAmount && b.branchSettlementAmount > 0
+                ? b.branchSettlementAmount
+                : Math.round(finalPrice * commRate / 100);
+            // 짐 정보: bag_summary 우선, 없으면 bagSizes로 조합
+            const bagLabel = (() => {
+                if (b.bagSummary) return b.bagSummary;
+                const s = b.bagSizes;
+                if (!s) return `${b.bags || 0}개`;
+                const parts = [
+                    s.handBag > 0 ? `핸드백 ${s.handBag}` : '',
+                    s.carrier > 0 ? `캐리어 ${s.carrier}` : '',
+                    s.strollerBicycle > 0 ? `유모차 ${s.strollerBicycle}` : '',
+                ].filter(Boolean);
+                return parts.length > 0 ? parts.join(' · ') : `${b.bags || 0}개`;
+            })();
+            return { ...b, calculatedFinalPrice: finalPrice, commissionRate: commRate, settlementAmount, bagLabel, isDelivery };
         });
 
-        const total = items.reduce((sum, item) => sum + item.commissionAmount, 0);
+        const total = items.reduce((sum, item) => sum + item.settlementAmount, 0);
         const totalSales = items.reduce((sum, item) => sum + item.calculatedFinalPrice, 0);
         return { total, totalSales, items: items.sort((a, b) => new Date(b.pickupDate || b.createdAt || 0).getTime() - new Date(a.pickupDate || a.createdAt || 0).getTime()) };
     }, [bookings, period, date, currentBranch, branchIdentifiers]);
@@ -79,9 +91,9 @@ const BranchRevenueTab: React.FC<BranchRevenueTabProps> = ({ bookings, currentBr
                         <i className="fa-solid fa-coins text-[120px]"></i>
                     </div>
                     <div className="z-10 relative">
-                        <div className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">정산액</div>
+                        <div className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">정산 받을 금액</div>
                         <div className="text-3xl font-black text-bee-yellow tracking-tighter">₩{revenueData.total.toLocaleString()}</div>
-                        <div className="text-[10px] text-gray-500 mt-1 font-bold">{revenueData.items.length}건 기반 예상액</div>
+                        <div className="text-[10px] text-gray-500 mt-1 font-bold">{revenueData.items.length}건 커미션 합계</div>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
@@ -112,6 +124,7 @@ const BranchRevenueTab: React.FC<BranchRevenueTabProps> = ({ bookings, currentBr
                                 <th className="px-6 py-4">#</th>
                                 <th className="px-6 py-4">일시 / 예약정보</th>
                                 <th className="px-6 py-4">유형</th>
+                                <th className="px-6 py-4">짐</th>
                                 <th className="px-6 py-4 text-center">요율</th>
                                 <th className="px-6 py-4 text-right">매출</th>
                                 <th className="px-6 py-4 text-right text-bee-black">정산액</th>
@@ -122,7 +135,7 @@ const BranchRevenueTab: React.FC<BranchRevenueTabProps> = ({ bookings, currentBr
                                 <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                                     <td className="px-6 py-4 text-gray-300 font-black">{idx + 1}</td>
                                     <td className="px-6 py-4">
-                                        <div className="text-bee-black mb-1">{item.createdAt?.split('T')[0] || item.pickupDate}</div>
+                                        <div className="text-bee-black mb-1">{item.pickupDate || item.createdAt?.split('T')[0]}</div>
                                         <div className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500 font-mono inline-block tracking-tighter">{item.reservationCode || item.id}</div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -130,12 +143,15 @@ const BranchRevenueTab: React.FC<BranchRevenueTabProps> = ({ bookings, currentBr
                                             {item.isDelivery ? '배송' : '보관'}
                                         </span>
                                     </td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-[11px] text-gray-600 font-bold">{item.bagLabel}</span>
+                                    </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className="bg-gray-100 px-2 py-1 rounded-md text-[10px]">{item.commissionRate}%</span>
                                     </td>
                                     <td className="px-6 py-4 text-right text-gray-400">₩{item.calculatedFinalPrice.toLocaleString()}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="font-black text-sm text-bee-black">₩{item.commissionAmount.toLocaleString()}</div>
+                                        <div className="font-black text-sm text-bee-black">₩{item.settlementAmount.toLocaleString()}</div>
                                     </td>
                                 </tr>
                             ))}

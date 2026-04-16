@@ -6,6 +6,7 @@
  * - Beeliber Onyx & Gold 디자인 시스템
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import QRCode from 'qrcode';
 import Logo from './Logo';
 import { useParams, useNavigate } from 'react-router-dom';
 import { printKioskReceipt } from '../utils/kioskPrint';
@@ -24,6 +25,9 @@ import {
   calcPrice,
   flushOfflineQueue,
   getOfflineQueueSize,
+  getBranchId,
+  verifyAdminPin,
+  changeAdminPin,
   todayStr,
   timeStr,
   addHours,
@@ -55,6 +59,17 @@ const LABELS: Record<Lang, Record<string, string>> = {
     qr_sub: 'bee-liber.com에서 조회', reset: '처음으로',
     from_4h: '소형 가방은 4시간부터 보관 가능합니다',
     select_bags: '짐을 입력해주세요', select_dur: '보관 시간을 선택해주세요', touch_add: '터치로 추가',
+    // 서비스 선택
+    service_title: '이용할 서비스를 선택하세요',
+    storage_btn: '짐 보관', storage_desc: '지점에 짐을 맡기고\n자유롭게 여행하세요',
+    delivery_btn2: '공항 배송', delivery_desc: '인천공항까지\n짐을 배달해드려요',
+    // 배송 전용
+    airport_select: '도착 터미널 선택', delivery_time_label: '배송 받을 시간',
+    delivery_date_label: '배송 날짜', delivery_submit: '배송 예약하기',
+    surcharge_warn: '찾는 시간보다 30분당(5천원) 추가금액 발생합니다',
+    select_airport: '터미널을 선택해주세요',
+    delivery_price_label: '배송 요금', back: '뒤로 가기',
+    delivery_success: '배송 예약이 완료되었습니다!', delivery_success_sub: 'Delivery booking confirmed',
   },
   en: {
     small: 'Small Bag', small_desc: 'Tote · Backpack · Small Carry-on',
@@ -79,6 +94,15 @@ const LABELS: Record<Lang, Record<string, string>> = {
     qr_sub: 'Track at bee-liber.com', reset: 'Start Over',
     from_4h: 'Minimum 4 hours for small bags',
     select_bags: 'Please enter bag count', select_dur: 'Please select duration', touch_add: 'Tap to add',
+    service_title: 'Select a service',
+    storage_btn: 'Luggage Storage', storage_desc: 'Drop off your bags\nand travel light',
+    delivery_btn2: 'Airport Delivery', delivery_desc: 'We deliver your bags\nto Incheon Airport',
+    airport_select: 'Select Terminal', delivery_time_label: 'Delivery Time',
+    delivery_date_label: 'Delivery Date', delivery_submit: 'Book Delivery',
+    surcharge_warn: '+₩5,000 per 30 min if later than expected time',
+    select_airport: 'Please select a terminal',
+    delivery_price_label: 'Delivery Fee', back: 'Back',
+    delivery_success: 'Delivery Booked!', delivery_success_sub: 'Delivery booking confirmed',
   },
   zh: {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型拉杆箱',
@@ -103,6 +127,15 @@ const LABELS: Record<Lang, Record<string, string>> = {
     qr_sub: '在 bee-liber.com 查询', reset: '重新开始',
     from_4h: '小行李最少存放4小时',
     select_bags: '请输入行李数量', select_dur: '请选择存放时间', touch_add: '点击添加',
+    service_title: '请选择服务',
+    storage_btn: '行李寄存', storage_desc: '将行李存放在门店\n轻松享受旅程',
+    delivery_btn2: '机场配送', delivery_desc: '为您将行李\n配送至仁川机场',
+    airport_select: '选择航站楼', delivery_time_label: '配送时间',
+    delivery_date_label: '配送日期', delivery_submit: '预约配送',
+    surcharge_warn: '超过预计时间每30分钟加收5,000韩元',
+    select_airport: '请选择航站楼',
+    delivery_price_label: '配送费用', back: '返回',
+    delivery_success: '配送预约完成！', delivery_success_sub: 'Delivery booking confirmed',
   },
   'zh-TW': {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型行李箱',
@@ -127,6 +160,15 @@ const LABELS: Record<Lang, Record<string, string>> = {
     qr_sub: '在 bee-liber.com 查詢', reset: '重新開始',
     from_4h: '小行李最少寄存4小時',
     select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間', touch_add: '點擊新增',
+    service_title: '請選擇服務',
+    storage_btn: '行李寄存', storage_desc: '將行李存放在門市\n輕鬆享受旅程',
+    delivery_btn2: '機場配送', delivery_desc: '為您將行李\n配送至仁川機場',
+    airport_select: '選擇航廈', delivery_time_label: '配送時間',
+    delivery_date_label: '配送日期', delivery_submit: '預約配送',
+    surcharge_warn: '超過預計時間每30分鐘加收5,000韓元',
+    select_airport: '請選擇航廈',
+    delivery_price_label: '配送費用', back: '返回',
+    delivery_success: '配送預約完成！', delivery_success_sub: 'Delivery booking confirmed',
   },
   'zh-HK': {
     small: '細型行李', small_desc: '手袋 · 背囊 · 小型行李箱',
@@ -151,6 +193,15 @@ const LABELS: Record<Lang, Record<string, string>> = {
     qr_sub: '喺 bee-liber.com 查詢', reset: '重新開始',
     from_4h: '細行李最少寄存4小時',
     select_bags: '請輸入行李數量', select_dur: '請選擇寄存時間', touch_add: '點擊新增',
+    service_title: '請選擇服務',
+    storage_btn: '行李寄存', storage_desc: '將行李存放喺門市\n輕鬆享受旅程',
+    delivery_btn2: '機場配送', delivery_desc: '為您將行李\n送到仁川機場',
+    airport_select: '選擇航廈', delivery_time_label: '配送時間',
+    delivery_date_label: '配送日期', delivery_submit: '預約配送',
+    surcharge_warn: '超過預計時間每30分鐘加收5,000韓元',
+    select_airport: '請選擇航廈',
+    delivery_price_label: '配送費用', back: '返回',
+    delivery_success: '配送預約完成！', delivery_success_sub: 'Delivery booking confirmed',
   },
   ja: {
     small: '小型バッグ', small_desc: 'トートバッグ · リュック · 小型スーツケース',
@@ -175,6 +226,15 @@ const LABELS: Record<Lang, Record<string, string>> = {
     qr_sub: 'bee-liber.com で確認', reset: '最初から',
     from_4h: '小型バッグは4時間以上からお預かりします',
     select_bags: '荷物の数を入力してください', select_dur: '預け時間を選択してください', touch_add: 'タップして追加',
+    service_title: 'サービスを選択してください',
+    storage_btn: '荷物預かり', storage_desc: '荷物を店舗に預けて\n身軽に旅を楽しもう',
+    delivery_btn2: '空港配送', delivery_desc: '仁川空港まで\n荷物をお届けします',
+    airport_select: 'ターミナル選択', delivery_time_label: '配送時間',
+    delivery_date_label: '配送日', delivery_submit: '配送予約',
+    surcharge_warn: '予定時刻より30分ごとに5,000ウォン追加料金が発生します',
+    select_airport: 'ターミナルを選択してください',
+    delivery_price_label: '配送料', back: '戻る',
+    delivery_success: '配送予約が完了しました！', delivery_success_sub: 'Delivery booking confirmed',
   },
 };
 
@@ -214,35 +274,42 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   // 숫자 키패드 PIN 상태
   const [pinInput, setPinInput] = React.useState('');
   const [pinShake, setPinShake] = React.useState(false);
+  const [pinVerifying, setPinVerifying] = React.useState(false);
+  // 검증 성공한 PIN — PIN 변경 시 old_pin으로 사용
+  const [verifiedPin, setVerifiedPin] = React.useState('');
 
   // 보관 장부 상단 PIN 변경 상태
   const [showPinChange, setShowPinChange] = React.useState(false);
   const [newPin, setNewPin] = React.useState('');
   const [pinSaved, setPinSaved] = React.useState(false);
+  const [pinChangeError, setPinChangeError] = React.useState('');
 
   const PIN_LEN = 4;
 
   const handlePinKey = React.useCallback((digit: string) => {
     setPinInput((prev) => {
-      if (prev.length >= PIN_LEN) return prev;
+      if (prev.length >= PIN_LEN || pinVerifying) return prev;
       const next = prev + digit;
       if (next.length === PIN_LEN) {
-        // 자동 검증
-        setTimeout(() => {
-          if (next === cfg.admin_password) {
+        // 4자리 완성 → Edge Function으로 서버 측 검증
+        setPinVerifying(true);
+        verifyAdminPin(branch ? getBranchId(branch) : 'default', next).then((ok) => {
+          setPinVerifying(false);
+          if (ok) {
             setAdminUnlocked(true);
             setAdminError(false);
             setAdminPw(next);
+            setVerifiedPin(next);
           } else {
             setPinShake(true);
             setTimeout(() => { setPinShake(false); setPinInput(''); }, 600);
             setAdminError(true);
           }
-        }, 100);
+        });
       }
       return next;
     });
-  }, [cfg.admin_password, setAdminUnlocked, setAdminError, setAdminPw]);
+  }, [branch, pinVerifying, setAdminUnlocked, setAdminError, setAdminPw]);
 
   const handleNewPinKey = (digit: string) => {
     setNewPin((prev) => prev.length < PIN_LEN ? prev + digit : prev);
@@ -251,13 +318,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const savePin = async () => {
     if (!branch || newPin.length !== PIN_LEN) return;
     setSaving(true);
-    await upsertSetting(branch.branch_id ?? 'default', 'admin_password', newPin);
-    setCfg((prev) => ({ ...prev, admin_password: newPin }));
+    setPinChangeError('');
+    const result = await changeAdminPin(getBranchId(branch), verifiedPin, newPin);
     setSaving(false);
-    setPinSaved(true);
-    setNewPin('');
-    setShowPinChange(false);
-    setTimeout(() => setPinSaved(false), 2500);
+    if (result.ok) {
+      setVerifiedPin(newPin); // 새 PIN으로 갱신
+      setPinSaved(true);
+      setNewPin('');
+      setShowPinChange(false);
+      setTimeout(() => setPinSaved(false), 2500);
+    } else {
+      setPinChangeError(result.error ?? 'PIN 변경 실패');
+    }
   };
 
   const saveSettings = async () => {
@@ -406,8 +478,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         className={`w-full py-3 rounded-full font-black text-sm transition-all active:scale-[0.98] ${
                           newPin.length === PIN_LEN ? (pinSaved ? 'bg-green-500 text-white' : 'bg-[#F5C842] text-[#111111]') : 'bg-white/10 text-white/30 cursor-not-allowed'
                         }`}>
-                        {pinSaved ? '✓ 저장 완료' : `PIN 저장 (${newPin.length}/${PIN_LEN})`}
+                        {saving ? '저장 중...' : pinSaved ? '✓ 저장 완료' : `PIN 저장 (${newPin.length}/${PIN_LEN})`}
                       </button>
+                      {pinChangeError && <p className="text-red-400 text-xs text-center mt-1">{pinChangeError}</p>}
                     </div>
                   )}
                 </div>
@@ -574,6 +647,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         <span className="text-white/40 text-sm">시</span>
                       </div>
                     </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <label className="text-white/70 text-sm flex-1">지점 커미션 비율</label>
+                      <div className="flex items-center gap-2">
+                        <input type="number" value={localOps.commission_rate ?? 0}
+                          onChange={(e) => setLocalOps((p) => ({ ...p, commission_rate: Number(e.target.value) }))}
+                          className="bg-white/10 rounded-xl px-3 py-2 text-white text-right font-black w-20 focus:outline-none focus:ring-2 focus:ring-[#F5C842] text-sm"
+                          min={0} max={100} />
+                        <span className="text-white/40 text-sm">%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <button onClick={saveSettings} disabled={saving}
@@ -614,6 +697,12 @@ const KioskPage: React.FC = () => {
   const [notFound, setNotFound] = useState(false);
 
   const [lang, setLang] = useState<Lang>('ko');
+  const [showLangModal, setShowLangModal] = useState(true); // 시작 시 언어 선택 팝업
+  const [serviceMode, setServiceMode] = useState<'select' | 'storage' | 'delivery'>('select');
+  // 배송 전용 상태
+  const [deliveryAirport, setDeliveryAirport] = useState<'T1' | 'T2' | null>(null);
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [deliveryTime, setDeliveryTime] = useState('');
   const [smallQty, setSmallQty] = useState(0);
   const [carrierQty, setCarrierQty] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -664,9 +753,9 @@ const KioskPage: React.FC = () => {
       const b = await loadBranchBySlug(slug);
       if (!b) { setNotFound(true); setLoading(false); return; }
       setBranch(b);
-      const settings = await loadSettings(b.branch_id ?? 'default');
+      const settings = await loadSettings(getBranchId(b));
       setCfg(settings);
-      const entries = await loadTodayLog(b.branch_id ?? slug, todayStr());
+      const entries = await loadTodayLog(getBranchId(b), todayStr());
       setTodayLog(entries);
       // 오늘 최대 태그 +1 로 카운터 초기화 (100 초과 시 1 로 순환)
       if (entries.length > 0) {
@@ -712,13 +801,16 @@ const KioskPage: React.FC = () => {
     return () => clearInterval(id);
   }, [step]);
 
-  // 카운트다운 0 → 폼 초기화
+  // 카운트다운 0 → 폼 초기화 + 언어 팝업 재표시
   useEffect(() => {
     if (step === 'success' && resetCountdown === 0) {
       setStep('form');
+      setServiceMode('select');
       setSmallQty(0); setCarrierQty(0); setDuration(0);
       setPayment('현금'); setDiscount(0);
       setResultTag(0); setResultRow('A'); setResultLogId(null);
+      setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime('');
+      setShowLangModal(true);
     }
   }, [resetCountdown, step]);
 
@@ -730,65 +822,63 @@ const KioskPage: React.FC = () => {
 
   const canSubmit = (smallQty + carrierQty > 0) && duration > 0;
 
+  // 배송 가격: 소형 10,000원 / 캐리어 25,000원
+  const DELIVERY_UNIT_PRICES = { small: 10000, carrier: 25000 };
+  const deliveryTotalPrice = smallQty * DELIVERY_UNIT_PRICES.small + carrierQty * DELIVERY_UNIT_PRICES.carrier;
+  const canSubmitDelivery = (smallQty + carrierQty > 0) && deliveryAirport !== null && deliveryDate !== '' && deliveryTime !== '';
+
   const handleSubmit = useCallback(async () => {
     if (!branch || !canSubmit) return;
     setSubmitting(true);
-    const today = todayStr();
-    const startTime = timeStr();
-    const pickupTime = addHours(startTime, duration);
-    const pickupTs = Date.now() + duration * 60 * 60 * 1000;
-    const currentLog = await loadTodayLog(branch.branch_id ?? branch.slug, today);
-    const { rowLabel } = assignTagAndRow(currentLog, cfg);
-    const tag = nextTag;
-    // 카운터 advance (100→1 순환)
-    const advancedTag = nextTag >= 100 ? 1 : nextTag + 1;
-    setNextTag(advancedTag);
-    setTagInputVal(String(advancedTag));
-    const payload = {
-      branch_id: branch.branch_id ?? branch.slug,
-      date: today, tag,
-      small_qty: smallQty, carrier_qty: carrierQty,
-      start_time: startTime, pickup_time: pickupTime, pickup_ts: pickupTs,
-      duration, original_price: originalPrice, discount, payment,
-      done: false, memo: '', row_label: rowLabel,
-      source: 'kiosk' as const, commission_rate: 0,
-    };
-    const saved = await insertStorageLog(payload);
-    setResultLogId(saved?.id ?? null);
-    setResultTag(tag);
-    setResultRow(rowLabel);
-    setResultStartTime(startTime);
-    setTodayLog((prev) => [...prev, { ...payload, id: tag, created_at: new Date().toISOString() }]);
-    setOfflineCount(getOfflineQueueSize());
-    setSubmitting(false);
-    setStep('success');
-    // 접수 완료 즉시 영수증 자동 출력
-    void printKioskReceipt({
-      tag,
-      rowLabel,
-      branchName: branch.branch_name,
-      branchSlug: branch.branch_name_en || branch.slug || '',
-      smallQty,
-      carrierQty,
-      duration,
-      startTime,
-      pickupTime,
-      originalPrice,
-      discount,
-      payment,
-      date: today,
-    });
+    try {
+      const bid = getBranchId(branch);
+      const today = todayStr();
+      const startTime = timeStr();
+      const pickupTime = addHours(startTime, duration);
+      const pickupTs = Date.now() + duration * 60 * 60 * 1000;
+      const currentLog = await loadTodayLog(bid, today);
+      const { rowLabel } = assignTagAndRow(currentLog, cfg);
+      const tag = nextTag;
+      // 카운터 advance (100→1 순환)
+      const advancedTag = nextTag >= 100 ? 1 : nextTag + 1;
+      setNextTag(advancedTag);
+      setTagInputVal(String(advancedTag));
+      const payload = {
+        branch_id: bid,
+        date: today, tag,
+        small_qty: smallQty, carrier_qty: carrierQty,
+        start_time: startTime, pickup_time: pickupTime, pickup_ts: pickupTs,
+        duration, original_price: originalPrice, discount, payment,
+        done: false, memo: '', row_label: rowLabel,
+        source: 'kiosk' as const, commission_rate: cfg.operations.commission_rate ?? 0,
+      };
+      const saved = await insertStorageLog(payload);
+      setResultLogId(saved?.id ?? null);
+      setResultTag(tag);
+      setResultRow(rowLabel);
+      setResultStartTime(startTime);
+      setTodayLog((prev) => [...prev, { ...payload, id: tag, created_at: new Date().toISOString() }]);
+      setOfflineCount(getOfflineQueueSize());
+      setStep('success');
+    } finally {
+      setSubmitting(false);
+    }
   }, [branch, cfg, smallQty, carrierQty, duration, originalPrice, discount, payment, canSubmit, nextTag]);
 
   const resetForm = () => {
     setStep('form');
+    setServiceMode('select');
     setSmallQty(0); setCarrierQty(0); setDuration(0);
     setPayment('현금'); setDiscount(0);
     setResultTag(0); setResultRow('A'); setResultLogId(null);
+    setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime('');
+    setShowLangModal(true); // 다음 손님을 위해 언어 선택 팝업 재표시
   };
 
-  const handleAdminLogin = () => {
-    if (adminPw === cfg.admin_password) { setAdminUnlocked(true); setAdminError(false); }
+  const handleAdminLogin = async () => {
+    if (!branch) return;
+    const ok = await verifyAdminPin(getBranchId(branch), adminPw);
+    if (ok) { setAdminUnlocked(true); setAdminError(false); }
     else setAdminError(true);
   };
 
@@ -797,11 +887,19 @@ const KioskPage: React.FC = () => {
     setTodayLog((prev) => prev.map((e) => (e.tag === entry.tag && e.date === entry.date ? { ...e, done: true } : e)));
   };
 
-  const deliveryUrl = `${window.location.origin}/ko/booking?from=kiosk&pickup=${branch?.branch_id ?? ''}&bags=${smallQty}&carriers=${carrierQty}&kiosk_tag=${resultTag}`;
+  const deliveryUrl = `${window.location.origin}/ko/booking?from=kiosk&pickup=${branch ? getBranchId(branch) : ''}&bags=${smallQty}&carriers=${carrierQty}&kiosk_tag=${resultTag}`;
   const voucherUrl = resultLogId
-    ? `${window.location.origin}/kiosk/voucher?id=${resultLogId}`
+    ? `${window.location.origin}/kiosk/voucher?id=${resultLogId}&lang=${lang}`
     : deliveryUrl;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(voucherUrl)}&size=220x220&bgcolor=ffffff&color=111111&margin=10`;
+
+  // QR 코드 — 로컬 생성 (오프라인 지원, api.qrserver.com 불필요)
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  useEffect(() => {
+    if (step !== 'success') return;
+    QRCode.toDataURL(voucherUrl, { width: 220, margin: 1, color: { dark: '#111111', light: '#ffffff' } })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(''));
+  }, [step, voucherUrl]);
 
   // ─── 로딩 ─────────────────────────────────────────────────────────────
   if (loading) return (
@@ -884,7 +982,7 @@ const KioskPage: React.FC = () => {
                 <div className="flex justify-between pt-2 border-t border-[#f0f0f0]"><span className="text-gray-400">{t.total}</span><span className="font-black text-[#111111]">{finalPrice.toLocaleString()}원</span></div>
               </div>
             </div>
-            <button onClick={() => navigate(`/ko/booking?from=kiosk&pickup=${branch?.branch_id ?? ''}&bags=${smallQty}&carriers=${carrierQty}&kiosk_tag=${resultTag}`)}
+            <button onClick={() => navigate(`/ko/booking?from=kiosk&pickup=${branch ? getBranchId(branch) : ''}&bags=${smallQty}&carriers=${carrierQty}&kiosk_tag=${resultTag}`)}
               className="w-full bg-[#F5C842] text-[#111111] font-black py-4 rounded-full text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
               <i className="fa-solid fa-plane" />{t.delivery_btn}
             </button>
@@ -892,7 +990,10 @@ const KioskPage: React.FC = () => {
           <div className="bg-white p-8 flex flex-col items-center justify-center gap-4 border-l border-[#f0f0f0]">
             <p className="text-[#111111] font-black text-base text-center">{t.qr_scan}</p>
             <div className="bg-[#f9f9f9] rounded-[20px] p-3">
-              <img src={qrUrl} alt="QR" className="w-44 h-44 rounded-xl" />
+              {qrDataUrl
+                ? <img src={qrDataUrl} alt="QR" className="w-44 h-44 rounded-xl" />
+                : <div className="w-44 h-44 rounded-xl bg-[#f0f0f0] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#111111]/20 border-t-[#111111] rounded-full animate-spin" /></div>
+              }
             </div>
             <p className="text-gray-400 text-sm">{t.qr_sub}</p>
             <button
@@ -945,6 +1046,62 @@ const KioskPage: React.FC = () => {
     <div className="h-screen bg-[#f5f5f7] flex flex-col overflow-hidden">
       {showAdmin && <AdminPanel {...adminPanelProps} />}
 
+      {/* ── 언어 선택 팝업 ──────────────────────────────────────────────── */}
+      {showLangModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          {/* 딤 배경 */}
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+
+          <div className="relative bg-[#111111] rounded-[2.5rem] shadow-[0_32px_80px_rgba(0,0,0,0.7)] border border-white/10 p-10 w-[520px] max-w-[90vw]">
+            {/* 상단 로고 + 문구 */}
+            <div className="text-center mb-8">
+              <p className="text-[#F5C842] font-black text-2xl tracking-[0.25em] mb-1">BEELIBER</p>
+              <p className="text-white/40 text-sm font-medium">언어를 선택하세요 · Select Language</p>
+            </div>
+
+            {/* 6개 언어 버튼 — 2열 그리드 */}
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                ['ko',    'kr', '한국어',   'Korean'],
+                ['en',    'us', 'English',  'English'],
+                ['zh',    'cn', '简体中文', 'Simplified Chinese'],
+                ['zh-TW', 'tw', '繁體中文', 'Traditional Chinese'],
+                ['zh-HK', 'hk', '粵語',    'Cantonese'],
+                ['ja',    'jp', '日本語',  'Japanese'],
+              ] as [Lang, string, string, string][]).map(([code, flag, label, sub]) => (
+                <button
+                  key={code}
+                  onClick={() => { setLang(code); setShowLangModal(false); setServiceMode('select'); }}
+                  className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all active:scale-[0.97] select-none ${
+                    lang === code
+                      ? 'bg-[#F5C842] border-[#F5C842] text-[#111111]'
+                      : 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <img
+                    src={`https://flagcdn.com/w40/${flag}.png`}
+                    alt={label}
+                    className="w-8 h-auto rounded-sm flex-shrink-0"
+                  />
+                  <div className="text-left">
+                    <p className="font-black text-lg leading-none">{label}</p>
+                    <p className={`text-xs mt-0.5 font-medium ${lang === code ? 'text-[#111111]/60' : 'text-white/30'}`}>{sub}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* 하단 선택 없이 건너뛰기 */}
+            <button
+              onClick={() => setShowLangModal(false)}
+              className="w-full mt-6 py-3 rounded-2xl border border-white/10 text-white/30 text-sm font-bold hover:border-white/20 hover:text-white/50 transition-all"
+            >
+              건너뛰기 · Skip
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ✦ 배경 파티클 — 여성 고객 감성 골드 스파클 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden>
         {([
@@ -978,14 +1135,14 @@ const KioskPage: React.FC = () => {
           onPointerDown={handleLogoPointerDown}
           onPointerUp={handleLogoPointerUp}
           onPointerLeave={handleLogoPointerUp}
-          className="select-none scale-90 origin-left"
+          className="select-none"
         >
-          <Logo size="sm" />
+          <Logo size="xl" />
         </button>
 
         {/* 주문 번호 카운터 */}
         <div className="flex flex-col items-center select-none">
-          <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">NEXT ORDER</p>
+          <p className="text-[#F5C842]/70 text-[10px] font-black uppercase tracking-[0.2em] mb-1">NEXT ORDER</p>
           {editingTag ? (
             <div className="flex items-center gap-2">
               <input
@@ -1010,7 +1167,7 @@ const KioskPage: React.FC = () => {
                   if (e.key === 'Escape') setEditingTag(false);
                 }}
                 autoFocus
-                className="w-16 text-center text-xl font-black bg-white/10 text-white rounded-xl px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#F5C842]"
+                className="w-24 text-center text-4xl font-black bg-white/10 text-white rounded-2xl px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#F5C842]"
               />
               <button
                 onClick={() => {
@@ -1025,12 +1182,12 @@ const KioskPage: React.FC = () => {
           ) : (
             <button
               onClick={() => { setTagInputVal(String(nextTag)); setEditingTag(true); }}
-              className="flex items-baseline gap-0.5 hover:opacity-80 transition-opacity group"
+              className="flex items-center gap-1.5 bg-[#F5C842]/10 border-2 border-[#F5C842]/40 rounded-3xl px-6 py-2 hover:bg-[#F5C842]/20 transition-all group"
               title="탭하여 번호 수정"
             >
-              <span className="text-white/30 text-sm font-black">#</span>
-              <span className="text-[#F5C842] text-3xl font-black tabular-nums leading-none">{String(nextTag).padStart(2, '0')}</span>
-              <i className="fa-solid fa-pen-to-square text-white/20 text-[10px] ml-1 group-hover:text-white/50 transition-colors" />
+              <span className="text-[#F5C842]/60 text-lg font-black">#</span>
+              <span className="text-[#F5C842] text-5xl font-black tabular-nums leading-none tracking-tighter">{String(nextTag).padStart(2, '0')}</span>
+              <i className="fa-solid fa-pen-to-square text-[#F5C842]/30 text-sm ml-1 group-hover:text-[#F5C842]/70 transition-colors" />
             </button>
           )}
         </div>
@@ -1126,15 +1283,295 @@ const KioskPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── 메인: 모바일 스크롤 세로 | PC(lg+) 좌우 2패널 ───────────── */}
-      <main className="flex-1 overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row">
+      {/* ─── 서비스 선택 화면 ─────────────────────────────────────────────── */}
+      {serviceMode === 'select' && !showLangModal && (
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="w-full max-w-2xl">
+            <p className="text-center text-[#111111] font-black text-2xl mb-2">{t.service_title}</p>
+            <p className="text-center text-gray-400 text-sm mb-10">Select Service · サービス選択 · 选择服务</p>
+            <div className="grid grid-cols-2 gap-6">
+              {/* 보관 */}
+              <button
+                onClick={() => setServiceMode('storage')}
+                className="group flex flex-col items-center justify-center gap-5 bg-white rounded-[2.5rem] p-10 shadow-[0_4px_32px_rgba(0,0,0,0.08)] border-2 border-transparent hover:border-[#F5C842] active:scale-[0.97] transition-all"
+              >
+                <div className="w-24 h-24 rounded-full bg-[#F5C842]/10 group-hover:bg-[#F5C842]/20 flex items-center justify-center transition-all">
+                  <i className="fa-solid fa-box text-[#F5C842] text-4xl" />
+                </div>
+                <div className="text-center">
+                  <p className="font-black text-[#111111] text-2xl mb-2">{t.storage_btn}</p>
+                  <p className="text-gray-400 text-sm font-medium whitespace-pre-line">{t.storage_desc}</p>
+                </div>
+                <div className="w-full py-3 bg-[#F5C842] rounded-2xl text-[#111111] font-black text-base text-center group-hover:shadow-[0_4px_16px_rgba(245,200,66,0.4)] transition-all">
+                  {t.storage_btn}
+                </div>
+              </button>
+              {/* 배송 */}
+              <button
+                onClick={() => setServiceMode('delivery')}
+                className="group flex flex-col items-center justify-center gap-5 bg-[#111111] rounded-[2.5rem] p-10 shadow-[0_4px_32px_rgba(0,0,0,0.2)] border-2 border-transparent hover:border-[#F5C842] active:scale-[0.97] transition-all"
+              >
+                <div className="w-24 h-24 rounded-full bg-[#F5C842]/10 group-hover:bg-[#F5C842]/20 flex items-center justify-center transition-all">
+                  <i className="fa-solid fa-plane text-[#F5C842] text-4xl" />
+                </div>
+                <div className="text-center">
+                  <p className="font-black text-white text-2xl mb-2">{t.delivery_btn2}</p>
+                  <p className="text-white/50 text-sm font-medium whitespace-pre-line">{t.delivery_desc}</p>
+                </div>
+                <div className="w-full py-3 bg-[#F5C842] rounded-2xl text-[#111111] font-black text-base text-center group-hover:shadow-[0_4px_16px_rgba(245,200,66,0.4)] transition-all">
+                  {t.delivery_btn2}
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 배송 폼 ────────────────────────────────────────────────────────── */}
+      {serviceMode === 'delivery' && (
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-6 py-6 flex flex-col gap-6">
+            {/* 뒤로 가기 */}
+            <button
+              onClick={() => { setServiceMode('select'); setSmallQty(0); setCarrierQty(0); setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime(''); }}
+              className="flex items-center gap-2 text-gray-400 hover:text-[#111111] transition-all text-sm font-bold w-fit"
+            >
+              <i className="fa-solid fa-chevron-left text-xs" />{t.back}
+            </button>
+
+            {/* ① 짐 수량 — 기존 카드 동일하게 */}
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-7 h-7 rounded-full bg-[#F5C842] flex items-center justify-center font-black text-sm text-[#111111]">1</span>
+                <span className="font-black text-[#111111] text-base">{t.col1}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* 소형 가방 */}
+                {(() => {
+                  const active = smallQty > 0;
+                  return (
+                    <div
+                      onClick={() => setSmallQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
+                      className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-all active:scale-[0.97]
+                        flex flex-col items-center justify-between p-4 pt-5 h-[180px]
+                        ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
+                    >
+                      {active && (
+                        <div className="absolute top-2 right-2 min-w-[24px] h-6 rounded-full bg-[#111111] flex items-center justify-center px-1">
+                          <span className="text-[#F5C842] font-black text-[10px] tabular-nums">{smallQty}</span>
+                        </div>
+                      )}
+                      <img src="/images/bags/hand-bag-photo.png" alt={t.small} className="w-14 h-14 object-contain flex-shrink-0" />
+                      <div className="text-center">
+                        <p className="font-black text-sm text-[#111111] leading-tight">{t.small}</p>
+                        <p className="text-[#111111]/50 text-[10px] mt-0.5">{(10000).toLocaleString()}원</p>
+                      </div>
+                      {!active ? (
+                        <div className="w-full py-1.5 bg-black/[0.06] rounded-full text-[11px] font-bold text-[#111111]/50 text-center">{t.touch_add}</div>
+                      ) : (
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => setSmallQty((v) => Math.max(0, v - 1))} className="w-8 h-8 rounded-full bg-[#111111]/15 flex items-center justify-center font-black text-[#111111] active:scale-95">−</button>
+                          <span className="font-black text-[#111111] text-lg tabular-nums">{smallQty}</span>
+                          <button onClick={() => setSmallQty((v) => Math.min(cfg.operations.max_bags, v + 1))} className="w-8 h-8 rounded-full bg-[#111111]/20 flex items-center justify-center font-black text-[#111111] active:scale-95">+</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+                {/* 대형 캐리어 */}
+                {(() => {
+                  const active = carrierQty > 0;
+                  return (
+                    <div
+                      onClick={() => setCarrierQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
+                      className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-all active:scale-[0.97]
+                        flex flex-col items-center justify-between p-4 pt-5 h-[180px]
+                        ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
+                    >
+                      {active && (
+                        <div className="absolute top-2 right-2 min-w-[24px] h-6 rounded-full bg-[#111111] flex items-center justify-center px-1">
+                          <span className="text-[#F5C842] font-black text-[10px] tabular-nums">{carrierQty}</span>
+                        </div>
+                      )}
+                      <img src="/images/bags/carrier-photo.png" alt={t.carrier} className="w-14 h-14 object-contain flex-shrink-0" />
+                      <div className="text-center">
+                        <p className="font-black text-sm text-[#111111] leading-tight">{t.carrier}</p>
+                        <p className="text-[#111111]/50 text-[10px] mt-0.5">{(25000).toLocaleString()}원</p>
+                      </div>
+                      {!active ? (
+                        <div className="w-full py-1.5 bg-black/[0.06] rounded-full text-[11px] font-bold text-[#111111]/50 text-center">{t.touch_add}</div>
+                      ) : (
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => setCarrierQty((v) => Math.max(0, v - 1))} className="w-8 h-8 rounded-full bg-[#111111]/15 flex items-center justify-center font-black text-[#111111] active:scale-95">−</button>
+                          <span className="font-black text-[#111111] text-lg tabular-nums">{carrierQty}</span>
+                          <button onClick={() => setCarrierQty((v) => Math.min(cfg.operations.max_bags, v + 1))} className="w-8 h-8 rounded-full bg-[#111111]/20 flex items-center justify-center font-black text-[#111111] active:scale-95">+</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </section>
+
+            {/* ② 공항 터미널 선택 */}
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-7 h-7 rounded-full bg-[#F5C842] flex items-center justify-center font-black text-sm text-[#111111]">2</span>
+                <span className="font-black text-[#111111] text-base">{t.airport_select}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {(['T1', 'T2'] as const).map((terminal) => (
+                  <button
+                    key={terminal}
+                    onClick={() => setDeliveryAirport(terminal)}
+                    className={`flex flex-col items-center justify-center gap-3 py-7 rounded-2xl font-black text-lg border-2 transition-all active:scale-[0.97] ${
+                      deliveryAirport === terminal
+                        ? 'bg-[#111111] border-[#111111] text-[#F5C842] shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
+                        : 'bg-white border-gray-100 text-[#111111] shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:border-gray-200'
+                    }`}
+                  >
+                    <i className={`fa-solid fa-plane-arrival text-2xl ${deliveryAirport === terminal ? 'text-[#F5C842]' : 'text-gray-300'}`} />
+                    <div className="text-center">
+                      <p className="text-base font-black">인천공항</p>
+                      <p className={`text-2xl font-black tabular-nums ${deliveryAirport === terminal ? 'text-[#F5C842]' : 'text-[#111111]'}`}>{terminal}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* ③ 배송 시간 */}
+            <section>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-7 h-7 rounded-full bg-[#F5C842] flex items-center justify-center font-black text-sm text-[#111111]">3</span>
+                <span className="font-black text-[#111111] text-base">{t.delivery_time_label}</span>
+              </div>
+              {/* 경고 문구 */}
+              <p className="text-red-500 text-[11px] font-bold mb-3 flex items-center gap-1.5">
+                <i className="fa-solid fa-triangle-exclamation" />
+                {t.surcharge_warn}
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-gray-400 ml-1">{t.delivery_date_label}</label>
+                  <input
+                    type="date"
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    min={todayStr()}
+                    className="bg-white rounded-2xl px-4 py-3.5 font-bold text-sm text-[#111111] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-2 border-transparent focus:border-[#F5C842] outline-none transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-gray-400 ml-1">{t.delivery_time_label}</label>
+                  <input
+                    type="time"
+                    value={deliveryTime}
+                    onChange={(e) => setDeliveryTime(e.target.value)}
+                    className="bg-white rounded-2xl px-4 py-3.5 font-bold text-sm text-[#111111] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border-2 border-transparent focus:border-[#F5C842] outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* ④ 가격 확인 + 접수 */}
+            <section className="bg-white rounded-2xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
+              <div className="space-y-2 text-sm mb-4">
+                {smallQty > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t.small} × {smallQty}</span>
+                    <span className="font-bold text-[#111111]">{(smallQty * DELIVERY_UNIT_PRICES.small).toLocaleString()}원</span>
+                  </div>
+                )}
+                {carrierQty > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t.carrier} × {carrierQty}</span>
+                    <span className="font-bold text-[#111111]">{(carrierQty * DELIVERY_UNIT_PRICES.carrier).toLocaleString()}원</span>
+                  </div>
+                )}
+                {deliveryAirport && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">터미널</span>
+                    <span className="font-bold text-[#111111]">인천공항 {deliveryAirport}</span>
+                  </div>
+                )}
+                {deliveryDate && deliveryTime && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t.delivery_time_label}</span>
+                    <span className="font-bold text-[#111111]">{deliveryDate} {deliveryTime}</span>
+                  </div>
+                )}
+              </div>
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between mb-4">
+                <span className="text-gray-400 text-sm">{t.delivery_price_label}</span>
+                <span className="font-black text-[#111111] text-2xl tabular-nums">
+                  {deliveryTotalPrice > 0 ? `${deliveryTotalPrice.toLocaleString()}원` : '—'}
+                </span>
+              </div>
+              {!canSubmitDelivery && (
+                <p className="text-center text-[10px] text-gray-400 mb-3">
+                  {smallQty + carrierQty === 0 ? t.select_bags : !deliveryAirport ? t.select_airport : t.delivery_time_label + '를 입력해주세요'}
+                </p>
+              )}
+              <button
+                disabled={!canSubmitDelivery || submitting}
+                onClick={async () => {
+                  // 배송 예약: 보관 로그에 기록 (source = kiosk_delivery)
+                  if (!branch || !canSubmitDelivery) return;
+                  setSubmitting(true);
+                  try {
+                    const bid = getBranchId(branch);
+                    const today = todayStr();
+                    const startTime = timeStr();
+                    const tag = nextTag;
+                    const advancedTag = nextTag >= 100 ? 1 : nextTag + 1;
+                    setNextTag(advancedTag);
+                    setTagInputVal(String(advancedTag));
+                    const payload = {
+                      branch_id: bid,
+                      date: today, tag,
+                      small_qty: smallQty, carrier_qty: carrierQty,
+                      start_time: startTime, pickup_time: deliveryTime, pickup_ts: new Date(`${deliveryDate}T${deliveryTime}`).getTime(),
+                      duration: 0, original_price: deliveryTotalPrice, discount: 0, payment: '미수금' as const,
+                      done: false, memo: `배송예약 인천공항${deliveryAirport} ${deliveryDate} ${deliveryTime}`, row_label: 'D',
+                      source: 'kiosk' as const, commission_rate: 0,
+                    };
+                    const saved = await insertStorageLog(payload);
+                    setResultLogId(saved?.id ?? null);
+                    setResultTag(tag);
+                    setResultRow('D');
+                    setResultStartTime(startTime);
+                    setStep('success');
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                className={`w-full py-4 rounded-full font-black text-base transition-all active:scale-[0.98] ${
+                  canSubmitDelivery && !submitting
+                    ? 'bg-[#F5C842] text-[#111111] shadow-[0_8px_28px_rgba(245,200,66,0.45)] kiosk-cta-shimmer'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {submitting
+                  ? <span className="inline-flex items-center gap-2"><i className="fa-solid fa-spinner animate-spin" /> 처리 중...</span>
+                  : <span><i className="fa-solid fa-plane mr-2" />{t.delivery_submit}</span>
+                }
+              </button>
+            </section>
+          </div>
+        </main>
+      )}
+
+      {/* ── 메인: 좌우 2패널 (모바일 세로, PC 가로) — 스크롤 없이 꽉 채움 ───── */}
+      {serviceMode === 'storage' && (
+      <main className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
 
         {/* ─── 패널 A: ① 짐 + ② 시간 ─────────────────────────────── */}
-        <div className="flex flex-col gap-3 px-4 pt-3 pb-2
+        <div className="flex flex-col gap-2 px-3 pt-2 pb-1 flex-1 min-h-0
                         lg:flex-1 lg:overflow-y-auto lg:pt-6 lg:pb-6 lg:pl-6 lg:pr-4 lg:gap-5">
 
           {/* ① 짐 수량 */}
-          <div className="flex flex-col gap-2 lg:flex-shrink-0 lg:gap-3">
+          <div className="flex flex-col gap-1.5 flex-1 min-h-0 lg:flex-shrink-0 lg:gap-3">
             {/* 섹션 헤더 — 노란 뱃지 */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-[#F5C842] flex items-center justify-center font-black text-xs lg:text-sm text-[#111111]">1</span>
@@ -1142,7 +1579,7 @@ const KioskPage: React.FC = () => {
             </div>
 
             {/* 가방 카드 그리드 */}
-            <div className="grid grid-cols-2 gap-2 lg:gap-3">
+            <div className="grid grid-cols-2 gap-2 lg:gap-3 flex-1 min-h-0">
 
               {/* 소형 가방 — portrait 카드 */}
               {(() => {
@@ -1151,7 +1588,7 @@ const KioskPage: React.FC = () => {
                   <div
                     onClick={() => setSmallQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
                     className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-all active:scale-[0.97]
-                      flex flex-col items-center justify-between p-4 pt-5 min-h-[155px]
+                      flex flex-col items-center justify-between p-3 pt-4 flex-1 min-h-0
                       lg:h-[200px] lg:min-h-0 lg:justify-center lg:gap-2 lg:p-4 lg:pt-5
                       ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
                   >
@@ -1161,7 +1598,7 @@ const KioskPage: React.FC = () => {
                       </div>
                     )}
                     <img src="/images/bags/hand-bag-photo.png" alt={t.small}
-                      className="w-10 h-10 lg:w-14 lg:h-14 object-contain flex-shrink-0" />
+                      className="w-8 h-8 lg:w-14 lg:h-14 object-contain flex-shrink-0" />
                     <div className="text-center">
                       <p className="font-black text-sm text-[#111111] leading-tight">{t.small}</p>
                       <p className="text-[10px] text-[#111111]/50 mt-1 leading-tight">{t.small_desc}</p>
@@ -1214,7 +1651,7 @@ const KioskPage: React.FC = () => {
                   <div
                     onClick={() => setCarrierQty((v) => Math.min(cfg.operations.max_bags, v + 1))}
                     className={`relative rounded-2xl overflow-hidden cursor-pointer select-none transition-all active:scale-[0.97]
-                      flex flex-col items-center justify-between p-4 pt-5 min-h-[155px]
+                      flex flex-col items-center justify-between p-3 pt-4 flex-1 min-h-0
                       lg:h-[200px] lg:min-h-0 lg:justify-center lg:gap-2 lg:p-4 lg:pt-5
                       ${active ? 'bg-[#F5C842] shadow-[0_4px_16px_rgba(245,200,66,0.35)]' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]'}`}
                   >
@@ -1223,7 +1660,7 @@ const KioskPage: React.FC = () => {
                         <span className="text-[#F5C842] font-black text-[9px] lg:text-[10px] tabular-nums">{carrierQty}</span>
                       </div>
                     )}
-                    <picture><source srcSet="/images/bags/carrier-photo.webp" type="image/webp" /><img src="/images/bags/carrier-photo.png" alt={t.carrier} className="w-10 h-10 lg:w-14 lg:h-14 object-contain flex-shrink-0" /></picture>
+                    <picture><source srcSet="/images/bags/carrier-photo.webp" type="image/webp" /><img src="/images/bags/carrier-photo.png" alt={t.carrier} className="w-8 h-8 lg:w-14 lg:h-14 object-contain flex-shrink-0" /></picture>
                     <div className="text-center">
                       <p className="font-black text-sm text-[#111111] leading-tight">{t.carrier}</p>
                       <p className="text-[10px] text-[#111111]/50 mt-1 leading-tight">{t.carrier_desc}</p>
@@ -1291,7 +1728,7 @@ const KioskPage: React.FC = () => {
           </div>
 
           {/* ② 보관 시간 */}
-          <div className="flex flex-col gap-2 flex-shrink-0 lg:gap-3">
+          <div className="flex flex-col gap-1.5 flex-shrink-0 lg:gap-3">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-[#F5C842] flex items-center justify-center font-black text-xs lg:text-sm text-[#111111]">2</span>
               <span className="font-black text-[#111111] text-sm lg:text-base">{t.col2}</span>
@@ -1329,7 +1766,7 @@ const KioskPage: React.FC = () => {
           </div>
 
           {/* ③ 모바일 전용 — 접수 확인 */}
-          <div className="lg:hidden flex flex-col gap-2 pb-3">
+          <div className="lg:hidden flex flex-col gap-1.5 pb-2 flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-[#111111] flex items-center justify-center font-black text-xs text-[#F5C842]">3</span>
               <span className="font-black text-[#111111] text-sm">{t.col3}</span>
@@ -1413,6 +1850,7 @@ const KioskPage: React.FC = () => {
         </div>
 
       </main>
+      )}
 
       {/* 온라인 인디케이터 */}
       <div className="fixed bottom-3 right-4 flex items-center gap-1.5 pointer-events-none">

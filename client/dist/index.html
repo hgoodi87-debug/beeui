@@ -392,6 +392,15 @@
 
     window.onerror = function (message, source, lineno, colno, error) {
       console.error("Critical:", message, source, lineno);
+      // GA4 에러 리포팅 (gtag 로드된 경우)
+      try {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'exception', {
+            description: '[window.onerror] ' + String(message).slice(0, 200),
+            fatal: true,
+          });
+        }
+      } catch(e) {}
       // 화이트 스크린 방지를 위한 최소한의 가시성 확보
       const root = document.getElementById('root');
       if (root && !root.innerHTML) {
@@ -399,12 +408,12 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-CU6ErJ0Y.js"></script>
+  <script type="module" crossorigin src="/assets/index-DSn7h9Bu.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-react-dom-B-4pjoWT.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-motion-BUt1lcWJ.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-RvhTvX1M.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-query-N1jjWJFK.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-3QGM_ZDy.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-B96v7VwF.css">
 </head>
 
 <body class="antialiased">

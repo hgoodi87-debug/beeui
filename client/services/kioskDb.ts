@@ -7,6 +7,7 @@ import { getSupabaseConfig } from './supabaseRuntime';
 
 // 키오스크는 인증 불필요 — anon key로 직접 접근 (관리자 JWT 우회)
 const _ANON = getSupabaseConfig().anonKey;
+const _SUPABASE_URL = getSupabaseConfig().url;
 
 // ─── 테이블 이름 ──────────────────────────────────────────────────────────
 export const KIOSK_TABLES = {
@@ -75,7 +76,7 @@ export interface KioskCfg {
 
 export const DEFAULT_CFG: KioskCfg = {
   prices: { small_4h: 4000, carrier_2h: 3000, carrier_4h: 5000, extra_per_hour: 1000 },
-  operations: { max_bags: 6, close_hour: 21, duration_options: [2, 4, 5, 6, 7, 8] },
+  operations: { max_bags: 100, close_hour: 21, duration_options: [2, 4, 5, 6, 7, 8] },
   notices: {
     ko: ['저희 매장은 오후 9시까지 운영합니다.', '현금 결제만 가능합니다.'],
     en: ['We operate until 9PM.', 'Cash payment only.'],
@@ -136,25 +137,32 @@ export const flushOfflineQueue = async (): Promise<number> => {
     const queue: OfflineEntry[] = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
     if (queue.length === 0) return 0;
 
-    // 현재 날짜의 DB 로그를 읽어 태그 재배정에 활용
-    let liveLog: KioskStorageLog[] = [];
-    if (queue.length > 0) {
-      const branchId = queue[0].payload.branch_id;
-      const date = queue[0].payload.date;
-      try {
-        liveLog = await supabaseGet<KioskStorageLog[]>(
-          `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=eq.${date}&order=tag.asc`,
-          _ANON
-        );
-      } catch {
-        // 조회 실패 시 빈 배열로 진행 (DB가 없으면 태그 재배정 불가 — 그래도 시도)
-      }
-    }
+    // (branch_id, date) 쌍별로 liveLog를 각각 조회 — 다중 날짜/지점 지원
+    const groupKeys = Array.from(
+      new Set(queue.map((e) => `${e.payload.branch_id}|${e.payload.date}`))
+    );
+    const liveLogMap: Map<string, KioskStorageLog[]> = new Map();
+    await Promise.allSettled(
+      groupKeys.map(async (key) => {
+        const [branchId, date] = key.split('|');
+        try {
+          const rows = await supabaseGet<KioskStorageLog[]>(
+            `${KIOSK_TABLES.log}?branch_id=eq.${encodeURIComponent(branchId)}&date=eq.${date}&order=tag.asc`,
+            _ANON
+          );
+          liveLogMap.set(key, rows);
+        } catch {
+          liveLogMap.set(key, []);
+        }
+      })
+    );
 
     let flushed = 0;
     const remaining: OfflineEntry[] = [];
 
     for (const entry of queue) {
+      const groupKey = `${entry.payload.branch_id}|${entry.payload.date}`;
+      const liveLog = liveLogMap.get(groupKey) ?? [];
       try {
         // 태그 재배정: 오프라인 중 DB에 이미 삽입된 태그와 충돌 방지
         const usedTags = new Set(liveLog.map((e) => e.tag));
@@ -174,6 +182,7 @@ export const flushOfflineQueue = async (): Promise<number> => {
         const result = await supabaseMutate<KioskStorageLog[]>(`${KIOSK_TABLES.log}`, 'POST', body, _ANON);
         if (result?.[0]) {
           liveLog.push(result[0]); // 성공한 항목을 liveLog에 추가해 다음 항목이 피하도록
+          liveLogMap.set(groupKey, liveLog);
         }
         flushed++;
       } catch {
@@ -321,6 +330,54 @@ export const updateStorageLog = async (
   await supabaseMutate(`${KIOSK_TABLES.log}?id=eq.${id}`, 'PATCH', patch, _ANON);
 };
 
+export const deleteStorageLog = async (id: number): Promise<void> => {
+  const res = await fetch(`${_SUPABASE_URL}/functions/v1/kiosk-auth`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': _ANON,
+      'Authorization': `Bearer ${_ANON}`,
+    },
+    body: JSON.stringify({ action: 'delete', id }),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error((json as { error?: string }).error || `삭제 실패: ${res.status}`);
+  }
+};
+
+/**
+ * resetEmployeePassword — 직원 Supabase Auth 비밀번호 직접 재설정
+ * admin-account-sync의 복잡한 인증 체인을 우회하고 service_role로 직접 업데이트.
+ * @param profileId  employees.profile_id (Supabase Auth user.id)
+ * @param newPassword 새 비밀번호 (최소 6자)
+ * @param accessToken 호출자 Supabase 세션 토큰 (있으면 검증, 없어도 동작)
+ */
+export const resetEmployeePassword = async (
+  profileId: string,
+  newPassword: string,
+  accessToken?: string,
+): Promise<void> => {
+  const res = await fetch(`${_SUPABASE_URL}/functions/v1/kiosk-auth`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': _ANON,
+      'Authorization': `Bearer ${_ANON}`,
+    },
+    body: JSON.stringify({
+      action: 'reset_password',
+      profile_id: profileId,
+      new_password: newPassword,
+      access_token: accessToken || undefined,
+    }),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error((json as { error?: string }).error || `비밀번호 변경 실패: ${res.status}`);
+  }
+};
+
 export const loadTodayLog = async (branchId: string, date: string): Promise<KioskStorageLog[]> => {
   try {
     return await supabaseGet<KioskStorageLog[]>(
@@ -413,6 +470,64 @@ export const calcPrice = (
     }
   }
   return total;
+};
+
+// ─── Branch ID 헬퍼 ───────────────────────────────────────────────────────
+/**
+ * branch_id가 null인 레거시 지점은 slug로 폴백.
+ * 키오스크 전체에서 일관되게 사용해야 할 단일 브랜치 식별자.
+ */
+export const getBranchId = (branch: KioskBranch): string =>
+  branch.branch_id ?? branch.slug;
+
+// ─── Admin PIN — Edge Function 경유 (service_role 사용) ───────────────────
+/**
+ * PIN 검증: kiosk-auth Edge Function을 통해 서버 측 비교.
+ * anon key는 RLS로 admin_password를 읽을 수 없으므로 클라이언트 비교 금지.
+ */
+export const verifyAdminPin = async (branchId: string, pin: string): Promise<boolean> => {
+  try {
+    const res = await fetch(`${_SUPABASE_URL}/functions/v1/kiosk-auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _ANON,
+        'Authorization': `Bearer ${_ANON}`,
+      },
+      body: JSON.stringify({ action: 'verify', branch_id: branchId, pin }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    return json.ok === true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * PIN 변경: 현재 PIN을 검증한 뒤 서버 측에서 교체.
+ * 반환값: { ok: true } 또는 { ok: false, error: string }
+ */
+export const changeAdminPin = async (
+  branchId: string,
+  oldPin: string,
+  newPin: string
+): Promise<{ ok: boolean; error?: string }> => {
+  try {
+    const res = await fetch(`${_SUPABASE_URL}/functions/v1/kiosk-auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _ANON,
+        'Authorization': `Bearer ${_ANON}`,
+      },
+      body: JSON.stringify({ action: 'change', branch_id: branchId, old_pin: oldPin, new_pin: newPin }),
+    });
+    const json = await res.json();
+    return { ok: json.ok === true, error: json.error };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
 };
 
 // ─── 날짜 유틸 ────────────────────────────────────────────────────────────

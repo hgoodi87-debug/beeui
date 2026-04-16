@@ -2,6 +2,22 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AdminUser, LocationOption } from '../../../types';
 import { HR_ROLES, HR_PERMISSIONS, HR_STATUS_CONFIG, ORG_TYPES, HRStatusConfig, HRRole } from '../../../src/constants/hr';
+import { supabaseGet } from '../../../services/supabaseClient';
+import { resetEmployeePassword } from '../../../services/kioskDb';
+import { getActiveAdminAccessToken } from '../../../services/adminAuthService';
+
+type SyncCheckItem = {
+  label: string;
+  value: string;
+  ok: boolean | null; // null = 확인불가
+};
+
+type SyncCheckState = {
+  loading: boolean;
+  items: SyncCheckItem[];
+  canLogin: boolean | null;
+  checkedAt: string;
+} | null;
 
 interface EmployeeDetailPanelProps {
   employee: Partial<AdminUser> | null;
@@ -18,13 +34,102 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
   const [activeSubTab, setActiveSubTab] = React.useState<'BASIC' | 'PERMISSIONS' | 'SECURITY' | 'HISTORY'>('BASIC');
   const [formData, setFormData] = React.useState<Partial<AdminUser>>({});
   const [showPassword, setShowPassword] = React.useState(false);
+  const [syncCheck, setSyncCheck] = React.useState<SyncCheckState>(null);
+  const [pwResetState, setPwResetState] = React.useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [pwResetError, setPwResetError] = React.useState('');
   const isCreatingEmployee = !employee?.id;
+
+  const handleCheckSync = React.useCallback(async (data: Partial<AdminUser>) => {
+    setSyncCheck({ loading: true, items: [], canLogin: null, checkedAt: '' });
+    const items: SyncCheckItem[] = [];
+
+    // 1. employees 레코드 확인
+    if (data.employeeId) {
+      try {
+        const rows = await supabaseGet<Array<{ id: string; login_id?: string; email?: string; employment_status?: string }>>(
+          `employees?select=id,login_id,email,employment_status&id=eq.${encodeURIComponent(data.employeeId)}&limit=1`
+        );
+        const row = rows[0];
+        items.push({
+          label: '직원 레코드',
+          value: row ? `${row.employment_status || 'active'}` : '없음',
+          ok: !!row,
+        });
+      } catch {
+        items.push({ label: '직원 레코드', value: '조회 실패', ok: null });
+      }
+    } else {
+      items.push({ label: '직원 레코드', value: 'ID 없음 — 미등록', ok: false });
+    }
+
+    // 2. profiles (Auth 연결) 확인
+    if (data.profileId) {
+      try {
+        const rows = await supabaseGet<Array<{ id: string; email?: string }>>(
+          `profiles?select=id,email&id=eq.${encodeURIComponent(data.profileId)}&limit=1`
+        );
+        const row = rows[0];
+        items.push({
+          label: 'Auth 프로필',
+          value: row ? (row.email || '(이메일 없음)') : '없음',
+          ok: !!row,
+        });
+      } catch {
+        items.push({ label: 'Auth 프로필', value: '조회 실패', ok: null });
+      }
+    } else {
+      items.push({ label: 'Auth 프로필', value: '연결 없음 — 로그인 불가', ok: false });
+    }
+
+    // 3. 로그인 ID 해석 확인 (RPC)
+    const loginId = data.loginId || data.email || '';
+    if (loginId) {
+      try {
+        const { getSupabaseConfig } = await import('../../../services/supabaseRuntime');
+        const { url, anonKey } = getSupabaseConfig();
+        const res = await fetch(`${url}/rest/v1/rpc/resolve_admin_login_email`, {
+          method: 'POST',
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ p_identifier: loginId }),
+        });
+        const resolved: string | null = await res.json();
+        items.push({
+          label: '로그인 ID 해석',
+          value: resolved ? `"${loginId}" → ${resolved}` : `"${loginId}" → 해석 불가`,
+          ok: !!resolved,
+        });
+      } catch {
+        items.push({ label: '로그인 ID 해석', value: '확인 실패', ok: null });
+      }
+    } else {
+      items.push({ label: '로그인 ID 해석', value: 'loginId 미설정', ok: false });
+    }
+
+    const canLogin = items.every(i => i.ok === true);
+    setSyncCheck({
+      loading: false,
+      items,
+      canLogin,
+      checkedAt: new Date().toLocaleTimeString('ko-KR'),
+    });
+  }, []);
 
   React.useEffect(() => {
     setActiveSubTab('BASIC');
     setShowPassword(false);
+    setSyncCheck(null);
+    setPwResetState('idle');
+    setPwResetError('');
     if (employee) {
       setFormData({ ...employee });
+      // 기존 직원이면 패널 열릴 때 바로 연동 상태 확인
+      if (employee.id) {
+        handleCheckSync(employee);
+      }
     } else {
       setFormData({
         status: 'active',
@@ -37,7 +142,7 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
         }
       });
     }
-  }, [employee]);
+  }, [employee, handleCheckSync]);
 
   const togglePermission = (perm: string) => {
     const current = formData.permissions || [];
@@ -50,6 +155,32 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
 
   const handleSave = () => {
     onSave(formData);
+  };
+
+  const handleResetPassword = async () => {
+    const profileId = formData.profileId;
+    const newPassword = formData.password?.trim() || '';
+    if (!profileId) {
+      setPwResetError('Supabase 계정이 아직 연동되지 않았습니다. 먼저 저장하여 계정을 생성해주세요.');
+      setPwResetState('error');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwResetError('비밀번호는 최소 6자 이상이어야 합니다.');
+      setPwResetState('error');
+      return;
+    }
+    setPwResetState('loading');
+    setPwResetError('');
+    try {
+      const token = getActiveAdminAccessToken();
+      await resetEmployeePassword(profileId, newPassword, token || undefined);
+      setPwResetState('ok');
+      setFormData({ ...formData, password: '' });
+    } catch (e) {
+      setPwResetError(e instanceof Error ? e.message : '비밀번호 변경 실패');
+      setPwResetState('error');
+    }
   };
 
   const syncSummary = React.useMemo(() => {
@@ -173,17 +304,68 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
             <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
               {activeSubTab === 'BASIC' && (
                 <div className="space-y-6 animate-fade-in">
-                  <div className={`rounded-[24px] border px-5 py-4 ${syncSummary.tone}`}>
-                    <div className="flex items-center gap-2 text-[11px] font-black">
-                      <i className="fa-solid fa-link"></i>
-                      <span>{syncSummary.label}</span>
+                  {/* 실시간 연동 상태 확인 */}
+                  <div className={`rounded-[24px] border px-5 py-4 ${
+                    syncCheck?.loading ? 'bg-gray-50 border-gray-200' :
+                    syncCheck ? (syncCheck.canLogin ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100') :
+                    syncSummary.tone
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className={`flex items-center gap-2 text-[11px] font-black ${
+                        syncCheck?.loading ? 'text-gray-500' :
+                        syncCheck ? (syncCheck.canLogin ? 'text-emerald-700' : 'text-red-700') :
+                        ''
+                      }`}>
+                        {syncCheck?.loading ? (
+                          <><i className="fa-solid fa-circle-notch animate-spin"></i><span>연동 상태 확인 중...</span></>
+                        ) : syncCheck ? (
+                          <><i className={`fa-solid ${syncCheck.canLogin ? 'fa-circle-check' : 'fa-circle-xmark'}`}></i>
+                          <span>{syncCheck.canLogin ? '로그인 연동 정상' : '연동 문제 발견'}</span></>
+                        ) : (
+                          <><i className="fa-solid fa-link"></i><span>{syncSummary.label}</span></>
+                        )}
+                      </div>
+                      {!isCreatingEmployee && (
+                        <button
+                          type="button"
+                          onClick={() => handleCheckSync(formData)}
+                          disabled={syncCheck?.loading}
+                          title="Supabase 연동 상태 실시간 재확인"
+                          className="text-[10px] font-black px-3 py-1.5 rounded-xl bg-white/60 hover:bg-white transition-all disabled:opacity-40"
+                        >
+                          <i className="fa-solid fa-rotate-right mr-1"></i>재확인
+                        </button>
+                      )}
                     </div>
-                    <p className="mt-2 text-[10px] font-bold leading-relaxed opacity-90">
-                      {syncSummary.detail}
-                    </p>
-                    {formData.syncStatus?.syncedAt && (
-                      <p className="mt-2 text-[10px] font-bold opacity-70">
-                        최근 동기화: {formData.syncStatus.syncedAt}
+
+                    {/* 체크 결과 목록 */}
+                    {syncCheck && !syncCheck.loading && (
+                      <div className="mt-3 space-y-2">
+                        {syncCheck.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-[10px] font-bold">
+                            <span className={`flex items-center gap-1.5 ${
+                              item.ok === true ? 'text-emerald-700' :
+                              item.ok === false ? 'text-red-600' : 'text-gray-400'
+                            }`}>
+                              <i className={`fa-solid fa-sm ${
+                                item.ok === true ? 'fa-check' :
+                                item.ok === false ? 'fa-xmark' : 'fa-minus'
+                              }`}></i>
+                              {item.label}
+                            </span>
+                            <span className="text-gray-500 max-w-[55%] text-right truncate">{item.value}</span>
+                          </div>
+                        ))}
+                        <p className="text-[9px] font-bold text-gray-400 pt-1">
+                          확인 시각: {syncCheck.checkedAt}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 미확인 시 기존 요약 */}
+                    {!syncCheck && (
+                      <p className="mt-2 text-[10px] font-bold leading-relaxed opacity-90">
+                        {syncSummary.detail}
                       </p>
                     )}
                   </div>
@@ -387,23 +569,48 @@ const EmployeeDetailPanel: React.FC<EmployeeDetailPanelProps> = ({
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 ml-1">비밀번호 재설정</label>
                     <div className="relative">
-                      <input 
+                      <input
                         type={showPassword ? 'text' : 'password'}
-                        value={formData.password || ''} 
-                        onChange={e => setFormData({ ...formData, password: e.target.value })}
-                        className="w-full bg-gray-50 p-4 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all tracking-widest" 
-                        placeholder="••••••••"
-                        title="신규 비밀번호 입력"
+                        value={formData.password || ''}
+                        onChange={e => {
+                          setFormData({ ...formData, password: e.target.value });
+                          if (pwResetState !== 'idle') { setPwResetState('idle'); setPwResetError(''); }
+                        }}
+                        className="w-full bg-gray-50 p-4 pr-24 rounded-2xl text-xs font-bold border border-transparent focus:border-bee-black outline-none transition-all tracking-widest"
+                        placeholder="새 비밀번호 (6자 이상)"
+                        title="새 비밀번호 입력"
                       />
-                      <button 
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        title="비밀번호 표시/숨기기"
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-bee-black transition-all"
-                      >
-                        <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                      </button>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          title="비밀번호 표시/숨기기"
+                          className="p-2 text-gray-300 hover:text-bee-black transition-all"
+                        >
+                          <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                        </button>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleResetPassword}
+                      disabled={pwResetState === 'loading' || !formData.password?.trim()}
+                      className="w-full py-3 rounded-2xl text-xs font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-bee-black text-white hover:bg-gray-800 active:scale-95"
+                    >
+                      {pwResetState === 'loading' ? (
+                        <span><i className="fa-solid fa-spinner fa-spin mr-2"></i>변경 중...</span>
+                      ) : pwResetState === 'ok' ? (
+                        <span><i className="fa-solid fa-check mr-2 text-green-400"></i>비밀번호 변경 완료</span>
+                      ) : (
+                        <span><i className="fa-solid fa-key mr-2"></i>지금 비밀번호 재설정</span>
+                      )}
+                    </button>
+                    {pwResetState === 'error' && pwResetError && (
+                      <p className="text-[10px] font-bold text-red-500 ml-1">{pwResetError}</p>
+                    )}
+                    {pwResetState === 'ok' && (
+                      <p className="text-[10px] font-bold text-emerald-600 ml-1">비밀번호가 성공적으로 변경됐어요. 직원에게 새 비밀번호를 알려주세요.</p>
+                    )}
                   </div>
 
                   {formData.security?.isLocked && (

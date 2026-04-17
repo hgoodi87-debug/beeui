@@ -21,6 +21,7 @@ import { Branch } from "../types";
 import TrackingWidget from "./TrackingWidget";
 import LandingHero from "./landing/LandingHero";
 import LandingOperationsMarquee from "./landing/LandingOperationsMarquee";
+import LandingStickyCTA from "./landing/LandingStickyCTA";
 import Navbar from "./Navbar";
 
 // [스봉이] 아래 섹션들은 스크롤 할 때만 불러오도록 지능적으로 세팅했어요. 💅✨
@@ -82,6 +83,9 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
 
     return (
         <div className="w-full bg-white selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden">
+
+            {/* Sticky CTA — 히어로 스크롤 후 하단 고정 (전환율 개선) */}
+            <LandingStickyCTA t={t} lang={lang} onNavigate={handleBookingNavigate} />
 
             {/* [스봉이] 프리미엄 블랙 글래스모피즘 내비게이션 바 적용 💅✨ */}
             <Navbar

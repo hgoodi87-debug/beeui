@@ -58,10 +58,15 @@ export interface KioskRowRule {
 
 export interface KioskCfg {
   prices: {
-    small_4h: number;
-    carrier_2h: number;
-    carrier_4h: number;
-    extra_per_hour: number;
+    small_4h: number;     // 핸드백/소형 4시간 요금
+    carrier_4h: number;   // 캐리어 4시간 요금
+    small_day: number;    // 핸드백/소형 1일 요금 (≥8h 적용)
+    carrier_day: number;  // 캐리어 1일 요금 (≥8h 적용)
+    extra_per_hour: number; // 4~7시간 시간당 추가 요금
+  };
+  deliveryPrices: {
+    small: number;    // 배송 핸드백/소형 단가
+    carrier: number;  // 배송 캐리어 단가
   };
   operations: {
     max_bags: number;
@@ -75,7 +80,8 @@ export interface KioskCfg {
 }
 
 export const DEFAULT_CFG: KioskCfg = {
-  prices: { small_4h: 4000, carrier_2h: 3000, carrier_4h: 5000, extra_per_hour: 1000 },
+  prices: { small_4h: 4000, carrier_4h: 5000, small_day: 8000, carrier_day: 10000, extra_per_hour: 1000 },
+  deliveryPrices: { small: 10000, carrier: 25000 },
   operations: { max_bags: 100, close_hour: 21, duration_options: [2, 4, 5, 6, 7, 8] },
   notices: {
     ko: ['저희 매장은 오후 9시까지 운영합니다.', '현금 결제만 가능합니다.'],
@@ -223,14 +229,57 @@ export const loadAllActiveBranches = async (): Promise<KioskBranch[]> => {
   }
 };
 
+// ─── app_settings 가격 조회 (단일 소스) ──────────────────────────────────
+interface _AppTierPrices { handBag?: number; carrier?: number; strollerBicycle?: number }
+interface _AppStorageTiers { tiers?: Array<{ id: string; prices: _AppTierPrices }> }
+interface _AppDeliveryPrices { handBag?: number; carrier?: number }
+
+const loadAppPricing = async (): Promise<{
+  prices: Partial<KioskCfg['prices']>;
+  deliveryPrices: Partial<KioskCfg['deliveryPrices']>;
+}> => {
+  try {
+    const rows = await supabaseGet<Array<{ key: string; value: unknown }>>(
+      `app_settings?key=in.(storage_tiers,delivery_prices)`,
+      _ANON
+    );
+    const result: { prices: Partial<KioskCfg['prices']>; deliveryPrices: Partial<KioskCfg['deliveryPrices']> } =
+      { prices: {}, deliveryPrices: {} };
+
+    for (const row of rows) {
+      if (row.key === 'storage_tiers') {
+        const v = row.value as _AppStorageTiers;
+        const tiers = v?.tiers ?? [];
+        const t4h = tiers.find((t) => t.id === 'st-4h');
+        const t1d = tiers.find((t) => t.id === 'st-1d');
+        if (t4h?.prices?.handBag   != null) result.prices.small_4h    = t4h.prices.handBag;
+        if (t4h?.prices?.carrier   != null) result.prices.carrier_4h  = t4h.prices.carrier;
+        if (t1d?.prices?.handBag   != null) result.prices.small_day   = t1d.prices.handBag;
+        if (t1d?.prices?.carrier   != null) result.prices.carrier_day = t1d.prices.carrier;
+      } else if (row.key === 'delivery_prices') {
+        const v = row.value as _AppDeliveryPrices;
+        if (v?.handBag  != null) result.deliveryPrices.small   = v.handBag;
+        if (v?.carrier  != null) result.deliveryPrices.carrier = v.carrier;
+      }
+    }
+    return result;
+  } catch (e) {
+    console.warn('[kioskDb] loadAppPricing failed, using defaults:', e);
+    return { prices: {}, deliveryPrices: {} };
+  }
+};
+
 // ─── Settings 조회 (default fallback 포함) ───────────────────────────────
 export const loadSettings = async (branchId: string): Promise<KioskCfg> => {
   try {
-    // branch + default 동시 조회
-    const rows = await supabaseGet<Array<{ branch_id: string; key: string; value: unknown }>>(
-      `${KIOSK_TABLES.settings}?branch_id=in.(${encodeURIComponent(branchId)},default)`,
-      _ANON
-    );
+    // app_settings(가격 단일소스) + kiosk_settings 병렬 조회
+    const [appPricing, rows] = await Promise.all([
+      loadAppPricing(),
+      supabaseGet<Array<{ branch_id: string; key: string; value: unknown }>>(
+        `${KIOSK_TABLES.settings}?branch_id=in.(${encodeURIComponent(branchId)},default)`,
+        _ANON
+      ),
+    ]);
 
     const merged: Record<string, unknown> = {};
 
@@ -243,8 +292,20 @@ export const loadSettings = async (branchId: string): Promise<KioskCfg> => {
       merged[row.key] = row.value;
     }
 
+    // 가격: app_settings → DEFAULT_CFG 순서로 폴백, kiosk_settings 오버라이드 가능
+    const finalPrices: KioskCfg['prices'] = {
+      ...DEFAULT_CFG.prices,
+      ...appPricing.prices,
+      ...(merged.prices as Partial<KioskCfg['prices']> ?? {}),
+    };
+    const finalDeliveryPrices: KioskCfg['deliveryPrices'] = {
+      ...DEFAULT_CFG.deliveryPrices,
+      ...appPricing.deliveryPrices,
+    };
+
     return {
-      prices: (merged.prices as KioskCfg['prices']) ?? DEFAULT_CFG.prices,
+      prices: finalPrices,
+      deliveryPrices: finalDeliveryPrices,
       operations: {
         ...DEFAULT_CFG.operations,
         ...(merged.operations as Partial<KioskCfg['operations']> ?? {}),
@@ -449,7 +510,8 @@ export const assignTagAndRow = (
   return { tag, rowLabel };
 };
 
-// ─── 가격 계산 ────────────────────────────────────────────────────────────
+// ─── 가격 계산 (웹 예약 공식과 동일) ─────────────────────────────────────
+// ≤4h → r4h / 5~7h → r4h + (h-4) * extra / ≥8h → rDay
 export const calcPrice = (
   smallQty: number,
   carrierQty: number,
@@ -457,20 +519,16 @@ export const calcPrice = (
   prices: KioskCfg['prices']
 ): number => {
   let total = 0;
-  const { small_4h, carrier_2h, carrier_4h, extra_per_hour } = prices;
+  const { small_4h, carrier_4h, small_day, carrier_day, extra_per_hour } = prices;
 
-  if (smallQty > 0) {
-    const extraHours = Math.max(0, duration - 4);
-    total += smallQty * (small_4h + extraHours * extra_per_hour);
-  }
-  if (carrierQty > 0) {
-    if (duration <= 2) {
-      total += carrierQty * carrier_2h;
-    } else {
-      const extraHours = Math.max(0, duration - 4);
-      total += carrierQty * (carrier_4h + extraHours * extra_per_hour);
-    }
-  }
+  const unitPrice = (r4h: number, rDay: number): number => {
+    if (duration >= 8) return rDay;
+    if (duration > 4) return r4h + (duration - 4) * extra_per_hour;
+    return r4h;
+  };
+
+  total += smallQty   * unitPrice(small_4h,   small_day);
+  total += carrierQty * unitPrice(carrier_4h,  carrier_day);
   return total;
 };
 

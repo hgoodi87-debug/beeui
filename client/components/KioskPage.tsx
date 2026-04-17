@@ -378,7 +378,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   handleAdminLogin, handleMarkDone, setCfg,
 }) => {
   const [adminTab, setAdminTab] = React.useState<'log' | 'stats' | 'settings'>('log');
-  const [localPrices, setLocalPrices] = React.useState({ ...cfg.prices });
   const [localOps, setLocalOps] = React.useState({ ...cfg.operations });
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
@@ -448,11 +447,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     if (!branch) return;
     setSaving(true);
     const bid = branch.branch_id ?? 'default';
-    await Promise.all([
-      upsertSetting(bid, 'prices', localPrices),
-      upsertSetting(bid, 'operations', localOps),
-    ]);
-    setCfg((prev) => ({ ...prev, prices: localPrices, operations: localOps }));
+    await upsertSetting(bid, 'operations', localOps);
+    setCfg((prev) => ({ ...prev, operations: localOps }));
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -715,25 +711,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             {adminTab === 'settings' && (
               <div className="space-y-5">
                 <div className="bg-white/10 rounded-2xl p-5">
-                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-4">가격 설정</p>
-                  <div className="space-y-3">
-                    {[
-                      { key: 'small_4h' as const, label: '소형 가방 (4시간)' },
-                      { key: 'carrier_2h' as const, label: '캐리어 (2시간)' },
-                      { key: 'carrier_4h' as const, label: '캐리어 (4시간)' },
-                      { key: 'extra_per_hour' as const, label: '초과 시간당' },
-                    ].map(({ key, label }) => (
-                      <div key={key} className="flex items-center justify-between gap-4">
-                        <label className="text-white/70 text-sm flex-1">{label}</label>
-                        <div className="flex items-center gap-2">
-                          <input type="number" value={localPrices[key]}
-                            onChange={(e) => setLocalPrices((p) => ({ ...p, [key]: Number(e.target.value) }))}
-                            className="bg-white/10 rounded-xl px-3 py-2 text-white text-right font-black w-24 focus:outline-none focus:ring-2 focus:ring-[#F5C842] text-sm"
-                            step={500} min={0} />
-                          <span className="text-white/40 text-sm">원</span>
-                        </div>
-                      </div>
-                    ))}
+                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-2">가격 설정</p>
+                  <p className="text-white/40 text-xs leading-relaxed">
+                    보관·배송 가격은 본사 관리자 대시보드 → 앱 설정에서 변경합니다.<br />
+                    변경 사항은 키오스크 재시작 시 자동 반영됩니다.
+                  </p>
+                  <div className="mt-3 space-y-1.5 text-xs text-white/60">
+                    <div className="flex justify-between"><span>소형 4시간</span><span className="font-bold">{cfg.prices.small_4h.toLocaleString()}원</span></div>
+                    <div className="flex justify-between"><span>캐리어 4시간</span><span className="font-bold">{cfg.prices.carrier_4h.toLocaleString()}원</span></div>
+                    <div className="flex justify-between"><span>소형 1일</span><span className="font-bold">{cfg.prices.small_day.toLocaleString()}원</span></div>
+                    <div className="flex justify-between"><span>캐리어 1일</span><span className="font-bold">{cfg.prices.carrier_day.toLocaleString()}원</span></div>
+                    <div className="flex justify-between"><span>시간당 추가</span><span className="font-bold">{cfg.prices.extra_per_hour.toLocaleString()}원</span></div>
+                    <div className="flex justify-between pt-1 border-t border-white/10"><span>배송 소형</span><span className="font-bold">{cfg.deliveryPrices.small.toLocaleString()}원</span></div>
+                    <div className="flex justify-between"><span>배송 캐리어</span><span className="font-bold">{cfg.deliveryPrices.carrier.toLocaleString()}원</span></div>
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-2xl p-5">
@@ -931,9 +921,8 @@ const KioskPage: React.FC = () => {
 
   const canSubmit = (smallQty + carrierQty > 0) && duration > 0;
 
-  // 배송 가격: 소형 10,000원 / 캐리어 25,000원
-  const DELIVERY_UNIT_PRICES = { small: 10000, carrier: 25000 };
-  const deliveryTotalPrice = smallQty * DELIVERY_UNIT_PRICES.small + carrierQty * DELIVERY_UNIT_PRICES.carrier;
+  // 배송 단가: app_settings.delivery_prices → cfg.deliveryPrices (단일 소스)
+  const deliveryTotalPrice = smallQty * cfg.deliveryPrices.small + carrierQty * cfg.deliveryPrices.carrier;
   const canSubmitDelivery = (smallQty + carrierQty > 0) && deliveryAirport !== null && deliveryDate !== '' && deliveryTime !== '';
 
   const handleSubmit = useCallback(async () => {
@@ -947,11 +936,10 @@ const KioskPage: React.FC = () => {
       const pickupTs = Date.now() + duration * 60 * 60 * 1000;
       const currentLog = await loadTodayLog(bid, today);
       const { rowLabel } = assignTagAndRow(currentLog, cfg);
-      const tag = nextTag;
-      // 카운터 advance (100→1 순환)
-      const advancedTag = nextTag >= 100 ? 1 : nextTag + 1;
-      setNextTag(advancedTag);
-      setTagInputVal(String(advancedTag));
+      // 이미 접수된 주문과 중복되지 않는 첫 번째 빈 태그 번호 선택
+      const usedTags = new Set(currentLog.map((e) => e.tag));
+      let tag = nextTag;
+      while (usedTags.has(tag)) { tag = tag >= 100 ? 1 : tag + 1; }
       const payload = {
         branch_id: bid,
         date: today, tag,
@@ -962,11 +950,16 @@ const KioskPage: React.FC = () => {
         source: 'kiosk' as const, commission_rate: 0,
       };
       const saved = await insertStorageLog(payload);
+      // 실제 DB에 저장된 태그 번호 사용 (서버 retry로 재배정됐을 수 있음)
+      const actualTag = saved?.tag ?? tag;
+      const advancedTag = actualTag >= 100 ? 1 : actualTag + 1;
+      setNextTag(advancedTag);
+      setTagInputVal(String(advancedTag));
       setResultLogId(saved?.id ?? null);
-      setResultTag(tag);
+      setResultTag(actualTag);
       setResultRow(rowLabel);
       setResultStartTime(startTime);
-      setTodayLog((prev) => [...prev, { ...payload, id: tag, created_at: new Date().toISOString() }]);
+      setTodayLog((prev) => [...prev, { ...payload, tag: actualTag, id: saved?.id ?? actualTag, created_at: new Date().toISOString() }]);
       setOfflineCount(getOfflineQueueSize());
       setStep('success');
     } finally {
@@ -1047,11 +1040,22 @@ const KioskPage: React.FC = () => {
         commission_rate: 0,
       };
       const saved = await insertStorageLog(payload);
+      const actualTag = saved?.tag ?? tag;
+      // nextTag 카운터가 방금 사용한 번호와 겹치면 다음으로 advance
+      setNextTag((prev) => {
+        if (prev === actualTag) return actualTag >= 100 ? 1 : actualTag + 1;
+        return prev;
+      });
+      setTagInputVal((prev) => {
+        const n = parseInt(prev);
+        if (n === actualTag) return String(actualTag >= 100 ? 1 : actualTag + 1);
+        return prev;
+      });
       setResultLogId(saved?.id ?? null);
-      setResultTag(tag);
+      setResultTag(actualTag);
       setResultRow(rowLabel);
       setResultStartTime(startTime);
-      setTodayLog((prev) => [...prev, { ...payload, id: tag, created_at: new Date().toISOString() }]);
+      setTodayLog((prev) => [...prev, { ...payload, tag: actualTag, id: saved?.id ?? actualTag, created_at: new Date().toISOString() }]);
       setOfflineCount(getOfflineQueueSize());
       setStep('success');
     } catch (e) {
@@ -1896,13 +1900,13 @@ const KioskPage: React.FC = () => {
                 {smallQty > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">{t.small} × {smallQty}</span>
-                    <span className="font-bold text-[#111111]">{(smallQty * DELIVERY_UNIT_PRICES.small).toLocaleString()}원</span>
+                    <span className="font-bold text-[#111111]">{(smallQty * cfg.deliveryPrices.small).toLocaleString()}원</span>
                   </div>
                 )}
                 {carrierQty > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">{t.carrier} × {carrierQty}</span>
-                    <span className="font-bold text-[#111111]">{(carrierQty * DELIVERY_UNIT_PRICES.carrier).toLocaleString()}원</span>
+                    <span className="font-bold text-[#111111]">{(carrierQty * cfg.deliveryPrices.carrier).toLocaleString()}원</span>
                   </div>
                 )}
                 {deliveryAirport && (
@@ -1939,10 +1943,11 @@ const KioskPage: React.FC = () => {
                     const bid = getBranchId(branch);
                     const today = todayStr();
                     const startTime = timeStr();
-                    const tag = nextTag;
-                    const advancedTag = nextTag >= 100 ? 1 : nextTag + 1;
-                    setNextTag(advancedTag);
-                    setTagInputVal(String(advancedTag));
+                    // 이미 접수된 주문과 중복되지 않는 첫 번째 빈 태그 번호 선택
+                    const currentLog = await loadTodayLog(bid, today);
+                    const usedTags = new Set(currentLog.map((e) => e.tag));
+                    let tag = nextTag;
+                    while (usedTags.has(tag)) { tag = tag >= 100 ? 1 : tag + 1; }
                     const payload = {
                       branch_id: bid,
                       date: today, tag,
@@ -1953,10 +1958,16 @@ const KioskPage: React.FC = () => {
                       source: 'kiosk' as const, commission_rate: 0,
                     };
                     const saved = await insertStorageLog(payload);
+                    // 실제 DB에 저장된 태그 번호 사용 (서버 retry로 재배정됐을 수 있음)
+                    const actualTag = saved?.tag ?? tag;
+                    const advancedTag = actualTag >= 100 ? 1 : actualTag + 1;
+                    setNextTag(advancedTag);
+                    setTagInputVal(String(advancedTag));
                     setResultLogId(saved?.id ?? null);
-                    setResultTag(tag);
+                    setResultTag(actualTag);
                     setResultRow('D');
                     setResultStartTime(startTime);
+                    setTodayLog((prev) => [...prev, { ...payload, tag: actualTag, id: saved?.id ?? actualTag, created_at: new Date().toISOString() }]);
                     setStep('success');
                   } finally {
                     setSubmitting(false);

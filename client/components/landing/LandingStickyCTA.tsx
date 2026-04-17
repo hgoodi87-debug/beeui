@@ -70,48 +70,48 @@ const LandingStickyCTA: React.FC<LandingStickyCTAProps> = ({ lang, onNavigate })
                     className="fixed bottom-0 inset-x-0 z-[9999] safe-area-bottom"
                 >
                     {/* 배경 블러 */}
-                    <div className="bg-black/90 backdrop-blur-xl border-t border-white/10 px-4 pt-3 pb-5">
-                        {/* 신뢰 지표 */}
-                        <div className="flex items-center justify-center gap-2 mb-2.5">
-                            <div className="flex -space-x-1.5">
-                                {['🇹🇼','🇯🇵','🇰🇷'].map((flag, i) => (
-                                    <span key={i} className="text-sm leading-none">{flag}</span>
-                                ))}
+                    <div className="bg-black/90 backdrop-blur-xl border-t border-white/10 px-4 py-2">
+                        {/* 한 줄: 신뢰 지표 + 버튼 2개 + 닫기 */}
+                        <div className="flex items-center gap-2 max-w-lg mx-auto">
+                            {/* 신뢰 지표 (모바일에서 숨김) */}
+                            <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                                <div className="flex -space-x-1">
+                                    {['🇹🇼','🇯🇵','🇰🇷'].map((flag, i) => (
+                                        <span key={i} className="text-xs leading-none">{flag}</span>
+                                    ))}
+                                </div>
+                                <span className="text-[#F5C842] text-[10px] font-black">★★★★★</span>
                             </div>
-                            <span className="text-white/50 text-[11px] font-bold">{labels.trust}</span>
-                            <span className="text-[#F5C842] text-[11px] font-black ml-1">
-                                ★★★★★
-                            </span>
-                        </div>
 
-                        {/* CTA 버튼 2개 */}
-                        <div className="flex gap-3 max-w-sm mx-auto">
+                            {/* 버튼 2개 */}
+                            <div className="flex gap-2 flex-1">
+                                <button
+                                    onClick={() => handleClick('LOCATIONS_STORE')}
+                                    className="flex-1 bg-[#F5C842] text-[#111] font-black py-2 rounded-xl text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] shadow-md shadow-[#F5C842]/20 flex items-center justify-center gap-1.5"
+                                >
+                                    <span>{labels.storage}</span>
+                                    <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">{labels.price_hint}</span>
+                                </button>
+                                <button
+                                    onClick={() => handleClick('LOCATIONS_DELIVER')}
+                                    className="flex-1 bg-white/10 text-white font-black py-2 rounded-xl text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] border border-white/20 flex items-center justify-center gap-1.5"
+                                >
+                                    <span>{labels.delivery}</span>
+                                    <span className="text-[10px] font-bold text-white/40 normal-case tracking-normal">₩10,000~</span>
+                                </button>
+                            </div>
+
+                            {/* 닫기 */}
                             <button
-                                onClick={() => handleClick('LOCATIONS_STORE')}
-                                className="flex-1 bg-[#F5C842] text-[#111] font-black py-3.5 rounded-2xl text-[13px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-lg shadow-[#F5C842]/30"
+                                onClick={() => setDismissed(true)}
+                                className="flex-shrink-0 text-white/30 hover:text-white/60 transition-colors p-1"
+                                aria-label="close"
                             >
-                                <span className="block">{labels.storage}</span>
-                                <span className="block text-[10px] font-bold text-[#111]/60 mt-0.5">{labels.price_hint}</span>
-                            </button>
-                            <button
-                                onClick={() => handleClick('LOCATIONS_DELIVER')}
-                                className="flex-1 bg-white/10 text-white font-black py-3.5 rounded-2xl text-[13px] uppercase tracking-wider transition-all active:scale-[0.97] border border-white/20"
-                            >
-                                <span className="block">{labels.delivery}</span>
-                                <span className="block text-[10px] font-bold text-white/40 mt-0.5">₩10,000~</span>
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                    <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
                             </button>
                         </div>
-
-                        {/* 닫기 */}
-                        <button
-                            onClick={() => setDismissed(true)}
-                            className="absolute top-3 right-4 text-white/30 hover:text-white/60 transition-colors"
-                            aria-label="close"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                        </button>
                     </div>
                 </motion.div>
             )}

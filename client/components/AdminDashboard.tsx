@@ -100,6 +100,7 @@ const MonthlySettlementTab = lazy(() => import('./admin/MonthlySettlementTab'));
 const KioskTab = lazy(() => import('./admin/KioskTab'));
 const GoogleAnalyticsTab = lazy(() => import('./admin/GoogleAnalyticsTab'));
 const ChannelAnalyticsTab = lazy(() => import('./admin/ChannelAnalyticsTab'));
+const UtmBuilderTab = lazy(() => import('./admin/UtmBuilderTab'));
 
 const AdminTabFallback: React.FC = () => (
   <div className="rounded-[32px] border border-dashed border-gray-200 bg-white/80 px-6 py-10 text-center text-sm font-bold text-gray-400 shadow-sm">
@@ -2517,6 +2518,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                 { id: 'REPORTS', label: '분석 리포트', icon: 'fa-chart-line' },
                 { id: 'CHANNEL_ANALYTICS', label: '채널 분석', icon: 'fa-route' },
                 { id: 'GOOGLE_ANALYTICS', label: '구글 데이터', icon: 'fa-magnifying-glass-chart' },
+                { id: 'UTM_BUILDER', label: 'UTM 빌더', icon: 'fa-link' },
               ].map(item => (
                 <button
                   key={item.id}
@@ -2679,6 +2681,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                         { id: 'AI_REVIEW', label: 'AI 검수함', icon: 'fa-robot' },
                         { id: 'ROADMAP', label: t.admin?.sidebar?.roadmap || '서비스 로드맵', icon: 'fa-map-location-dot' },
                         { id: 'CHATS', label: t.admin?.sidebar?.marketing || '실시간 채팅', icon: 'fa-comments' },
+                        { id: 'UTM_BUILDER', label: 'UTM 빌더', icon: 'fa-link' },
                       ].map(item => (
                         <button
                           key={item.id}
@@ -2941,6 +2944,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
           {activeTab === 'GOOGLE_ANALYTICS' && (
             <Suspense fallback={<AdminTabFallback />}>
               <GoogleAnalyticsTab />
+            </Suspense>
+          )}
+
+          {activeTab === 'UTM_BUILDER' && (
+            <Suspense fallback={<AdminTabFallback />}>
+              <UtmBuilderTab />
             </Suspense>
           )}
 

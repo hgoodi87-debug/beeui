@@ -14,9 +14,9 @@ interface StoredAdParams {
   expires: number;
 }
 
-/** 페이지 최초 로드 시 UTM + GCLID + Referrer를 localStorage에 저장 (14일 TTL) */
+/** 페이지 최초 로드 시 UTM + GCLID + Referrer를 localStorage에 저장 (14일 TTL, 첫터치 모델) */
 export function captureAdParams(): void {
-  // 유효한 첫터치가 이미 저장돼 있으면 덮어쓰지 않음
+  // 유효한 첫터치가 이미 저장돼 있으면 덮어쓰지 않음 (첫터치 어트리뷰션 모델)
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -34,22 +34,55 @@ export function captureAdParams(): void {
     'utm_source', 'utm_medium', 'utm_campaign',
     'utm_term', 'utm_content', 'gclid', 'gad_source',
   ];
-
   keys.forEach((k) => {
     const v = params.get(k);
     if (v) adParams[k] = v;
   });
 
-  // UTM 없을 때 referrer 저장 (유기 채널 추론용)
-  if (Object.keys(adParams).length === 0 && document.referrer) {
-    adParams['_referrer'] = document.referrer;
+  // 랜딩 페이지 항상 기록 (퍼널 분석용)
+  adParams['_landing_page'] = window.location.pathname;
+
+  // UTM source가 없으면 referrer 기반으로 자동 분류
+  // → booking_details.utm_source 가 항상 채워져 GA4 "미지정" 제거
+  if (!adParams['utm_source']) {
+    if (document.referrer) {
+      adParams['_referrer'] = document.referrer;
+      const channel = inferChannelFromReferrer(document.referrer);
+      if (channel === 'organic_search') {
+        adParams['utm_source'] = 'google';
+        adParams['utm_medium'] = 'organic';
+      } else if (channel === 'organic_social') {
+        try {
+          const host = new URL(document.referrer).hostname.toLowerCase();
+          if (/xiaohongshu|xhs/.test(host))   { adParams['utm_source'] = 'xiaohongshu'; }
+          else if (/instagram/.test(host))    { adParams['utm_source'] = 'instagram'; }
+          else if (/threads/.test(host))      { adParams['utm_source'] = 'threads'; }
+          else if (/twitter|x\.com/.test(host)) { adParams['utm_source'] = 'twitter'; }
+          else if (/facebook|fb\.com/.test(host)) { adParams['utm_source'] = 'facebook'; }
+          else if (/youtube/.test(host))      { adParams['utm_source'] = 'youtube'; }
+          else if (/line\.me/.test(host))     { adParams['utm_source'] = 'line'; }
+          else                                { adParams['utm_source'] = 'social'; }
+          adParams['utm_medium'] = 'organic_social';
+        } catch {
+          adParams['utm_source'] = 'social';
+          adParams['utm_medium'] = 'organic_social';
+        }
+      } else if (channel === 'referral_ota') {
+        adParams['utm_source'] = 'ota';
+        adParams['utm_medium'] = 'referral';
+      } else {
+        adParams['utm_source'] = 'referral';
+        adParams['utm_medium'] = 'referral';
+      }
+    } else {
+      // 완전 직접 방문 (북마크 / 직접 URL 입력 / 앱 내 브라우저)
+      adParams['utm_source'] = 'direct';
+      adParams['utm_medium'] = 'none';
+    }
   }
 
-  // 뭔가 수집된 경우에만 저장
-  if (Object.keys(adParams).length > 0) {
-    const payload: StoredAdParams = { data: adParams, expires: Date.now() + TTL_MS };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }
+  const payload: StoredAdParams = { data: adParams, expires: Date.now() + TTL_MS };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
 /** 저장된 광고 파라미터 반환 (만료된 경우 빈 객체) */

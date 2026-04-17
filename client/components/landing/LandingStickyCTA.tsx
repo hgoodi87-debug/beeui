@@ -67,51 +67,48 @@ const LandingStickyCTA: React.FC<LandingStickyCTAProps> = ({ lang, onNavigate })
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: 100, opacity: 0 }}
                     transition={{ type: 'spring', damping: 24, stiffness: 300 }}
-                    className="fixed bottom-0 inset-x-0 z-[9999] safe-area-bottom"
+                    className="fixed bottom-4 inset-x-0 z-[9999] flex justify-center px-4"
                 >
-                    {/* 배경 블러 */}
-                    <div className="bg-black/90 backdrop-blur-xl border-t border-white/10 px-4 py-2">
-                        {/* 한 줄: 신뢰 지표 + 버튼 2개 + 닫기 */}
-                        <div className="flex items-center gap-2 max-w-lg mx-auto">
-                            {/* 신뢰 지표 (모바일에서 숨김) */}
-                            <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
-                                <div className="flex -space-x-1">
-                                    {['🇹🇼','🇯🇵','🇰🇷'].map((flag, i) => (
-                                        <span key={i} className="text-xs leading-none">{flag}</span>
-                                    ))}
-                                </div>
-                                <span className="text-[#F5C842] text-[10px] font-black">★★★★★</span>
+                    {/* 글래스모피즘 플로팅 바 */}
+                    <div className="w-full max-w-xl bg-black/40 backdrop-blur-2xl border border-white/10 rounded-full px-3 py-1.5 flex items-center gap-2 shadow-2xl shadow-black/40">
+                        {/* 신뢰 지표 */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0 pl-1">
+                            <div className="flex -space-x-1">
+                                {['🇹🇼','🇯🇵','🇰🇷'].map((flag, i) => (
+                                    <span key={i} className="text-xs leading-none">{flag}</span>
+                                ))}
                             </div>
+                            <span className="text-[#F5C842] text-[10px] font-black">★★★★★</span>
+                        </div>
 
-                            {/* 버튼 2개 */}
-                            <div className="flex gap-2 flex-1">
-                                <button
-                                    onClick={() => handleClick('LOCATIONS_STORE')}
-                                    className="flex-1 bg-[#F5C842] text-[#111] font-black py-2 rounded-xl text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] shadow-md shadow-[#F5C842]/20 flex items-center justify-center gap-1.5"
-                                >
-                                    <span>{labels.storage}</span>
-                                    <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">{labels.price_hint}</span>
-                                </button>
-                                <button
-                                    onClick={() => handleClick('LOCATIONS_DELIVER')}
-                                    className="flex-1 bg-[#F5C842] text-[#111] font-black py-2 rounded-xl text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] shadow-md shadow-[#F5C842]/20 flex items-center justify-center gap-1.5"
-                                >
-                                    <span>{labels.delivery}</span>
-                                    <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">₩10,000~</span>
-                                </button>
-                            </div>
-
-                            {/* 닫기 */}
+                        {/* 버튼 2개 */}
+                        <div className="flex gap-1.5 flex-1">
                             <button
-                                onClick={() => setDismissed(true)}
-                                className="flex-shrink-0 text-white/30 hover:text-white/60 transition-colors p-1"
-                                aria-label="close"
+                                onClick={() => handleClick('LOCATIONS_STORE')}
+                                className="flex-1 bg-[#F5C842] text-[#111] font-black py-2 rounded-full text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] shadow-lg shadow-[#F5C842]/20 flex items-center justify-center gap-1.5"
                             >
-                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                    <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                </svg>
+                                <span>{labels.storage}</span>
+                                <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">{labels.price_hint}</span>
+                            </button>
+                            <button
+                                onClick={() => handleClick('LOCATIONS_DELIVER')}
+                                className="flex-1 bg-[#F5C842] text-[#111] font-black py-2 rounded-full text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] shadow-lg shadow-[#F5C842]/20 flex items-center justify-center gap-1.5"
+                            >
+                                <span>{labels.delivery}</span>
+                                <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">₩10,000~</span>
                             </button>
                         </div>
+
+                        {/* 닫기 */}
+                        <button
+                            onClick={() => setDismissed(true)}
+                            className="flex-shrink-0 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/40 hover:text-white/70 transition-all"
+                            aria-label="close"
+                        >
+                            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            </svg>
+                        </button>
                     </div>
                 </motion.div>
             )}

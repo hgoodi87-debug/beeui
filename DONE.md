@@ -130,6 +130,35 @@
 
 ---
 
+## 2026-04-17
+
+### fzvf 레거시 이관 + xpnf 보안 대대적 감사·패치
+
+| 이슈 | 파일 / DB | 핵심 |
+|---|---|---|
+| .mcp.json xpnf 전용 서버 등록 | `.mcp.json` (커밋 29fa777) | project_ref 박은 project-scoped MCP. `claude mcp add --scope project ...` |
+| fzvf→xpnf 조직 이전 | Supabase Dashboard | 사장님이 xpnf 조직에 beeliberofficial 계정 멤버 추가 완료 |
+| fzvf.luggage_storage_log 136행 누락 발견 | MCP SQL 대조 | 2026-04-07~04-15 연남점 키오스크 **미이관** 136행 / ₩1,114,000. branch_id 컬럼 없는 단일지점 레거시 |
+| archive 테이블 이관 | migration `create_luggage_storage_log_archive` | `public.luggage_storage_log_archive` 신설 + 관리자 전용 RLS. 원본 구조 그대로 + branch_id='yeonnam' + source='fzvf_legacy' |
+| 136행 JSON 일괄 INSERT | `execute_sql` (jsonb_array_elements) | 원본과 날짜별 행수·매출 **100% 일치** (04-07:2/18K → 04-15:9/45K) |
+| SECURITY DEFINER 뷰 3개 차단 | migrations `revoke_anon_from_admin_views` + `views_to_security_invoker` | `admin_booking_list_v1`/`admin_revenue_daily_v1`/`admin_revenue_monthly_v1` → REVOKE anon + `SET (security_invoker = true)`. 이전엔 anon key로 전 예약·결제·이메일 조회 가능했던 경로 차단 |
+| 함수 9개 search_path 고정 | migration `fix_function_search_path_mutable` | `admin_adjust_credits`, `deduct_credits`, `approve_ai_output`x2, `reject_ai_output`x2, `trigger_on_booking_created/updated`, `map_admin_booking_status`, `set_updated_at` 모두 `SET search_path = public, pg_temp`. SECURITY DEFINER 권한 승격 경로 차단 |
+| chat_sessions anon_update 축소 | migration `tighten_chat_sessions_anon_update` | `USING(true) WITH CHECK(true)` 제거 → session_id 기반 self-update만 허용. 세션 탈취 → 과거 대화 열람 공격 차단 |
+| bank_transactions anon 전권 차단 (CRITICAL) | migration `fix_critical_public_rls_3tables` | 기존 `admin_all_bank_transactions`가 `roles={public}` + `ALL true/true`로 **anon이 통장 거래 전권**이었음. `finance_staff` 이상만 접근하도록 4개 정책으로 분리 |
+| partnership_inquiries SELECT 차단 | 동 migration | `p_partnership_inq_r` SELECT `qual=true` → 관리자 전용. 문의자 회사·담당자·연락처 PII 유출 차단 |
+| user_coupons INSERT 차단 | 동 migration | `p_user_coupons_i` WITH CHECK `true` → 관리자(finance/cs) 또는 본인(`user_id=auth.uid()`)만 INSERT |
+| fzvf 프로젝트 pause | MCP `pause_project` | 이관 완료 확인 후 pause. 실코드가 fzvf 쓰는 경로 있으면 즉시 오류로 드러남. 트래픽 차단만, 데이터 보존 |
+
+**advisor 결과: ERROR 3건 / function WARN 9건 → 0건 해결.** 남은 WARN 8건은 모두 의도적 공개 INSERT (예약·챗봇·키오스크·파트너십 접수) + Supabase Auth 토글 1건(`auth_leaked_password_protection`).
+
+**Performance advisor 198건 요약**: multiple_permissive_policies 130건, auth_rls_initplan 34건, unindexed_foreign_keys 10건, unused_index 23건. → TODOS.md `DB-06`~`DB-09`로 이관.
+
+**⚠️ 수동 작업 필요**:
+- Supabase Dashboard → Auth → Password Policy → "Leaked Password Protection" 토글 활성화
+- fzvf pause 후 1주일 오류 관찰 → 문제없으면 Dashboard에서 Delete Project
+
+---
+
 ## 2026-04-13 (후속 3)
 
 ### 직원 소속지점 수정 불가 버그 수정

@@ -80,6 +80,9 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                 createdAt: new Date().toISOString(),
             });
             setBankForm(emptyBankForm);
+        } catch (e) {
+            console.error('[AccountingTab] saveBankTx failed:', e);
+            alert(`통장 거래 저장 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
         } finally {
             setBankSaving(false);
         }

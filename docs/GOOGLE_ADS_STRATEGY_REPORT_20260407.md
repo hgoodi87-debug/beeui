@@ -1,7 +1,12 @@
 # Beeliber 구글 애즈 전략 완료 보고서
 
-> 기준일: 2026-04-07  
-> 작성자: Claude Code (Beeliber 하네스)  
+> **[상태] ✅ 기술 인프라 완료 / ⚠️ 실집행 대기** (2026-04-17 기준)
+> - UTM/GCLID 캡처·GA4·전환 이벤트 구조: 구현 완료 (v1.1.0)
+> - `VITE_GOOGLE_ADS_ID` 실값 + 광고 계정 전환 액션 + 캠페인 집행: 미완
+> - 채널 어트리뷰션은 이미 14일 TTL localStorage 전환 완료(DONE.md 2026-04-12)
+>
+> 기준일: 2026-04-07
+> 작성자: Claude Code (Beeliber 하네스)
 > 참조: `client/src/utils/gads.ts`, `client/index.html`, `client/App.tsx`, `.agent/skills/beeliber_seo/SKILL.md`
 
 ---

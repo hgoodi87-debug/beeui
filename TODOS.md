@@ -1,7 +1,160 @@
 # TODOS — 빌리버 개선 항목 통합
 
 작업 완료 후 다음 단계를 위한 기술 부채 · SEO · AI 기능 개선 목록.
-마지막 갱신: 2026-04-08
+마지막 갱신: 2026-04-17
+
+---
+
+## 관리자 DB 연동 감사 결과 (2026-04-17 세션)
+
+### [DB-01] AccountingTab 통장 거래 에러 UX (P1 — 부분 완료)
+
+**완료 부분 (2026-04-17):** `handleSaveBankTx`에 `catch` 블록 + `alert` 추가 — 저장 실패 시 사용자가 인지 가능.
+
+**잔여 작업:** `alert` 대신 프로젝트 토스트 시스템(`motion` 기반 `csToast` 등)으로 교체. 접근성·다국어 고려.
+
+**Why:** `alert`는 모바일 UX 저해. 관리자는 다국어 운영자 포함. **How to apply:** `BookingDetailModal.tsx`의 `setCsToast` 패턴 동일 적용.
+
+**Effort:** XS **Priority:** P2
+
+---
+
+### [DB-02] 키오스크 anon 키 노출 — RLS 감사 재확인 (P1)
+
+**What:** `client/services/kioskDb.ts:9` 의 `_ANON` 변수가 `supabaseGet/supabaseMutate` 로 직접 전달된다. 2026-04-12 RLS 강화 이후 `kiosk_storage_log`·`kiosk_branches`·`kiosk_settings`가 실제로 다음 5개 공격 시나리오를 차단하는지 SQL로 확인 필요.
+
+1. 다른 `branch_id`의 로그 INSERT (악의적 클라이언트가 branch_id 위조)
+2. 다른 지점의 완료된 로그 UPDATE (done=true 이후 수정)
+3. 다른 지점의 로그 DELETE (이미 정책 제거됨 — 재검증)
+4. `kiosk_settings.admin_password` 읽기
+5. 다른 지점 바우처 태그 순번 훔치기
+
+**Why:** anon key 노출 자체는 Supabase 설계 의도. 취약점은 RLS 정책 부실. **How to apply:** `supabase/migrations/20260412000004_*.sql` 정책 검토 + `select rls_audit()` Edge Function 재실행.
+
+**Effort:** S (CC: ~20분) **Priority:** P1
+
+---
+
+### [DB-03] AccountingTab 실시간 구독 cleanup 확인 (P3)
+
+**What:** `useBankTransactions`(React Query)는 자동 cleanup이지만, `StorageService`의 `subscribeXxx` 계열을 사용하는 다른 탭(`OperationsConsole`, `LogisticsTab`)에서 unsubscribe 누수 여부 코드 리뷰.
+
+**Why:** 탭 전환 시 구독 누적되면 대시보드 장기 구동 시 메모리·네트워크 부하.
+
+**Effort:** S (CC: ~15분) **Priority:** P3
+
+---
+
+### [DB-04] 금액 정밀도 방어 (P3 — 한국 원화 특성상 위험 낮음)
+
+**What:** `AccountingTab.tsx:67,105` 등에서 `reduce((s, t) => s + t.amount, 0)` 부동소수점 합산. 한국 원화는 소수점 없어 2^53까지 정수 정확성 보장 → 실사용 위험 낮음.
+
+**Why:** 단, `bankForm.balance` 입력이 `<input type="number">`일 경우 사용자가 소수점 입력 가능 → DB에 decimal 유입 가능.
+
+**How to apply:** `<input step="1" min="0">` + `onChange`에서 `Math.round` 강제.
+
+**Effort:** XS **Priority:** P3
+
+---
+
+### [DB-05] kioskDb flushOfflineQueue flushed 카운트 버그 (완료 — 2026-04-17)
+
+**완료:** 기존 코드는 mutation result가 빈 배열이어도 `flushed++` 실행하고 큐에서 제거했다. `result?.[0]`가 없을 때 `remaining.push(entry)` + `console.warn` 추가로 수정. 이로써 RLS 정책 위반·네트워크 이상 시 큐에 유지되어 재시도 가능.
+
+---
+
+### [DB-06] Leaked Password Protection 활성화 (P1 — 수동 작업)
+
+**What:** Supabase Dashboard → Auth → Password Policy → "Leaked Password Protection" 토글 ON.
+
+**Why:** HaveIBeenPwned.org 유출 패스워드 자동 차단. 현재 advisor WARN 상태.
+
+**Effort:** XS (1분) **Priority:** P1
+
+---
+
+### [DB-07] fzvf 최종 삭제 (P2 — 관찰 후 수동 작업)
+
+**What:** https://supabase.com/dashboard/project/fzvfyeskdivulazjjpgr/settings/general → Delete Project.
+
+**Why:** 2026-04-17 pause 완료. 이관 검증 끝. 1주일 관찰해서 에러 없으면 삭제.
+
+**Check first:** pause 이후 애플리케이션 로그·Google Chat 알림에서 `fzvfyeskdivulazjjpgr` 관련 오류 없는지. 있으면 **`client/services/supabaseRuntime.ts:4` LEGACY_PROJECT_ID 우회 로직이 아직 동작 중**이니 삭제 전 해당 코드 확인.
+
+**Effort:** XS (5분) **Priority:** P2 (1주일 후)
+
+---
+
+### [DB-08] Performance: RLS 정책 통합 (P2)
+
+**What:** advisor `multiple_permissive_policies` 130건. 같은 롤·액션에 중복 permissive 정책이 쌓여 쿼리마다 전부 평가됨.
+
+**핵심 테이블 (영향도 순):**
+- `booking_details` (21건), `chat_sessions` (19), `reservations` (18), `chat_messages` (12), `payments` (10), `kiosk_storage_log` (7)
+
+**Approach:** `p_*_admin` + `owner_or_staff_*` + `staff_*` 계열을 OR 조건 단일 정책으로 병합. 예:
+```sql
+-- Before: 3개 정책 (admin, owner, staff)
+-- After: 1개 정책 USING (admin_role OR owner_match OR staff_role)
+```
+
+**Effort:** L (CC: ~45분) **Priority:** P2
+
+---
+
+### [DB-09] Performance: auth.uid() InitPlan 래핑 (P2)
+
+**What:** advisor `auth_rls_initplan` 34건. `auth.uid()` / `auth.role()` 호출이 매 row마다 재평가됨.
+
+**Fix:** 모든 RLS 정책에서 `auth.uid()` → `(select auth.uid())`, `auth.role()` → `(select auth.role())` 래핑. PostgreSQL 쿼리 플래너가 InitPlan으로 한 번만 평가.
+
+**Effort:** M (CC: ~30분) **Priority:** P2
+**Depends on:** DB-08 진행 후 같이 처리 권장
+
+---
+
+### [DB-10] FK 인덱스 추가 (P2)
+
+**What:** advisor `unindexed_foreign_keys` 10건. 우선순위:
+1. `reservation_items.reservation_id_fkey` + `baggage_type_id_fkey`
+2. `proof_assets.reservation_id_fkey`
+3. `booking_details.payout_id_fkey`
+4. `daily_closings.branch_id`, `expenditures.branch_id`
+5. `user_coupons.discount_code_id`, `branch_prospects`, `storage_assets.uploaded_by_user_id`, `cms_contents.area_slug`
+
+**Why:** FK 없는 child row 조회/CASCADE 삭제 시 seq scan.
+
+**Effort:** S (CC: ~10분) **Priority:** P2
+
+---
+
+### [DB-11] 남은 공개 INSERT 정책 검증 (P3)
+
+**What:** advisor `rls_policy_always_true` WARN 남은 8건은 모두 의도적 공개 INSERT (DONE.md 2026-04-17 참조). 단 **각 테이블별 추가 제약이 코드에서 수행되는지** 검증:
+- `booking_details` allow_public_insert: 중복 예약 감지 + payment_key 검증이 Edge Function이나 client에 있는지
+- `kiosk_storage_log` anon_insert/update: branch_id 위조 방지 장치 (현재 없음, 클라이언트 trust)
+- `chat_messages`/`chat_sessions` anon_insert: rate limit (abuse 방지)
+- `partnership_inquiries` INSERT: spam 방지 (캡차 등)
+- `branch_prospects` INSERT: 같은 이유
+
+**Effort:** M **Priority:** P3
+
+---
+
+## 배포 후 확인 필요 (2026-04-16 세션)
+
+### [QA-01] 관리자 화면 — 커미션 제거 실환경 확인 (P1)
+
+**What:** 아래 두 화면 실제 로그인 후 확인:
+1. 일일 정산탭 — "지점 커미션" 카드 없음, "총 할인" 카드 표시
+2. 통합 회계탭 — 키오스크 테이블에 "지점 커미션" 컬럼 없음 (colSpan 5)
+3. 키오스크 설정 — "지점 커미션 비율" 입력 없음
+
+**Why:** 인증 필요 페이지라 QA 브라우저 테스트 불가. 코드 검수는 완료.
+
+**Effort:** XS (5분) **Priority:** P1 (배포 후 즉시)
+
+---
 
 ---
 

@@ -188,9 +188,14 @@ export const flushOfflineQueue = async (): Promise<number> => {
         if (result?.[0]) {
           liveLog.push(result[0]); // 성공한 항목을 liveLog에 추가해 다음 항목이 피하도록
           liveLogMap.set(groupKey, liveLog);
+          flushed++;
+        } else {
+          // DB에는 삽입 실패지만 예외는 아닌 케이스 — 큐에 남김
+          console.warn('[kioskDb] flush insert returned empty result, requeueing', entry);
+          remaining.push(entry);
         }
-        flushed++;
-      } catch {
+      } catch (e) {
+        console.error('[kioskDb] flush insert failed:', e);
         remaining.push(entry);
       }
     }

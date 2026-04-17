@@ -235,7 +235,8 @@ firebase deploy   # 전체 배포
 
 ## 데이터베이스 구조 (Supabase PostgreSQL — 2026-04-15 기준)
 
-**프로젝트 ID:** `fzvfyeskdivulazjjpgr` | **리전:** ap-northeast-1 | **총 테이블:** 57개
+**프로덕션 프로젝트 ID:** `xpnfjolqiffduedwtxey` | **리전:** `ap-southeast-1` | **총 테이블:** 57개
+**⚠️ MCP 연결 프로젝트 ID:** `fzvfyeskdivulazjjpgr` (프로덕션과 다름 — MCP Supabase 명령은 실제 DB가 아닐 수 있음. 실제 DB 변경은 `supabase db push --linked` 필수. DONE.md 2026-04-13 참조)
 
 > **연동 주의사항**
 > - `booking_details`와 `reservations`는 별개 테이블. `booking_details.reservation_id → reservations.id` (nullable FK)

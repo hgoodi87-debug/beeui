@@ -1,5 +1,9 @@
 # 빌리버 예산 관리 및 정산 체계 현황 & 개선 계획
 
+> **[상태] ✅ 계획 완료** — CHANGELOG v1.3.0.0 (2026-04-08) 기준 Phase 1~3 구현 완료.
+> 실제 구현 현황은 `client/components/admin/DailySettlementTab.tsx`, `MonthlySettlementTab.tsx`, `AccountingTab.tsx` 참조.
+> 본 문서는 역사적 참조용으로 유지. 신규 정산 개선은 `TODOS.md` [A1~A2] 항목 참조.
+>
 > 작성일: 2026-04-08 | 작성자: Claude (하네스 보조) | 버전: 1.0
 
 ---

@@ -1775,7 +1775,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       : undefined;
 
     // ops_status 매핑: booking_details.ops_status에 직접 기입 (reservation 없는 신규 예약 포함)
-    const opsStatusMap: Partial<Record<BookingStatus, string>> = {
+    // PENDING → null 명시적 기입 (이전에 설정된 ops_status를 초기화해 뷰가 '접수완료'를 반환하도록)
+    const opsStatusMap: Record<BookingStatus, string | null> = {
+      [BookingStatus.PENDING]:   null,              // ops_status 초기화 → '접수완료'
       [BookingStatus.CONFIRMED]: 'pickup_ready',
       [BookingStatus.STORAGE]:   'pickup_completed',
       [BookingStatus.TRANSIT]:   'in_transit',
@@ -1784,7 +1786,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       [BookingStatus.CANCELLED]: 'cancelled',
       [BookingStatus.REFUNDED]:  'refunded',
     };
-    const newOpsStatus = opsStatusMap[status] ?? null;
+    // null = PENDING (ops_status를 DB에서 명시적으로 비워야 함)
+    const newOpsStatus: string | null = opsStatusMap[status] ?? null;
+    const shouldClearOpsStatus = status === BookingStatus.PENDING;
 
     if (previousBookings) {
       queryClient.setQueryData(['bookings'], (old: BookingState[] | undefined) =>
@@ -1803,9 +1807,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const updateData: Record<string, unknown> = {
         ...(newSettlementStatus ? { settlement_status: newSettlementStatus } : {}),
         ...(shouldSettle ? { settled_at: settledAt, settled_by: settledBy } : {}),
-        ...(newOpsStatus !== null ? { ops_status: newOpsStatus } : {}),
+        // PENDING: ops_status를 빈 문자열로 클리어 (NULL은 COALESCE로 무시되므로 '' 사용)
+        ...(shouldClearOpsStatus ? { ops_status: '' } : newOpsStatus !== null ? { ops_status: newOpsStatus } : {}),
       };
-      if (auditNote) (updateData as any).notes = auditNote;
+      if (auditNote) updateData['admin_note'] = auditNote;
       await mutateBookingRecord(id, {
         supabaseMethod: 'PATCH',
         supabaseBody: updateData,

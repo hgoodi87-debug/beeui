@@ -94,10 +94,10 @@ const LandingStickyCTA: React.FC<LandingStickyCTAProps> = ({ lang, onNavigate })
                                 </button>
                                 <button
                                     onClick={() => handleClick('LOCATIONS_DELIVER')}
-                                    className="flex-1 bg-white/10 text-white font-black py-2 rounded-xl text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] border border-white/20 flex items-center justify-center gap-1.5"
+                                    className="flex-1 bg-[#F5C842] text-[#111] font-black py-2 rounded-xl text-[12px] uppercase tracking-wide transition-all active:scale-[0.97] shadow-md shadow-[#F5C842]/20 flex items-center justify-center gap-1.5"
                                 >
                                     <span>{labels.delivery}</span>
-                                    <span className="text-[10px] font-bold text-white/40 normal-case tracking-normal">₩10,000~</span>
+                                    <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">₩10,000~</span>
                                 </button>
                             </div>
 

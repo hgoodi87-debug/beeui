@@ -44,14 +44,19 @@ export function loadPayPalSDK(lang = 'zh-TW'): Promise<void> {
     if (window.paypal) return Promise.resolve();
     if (sdkLoadPromise) return sdkLoadPromise;
 
+    // locale은 zh_TW/zh_HK 등 PayPal 지원 locale만 사용, 미지원 시 zh_TW 기본값
+    // enable-funding=card 제거 — 일부 locale에서 SDK 로드 자체를 막는 경우가 있음
     const locale = toPayPalLocale(lang);
     sdkLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&intent=capture&locale=${locale}&enable-funding=card`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&intent=capture&locale=${locale}`;
         script.async = true;
         script.dataset.paypalSdk = 'true';
         script.onload = () => resolve();
-        script.onerror = () => reject(new Error('PayPal SDK 로드 실패'));
+        script.onerror = () => {
+            sdkLoadPromise = null; // 실패 시 캐시 초기화 → 재시도 가능
+            reject(new Error('PayPal SDK 로드 실패'));
+        };
         document.head.appendChild(script);
     });
 

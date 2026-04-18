@@ -1126,6 +1126,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
         if (activeStatusTab === 'ISSUE' && !(effectiveStatus === BookingStatus.CANCELLED || effectiveStatus === BookingStatus.REFUNDED || !!b.auditNote)) return false;
       }
       return true;
+    }).sort((a, b) => {
+      // 가까운 날짜 우선 (오름차순)
+      const da = a.pickupDate || '';
+      const db = b.pickupDate || '';
+      if (da !== db) return da.localeCompare(db);
+      // 같은 날이면 픽업 시간 순
+      return (a.pickupTime || '').localeCompare(b.pickupTime || '');
     });
   }, [bookings, activeTab, activeStatusTab, todayKST, cancelStartDate, cancelEndDate, completedStartDate, completedEndDate, searchStartDate, searchEndDate]);
 

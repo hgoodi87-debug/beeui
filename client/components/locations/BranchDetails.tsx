@@ -110,11 +110,6 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                         <h2 className="text-2xl md:text-4xl font-black italic tracking-[-0.05em] leading-tight text-gray-900 font-montserrat">
                             {getName()}
                         </h2>
-                        {selectedBranch.shortCode && (
-                            <p className="mt-1 text-[11px] md:text-[13px] font-bold uppercase tracking-[0.18em] text-gray-400">
-                                {selectedBranch.shortCode}
-                            </p>
-                        )}
                     </div>
 
                     <motion.button

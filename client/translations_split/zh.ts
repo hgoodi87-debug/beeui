@@ -408,7 +408,7 @@ export const zh = {
         contact: "客服中心",
         address: '서울시 마포구 월드컵북로2길 93, 1층',
         email: 'ceo@bee-liber.com',
-        phone: '+82 010-2922-7731',
+        phone: '+82 10-2922-7731',
         back_to_top: "回到顶部"
     },
     locations_page: {

@@ -1431,7 +1431,7 @@ export const StorageService = {
             }
             return [enrichLoc(loc)];
           });
-          console.log('[Storage] Loaded', supabaseLocs.length, 'locations from Supabase ✅');
+
         }
       } catch (e) {
         console.warn('[Storage] Supabase locations failed:', e);
@@ -1445,7 +1445,7 @@ export const StorageService = {
     }
 
     const filtered = supabaseLocs.filter((item) => shouldIncludeLocation(item, includeInactive));
-    console.log(`[Storage] Loaded ${filtered.length} locations 💅`);
+
     return filtered;
   },
 
@@ -1592,7 +1592,7 @@ export const StorageService = {
           'app_settings?select=value&key=eq.storage_tiers&limit=1'
         );
         if (rows?.[0]?.value?.tiers) {
-          console.log("[Storage] Loaded storage tiers from Supabase ✅");
+
           const result = normalizeStorageTiers(rows[0].value.tiers);
           _storageTiersCache = { data: result, ts: Date.now() };
           return result;
@@ -1674,7 +1674,7 @@ export const StorageService = {
           'app_settings?select=value&key=eq.delivery_prices&limit=1'
         );
         if (rows?.[0]?.value) {
-          console.log("[Storage] Loaded delivery prices from Supabase ✅");
+
           const result = normalizeDeliveryPrices(rows[0].value as PriceSettings);
           if (result) _deliveryPricesCache = { data: result, ts: Date.now() };
           return result;

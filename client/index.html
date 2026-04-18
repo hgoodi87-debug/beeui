@@ -388,7 +388,6 @@
     window.process = { env: { NODE_ENV: 'production' } };
     window.BEELIBER_REVIVAL = "V4_HARDCODED_STABLE";
 
-    console.log("%c🚀 [스봉이 리포트] 빌리버 시스템 복구 엔진 V4 가동 중... 아시겠어요? 💅", "color: #FFD700; font-weight: bold; font-size: 14px;");
 
     window.onerror = function (message, source, lineno, colno, error) {
       console.error("Critical:", message, source, lineno);
@@ -456,7 +455,6 @@
     window.addEventListener('load', function() {
       if (typeof window.wcs_do === 'function') {
         window.wcs_do();
-        console.log("%c🌲 [스봉이 리포트] 네이버 애널리틱스 수집 중... 💅", "color: #2DB400; font-weight: bold;");
       }
     });
   </script>

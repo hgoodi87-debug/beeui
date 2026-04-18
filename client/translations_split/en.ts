@@ -394,7 +394,7 @@ export const en = {
     footer: {
         address: '1F Moneybox Yeonnam, 93 World Cup buk-ro 2-gil, Mapo-gu, Seoul',
         email: 'ceo@bee-liber.com',
-        phone: '+82 010-2922-7731',
+        phone: '+82 10-2922-7731',
         desc: 'Beeliber makes travel light and valuable. Enjoy the freedom of travel without baggage. Start a light journey with Beeliber.',
         service: "Service",
         home: "Home",

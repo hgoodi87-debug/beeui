@@ -16,5 +16,4 @@ export const COUNTRY_NAMES: Record<string, string> = {
   'DE': 'Germany 🇩🇪',
   'GB': 'UK 🇬🇧',
   'ETC': 'Other 🌏',
-  'OTHER': 'Other 🌎',
 };

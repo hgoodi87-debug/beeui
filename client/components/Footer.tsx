@@ -38,14 +38,7 @@ const Footer: React.FC<FooterProps> = ({ t, onNavigate }) => {
               {t.footer?.desc || "Experience the freedom of travel without baggage."}
             </p>
             <div className="flex gap-4 justify-center md:justify-start">
-              <a href="https://www.instagram.com/beeliber" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" className="w-11 h-11 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow group transition-all">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white group-hover:text-bee-black transition-colors">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
-                </svg>
-              </a>
-              <a href="https://www.threads.net/@beeliber" target="_blank" rel="noopener noreferrer" title="Threads" aria-label="Threads" className="w-11 h-11 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow group transition-all">
+<a href="https://www.threads.net/@beeliber" target="_blank" rel="noopener noreferrer" title="Threads" aria-label="Threads" className="w-11 h-11 rounded-full bg-white/5 flex items-center justify-center hover:bg-bee-yellow group transition-all">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white group-hover:text-bee-black transition-colors">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="none"/>
                   <path d="M16.5 10.5c-.28-.42-.65-.77-1.1-1.02-.9-.5-2.1-.6-3.15-.15-.55.23-1.02.6-1.37 1.07-.36.47-.57 1.03-.6 1.6-.03.57.12 1.14.43 1.62.31.48.76.85 1.29 1.05.53.2 1.12.22 1.67.06.54-.16 1.02-.5 1.35-.96.33-.46.49-1.01.46-1.57m-4.3 2.85c-.58-.28-1-.8-1.15-1.42-.15-.62-.04-1.28.3-1.82.34-.54.88-.93 1.5-1.07.62-.14 1.28-.01 1.8.36" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>

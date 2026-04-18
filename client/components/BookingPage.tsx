@@ -204,7 +204,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     useEffect(() => {
         if (isCountryManuallySet) return; // 사용자 선택이 우선이죠! 🙄
 
-        let autoCountry = 'US';
+        let autoCountry = 'TW';
         if (lang === 'ko') autoCountry = 'KR';
         else if (lang === 'ja') autoCountry = 'JP';
         else if (lang === 'zh' || lang === 'zh-CN') autoCountry = 'CN';
@@ -903,7 +903,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         <ChevronLeft size={24} />
                     </button>
                     <h2 className="text-xl font-black italic tracking-tighter flex items-center gap-2">
-                        <span className="text-bee-yellow">beeliber</span> 예약
+                        <span className="text-bee-yellow">beeliber</span>{' '}
+                        {lang === 'ko' ? '예약' : lang === 'ja' ? '予約' : lang.startsWith('zh') ? '預約' : 'Booking'}
                     </h2>
                 </div>
             </div>

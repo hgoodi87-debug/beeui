@@ -170,6 +170,7 @@ export const zhHK = {
     booking: {
         delivery: '配送', storage: '寄存', from: '出發 / 寄存地', to: '送達 / 領取地', duration: '寄存時間',
         slot_past: '已截止',
+        reservation_first_desc: '目前線上付款暫時關閉。預訂將即時確認，付款將在現場或另行通知後進行。',
         select_origin: '選擇出發地', select_dest: '選擇目的地', select_storage: '選擇寄存選項',
         pickup_schedule: '寄存日期同時間', delivery_schedule: '送達日期同時間',
         pickup_note: '* 可選時間 09:00 ~ 13:00', delivery_note: '* 可選時間 16:00 ~ 21:00',

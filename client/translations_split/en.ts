@@ -303,6 +303,7 @@ export const en = {
         agree_premium_checklist: "Confirm restricted items & compensation policy",
         restricted_items_note: "* Compensation may be denied for these items.",
         slot_past: "Sold out",
+        reservation_first_desc: "Online payment is temporarily hidden. Your booking will be confirmed first, and payment will be handled offline.",
         airport_late_notice: "Airport locations require arrival exactly at the scheduled collection time. Late arrival may result in additional charges, so please be punctual!",
         booking_summary: "Booking Summary",
         service_type: "Service Type",

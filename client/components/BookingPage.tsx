@@ -1498,9 +1498,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 Reservation First
                                             </p>
                                             <p className="text-[11px] font-bold text-white/80 leading-relaxed">
-                                                {lang === 'ko'
-                                                    ? '지금은 온라인 결제를 잠시 숨겨두었어요. 예약은 바로 접수되고 결제는 현장 또는 별도 안내로 이어집니다.'
-                                                    : 'Online payment is temporarily hidden. Your booking will be confirmed first, and payment will be handled offline.'}
+                                                {tBooking.reservation_first_desc || '지금은 온라인 결제를 잠시 숨겨두었어요. 예약은 바로 접수되고 결제는 현장 또는 별도 안내로 이어집니다.'}
                                             </p>
                                         </div>
                                     )}

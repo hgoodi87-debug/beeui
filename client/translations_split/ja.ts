@@ -221,6 +221,7 @@ export const ja = {
         to: '到着 / 受け取り場所',
         duration: '保管期間',
         slot_past: '締め切り',
+        reservation_first_desc: 'オンライン決済は一時的に非表示です。ご予約はすぐに受付され、お支払いは現地または別途ご案内にて対応いたします。',
         select_origin: '出発地点を選択',
         select_dest: '到着地点を選択',
         select_storage: '保管オプションを選択',

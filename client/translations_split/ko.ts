@@ -326,6 +326,7 @@ export const ko = {
         agree_premium_checklist: "취급 제한 물품 확인 및 보상 정책 동의",
         restricted_items_note: "* 상기 물품이 포함된 경우 보상이 거절될 수 있습니다.",
         slot_past: "마감",
+        reservation_first_desc: "지금은 온라인 결제를 잠시 숨겨두었어요. 예약은 바로 접수되고 결제는 현장 또는 별도 안내로 이어집니다.",
         airport_late_notice: "공항 지점은 정해진 수령 시간에 맞춰 방문해 주셔야 합니다. 지관 미준수 시 별도의 추가 비용이 발생할 수 있습니다.",
         booking_summary: "예약 요약",
         service_type: "서비스 유형",

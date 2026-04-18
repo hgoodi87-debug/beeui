@@ -159,6 +159,7 @@ export const zh = {
     booking: {
         delivery: '配送', storage: '寄存', from: '出发 / 寄存地', to: '送达 / 领取地', duration: '寄存时间',
         slot_past: '已截止',
+        reservation_first_desc: '目前线上付款暂时关闭。预订将立即确认，付款将在现场或另行通知后进行。',
         select_origin: '选择出发地', select_dest: '选择目的地', select_storage: '选择寄存选项',
         pickup_schedule: '寄存日期和时间', delivery_schedule: '送达日期和时间',
         pickup_note: '* 可选时间 09:00 ~ 13:00', delivery_note: '* 可选时间 16:00 ~ 21:00',

@@ -130,11 +130,11 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
 
                             <nav className="flex flex-col gap-8">
                                 {[
-                                    { label: 'Services', icon: Package, view: 'SERVICES' },
-                                    { label: 'Booking', icon: MapPin, view: 'LOCATIONS_STORE' },
-                                    { label: 'Partners', icon: Users, view: 'PARTNERSHIP' },
-                                    { label: 'Tracking', icon: Sparkles, onClick: () => setShowTracking(true) },
-                                    { label: 'Community', icon: Globe, view: 'COMMUNITY' }
+                                    { label: t.nav?.services || 'Services', icon: Package, view: 'SERVICES' },
+                                    { label: t.nav?.locations || 'Booking', icon: MapPin, view: 'LOCATIONS_STORE' },
+                                    { label: t.nav?.partners || 'Partners', icon: Users, view: 'PARTNERSHIP' },
+                                    { label: t.nav?.tracking || 'Tracking', icon: Sparkles, onClick: () => setShowTracking(true) },
+                                    { label: t.nav?.community || 'Community', icon: Globe, view: 'COMMUNITY' }
                                 ].map((item, idx) => (
                                     <motion.button
                                         key={item.label}
@@ -159,11 +159,11 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                             </nav>
 
                             <div className="mt-auto pt-10 border-t border-white/5">
-                                <p className="text-[10px] text-white/20 font-bold uppercase tracking-[0.3em] mb-4">Support & Policy</p>
+                                <p className="text-[10px] text-white/20 font-bold uppercase tracking-[0.3em] mb-4">{t.nav?.support_policy || 'Support & Policy'}</p>
                                 <div className="flex flex-wrap gap-4">
-                                    <button onClick={() => onNavigate('TERMS')} className="text-xs font-bold text-white/40 hover:text-white transition-colors underline-offset-4 decoration-bee-yellow/20">Terms</button>
-                                    <button onClick={() => onNavigate('PRIVACY')} className="text-xs font-bold text-white/40 hover:text-white transition-colors">Privacy</button>
-                                    <button onClick={() => onNavigate('QNA')} className="text-xs font-bold text-white/40 hover:text-white transition-colors">Help Center</button>
+                                    <button onClick={() => onNavigate('TERMS')} className="text-xs font-bold text-white/40 hover:text-white transition-colors underline-offset-4 decoration-bee-yellow/20">{t.nav?.terms || 'Terms'}</button>
+                                    <button onClick={() => onNavigate('PRIVACY')} className="text-xs font-bold text-white/40 hover:text-white transition-colors">{t.nav?.privacy || 'Privacy'}</button>
+                                    <button onClick={() => onNavigate('QNA')} className="text-xs font-bold text-white/40 hover:text-white transition-colors">{t.nav?.help_center || 'Help Center'}</button>
                                 </div>
                             </div>
                         </motion.div>

@@ -38,6 +38,8 @@ const KioskPage = lazy(() => import('./components/KioskPage'));
 const KioskLogPage = lazy(() => import('./components/KioskLogPage'));
 const KioskVoucherPage = lazy(() => import('./components/KioskVoucherPage'));
 const KioskStaffReturnPage = lazy(() => import('./components/KioskStaffReturnPage'));
+const MyLoginPage = lazy(() => import('./components/MyLoginPage'));
+const MyReservationsPage = lazy(() => import('./components/MyReservationsPage'));
 import { useParams } from 'react-router-dom';
 import ErrorBoundary, { PageErrorFallback } from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
@@ -177,6 +179,7 @@ const App: React.FC = () => {
   } = useBookingStore();
 
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginModalRedirectTo, setLoginModalRedirectTo] = useState('');
   const [showSignupModal, setShowSignupModal] = useState(false);
   const { data: currentUser } = useCurrentUser();
   const adminHomePath = getAdminHomePath(adminInfo.role, adminInfo.jobTitle, adminInfo.branchId);
@@ -490,14 +493,18 @@ const App: React.FC = () => {
       case 'MYPAGE': return navigate(`/${lang}/mypage`);
       case 'BOOKING': return navigate(`/${lang}/booking`);
       case 'LOCATIONS_STORE':
+        // TODO: 이메일 로그인 임시 비활성화 — SMTP 설정 완료 후 재활성화
         console.log("[App] Pre-selecting STORAGE service type");
         setPreSelectedBooking({ ...preSelectedBooking, serviceType: ServiceType.STORAGE });
         return navigate(`/${lang}/locations`);
       case 'LOCATIONS_DELIVER':
+        // TODO: 이메일 로그인 임시 비활성화 — SMTP 설정 완료 후 재활성화
         console.log("[App] Pre-selecting DELIVERY service type");
         setPreSelectedBooking({ ...preSelectedBooking, serviceType: ServiceType.DELIVERY });
         return navigate(`/${lang}/locations`);
-      case 'LOCATIONS': return navigate(`/${lang}/locations`);
+      case 'LOCATIONS':
+        // TODO: 이메일 로그인 임시 비활성화 — SMTP 설정 완료 후 재활성화
+        return navigate(`/${lang}/locations`);
       case 'VISION': return navigate(`/${lang}/vision`);
       case 'USER': default: return navigate(`/${lang}`);
     }
@@ -683,9 +690,10 @@ const App: React.FC = () => {
                 <Routes location={location} key={location.pathname}>
                   {/* USER ROUTES WITH LANG PREFIX */}
                   <Route path="/:urlLang" element={<LangRouteLayout setLang={setLang} lang={lang} />}>
-                    <Route index element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
-                    <Route path="branch/:code" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
+                    <Route index element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => navigate(`/${lang}/my/login`)} onMyPageClick={() => navigate(auth.currentUser ? `/${lang}/mypage` : `/${lang}/my/login`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
+                    <Route path="branch/:code" element={<AnimatedRoute><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={changeLanguage} onAdminClick={() => navigate('/admin')} onLoginClick={() => navigate(`/${lang}/my/login`)} onMyPageClick={() => navigate(auth.currentUser ? `/${lang}/mypage` : `/${lang}/my/login`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /></AnimatedRoute>} />
                     <Route path="services" element={<ErrorBoundary fallback={<PageErrorFallback lang={lang} />}><AnimatedRoute><ServicesPage onBack={() => navigate(`/${lang}`)} t={t.services_page} landingT={t.landing_renewal} pricingT={t.pricing} /></AnimatedRoute></ErrorBoundary>} />
+                    {/* TODO: 로그인 게이트 임시 비활성화 — SMTP 설정 완료 후 auth.currentUser 체크 복원 */}
                     <Route path="locations" element={<ErrorBoundary fallback={<PageErrorFallback lang={lang} />}><AnimatedRoute><LocationsPage onBack={() => navigate(`/${lang}`)} onSelectLocation={handleLocationSelect} t={t} lang={lang} onLangChange={changeLanguage} user={currentUser} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as string | undefined} /></AnimatedRoute></ErrorBoundary>} />
                     <Route path="booking" element={<ErrorBoundary fallback={<PageErrorFallback lang={lang} />}><AnimatedRoute><BookingPage t={t} lang={lang} locations={bookingLocations} initialLocationId={preSelectedBooking?.pickupLocation} initialServiceType={preSelectedBooking?.serviceType as ServiceType | undefined} initialDate={preSelectedBooking?.date} initialReturnDate={preSelectedBooking?.returnDate} initialBagSizes={preSelectedBooking?.bagCounts} onBack={() => navigate(`/${lang}/locations`)} onSuccess={handleBookingSuccess} user={currentUser} customerBranchId={customerBranch?.id} customerBranchRates={customerBranch?.commissionRates} /></AnimatedRoute></ErrorBoundary>} />
                     <Route path="payments/toss/success" element={<AnimatedRoute fade><TossPaymentSuccessPage lang={lang} onBookingReady={handlePaidBookingReady} onBackToBooking={() => navigate(`/${lang}/booking`, { replace: true })} /></AnimatedRoute>} />
@@ -701,7 +709,9 @@ const App: React.FC = () => {
                     <Route path="vision" element={<AnimatedRoute><VisionPage /></AnimatedRoute>} />
                     <Route path="storage/:slug" element={<AnimatedRoute><StorageLandingPage lang={lang} onBack={() => navigate(`/${lang}/locations`)} onBook={(locationId) => { navigate(`/${lang}/locations`); }} /></AnimatedRoute>} />
                     <Route path="delivery/:slug" element={<AnimatedRoute><StorageLandingPage mode="delivery" lang={lang} onBack={() => navigate(`/${lang}/locations`)} onBook={(locationId) => { navigate(`/${lang}/locations`); }} /></AnimatedRoute>} />
-                    <Route path="mypage" element={<AnimatedRoute><div className="fixed inset-0 z-0 pointer-events-none"><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => setShowLoginModal(true)} onMyPageClick={() => navigate(`/${lang}/mypage`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /><div className="absolute inset-0 bg-black/50 pointer-events-auto" /></div><MyPage t={t} onClose={() => { navigate(-1); }} /></AnimatedRoute>} />
+                    <Route path="mypage" element={<AnimatedRoute><div className="fixed inset-0 z-0 pointer-events-none"><LandingRenewal t={t} lang={lang} onNavigate={(view) => legacyNavigate(view as string)} onLangChange={setLang} onAdminClick={() => navigate('/admin')} onLoginClick={() => navigate(`/${lang}/my/login`)} onMyPageClick={() => navigate(auth.currentUser ? `/${lang}/mypage` : `/${lang}/my/login`)} user={currentUser} onSuccess={handleBookingSuccess} branchCode={customerBranchCode || undefined} branchData={customerBranch || undefined} /><div className="absolute inset-0 bg-black/50 pointer-events-auto" /></div><MyPage t={t} onClose={() => { navigate(-1); }} /></AnimatedRoute>} />
+                    <Route path="my/login" element={<AnimatedRoute fade><MyLoginPage /></AnimatedRoute>} />
+                    <Route path="my/reservations" element={<AnimatedRoute fade><MyReservationsPage /></AnimatedRoute>} />
                     <Route path="*" element={<Navigate to={`/${lang}`} replace />} />
                   </Route>
 
@@ -770,11 +780,11 @@ const App: React.FC = () => {
 
           <NoticePopup t={t} />
           <LoginModal
-            isOpen={showLoginModal}
-            t={t}
+            open={showLoginModal}
+            lang={lang}
+            redirectTo={loginModalRedirectTo || `${window.location.origin}/${lang}/my/reservations`}
             onClose={() => setShowLoginModal(false)}
-            onLoginSuccess={() => setShowLoginModal(false)}
-            onSwitchToSignup={() => { setShowLoginModal(false); setShowSignupModal(true); }}
+            onNavigateTracking={() => { setShowLoginModal(false); navigate(`/${lang}/tracking`); }}
           />
           <SignupModal
             isOpen={showSignupModal}

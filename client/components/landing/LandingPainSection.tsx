@@ -32,7 +32,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                     {/* Left Side: After (자유로운 여행) */}
                     <motion.div
                         style={{ x: leftX, opacity: leftOpacity }}
-                        className="relative rounded-[3rem] shadow-2xl aspect-[4/3] md:aspect-[3/2]"
+                        className="relative rounded-[2rem] shadow-2xl aspect-[3/2] md:aspect-[2/1]"
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-yellow/10 group">
                             <picture>
@@ -59,7 +59,7 @@ const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
                     {/* Right Side: Before (무거운 짐) */}
                     <motion.div
                         style={{ x: rightX, opacity: rightOpacity }}
-                        className="relative rounded-[3rem] shadow-2xl aspect-[4/3] md:aspect-[3/2]"
+                        className="relative rounded-[2rem] shadow-2xl aspect-[3/2] md:aspect-[2/1]"
                     >
                         <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-black group">
                             <picture>

@@ -4,7 +4,7 @@ export const zhHK = {
         description: '首爾退房後行李寄存及配送至仁川機場。酒店、弘大入口站、首爾站、機場當日行李箱配送服務。送走重擔，盡情享受首爾最後衝刺。',
         keywords: '首爾行李寄存, 弘大行李寄存, 首爾站行李寄存, 仁川機場行李配送, 金浦機場行李配送, 酒店行李配送, 首爾旅遊最後一日, 首爾退房後行程, 搭機前行李寄存'
     },
-    nav: { services: '服務介紹', locations: '分店指南', tracking: '配送查詢', partners: '加盟諮詢', book: '立即預訂', terms_label: '配送業務委託及第三方(運輸公司)信息提供同意書', admin_portal: '管理員門戶', login: '登錄', mypage: '個人中心' },
+    nav: { services: '服務介紹', locations: '分店指南', tracking: '配送查詢', partners: '加盟諮詢', community: '社群', support_policy: '支援與營運政策', terms: '使用條款', privacy: '私隱政策', help_center: '幫助中心', book: '立即預訂', terms_label: '配送業務委託及第三方(運輸公司)信息提供同意書', admin_portal: '管理員門戶', login: '登錄', mypage: '個人中心' },
     terms_page: {
         title: '服務使用條款',
         last_updated: '最後更新: 2025年 1月 1日',

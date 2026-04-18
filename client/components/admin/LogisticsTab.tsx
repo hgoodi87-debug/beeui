@@ -148,13 +148,13 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
 
                 <div className="flex-1 min-w-0 flex justify-start lg:justify-center">
                     <div className="max-w-full overflow-x-auto no-scrollbar">
-                        <div className="flex flex-nowrap bg-white/50 backdrop-blur-3xl p-1.5 rounded-2xl border border-gray-200 min-w-max">
+                        <div className="h-10 flex items-center flex-nowrap bg-white/50 backdrop-blur-3xl px-1.5 rounded-2xl border border-gray-200 min-w-max gap-0.5">
                             {activeTab === 'STORAGE_BOOKINGS' ? (
                                 (['ALL', 'TODAY_IN', 'STORAGE', 'TODAY_OUT', 'COMPLETED', 'ISSUE'] as const).map(tab => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveStatusTab(tab)}
-                                        className={`shrink-0 whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
+                                        className={`h-7 shrink-0 whitespace-nowrap px-3 rounded-xl text-[11px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-md shadow-bee-yellow/20' : 'text-gray-400 hover:text-bee-black hover:bg-white/70'}`}
                                     >
                                         {tab === 'ALL' ? (t.admin?.logistics?.filter_all || '전체') : tab === 'TODAY_IN' ? '오늘 입고' : tab === 'STORAGE' ? '보관중' : tab === 'TODAY_OUT' ? '오늘 픽업' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
                                     </button>
@@ -164,7 +164,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     <button
                                         key={tab}
                                         onClick={() => setActiveStatusTab(tab)}
-                                        className={`shrink-0 whitespace-nowrap px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-[10px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-lg shadow-bee-yellow/20 scale-105' : 'text-gray-500 hover:text-bee-black hover:bg-white/50'}`}
+                                        className={`h-7 shrink-0 whitespace-nowrap px-3 rounded-xl text-[11px] font-black transition-all ${activeStatusTab === tab ? 'bg-bee-yellow text-bee-black shadow-md shadow-bee-yellow/20' : 'text-gray-400 hover:text-bee-black hover:bg-white/70'}`}
                                     >
                                         {tab === 'ALL' ? '전체' : tab === 'PENDING' ? '접수 대기' : tab === 'TRANSIT' ? '이동중' : tab === 'ARRIVED' ? '도착' : tab === 'COMPLETED' ? '완료' : '이슈/취소'}
                                     </button>
@@ -174,9 +174,9 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                     </div>
                 </div>
 
-                <div className="flex-1 flex justify-start lg:justify-end gap-3">
+                <div className="flex-1 flex items-center justify-start lg:justify-end gap-3">
                     {/* 날짜 구간 조회 필터 */}
-                    <div className="flex items-center gap-2 bg-white/50 backdrop-blur-3xl px-3 py-2 rounded-2xl border border-bee-yellow/20 shadow-lg shadow-bee-yellow/5">
+                    <div className="h-10 flex items-center gap-2 bg-white/50 backdrop-blur-3xl px-3 rounded-2xl border border-bee-yellow/20 shadow-lg shadow-bee-yellow/5">
                         <i className="fa-solid fa-calendar-range text-bee-yellow text-xs shrink-0"></i>
                         <input
                             type="date"
@@ -207,7 +207,7 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                     {onAddManual && (
                         <button
                             onClick={onAddManual}
-                            className="px-6 py-3 bg-bee-yellow text-bee-black font-black rounded-2xl text-[11px] shadow-xl shadow-bee-yellow/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 border-2 border-bee-yellow hover:bg-white/10 hover:text-bee-yellow hover:border-white/20"
+                            className="h-10 px-4 bg-bee-yellow text-bee-black font-black rounded-2xl text-[11px] shadow-xl shadow-bee-yellow/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap shrink-0"
                         >
                             <i className="fa-solid fa-plus text-[9px]"></i>
                             수동 예약 추가

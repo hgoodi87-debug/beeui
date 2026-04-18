@@ -4,7 +4,7 @@ export const zh = {
         description: '首尔退房后行李寄存及配送至仁川机场。酒店、弘大入口站、首尔站、机场当日行李箱配送服务。放下重担，尽情享受首尔行程。',
         keywords: '首尔行李寄存, 弘大行李寄存, 首尔站行李寄存, 仁川机场行李配送, 金浦机场行李配送, 酒店行李配送, 首尔旅行最后一天, 首尔退房后行程, 登机前行李寄存'
     },
-    nav: { services: '服务介绍', locations: '分店指南', tracking: '配送查询', partners: '加盟咨询', book: '立即预订', terms_label: '配送业务委托及第三方(运输公司)信息提供同意书', admin_portal: '管理员门户', login: '登录', mypage: '个人中心' },
+    nav: { services: '服务介绍', locations: '分店指南', tracking: '配送查询', partners: '加盟咨询', community: '社群', support_policy: '支持与运营政策', terms: '使用条款', privacy: '隐私政策', help_center: '帮助中心', book: '立即预订', terms_label: '配送业务委托及第三方(运输公司)信息提供同意书', admin_portal: '管理员门户', login: '登录', mypage: '个人中心' },
     terms_page: {
         title: '服务使用条款',
         last_updated: '最后更新: 2025年 1月 1日',

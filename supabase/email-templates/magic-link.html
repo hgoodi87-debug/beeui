@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEELIBER 로그인</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f3;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:480px;background:#fff;border-radius:24px;overflow:hidden;">
+
+          <!-- 헤더 -->
+          <tr>
+            <td style="background:#1c1b1b;padding:28px 40px;text-align:center;">
+              <div style="display:inline-block;background:#FFD600;border-radius:14px;width:52px;height:52px;line-height:52px;font-size:26px;margin-bottom:10px;">🐝</div>
+              <br/>
+              <span style="color:#FFD600;font-size:10px;font-weight:900;letter-spacing:0.25em;">BEELIBER</span>
+            </td>
+          </tr>
+
+          <!-- 본문 -->
+          <tr>
+            <td style="padding:36px 40px 28px;">
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#1c1b1b;letter-spacing:-0.02em;">
+                로그인 인증
+              </h1>
+              <p style="margin:0 0 28px;font-size:14px;color:#1c1b1b;opacity:0.45;line-height:1.65;">
+                아래 버튼을 클릭하면 로그인이 완료됩니다.<br/>
+                로그인 요청 중인 창에서 자동으로 인증이 확인됩니다.
+              </p>
+
+              <!-- 인증 버튼 -->
+              <a href="{{ .ConfirmationURL }}"
+                 style="display:block;background-color:#1c1b1b;color:#FFD600;text-decoration:none;text-align:center;padding:18px 24px;border-radius:16px;font-size:16px;font-weight:900;letter-spacing:0.04em;margin-bottom:28px;">
+                인증하기 →
+              </a>
+
+              <hr style="border:none;border-top:1px solid #f0ede8;margin:0 0 24px;"/>
+
+              <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#1c1b1b;opacity:0.3;text-transform:uppercase;letter-spacing:0.1em;">
+                버튼이 작동하지 않으면 아래 링크를 복사하세요
+              </p>
+              <p style="margin:0;font-size:11px;color:#1c1b1b;opacity:0.35;word-break:break-all;line-height:1.5;">
+                {{ .ConfirmationURL }}
+              </p>
+            </td>
+          </tr>
+
+          <!-- 보안 안내 -->
+          <tr>
+            <td style="background:#f9f8f4;padding:18px 40px;border-top:1px solid #f0ede8;">
+              <p style="margin:0;font-size:12px;color:#1c1b1b;opacity:0.35;line-height:1.6;">
+                🔒 <strong>{{ .Email }}</strong> 계정에서 요청한 링크입니다.<br/>
+                직접 요청하지 않았다면 이 메일을 무시하세요.
+              </p>
+            </td>
+          </tr>
+
+          <!-- 푸터 -->
+          <tr>
+            <td style="padding:20px 40px;text-align:center;">
+              <p style="margin:0 0 3px;font-size:10px;font-weight:900;letter-spacing:0.22em;color:#1c1b1b;opacity:0.2;text-transform:uppercase;">BEELIBER</p>
+              <p style="margin:0;font-size:11px;color:#1c1b1b;opacity:0.2;">짐 없는 자유, 온전한 만끽 · bee-liber.com</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import QRCode from 'qrcode';
 import Logo from './Logo';
+import KioskQRScanner from './KioskQRScanner';
 import { useParams, useNavigate } from 'react-router-dom';
 import { printKioskReceipt } from '../utils/kioskPrint';
 import {
@@ -79,11 +80,17 @@ const LABELS: Record<Lang, Record<string, string>> = {
     active_count_unit: '건',
     // 예약 조회
     walk_in_label: '현장 접수',
-    booking_lookup_btn: '예약건 확인',
-    booking_lookup_title: '예약 조회',
+    booking_lookup_btn: '예약자 접수',
+    booking_lookup_title: 'QR 바우처 스캔',
     booking_code_ph: '예약번호 입력 (예: BL-20260416-001)',
     booking_search: '조회',
     booking_not_found: '예약을 찾을 수 없습니다. 예약번호를 다시 확인해주세요.',
+    qr_scanning: 'QR 코드를 화면에 맞춰주세요',
+    qr_hint: '고객의 예약 QR 바우처를 카메라에 비춰주세요',
+    qr_error: '카메라를 사용할 수 없습니다.',
+    qr_retry: '다시 시도',
+    qr_close: '뒤로',
+    qr_or_manual: '예약번호로 직접 입력',
     booking_paid_badge: '결제완료',
     booking_unpaid_badge: '결제대기',
     booking_confirm_btn: '접수진행',
@@ -130,11 +137,17 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_airport_label: 'Terminal', delivery_date_result: 'Date', delivery_time_result: 'Time',
     active_count_unit: '',
     walk_in_label: 'Walk-in',
-    booking_lookup_btn: 'Check Booking',
-    booking_lookup_title: 'Reservation Lookup',
+    booking_lookup_btn: 'Guest Check-in',
+    booking_lookup_title: 'Scan QR Voucher',
     booking_code_ph: 'Enter booking number',
     booking_search: 'Search',
     booking_not_found: 'Booking not found. Please check your booking number.',
+    qr_scanning: 'Align QR code to the frame',
+    qr_hint: "Point the camera at the customer's QR voucher",
+    qr_error: 'Camera unavailable.',
+    qr_retry: 'Try again',
+    qr_close: 'Back',
+    qr_or_manual: 'Enter booking number manually',
     booking_paid_badge: 'Paid',
     booking_unpaid_badge: 'Unpaid',
     booking_confirm_btn: 'Proceed Check-in',
@@ -181,11 +194,17 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_airport_label: '到达航站楼', delivery_date_result: '配送日期', delivery_time_result: '配送时间',
     active_count_unit: '件',
     walk_in_label: '现场办理',
-    booking_lookup_btn: '确认预约',
-    booking_lookup_title: '预约查询',
+    booking_lookup_btn: '旅客办理登记',
+    booking_lookup_title: '扫描QR凭证',
     booking_code_ph: '输入预约号码',
     booking_search: '查询',
     booking_not_found: '未找到预约。请重新确认预约号码。',
+    qr_scanning: '请将二维码对准框内',
+    qr_hint: '请将相机对准客户的QR凭证',
+    qr_error: '无法使用摄像头',
+    qr_retry: '重试',
+    qr_close: '返回',
+    qr_or_manual: '手动输入预约号码',
     booking_paid_badge: '已付款',
     booking_unpaid_badge: '待付款',
     booking_confirm_btn: '办理登记',
@@ -232,11 +251,17 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_airport_label: '抵達航廈', delivery_date_result: '配送日期', delivery_time_result: '配送時間',
     active_count_unit: '件',
     walk_in_label: '現場辦理',
-    booking_lookup_btn: '確認預約',
-    booking_lookup_title: '預約查詢',
+    booking_lookup_btn: '旅客辦理登記',
+    booking_lookup_title: '掃描QR憑證',
     booking_code_ph: '輸入預約號碼',
     booking_search: '查詢',
     booking_not_found: '找不到預約。請重新確認預約號碼。',
+    qr_scanning: '請將QR碼對準框內',
+    qr_hint: '請將相機對準客人的QR憑證',
+    qr_error: '無法使用鏡頭',
+    qr_retry: '重試',
+    qr_close: '返回',
+    qr_or_manual: '手動輸入預約號碼',
     booking_paid_badge: '已付款',
     booking_unpaid_badge: '待付款',
     booking_confirm_btn: '辦理登記',
@@ -283,11 +308,17 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_airport_label: '抵達航廈', delivery_date_result: '配送日期', delivery_time_result: '配送時間',
     active_count_unit: '件',
     walk_in_label: '現場辦理',
-    booking_lookup_btn: '確認預約',
-    booking_lookup_title: '預約查詢',
+    booking_lookup_btn: '旅客辦理登記',
+    booking_lookup_title: '掃描QR憑證',
     booking_code_ph: '輸入預約號碼',
     booking_search: '查詢',
     booking_not_found: '搵唔到預約。請重新確認預約號碼。',
+    qr_scanning: '請將QR碼對準框內',
+    qr_hint: '請將鏡頭對準客人嘅QR憑證',
+    qr_error: '無法使用鏡頭',
+    qr_retry: '重試',
+    qr_close: '返回',
+    qr_or_manual: '手動輸入預約號碼',
     booking_paid_badge: '已付款',
     booking_unpaid_badge: '待付款',
     booking_confirm_btn: '辦理登記',
@@ -334,11 +365,17 @@ const LABELS: Record<Lang, Record<string, string>> = {
     delivery_airport_label: '到着ターミナル', delivery_date_result: '配送日', delivery_time_result: '配送時間',
     active_count_unit: '件',
     walk_in_label: '現地受付',
-    booking_lookup_btn: '予約確認',
-    booking_lookup_title: '予約照会',
+    booking_lookup_btn: 'ゲスト受付',
+    booking_lookup_title: 'QRバウチャースキャン',
     booking_code_ph: '予約番号を入力',
     booking_search: '検索',
     booking_not_found: '予約が見つかりません。予約番号をご確認ください。',
+    qr_scanning: 'QRコードを枠に合わせてください',
+    qr_hint: 'お客様のQRバウチャーをカメラに向けてください',
+    qr_error: 'カメラを使用できません',
+    qr_retry: '再試行',
+    qr_close: '戻る',
+    qr_or_manual: '予約番号を手動入力',
     booking_paid_badge: '支払済',
     booking_unpaid_badge: '未払い',
     booking_confirm_btn: '受付を進める',
@@ -798,9 +835,10 @@ const KioskPage: React.FC = () => {
   // 예약 조회 전용 상태
   const [bookingCode, setBookingCode] = useState('');
   const [bookingResult, setBookingResult] = useState<KioskBookingLookup | null>(null);
-  const [bookingLookupStep, setBookingLookupStep] = useState<'input' | 'result'>('input');
+  const [bookingLookupStep, setBookingLookupStep] = useState<'scan' | 'input' | 'result'>('scan');
   const [bookingLookupLoading, setBookingLookupLoading] = useState(false);
   const [bookingLookupError, setBookingLookupError] = useState('');
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [smallQty, setSmallQty] = useState(0);
   const [carrierQty, setCarrierQty] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -974,7 +1012,8 @@ const KioskPage: React.FC = () => {
     setPayment('현금'); setDiscount(0);
     setResultTag(0); setResultRow('A'); setResultLogId(null);
     setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime('');
-    setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError('');
+    setBookingCode(''); setBookingResult(null); setBookingLookupStep('scan'); setBookingLookupError('');
+    setShowQRScanner(false);
     setShowLangModal(true);
   };
 
@@ -989,6 +1028,26 @@ const KioskPage: React.FC = () => {
     if (entry.id) await updateStorageLog(entry.id, { done: true });
     setTodayLog((prev) => prev.map((e) => (e.tag === entry.tag && e.date === entry.date ? { ...e, done: true } : e)));
   };
+
+  // QR 스캐너 인식 후 자동 조회
+  const handleQRDetected = useCallback(async (raw: string) => {
+    setShowQRScanner(false);
+    // QR에서 예약코드 추출: URL 파라미터 또는 plain code
+    let code = raw.trim();
+    try {
+      const url = new URL(raw);
+      code = url.searchParams.get('code') || url.searchParams.get('booking') || url.pathname.split('/').pop() || raw;
+    } catch { /* plain code */ }
+    setBookingCode(code.toUpperCase());
+    setBookingLookupLoading(true);
+    setBookingLookupError('');
+    try {
+      const result = await lookupBookingByCode(code.trim());
+      if (!result) { setBookingLookupError(t.booking_not_found); setBookingLookupStep('input'); }
+      else { setBookingResult(result); setBookingLookupStep('result'); }
+    } catch { setBookingLookupError(t.booking_not_found); setBookingLookupStep('input'); }
+    finally { setBookingLookupLoading(false); }
+  }, [t.booking_not_found]);
 
   const handleBookingSearch = useCallback(async () => {
     if (!bookingCode.trim()) return;
@@ -1575,7 +1634,7 @@ const KioskPage: React.FC = () => {
 
             {/* 예약건 QR코드 버튼 */}
             <button
-              onClick={() => { setServiceMode('booking'); setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError(''); }}
+              onClick={() => { setServiceMode('booking'); setBookingCode(''); setBookingResult(null); setBookingLookupStep('scan'); setBookingLookupError(''); setShowQRScanner(true); }}
               className="w-full flex items-center justify-center gap-3 bg-[#f4f4f4] hover:bg-[#ececec] border-2 border-transparent hover:border-[#111111]/20 rounded-2xl py-4 px-5 active:scale-[0.97] transition-all"
             >
               <div className="w-10 h-10 rounded-full bg-[#111111]/8 flex items-center justify-center flex-shrink-0">
@@ -1597,7 +1656,7 @@ const KioskPage: React.FC = () => {
           <div className="w-full max-w-lg">
             {/* 뒤로 가기 */}
             <button
-              onClick={() => { setServiceMode('select'); setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError(''); }}
+              onClick={() => { setServiceMode('select'); setBookingCode(''); setBookingResult(null); setBookingLookupStep('scan'); setBookingLookupError(''); setShowQRScanner(false); }}
               className="flex items-center gap-2 text-gray-400 hover:text-[#111111] transition-all text-sm font-bold mb-6 w-fit"
             >
               <i className="fa-solid fa-chevron-left text-xs" />{t.back}
@@ -1610,9 +1669,45 @@ const KioskPage: React.FC = () => {
               {t.booking_lookup_title}
             </h2>
 
-            {/* ── 입력 화면 ── */}
-            {bookingLookupStep === 'input' && (
+            {/* ── 스캔 화면: QR 스캐너 오버레이 ── */}
+            {showQRScanner && (
+              <KioskQRScanner
+                onDetected={handleQRDetected}
+                onClose={() => { setShowQRScanner(false); setBookingLookupStep('input'); }}
+                labelScanning={t.qr_scanning}
+                labelHint={t.qr_hint}
+                labelError={t.qr_error}
+                labelRetry={t.qr_retry}
+                labelClose={t.qr_close}
+              />
+            )}
+
+            {/* ── 조회 중 스피너 ── */}
+            {bookingLookupLoading && (
+              <div className="flex flex-col items-center justify-center gap-4 py-12">
+                <i className="fa-solid fa-spinner animate-spin text-[#F5C842] text-4xl" />
+                <p className="text-gray-400 font-bold text-sm">조회 중...</p>
+              </div>
+            )}
+
+            {/* ── 수동 입력 화면 ── */}
+            {!showQRScanner && !bookingLookupLoading && bookingLookupStep === 'input' && (
               <div className="flex flex-col gap-4">
+                {/* QR 재스캔 버튼 */}
+                <button
+                  onClick={() => { setBookingCode(''); setBookingLookupError(''); setShowQRScanner(true); }}
+                  className="w-full flex items-center justify-center gap-3 bg-[#111111] text-[#F5C842] font-black py-4 rounded-2xl text-sm active:scale-[0.97] transition-all"
+                >
+                  <i className="fa-solid fa-qrcode text-lg" />
+                  QR 다시 스캔
+                </button>
+
+                <div className="relative flex items-center gap-3">
+                  <div className="flex-1 border-t border-gray-100" />
+                  <span className="text-[10px] text-gray-300 font-bold tracking-widest uppercase">OR</span>
+                  <div className="flex-1 border-t border-gray-100" />
+                </div>
+
                 <div className="bg-white rounded-2xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t.booking_code_header}</p>
                   <input
@@ -1639,10 +1734,7 @@ const KioskPage: React.FC = () => {
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  {bookingLookupLoading
-                    ? <><i className="fa-solid fa-spinner animate-spin" /> 조회 중...</>
-                    : <><i className="fa-solid fa-magnifying-glass" /> {t.booking_search}</>
-                  }
+                  <i className="fa-solid fa-magnifying-glass" /> {t.booking_search}
                 </button>
               </div>
             )}

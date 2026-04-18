@@ -78,32 +78,24 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
             </div>
 
             {/* 3. CTA Area */}
-            <div className="absolute bottom-48 md:bottom-60 inset-x-0 z-40 flex flex-col items-center justify-center px-6 pointer-events-none gap-3">
-                <div className="flex flex-row gap-4 pointer-events-auto">
+            <div className="absolute bottom-44 sm:bottom-52 md:bottom-64 inset-x-0 z-40 flex items-center justify-center px-5 pointer-events-none">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pointer-events-auto w-full max-w-[340px] sm:max-w-none sm:w-auto">
                     <motion.button
                         whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onNavigate('LOCATIONS_STORE')}
-                        className="w-[160px] md:w-[230px] py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-[12px] md:text-base shadow-2xl shadow-bee-yellow/20 transition-all uppercase tracking-widest flex flex-col items-center justify-center leading-tight"
+                        className="w-full sm:w-[200px] md:w-[260px] py-4 md:py-4 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-base shadow-2xl shadow-bee-yellow/20 transition-all uppercase tracking-widest flex items-center justify-center"
                     >
-                        <span>{t.hero.cta_storage || "STORE"}</span>
-                        <span className="text-[9px] md:text-[11px] font-bold text-bee-black/50 mt-0.5 normal-case tracking-normal">4h ₩4,000~</span>
+                        {t.hero.cta_storage || "STORE"}
                     </motion.button>
                     <motion.button
                         whileHover={{ scale: 1.05, backgroundColor: "#fff", color: "#000" }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onNavigate('LOCATIONS_DELIVER')}
-                        className="w-[160px] md:w-[230px] py-4 md:py-5 bg-bee-yellow text-bee-black font-black rounded-full text-[12px] md:text-base shadow-2xl shadow-bee-yellow/20 transition-all uppercase tracking-widest flex flex-col items-center justify-center leading-tight"
+                        className="w-full sm:w-[200px] md:w-[260px] py-4 md:py-4 bg-bee-yellow text-bee-black font-black rounded-full text-sm md:text-base shadow-2xl shadow-bee-yellow/20 transition-all uppercase tracking-widest flex items-center justify-center"
                     >
-                        <span>{t.hero.cta_delivery || "DELIVER"}</span>
-                        <span className="text-[9px] md:text-[11px] font-bold text-bee-black/50 mt-0.5 normal-case tracking-normal">₩10,000~</span>
+                        {t.hero.cta_delivery || "DELIVER"}
                     </motion.button>
-                </div>
-                {/* 소셜 프루프 */}
-                <div className="pointer-events-none flex items-center gap-2">
-                    <span className="text-white/40 text-[10px] md:text-xs font-bold tracking-wide">
-                        ★★★★★ &nbsp;3만+ 여행객 선택
-                    </span>
                 </div>
             </div>
 

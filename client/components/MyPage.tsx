@@ -37,28 +37,18 @@ const MyPage: React.FC<MyPageProps> = ({ t, onClose }) => {
             }
 
             try {
-                let profile = await StorageService.getUserProfile(user.uid);
-
-                // If profile doesn't exist, create one (Welcome!)
-                if (!profile) {
-                    const newProfile: UserProfile = {
-                        uid: user.uid,
-                        email: user.email || '',
-                        displayName: user.displayName || 'Traveler',
-                        points: 1000, // Initial welcome points
-                        level: 'BRONZE',
-                        createdAt: new Date().toISOString()
-                    };
-                    await StorageService.updateUserProfile(user.uid, newProfile);
-                    await StorageService.issueWelcomeCoupon(user.uid);
-                    profile = newProfile;
-                }
+                // Supabase Auth 기반: 프로필은 auth 세션에서 직접 구성
+                const profile: UserProfile = {
+                    uid: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName || user.email?.split('@')[0] || 'Traveler',
+                    points: 0,
+                    level: 'BRONZE',
+                    createdAt: new Date().toISOString(),
+                };
 
                 setUserData(profile);
-
-                // Fetch coupons count
-                const coupons = await StorageService.getUserCoupons(user.uid);
-                setCouponCount(coupons.length);
+                setCouponCount(0); // 쿠폰은 추후 Supabase 연동
 
             } catch (error) {
                 console.error("Error fetching user data:", error);

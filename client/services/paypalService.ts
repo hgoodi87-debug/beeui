@@ -47,7 +47,7 @@ export function loadPayPalSDK(lang = 'zh-TW'): Promise<void> {
     const locale = toPayPalLocale(lang);
     sdkLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&intent=capture&locale=${locale}`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&intent=capture&locale=${locale}&enable-funding=card`;
         script.async = true;
         script.dataset.paypalSdk = 'true';
         script.onload = () => resolve();

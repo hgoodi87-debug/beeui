@@ -328,6 +328,16 @@ const ensureCustomerAuthInitialized = async () => {
 
 void ensureCustomerAuthInitialized();
 
+// 다른 탭에서 로그인 완료 시 현재 탭도 자동 반영 (magic link cross-tab 동기화)
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === CUSTOMER_SESSION_KEY && e.newValue && !currentSession) {
+      const session = readPersistedCustomerSession();
+      if (session) applySession(session);
+    }
+  });
+}
+
 export const getActiveCustomerAccessToken = async () => {
   await ensureCustomerAuthInitialized();
   if (shouldRefreshSession(currentSession)) {
@@ -346,6 +356,72 @@ export const getActiveCustomerAccessToken = async () => {
 export const ensureAuth = async (): Promise<CustomerAuthUser | null> => {
   await ensureCustomerAuthInitialized();
   return currentUser;
+};
+
+/**
+ * 매직링크(OTP) 이메일 전송
+ * 사용자가 링크를 클릭하면 #access_token 해시와 함께 redirectTo URL로 이동,
+ * parseOAuthHashSession이 자동으로 세션을 복원합니다.
+ */
+export const signInWithMagicLink = async (email: string, redirectTo: string): Promise<void> => {
+  await requestSupabaseAuth<unknown>(
+    '/auth/v1/otp',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        email: normalizeText(email),
+        create_user: true,
+        options: { emailRedirectTo: redirectTo },
+      }),
+    },
+  );
+};
+
+/** 이메일로 6자리 OTP 코드 전송 (팝업 내 완결 로그인용) */
+export const sendEmailOtp = async (email: string): Promise<void> => {
+  await requestSupabaseAuth<unknown>(
+    '/auth/v1/otp',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        email: normalizeText(email),
+        create_user: true,
+      }),
+    },
+  );
+};
+
+/** 6자리 OTP 코드 검증 → 세션 적용 → CustomerAuthUser 반환 */
+export const signInWithEmailOtp = async (
+  email: string,
+  token: string,
+): Promise<{ user: CustomerAuthUser }> => {
+  const response = await requestSupabaseAuth<SupabaseAuthTokenResponse>(
+    '/auth/v1/verify',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        email: normalizeText(email),
+        token: token.trim(),
+        type: 'email',
+      }),
+    },
+  );
+
+  const normalized = await normalizeSupabaseAuthPayload(response);
+  if (!normalized.accessToken || !normalized.user) {
+    throw new Error('OTP verification did not return a valid session.');
+  }
+
+  const session: StoredCustomerSession = {
+    accessToken: normalized.accessToken,
+    refreshToken: normalized.refreshToken,
+    expiresAt: normalized.expiresAt,
+    user: normalized.user,
+  };
+
+  applySession(session);
+  return { user: session.user };
 };
 
 export const signInWithEmailAndPassword = async (email: string, password: string) => {

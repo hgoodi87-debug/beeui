@@ -220,81 +220,124 @@ const EmployeeListTab: React.FC<EmployeeListTabProps> = ({
         ) : (
           filteredAdmins.map(admin => {
             const isSuperName = admin.name === '천명' || admin.name === 'admin';
-            // [스봉이] 지점 소속이면 우선적으로 'branch' 역할을 부여해서 '브랜치' 배지가 나오게 합니다. 💅
             const matchedLocation = resolveLocation(admin);
             const adminRole = isSuperName ? 'super' : (admin.role || ((admin.branchId || admin.branchCode || matchedLocation?.id) ? 'branch' : 'staff'));
             const statusConfig = (HR_STATUS_CONFIG as Record<string, HRStatusConfig>)[admin.status || 'active'] || HR_STATUS_CONFIG.active;
-            const roleConfig = HR_ROLES.find((r: HRRole) => r.id === adminRole) || HR_ROLES.find(r => r.id === 'staff') || HR_ROLES[0];
             const syncBadge = getSyncBadge(admin);
-            
+            const branchName = admin.branchName || matchedLocation?.name || null;
+            const isHQ = !branchName;
+
+            // ── 역할(직책) 배지 스타일 ──────────────────────────────────────
+            const ROLE_BADGE: Record<string, { bg: string; text: string; icon: string }> = {
+              super:   { bg: 'bg-[#111111]',     text: 'text-[#F5C842]', icon: 'fa-shield-crown' },
+              hq:      { bg: 'bg-blue-600',       text: 'text-white',     icon: 'fa-building' },
+              branch:  { bg: 'bg-[#F5C842]',      text: 'text-[#111111]', icon: 'fa-store' },
+              finance: { bg: 'bg-emerald-600',    text: 'text-white',     icon: 'fa-coins' },
+              cs:      { bg: 'bg-sky-500',         text: 'text-white',     icon: 'fa-headset' },
+              partner: { bg: 'bg-purple-500',     text: 'text-white',     icon: 'fa-handshake' },
+              driver:  { bg: 'bg-orange-500',     text: 'text-white',     icon: 'fa-truck' },
+              staff:   { bg: 'bg-gray-200',       text: 'text-gray-600',  icon: 'fa-user' },
+            };
+            const roleBadge = ROLE_BADGE[adminRole] ?? ROLE_BADGE.staff;
+            const roleLabel = HR_ROLES.find((r: HRRole) => r.id === adminRole)?.label ?? '일반스태프';
+
+            // ── 상태 dot 색상 ────────────────────────────────────────────────
+            const STATUS_DOT: Record<string, string> = {
+              active:    'bg-emerald-500',
+              invited:   'bg-amber-400',
+              suspended: 'bg-orange-500',
+              resigned:  'bg-gray-300',
+              locked:    'bg-red-500',
+            };
+            const statusDot = STATUS_DOT[admin.status || 'active'] ?? 'bg-gray-300';
+
             return (
-              <div 
+              <div
                 key={admin.id}
                 onClick={() => onEdit(admin)}
                 className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative overflow-hidden"
               >
-                {/* 우측 상단 상태 뱃지 */}
-                <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
-                   <div className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${statusConfig.color} shadow-sm`}>
-                     {statusConfig.label}
-                   </div>
-                   <div className={`px-2.5 py-1 rounded-full text-[9px] font-black tracking-tight shadow-sm ${syncBadge.className}`}>
-                     {syncBadge.label}
-                   </div>
-                </div>
-
-                <div className="flex items-center gap-5 mt-2">
-                  <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center font-black italic text-2xl transition-all ${admin.id ? 'bg-bee-yellow text-bee-black group-hover:bg-bee-black group-hover:text-bee-yellow' : 'bg-gray-100 text-gray-300'}`}>
-                    {admin.name?.slice(0,1)}
+                {/* ── 상단: 아바타 + 이름 + 이메일 ── */}
+                <div className="flex items-start gap-4">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black italic text-xl flex-shrink-0 transition-all ${admin.id ? 'bg-bee-yellow text-bee-black group-hover:bg-bee-black group-hover:text-bee-yellow' : 'bg-gray-100 text-gray-300'}`}>
+                    {admin.name?.slice(0, 1)}
                   </div>
-                  <div>
-                    <h4 className="text-lg font-black text-bee-black mb-0.5">{admin.name}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-gray-400">{admin.jobTitle}</span>
-                      <span className="w-1 h-1 rounded-full bg-gray-200"></span>
-                      <span className="text-[10px] font-black text-bee-black/30 group-hover:text-bee-black transition-colors">
-                        {admin.branchName || matchedLocation?.name || 'HQ / 본사'}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-bold text-gray-400">
-                        {admin.syncStatus?.authEmail || admin.email || admin.loginId || '로그인 정보 미설정'}
-                      </span>
-                      {admin.syncStatus?.syntheticEmail && (
-                        <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black text-amber-700">
-                          임시 이메일
-                        </span>
-                      )}
-                    </div>
-                    {admin.syncStatus?.status === 'error' && admin.syncStatus.lastError && (
-                      <p className="mt-2 max-w-[240px] text-[10px] font-bold leading-relaxed text-red-500">
-                        {admin.syncStatus.lastError}
-                      </p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base font-black text-bee-black leading-tight truncate">{admin.name}</h4>
+                    {admin.jobTitle && (
+                      <p className="text-[11px] font-bold text-gray-400 mt-0.5 truncate">{admin.jobTitle}</p>
                     )}
+                    <p className="text-[10px] text-gray-300 mt-0.5 truncate">
+                      {admin.syncStatus?.authEmail || admin.email || admin.loginId || '로그인 정보 미설정'}
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full bg-${roleConfig.color}`}></div>
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{roleConfig.label}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onEdit(admin); }}
-                      title="직원 상세 정보 및 권한 수정"
-                      className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-white transition-all flex items-center justify-center"
-                    >
-                      <i className="fa-solid fa-gear text-[10px]"></i>
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onDelete(admin.id); }}
-                      title="직원 계정 삭제"
-                      className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
-                    >
-                      <i className="fa-solid fa-trash-can text-[10px]"></i>
-                    </button>
-                  </div>
+                {/* ── 배지 행 ── */}
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {/* 역할 배지 */}
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black ${roleBadge.bg} ${roleBadge.text}`}>
+                    <i className={`fa-solid ${roleBadge.icon} text-[8px]`} />
+                    {roleLabel}
+                  </span>
+
+                  {/* 지점 배지 */}
+                  {isHQ ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-gray-800 text-white">
+                      <i className="fa-solid fa-building text-[8px]" />
+                      HQ 본사
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-violet-500 text-white">
+                      <i className="fa-solid fa-location-dot text-[8px]" />
+                      {branchName}
+                    </span>
+                  )}
+
+                  {/* 상태 배지 */}
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black ${statusConfig.color}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusDot} flex-shrink-0`} />
+                    {statusConfig.label}
+                  </span>
+
+                  {/* 동기화 배지 */}
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black ${syncBadge.className}`}>
+                    {syncBadge.label}
+                  </span>
+
+                  {/* 임시 이메일 배지 */}
+                  {admin.syncStatus?.syntheticEmail && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-700">
+                      <i className="fa-solid fa-at text-[8px]" />
+                      임시메일
+                    </span>
+                  )}
+                </div>
+
+                {/* ── 에러 메시지 ── */}
+                {admin.syncStatus?.status === 'error' && admin.syncStatus.lastError && (
+                  <p className="mt-3 text-[10px] font-bold leading-relaxed text-red-500 bg-red-50 rounded-xl px-3 py-2">
+                    <i className="fa-solid fa-circle-exclamation mr-1" />
+                    {admin.syncStatus.lastError}
+                  </p>
+                )}
+
+                {/* ── 하단: 구분선 + 버튼 ── */}
+                <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-end gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onEdit(admin); }}
+                    title="직원 상세 정보 및 권한 수정"
+                    className="w-8 h-8 rounded-xl bg-gray-50 text-gray-400 hover:bg-bee-black hover:text-white transition-all flex items-center justify-center"
+                  >
+                    <i className="fa-solid fa-gear text-[10px]" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(admin.id); }}
+                    title="직원 계정 삭제"
+                    className="w-8 h-8 rounded-xl bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                  >
+                    <i className="fa-solid fa-trash-can text-[10px]" />
+                  </button>
                 </div>
               </div>
             );

@@ -940,9 +940,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-5">
-                                    <div className="space-y-4">
-                                        <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-5 xl:items-stretch">
+                                    <div className="h-full">
+                                        <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{booking.serviceType === ServiceType.DELIVERY ? tBooking.from : tBooking.select_storage}</label>
                                             <select
                                                 title="Select Pickup Location"
@@ -1013,9 +1013,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
+                                    <div className="h-full">
                                         {booking.serviceType === ServiceType.DELIVERY ? (
-                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4">
+                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">
                                                 <div>
                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.to || 'To'}</label>
                                                     <select
@@ -1088,7 +1088,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4">
+                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">
                                                 <div className="p-5 sm:p-6 bg-white rounded-[2rem] border-2 border-bee-yellow/20 shadow-xl shadow-bee-yellow/5 space-y-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 bg-bee-yellow/10 rounded-2xl flex items-center justify-center">

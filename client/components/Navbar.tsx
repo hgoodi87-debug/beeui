@@ -57,7 +57,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] px-4 py-2 md:py-3 transition-all duration-500 pointer-events-none">
-      <div className={`max-w-[1200px] mx-auto flex items-center justify-between backdrop-blur-2xl border border-white/5 rounded-full px-6 py-1.5 shadow-2xl transition-all duration-500 pointer-events-auto ${scrolled ? 'bg-black/40 scale-[0.98]' : 'bg-black/20 scale-100'}`}>
+      <div className={`max-w-[1200px] mx-auto flex items-center justify-between backdrop-blur-2xl border border-white/5 rounded-full px-4 md:px-6 py-1.5 shadow-2xl transition-all duration-500 pointer-events-auto ${scrolled ? 'bg-black/40 scale-[0.98]' : 'bg-black/20 scale-100'}`}>
 
         {/* Brand Logo Area */}
         <div className="flex items-center cursor-pointer group scale-90 md:scale-95 origin-left" onClick={() => window.location.href = '/'}>

@@ -892,7 +892,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
             </AnimatePresence>
 
             {/* Header */}
-            <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center z-50">
+            <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 md:px-6 py-4 flex justify-between items-center z-50">
                 <div className="flex items-center gap-4">
                     <button
                         title={t.common?.back || "Back"}
@@ -1196,7 +1196,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 <h3 className="text-xl font-black italic uppercase tracking-tight">{tBooking.bags_label || 'Baggage Selection'}</h3>
                             </div>
 
-                            <div className={`grid gap-4 ${booking.serviceType === ServiceType.DELIVERY ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 2xl:grid-cols-3'}`}>
+                            <div className={`grid gap-4 ${booking.serviceType === ServiceType.DELIVERY ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
                                 {visibleBagCategories.map((category) => {
                                     const count = getBagCategoryCount(booking.bagSizes, category.id);
                                     const isDelivery = booking.serviceType === ServiceType.DELIVERY;

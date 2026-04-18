@@ -79,7 +79,7 @@ const LandingGoogleReviewsStrip: React.FC = () => {
     const renderPlaceholderCard = (index: number) => (
         <div
             key={`placeholder-${index}`}
-            className="w-[260px] md:w-[280px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 md:p-4 backdrop-blur-xl"
+            className="w-[220px] sm:w-[250px] md:w-[280px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 md:p-4 backdrop-blur-xl"
         >
             <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
@@ -97,13 +97,13 @@ const LandingGoogleReviewsStrip: React.FC = () => {
 
     const renderCard = (review: GoogleReview, i: number) => {
         return (
-            <div key={`${review.id}-${i}`} className="w-[260px] md:w-[280px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 md:p-4 backdrop-blur-xl group hover:border-bee-yellow/50 transition-all duration-500">
+            <div key={`${review.id}-${i}`} className="w-[220px] sm:w-[250px] md:w-[280px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 md:p-4 backdrop-blur-xl group hover:border-bee-yellow/50 transition-all duration-500">
                 <div className="flex items-center gap-2 mb-2">
                     <div className="w-7 h-7 rounded-full bg-bee-yellow/20 flex items-center justify-center text-[10px] font-black text-bee-yellow border border-bee-yellow/30 shadow-sm">
                         {(review.author_name || "U")[0]}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-[10px] md:text-xs font-bold text-white/90 truncate">{review.author_name}</p>
+                        <p className="text-xs font-bold text-white/90 truncate">{review.author_name}</p>
                         {renderStars(review.rating)}
                     </div>
                     <svg viewBox="0 0 24 24" className="w-3 h-3 shrink-0 opacity-40 grayscale brightness-200">
@@ -114,7 +114,7 @@ const LandingGoogleReviewsStrip: React.FC = () => {
                     </svg>
                 </div>
                 {review.text && (
-                    <p className="text-[10px] md:text-[11px] text-white/70 leading-relaxed line-clamp-2 font-medium">
+                    <p className="text-[11px] md:text-[12px] text-white/70 leading-relaxed line-clamp-2 font-medium">
                         "{review.text}"
                     </p>
                 )}
@@ -129,7 +129,7 @@ const LandingGoogleReviewsStrip: React.FC = () => {
         <section className="py-3 md:py-4 bg-transparent overflow-hidden relative z-20">
             {summary && (
                 <div className="flex items-center justify-center gap-3 mb-4 md:mb-6">
-                    <span className="text-[10px] font-black text-white/40 tracking-[0.3em] uppercase">
+                    <span className="text-[11px] font-black text-white/40 tracking-[0.25em] uppercase">
                         Verified Google Feedback
                     </span>
                     <div className="w-1 h-1 bg-bee-yellow rounded-full" />

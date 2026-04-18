@@ -86,7 +86,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                     </motion.h2>
                     <motion.p 
                         variants={itemVariants}
-                        className="text-black/30 text-[9px] md:text-xs font-black tracking-[0.3em] uppercase"
+                        className="text-black/30 text-[11px] md:text-xs font-black tracking-[0.25em] uppercase"
                     >
                         {t.howitworks.subtitle || "The Beeliber Guide"}
                     </motion.p>
@@ -95,7 +95,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                 {/* Timeline Layout (Desktop & Mobile) */}
                 <div className="relative">
                     {/* Vertical Line */}
-                    <div className="absolute left-[16px] md:left-1/2 top-4 bottom-4 w-[1px] md:w-[2px] bg-gradient-to-b from-bee-yellow via-bee-yellow/20 to-transparent md:-translate-x-1/2" />
+                    <div className="absolute left-[22px] md:left-1/2 top-4 bottom-4 w-[1px] md:w-[2px] bg-gradient-to-b from-bee-yellow via-bee-yellow/20 to-transparent md:-translate-x-1/2" />
 
                     {/* Step Cards Container */}
                     <div className="flex flex-col gap-4 md:gap-10 relative">
@@ -106,16 +106,16 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-50px" }}
                                 transition={{ duration: 0.6, ease: [0, 0.55, 0.45, 1], delay: i * 0.05 }}
-                                className={`flex flex-row items-start md:items-center gap-4 md:gap-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} relative`}
+                                className={`flex flex-row items-start md:items-center gap-4 md:gap-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} relative pl-10 md:pl-0`}
                             >
                                 {/* Content Side */}
-                                <div className={`w-full md:w-1/2 flex pl-8 md:pl-0 ${i % 2 === 0 ? 'md:justify-end md:pr-12' : 'md:justify-start md:pl-12'}`}>
+                                <div className={`w-full md:w-1/2 flex ${i % 2 === 0 ? 'md:justify-end md:pr-12' : 'md:justify-start md:pl-12'}`}>
                                     <div className={`bg-white p-3 md:p-6 rounded-[1rem] md:rounded-[1.5rem] shadow-[0_8px_20px_-6px_rgba(0,0,0,0.03)] border border-black/5 max-w-sm w-full md:hover:translate-y-[-3px] md:hover:border-bee-yellow/50 transition-all duration-500 relative group overflow-hidden`}>
                                         <div className="flex flex-col gap-2 md:gap-3 relative z-10">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5">
                                                     <div className="w-1 h-1 rounded-full bg-bee-yellow animate-pulse" />
-                                                    <span className="text-[8px] md:text-[9px] font-black tracking-[0.15em] text-bee-yellow uppercase italic">{step.badge}</span>
+                                                    <span className="text-[10px] md:text-[11px] font-black tracking-[0.12em] text-bee-yellow uppercase italic">{step.badge}</span>
                                                 </div>
                                                 <div className="md:hidden w-6 h-6 rounded-lg bg-bee-yellow/10 flex items-center justify-center text-bee-yellow">
                                                     {React.cloneElement(step.icon as React.ReactElement, { className: "w-3 h-3" } as any)}
@@ -123,7 +123,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                                             </div>
                                             
                                             <h3 className="text-sm md:text-xl font-display font-black text-bee-black tracking-tight leading-tight">{step.title}</h3>
-                                            <p className="text-[9px] md:text-[14px] text-black/50 font-medium leading-relaxed break-keep">
+                                            <p className="text-[12px] md:text-[14px] text-black/50 font-medium leading-relaxed break-keep">
                                                 {step.desc}
                                             </p>
                                         </div>
@@ -134,7 +134,7 @@ const LandingHowItWorks: React.FC<LandingHowItWorksProps> = ({ t }) => {
                                 <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex w-12 h-12 rounded-full bg-white items-center justify-center text-bee-yellow shadow-[0_8px_20px_rgba(0,0,0,0.05)] z-20 border border-black/5 group-hover:scale-110 transition-all duration-500">
                                     {React.cloneElement(step.icon as React.ReactElement, { className: "w-5 h-5" } as any)}
                                 </div>
-                                <div className="md:hidden absolute left-[10px] top-4 w-3 h-3 rounded-full bg-bee-yellow border-[2px] border-white shadow-sm z-20" />
+                                <div className="md:hidden absolute left-[-28px] top-4 w-3 h-3 rounded-full bg-bee-yellow border-[2px] border-white shadow-sm z-20" />
 
                                 {/* Spacer for desktop */}
                                 <div className="w-full md:w-1/2 hidden md:block" />

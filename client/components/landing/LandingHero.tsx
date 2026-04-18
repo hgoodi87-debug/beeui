@@ -57,7 +57,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
                                 </span>
                             </div>
                         )}
-                        <span className="inline-block px-5 py-2 rounded-full border border-white/10 text-white/90 text-[10px] md:text-xs font-bold uppercase tracking-[0.5em] backdrop-blur-md bg-white/5">
+                        <span className="inline-block px-5 py-2 rounded-full border border-white/10 text-white/90 text-[11px] md:text-xs font-bold uppercase tracking-[0.4em] backdrop-blur-md bg-white/5">
                             {t.hero.badge || "Global Logistics Excellence"}
                         </span>
                     </motion.div>
@@ -102,7 +102,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
             {/* 4. Google Reviews Strip - VISIBLE IMMEDIATELY at bottom 💅 */}
             <div className="absolute bottom-0 left-0 right-0 z-50">
                 <div className="bg-gradient-to-t from-black to-transparent h-40 absolute bottom-0 inset-x-0 z-0" />
-                <div className="relative z-10 scale-[0.9] md:scale-100 origin-bottom">
+                <div className="relative z-10">
                     <LandingGoogleReviewsStrip />
                 </div>
             </div>

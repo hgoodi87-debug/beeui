@@ -44,7 +44,7 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate, lang }
                         </div>
                     </div>
 
-                    <h2 className="text-4xl md:text-6xl lg:text-[6.5rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-6 break-keep whitespace-pre-line px-4">
+                    <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-[6.5rem] font-display font-black text-white drop-shadow-2xl leading-[1.1] md:leading-[1.1] tracking-tighter mb-6 break-keep whitespace-pre-line px-4">
                         {t.final_cta.headline}
                     </h2>
 
@@ -54,13 +54,13 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate, lang }
                         </p>
                     )}
 
-                    <div className="flex flex-col md:flex-row gap-6 md:gap-10 justify-center">
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-10 justify-center px-4 md:px-0">
                         <motion.a
                             href={`/${lang}/locations`}
                             onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS'); }}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="px-12 py-5 md:px-20 md:py-8 bg-bee-black text-bee-yellow text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl transition-all tracking-widest uppercase flex items-center justify-center gap-3 cursor-pointer"
+                            className="w-full md:w-auto px-8 py-4 md:px-20 md:py-8 bg-bee-black text-bee-yellow text-base md:text-2xl font-black rounded-[2.5rem] shadow-2xl transition-all tracking-widest uppercase flex items-center justify-center gap-3 cursor-pointer"
                         >
                             {t.final_cta.btn_airport_hotel} ➔
                         </motion.a>
@@ -69,7 +69,7 @@ const LandingFinalCTA: React.FC<LandingFinalCTAProps> = ({ t, onNavigate, lang }
                             onClick={(e) => { e.preventDefault(); onNavigate('LOCATIONS'); }}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="px-12 py-5 md:px-20 md:py-8 bg-white text-bee-black text-lg md:text-2xl font-black rounded-[2.5rem] shadow-2xl transition-all tracking-widest uppercase flex items-center justify-center gap-3 border-2 border-bee-black cursor-pointer"
+                            className="w-full md:w-auto px-8 py-4 md:px-20 md:py-8 bg-white text-bee-black text-base md:text-2xl font-black rounded-[2.5rem] shadow-2xl transition-all tracking-widest uppercase flex items-center justify-center gap-3 border-2 border-bee-black cursor-pointer"
                         >
                             {t.final_cta.btn_hotel_airport} ➔
                         </motion.a>

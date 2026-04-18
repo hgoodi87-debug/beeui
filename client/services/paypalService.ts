@@ -41,7 +41,8 @@ let sdkLoadPromise: Promise<void> | null = null;
 
 export function loadPayPalSDK(lang = 'zh-TW'): Promise<void> {
     if (!PAYPAL_CLIENT_ID) return Promise.reject(new Error('PayPal Client ID가 설정되지 않았습니다.'));
-    if (window.paypal) return Promise.resolve();
+    // window.paypal이 있어도 현재 client-id가 다른 경우 무시 (sandbox→live 전환 후 stale 방지)
+    if (window.paypal && sdkLoadPromise) return Promise.resolve();
     if (sdkLoadPromise) return sdkLoadPromise;
 
     // locale 파라미터 제거 — PayPal이 자동 감지 (zh_CN 등 미지원 locale 로드 실패 방지)

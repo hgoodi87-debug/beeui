@@ -365,17 +365,19 @@ const App: React.FC = () => {
   };
 
   const changeLanguage = (newLang: string) => {
-    // [스봉이] 언어만 고르면 뭐해요? 주소도 같이 바꿔야 빙이랑 로봇들이 좋아하죠! 💅✨
     const pathParts = location.pathname.split('/').filter(Boolean);
     const supported = ['ko', 'en', 'ja', 'zh', 'zh-tw', 'zh-hk'];
-    
-    // 첫 번째 세그먼트가 지원하는 언어인 경우 교체, 아니면 앞에 추가
+
+    // 각 언어별 prerendered HTML이 Firebase에 있으므로 full reload로 전환
+    // navigate()는 History API만 바꿔 hydration 충돌 발생 → window.location 사용
+    let newPath: string;
     if (supported.includes(pathParts[0]?.toLowerCase())) {
       pathParts[0] = newLang;
-      navigate(`/${pathParts.join('/')}`);
+      newPath = `/${pathParts.join('/')}`;
     } else {
-      navigate(`/${newLang}${location.pathname}`);
+      newPath = `/${newLang}${location.pathname}`;
     }
+    window.location.href = newPath;
   };
 
   const handleBookingSuccess = async (booking: BookingState) => {

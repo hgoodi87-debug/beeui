@@ -16,6 +16,8 @@ export interface VoucherEmailTemplateInput {
   pickupGuide?: string;
   pickupMapUrl?: string;
   adminNote?: string;
+  paymentMethod?: string;
+  paidAt?: string;
 }
 
 export interface ArrivalEmailTemplateInput {
@@ -49,6 +51,136 @@ const buildQrCodeUrl = (reservationCode: string) => {
 const buildFxCouponCode = (reservationCode: string) => {
   const suffix = reservationCode.replace(/[^A-Z0-9]/gi, '').slice(-4).toUpperCase();
   return `BEE-FX-${suffix}`;
+};
+
+// 결제수단 한글 레이블
+const paymentMethodLabel = (method?: string) => {
+  if (!method) return "";
+  const m = method.toLowerCase();
+  if (m === "card" || m.includes("credit")) return "신용/체크카드";
+  if (m === "cash") return "현금결제";
+  if (m === "naver") return "네이버페이";
+  if (m === "kakao") return "카카오페이";
+  if (m === "apple") return "Apple Pay";
+  if (m === "samsung") return "Samsung Pay";
+  if (m === "paypal") return "PayPal";
+  if (m === "alipay") return "Alipay";
+  if (m === "wechat") return "WeChat Pay";
+  if (m === "toss") return "Toss Payments";
+  return method;
+};
+
+// 영수증 번호 (예약코드 기반 결정론적)
+const buildReceiptNumber = (reservationCode: string, bookingId: string) => {
+  const src = (reservationCode || bookingId || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  const tail = src.slice(-8).padStart(8, "0");
+  return `R-${tail}`;
+};
+
+// 날짜 포맷 (YYYY-MM-DD HH:mm)
+const formatDateTime = (iso?: string) => {
+  if (!iso) return new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour12: false });
+  try {
+    return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour12: false });
+  } catch {
+    return iso;
+  }
+};
+
+// 영수증 블록 HTML (빌리버 테마 — 블랙 헤더, 옐로우 액센트, 오프화이트 바디)
+const buildReceiptBlock = (input: VoucherEmailTemplateInput) => {
+  const receiptNo   = buildReceiptNumber(input.reservationCode, input.bookingId);
+  const issuedAt    = formatDateTime(input.paidAt);
+  const supplyPrice = Math.round(Number(input.finalPrice || 0) / 1.1);
+  const vat         = Number(input.finalPrice || 0) - supplyPrice;
+  const payLabel    = paymentMethodLabel(input.paymentMethod) || "-";
+  const serviceName = input.serviceType === "DELIVERY" ? "짐 배송 서비스" : "짐 보관 서비스";
+
+  return `
+    <div style="margin-top:28px;background:#fffdf5;border:2px dashed #facc15;border-radius:22px;padding:0;overflow:hidden;">
+      <!-- 영수증 헤더 -->
+      <div style="background:#111827;color:#ffffff;padding:18px 22px;border-bottom:4px solid #facc15;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:10px;font-weight:900;color:#facc15;letter-spacing:0.2em;text-transform:uppercase;">Receipt · 영수증</div>
+          <div style="margin-top:4px;font-size:18px;font-weight:900;color:#ffffff;letter-spacing:-0.02em;">
+            <span style="color:#facc15;">Bee</span>liber
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9px;font-weight:800;color:#94a3b8;letter-spacing:0.12em;text-transform:uppercase;">No.</div>
+          <div style="margin-top:2px;font-size:13px;font-weight:900;color:#facc15;letter-spacing:0.08em;">${escapeHtml(receiptNo)}</div>
+        </div>
+      </div>
+
+      <!-- 본문 -->
+      <div style="padding:22px;">
+        <div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:18px;font-size:12px;">
+          <div>
+            <div style="color:#92400e;font-weight:900;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">발행일</div>
+            <div style="color:#111827;font-weight:800;">${escapeHtml(issuedAt)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#92400e;font-weight:900;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">받는 분</div>
+            <div style="color:#111827;font-weight:800;">${escapeHtml(input.userName || "Guest")}</div>
+          </div>
+        </div>
+
+        <!-- 품목 -->
+        <table style="width:100%;border-collapse:collapse;font-size:13px;background:#ffffff;border-radius:14px;overflow:hidden;">
+          <thead>
+            <tr style="background:#111827;color:#facc15;">
+              <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;">품목</th>
+              <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;">수량</th>
+              <th style="padding:10px 14px;text-align:right;font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;">금액</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:12px 14px;border-bottom:1px solid #f1f5f9;color:#111827;font-weight:800;">
+                ${escapeHtml(serviceName)}
+                <div style="margin-top:2px;font-size:11px;color:#64748b;font-weight:600;">${escapeHtml(input.bagSummary || "-")}</div>
+              </td>
+              <td style="padding:12px 14px;border-bottom:1px solid #f1f5f9;text-align:right;color:#111827;font-weight:800;">1</td>
+              <td style="padding:12px 14px;border-bottom:1px solid #f1f5f9;text-align:right;color:#111827;font-weight:800;">${formatCurrency(input.finalPrice)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 합계 -->
+        <div style="margin-top:16px;padding:14px 18px;background:#ffffff;border-radius:14px;">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;color:#64748b;font-weight:700;">
+            <span>공급가액</span><span>${formatCurrency(supplyPrice)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;color:#64748b;font-weight:700;border-bottom:1px dashed #e5e7eb;">
+            <span>부가세 (10%)</span><span>${formatCurrency(vat)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0 2px;font-size:15px;color:#111827;font-weight:900;">
+            <span>합계 (Total)</span>
+            <span style="color:#111827;font-size:20px;">${formatCurrency(input.finalPrice)}</span>
+          </div>
+        </div>
+
+        <!-- 결제 정보 -->
+        <div style="margin-top:14px;display:flex;justify-content:space-between;padding:12px 16px;background:#facc15;border-radius:12px;">
+          <div>
+            <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.12em;text-transform:uppercase;">결제수단</div>
+            <div style="margin-top:2px;font-size:13px;font-weight:900;color:#111827;">${escapeHtml(payLabel)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.12em;text-transform:uppercase;">예약코드</div>
+            <div style="margin-top:2px;font-size:13px;font-weight:900;color:#111827;letter-spacing:0.06em;">${escapeHtml(input.reservationCode || input.bookingId)}</div>
+          </div>
+        </div>
+
+        <!-- 발행자 정보 -->
+        <div style="margin-top:18px;padding-top:16px;border-top:1px dashed #fde68a;font-size:10px;color:#94a3b8;line-height:1.8;font-weight:700;">
+          <div><strong style="color:#475569;">빌리버 (Beeliber)</strong> · No Bags, Just Freedom</div>
+          <div>bee-liber.com · ceo@bee-liber.com · +82 010-2922-7731</div>
+          <div style="margin-top:4px;color:#cbd5e1;">본 영수증은 전자 발행되었으며 세금계산서 발행이 필요한 경우 고객센터로 문의해 주세요.</div>
+        </div>
+      </div>
+    </div>
+  `;
 };
 
 export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
@@ -134,6 +266,8 @@ export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
             </div>
             <div style="margin-top:10px;font-size:10px;color:#64748b;font-weight:700;">* 1회 사용 가능 · 예약코드와 함께 제시</div>
           </div>
+
+          ${buildReceiptBlock(input)}
 
           <div style="margin-top:28px;text-align:center;color:#94a3b8;font-size:11px;font-weight:800;letter-spacing:0.3em;text-transform:uppercase;">
             No Bags, Just Freedom

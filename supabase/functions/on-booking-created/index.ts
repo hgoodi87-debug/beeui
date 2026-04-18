@@ -170,6 +170,12 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
         : typeof booking.audit_note === "string" && booking.audit_note.trim()
         ? booking.audit_note.trim()
         : undefined,
+      paymentMethod: typeof booking.payment_method === "string" ? booking.payment_method : undefined,
+      paidAt: typeof booking.paid_at === "string"
+        ? booking.paid_at
+        : typeof booking.created_at === "string"
+        ? booking.created_at
+        : undefined,
     };
 
     await sendEdgeMail({

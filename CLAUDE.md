@@ -1,5 +1,12 @@
 # Beeliber Claude Code 하네스 설정 (v2026.04)
 
+## Advisor 응답 규칙
+
+Advisor(Opus)는 다음 규칙을 반드시 준수:
+1. 100단어 이내로만 응답
+2. 열거된 단계 형태(numbered list)로만 응답
+3. 산문형 설명 금지
+
 ## 프로젝트 개요
 
 **Beeliber (빌리버)** — 서울 여행객 대상 짐보관·공항배송 서비스.

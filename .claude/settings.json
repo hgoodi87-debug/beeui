@@ -1,4 +1,6 @@
 {
+  "model": "claude-sonnet-4-6",
+  "advisorModel": "claude-opus-4-7",
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
@@ -7,6 +9,32 @@
       "Skill(ship)",
       "Skill(ship:*)",
       "Bash(git merge:*)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "model": "claude-opus-4-7",
+            "prompt": "You are a strategic advisor. Before work begins, review this request and respond ONLY as a numbered list, max 100 words: $ARGUMENTS",
+            "statusMessage": "Advisor 검토 중..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "model": "claude-opus-4-7",
+            "prompt": "You are a strategic advisor. Work just completed. Review what was done and respond ONLY as a numbered list, max 100 words: $ARGUMENTS",
+            "statusMessage": "Advisor 최종 검토 중..."
+          }
+        ]
+      }
     ]
   }
 }

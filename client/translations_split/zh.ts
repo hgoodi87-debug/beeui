@@ -162,6 +162,7 @@ export const zh = {
         select_origin: '选择出发地', select_dest: '选择目的地', select_storage: '选择寄存选项',
         pickup_schedule: '寄存日期和时间', delivery_schedule: '送达日期和时间',
         pickup_note: '* 可选时间 09:00 ~ 13:00', delivery_note: '* 可选时间 16:00 ~ 21:00',
+        delivery_time_warning: '超过预定取件时间，每30分钟加收5,000韩元。请谨慎选择时间。',
         from_label: '出发地', to_label: '目的地', base_price: '基础行李费',
         surcharge_origin: '出发地附加费', surcharge_dest: '目的地附加费',
         surcharge_storage: '寄存附加费 (按日)',

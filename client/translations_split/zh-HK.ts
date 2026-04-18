@@ -173,6 +173,7 @@ export const zhHK = {
         select_origin: '選擇出發地', select_dest: '選擇目的地', select_storage: '選擇寄存選項',
         pickup_schedule: '寄存日期同時間', delivery_schedule: '送達日期同時間',
         pickup_note: '* 可選時間 09:00 ~ 13:00', delivery_note: '* 可選時間 16:00 ~ 21:00',
+        delivery_time_warning: '超過預定取件時間，每30分鐘加收5,000韓元。請謹慎選擇時間。',
         from_label: '出發地', to_label: '目的地', base_price: '基礎行李費',
         surcharge_origin: '出發地附加費', surcharge_dest: '目的地附加費',
         surcharge_storage: '寄存附加費 (按日)',

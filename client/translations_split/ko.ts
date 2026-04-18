@@ -233,6 +233,7 @@ export const ko = {
         delivery_schedule: "찾으실 날짜와 시간",
         pickup_note: "* 이용 가능 시간: 09:00 ~ 13:00",
         delivery_note: "* 이용 가능 시간: 16:00 ~ 21:00",
+        delivery_time_warning: "픽업시간보다 늦으실 경우 30분에 5천원씩 비용이 발생합니다. 신중하게 선택 부탁드리겠습니다.",
         from_label: "보내시는 곳",
         to_label: "받으시는 곳",
         base_price: "기본 운임",

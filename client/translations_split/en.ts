@@ -208,6 +208,7 @@ export const en = {
         delivery_schedule: "Delivery Schedule",
         pickup_note: "* Available: 09:00 ~ 13:00",
         delivery_note: "* Available: 16:00 ~ 21:00",
+        delivery_time_warning: "Additional ₩5,000 per 30 min applies if you pick up later than scheduled. Please choose carefully.",
         from_label: "Pickup Location",
         to_label: "Drop-off Location",
         base_price: "Base Fare",

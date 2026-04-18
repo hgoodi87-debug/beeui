@@ -228,6 +228,7 @@ export const ja = {
         delivery_schedule: '受け取り日時',
         pickup_note: '* 09:00〜13:00の間で選択可能',
         delivery_note: '* 16:00〜21:00の間で選択可能',
+        delivery_time_warning: '予定受取時間を超える場合、30分ごとに5,000ウォンが加算されます。慎重にお選びください。',
         from_label: '出発地',
         to_label: '目的地',
         base_price: 'バッグ基本料金',

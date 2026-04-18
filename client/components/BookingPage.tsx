@@ -1016,14 +1016,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     <div className="h-full">
                                         {booking.serviceType === ServiceType.DELIVERY ? (
                                             <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">
-                                                <div>
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.to || 'To'}</label>
+                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.to || 'To'}</label>
                                                     <select
                                                         title="Select Dropoff Location"
                                                         aria-label="Select Dropoff Location"
                                                         value={booking.dropoffLocation}
                                                         onChange={e => setBooking(prev => ({ ...prev, dropoffLocation: e.target.value }))}
-                                                        className="mt-2 w-full rounded-[1.45rem] border border-gray-200 bg-white px-5 py-3.5 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
+                                                        className="w-full rounded-[1.45rem] border border-gray-200 bg-white px-5 py-3.5 font-bold text-sm outline-none transition-colors focus:border-bee-yellow"
                                                     >
                                                         <option value="">{tBooking.select_dest || 'Select Destination'}</option>
                                                         {destinationLocations.map(loc => (
@@ -1032,7 +1031,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                             </option>
                                                         ))}
                                                     </select>
-                                                </div>
                                                 <div className="rounded-[1.55rem] border border-gray-100 bg-gray-50/90 p-3.5 sm:p-4">
                                                     <div className="mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">
                                                         <Calendar size={14} />
@@ -1086,6 +1084,11 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                         </div>
                                                     </div>
                                                 </div>
+                                                {booking.deliveryTime && (
+                                                    <p className="text-[11px] font-bold text-red-500 leading-relaxed mt-1">
+                                                        ⚠️ {tBooking.delivery_time_warning || '픽업시간보다 늦으실 경우 30분에 5천원씩 비용이 발생합니다. 신중하게 선택 부탁드리겠습니다.'}
+                                                    </p>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">

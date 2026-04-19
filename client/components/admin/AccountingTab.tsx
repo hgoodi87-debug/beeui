@@ -49,7 +49,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
 
     // 통장 잔고 내역
-    const { data: bankTxs = [], isLoading: bankLoading } = useBankTransactions({ enabled: activeSubTab === 'bank' });
+    const { data: bankTxs = [], isLoading: bankLoading } = useBankTransactions({ enabled: activeSubTab === 'bank', startDate: revenueStartDate, endDate: revenueEndDate });
     const { save: saveBankTx, remove: deleteBankTx } = useBankTransactionsMutations();
     const [bankSaving, setBankSaving] = useState(false);
     const emptyBankForm: Omit<BankTransaction, 'id' | 'createdAt' | 'createdBy'> = {
@@ -105,6 +105,8 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     }, [revenueStartDate, revenueEndDate]);
 
     const kioskStats = useMemo(() => {
+        // done=false는 짐 미반환(보관중)이지 미결제가 아님 — 날짜 기준으로 전체 집계
+        const storingCount = kioskLogs.filter(l => !l.done).length;
         const gross = kioskLogs.reduce((s, l) => s + l.original_price, 0);
         const disc  = kioskLogs.reduce((s, l) => s + (l.discount ?? 0), 0);
         const net   = gross - disc;
@@ -120,7 +122,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
         const daily = Array.from(dailyMap.entries())
             .map(([date, v]) => ({ date, ...v }))
             .sort((a, b) => b.date.localeCompare(a.date));
-        return { count: kioskLogs.length, gross, disc, net, daily };
+        return { count: kioskLogs.length, gross, disc, net, daily, storingCount };
     }, [kioskLogs]);
 
     // Calendar logic
@@ -233,9 +235,14 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                             </button>
                             <button
                                 onClick={() => setActiveSubTab('kiosk')}
-                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'kiosk' ? 'bg-bee-yellow text-bee-black shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap relative ${activeSubTab === 'kiosk' ? 'bg-bee-yellow text-bee-black shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                             >
                                 🐝 키오스크 정산
+                                {kioskStats.storingCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 bg-blue-500 text-white text-[8px] font-black rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                                        {kioskStats.storingCount}
+                                    </span>
+                                )}
                             </button>
                             <button
                                 onClick={() => setActiveSubTab('bank')}

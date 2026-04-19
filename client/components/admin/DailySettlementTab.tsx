@@ -4,6 +4,7 @@ import { loadAllLogsForRange, KioskStorageLog } from '../../services/kioskDb';
 import { useBankTransactions, useBankTransactionsMutations } from '../../src/domains/admin/hooks/useBankTransactions';
 
 interface DailySettlementTabProps {
+    revenueStartDate: string;
     revenueEndDate: string;
     setRevenueStartDate: (d: string) => void;
     setRevenueEndDate: (d: string) => void;
@@ -24,6 +25,7 @@ interface DailySettlementTabProps {
 }
 
 const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
+    revenueStartDate,
     revenueEndDate,
     setRevenueStartDate,
     setRevenueEndDate,
@@ -56,6 +58,16 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
     });
     const [bankSaving, setBankSaving] = useState(false);
     const [bankSaved, setBankSaved] = useState(false);
+
+    const CLOSE_CHECKLIST = [
+        { id: 'reservations', label: '예약 확정 완료', icon: 'fa-calendar-check' },
+        { id: 'kiosk',        label: '키오스크 집계 확인', icon: 'fa-store' },
+        { id: 'cash',         label: '현금 실사 완료', icon: 'fa-coins' },
+        { id: 'bank',         label: '통장 입금 확인', icon: 'fa-building-columns' },
+    ] as const;
+    const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+    useEffect(() => { setCheckedItems(new Set()); }, [revenueEndDate]);
+    const allChecked = checkedItems.size === CLOSE_CHECKLIST.length;
 
     const handleSaveDeposit = async () => {
         const amount = Number(bankForm.amount);
@@ -91,6 +103,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
         setKioskLoading(true);
         (async () => {
             try {
+                // 일일 시재는 단일 날짜 — revenueEndDate만 사용해 탭 전환 시 월범위 오염 방지
                 const logs = await loadAllLogsForRange(revenueEndDate, revenueEndDate);
                 setKioskLogs(logs);
             } finally {
@@ -100,13 +113,15 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
     }, [revenueEndDate]);
 
     const kioskStats = useMemo(() => {
+        // done=false는 짐 미반환(보관중)이지 미결제가 아님 — 날짜 기준으로 전체 집계
         const gross = kioskLogs.reduce((s, l) => s + l.original_price, 0);
         const disc  = kioskLogs.reduce((s, l) => s + (l.discount ?? 0), 0);
         const net = gross - disc;
         const cash = kioskLogs.filter(l => l.payment === '현금').reduce((s, l) => s + (l.original_price - (l.discount ?? 0)), 0);
         const card = kioskLogs.filter(l => l.payment === '카드').reduce((s, l) => s + (l.original_price - (l.discount ?? 0)), 0);
         const unpaid = kioskLogs.filter(l => l.payment === '미수금').reduce((s, l) => s + (l.original_price - (l.discount ?? 0)), 0);
-        return { count: kioskLogs.length, gross, disc, net, cash, card, unpaid };
+        const storingCount = kioskLogs.filter(l => !l.done).length;
+        return { count: kioskLogs.length, gross, disc, net, cash, card, unpaid, storingCount };
     }, [kioskLogs]);
 
     return (
@@ -259,6 +274,9 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                         <span className="w-6 h-6 bg-bee-yellow rounded-lg flex items-center justify-center text-[10px]">🐝</span>
                         키오스크 정산 <span className="text-gray-300 font-serif italic text-xs">Kiosk Settlement</span>
                         <span className="px-2 py-0.5 bg-bee-black text-bee-yellow text-[8px] font-black rounded-lg tracking-widest uppercase">연남점 본사 통합</span>
+                        {kioskStats.storingCount > 0 && (
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-[8px] font-black rounded-lg">보관중 {kioskStats.storingCount}건</span>
+                        )}
                     </h3>
                     <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{revenueEndDate}</span>
                 </div>
@@ -502,11 +520,45 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                             />
                         </div>
 
+                        {/* 일마감 체크리스트 */}
+                        <div className="bg-gray-50/50 rounded-[28px] border border-gray-100 p-5 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                    <i className="fa-solid fa-list-check text-bee-yellow"></i> 일마감 체크리스트
+                                </span>
+                                {allChecked && (
+                                    <span className="text-[8px] px-2 py-0.5 bg-emerald-500 text-white font-black rounded-full">마감 준비 완료</span>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                {CLOSE_CHECKLIST.map(item => {
+                                    const checked = checkedItems.has(item.id);
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setCheckedItems(prev => {
+                                                const next = new Set(prev);
+                                                checked ? next.delete(item.id) : next.add(item.id);
+                                                return next;
+                                            })}
+                                            className={`flex items-center gap-2 p-3 rounded-[16px] border text-left transition-all ${checked ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}
+                                        >
+                                            <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all ${checked ? 'bg-emerald-500' : 'bg-gray-100'}`}>
+                                                <i className={`fa-solid ${checked ? 'fa-check' : item.icon} text-[8px] ${checked ? 'text-white' : 'text-gray-300'}`}></i>
+                                            </div>
+                                            <span className="text-[10px] font-black">{item.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <button
                             onClick={handleCashClose}
-                            className="group relative w-full py-6 bg-bee-black text-white font-black rounded-[32px] overflow-hidden shadow-2xl transition-all hover:translate-y-[-2px] active:translate-y-[1px]"
+                            disabled={!allChecked}
+                            className={`group relative w-full py-6 font-black rounded-[32px] overflow-hidden shadow-2xl transition-all ${allChecked ? 'bg-bee-black text-white hover:translate-y-[-2px] active:translate-y-[1px]' : 'bg-gray-100 text-gray-300 cursor-not-allowed'}`}
                         >
-                            <div className="absolute inset-0 bg-gradient-to-r from-bee-yellow to-amber-400 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out"></div>
+                            {allChecked && <div className="absolute inset-0 bg-gradient-to-r from-bee-yellow to-amber-400 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out"></div>}
                             <span className="relative z-10 group-hover:text-bee-black transition-colors flex items-center justify-center gap-3 tracking-widest uppercase text-xs">
                                 <i className="fa-solid fa-file-signature text-sm"></i> 최종 정산 원장 마감 및 승인
                             </span>
@@ -674,7 +726,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-gray-50">
-                    {expenditures.filter(e => e.date === revenueEndDate || !e.date).map(e => (
+                    {expenditures.filter(e => e.date === revenueEndDate).map(e => (
                         <div key={e.id} className="group/exp p-4 bg-gray-50/50 border border-gray-100 rounded-3xl hover:bg-white hover:border-orange-200 hover:shadow-xl hover:shadow-orange-500/5 transition-all">
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-3">
@@ -695,7 +747,7 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                             </div>
                         </div>
                     ))}
-                    {expenditures.filter(e => e.date === revenueEndDate || !e.date).length === 0 && (
+                    {expenditures.filter(e => e.date === revenueEndDate).length === 0 && (
                         <div className="py-10 flex flex-col items-center justify-center text-gray-300 border-2 border-dashed border-gray-50 rounded-[32px]">
                             <i className="fa-solid fa-face-smile text-xl mb-2 opacity-20"></i>
                             <p className="text-[10px] font-black italic">해당 날짜에 등록된 기타 지출 내역이 없습니다. ✨</p>

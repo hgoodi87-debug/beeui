@@ -607,7 +607,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                     <div className="space-y-6 pb-20">
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점 ID (중복불가)</label>
-                            <input value={locForm.id ?? ''} onChange={e => setLocForm({ ...locForm, id: e.target.value })} placeholder="예: icn-t1" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                            <input autoComplete="off" value={locForm.id ?? ''} onChange={e => setLocForm({ ...locForm, id: e.target.value })} placeholder="예: icn-t1" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between ml-1">
@@ -627,12 +627,12 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 )}
                             </div>
                             <div className="grid grid-cols-1 gap-2">
-                                <input value={locForm.name ?? ''} onChange={e => setLocForm({ ...locForm, name: e.target.value })} placeholder="한글 명칭 입력 (예: 인천공항 T1)" title="지점명 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
-                                <input value={locForm.name_en || ''} onChange={e => setLocForm({ ...locForm, name_en: e.target.value })} placeholder="영어 명칭 입력 (예: Incheon Airport T1)" title="지점명 (영어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.name_ja || ''} onChange={e => setLocForm({ ...locForm, name_ja: e.target.value })} placeholder="일본어 명칭 입력 (예: 仁川空港 T1)" title="지점명 (일본어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.name_zh || ''} onChange={e => setLocForm({ ...locForm, name_zh: e.target.value })} placeholder="중국어 간체 입력 (예: 仁川机场 T1)" title="지점명 (중국어 간체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.name_zh_tw || ''} onChange={e => setLocForm({ ...locForm, name_zh_tw: e.target.value })} placeholder="대만 번체 입력 (예: 仁川機場 T1)" title="지점명 (대만 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.name_zh_hk || ''} onChange={e => setLocForm({ ...locForm, name_zh_hk: e.target.value })} placeholder="홍콩 번체 입력 (예: 仁川機場 T1)" title="지점명 (홍콩 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.name ?? ''} onChange={e => setLocForm({ ...locForm, name: e.target.value })} placeholder="한글 명칭 입력 (예: 인천공항 T1)" title="지점명 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
+                                <input autoComplete="off" value={locForm.name_en || ''} onChange={e => setLocForm({ ...locForm, name_en: e.target.value })} placeholder="영어 명칭 입력 (예: Incheon Airport T1)" title="지점명 (영어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.name_ja || ''} onChange={e => setLocForm({ ...locForm, name_ja: e.target.value })} placeholder="일본어 명칭 입력 (예: 仁川空港 T1)" title="지점명 (일본어)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.name_zh || ''} onChange={e => setLocForm({ ...locForm, name_zh: e.target.value })} placeholder="중국어 간체 입력 (예: 仁川机场 T1)" title="지점명 (중국어 간체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.name_zh_tw || ''} onChange={e => setLocForm({ ...locForm, name_zh_tw: e.target.value })} placeholder="대만 번체 입력 (예: 仁川機場 T1)" title="지점명 (대만 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.name_zh_hk || ''} onChange={e => setLocForm({ ...locForm, name_zh_hk: e.target.value })} placeholder="홍콩 번체 입력 (예: 仁川機場 T1)" title="지점명 (홍콩 번체)" className="bg-gray-50 p-1.5 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                             </div>
                         </div>
                         <div>
@@ -644,28 +644,28 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div className="grid grid-cols-2 gap-2">
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">위도 (Lat)</label>
-                                <input type="number" title="Latitude" placeholder="Latitude" value={locForm.lat ?? ''} onChange={e => setLocForm({ ...locForm, lat: e.target.value ? parseFloat(e.target.value) : undefined })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                <input autoComplete="off" type="number" title="Latitude" placeholder="Latitude" value={locForm.lat ?? ''} onChange={e => setLocForm({ ...locForm, lat: e.target.value ? parseFloat(e.target.value) : undefined })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">경도 (Lng)</label>
-                                <input type="number" title="Longitude" placeholder="Longitude" value={locForm.lng ?? ''} onChange={e => setLocForm({ ...locForm, lng: e.target.value ? parseFloat(e.target.value) : undefined })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                <input autoComplete="off" type="number" title="Longitude" placeholder="Longitude" value={locForm.lng ?? ''} onChange={e => setLocForm({ ...locForm, lng: e.target.value ? parseFloat(e.target.value) : undefined })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
                             </div>
                         </div>
 
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">주소 (Address)</label>
                             <div className="flex gap-2">
-                                <input value={locForm.address ?? ''} onChange={e => setLocForm({ ...locForm, address: e.target.value })} placeholder="지점의 도로명 주소를 입력하세요" className="flex-1 bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
+                                <input autoComplete="off" value={locForm.address ?? ''} onChange={e => setLocForm({ ...locForm, address: e.target.value })} placeholder="지점의 도로명 주소를 입력하세요" className="flex-1 bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
                                 <button onClick={findCoordinates} title="Find Coordinates" disabled={isGeocoding} className="px-4 bg-bee-yellow text-bee-black font-black rounded-xl text-[10px] hover:scale-105 transition-all shadow-sm disabled:opacity-50 whitespace-nowrap">
                                     {isGeocoding ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-location-crosshairs"></i>} 좌표찾기
                                 </button>
                             </div>
                             <div className="mt-2 space-y-2">
-                                <input value={locForm.address_en || ''} onChange={e => setLocForm({ ...locForm, address_en: e.target.value })} placeholder="영어 주소 입력" title="상세 주소 (영어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.address_ja || ''} onChange={e => setLocForm({ ...locForm, address_ja: e.target.value })} placeholder="일본어 주소 입력" title="상세 주소 (일본어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.address_zh || ''} onChange={e => setLocForm({ ...locForm, address_zh: e.target.value })} placeholder="중국어 간체 주소 입력" title="상세 주소 (중국어 간체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.address_zh_tw || ''} onChange={e => setLocForm({ ...locForm, address_zh_tw: e.target.value })} placeholder="대만 번체 주소 입력" title="상세 주소 (대만 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.address_zh_hk || ''} onChange={e => setLocForm({ ...locForm, address_zh_hk: e.target.value })} placeholder="홍콩 번체 주소 입력" title="상세 주소 (홍콩 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.address_en || ''} onChange={e => setLocForm({ ...locForm, address_en: e.target.value })} placeholder="영어 주소 입력" title="상세 주소 (영어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.address_ja || ''} onChange={e => setLocForm({ ...locForm, address_ja: e.target.value })} placeholder="일본어 주소 입력" title="상세 주소 (일본어)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.address_zh || ''} onChange={e => setLocForm({ ...locForm, address_zh: e.target.value })} placeholder="중국어 간체 주소 입력" title="상세 주소 (중국어 간체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.address_zh_tw || ''} onChange={e => setLocForm({ ...locForm, address_zh_tw: e.target.value })} placeholder="대만 번체 주소 입력" title="상세 주소 (대만 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.address_zh_hk || ''} onChange={e => setLocForm({ ...locForm, address_zh_hk: e.target.value })} placeholder="홍콩 번체 주소 입력" title="상세 주소 (홍콩 번체)" className="w-full bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                             </div>
                         </div>
 
@@ -676,11 +676,11 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">전용 URL 코드</label>
-                                    <input value={locForm.branchCode || ''} onChange={e => setLocForm({ ...locForm, branchCode: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} placeholder="예: yeonnam" className="w-full bg-bee-yellow/5 p-3 rounded-xl font-bold border border-bee-yellow/20 focus:border-bee-yellow outline-none text-xs text-bee-black" />
+                                    <input autoComplete="off" value={locForm.branchCode || ''} onChange={e => setLocForm({ ...locForm, branchCode: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} placeholder="예: yeonnam" className="w-full bg-bee-yellow/5 p-3 rounded-xl font-bold border border-bee-yellow/20 focus:border-bee-yellow outline-none text-xs text-bee-black" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">대표자명</label>
-                                    <input value={locForm.ownerName || ''} onChange={e => setLocForm({ ...locForm, ownerName: e.target.value })} placeholder="대표자 성함" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                    <input autoComplete="off" value={locForm.ownerName || ''} onChange={e => setLocForm({ ...locForm, ownerName: e.target.value })} placeholder="대표자 성함" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
                                 </div>
                             </div>
 
@@ -688,14 +688,14 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 <div>
                                     <label htmlFor="delivery-commission" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">정산 수수료 (배송)</label>
                                     <div className="relative">
-                                        <input id="delivery-commission" type="number" value={locForm.commissionRates?.delivery ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, delivery: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
+                                        <input autoComplete="off" id="delivery-commission" type="number" value={locForm.commissionRates?.delivery ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, delivery: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
                                     </div>
                                 </div>
                                 <div>
                                     <label htmlFor="storage-commission" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">정산 수수료 (보관)</label>
                                     <div className="relative">
-                                        <input id="storage-commission" type="number" value={locForm.commissionRates?.storage ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, storage: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
+                                        <input autoComplete="off" id="storage-commission" type="number" value={locForm.commissionRates?.storage ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, storage: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
                                     </div>
                                 </div>
@@ -703,7 +703,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
 
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점 연락처</label>
-                                <input value={locForm.phone || locForm.contactNumber || ''} onChange={e => setLocForm({ ...locForm, phone: e.target.value })} placeholder="02-1234-5678" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
+                                <input autoComplete="off" value={locForm.phone || locForm.contactNumber || ''} onChange={e => setLocForm({ ...locForm, phone: e.target.value })} placeholder="02-1234-5678" className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs" />
                             </div>
                         </div>
 
@@ -719,6 +719,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                     </div>
                                 )}
                                 <input
+                                    autoComplete="off"
                                     value={locForm.imageUrl || ''}
                                     onChange={e => setLocForm({ ...locForm, imageUrl: e.target.value })}
                                     placeholder="URL 입력 혹은 우측 버튼으로 업로드"
@@ -744,6 +745,7 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                     </div>
                                 )}
                                 <input
+                                    autoComplete="off"
                                     value={locForm.pickupImageUrl || ''}
                                     onChange={e => setLocForm({ ...locForm, pickupImageUrl: e.target.value })}
                                     placeholder="URL 입력 혹은 우측 버튼으로 업로드"
@@ -760,10 +762,10 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                         <div>
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">영업 시간 (Business Hours)</label>
                             <div className="grid grid-cols-1 gap-2 mt-1">
-                                <input value={locForm.businessHours ?? ''} onChange={e => setLocForm({ ...locForm, businessHours: e.target.value })} placeholder="예: 09:00 - 22:00 (연중무휴)" title="영업 시간 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
-                                <input value={locForm.businessHours_en || ''} onChange={e => setLocForm({ ...locForm, businessHours_en: e.target.value })} placeholder="영어 영업 시간 입력" title="영업 시간 (영어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.businessHours_ja || ''} onChange={e => setLocForm({ ...locForm, businessHours_ja: e.target.value })} placeholder="일본어 영업 시간 입력" title="영업 시간 (일본어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
-                                <input value={locForm.businessHours_zh || ''} onChange={e => setLocForm({ ...locForm, businessHours_zh: e.target.value })} placeholder="중국어 영업 시간 입력" title="영업 시간 (중국어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.businessHours ?? ''} onChange={e => setLocForm({ ...locForm, businessHours: e.target.value })} placeholder="예: 09:00 - 22:00 (연중무휴)" title="영업 시간 (한국어)" className="bg-white p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs shadow-sm" />
+                                <input autoComplete="off" value={locForm.businessHours_en || ''} onChange={e => setLocForm({ ...locForm, businessHours_en: e.target.value })} placeholder="영어 영업 시간 입력" title="영업 시간 (영어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.businessHours_ja || ''} onChange={e => setLocForm({ ...locForm, businessHours_ja: e.target.value })} placeholder="일본어 영업 시간 입력" title="영업 시간 (일본어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
+                                <input autoComplete="off" value={locForm.businessHours_zh || ''} onChange={e => setLocForm({ ...locForm, businessHours_zh: e.target.value })} placeholder="중국어 영업 시간 입력" title="영업 시간 (중국어)" className="bg-gray-50 p-2 px-3 rounded-lg font-bold border border-gray-100 focus:border-bee-yellow outline-none text-[10px]" />
                             </div>
                         </div>
 

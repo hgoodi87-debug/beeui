@@ -2,13 +2,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StorageService } from '../../../../services/storageService';
 import { BankTransaction } from '../../../../types';
 
-const QUERY_KEY = ['bankTransactions'] as const;
-
-export const useBankTransactions = ({ enabled = true }: { enabled?: boolean } = {}) => {
+export const useBankTransactions = ({
+    enabled = true,
+    startDate,
+    endDate,
+}: { enabled?: boolean; startDate?: string; endDate?: string } = {}) => {
     return useQuery<BankTransaction[]>({
-        queryKey: QUERY_KEY,
+        queryKey: ['bankTransactions', startDate, endDate],
         queryFn: async () => {
-            const data = await StorageService.getBankTransactions();
+            const data = await StorageService.getBankTransactions(startDate, endDate);
             return Array.isArray(data) ? data : [];
         },
         staleTime: 60_000,

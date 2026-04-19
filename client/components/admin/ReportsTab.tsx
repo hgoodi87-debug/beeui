@@ -49,7 +49,7 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
     }, [startDate, endDate]);
 
     const kioskStats = useMemo(() => {
-        const validLogs = kioskLogs.filter(l => l.done);
+        const validLogs = kioskLogs; // done=false는 보관중이지 미결제가 아님 — 날짜 기준 전체 집계
         const totalRevenue = validLogs.reduce((s, l) => s + (l.original_price - l.discount), 0);
         const totalCount = validLogs.length;
         const smallCount = validLogs.reduce((s, l) => s + l.small_qty, 0);

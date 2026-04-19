@@ -748,8 +748,11 @@ const loadSupabaseExpenditures = async (): Promise<Expenditure[]> => {
   return (rows || []).map((row) => snakeToCamel(row) as unknown as Expenditure);
 };
 
-const loadSupabaseBankTransactions = async (): Promise<BankTransaction[]> => {
-  const rows = await supabaseGet<Array<Record<string, unknown>>>('bank_transactions?select=*&order=date.desc,created_at.desc&limit=2000');
+const loadSupabaseBankTransactions = async (startDate?: string, endDate?: string): Promise<BankTransaction[]> => {
+  const dateFilter = startDate && endDate
+    ? `&date=gte.${startDate}&date=lte.${endDate}`
+    : '';
+  const rows = await supabaseGet<Array<Record<string, unknown>>>(`bank_transactions?select=*${dateFilter}&order=date.desc,created_at.desc&limit=2000`);
   return (rows || []).map((row) => snakeToCamel(row) as unknown as BankTransaction);
 };
 
@@ -2074,9 +2077,9 @@ export const StorageService = {
   },
 
   // --- Bank Transactions (통장 잔고 내역) ---
-  getBankTransactions: async (): Promise<BankTransaction[]> => {
+  getBankTransactions: async (startDate?: string, endDate?: string): Promise<BankTransaction[]> => {
     try {
-      const data = await loadSupabaseBankTransactions();
+      const data = await loadSupabaseBankTransactions(startDate, endDate);
       return data;
     } catch (e) {
       console.warn('[Storage] Supabase bank_transactions failed:', e);

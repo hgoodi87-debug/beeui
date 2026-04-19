@@ -7,6 +7,7 @@ import { generateTimeSlots, isPastKSTTime, getFirstAvailableSlot, formatKSTDate,
 import { formatDistance } from '../../utils/locationUtils';
 import { BagCategoryId } from '../../src/domains/booking/bagCategoryUtils';
 import { BagSizes } from '../../types';
+import { getBranchStatus } from '../../utils/businessHours';
 
 
 interface LocationListProps {
@@ -471,6 +472,7 @@ const LocationList: React.FC<LocationListProps> = ({
                     {visibleBranches.map((branch, index) => {
                         const isSelected = selectedBranch?.id === branch.id;
                         const isActive = branch.isActive !== false;
+                        const branchStatus = getBranchStatus(isActive, branch.businessHours);
 
                         // [스봉이] 가장 가까운 지점 찾기 (정렬된 상태라면 index 0)
                         const isClosest = index === 0 && branch && branch.distance !== undefined && branch.distance < 5; // 5km 이내면 가깝다고 해줄게요 💅
@@ -509,8 +511,14 @@ const LocationList: React.FC<LocationListProps> = ({
                                     </div>
 
                                     <div className="flex items-center gap-1.5">
-                                        <div className={`px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-wider w-fit border shadow-sm ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                                            {isActive ? (t.locations_page?.open || 'ACTIVE') : (t.locations_page?.close || 'CLOSE')}
+                                        <div className={`px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-wider w-fit border shadow-sm ${
+                                            branchStatus === 'open_now' ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' :
+                                            branchStatus === 'bookable' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                            'bg-red-50 text-red-600 border-red-200'
+                                        }`}>
+                                            {branchStatus === 'open_now' ? (t.locations_page?.open_now || '운영중') :
+                                             branchStatus === 'bookable' ? (t.locations_page?.bookable || '예약가능') :
+                                             (t.locations_page?.close || 'CLOSE')}
                                         </div>
                                         {branch.distance !== undefined && (
                                             <div className="text-[8px] md:text-[12px] font-black text-blue-500 italic font-montserrat">

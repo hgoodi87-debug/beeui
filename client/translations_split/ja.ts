@@ -482,6 +482,8 @@ export const ja = {
         branch_info: '店舗情報',
         storage_hub: '保管ハブ',
         open: '営業中',
+        open_now: '営業中',
+        bookable: '予約可能',
         close: '終了',
         address_label: '住所',
         hours_label: '営業時間',

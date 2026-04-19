@@ -482,6 +482,8 @@ export const zh = {
         branch_info: '网点信息',
         storage_hub: '寄存中心',
         open: '营业中',
+        open_now: '营业中',
+        bookable: '可预约',
         close: '已关门',
         address_label: '地址',
         hours_label: '营业时间',

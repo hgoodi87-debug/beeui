@@ -484,6 +484,8 @@ export const en = {
         branch_info: 'Branch Info',
         storage_hub: 'Storage Hub',
         open: 'Open',
+        open_now: 'Open Now',
+        bookable: 'Bookable',
         close: 'Closed',
         address_label: 'Address',
         hours_label: 'Business Hours',

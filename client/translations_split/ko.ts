@@ -511,6 +511,8 @@ export const ko = {
         branch_info: '지점 정보',
         storage_hub: '보관 허브',
         open: '영업 중',
+        open_now: '운영중',
+        bookable: '예약가능',
         close: '마감',
         address_label: '주소',
         hours_label: '운영 시간',

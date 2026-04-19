@@ -4,6 +4,7 @@ import { X, Clock, MapPin, Sparkles, Compass, Star, Store, ArrowRight } from 'lu
 import { BagSizes, LocationOption } from "../../types";
 import { SEO_LOCATIONS } from '../../src/constants/seoLocations';
 import { BagCategoryId } from '../../src/domains/booking/bagCategoryUtils';
+import { getBranchStatus } from '../../utils/businessHours';
 
 interface BranchDetailsProps {
     t: any;
@@ -28,6 +29,7 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
 }) => {
     const serviceKey = currentService === 'STORAGE' ? 'STORAGE' : 'DELIVERY';
     const isActive = selectedBranch.isActive !== false;
+    const branchStatus = getBranchStatus(isActive, selectedBranch.businessHours);
     const [imageFailed, setImageFailed] = React.useState(false);
     const l = (lang ?? '').toLowerCase();
 
@@ -91,8 +93,14 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                         <span className="px-3 py-1 bg-bee-black text-bee-yellow text-[9px] md:text-[11px] font-black italic uppercase tracking-[0.18em] rounded-full shadow-lg font-montserrat">
                             {currentService !== 'STORAGE' ? (t.locations_page?.branch_info || 'Branch Info') : (t.locations_page?.storage_hub || 'Storage Hub')}
                         </span>
-                        <span className={`px-2.5 py-1 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.18em] border ${isActive ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                            {isActive ? (t.locations_page?.open || 'OPEN') : (t.locations_page?.close || 'CLOSE')}
+                        <span className={`px-2.5 py-1 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.18em] border ${
+                            branchStatus === 'open_now' ? 'bg-[#E3F6ED] text-[#13A35E] border-[#13A35E]/20' :
+                            branchStatus === 'bookable' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                            'bg-red-50 text-red-600 border-red-200'
+                        }`}>
+                            {branchStatus === 'open_now' ? (t.locations_page?.open_now || '운영중') :
+                             branchStatus === 'bookable' ? (t.locations_page?.bookable || '예약가능') :
+                             (t.locations_page?.close || 'CLOSE')}
                         </span>
                         {selectedBranch.supportsDelivery && (
                             <span className="px-2.5 py-1 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.14em] bg-bee-black text-bee-yellow">

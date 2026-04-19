@@ -389,6 +389,8 @@ export const zhHK = {
         branch_info: '網點資訊',
         storage_hub: '寄存中心',
         open: '營業中',
+        open_now: '營業中',
+        bookable: '可預約',
         close: '已關門',
         address_label: '地址',
         hours_label: '營業時間',

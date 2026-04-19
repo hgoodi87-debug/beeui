@@ -34,25 +34,20 @@ const preferLocationTranslation = (value?: string, fallback?: string) => {
 };
 
 const normalizeLocationFormTranslations = (loc: LocationOption): LocationOption => {
-    const baseName = loc.name?.trim() || '';
-    const baseAddress = loc.address?.trim() || '';
-    const zhName = preferLocationTranslation(loc.name_zh, baseName);
-    const zhAddress = preferLocationTranslation(loc.address_zh, baseAddress);
-
     return {
         ...loc,
-        name: baseName || loc.name,
-        address: baseAddress || loc.address,
-        name_en: preferLocationTranslation(loc.name_en, baseName),
-        name_ja: preferLocationTranslation(loc.name_ja, baseName),
-        name_zh: zhName,
-        name_zh_tw: preferLocationTranslation(loc.name_zh_tw, zhName),
-        name_zh_hk: preferLocationTranslation(loc.name_zh_hk, zhName),
-        address_en: preferLocationTranslation(loc.address_en, baseAddress),
-        address_ja: preferLocationTranslation(loc.address_ja, baseAddress),
-        address_zh: zhAddress,
-        address_zh_tw: preferLocationTranslation(loc.address_zh_tw, zhAddress),
-        address_zh_hk: preferLocationTranslation(loc.address_zh_hk, zhAddress),
+        name: loc.name?.trim() || '',
+        address: loc.address?.trim() || '',
+        name_en: loc.name_en?.trim() || '',
+        name_ja: loc.name_ja?.trim() || '',
+        name_zh: loc.name_zh?.trim() || '',
+        name_zh_tw: loc.name_zh_tw?.trim() || '',
+        name_zh_hk: loc.name_zh_hk?.trim() || '',
+        address_en: loc.address_en?.trim() || '',
+        address_ja: loc.address_ja?.trim() || '',
+        address_zh: loc.address_zh?.trim() || '',
+        address_zh_tw: loc.address_zh_tw?.trim() || '',
+        address_zh_hk: loc.address_zh_hk?.trim() || '',
     };
 };
 

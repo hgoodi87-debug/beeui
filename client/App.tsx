@@ -127,6 +127,21 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // GA4 SPA 라우트 page_view — 초기 로드는 gtag config가 처리하므로 2번째 변경부터 수동 발송
+  const isFirstPageView = React.useRef(true);
+  useEffect(() => {
+    if (isFirstPageView.current) {
+      isFirstPageView.current = false;
+      return;
+    }
+    if (typeof window.gtag !== 'function') return;
+    window.gtag('event', 'page_view', {
+      page_path: location.pathname + location.search,
+      page_location: window.location.href,
+      page_title: document.title,
+    });
+  }, [location.pathname, location.search]);
+
   // Google Ads — 첫 방문 시 UTM/GCLID 캡처 (SPA 라우팅 중 유실 방지)
   useEffect(() => {
     captureAdParams();
@@ -474,7 +489,7 @@ const App: React.FC = () => {
     setAdminInfo(EMPTY_ADMIN_INFO);
     clearPersistedAdminInfo();
     localStorage.removeItem('beeliber_admin_info');
-    navigate('/');
+    navigate(`/${lang}`);
   };
 
   // Legacy navigations handler to not break hardcoded prop strings in subcomponents
@@ -740,7 +755,7 @@ const App: React.FC = () => {
 
                       navigate(nextPath, { replace: true });
                     })();
-                  }} onCancel={() => navigate('/')} />} />
+                  }} onCancel={() => navigate(`/${lang}`)} />} />
                   <Route path="/admin/dashboard" element={<AdminGuard><AnimatedRoute><AdminDashboard onBack={handleAdminLogout} onStaffMode={() => navigate('/staff/scan')} adminName={adminInfo.name} jobTitle={adminInfo.jobTitle} adminRole={adminInfo.role} adminEmail={adminInfo.email} scanId={new URLSearchParams(location.search).get('scan') || undefined} initialTab={new URLSearchParams(location.search).get('tab') || undefined} lang={ADMIN_LANG} t={adminT} /></AnimatedRoute></AdminGuard>} />
                   <Route path="/admin/branch/:branchId" element={<BranchAdminGuard><AnimatedRoute><BranchAdminPage branchId={adminInfo.branchId} lang={ADMIN_LANG} t={adminT} onBack={handleAdminLogout} /></AnimatedRoute></BranchAdminGuard>} />
                   <Route path="/admin/branch/:branchId/booking" element={<BranchAdminGuard><AnimatedRoute><BookingPage t={adminT} lang={ADMIN_LANG} locations={bookingLocations} initialLocationId={adminInfo.branchId} onBack={() => navigate(`/admin/branch/${adminInfo.branchId}`)} onSuccess={handleBranchManualBookingSuccess} user={currentUser} /></AnimatedRoute></BranchAdminGuard>} />

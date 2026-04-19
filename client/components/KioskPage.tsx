@@ -649,6 +649,58 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     </div>
                   ))}
                 </div>
+                {/* 열별 보관 현황 */}
+                {(() => {
+                  const colColors = [
+                    'bg-indigo-500',
+                    'bg-emerald-500',
+                    'bg-amber-500',
+                    'bg-rose-500',
+                    'bg-sky-500',
+                    'bg-purple-500',
+                    'bg-teal-500',
+                  ];
+                  return (
+                    <div className="mb-5">
+                      <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                        <span>📦</span>
+                        열별 보관 현황
+                        <span className="text-white/20 font-normal normal-case tracking-normal">
+                          · 취소선 = 픽업완료
+                        </span>
+                      </p>
+                      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(cfg.row_rules.rows.length, 4)}, 1fr)` }}>
+                        {cfg.row_rules.rows.map((row, idx) => {
+                          const items = todayLog.filter((e) => e.row_label === row.label);
+                          const active = items.filter((e) => !e.done).length;
+                          const color = colColors[idx % colColors.length];
+                          return (
+                            <div key={row.label} className="bg-white/5 rounded-xl overflow-hidden">
+                              <div className={`${color} px-2 py-1.5 flex items-center justify-between`}>
+                                <span className="text-white font-black text-sm">{row.label}</span>
+                                <span className="text-white/80 font-black text-xs tabular-nums">{active}</span>
+                              </div>
+                              <div className="px-2 py-1.5 min-h-[40px] space-y-0.5">
+                                {items.length === 0 ? (
+                                  <p className="text-white/20 text-[10px] text-center py-1">비어있음</p>
+                                ) : (
+                                  items.map((e) => (
+                                    <div key={e.id ?? e.tag} className={`text-[10px] font-bold tabular-nums ${e.done ? 'line-through text-white/20' : 'text-white/70'}`}>
+                                      #{e.tag} {e.small_qty > 0 ? `소${e.small_qty}` : ''}{e.carrier_qty > 0 ? `캐${e.carrier_qty}` : ''}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                              <div className="px-2 pb-1.5">
+                                <p className="text-white/25 text-[9px] tabular-nums">{row.start}~{row.end}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {/* 접수 목록 */}
                 <div className="space-y-2">
                   {todayLog.length === 0 && <p className="text-white/30 text-sm text-center py-10">오늘 접수 없음</p>}
@@ -671,12 +723,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                           <p className="text-white/40 text-xs">{e.payment}</p>
                         </div>
                       </div>
-                      {!e.done
-                        ? <button onClick={() => handleMarkDone(e)}
-                            className="text-[#F5C842] text-xs font-bold ring-1 ring-[#F5C842]/40 rounded-full px-3 py-1.5 active:scale-95 flex-shrink-0 whitespace-nowrap">
-                            {t.mark_done}
-                          </button>
-                        : <span className="text-green-400 text-xs font-bold flex-shrink-0">✓ {t.done}</span>}
+                      <button onClick={() => handleMarkDone(e)}
+                          className={`text-xs font-bold rounded-full px-3 py-1.5 active:scale-95 flex-shrink-0 whitespace-nowrap ${e.done ? 'ring-1 ring-green-400/40 text-green-400' : 'ring-1 ring-[#F5C842]/40 text-[#F5C842]'}`}>
+                          {e.done ? `✓ ${t.done}` : t.mark_done}
+                        </button>
                     </div>
                   ))}
                 </div>
@@ -844,6 +894,7 @@ const KioskPage: React.FC = () => {
   const [duration, setDuration] = useState(0);
   const [payment, setPayment] = useState<PaymentMethod>('현금');
   const [discount, setDiscount] = useState(0);
+  const [eventParticipated, setEventParticipated] = useState(false);
 
   // ── 언어 드롭다운 ────────────────────────────────────────────────────
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -1025,8 +1076,9 @@ const KioskPage: React.FC = () => {
   };
 
   const handleMarkDone = async (entry: KioskStorageLog) => {
-    if (entry.id) await updateStorageLog(entry.id, { done: true });
-    setTodayLog((prev) => prev.map((e) => (e.tag === entry.tag && e.date === entry.date ? { ...e, done: true } : e)));
+    const newDone = !entry.done;
+    if (entry.id) await updateStorageLog(entry.id, { done: newDone });
+    setTodayLog((prev) => prev.map((e) => (e.tag === entry.tag && e.date === entry.date ? { ...e, done: newDone } : e)));
   };
 
   // QR 스캐너 인식 후 자동 조회
@@ -1561,6 +1613,37 @@ const KioskPage: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {/* ── 이벤트 할인 섹션 ── */}
+      {cfg.discount.unit > 0 && (
+        <div className="bg-[#FFFBEA] border-b border-[#F5C842]/30 px-4 py-2.5 flex-shrink-0">
+          <div className="border-2 border-[#F5C842] rounded-2xl p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-base">🎁</span>
+              <span className="font-black text-[#6B4F00] text-sm">이벤트 참여 시 추가 할인</span>
+            </div>
+            <p className="text-[#8B6914] text-xs mb-2 pl-6">룰렛을 돌리신 후 당첨된 금액을 아래에서 선택해주세요</p>
+            <button
+              onClick={() => {
+                const next = !eventParticipated;
+                setEventParticipated(next);
+                if (!next) setDiscount(0);
+              }}
+              className={`w-full flex items-center gap-3 bg-white rounded-xl px-3.5 py-2.5 border-2 transition-all active:scale-[0.98] ${
+                eventParticipated ? 'border-[#F5C842] bg-[#FFFBEA]' : 'border-transparent hover:border-[#F5C842]/30'
+              }`}
+            >
+              <span className="text-base">👉</span>
+              <span className="font-bold text-[#111111] text-sm flex-1 text-left">이벤트 참여하기</span>
+              <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                eventParticipated ? 'border-[#F5C842] bg-[#F5C842]' : 'border-gray-300'
+              }`}>
+                {eventParticipated && <span className="w-2 h-2 rounded-full bg-white" />}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 오늘 접수 현황 */}
       {todayLog.length > 0 && (

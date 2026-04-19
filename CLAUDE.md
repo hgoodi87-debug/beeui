@@ -226,10 +226,11 @@ cd ~/.claude/skills/gstack && ./setup
 
 | 우선순위 | 이니셔티브 | 상태 | 참조 문서 |
 |---|---|---|---|
-| 1 | Supabase 마이그레이션 | Phase 0 진단 중 | `beeliber_supabase` |
-| 2 | 다국어 SEO 개선 | 사이트맵·JSON-LD·canonical 완료 / 콘텐츠·hreflang 보강 대기 | `beeliber_seo` |
+| 1 | Supabase 마이그레이션 | xpnf 완전 전환 완료 / fzvf pause (2026-04-17) → 2026-04-24 이후 삭제 | `beeliber_supabase` |
+| 2 | 다국어 SEO 개선 | 사이트맵·JSON-LD·canonical 완료 / G3 Prerender 미완 | `beeliber_seo` |
 | 3 | Toss Payments 실배포 | 코드 준비 완료, 환경변수 대기 | `beeliber_payments` |
 | 4 | 랜딩페이지 리뉴얼 | 진행 중 | `beeliber_design` |
+| 5 | 보안·성능 안정화 | **완료** (2026-04-19) — RLS 통합·InitPlan·FK 인덱스·settlement trigger·키오스크 보안 | DONE.md |
 
 ## 빌드 & 배포
 
@@ -240,18 +241,22 @@ firebase deploy   # 전체 배포
 
 ---
 
-## 데이터베이스 구조 (Supabase PostgreSQL — 2026-04-15 기준)
+## 데이터베이스 구조 (Supabase PostgreSQL — 2026-04-19 기준)
 
 **프로덕션 프로젝트 ID:** `xpnfjolqiffduedwtxey` | **리전:** `ap-southeast-1` | **총 테이블:** 57개
-**⚠️ MCP 연결 프로젝트 ID:** `fzvfyeskdivulazjjpgr` (프로덕션과 다름 — MCP Supabase 명령은 실제 DB가 아닐 수 있음. 실제 DB 변경은 `supabase db push --linked` 필수. DONE.md 2026-04-13 참조)
+**✅ MCP 연결:** `.mcp.json`에 xpnf project-scoped 서버 등록 완료 (2026-04-17). MCP 명령이 프로덕션 DB에 직접 연결됨.
+**⚠️ fzvf 레거시:** pause 상태 (2026-04-17). 2026-04-24 이후 삭제 예정. `supabaseRuntime.ts:4` LEGACY_PROJECT_ID 먼저 제거 필요.
 
 > **연동 주의사항**
 > - `booking_details`와 `reservations`는 별개 테이블. `booking_details.reservation_id → reservations.id` (nullable FK)
 > - `kiosk_storage_log`의 PK는 `bigint` (UUID 아님). `branch_id`는 `text` 타입 (UUID 아님)
 > - `settlement_status` CHECK 제약: `PENDING|CONFIRMED|PAID_OUT|MONTHLY_INCLUDED|ON_HOLD|CANCELLED|REFUNDED|DELETED` — 소문자·한국어 불허
+> - `settlement_status` **전이 trigger 적용됨** (2026-04-19): `trg_settlement_status_transition` — 역전이(PAID_OUT→PENDING 등) 시 `check_violation` 에러 발생
 > - `expenditures` 테이블의 실제 컬럼: `receipt_url`, `approved_by`, `notes`, `updated_at` 존재 (타입 코드와 다를 수 있음)
 > - `employees.profile_id → profiles.id` (UNIQUE FK) — 직원 조회 시 profiles 조인 필수
 > - `locations.branch_id → branches.id` (nullable) — 일부 지점은 branch_id 없음
+> - `kiosk_storage_log` INSERT/UPDATE: `kiosk_branches.branch_id` 실존 값만 허용 (RLS with_check 강화, 2026-04-19)
+> - RLS 정책 전체 `auth.uid()` → `(select auth.uid())` InitPlan 래핑 완료 (2026-04-19) — 성능 최적화
 
 ### 도메인별 테이블 구조
 

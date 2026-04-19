@@ -178,3 +178,28 @@
 - `BookingState.status` — UI 합성 필드. DB `booking_details` 테이블에 없음. `settlement_status`와 별개
 - `getLocations()` / `subscribeLocations()` — Supabase 우선, INITIAL_LOCATIONS 폴백. `INITIAL_LOCATION_ID_SET` 필터 **제거된 상태**
 - `sitemap.xml` / `sitemap-core.xml` / `sitemap-locations.xml` — `dist/`에 존재, `application/xml` 정상 서비스
+
+---
+
+## 2026-04-19
+
+### 안정화 세션 — 보안·성능·UX 10건
+
+| 항목 | 분류 | 핵심 | 커밋 |
+|---|---|---|---|
+| [K2] kiosk_branches NULL 점검 | 검증 | `branch_id IS NULL` 0건 — 이상 없음 | — |
+| [DB-01] AccountingTab alert→toast | UX | 통장 저장 성공/실패 시 `alert` 제거 → motion 토스트. `bankToast` state + 3~4초 자동 소멸 | b0f3327 |
+| [DB-04] 통장 입력 소수점 방어 | UX | 거래금액·잔액 `step=1` + `Math.round` — 소수점 원화 DB 유입 차단 | b0f3327 |
+| [DB-10] FK 인덱스 10건 추가 | 성능 | `reservation_items`×2, `proof_assets`, `booking_details.payout_id`, `daily_closings`, `expenditures`, `user_coupons`, `storage_assets`, `cms_contents`, `branch_prospects` | b0f3327 |
+| [K2] kiosk_branches NULL 점검 | 검증 | `branch_id IS NULL` 0건 — 이상 없음 | — |
+| [DB-02] kiosk_settings admin_password 노출 | 보안 CRITICAL | `kiosk_settings_anon_read`(qual=true) 제거 — permissive OR로 anon이 admin_password 읽던 경로 차단 | 7f020e3 |
+| [DB-02] kiosk_log INSERT branch_id 위조 | 보안 | `with_check=true` → `kiosk_branches` 실존 branch_id만 허용 | 7f020e3 |
+| [DB-02] kiosk_log UPDATE branch_id 변경 | 보안 | `with_check` 강화 — 수정 시에도 등록된 branch_id만 허용 | 7f020e3 |
+| [A1] settlement_status 전이 trigger | 안정성 | `PAID_OUT→PENDING` 등 역전이 DB BEFORE trigger로 차단. `check_settlement_status_transition()` 함수 + `trg_settlement_status_transition` 트리거 | 6f4c4ad |
+| [DB-09] auth.uid() InitPlan 래핑 18건 | 성능 | 18개 RLS 정책 `auth.uid()` → `(select auth.uid())` — 매 row 재평가 → 쿼리당 1회 | 6f4c4ad |
+| [DB-08] RLS 중복 정책 통합 5건 | 보안+성능 | `app_settings` anon 전체 노출 제거, `booking_details`·`employees`·`branches`·`roles` 정책 병합 | 21fc6d5 |
+| GA4 SPA page_view 누락 | 분석 | SPA 라우트 변경 시 `gtag page_view` 미발송 → `useRef` 초기 skip + pathname 변경마다 수동 발송 | 6005aa9 |
+| 지점 번역 검수 — 한국어 주소 10건 + T2 일본어 | 데이터 | 활성 지점 37개 전수 검사. 주소 앞부분(시/구) 생략 10건 DB 수정. T2 `address_ja` 한국어 혼용 수정 | DB직접 |
+| LocationsTab 모달 autoComplete="off" | UX | 지점 상세 모달 전체 input 브라우저 자동완성 드롭다운 제거 | 19f2cf4 |
+| 정산 5건 수정 | 안정성 | kiosk `done` 필터 제거, bankTxs 날짜 필터, 일일시재 race condition, 지출 `!e.date` 버그, 일마감 체크리스트 UI | 19f2cf4 |
+| 연남점 branches 등록 | 데이터 | `branches` 테이블 연남점 HQ 타입으로 INSERT (`87917866-2781-4682-86fe-b54cd2fc5a15`) | DB직접 |

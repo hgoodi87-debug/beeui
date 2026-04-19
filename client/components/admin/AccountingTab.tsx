@@ -52,6 +52,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     const { data: bankTxs = [], isLoading: bankLoading } = useBankTransactions({ enabled: activeSubTab === 'bank', startDate: revenueStartDate, endDate: revenueEndDate });
     const { save: saveBankTx, remove: deleteBankTx } = useBankTransactionsMutations();
     const [bankSaving, setBankSaving] = useState(false);
+    const [bankToast, setBankToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
     const emptyBankForm: Omit<BankTransaction, 'id' | 'createdAt' | 'createdBy'> = {
         date: new Date().toISOString().slice(0, 10),
         bankName: '',
@@ -80,9 +81,12 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                 createdAt: new Date().toISOString(),
             });
             setBankForm(emptyBankForm);
+            setBankToast({ msg: '저장 완료', type: 'success' });
+            setTimeout(() => setBankToast(null), 3000);
         } catch (e) {
             console.error('[AccountingTab] saveBankTx failed:', e);
-            alert(`통장 거래 저장 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
+            setBankToast({ msg: `저장 실패: ${e instanceof Error ? e.message : '알 수 없는 오류'}`, type: 'error' });
+            setTimeout(() => setBankToast(null), 4000);
         } finally {
             setBankSaving(false);
         }
@@ -961,8 +965,10 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">거래 금액 (₩)</label>
                                         <input
                                             type="number"
+                                            step="1"
+                                            min="0"
                                             value={bankForm.amount || ''}
-                                            onChange={e => setBankForm(f => ({ ...f, amount: Number(e.target.value) }))}
+                                            onChange={e => setBankForm(f => ({ ...f, amount: Math.round(Number(e.target.value)) }))}
                                             placeholder="0"
                                             className={`w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none transition-all shadow-sm ${bankForm.txType === 'deposit' ? 'focus:border-emerald-200 text-emerald-600' : 'focus:border-red-200 text-red-500'}`}
                                         />
@@ -971,8 +977,10 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">거래 후 잔액 (₩)</label>
                                         <input
                                             type="number"
+                                            step="1"
+                                            min="0"
                                             value={bankForm.balance || ''}
-                                            onChange={e => setBankForm(f => ({ ...f, balance: Number(e.target.value) }))}
+                                            onChange={e => setBankForm(f => ({ ...f, balance: Math.round(Number(e.target.value)) }))}
                                             placeholder="0"
                                             className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-blue-200 transition-all shadow-sm text-blue-600"
                                         />
@@ -991,18 +999,25 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                             className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-blue-200 transition-all shadow-sm"
                                         />
                                     </div>
-                                    <button
-                                        onClick={handleSaveBankTx}
-                                        disabled={bankSaving || !bankForm.bankName || bankForm.amount <= 0}
-                                        className="flex items-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-600/20 whitespace-nowrap"
-                                    >
-                                        {bankSaving ? (
-                                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ) : (
-                                            <i className="fa-solid fa-floppy-disk"></i>
+                                    <div className="flex flex-col items-end gap-1">
+                                        {bankToast && (
+                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${bankToast.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                                                {bankToast.msg}
+                                            </span>
                                         )}
-                                        저장
-                                    </button>
+                                        <button
+                                            onClick={handleSaveBankTx}
+                                            disabled={bankSaving || !bankForm.bankName || bankForm.amount <= 0}
+                                            className="flex items-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-600/20 whitespace-nowrap"
+                                        >
+                                            {bankSaving ? (
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <i className="fa-solid fa-floppy-disk"></i>
+                                            )}
+                                            저장
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

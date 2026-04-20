@@ -1040,6 +1040,9 @@ export const StorageService = {
         discount_amount: safeBooking.discountAmount || 0,
         payment_method: safeBooking.paymentMethod || null,
         payment_provider: safeBooking.paymentProvider || null,
+        payment_order_id: safeBooking.paymentOrderId || null,
+        payment_key: safeBooking.paymentKey || null,
+        payment_approved_at: safeBooking.paymentApprovedAt || null,
         agreed_to_terms: safeBooking.agreedToTerms || false,
         agreed_to_privacy: safeBooking.agreedToPrivacy || false,
         reservation_code: reservationCode,
@@ -1152,22 +1155,31 @@ export const StorageService = {
     try {
       if (!id) return null;
       if (isSupabaseDataEnabled()) {
-        try {
-          const byId = await supabaseGet<Array<Record<string, unknown>>>(
-            `admin_booking_list_v1?select=*&id=eq.${encodeURIComponent(id)}&limit=1`
-          );
-          if (byId?.[0]) {
-            return normalizeBookingForDeliveryPolicy(snakeToCamel(byId[0]) as unknown as BookingState);
+        // UUID 조회 (UUID 형식일 때만 시도 — 형식 불일치시 PostgREST 400 방지)
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (isUuid) {
+          try {
+            const byId = await supabaseGet<Array<Record<string, unknown>>>(
+              `admin_booking_list_v1?select=*&id=eq.${encodeURIComponent(id)}&limit=1`
+            );
+            if (byId?.[0]) {
+              return normalizeBookingForDeliveryPolicy(snakeToCamel(byId[0]) as unknown as BookingState);
+            }
+          } catch (idError) {
+            console.warn('[Storage] UUID lookup failed:', idError);
           }
+        }
 
+        // reservation_code 조회 (BEE-XXXX 형식 바우처 QR 코드 지원)
+        try {
           const byReservationCode = await supabaseGet<Array<Record<string, unknown>>>(
             `admin_booking_list_v1?select=*&reservation_code=eq.${encodeURIComponent(id)}&limit=1`
           );
           if (byReservationCode?.[0]) {
             return normalizeBookingForDeliveryPolicy(snakeToCamel(byReservationCode[0]) as unknown as BookingState);
           }
-        } catch (viewError) {
-          console.warn('[Storage] admin_booking_list_v1 single fetch failed, falling back to booking_details:', viewError);
+        } catch (codeError) {
+          console.warn('[Storage] reservation_code lookup failed:', codeError);
         }
       }
 

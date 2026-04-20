@@ -9,10 +9,11 @@ interface BranchHeaderProps {
     onManualBooking?: () => void;
     onExportCSV?: () => void;
     onLogout?: () => void;
+    onQRScan?: () => void;
 }
 
 const BranchHeader: React.FC<BranchHeaderProps> = ({
-    currentBranch, branchId, bookings, kioskSlug, onManualBooking, onExportCSV, onLogout
+    currentBranch, branchId, bookings, kioskSlug, onManualBooking, onExportCSV, onLogout, onQRScan
 }) => {
     const stats = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];
@@ -81,6 +82,15 @@ const BranchHeader: React.FC<BranchHeaderProps> = ({
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap md:flex-nowrap">
+                    {onQRScan && (
+                        <button
+                            onClick={onQRScan}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-bee-yellow text-bee-black font-black text-xs shadow-lg shadow-bee-yellow/30 hover:scale-[1.03] active:scale-95 transition-all"
+                        >
+                            <i className="fa-solid fa-qrcode text-sm" />
+                            QR 스캔
+                        </button>
+                    )}
                     {kioskSlug && (
                         <a
                             href={`/kiosk/${encodeURIComponent(kioskSlug)}`}

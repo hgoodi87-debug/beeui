@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-20
+
+### 지점 관리자 QR 스캔 무반응 버그 수정
+
+| 이슈 | 파일 | 핵심 |
+|---|---|---|
+| 바우처 QR(`BEE-XXXX`) 스캔 시 예약 조회 실패 | `client/services/storageService.ts` | UUID 형식 아닌 id로 `id=eq.BEE-XXXX` 조회 → PostgREST 400 발생 → catch가 `reservation_code` 조회도 건너뜀. UUID 여부를 정규식으로 사전 판별 후 UUID일 때만 id 조회, 항상 reservation_code 조회를 별도 try/catch로 분리 |
+| 지점 관리자 QR 스캔 버튼 없음 | `client/components/branch/BranchHeader.tsx`, `client/components/BranchAdminPage.tsx` | `BranchAdminPage`에 QR 스캔 버튼 자체가 없었음. `BranchHeader`에 `onQRScan` prop 추가, `BranchAdminPage`에서 `/staff/scan` navigate 연결 |
+
+---
+
 ## 2026-04-09
 
 ### 관리자 버그
@@ -203,3 +214,5 @@
 | LocationsTab 모달 autoComplete="off" | UX | 지점 상세 모달 전체 input 브라우저 자동완성 드롭다운 제거 | 19f2cf4 |
 | 정산 5건 수정 | 안정성 | kiosk `done` 필터 제거, bankTxs 날짜 필터, 일일시재 race condition, 지출 `!e.date` 버그, 일마감 체크리스트 UI | 19f2cf4 |
 | 연남점 branches 등록 | 데이터 | `branches` 테이블 연남점 HQ 타입으로 INSERT (`87917866-2781-4682-86fe-b54cd2fc5a15`) | DB직접 |
+| [G3] Prerender 186개 HTML 확인 | SEO | `vite-plugin-prerender` 이미 적용. 빌드 시 186개 라우트 HTML 생성 — G3 구현 완료 상태 | — |
+| [G4] 다국어 사이트맵 자동 생성 | SEO | `client/scripts/generate-sitemap.mjs` 이미 존재. 빌드 파이프라인 통합. 6언어×전체 라우트 hreflang 포함 자동 생성 (core 54 + locations 132 = 186 URL) | — |

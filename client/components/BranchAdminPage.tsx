@@ -473,6 +473,7 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                     branchId={branchId}
                     bookings={bookings}
                     kioskSlug={kioskSlug}
+                    onQRScan={() => navigate('/staff/scan')}
                     onManualBooking={() => navigate(`/admin/branch/${branchId}/booking`)}
                     onExportCSV={handleExportCSV}
                     onLogout={onBack}

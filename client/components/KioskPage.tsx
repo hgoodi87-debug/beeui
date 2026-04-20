@@ -636,97 +636,102 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     오프라인 {offlineCount}건 대기 중 — 네트워크 연결 시 자동 동기화
                   </div>
                 )}
-                {/* 요약 뱃지 */}
-                <div className="grid grid-cols-3 gap-3 mb-5">
-                  {[
-                    { label: '전체', value: stats.total, color: 'bg-white/10 text-white' },
-                    { label: '보관 중', value: stats.active, color: 'bg-[#F5C842]/20 text-[#F5C842]' },
-                    { label: '반납 완료', value: stats.done, color: 'bg-green-500/20 text-green-400' },
-                  ].map((s) => (
-                    <div key={s.label} className={`${s.color} rounded-2xl p-4 text-center`}>
-                      <p className="text-3xl font-black tabular-nums">{s.value}</p>
-                      <p className="text-xs font-bold opacity-70 mt-1">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-                {/* 열별 보관 현황 */}
+                {/* ── 상단: 열별 현황(좌) + 오늘 요약(우) ── */}
                 {(() => {
-                  const colColors = [
-                    'bg-indigo-500',
-                    'bg-emerald-500',
-                    'bg-amber-500',
-                    'bg-rose-500',
-                    'bg-sky-500',
-                    'bg-purple-500',
-                    'bg-teal-500',
-                  ];
+                  const colColors = ['bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-sky-500', 'bg-purple-500'];
                   return (
-                    <div className="mb-5">
-                      <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                        <span>📦</span>
-                        열별 보관 현황
-                        <span className="text-white/20 font-normal normal-case tracking-normal">
-                          · 취소선 = 픽업완료
-                        </span>
-                      </p>
-                      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(cfg.row_rules.rows.length, 4)}, 1fr)` }}>
-                        {cfg.row_rules.rows.map((row, idx) => {
-                          const items = todayLog.filter((e) => e.row_label === row.label);
-                          const active = items.filter((e) => !e.done).length;
-                          const color = colColors[idx % colColors.length];
-                          return (
-                            <div key={row.label} className="bg-white/5 rounded-xl overflow-hidden">
-                              <div className={`${color} px-2 py-1.5 flex items-center justify-between`}>
-                                <span className="text-white font-black text-sm">{row.label}</span>
-                                <span className="text-white/80 font-black text-xs tabular-nums">{active}</span>
+                    <div className="flex gap-3 mb-5">
+                      {/* 열별 보관 현황 — 좌 */}
+                      <div className="flex-[3] min-w-0">
+                        <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mb-2 flex items-center gap-1">
+                          <span>📦</span>열별 보관 현황
+                          <span className="text-white/20 font-normal normal-case tracking-normal">· 취소선=픽업완료</span>
+                        </p>
+                        <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(cfg.row_rules.rows.length, 3)}, 1fr)` }}>
+                          {cfg.row_rules.rows.map((row, idx) => {
+                            const items = todayLog.filter((e) => e.row_label === row.label);
+                            const active = items.filter((e) => !e.done).length;
+                            const color = colColors[idx % colColors.length];
+                            return (
+                              <div key={row.label} className="bg-white/5 rounded-xl overflow-hidden">
+                                <div className={`${color} px-2.5 py-2 flex items-center justify-between`}>
+                                  <span className="text-white font-black text-sm">{row.label}</span>
+                                  <span className="text-white/90 font-black text-xs tabular-nums">{active}</span>
+                                </div>
+                                <div className="px-2 py-2 min-h-[36px] space-y-0.5">
+                                  {items.length === 0 ? (
+                                    <p className="text-white/20 text-[10px] text-center py-0.5">비어있음</p>
+                                  ) : (
+                                    items.map((e) => (
+                                      <div key={e.id ?? e.tag} className={`text-[10px] font-bold tabular-nums ${e.done ? 'line-through text-white/20' : 'text-white/70'}`}>
+                                        #{e.tag}{e.small_qty > 0 ? ` 소${e.small_qty}` : ''}{e.carrier_qty > 0 ? ` 캐${e.carrier_qty}` : ''}
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                                <p className="px-2 pb-1.5 text-white/25 text-[9px] tabular-nums">{row.start}~{row.end}</p>
                               </div>
-                              <div className="px-2 py-1.5 min-h-[40px] space-y-0.5">
-                                {items.length === 0 ? (
-                                  <p className="text-white/20 text-[10px] text-center py-1">비어있음</p>
-                                ) : (
-                                  items.map((e) => (
-                                    <div key={e.id ?? e.tag} className={`text-[10px] font-bold tabular-nums ${e.done ? 'line-through text-white/20' : 'text-white/70'}`}>
-                                      #{e.tag} {e.small_qty > 0 ? `소${e.small_qty}` : ''}{e.carrier_qty > 0 ? `캐${e.carrier_qty}` : ''}
-                                    </div>
-                                  ))
-                                )}
-                              </div>
-                              <div className="px-2 pb-1.5">
-                                <p className="text-white/25 text-[9px] tabular-nums">{row.start}~{row.end}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
+                      </div>
+                      {/* 오늘 요약 — 우 */}
+                      <div className="flex-[2] flex flex-col gap-1.5">
+                        <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mb-0.5">오늘 요약</p>
+                        {[
+                          { label: '전체', value: stats.total, cls: 'bg-white/10 text-white' },
+                          { label: '보관중', value: stats.active, cls: 'bg-[#F5C842]/20 text-[#F5C842]' },
+                          { label: '반납완료', value: stats.done, cls: 'bg-green-500/20 text-green-400' },
+                        ].map((s) => (
+                          <div key={s.label} className={`${s.cls} rounded-xl px-3 py-2.5 flex items-center justify-between`}>
+                            <p className="text-[11px] font-bold opacity-70">{s.label}</p>
+                            <p className="text-2xl font-black tabular-nums">{s.value}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
                 })()}
-                {/* 접수 목록 */}
+
+                {/* ── 접수 내역 ── */}
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mb-2">접수 내역</p>
                 <div className="space-y-2">
                   {todayLog.length === 0 && <p className="text-white/30 text-sm text-center py-10">오늘 접수 없음</p>}
                   {todayLog.map((e, i) => (
-                    <div key={i} className={`flex items-center gap-3 p-4 rounded-2xl transition-opacity ${e.done ? 'bg-white/5 opacity-50' : 'bg-white/10'}`}>
-                      <span className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-base flex-shrink-0 ${e.done ? 'bg-white/20 text-white/50' : 'bg-[#F5C842] text-[#111111]'}`}>{e.tag}</span>
+                    <div key={i} className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all ${e.done ? 'bg-white/5 opacity-50' : 'bg-[#1C1B1B]'}`}>
+                      {/* 태그 번호 */}
+                      <span className={`w-11 h-11 rounded-full flex items-center justify-center font-black text-lg flex-shrink-0 ${e.done ? 'bg-white/10 text-white/30' : 'bg-[#F5C842] text-[#111111]'}`}>
+                        {e.tag}
+                      </span>
+                      {/* 상세 정보 */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-white text-sm font-bold">{e.row_label}구역</p>
-                          <span className="text-white/40 text-xs">·</span>
-                          <p className="text-white/70 text-xs">
-                            {e.small_qty > 0 ? `소형 ${e.small_qty}` : ''}{e.small_qty > 0 && e.carrier_qty > 0 ? ' ' : ''}{e.carrier_qty > 0 ? `캐리어 ${e.carrier_qty}` : ''}
-                          </p>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-white text-sm font-bold">{e.row_label}구역</span>
+                          {e.small_qty > 0 && <span className="text-[10px] bg-white/10 text-white/60 font-bold px-2 py-0.5 rounded-full">소형 {e.small_qty}</span>}
+                          {e.carrier_qty > 0 && <span className="text-[10px] bg-white/10 text-white/60 font-bold px-2 py-0.5 rounded-full">캐리어 {e.carrier_qty}</span>}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-white/40 text-xs">{e.start_time} → {e.pickup_time}</p>
-                          <span className="text-white/20 text-xs">·</span>
-                          <p className="text-[#F5C842]/70 text-xs font-bold">{(e.original_price - e.discount).toLocaleString()}원</p>
-                          <span className="text-white/20 text-xs">·</span>
-                          <p className="text-white/40 text-xs">{e.payment}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white/40 text-[11px]">{e.start_time} → {e.pickup_time}</span>
+                          <span className="text-white/20">·</span>
+                          <span className="text-[11px] bg-white/8 text-white/50 font-bold px-2 py-0.5 rounded-full">{e.payment}</span>
                         </div>
                       </div>
-                      <button onClick={() => handleMarkDone(e)}
-                          className={`text-xs font-bold rounded-full px-3 py-1.5 active:scale-95 flex-shrink-0 whitespace-nowrap ${e.done ? 'ring-1 ring-green-400/40 text-green-400' : 'ring-1 ring-[#F5C842]/40 text-[#F5C842]'}`}>
+                      {/* 금액 + 버튼 */}
+                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                        <span className={`text-sm font-black tabular-nums ${e.done ? 'text-white/30' : 'text-[#F5C842]'}`}>
+                          {(e.original_price - e.discount).toLocaleString()}원
+                        </span>
+                        <button
+                          onClick={() => handleMarkDone(e)}
+                          className={`text-[11px] font-black rounded-full px-3 py-1.5 active:scale-95 whitespace-nowrap transition-all ${
+                            e.done
+                              ? 'bg-green-500/15 text-green-400 ring-1 ring-green-400/30'
+                              : 'bg-[#F5C842] text-[#111111]'
+                          }`}
+                        >
                           {e.done ? `✓ ${t.done}` : t.mark_done}
                         </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1629,41 +1634,40 @@ const KioskPage: React.FC = () => {
                 setEventParticipated(next);
                 if (!next) setDiscount(0);
               }}
-              className={`w-full flex items-center gap-3 bg-white rounded-xl px-3.5 py-2.5 border-2 transition-all active:scale-[0.98] ${
-                eventParticipated ? 'border-[#F5C842] bg-[#FFFBEA]' : 'border-transparent hover:border-[#F5C842]/30'
+              className={`w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3 border transition-all active:scale-[0.98] ${
+                eventParticipated ? 'border-[#F5C842]' : 'border-gray-200 hover:border-[#F5C842]/50'
               }`}
             >
               <span className="text-base">👉</span>
               <span className="font-bold text-[#111111] text-sm flex-1 text-left">이벤트 참여하기</span>
-              <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                eventParticipated ? 'border-[#F5C842] bg-[#F5C842]' : 'border-gray-300'
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                eventParticipated ? 'bg-green-500' : 'border-2 border-gray-300'
               }`}>
-                {eventParticipated && <span className="w-2 h-2 rounded-full bg-white" />}
+                {eventParticipated && (
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
               </span>
             </button>
             {eventParticipated && (
-              <div className="mt-2.5">
-                <p className="text-[#8B6914] text-[11px] font-bold mb-2 pl-1">당첨 금액을 선택하세요</p>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {[0, 1000, 2000, 3000, 4000, 5000].map((amt) => (
+              <div className="mt-2.5 bg-[#F0FFF4] rounded-2xl px-3.5 py-3">
+                <p className="text-gray-400 text-[11px] font-bold mb-2.5">룰렛에서 당첨된 할인 금액</p>
+                <div className="flex gap-2">
+                  {[1000, 2000, 4000, 0].map((amt) => (
                     <button
                       key={amt}
                       onClick={() => setDiscount(amt)}
-                      className={`py-2 rounded-xl text-xs font-black transition-all active:scale-95 border-2 ${
+                      className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 border ${
                         discount === amt
-                          ? 'bg-[#F5C842] border-[#F5C842] text-[#111111] shadow-md'
-                          : 'bg-white border-[#F5C842]/30 text-[#6B4F00] hover:border-[#F5C842]'
+                          ? 'bg-[#323126] border-[#323126] text-white'
+                          : 'bg-white border-gray-200 text-[#111111] hover:border-gray-400'
                       }`}
                     >
-                      {amt === 0 ? '0원' : `${(amt / 1000).toFixed(0)}천원`}
+                      {amt === 0 ? '무료' : amt.toLocaleString()}
                     </button>
                   ))}
                 </div>
-                {discount > 0 && (
-                  <p className="text-[#6B4F00] text-xs font-black mt-2 pl-1 text-center">
-                    🎉 {discount.toLocaleString()}원 할인 적용됩니다
-                  </p>
-                )}
               </div>
             )}
           </div>

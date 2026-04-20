@@ -1641,6 +1641,31 @@ const KioskPage: React.FC = () => {
                 {eventParticipated && <span className="w-2 h-2 rounded-full bg-white" />}
               </span>
             </button>
+            {eventParticipated && (
+              <div className="mt-2.5">
+                <p className="text-[#8B6914] text-[11px] font-bold mb-2 pl-1">당첨 금액을 선택하세요</p>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {[0, 1000, 2000, 3000, 4000, 5000].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => setDiscount(amt)}
+                      className={`py-2 rounded-xl text-xs font-black transition-all active:scale-95 border-2 ${
+                        discount === amt
+                          ? 'bg-[#F5C842] border-[#F5C842] text-[#111111] shadow-md'
+                          : 'bg-white border-[#F5C842]/30 text-[#6B4F00] hover:border-[#F5C842]'
+                      }`}
+                    >
+                      {amt === 0 ? '0원' : `${(amt / 1000).toFixed(0)}천원`}
+                    </button>
+                  ))}
+                </div>
+                {discount > 0 && (
+                  <p className="text-[#6B4F00] text-xs font-black mt-2 pl-1 text-center">
+                    🎉 {discount.toLocaleString()}원 할인 적용됩니다
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

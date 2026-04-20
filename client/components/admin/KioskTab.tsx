@@ -776,32 +776,38 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
         ))}
       </div>
 
-      {/* 구역별 현황 + 오늘 요약 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* 구역별 현황 */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-black text-bee-black mb-4 flex items-center gap-2 text-sm">
+      {/* 구역별 현황 + 오늘 요약 — 나란히 */}
+      <div className="flex gap-4 items-start">
+        {/* 구역별 현황 — 좌 (컬럼 카드) */}
+        <div className="flex-[3] min-w-0 bg-white rounded-2xl shadow-sm p-4">
+          <h3 className="font-black text-bee-black mb-3 flex items-center gap-2 text-sm">
             <i className="fa-solid fa-table-columns text-bee-yellow text-xs"></i>
             구역별 현황
           </h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(cfg.row_rules.rows.length, 4)}, 1fr)` }}>
             {cfg.row_rules.rows.map(rule => {
               const rowItems = todayEntries.filter(e => e.rowLabel === rule.label);
               const active = rowItems.filter(e => !e.done).length;
-              const pct = Math.round((active / rule.max) * 100);
               return (
-                <div key={rule.label} className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-md flex items-center justify-center font-black text-white text-xs flex-shrink-0"
-                    style={{ background: ROW_COLORS[rule.label] ?? '#999' }}>{rule.label}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between text-[10px] font-bold text-gray-500 mb-1">
-                      <span className="truncate">{rowItems.filter(e=>!e.done).map(e=>`#${e.tag}`).join(' ')||'—'}</span>
-                      <span className="flex-shrink-0 ml-2">{active}/{rule.max}</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div className="h-1.5 rounded-full transition-all"
-                        style={{ width: `${pct}%`, background: ROW_COLORS[rule.label] ?? '#999' }} />
-                    </div>
+                <div key={rule.label} className="rounded-xl overflow-hidden border border-gray-100">
+                  <div className="px-3 py-2 flex items-center justify-between text-white font-black text-sm"
+                    style={{ background: ROW_COLORS[rule.label] ?? '#999' }}>
+                    <span>{rule.label}</span>
+                    <span className="text-white/80 text-xs tabular-nums">{active}</span>
+                  </div>
+                  <div className="px-3 py-2 min-h-[44px] space-y-0.5 bg-white">
+                    {rowItems.filter(e => !e.done).length === 0 ? (
+                      <p className="text-gray-300 text-[10px] text-center py-1">비어있음</p>
+                    ) : (
+                      rowItems.map(e => (
+                        <div key={e.id} className={`text-[10px] font-bold tabular-nums ${e.done ? 'line-through text-gray-300' : 'text-gray-600'}`}>
+                          #{e.tag}{e.smallQty > 0 ? ` 소${e.smallQty}` : ''}{e.carrierQty > 0 ? ` 캐${e.carrierQty}` : ''}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="px-3 pb-2 bg-white">
+                    <p className="text-gray-300 text-[9px] tabular-nums">{rule.start}~{rule.end}</p>
                   </div>
                 </div>
               );
@@ -809,22 +815,22 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
           </div>
         </div>
 
-        {/* 오늘 요약 */}
-        <div className="bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-black text-bee-black mb-4 flex items-center gap-2 text-sm">
+        {/* 오늘 요약 — 우 */}
+        <div className="flex-[2] bg-white rounded-2xl shadow-sm p-4">
+          <h3 className="font-black text-bee-black mb-3 flex items-center gap-2 text-sm">
             <i className="fa-solid fa-chart-simple text-bee-yellow text-xs"></i>
             오늘 요약
           </h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
             {[
-              { label: '소형 가방', val: `${todayEntries.reduce((s,e)=>s+e.smallQty,0)}개` },
-              { label: '캐리어',    val: `${todayEntries.reduce((s,e)=>s+e.carrierQty,0)}개` },
-              { label: '미수금',    val: `${stats.unpaid}건`, warn: true },
-              { label: '총 수익',   val: `₩${stats.rev.toLocaleString()}`, dark: true },
+              { label: '소형 가방', val: `${todayEntries.reduce((s,e)=>s+e.smallQty,0)}개`, cls: 'bg-gray-50' },
+              { label: '캐리어',    val: `${todayEntries.reduce((s,e)=>s+e.carrierQty,0)}개`, cls: 'bg-gray-50' },
+              { label: '미수금',    val: `${stats.unpaid}건`, cls: 'bg-amber-50', valCls: 'text-amber-600' },
+              { label: '총 수익',   val: `₩${stats.rev.toLocaleString()}`, cls: 'bg-bee-black', labelCls: 'text-white/60', valCls: 'text-bee-yellow' },
             ].map(r => (
-              <div key={r.label} className={`flex justify-between items-center px-3 py-2 rounded-lg ${r.dark ? 'bg-bee-black' : 'bg-gray-50'}`}>
-                <span className={`text-xs font-semibold ${r.dark ? 'text-white/60' : 'text-gray-500'}`}>{r.label}</span>
-                <span className={`font-black text-sm ${r.dark ? 'text-bee-yellow' : r.warn ? 'text-amber-600' : ''}`}>{r.val}</span>
+              <div key={r.label} className={`flex justify-between items-center px-3 py-2.5 rounded-xl ${r.cls}`}>
+                <span className={`text-xs font-semibold ${(r as any).labelCls ?? 'text-gray-500'}`}>{r.label}</span>
+                <span className={`font-black text-sm ${(r as any).valCls ?? 'text-bee-black'}`}>{r.val}</span>
               </div>
             ))}
           </div>
@@ -868,18 +874,22 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
                   e.done ? 'bg-green-50 border-green-100' : ov ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'
                 } shadow-sm`}>
                   {/* 카드 헤더 */}
-                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-inherit">
-                    {e.rowLabel ? (
-                      <span className="w-6 h-6 rounded-md flex items-center justify-center font-black text-white text-xs flex-shrink-0"
-                        style={{ background: ROW_COLORS[e.rowLabel]??'#999' }}>{e.rowLabel}</span>
-                    ) : <span className="w-6 h-6 rounded-md bg-gray-200 flex-shrink-0" />}
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-inherit">
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center font-black text-white text-sm flex-shrink-0"
+                      style={{ background: e.rowLabel ? (ROW_COLORS[e.rowLabel] ?? '#999') : '#ccc' }}>
+                      {e.rowLabel || '?'}
+                    </span>
                     <span className="font-black text-bee-black text-sm">#{e.tag}</span>
                     <span className="text-[10px] text-gray-400 ml-auto">{e.date}</span>
                   </div>
                   {/* 카드 바디 */}
                   <div className="px-3 py-2.5 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">{types || '—'}</span>
+                      <div className="flex gap-1 flex-wrap">
+                        {e.smallQty > 0 && <span className="text-[10px] bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full">소형 {e.smallQty}</span>}
+                        {e.carrierQty > 0 && <span className="text-[10px] bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full">캐리어 {e.carrierQty}</span>}
+                        {!e.smallQty && !e.carrierQty && <span className="text-xs text-gray-400">—</span>}
+                      </div>
                       {e.done
                         ? <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">{t('f_done')}</span>
                         : ov

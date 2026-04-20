@@ -237,9 +237,17 @@ async function notifyGoogleChat(booking: Record<string, unknown>) {
   const dropoffLabel = isDelivery
     ? await getLocationLabel(booking.dropoff_location_id as string | null, booking.dropoff_location)
     : pickupLabel;
+  const isCash = booking.payment_method === "cash";
+  const isPaypal = booking.payment_method === "paypal";
+  const isPaid = !!(booking.payment_approved_at);
+  const paymentLine = isCash
+    ? "💵 *결제*: 방문 현금"
+    : isPaypal && isPaid
+    ? "💳 *결제*: 페이팔 결제완료 ✅"
+    : "";
   const text = isDelivery
-    ? `*🚨 신규 배송 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🚚 *서비스*: 배송\n📍 *픽업*: ${pickupLabel} (${booking.pickup_time})\n🎯 *도착*: ${dropoffLabel} (${booking.dropoff_date || ""} ${booking.delivery_time || ""})\n${bagSummaryLine ? bagSummaryLine + "\n" : ""}💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`
-    : `*🚨 신규 보관 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🏦 *서비스*: 보관\n📥 *보관*: ${pickupLabel} (${booking.pickup_date} ${booking.pickup_time})\n${bagSummaryLine ? bagSummaryLine + "\n" : ""}💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`;
+    ? `*🚨 신규 배송 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🚚 *서비스*: 배송\n📍 *픽업*: ${pickupLabel} (${booking.pickup_time})\n🎯 *도착*: ${dropoffLabel} (${booking.dropoff_date || ""} ${booking.delivery_time || ""})\n${bagSummaryLine ? bagSummaryLine + "\n" : ""}💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}${paymentLine ? "\n" + paymentLine : ""}\n━━━━━━━━━━━━━━━━━━━━`
+    : `*🚨 신규 보관 예약 알림*\n━━━━━━━━━━━━━━━━━━━━\n🔖 *예약코드*: ${code}\n👤 *이름*: ${booking.user_name}\n🏦 *서비스*: 보관\n📥 *보관*: ${pickupLabel} (${booking.pickup_date} ${booking.pickup_time})\n${bagSummaryLine ? bagSummaryLine + "\n" : ""}💰 *금액*: ₩${Number(booking.final_price || 0).toLocaleString()}${paymentLine ? "\n" + paymentLine : ""}\n━━━━━━━━━━━━━━━━━━━━`;
 
   try {
     const response = await fetch(GOOGLE_CHAT_WEBHOOK_URL, {

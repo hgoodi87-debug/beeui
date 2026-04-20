@@ -209,7 +209,7 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                     </div>
                 </div>
 
-                <div className="pt-1">
+                <div className="pt-1 flex flex-col gap-2">
                     <motion.button
                         whileHover={isActive ? { scale: 1.01, y: -1 } : {}}
                         whileTap={isActive ? { scale: 0.99 } : {}}
@@ -223,6 +223,17 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                         <span>{t.locations_page?.info_card_book || 'RESERVE'}</span>
                         <ArrowRight className="w-4 h-4 md:w-6 md:h-6" />
                     </motion.button>
+                    {(selectedBranch.lat && selectedBranch.lng) && (
+                        <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${selectedBranch.lat},${selectedBranch.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-3 md:py-4 rounded-[1.6rem] md:rounded-[2rem] flex items-center justify-center gap-2 text-[12px] md:text-[15px] font-black uppercase tracking-[0.08em] transition-all border-2 border-gray-200 text-gray-600 hover:border-bee-yellow hover:text-bee-black bg-white font-montserrat"
+                        >
+                            <MapPin className="w-4 h-4 md:w-5 md:h-5" />
+                            <span>{t.locations_page?.btn_get_directions || '길 찾기'}</span>
+                        </a>
+                    )}
                 </div>
 
                 {!isActive && (

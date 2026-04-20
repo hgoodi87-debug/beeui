@@ -381,13 +381,25 @@ const BookingSidePanel: React.FC<BookingSidePanelProps> = ({
                                 <div className="flex justify-between items-start relative z-10 gap-6">
                                     <div className="space-y-4">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border flex items-center gap-1.5 ${selectedBooking.paymentStatus === 'paid' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/20' : 'bg-amber-400/15 text-amber-200 border-amber-300/20'}`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${selectedBooking.paymentStatus === 'paid' ? 'bg-emerald-300' : 'bg-amber-300'}`}></span>
-                                                {selectedBooking.paymentStatus === 'paid' ? '결제완료' : '결제대기'}
-                                            </span>
-                                            {selectedBooking.paymentStatus !== 'paid' && (
+                                            {selectedBooking.paymentMethod === 'cash' ? (
+                                                <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border flex items-center gap-1.5 bg-gray-500/15 text-gray-300 border-gray-400/20">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                    방문 현금
+                                                </span>
+                                            ) : selectedBooking.paymentMethod === 'paypal' && selectedBooking.paymentStatus === 'paid' ? (
+                                                <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border flex items-center gap-1.5 bg-blue-500/15 text-blue-300 border-blue-400/20">
+                                                    <i className="fa-brands fa-paypal text-[10px]"></i>
+                                                    페이팔 결제완료
+                                                </span>
+                                            ) : (
+                                                <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border flex items-center gap-1.5 ${selectedBooking.paymentStatus === 'paid' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/20' : 'bg-amber-400/15 text-amber-200 border-amber-300/20'}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${selectedBooking.paymentStatus === 'paid' ? 'bg-emerald-300' : 'bg-amber-300'}`}></span>
+                                                    {selectedBooking.paymentStatus === 'paid' ? '결제완료' : '결제대기'}
+                                                </span>
+                                            )}
+                                            {selectedBooking.paymentMethod === 'cash' && (
                                                 <span className="text-[10px] font-bold text-gray-300">
-                                                    토스 실결제 전이라 현장 결제 기준으로 처리 중
+                                                    현장 결제 기준으로 처리 중
                                                 </span>
                                             )}
                                         </div>

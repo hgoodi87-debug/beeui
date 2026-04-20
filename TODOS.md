@@ -31,6 +31,23 @@ pause 후 1주일 경과. 오류 없으면 Dashboard에서 Delete.
 
 ---
 
+## EMS (beeliber-academy) 이전
+
+### [EMS-01] analytics 탭 3개 beeliber-main에서 제거 (P2 — EMS 안정화 2주 후)
+
+EMS `/admin/analytics` 확인 후: `UtmBuilderTab.tsx`, `ChannelAnalyticsTab.tsx`, `ReportsTab.tsx` 삭제 + `AdminDashboard.tsx` import 정리 (~1,800 LOC 제거).
+
+**왜:** 관심사 분리. 예약 서비스에 운영 분석 도구가 섞여 있음. EMS 이전 완료 후 중복 코드 제거.
+**파일:**
+- `client/components/admin/UtmBuilderTab.tsx` (삭제)
+- `client/components/admin/ChannelAnalyticsTab.tsx` (삭제)
+- `client/components/admin/ReportsTab.tsx` (삭제)
+- `client/components/AdminDashboard.tsx` (import 정리)
+
+Effort: S | Depends on: EMS analytics 2주 안정 운영 확인
+
+---
+
 ## 기술 부채
 
 ### [TD-01] storageService.ts 도메인별 분리 (P2)
@@ -56,18 +73,6 @@ Effort: S
 ---
 
 ## SEO 개선 (잔여)
-
-### [G3] Prerender / SSG 도입 (P1 — SEO 임팩트 최대)
-
-SPA 치명적 약점: 크롤러가 JS 실행 못하면 한국어 index.html만 인식.
-단기: Firebase Hosting rewrites + Rendertron. 중기: Vite SSG. 장기: Next.js.
-Effort: XL
-
-### [G4] sitemap.xml 언어별 URL 자동 생성 (P2)
-
-현재 37개 URL(한국어만) → 654개(9 라우트 × 6언어 + 지역·배송 × 6언어).
-`client/scripts/generateSitemap.mjs` 빌드 스크립트 작성.
-Effort: M
 
 ### [G6] Search Console Bing Webmaster 등록 (P2)
 

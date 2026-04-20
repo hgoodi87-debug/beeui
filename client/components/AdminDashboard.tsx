@@ -2874,6 +2874,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
           {activeTab === 'DAILY_SETTLEMENT' && (
             <DailySettlementTab
+              revenueStartDate={revenueStartDate}
               revenueEndDate={revenueEndDate}
               setRevenueStartDate={setRevenueStartDate}
               setRevenueEndDate={setRevenueEndDate}
@@ -3111,8 +3112,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               <h2 className="text-2xl font-black text-bee-black">바우처 스캔 결과</h2>
               <p className="text-xs font-bold text-bee-black/60 uppercase tracking-widest mt-1">Booking ID: {scannedBooking.id}</p>
               {scannedBooking.paymentStatus === 'paid' && (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white rounded-full text-[11px] font-black">
-                  <i className="fa-solid fa-circle-check text-xs"></i> 결제완료 처리됨
+                <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black ${scannedBooking.paymentMethod === 'paypal' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'}`}>
+                  {scannedBooking.paymentMethod === 'paypal'
+                    ? <><i className="fa-brands fa-paypal text-xs"></i> 페이팔 결제완료</>
+                    : <><i className="fa-solid fa-circle-check text-xs"></i> 결제완료 처리됨</>
+                  }
                 </div>
               )}
             </div>
@@ -3149,8 +3153,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
                     {(scannedBooking.finalPrice ?? scannedBooking.price ?? 0).toLocaleString()}
                     <span className="text-xs font-bold text-gray-400 ml-1">KRW</span>
                   </span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${scannedBooking.paymentStatus === 'paid' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                    {scannedBooking.paymentStatus === 'paid' ? '결제완료' : '미결제'}
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 ${scannedBooking.paymentStatus === 'paid' ? (scannedBooking.paymentMethod === 'paypal' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600') : 'bg-red-100 text-red-600'}`}>
+                    {scannedBooking.paymentMethod === 'paypal' && scannedBooking.paymentStatus === 'paid' && <i className="fa-brands fa-paypal text-[9px]"></i>}
+                    {scannedBooking.paymentStatus === 'paid' ? (scannedBooking.paymentMethod === 'paypal' ? '페이팔 결제완료' : '결제완료') : '미결제'}
                   </span>
                 </div>
               </div>

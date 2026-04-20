@@ -113,16 +113,31 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     const findLocName = (id: string | undefined) =>
         locations.find(l => l.id === id || l.supabaseId === id || l.shortCode === id)?.name || id || '-';
 
-    const paymentBadgeLabel = (booking: BookingState) =>
-        booking.paymentStatus === 'paid' ? '결제완료' : '결제대기';
+    const paymentBadgeLabel = (booking: BookingState) => {
+        if (booking.paymentMethod === 'cash') return '방문 현금';
+        if (booking.paymentStatus === 'paid') {
+            return booking.paymentMethod === 'paypal' ? '페이팔 결제완료' : '결제완료';
+        }
+        return '결제대기';
+    };
 
-    const paymentBadgeStyle = (booking: BookingState) =>
-        booking.paymentStatus === 'paid'
-            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-            : 'bg-amber-50 text-amber-600 border-amber-100';
+    const paymentBadgeStyle = (booking: BookingState) => {
+        if (booking.paymentMethod === 'cash') return 'bg-gray-50 text-gray-500 border-gray-200';
+        if (booking.paymentStatus === 'paid') {
+            return booking.paymentMethod === 'paypal'
+                ? 'bg-blue-50 text-blue-600 border-blue-100'
+                : 'bg-emerald-50 text-emerald-600 border-emerald-100';
+        }
+        return 'bg-amber-50 text-amber-600 border-amber-100';
+    };
 
-    const paymentBadgeDotStyle = (booking: BookingState) =>
-        booking.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-amber-500';
+    const paymentBadgeDotStyle = (booking: BookingState) => {
+        if (booking.paymentMethod === 'cash') return 'bg-gray-400';
+        if (booking.paymentStatus === 'paid') {
+            return booking.paymentMethod === 'paypal' ? 'bg-blue-500' : 'bg-emerald-500';
+        }
+        return 'bg-amber-500';
+    };
 
     const cleanupTargetBookings = React.useMemo(() => {
         return filteredBookings.filter((booking) => {

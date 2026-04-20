@@ -831,8 +831,8 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
 
         {/* 테이블 헤더 */}
         <div className="grid text-[10px] font-black text-bee-yellow bg-bee-black px-3 py-2"
-          style={{ gridTemplateColumns: '72px 48px 36px 56px 60px 80px 80px 64px 64px 64px 60px 72px 80px 64px 1fr' }}>
-          {['날짜','태그','열','유형','수량','시작','픽업예정','상태','초과시간','정가','할인','최종금액','결제','픽업','메모'].map(h => (
+          style={{ gridTemplateColumns: '72px 48px 36px 56px 56px 72px 72px 56px 60px 60px 72px 76px 72px 40px 1fr' }}>
+          {['날짜','태그','열','유형','수량','시작','픽업예정','상태','초과시간','정가','할인','최종금액','결제','완료','메모'].map(h => (
             <span key={h} className="truncate">{h}</span>
           ))}
         </div>
@@ -852,7 +852,7 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
               return (
                 <div key={e.id}
                   className={`grid items-center px-3 py-2 text-xs ${rowBg} hover:bg-gray-50 transition-colors`}
-                  style={{ gridTemplateColumns: '72px 48px 36px 56px 60px 80px 80px 64px 64px 64px 60px 72px 80px 64px 1fr' }}>
+                  style={{ gridTemplateColumns: '72px 48px 36px 56px 56px 72px 72px 56px 60px 60px 72px 76px 72px 40px 1fr' }}>
                   {/* 날짜 */}
                   <span className="text-gray-400 text-[10px]">{e.date}</span>
                   {/* 태그 */}
@@ -880,10 +880,11 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
                   </span>
                   {/* 정가 */}
                   <span className="text-gray-500 tabular-nums">{e.originalPrice.toLocaleString()}</span>
-                  {/* 할인 */}
-                  <span className={e.discount > 0 ? 'text-red-400 tabular-nums' : 'text-gray-300'}>
-                    {e.discount > 0 ? `-${e.discount.toLocaleString()}` : '—'}
-                  </span>
+                  {/* 할인 — 셀렉트 */}
+                  <select value={e.discount} onChange={ev => handleUf(e.id,'discount',+ev.target.value)}
+                    className="border border-gray-200 rounded-lg px-1 py-0.5 text-[10px] focus:border-bee-yellow outline-none bg-white w-full">
+                    {discOpts.map(v => <option key={v} value={v}>{v===0?'없음':v===e.originalPrice?'무료':`-${v}`}</option>)}
+                  </select>
                   {/* 최종금액 */}
                   <span className="font-black text-bee-black tabular-nums">₩{fn.toLocaleString()}</span>
                   {/* 결제 */}
@@ -892,14 +893,10 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
                     <option value="미수금">{t('up')}</option>
                     <option value="완료">{t('pd')}</option>
                   </select>
-                  {/* 픽업(완료체크) + 할인선택 */}
-                  <div className="flex items-center gap-1">
-                    <select value={e.discount} onChange={ev => handleUf(e.id,'discount',+ev.target.value)}
-                      className="border border-gray-200 rounded-lg px-1 py-0.5 text-[10px] focus:border-bee-yellow outline-none bg-white w-16">
-                      {discOpts.map(v => <option key={v} value={v}>{v===0?'없음':v===e.originalPrice?'무료':`-${v}`}</option>)}
-                    </select>
+                  {/* 완료 체크 — 독립 컬럼 */}
+                  <div className="flex justify-center">
                     <input type="checkbox" checked={e.done} onChange={ev => handleUf(e.id,'done',ev.target.checked)}
-                      className="w-3.5 h-3.5 accent-bee-yellow cursor-pointer flex-shrink-0" title="반납완료" />
+                      className="w-4 h-4 accent-bee-yellow cursor-pointer" title="반납완료" />
                   </div>
                   {/* 메모 */}
                   <div className="flex items-center gap-1">

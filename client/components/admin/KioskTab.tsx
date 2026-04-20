@@ -784,8 +784,8 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
             <i className="fa-solid fa-table-columns text-bee-yellow text-xs"></i>
             구역별 현황
           </h3>
-          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(cfg.row_rules.rows.length, 4)}, 1fr)` }}>
-            {cfg.row_rules.rows.map(rule => {
+          <div className="grid grid-cols-3 gap-2">
+            {cfg.row_rules.rows.filter(rule => ['A','B','C'].includes(rule.label)).map(rule => {
               const rowItems = todayEntries.filter(e => e.rowLabel === rule.label);
               const active = rowItems.filter(e => !e.done).length;
               return (

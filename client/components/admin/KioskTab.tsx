@@ -758,94 +758,65 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
         {findResult && <div>{findResult}</div>}
       </div>
 
-      {/* 통계 6칸 */}
+      {/* 통계 6칸 — 컬러 보더 카드 */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {[
-          { label: t('st_total'),  val: stats.total,  icon: 'fa-inbox',           color: 'text-blue-500' },
-          { label: t('active'),    val: stats.active,  icon: 'fa-box-open',        color: 'text-indigo-500' },
-          { label: t('st_done'),   val: stats.done,    icon: 'fa-circle-check',    color: 'text-green-500' },
-          { label: t('st_over'),   val: stats.over,    icon: 'fa-clock',           color: 'text-red-500' },
-          { label: t('st_rev'),    val: `₩${stats.rev.toLocaleString()}`, icon: 'fa-won-sign', color: 'text-amber-500' },
-          { label: t('st_unpaid'), val: stats.unpaid,  icon: 'fa-money-bill-wave', color: 'text-orange-500' },
+          { label: '총 접수',  val: stats.total,                        border: 'border-l-blue-400' },
+          { label: '픽업 완료', val: stats.done,                         border: 'border-l-green-400' },
+          { label: '보관 중',  val: stats.active,                        border: 'border-l-indigo-400' },
+          { label: '시간 초과', val: stats.over,                         border: 'border-l-red-400' },
+          { label: '매출',     val: `${stats.rev.toLocaleString()}원`,   border: 'border-l-amber-400' },
+          { label: '미수금',   val: stats.unpaid,                        border: 'border-l-orange-400' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl p-3 shadow-sm text-center">
-            <i className={`fa-solid ${s.icon} ${s.color} text-sm mb-1 block`}></i>
-            <p className="text-lg font-black text-bee-black leading-none mb-0.5">{s.val}</p>
-            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">{s.label}</p>
+          <div key={s.label} className={`bg-white rounded-xl px-3 py-2.5 shadow-sm border-l-4 ${s.border}`}>
+            <p className="text-xl font-black text-bee-black leading-none mb-1">{s.val}</p>
+            <p className="text-[10px] text-gray-400 font-bold">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* 구역별 현황 + 오늘 요약 — 나란히 */}
-      <div className="flex gap-4 items-start">
-        {/* 구역별 현황 — 좌 (컬럼 카드) */}
-        <div className="flex-[3] min-w-0 bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-black text-bee-black mb-3 flex items-center gap-2 text-sm">
-            <i className="fa-solid fa-table-columns text-bee-yellow text-xs"></i>
-            구역별 현황
-          </h3>
-          <div className="grid grid-cols-3 gap-2">
-            {cfg.row_rules.rows.filter(rule => ['A','B','C'].includes(rule.label)).map(rule => {
-              const rowItems = todayEntries.filter(e => e.rowLabel === rule.label);
-              const active = rowItems.filter(e => !e.done).length;
-              return (
-                <div key={rule.label} className="rounded-xl overflow-hidden border border-gray-100">
-                  <div className="px-3 py-2 flex items-center justify-between text-white font-black text-sm"
-                    style={{ background: ROW_COLORS[rule.label] ?? '#999' }}>
-                    <span>{rule.label}</span>
-                    <span className="text-white/80 text-xs tabular-nums">{active}</span>
-                  </div>
-                  <div className="px-3 py-2 min-h-[44px] space-y-0.5 bg-white">
-                    {rowItems.filter(e => !e.done).length === 0 ? (
-                      <p className="text-gray-300 text-[10px] text-center py-1">비어있음</p>
-                    ) : (
-                      rowItems.map(e => (
-                        <div key={e.id} className={`text-[10px] font-bold tabular-nums ${e.done ? 'line-through text-gray-300' : 'text-gray-600'}`}>
-                          #{e.tag}{e.smallQty > 0 ? ` 소${e.smallQty}` : ''}{e.carrierQty > 0 ? ` 캐${e.carrierQty}` : ''}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <div className="px-3 pb-2 bg-white">
-                    <p className="text-gray-300 text-[9px] tabular-nums">{rule.start}~{rule.end}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 오늘 요약 — 우 */}
-        <div className="flex-[2] bg-white rounded-2xl shadow-sm p-4">
-          <h3 className="font-black text-bee-black mb-3 flex items-center gap-2 text-sm">
-            <i className="fa-solid fa-chart-simple text-bee-yellow text-xs"></i>
-            오늘 요약
-          </h3>
-          <div className="space-y-2">
-            {[
-              { label: '소형 가방', val: `${todayEntries.reduce((s,e)=>s+e.smallQty,0)}개`, cls: 'bg-gray-50' },
-              { label: '캐리어',    val: `${todayEntries.reduce((s,e)=>s+e.carrierQty,0)}개`, cls: 'bg-gray-50' },
-              { label: '미수금',    val: `${stats.unpaid}건`, cls: 'bg-amber-50', valCls: 'text-amber-600' },
-              { label: '총 수익',   val: `₩${stats.rev.toLocaleString()}`, cls: 'bg-bee-black', labelCls: 'text-white/60', valCls: 'text-bee-yellow' },
-            ].map(r => (
-              <div key={r.label} className={`flex justify-between items-center px-3 py-2.5 rounded-xl ${r.cls}`}>
-                <span className={`text-xs font-semibold ${(r as any).labelCls ?? 'text-gray-500'}`}>{r.label}</span>
-                <span className={`font-black text-sm ${(r as any).valCls ?? 'text-bee-black'}`}>{r.val}</span>
+      {/* A/B/C 구역 현황 — 3열 */}
+      <div className="grid grid-cols-3 gap-3">
+        {cfg.row_rules.rows.filter(r => ['A','B','C'].includes(r.label)).map(rule => {
+          const items = todayEntries.filter(e => e.rowLabel === rule.label);
+          const active = items.filter(e => !e.done).length;
+          return (
+            <div key={rule.label} className="bg-white rounded-2xl overflow-hidden shadow-sm">
+              <div className="px-4 py-2.5 flex items-center justify-between text-white font-black text-sm"
+                style={{ background: ROW_COLORS[rule.label] ?? '#999' }}>
+                <span>{rule.label}</span>
+                <span className="text-white/80 text-xs tabular-nums">{active}건</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="p-3 min-h-[56px]">
+                {items.length === 0 ? (
+                  <p className="text-gray-300 text-xs text-center py-2">비어있음</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {items.map(e => (
+                      <div key={e.id} className={`text-[10px] font-bold tabular-nums px-1.5 py-1 rounded-lg text-center ${
+                        e.done ? 'bg-gray-50 text-gray-300 line-through' : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        #{e.tag}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="px-4 pb-2.5">
+                <p className="text-gray-300 text-[9px]">{rule.start} – {rule.end}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* 전체 목록 — 3열 카드 */}
+      {/* 보관 장부 — 1열 테이블 */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex flex-wrap gap-3 items-center px-4 py-3 border-b border-gray-100">
-          <h3 className="font-black text-sm flex-1">{t('a_title')}</h3>
-          <div className="flex items-center gap-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase">{t('a_date')}</label>
-            <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
-              className="border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:border-bee-yellow outline-none" />
-          </div>
+        {/* 헤더 컨트롤 */}
+        <div className="flex flex-wrap gap-2 items-center px-4 py-3 border-b border-gray-100">
+          <h3 className="font-black text-sm flex-1">보관 장부</h3>
+          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
+            className="border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:border-bee-yellow outline-none" />
           <div className="flex gap-1 bg-gray-100 rounded-full p-1">
             {(['all','active','done'] as const).map(s => (
               <button key={s} onClick={() => setFilterStat(s)}
@@ -858,89 +829,89 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
           </div>
         </div>
 
+        {/* 테이블 헤더 */}
+        <div className="grid text-[10px] font-black text-bee-yellow bg-bee-black px-3 py-2"
+          style={{ gridTemplateColumns: '72px 48px 36px 56px 60px 80px 80px 64px 64px 64px 60px 72px 80px 64px 1fr' }}>
+          {['날짜','태그','열','유형','수량','시작','픽업예정','상태','초과시간','정가','할인','최종금액','결제','픽업','메모'].map(h => (
+            <span key={h} className="truncate">{h}</span>
+          ))}
+        </div>
+
+        {/* 테이블 바디 */}
         {filtered.length === 0 ? (
-          <div className="py-16 text-center text-gray-400 font-bold text-sm">{t('empty')}</div>
+          <div className="py-12 text-center text-gray-400 font-bold text-sm">데이터가 없습니다</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+          <div className="divide-y divide-gray-50">
             {filtered.map(e => {
               const ov = !e.done && e.pickupTs < now;
-              const types = [e.smallQty>0?`소형 ${e.smallQty}`:'', e.carrierQty>0?`캐리어 ${e.carrierQty}`:''].filter(Boolean).join(' + ');
-              const fn = e.originalPrice - (e.discount||0);
+              const fn = e.originalPrice - (e.discount || 0);
               const discOpts: number[] = [0];
               for (let v = cfg.discount.unit; v < e.originalPrice; v += cfg.discount.unit) discOpts.push(v);
               if (cfg.discount.allow_free && e.originalPrice > 0) discOpts.push(e.originalPrice);
+              const rowBg = e.done ? 'bg-green-50' : ov ? 'bg-red-50' : 'bg-white';
               return (
-                <div key={e.id} className={`rounded-2xl overflow-hidden border ${
-                  e.done ? 'bg-green-50 border-green-100' : ov ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'
-                } shadow-sm`}>
-                  {/* 카드 헤더 */}
-                  <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-inherit">
-                    <span className="w-8 h-8 rounded-full flex items-center justify-center font-black text-white text-sm flex-shrink-0"
-                      style={{ background: e.rowLabel ? (ROW_COLORS[e.rowLabel] ?? '#999') : '#ccc' }}>
-                      {e.rowLabel || '?'}
-                    </span>
-                    <span className="font-black text-bee-black text-sm">#{e.tag}</span>
-                    <span className="text-[10px] text-gray-400 ml-auto">{e.date}</span>
-                  </div>
-                  {/* 카드 바디 */}
-                  <div className="px-3 py-2.5 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-1 flex-wrap">
-                        {e.smallQty > 0 && <span className="text-[10px] bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full">소형 {e.smallQty}</span>}
-                        {e.carrierQty > 0 && <span className="text-[10px] bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded-full">캐리어 {e.carrierQty}</span>}
-                        {!e.smallQty && !e.carrierQty && <span className="text-xs text-gray-400">—</span>}
-                      </div>
-                      {e.done
-                        ? <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">{t('f_done')}</span>
-                        : ov
-                        ? <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">{overStr(e)}</span>
-                        : <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">{t('f_wait')}</span>
-                      }
-                    </div>
-                    <p className="text-[11px] text-gray-500">{e.startTime} → {e.pickupTime}</p>
-                    <div className="flex items-center gap-1 text-xs">
-                      {e.discount > 0 && <span className="text-gray-300 line-through">{e.originalPrice.toLocaleString()}</span>}
-                      {e.discount > 0 && <span className="text-red-400 text-[10px]">-{e.discount.toLocaleString()}</span>}
-                      <span className="font-black text-bee-black">₩{fn.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  {/* 카드 푸터 컨트롤 */}
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border-t border-gray-100">
-                    <select value={e.payment} onChange={ev => handleUf(e.id,'payment',ev.target.value)}
-                      className="flex-1 border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] focus:border-bee-yellow outline-none bg-white">
-                      <option value="미수금">{t('up')}</option>
-                      <option value="완료">{t('pd')}</option>
-                    </select>
+                <div key={e.id}
+                  className={`grid items-center px-3 py-2 text-xs ${rowBg} hover:bg-gray-50 transition-colors`}
+                  style={{ gridTemplateColumns: '72px 48px 36px 56px 60px 80px 80px 64px 64px 64px 60px 72px 80px 64px 1fr' }}>
+                  {/* 날짜 */}
+                  <span className="text-gray-400 text-[10px]">{e.date}</span>
+                  {/* 태그 */}
+                  <span className="font-black text-bee-black">#{e.tag}</span>
+                  {/* 열 */}
+                  <span className="w-5 h-5 rounded-md flex items-center justify-center font-black text-white text-[10px]"
+                    style={{ background: ROW_COLORS[e.rowLabel] ?? '#ccc' }}>{e.rowLabel}</span>
+                  {/* 유형 */}
+                  <span className="text-gray-500 text-[10px]">{e.smallQty > 0 ? '소형' : e.carrierQty > 0 ? '캐리어' : '—'}</span>
+                  {/* 수량 */}
+                  <span className="text-gray-600">{e.smallQty > 0 ? `${e.smallQty}개` : ''}{e.carrierQty > 0 ? `${e.carrierQty}개` : ''}</span>
+                  {/* 시작 */}
+                  <span className="text-gray-500 text-[10px]">{e.startTime}</span>
+                  {/* 픽업예정 */}
+                  <span className="text-gray-500 text-[10px]">{e.pickupTime}</span>
+                  {/* 상태 */}
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full w-fit ${
+                    e.done ? 'bg-green-100 text-green-700' : ov ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {e.done ? '완료' : ov ? '초과' : '대기'}
+                  </span>
+                  {/* 초과시간 */}
+                  <span className={`text-[10px] ${ov ? 'text-red-500 font-bold' : 'text-gray-300'}`}>
+                    {ov ? overStr(e) : '—'}
+                  </span>
+                  {/* 정가 */}
+                  <span className="text-gray-500 tabular-nums">{e.originalPrice.toLocaleString()}</span>
+                  {/* 할인 */}
+                  <span className={e.discount > 0 ? 'text-red-400 tabular-nums' : 'text-gray-300'}>
+                    {e.discount > 0 ? `-${e.discount.toLocaleString()}` : '—'}
+                  </span>
+                  {/* 최종금액 */}
+                  <span className="font-black text-bee-black tabular-nums">₩{fn.toLocaleString()}</span>
+                  {/* 결제 */}
+                  <select value={e.payment} onChange={ev => handleUf(e.id,'payment',ev.target.value)}
+                    className="border border-gray-200 rounded-lg px-1 py-0.5 text-[10px] focus:border-bee-yellow outline-none bg-white w-full">
+                    <option value="미수금">{t('up')}</option>
+                    <option value="완료">{t('pd')}</option>
+                  </select>
+                  {/* 픽업(완료체크) + 할인선택 */}
+                  <div className="flex items-center gap-1">
                     <select value={e.discount} onChange={ev => handleUf(e.id,'discount',+ev.target.value)}
-                      className="border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] focus:border-bee-yellow outline-none bg-white w-14">
-                      {discOpts.map(v => <option key={v} value={v}>{v===0?'할인없음':v===e.originalPrice?'무료':`-${v}`}</option>)}
+                      className="border border-gray-200 rounded-lg px-1 py-0.5 text-[10px] focus:border-bee-yellow outline-none bg-white w-16">
+                      {discOpts.map(v => <option key={v} value={v}>{v===0?'없음':v===e.originalPrice?'무료':`-${v}`}</option>)}
                     </select>
                     <input type="checkbox" checked={e.done} onChange={ev => handleUf(e.id,'done',ev.target.checked)}
-                      className="w-4 h-4 accent-bee-yellow cursor-pointer" title="반납완료" />
+                      className="w-3.5 h-3.5 accent-bee-yellow cursor-pointer flex-shrink-0" title="반납완료" />
+                  </div>
+                  {/* 메모 */}
+                  <div className="flex items-center gap-1">
                     <input value={e.memo} onChange={ev => handleUf(e.id,'memo',ev.target.value)}
-                      className="w-14 border border-gray-200 rounded-lg px-1.5 py-1 text-[10px] focus:border-bee-yellow outline-none bg-white" placeholder="메모" />
-                    <button
-                      onClick={() => printKioskReceipt({
-                        tag: e.tag,
-                        rowLabel: e.rowLabel,
-                        branchName,
-                        smallQty: e.smallQty,
-                        carrierQty: e.carrierQty,
-                        duration: e.duration,
-                        startTime: e.startTime,
-                        pickupTime: e.pickupTime,
-                        originalPrice: e.originalPrice,
-                        discount: e.discount,
-                        payment: e.payment,
-                        date: e.date,
-                      })}
-                      title="재출력"
-                      className="w-6 h-6 rounded-full bg-white text-gray-400 hover:bg-amber-50 hover:text-amber-500 flex items-center justify-center transition-colors border border-gray-200 flex-shrink-0">
-                      <i className="fa-solid fa-print text-[9px]"></i>
+                      className="flex-1 min-w-0 border border-gray-200 rounded-lg px-1.5 py-0.5 text-[10px] focus:border-bee-yellow outline-none bg-white" placeholder="메모" />
+                    <button onClick={() => printKioskReceipt({ tag: e.tag, rowLabel: e.rowLabel, branchName, smallQty: e.smallQty, carrierQty: e.carrierQty, duration: e.duration, startTime: e.startTime, pickupTime: e.pickupTime, originalPrice: e.originalPrice, discount: e.discount, payment: e.payment, date: e.date })}
+                      title="재출력" className="w-5 h-5 rounded-full bg-gray-100 text-gray-400 hover:text-amber-500 flex items-center justify-center flex-shrink-0">
+                      <i className="fa-solid fa-print text-[8px]"></i>
                     </button>
-                    <button onClick={() => { if (confirm(t('del'))) { deleteStorageLog(e.id).then(()=>onUpdate()).catch((err)=>alert(err.message || '삭제 실패')); } }}
-                      className="w-6 h-6 rounded-full bg-white text-gray-300 hover:bg-red-50 hover:text-red-400 flex items-center justify-center transition-colors border border-gray-200 flex-shrink-0">
-                      <i className="fa-solid fa-xmark text-[9px]"></i>
+                    <button onClick={() => { if (confirm(t('del'))) deleteStorageLog(e.id).then(()=>onUpdate()).catch(err=>alert(err.message||'삭제 실패')); }}
+                      className="w-5 h-5 rounded-full bg-gray-100 text-gray-300 hover:text-red-400 flex items-center justify-center flex-shrink-0">
+                      <i className="fa-solid fa-xmark text-[8px]"></i>
                     </button>
                   </div>
                 </div>

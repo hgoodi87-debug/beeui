@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { CashClosing, Expenditure, BookingState, BookingStatus, BankTransaction } from '../../types';
 import { loadAllLogsForRange, KioskStorageLog } from '../../services/kioskDb';
 import { useBankTransactions, useBankTransactionsMutations } from '../../src/domains/admin/hooks/useBankTransactions';
+import { StorageService } from '../../services/storageService';
 
 interface DailySettlementTabProps {
     revenueStartDate: string;
@@ -44,6 +45,27 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
     setSelectedBooking,
     t
 }) => {
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
+    const [receiptUploading, setReceiptUploading] = useState(false);
+    const receiptInputRef = useRef<HTMLInputElement>(null);
+
+    const handleReceiptSelect = async (file: File) => {
+        setReceiptFile(file);
+        setReceiptUploading(true);
+        try {
+            const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+            const path = `receipts/${new Date().toISOString().slice(0, 10)}/${Date.now()}.${ext}`;
+            const url = await StorageService.uploadFile(file, path);
+            setExpForm({ ...expForm, receiptUrl: url });
+        } catch (e) {
+            console.error('[Receipt] upload failed', e);
+            alert('영수증 업로드에 실패했습니다.');
+            setReceiptFile(null);
+        } finally {
+            setReceiptUploading(false);
+        }
+    };
+
     // 통장 잔고 & 입금
     const { data: bankTxs = [] } = useBankTransactions();
     const { save: saveBankTx } = useBankTransactionsMutations();
@@ -708,21 +730,56 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                             className="bg-gray-50 p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:bg-white focus:border-orange-100 transition-all text-orange-500"
                         />
                     </div>
-                    <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={expForm.description}
+                        onChange={e => setExpForm({ ...expForm, description: e.target.value })}
+                        placeholder="지출 상세 내역 입력..."
+                        className="w-full bg-gray-50 p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:bg-white focus:border-orange-100 transition-all"
+                    />
+                    {/* 영수증 업로드 */}
+                    <div>
                         <input
-                            type="text"
-                            value={expForm.description}
-                            onChange={e => setExpForm({ ...expForm, description: e.target.value })}
-                            placeholder="지출 상세 내역 입력..."
-                            className="flex-1 bg-gray-50 p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:bg-white focus:border-orange-100 transition-all"
+                            ref={receiptInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+                            className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) handleReceiptSelect(f); }}
                         />
                         <button
-                            onClick={handleSaveExpenditure}
-                            className="px-5 sm:px-6 bg-orange-50 text-orange-500 font-black rounded-2xl hover:bg-orange-500 hover:text-white transition-all shadow-sm border border-orange-100 whitespace-nowrap"
+                            type="button"
+                            onClick={() => receiptInputRef.current?.click()}
+                            disabled={receiptUploading}
+                            className={`w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-dashed text-xs font-black transition-all ${
+                                expForm.receiptUrl
+                                    ? 'border-green-300 bg-green-50 text-green-700'
+                                    : 'border-gray-200 bg-white text-gray-400 hover:border-orange-200 hover:text-orange-400'
+                            }`}
                         >
-                            추가
+                            {receiptUploading ? (
+                                <><i className="fa-solid fa-spinner fa-spin text-orange-400"></i> 업로드 중...</>
+                            ) : expForm.receiptUrl ? (
+                                <>
+                                    <i className="fa-solid fa-circle-check text-green-500"></i>
+                                    <span className="truncate max-w-[180px]">{receiptFile?.name || '영수증 첨부됨'}</span>
+                                    <a href={expForm.receiptUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="ml-auto text-green-600 hover:underline shrink-0">보기</a>
+                                </>
+                            ) : (
+                                <><i className="fa-solid fa-paperclip"></i> 영수증 첨부 (JPG · PNG · PDF)</>
+                            )}
                         </button>
+                        {expForm.receiptUrl && (
+                            <button type="button" onClick={() => { setReceiptFile(null); setExpForm({ ...expForm, receiptUrl: '' }); }} className="text-[9px] text-gray-300 hover:text-red-400 ml-1 mt-1 font-black transition-colors">
+                                첨부 취소
+                            </button>
+                        )}
                     </div>
+                    <button
+                        onClick={handleSaveExpenditure}
+                        className="w-full px-5 py-3.5 bg-orange-50 text-orange-500 font-black rounded-2xl hover:bg-orange-500 hover:text-white transition-all shadow-sm border border-orange-100"
+                    >
+                        지출 추가
+                    </button>
                 </div>
 
                 <div className="space-y-3 pt-4 border-t border-gray-50">
@@ -738,9 +795,14 @@ const DailySettlementTab: React.FC<DailySettlementTabProps> = ({
                                         <span className="text-sm font-black text-bee-black mt-0.5">{e.description}</span>
                                     </div>
                                 </div>
-                                <div className="flex flex-col items-end">
+                                <div className="flex flex-col items-end gap-1">
                                     <span className="text-sm font-black text-orange-500 tabular-nums">-₩{e.amount?.toLocaleString()}</span>
-                                    <button onClick={() => deleteExpenditure(e.id!)} className="text-[8px] font-black text-gray-300 hover:text-red-500 uppercase mt-1 transition-colors opacity-0 group-hover/exp:opacity-100">
+                                    {e.receiptUrl && (
+                                        <a href={e.receiptUrl} target="_blank" rel="noreferrer" className="text-[9px] font-black text-blue-400 hover:text-blue-600 flex items-center gap-1">
+                                            <i className="fa-solid fa-paperclip text-[8px]"></i> 영수증
+                                        </a>
+                                    )}
+                                    <button onClick={() => deleteExpenditure(e.id!)} className="text-[8px] font-black text-gray-300 hover:text-red-500 uppercase mt-0.5 transition-colors opacity-0 group-hover/exp:opacity-100">
                                         Remove
                                     </button>
                                 </div>

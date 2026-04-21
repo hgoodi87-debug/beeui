@@ -1,0 +1,22 @@
+{
+  "name": "beeliber",
+  "short_name": "beeliber",
+  "description": "beeliber 모바일 예약",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0A0A",
+  "theme_color": "#F5B200",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["lifestyle", "business"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

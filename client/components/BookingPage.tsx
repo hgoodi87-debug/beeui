@@ -1506,16 +1506,6 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10">
-                                    {isDirectBookingMode && (
-                                        <div className="rounded-2xl border border-bee-yellow/40 bg-bee-yellow/10 px-4 py-3">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-bee-yellow mb-1">
-                                                Reservation First
-                                            </p>
-                                            <p className="text-[11px] font-bold text-white/80 leading-relaxed">
-                                                {tBooking.reservation_first_desc || '지금은 온라인 결제를 잠시 숨겨두었어요. 예약은 바로 접수되고 결제는 현장 또는 별도 안내로 이어집니다.'}
-                                            </p>
-                                        </div>
-                                    )}
                                     <label className="flex items-center gap-4 group cursor-pointer">
                                         <div className="relative w-5 h-5 flex-shrink-0">
                                             <input
@@ -1613,36 +1603,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             <div ref={paypalContainerRef} id="paypal-button-container" />
                                         )}
 
-                                        {/* 현금결제 폴백 — PayPal 오류 시 현장 결제용 */}
-                                        <div className="mt-3 border-t border-gray-100 pt-3">
-                                            <p className="text-center text-[10px] text-gray-400 mb-2">
-                                                {lang === 'ko' ? '현장에서 직접 결제하시겠어요?' : lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK' ? '想在現場直接付款嗎？' : lang === 'ja' ? '現場で直接お支払いますか？' : 'Prefer to pay on-site?'}
-                                            </p>
-                                            <motion.button
-                                                whileHover={{ scale: 1.01 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                onClick={handleBook}
-                                                disabled={isSubmitting}
-                                                className="w-full py-3 bg-gray-100 text-gray-600 font-black text-sm rounded-2xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                            >
-                                                {isSubmitting ? (
-                                                    <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <>
-                                                        💵 {lang === 'ko' ? '현금으로 현장 결제' : lang === 'zh' || lang === 'zh-TW' || lang === 'zh-HK' ? '現場現金付款' : lang === 'ja' ? '現場で現金払い' : 'Pay Cash On-Site'}
-                                                    </>
-                                                )}
-                                            </motion.button>
-                                        </div>
                                     </div>
                                 ) : (
-                                    /* PayPal 비활성 시: 기존 직접예약 버튼 */
                                     <motion.button
                                         whileHover={{ scale: 1.02, y: -2 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handleBook}
                                         disabled={isSubmitting}
-                                        className="w-full mt-8 py-4 bg-bee-yellow text-bee-black font-black text-lg rounded-2xl shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        className="hidden w-full mt-8 py-4 bg-bee-yellow text-bee-black font-black text-lg rounded-2xl shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         {isSubmitting ? (
                                             <div className="w-5 h-5 border-2 border-bee-black border-t-transparent rounded-full animate-spin" />
@@ -1650,7 +1618,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             <>
                                                 {isMockPaymentMode
                                                     ? (lang === 'ko' ? '결제 흐름 테스트하기' : 'TEST PAYMENT FLOW')
-                                                    : (lang === 'ko' ? '예약 바로 확정하기' : (tBooking.book_now || 'COMPLETE BOOKING'))} <ArrowRight size={20} />
+                                                    : (tBooking.book_now || 'COMPLETE BOOKING')} <ArrowRight size={20} />
                                             </>
                                         )}
                                     </motion.button>

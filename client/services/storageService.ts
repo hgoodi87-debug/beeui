@@ -1155,7 +1155,23 @@ export const StorageService = {
     try {
       if (!id) return null;
       if (isSupabaseDataEnabled()) {
-        // UUID 조회 (UUID 형식일 때만 시도 — 형식 불일치시 PostgREST 400 방지)
+        // SECURITY DEFINER RPC — authenticated 이면 has_any_role() 없이 조회 가능
+        // QR 스캔, UUID, reservation_code 모두 단일 호출로 처리
+        try {
+          const { supabaseMutate: _mutate } = await import('./supabaseClient');
+          const rpcResult = await _mutate<Record<string, unknown>>(
+            'rpc/get_booking_for_scan',
+            'POST',
+            { p_id: id }
+          );
+          if (rpcResult) {
+            return normalizeBookingForDeliveryPolicy(snakeToCamel(rpcResult) as unknown as BookingState);
+          }
+        } catch (rpcError) {
+          console.warn('[Storage] get_booking_for_scan RPC failed, falling back:', rpcError);
+        }
+
+        // RPC 실패 시 직접 뷰 조회 (has_any_role 있는 관리자 대비)
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         if (isUuid) {
           try {
@@ -1170,7 +1186,6 @@ export const StorageService = {
           }
         }
 
-        // reservation_code 조회 (BEE-XXXX 형식 바우처 QR 코드 지원)
         try {
           const byReservationCode = await supabaseGet<Array<Record<string, unknown>>>(
             `admin_booking_list_v1?select=*&reservation_code=eq.${encodeURIComponent(id)}&limit=1`

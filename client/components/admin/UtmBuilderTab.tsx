@@ -24,6 +24,14 @@ const BASE_URLS = [
   'https://bee-liber.com/branches',
 ];
 
+const LANG_PREFIXES: { label: string; lang: string; flag: string }[] = [
+  { label: '한국어', lang: 'ko', flag: '🇰🇷' },
+  { label: '繁體中文', lang: 'zh-TW', flag: '🇹🇼' },
+  { label: '简体中文', lang: 'zh', flag: '🇨🇳' },
+  { label: 'English', lang: 'en', flag: '🇺🇸' },
+  { label: '日本語', lang: 'ja', flag: '🇯🇵' },
+];
+
 interface HistoryEntry {
   id: string;
   fullUrl: string;
@@ -149,6 +157,28 @@ const UtmBuilderTab: React.FC = () => {
                   {u.replace('https://bee-liber.com', '~')}
                 </button>
               ))}
+            </div>
+            {/* 언어별 빠른 유입 버튼 */}
+            <div className="mt-2">
+              <p className="text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-widest">언어별 유입</p>
+              <div className="flex flex-wrap gap-1.5">
+                {LANG_PREFIXES.map(({ label, lang, flag }) => {
+                  const path = baseUrl.replace('https://bee-liber.com', '') || '/';
+                  const langUrl = `https://bee-liber.com/${lang}${path === '/' ? '' : path}`;
+                  return (
+                    <button
+                      key={lang}
+                      onClick={() => setBaseUrl(langUrl)}
+                      className={`text-xs px-2.5 py-1 rounded-lg transition-colors font-bold flex items-center gap-1 ${
+                        baseUrl === langUrl ? 'bg-[#F5C842] text-[#111]' : 'bg-gray-100 hover:bg-[#F5C842] hover:text-[#111]'
+                      }`}
+                    >
+                      <span>{flag}</span>
+                      <span className="font-mono">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

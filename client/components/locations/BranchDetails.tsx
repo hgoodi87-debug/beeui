@@ -197,10 +197,10 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
                                     </div>
                                     <div className="min-w-0">
                                         <h4 className="text-[12px] md:text-[15px] font-black text-gray-900 leading-tight">
-                                            {(nearbySpot.name as any)[lang] || nearbySpot.name.ko}
+                                            {(nearbySpot.name as any)[lang] || (nearbySpot.name as any)[l] || (l === 'zh-tw' ? (nearbySpot.name as any)['zh-TW'] : undefined) || (l === 'zh-hk' ? (nearbySpot.name as any)['zh-HK'] : undefined) || nearbySpot.name.ko}
                                         </h4>
                                         <p className="mt-1 text-[10px] md:text-[13px] text-gray-600 leading-snug">
-                                            {(nearbySpot.description as any)[lang] || nearbySpot.description.ko}
+                                            {(nearbySpot.description as any)[lang] || (nearbySpot.description as any)[l] || (l === 'zh-tw' ? (nearbySpot.description as any)['zh-TW'] : undefined) || (l === 'zh-hk' ? (nearbySpot.description as any)['zh-HK'] : undefined) || nearbySpot.description.ko}
                                         </p>
                                     </div>
                                 </div>

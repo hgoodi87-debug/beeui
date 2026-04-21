@@ -101,13 +101,23 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
         }
     };
 
+    // BookingStatus(한국어) → booking_details.ops_status(영문) 매핑
+    const BOOKING_STATUS_TO_OPS: Record<string, string> = {
+        [BookingStatus.STORAGE]: 'pickup_completed',
+        [BookingStatus.TRANSIT]: 'in_transit',
+        [BookingStatus.ARRIVED]: 'arrived_at_destination',
+        [BookingStatus.COMPLETED]: 'handover_completed',
+        [BookingStatus.CANCELLED]: 'cancelled',
+    };
+
     const handleStatusUpdate = async (newStatus: BookingStatus) => {
         if (!booking) return;
         // confirm() 제거 — 모바일에서 네이티브 다이얼로그 차단. 버튼 자체가 명시적 액션임.
 
         setIsUpdating(true);
         try {
-            await StorageService.updateBooking(booking.id!, { status: newStatus });
+            const opsStatus = BOOKING_STATUS_TO_OPS[newStatus];
+            await StorageService.updateBooking(booking.id!, opsStatus ? { opsStatus } : { status: newStatus });
 
             // 로컬 상태 즉시 업데이트
             setBooking(prev => prev ? { ...prev, status: newStatus } : null);

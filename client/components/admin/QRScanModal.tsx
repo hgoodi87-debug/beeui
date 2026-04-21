@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import jsQR from 'jsqr';
 
 interface QRScanModalProps {
   onDetect: (bookingId: string) => void;
@@ -6,11 +7,6 @@ interface QRScanModalProps {
   /** inline 모드: 전체화면 오버레이 없이 부모 레이아웃 안에 임베드 */
   inline?: boolean;
 }
-
-// BarcodeDetector가 지원되는지 확인
-const hasBarcodeDetector = (): boolean => {
-  return typeof window !== 'undefined' && 'BarcodeDetector' in window;
-};
 
 // 스캔된 QR 텍스트에서 예약 ID 추출
 // QR 포맷: https://bee-liber.com/staff/scan?id=XXXX 또는 예약코드 직접 포함
@@ -36,7 +32,6 @@ const QRScanModal: React.FC<QRScanModalProps> = ({ onDetect, onClose, inline = f
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
-  const detectorRef = useRef<any>(null);
 
   const [status, setStatus] = useState<'starting' | 'scanning' | 'error' | 'manual'>('starting');
   const [errorMsg, setErrorMsg] = useState('');
@@ -65,19 +60,6 @@ const QRScanModal: React.FC<QRScanModalProps> = ({ onDetect, onClose, inline = f
     let cancelled = false;
 
     const startCamera = async () => {
-      if (!hasBarcodeDetector()) {
-        setStatus('manual');
-        return;
-      }
-
-      try {
-        // @ts-ignore — BarcodeDetector는 TypeScript 타입 없을 수 있음
-        detectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] });
-      } catch {
-        setStatus('manual');
-        return;
-      }
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -90,23 +72,30 @@ const QRScanModal: React.FC<QRScanModalProps> = ({ onDetect, onClose, inline = f
         }
         setStatus('scanning');
 
-        const scan = async () => {
-          if (!videoRef.current || !canvasRef.current || !detectorRef.current) return;
+        const scan = () => {
+          if (!videoRef.current || !canvasRef.current) return;
           const video = videoRef.current;
+          const canvas = canvasRef.current;
           if (video.readyState < 2) { rafRef.current = requestAnimationFrame(scan); return; }
 
-          try {
-            const barcodes = await detectorRef.current.detect(video);
-            if (barcodes.length > 0) {
-              const text = barcodes[0].rawValue;
-              const id = extractBookingId(text);
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const result = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: 'dontInvert',
+            });
+            if (result?.data) {
+              const id = extractBookingId(result.data);
               if (id) {
                 stopCamera();
                 onDetect(id);
                 return;
               }
             }
-          } catch { /* 간헐적 오류 무시 */ }
+          }
 
           setScanCount(c => c + 1);
           rafRef.current = requestAnimationFrame(scan);

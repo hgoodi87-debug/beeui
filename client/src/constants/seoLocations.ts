@@ -245,9 +245,9 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                     ko: '버스킹과 예술 공연이 끊이지 않는 홍대의 심장부입니다. 짐 없이 가볍게 축제를 즐기세요! ✨',
                     en: 'The heart of Hongdae with continuous performances. Enjoy festivals light as a feather! ✨',
                     ja: 'バスキングが絶えない弘大の心臓部です. 身軽にお祭りを楽しんで! ✨',
-                    zh: '街头艺术表演不断的弘大核心. 告别行李, 轻松加入狂欢吧! ✨',
-                    'zh-TW': '街頭 藝術 表演 不斷 의 弘大 核心. 告別 行李, 輕鬆 加入 狂歡吧! ✨',
-                    'zh-HK': '街頭 藝術 表演 不斷 의 弘大 核心. 告別 行李, 輕鬆 加入 狂歡吧! ✨'
+                    zh: '街头艺术表演不断的弘大核心，告别行李，轻松加入狂欢吧！✨',
+                    'zh-TW': '街頭藝術表演不斷的弘大核心，告別行李，輕鬆加入狂歡吧！✨',
+                    'zh-HK': '街頭藝術表演不斷的弘大核心，告別行李，輕鬆加入狂歡吧！✨'
                 }
             }
         ]
@@ -340,14 +340,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'culture',
                 lat: 37.5631,
                 lng: 126.9873,
-                name: { ko: '명동성당', en: 'Myeongdong Cathedral', ja: '明洞聖堂', zh: '明洞圣堂', 'zh-TW': '명동성당', 'zh-HK': '명동성당' },
+                name: { ko: '명동성당', en: 'Myeongdong Cathedral', ja: '明洞聖堂', zh: '明洞圣堂', 'zh-TW': '明洞大聖堂', 'zh-HK': '明洞大聖堂' },
                 description: {
                     ko: '한국 천주교의 상징이자 명동의 랜드마크입니다. 💅',
                     en: 'Symbol of Korean Catholicism and landmark of Myeongdong. 💅',
                     ja: '韓国カトリックの象徴であり、明洞のランドマーク。 💅',
                     zh: '韩国天主教的象征，也是明洞的地标。 💅',
-                    'zh-TW': '韓國天주교의 象徵이자 명동의 랜드마크입니다. 💅',
-                    'zh-HK': '韓國 天主教 의 象徵, 也是 명동 의 地標. 💅'
+                    'zh-TW': '韓國天主教的象徵，也是明洞的地標。 💅',
+                    'zh-HK': '韓國天主教的象徵，也是明洞的地標。 💅'
                 }
             }
         ]
@@ -395,14 +395,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'culture',
                 lat: 37.5665,
                 lng: 127.0092,
-                name: { ko: 'DDP (동대문디자인플라자)', en: 'DDP', ja: 'DDP (東大門デザインプラザ)', zh: 'DDP (东大门设计广场)', 'zh-TW': 'DDP (東大門設計廣場)', 'zh-HK': 'DDP' },
+                name: { ko: 'DDP (동대문디자인플라자)', en: 'DDP', ja: 'DDP (東大門デザインプラザ)', zh: 'DDP (东大门设计广场)', 'zh-TW': 'DDP (東大門設計廣場)', 'zh-HK': 'DDP (東大門設計廣場)' },
                 description: {
                     ko: '세계 최대 규모의 3차원 비정형 건축물로 동대문의 랜드마크입니다. 💅',
                     en: 'The largest 3D atypical structure and a landmark of Dongdaemun. 💅',
                     ja: '世界最大規模の3次元非定型建築物で, 東大門のランドマークです. 💅',
-                    zh: '世界上最大的三维非定型建筑, 东大门的地标. 💅',
-                    'zh-TW': '世界上最大的三維非定型建築, 東大門 의 地標. 💅',
-                    'zh-HK': '世界 最大 規模 의 三維 非定型 建築物, 東大門 의 地標. 💅'
+                    zh: '世界上最大的三维非定型建筑，是东大门的地标。 💅',
+                    'zh-TW': '世界上最大的三維非定型建築，是東大門的地標。 💅',
+                    'zh-HK': '世界上最大的三維非定型建築，是東大門的地標。 💅'
                 }
             }
         ]
@@ -450,14 +450,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'culture',
                 lat: 37.5826,
                 lng: 126.9835,
-                name: { ko: '북촌 한옥마을', en: 'Bukchon Hanok Village', ja: '北村韓屋村', zh: '北村韩屋村', 'zh-TW': '北村韓屋村', 'zh-HK': '북촌 한옥마을' },
+                name: { ko: '북촌 한옥마을', en: 'Bukchon Hanok Village', ja: '北村韓屋村', zh: '北村韩屋村', 'zh-TW': '北村韓屋村', 'zh-HK': '北村韓屋村' },
                 description: {
                     ko: '전통의 미가 살아있는 한옥 밀집 지역입니다. 💅',
                     en: 'Historic village with traditional Korean houses. 💅',
                     ja: '伝統的な美しさが残る韓屋が並ぶ場所. 💅',
-                    zh: '保留着传统之美的韩屋密集区. 💅',
-                    'zh-TW': '保留著傳統之美的韓屋密集區. 💅',
-                    'zh-HK': '保留著 傳統之美 의 韓屋 密集區. 💅'
+                    zh: '保留着传统之美的韩屋密集区。 💅',
+                    'zh-TW': '保留著傳統之美的韓屋密集區。 💅',
+                    'zh-HK': '保留著傳統之美的韓屋密集區。 💅'
                 }
             }
         ]
@@ -505,14 +505,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'culture',
                 lat: 37.5342,
                 lng: 126.9945,
-                name: { ko: '이태원 앤티크 가구 거리', en: 'Itaewon Antique Street', ja: '梨泰院アンティーク家具通り', zh: '梨泰院古董家具街', 'zh-TW': '梨泰院古董家具街', 'zh-HK': '이태원 앤티크 가구 거리' },
+                name: { ko: '이태원 앤티크 가구 거리', en: 'Itaewon Antique Street', ja: '梨泰院アンティーク家具通り', zh: '梨泰院古董家具街', 'zh-TW': '梨泰院古董家具街', 'zh-HK': '梨泰院古董家具街' },
                 description: {
                     ko: '이색적인 소품과 앤티크 가구가 가득한 이태원의 명소입니다. 💅',
                     en: 'Exotic street with unique props and antique furniture. 💅',
                     ja: '異国情緒あふれる雑貨店や家具店が並ぶ. 💅',
-                    zh: '充满异国情调的饰品和古董家具的梨泰院名胜. 💅',
-                    'zh-TW': '充滿異國情調的飾品和古董家具的梨泰院名勝. 💅',
-                    'zh-HK': '充滿 異國情調 의 飾品 과 古董家具 의 梨泰院 名勝. 💅'
+                    zh: '充满异国情调的古董家具和特色饰品，是梨泰院的著名景点。 💅',
+                    'zh-TW': '充滿異國情調的古董家具和特色飾品，是梨泰院的著名景點。 💅',
+                    'zh-HK': '充滿異國情調的古董家具和特色飾品，是梨泰院的著名景點。 💅'
                 }
             }
         ]
@@ -605,14 +605,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'shopping',
                 lat: 37.5218,
                 lng: 127.0226,
-                name: { ko: '가로수길', en: 'Garosu-gil', ja: '街로樹通り', zh: '林荫道', 'zh-TW': '林蔭道', 'zh-HK': '가로수길' },
+                name: { ko: '가로수길', en: 'Garosu-gil', ja: 'ガロスキル', zh: '林荫道', 'zh-TW': '林蔭道', 'zh-HK': '林蔭道' },
                 description: {
                     ko: '감각적인 카페와 브랜드 숍이 가득한 서울의 트렌디한 거리입니다. 💅',
                     en: 'Seoul\'s trendy street with stylish brand shops. 💅',
                     ja: '感覚的なカフェやブランドショップが集まる通り. 💅',
-                    zh: '遍布时尚品牌和特色咖啡屋的潮流地标. 💅',
-                    'zh-TW': '遍布時尚品牌和特色咖啡屋的潮流地標. 💅',
-                    'zh-HK': '遍布 時尚 品牌 和 特色 咖啡屋 의 潮流 地標. 💅'
+                    zh: '遍布时尚品牌和特色咖啡馆的潮流地标。 💅',
+                    'zh-TW': '遍布時尚品牌和特色咖啡館的潮流地標。 💅',
+                    'zh-HK': '遍布時尚品牌和特色咖啡館的潮流地標。 💅'
                 }
             }
         ]
@@ -660,14 +660,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'nature',
                 lat: 37.5284,
                 lng: 126.9321,
-                name: { ko: '여의도 한강공원', en: 'Yeouido Han River Park', ja: '汝矣島漢江公園', zh: '汝矣岛汉江公园', 'zh-TW': '汝矣島漢江公園', 'zh-HK': '여의도 한강공원' },
+                name: { ko: '여의도 한강공원', en: 'Yeouido Han River Park', ja: '汝矣島漢江公園', zh: '汝矣岛汉江公园', 'zh-TW': '汝矣島漢江公園', 'zh-HK': '汝矣島漢江公園' },
                 description: {
                     ko: '서울의 낭만이 가득한 한강공원입니다. 💅',
                     en: 'Romantic riverside park in Seoul. 💅',
                     ja: 'ソウルのロマンがつまった漢江公園. 💅',
-                    zh: '充满首尔浪漫气息的汉江公园. 💅',
-                    'zh-TW': '充滿首爾浪漫氣息的漢江公園. 💅',
-                    'zh-HK': '充滿 首爾 浪漫 氣息 의 漢江 公園. 💅'
+                    zh: '充满首尔浪漫气息的汉江公园。 💅',
+                    'zh-TW': '充滿首爾浪漫氣息的漢江公園。 💅',
+                    'zh-HK': '充滿首爾浪漫氣息的漢江公園。 💅'
                 }
             }
         ],
@@ -831,14 +831,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'nature',
                 lat: 35.1587,
                 lng: 129.1603,
-                name: { ko: '해운대 해수욕장', en: 'Haeundae Beach', ja: '海雲台海水浴場', zh: '海云台海水浴场', 'zh-TW': '海雲台海水浴場', 'zh-HK': '해운대 해수욕장' },
+                name: { ko: '해운대 해수욕장', en: 'Haeundae Beach', ja: '海雲台海水浴場', zh: '海云台海水浴场', 'zh-TW': '海雲台海水浴場', 'zh-HK': '海雲台海水浴場' },
                 description: {
                     ko: '부산 최고의 랜드마크이자 대표 해변입니다. 💅',
                     en: 'Most iconic beach and landmark in Busan. 💅',
                     ja: '釜山最高のランドマークであり, 代表的なビーチ. 💅',
-                    zh: '釜山最具代表性的地标海滩. 💅',
-                    'zh-TW': '釜山最具代表性的地標海灘. 💅',
-                    'zh-HK': '釜山 最 具 代表性 의 地標 海灘. 💅'
+                    zh: '釜山最具代表性的地标海滩。 💅',
+                    'zh-TW': '釜山最具代表性的地標海灘。 💅',
+                    'zh-HK': '釜山最具代表性的地標海灘。 💅'
                 }
             }
         ]
@@ -886,14 +886,14 @@ export const SEO_LOCATIONS: SeoLocation[] = [
                 category: 'culture',
                 lat: 33.5126,
                 lng: 126.5281,
-                name: { ko: '제주 동문시장', en: 'Jeju Dongmun Market', ja: '済州東門市場', zh: '济州东门 市场', 'zh-TW': '濟州東門市場', 'zh-HK': '제주 동문시장' },
+                name: { ko: '제주 동문시장', en: 'Jeju Dongmun Market', ja: '済州東門市場', zh: '济州东门市场', 'zh-TW': '濟州東門市場', 'zh-HK': '濟州東門市場' },
                 description: {
                     ko: '제주의 활기를 느낄 수 있는 대표 재래시장입니다. 💅',
                     en: 'The representative market in Jeju. 💅',
                     ja: '済州の活気を感じられる代表的な伝統市場. 💅',
-                    zh: '可以感受济州活力的代表性传统市场. 💅',
-                    'zh-TW': '可以感受濟州活力的代表性傳統市場. 💅',
-                    'zh-HK': '可以 感受 濟州 活力 의 代表性 傳統 市場. 💅'
+                    zh: '可以感受济州活力的代表性传统市场。 💅',
+                    'zh-TW': '可以感受濟州活力的代表性傳統市場。 💅',
+                    'zh-HK': '可以感受濟州活力的代表性傳統市場。 💅'
                 }
             }
         ]

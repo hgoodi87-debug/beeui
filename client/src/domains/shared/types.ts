@@ -190,6 +190,7 @@ export interface Expenditure {
     description: string;
     costType?: ExpenditureCostType;     // 고정비 / 유동비
     paymentType?: ExpenditurePaymentType; // 법인카드 / 개인비용
+    receiptUrl?: string;
     createdBy: string;
     createdAt: string;
 }

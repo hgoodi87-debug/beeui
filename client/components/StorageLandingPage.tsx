@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, ArrowLeft, Star, Luggage } from 'lucide-react';
@@ -230,6 +230,34 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
         window.scrollTo(0, 0);
     }, [slug]);
 
+    // viewContent — 페이지 진입 시 GA4 + Meta Pixel 이벤트 발화
+    useEffect(() => {
+        if (!location) return;
+        import('../services/trackingService').then(({ TrackingService }) => {
+            TrackingService.viewContent(
+                `${isDelivery ? '배송' : '보관'} — ${location.slug}`,
+                location.slug,
+                undefined,
+                {
+                    item_category: isDelivery ? 'delivery' : 'storage',
+                    item_category2: location.slug,
+                }
+            );
+        });
+    }, [slug, isDelivery, location]);
+
+    const handleBook = useCallback((locationId: string) => {
+        import('../services/trackingService').then(({ TrackingService }) => {
+            TrackingService.addToCart(undefined, {
+                item_id: slug || '',
+                item_name: `${isDelivery ? '배송' : '보관'} — ${slug}`,
+                item_category: isDelivery ? 'delivery' : 'storage',
+                item_category2: slug || '',
+            });
+        });
+        onBook(locationId);
+    }, [slug, isDelivery, onBook]);
+
     // 해당 slug를 찾지 못한 경우
     if (!location) {
         return (
@@ -335,7 +363,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                         <p className="text-white/70 text-base leading-relaxed mb-8">{description}</p>
 
                         <button
-                            onClick={() => onBook(location.relatedBranchIds[0] || '')}
+                            onClick={() => handleBook(location.relatedBranchIds[0] || '')}
                             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#FFD700] text-black font-bold text-base hover:bg-[#FFE44D] transition-colors shadow-lg shadow-[#FFD700]/20"
                         >
                             {ctaLabel}
@@ -426,7 +454,7 @@ const StorageLandingPage: React.FC<StorageLandingPageProps> = ({ lang, onBack, o
                 {/* Bottom CTA */}
                 <motion.div {...fadeUp} className="text-center pt-4 pb-8">
                     <button
-                        onClick={() => onBook(location.relatedBranchIds[0] || '')}
+                        onClick={() => handleBook(location.relatedBranchIds[0] || '')}
                         className="inline-flex items-center gap-2 px-10 py-4 rounded-full bg-[#FFD700] text-black font-bold text-base hover:bg-[#FFE44D] transition-colors shadow-lg shadow-[#FFD700]/20"
                     >
                         {ctaLabel}

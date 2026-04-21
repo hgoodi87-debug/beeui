@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { BookingState, Expenditure, CashClosing, AdminTab, BankTransaction, BankTxType } from '../../types';
+import { StorageService } from '../../services/storageService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { exportKoreanAccountingXLSX } from '../../utils/accountingExport';
 import { exportPaymentMethodWordDoc } from '../../utils/wordExport';
@@ -47,6 +48,26 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     t
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
+    const [receiptUploading, setReceiptUploading] = useState(false);
+    const receiptInputRef = useRef<HTMLInputElement>(null);
+
+    const handleReceiptSelect = async (file: File) => {
+        setReceiptFile(file);
+        setReceiptUploading(true);
+        try {
+            const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+            const path = `receipts/${new Date().toISOString().slice(0, 10)}/${Date.now()}.${ext}`;
+            const url = await StorageService.uploadFile(file, path);
+            setExpForm({ ...expForm, receiptUrl: url });
+        } catch (e) {
+            console.error('[Receipt] upload failed', e);
+            alert('영수증 업로드에 실패했습니다.');
+            setReceiptFile(null);
+        } finally {
+            setReceiptUploading(false);
+        }
+    };
 
     // 통장 잔고 내역
     const { data: bankTxs = [], isLoading: bankLoading } = useBankTransactions({ enabled: activeSubTab === 'bank', startDate: revenueStartDate, endDate: revenueEndDate });
@@ -259,8 +280,8 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                 </div>
             </div>
 
-            {/* Premium Summary Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Premium Summary Grid — 매출 요약 탭에서만 노출 */}
+            {activeSubTab === 'revenue' && <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* 총 매출 */}
                 <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col justify-between hover:border-bee-yellow transition-all">
                     <div>
@@ -341,10 +362,10 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         <p className="text-[8px] font-black text-bee-yellow uppercase">🐝 키오스크 +₩{kioskStats.net.toLocaleString()} 포함</p>
                     </div>
                 </div>
-            </div>
+            </div>}
 
-            {/* 🐝 키오스크 정산 요약 — 항상 노출 */}
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
+            {/* 🐝 키오스크 정산 요약 — 매출 요약 탭에서만 노출 */}
+            {activeSubTab === 'revenue' && <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-black flex items-center gap-2 text-bee-black">
                         <span className="w-6 h-6 bg-bee-yellow rounded-lg flex items-center justify-center text-[10px]">🐝</span>
@@ -376,12 +397,10 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         <p className="text-xl font-black italic text-bee-yellow tabular-nums">₩{kioskStats.net.toLocaleString()}</p>
                     </div>
                 </div>
-            </div>
+            </div>}
 
-            {/* Date Range Selector removed from here and moved to header */}
-
-            {/* Payment Method Matrix - Premium Card Style */}
-            <div className="bg-white p-5 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+            {/* Payment Method Matrix — 매출 요약 탭에서만 노출 */}
+            {activeSubTab === 'revenue' && <div className="bg-white p-5 md:p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
                 <div className="flex items-center justify-between">
                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                         <i className="fa-solid fa-credit-card text-bee-blue"></i> 결제 수단별 매출 분석
@@ -418,7 +437,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         </motion.div>
                     ))}
                 </div>
-            </div>
+            </div>}
 
             {/* SubTab Content */}
             <div className="animate-fade-in">
@@ -617,6 +636,44 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                     className="w-full bg-white p-4 rounded-2xl border border-transparent font-black text-xs outline-none focus:border-red-200 transition-all shadow-sm"
                                 />
                             </div>
+                            {/* 영수증 업로드 */}
+                            <div className="space-y-2 text-left">
+                                <label className="text-[10px] font-black text-gray-400 uppercase ml-1 block">영수증 첨부</label>
+                                <input
+                                    ref={receiptInputRef}
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+                                    className="hidden"
+                                    onChange={e => { const f = e.target.files?.[0]; if (f) handleReceiptSelect(f); }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => receiptInputRef.current?.click()}
+                                    disabled={receiptUploading}
+                                    className={`w-full flex items-center justify-center gap-3 p-4 rounded-2xl border-2 border-dashed text-xs font-black transition-all ${
+                                        expForm.receiptUrl
+                                            ? 'border-green-300 bg-green-50 text-green-700'
+                                            : 'border-gray-200 bg-white text-gray-400 hover:border-red-200 hover:text-red-400'
+                                    }`}
+                                >
+                                    {receiptUploading ? (
+                                        <><i className="fa-solid fa-spinner fa-spin text-red-400"></i> 업로드 중...</>
+                                    ) : expForm.receiptUrl ? (
+                                        <>
+                                            <i className="fa-solid fa-circle-check text-green-500"></i>
+                                            <span className="truncate max-w-[200px]">{receiptFile?.name || '영수증 첨부됨'}</span>
+                                            <a href={expForm.receiptUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="ml-auto text-green-600 hover:underline shrink-0">보기</a>
+                                        </>
+                                    ) : (
+                                        <><i className="fa-solid fa-paperclip"></i> 영수증 파일 첨부 (JPG · PNG · PDF)</>
+                                    )}
+                                </button>
+                                {expForm.receiptUrl && (
+                                    <button type="button" onClick={() => { setReceiptFile(null); setExpForm({ ...expForm, receiptUrl: '' }); }} className="text-[9px] text-gray-300 hover:text-red-400 ml-1 font-black transition-colors">
+                                        첨부 취소
+                                    </button>
+                                )}
+                            </div>
                             <button
                                 onClick={handleSaveExpenditure}
                                 className="w-full py-5 bg-red-400 text-white font-black rounded-[24px] hover:bg-red-500 transition-all shadow-xl shadow-red-100 hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center gap-2"
@@ -634,6 +691,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                         <th className="px-6 py-4">항목</th>
                                         <th className="px-6 py-4">구분</th>
                                         <th className="px-6 py-4 text-right">금액</th>
+                                        <th className="px-6 py-4 text-center">영수증</th>
                                         <th className="px-6 py-4 w-10"></th>
                                     </tr>
                                 </thead>
@@ -665,6 +723,15 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right font-black text-red-500 text-xs">₩{e.amount?.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-center">
+                                                {e.receiptUrl ? (
+                                                    <a href={e.receiptUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-50 text-green-500 hover:bg-green-100 transition-colors" title="영수증 보기">
+                                                        <i className="fa-solid fa-receipt text-[10px]"></i>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-gray-200 text-[10px]">—</span>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <button
                                                     onClick={() => deleteExpenditure(e.id!)}

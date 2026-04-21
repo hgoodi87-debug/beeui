@@ -23,7 +23,7 @@ const getBrowserLang = (): string => {
     if (browserLang.includes('hk')) return 'zh-HK';
     if (browserLang.includes('tw')) return 'zh-TW';
     if (browserLang.startsWith('zh')) return 'zh'; // zh-CN
-    return 'ko'; // Default
+    return 'ko';
 };
 
 export const useAppStore = create<AppState>()(

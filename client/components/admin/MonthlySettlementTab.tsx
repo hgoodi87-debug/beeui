@@ -41,12 +41,21 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }, [revenueStartDate]);
 
-    const payoutCandidateIds = useMemo(() =>
-        bookings
-            .filter(b => b.paymentStatus === 'paid' && b.status !== BookingStatus.REFUNDED && b.settlementStatus !== 'CONFIRMED' && b.settlementStatus !== 'PAID_OUT' && b.settlementStatus !== 'MONTHLY_INCLUDED')
-            .map(b => b.id)
-            .filter((id): id is string => Boolean(id)),
-        [bookings]
+    const payoutCandidates = useMemo(() =>
+        bookings.filter((booking) => {
+            const pickupDate = String(booking.pickupDate || '').trim();
+            if (!pickupDate.startsWith(currentMonth)) return false;
+            if (!booking.id || booking.isDeleted) return false;
+            if (booking.status === BookingStatus.REFUNDED || booking.status === BookingStatus.CANCELLED) return false;
+            if (booking.settlementStatus !== 'CONFIRMED') return false;
+            return Number(booking.branchSettlementAmount || 0) > 0;
+        }),
+        [bookings, currentMonth]
+    );
+
+    const payoutCandidateIds = useMemo(
+        () => payoutCandidates.map((booking) => booking.id!).filter(Boolean),
+        [payoutCandidates]
     );
 
     const handleSettlementClose = useCallback(async () => {
@@ -369,10 +378,9 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 text-xs text-bee-black">
-                                    {bookings.filter(b => b.paymentStatus === 'paid' && b.status !== BookingStatus.REFUNDED).length > 0 ? (
-                                        // Simple mock grouping for demonstration based on the first few bookings
-                                        bookings.slice(0, 5).map((b, idx) => (
-                                            <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                    {payoutCandidates.length > 0 ? (
+                                        payoutCandidates.slice(0, 5).map((b, idx) => (
+                                            <tr key={b.id || idx} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${idx % 2 === 0 ? 'bg-bee-yellow/10 text-bee-yellow' : 'bg-blue-100 text-blue-500'}`}>
                                                         {idx % 2 === 0 ? 'PARTNER' : 'CARRIER'}
@@ -380,7 +388,7 @@ const MonthlySettlementTab: React.FC<MonthlySettlementTabProps> = ({
                                                 </td>
                                                 <td className="px-6 py-4 font-black">{b.pickupLocation || 'N/A'}</td>
                                                 <td className="px-6 py-4 text-center font-bold">1 건</td>
-                                                <td className="px-6 py-4 text-right font-black">₩{((b.finalPrice || 0) * 0.7).toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-right font-black">₩{Number(b.branchSettlementAmount || 0).toLocaleString()}</td>
                                                 <td className="px-6 py-4 text-center">
                                                     <span className={`text-[10px] font-black uppercase ${b.settlementStatus === 'CONFIRMED' ? 'text-emerald-500' : 'text-orange-400'}`}>
                                                         {b.settlementStatus === 'CONFIRMED' ? '정산확정' : '정산대기'}

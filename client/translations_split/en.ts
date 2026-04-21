@@ -813,48 +813,63 @@ export const en = {
         items: [
             {
                 category: "general",
-                question: "What is Beeliber?",
-                answer: "Beeliber is a premium luggage solution that delivers your bags from the airport to your hotel and provides secure storage. Leave the weight to us and enjoy your journey with freedom."
+                question: "What is Beeliber? How do I use the service for the first time?",
+                answer: "Beeliber is a professional luggage storage and airport delivery service for travelers visiting Seoul. Drop your bags at key spots like Hongdae, Seoul Station, or Myeongdong and explore the city hands-free.\n\nHow it works:\n① Book online\n② Visit a branch and hand your bags to staff\n③ Enjoy Seoul without heavy luggage\n④ Pick up your bags at the branch, or have them delivered to Incheon Airport\n\nAfter booking, you'll receive a confirmation email. Staff will photograph your bags at drop-off for your peace of mind."
             },
             {
                 category: "general",
-                question: "How do I use the service?",
-                answer: "It's simple: Book online, Drop your bags at a designated point, Enjoy your day hands-free, and Meet your luggage at your destination. Magic, isn't it?"
+                question: "What types of luggage can I store? Are there size or weight limits?",
+                answer: "We accept most luggage — carry-on bags, large suitcases, backpacks, and shopping bags.\n\nPricing by size:\n• Small (carry-on / handbag) — ₩3,000/day\n• Medium (24–28\" suitcase) — ₩5,000/day\n• Large (29\"+ suitcase) — ₩7,000/day\n\nStrollers, kick scooters, and small bicycles depend on branch availability — please inquire when booking.\n\n⚠️ Cash, valuables over ₩500,000, food, and hazardous materials cannot be stored."
             },
             {
                 category: "booking",
-                question: "Can I change or cancel my booking?",
-                answer: "Yes, you get a 100% refund up to 24 hours before service, and 50% up to 12 hours. No refunds for late cancellations or no-shows. Time is precious, just like our service!"
+                question: "How do I pay? Can I use PayPal or a foreign credit card?",
+                answer: "PayPal is the easiest option when booking online — perfect for travelers from Taiwan, Hong Kong, Japan, and other countries.\n\nOn-site cash payment (Korean Won) is also available at all branches.\n\nCredit card availability varies by location, so please check the branch details when booking."
             },
             {
                 category: "booking",
-                question: "Are there any restricted items?",
-                answer: "We do not accept cash, jewelry valued over 500,000 KRW, perishables, or hazardous materials. We treat your bags like VIPs, but safety always comes first."
+                question: "How does airport delivery work? What time do I need to drop off my bags?",
+                answer: "Select the 'Incheon Airport Delivery' option when booking.\n\n• Drop your bags at a branch by 8:00 AM on your departure day to receive them at Incheon Airport the same day.\n• For flights before 9:00 AM, we recommend dropping off the evening before.\n\nOnce delivered, you'll receive a photo confirmation by email."
+            },
+            {
+                category: "booking",
+                question: "What if I arrive later than my pick-up time, or my flight is delayed?",
+                answer: "If you're running late, please contact the branch as soon as possible.\n\nYou can pick up your bags at any point during business hours without extra charge.\n\nFor unavoidable situations like flight delays or cancellations, email our customer support in advance and we'll do our best to accommodate you.\n\n⚠️ Bags cannot be retrieved after a branch closes for the day, so please plan accordingly."
             },
             {
                 category: "safety",
-                question: "Is my luggage safe?",
-                answer: "Absolutely. Every bag is protected by a smart security seal, and you can track the real-time status via email. Our team handles your belongings with the utmost care."
+                question: "How is my luggage protected? Is there CCTV?",
+                answer: "All partner locations are professional storage facilities with 24/7 CCTV surveillance.\n\n• We photograph your bags at both drop-off and delivery, and send the photos to you by email.\n• We only partner with verified, trusted locations.\n• Only staff members have access to the storage area — no unauthorized access."
             },
             {
                 category: "safety",
-                question: "What about insurance coverage?",
-                answer: "Basic insurance covers up to 500,000 KRW per bag. For high-value items, you can opt for premium coverage up to 3,000,000 KRW. Your peace of mind is our priority."
-            },
-            {
-                category: "locations",
-                question: "Where are the Beeliber locations?",
-                answer: "You can find us at Incheon Airport (T1/T2), Gimpo Airport, Seoul Station, Hongdae, Gangnam, and Myeongdong. Check our 'Locations' page for detailed directions."
-            },
-            {
-                category: "locations",
-                question: "What are the operating hours?",
-                answer: "Most branches operate from 09:00 to 21:00. However, hours may vary by location and partner, so please check the specific branch info when booking!"
+                question: "How much compensation will I get if my luggage is damaged or lost?",
+                answer: "Basic compensation covers up to ₩500,000 per bag.\n\nAdd our 'Peace of Mind' option at booking to increase coverage up to ₩3,000,000.\n\nIf damage or loss occurs, email us with the drop-off photos and receipt and we'll guide you through the claims process.\n\n⚠️ Cash, valuables, and personal electronics are excluded from basic coverage."
             },
             {
                 category: "booking",
-                question: "What happens if I arrive later than the scheduled pickup time?",
-                answer: "If you arrive after the scheduled pickup time, an additional late fee may be charged in 30-minute increments to ensure smooth operations. We kindly ask you to stay on schedule for the comfort of yourself and other travelers! ✨"
+                question: "How far in advance can I cancel or modify my booking?",
+                answer: "• Cancel 24+ hours before service → 100% refund\n• Cancel 12–24 hours before → 50% refund\n• Cancel within 12 hours or no-show → No refund\n\nFor date or location changes, contact us by email at least 24 hours before your scheduled service."
+            },
+            {
+                category: "locations",
+                question: "What are the branch operating hours? Are branches open on public holidays?",
+                answer: "Most branches operate daily from 09:00 to 21:00.\n\nHours may vary by partner location — always check the specific hours on your booking confirmation.\n\nPublic holiday availability varies by branch, so we recommend confirming before your visit."
+            },
+            {
+                category: "booking",
+                question: "Can I walk in without a prior booking?",
+                answer: "Walk-in visits are possible if a branch has availability, but it's not guaranteed.\n\nBranches often fill up on weekends, public holidays, and peak tourist season.\n\nTo be sure of getting a spot, we strongly recommend booking online in advance. Reservation holders always have priority!"
+            },
+            {
+                category: "general",
+                question: "What items are not allowed?",
+                answer: "The following items cannot be stored:\n\n• Cash, passports, and important documents\n• Valuables and jewelry over ₩500,000\n• Food and perishable items\n• Explosives, flammables, and hazardous materials\n• Live animals\n\nLaptops and cameras are accepted, but compensation for electronics damage is limited — the 'Peace of Mind' option is recommended."
+            },
+            {
+                category: "general",
+                question: "Can I store a stroller, kick scooter, or bicycle?",
+                answer: "Strollers, kick scooters, and small bicycles can be accommodated at some locations depending on available space.\n\nAs these items take up more room than regular luggage, please contact the branch directly before your visit.\n\nAdditional fees may apply based on size."
             }
         ]
     },

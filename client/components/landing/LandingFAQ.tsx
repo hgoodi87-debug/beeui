@@ -16,7 +16,7 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
   useEffect(() => {
     // [스봉이] 서버 데이터 기다릴 시간 없어요. 번역 파일에 정성껏 준비해둔 데이터를 바로 꽂아넣을게요. 💅✨
     if (t && t.qna && t.qna.items) {
-      setFaqItems(t.qna.items.slice(0, 5));
+      setFaqItems(t.qna.items.slice(0, 7));
     }
   }, [t]);
 

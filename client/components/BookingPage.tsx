@@ -1465,6 +1465,11 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 <span className="text-bee-yellow font-black italic text-3xl">₩</span>
                                                 <span className="text-4xl font-black italic tracking-tighter tabular-nums">{priceDetails.total.toLocaleString()}</span>
                                             </div>
+                                            {isPayPalEnabled() && priceDetails.total > 0 && (
+                                                <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                                                    {({ ko: '약', 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈'} USD ${krwToUsd(priceDetails.total)}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1583,10 +1588,24 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 {isPayPalEnabled() && priceDetails.total > 0 ? (
                                     <div className="mt-8">
                                         <p className="text-center text-xs font-black text-gray-500 mb-1">
-                                            {lang === 'ko' ? '아래 버튼으로 결제 후 예약이 확정됩니다' : 'Pay below to confirm your booking'}
+                                            {({
+                                                ko: '아래 버튼으로 결제 후 예약이 확정됩니다',
+                                                'zh-TW': '請點擊下方按鈕完成付款以確認預訂',
+                                                'zh-HK': '請點擊下方按鈕完成付款以確認預訂',
+                                                zh: '请点击下方按钮完成付款以确认预订',
+                                                ja: '下のボタンでお支払いいただくと予約が確定されます',
+                                                en: 'Pay below to confirm your booking',
+                                            } as Record<string, string>)[lang] ?? 'Pay below to confirm your booking'}
                                         </p>
                                         <div className="text-center text-[11px] text-gray-400 font-bold mb-3">
-                                            USD ${krwToUsd(priceDetails.total)} (≈ ₩{priceDetails.total.toLocaleString()})
+                                            {({
+                                                ko: `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()} 원)`,
+                                                'zh-TW': `USD $${krwToUsd(priceDetails.total)}（約 ₩${priceDetails.total.toLocaleString()} 韓元）`,
+                                                'zh-HK': `USD $${krwToUsd(priceDetails.total)}（約 ₩${priceDetails.total.toLocaleString()} 韓元）`,
+                                                zh: `USD $${krwToUsd(priceDetails.total)}（约 ₩${priceDetails.total.toLocaleString()} 韩元）`,
+                                                ja: `USD $${krwToUsd(priceDetails.total)}（約 ₩${priceDetails.total.toLocaleString()} ウォン）`,
+                                                en: `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()} KRW)`,
+                                            } as Record<string, string>)[lang] ?? `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()} KRW)`}
                                         </div>
                                         {paypalValidationMsg && (
                                             <p className="text-xs text-red-500 font-bold text-center mb-2">
@@ -1595,9 +1614,14 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         )}
                                         {paypalLoadError ? (
                                             <p className="text-xs text-red-500 font-bold text-center py-3">
-                                                {lang === 'ko'
-                                                    ? 'PayPal 결제를 불러오지 못했습니다. 페이지를 새로고침해 주세요.'
-                                                    : 'PayPal failed to load. Please refresh the page.'}
+                                                {({
+                                                    ko: 'PayPal 결제를 불러오지 못했습니다. 페이지를 새로고침해 주세요.',
+                                                    'zh-TW': '無法載入 PayPal 付款。請重新整理頁面。',
+                                                    'zh-HK': '無法載入 PayPal 付款。請重新載入頁面。',
+                                                    zh: '无法加载 PayPal 付款。请刷新页面。',
+                                                    ja: 'PayPalの読み込みに失敗しました。ページを更新してください。',
+                                                    en: 'PayPal failed to load. Please refresh the page.',
+                                                } as Record<string, string>)[lang] ?? 'PayPal failed to load. Please refresh the page.'}
                                             </p>
                                         ) : (
                                             <div ref={paypalContainerRef} id="paypal-button-container" />

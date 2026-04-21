@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { isPayPalEnabled, krwToUsd } from "../../services/paypalService";
 
 interface LandingPricingProps {
     t: any;
@@ -10,6 +11,8 @@ interface LandingPricingProps {
 }
 
 const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) => {
+    const usdPrefix = ({ ko: '약', 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈';
+    const PRICE_NUMERICS = [lang === 'ko' ? 5000 : 4000, 25000];
     const prices = [
         {
             image: "/images/bags/carrier-photo.png",
@@ -92,10 +95,16 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
                             </div>
 
                             <h3 className="text-sm md:text-3xl font-display font-black text-bee-black mb-2 md:mb-4 tracking-tight leading-tight">{item.title}</h3>
-                            <div className="flex items-baseline flex-wrap gap-1 mb-4 md:mb-10">
+                            <div className="flex items-baseline flex-wrap gap-1 mb-1 md:mb-3">
                                 <span className="text-xl md:text-6xl font-display font-black tracking-tighter text-bee-black whitespace-nowrap">{item.price}</span>
                                 <span className="text-bee-muted font-black text-[8px] md:text-xs uppercase tracking-[0.05em] md:tracking-widest">{item.unit}</span>
                             </div>
+                            {isPayPalEnabled() && (
+                                <p className="text-[9px] md:text-xs text-gray-400 font-bold mb-4 md:mb-10">
+                                    {usdPrefix} USD ${krwToUsd(PRICE_NUMERICS[i])}{lang !== 'ko' ? '+' : ''}
+                                </p>
+                            )}
+                            {!isPayPalEnabled() && <div className="mb-4 md:mb-10" />}
 
                             <ul className="space-y-2 md:space-y-4 mb-6 md:mb-12 flex-grow overflow-hidden">
                                 {item.features.map((feat: string, idx: number) => (

@@ -2,6 +2,7 @@
 import React from "react";
 import { Plus, Minus } from "lucide-react";
 import { STORAGE_RATES } from "../../utils/pricing";
+import { isPayPalEnabled, krwToUsd } from "../../services/paypalService";
 import {
     BagCategoryId,
     DEFAULT_DELIVERY_PRICES,
@@ -92,6 +93,11 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
                                                     {isDelivery ? '/Trip' : '/4h'}
                                                 </span>
                                             </div>
+                                            {isPayPalEnabled() && (
+                                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">
+                                                    {({ ko: '약', 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈'} USD ${krwToUsd(unitPrice)}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center bg-gray-50/80 rounded-md p-1 border border-gray-100 shadow-inner">

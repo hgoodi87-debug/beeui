@@ -276,7 +276,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const pendingBookingRef = useRef<BookingState | null>(null);
     const paypalContainerRef = useRef<HTMLDivElement>(null);
     const paypalRenderedRef = useRef(false);
-    const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: ServiceType; finalBooking: any } | null>(null);
+    const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: ServiceType; finalBooking: any; lang: string } | null>(null);
     const [paypalLoadError, setPaypalLoadError] = useState(false);
     const [paypalValidationMsg, setPaypalValidationMsg] = useState('');
 
@@ -769,11 +769,16 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     }
                 },
                 onCancel: () => {
-                    const ctx = latestPayPalCtxRef.current;
-                    const isKo = (ctx ? lang : lang) === 'ko';
-                    alert(isKo
-                        ? '결제가 취소되었습니다.\n예약이 완료되지 않았습니다. 다시 시도하려면 아래 PayPal 버튼을 눌러주세요.'
-                        : 'Payment was cancelled.\nYour booking is not confirmed. Press the PayPal button again to retry.');
+                    const cancelLang = latestPayPalCtxRef.current?.lang ?? 'en';
+                    const msgs: Record<string, string> = {
+                        ko: '결제가 취소되었습니다.\n예약이 완료되지 않았습니다. 다시 시도하려면 아래 PayPal 버튼을 눌러주세요.',
+                        en: 'Payment was cancelled.\nYour booking is not confirmed. Please press the PayPal button again to retry.',
+                        zh: '付款已取消。\n您的预订尚未完成，请再次点击 PayPal 按钮重试。',
+                        'zh-TW': '付款已取消。\n您的預訂尚未完成，請再次點擊 PayPal 按鈕重試。',
+                        'zh-HK': '付款已取消。\n您嘅預訂尚未完成，請再次按 PayPal 按鈕重試。',
+                        ja: '支払いがキャンセルされました。\n予約が完了していません。もう一度 PayPal ボタンを押してください。',
+                    };
+                    alert(msgs[cancelLang] ?? msgs['en']);
                 },
                 onError: (err: any) => {
                     console.error('[PayPal] onError:', err);
@@ -816,6 +821,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
         latestPayPalCtxRef.current = {
             priceTotal: priceDetails.total,
             serviceType: booking.serviceType || ServiceType.STORAGE,
+            lang,
             finalBooking: {
                 ...booking,
                 pickupLoc: pickupLoc_,

@@ -1342,7 +1342,9 @@ function calcDurationHours(){
   const d2 = new Date(`${state.pickDate}T${state.pickTime||'18:00'}:00`);
   const diffMs = d2 - d1;
   if(isNaN(diffMs) || diffMs<=0) return 4;
-  return diffMs / 3600000;
+  // 30분 단위 선택이므로 분 단위로 올림 → 시간으로 환산 (4h30m → 5h)
+  const diffMins = diffMs / 60000;
+  return Math.ceil(diffMins / 60);
 }
 function storagePricePerItem(type, hours){
   const p = PRICING.storage[type];

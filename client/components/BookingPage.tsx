@@ -768,6 +768,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         setIsSubmitting(false);
                     }
                 },
+                onCancel: () => {
+                    const ctx = latestPayPalCtxRef.current;
+                    const isKo = (ctx ? lang : lang) === 'ko';
+                    alert(isKo
+                        ? '결제가 취소되었습니다.\n예약이 완료되지 않았습니다. 다시 시도하려면 아래 PayPal 버튼을 눌러주세요.'
+                        : 'Payment was cancelled.\nYour booking is not confirmed. Press the PayPal button again to retry.');
+                },
                 onError: (err: any) => {
                     console.error('[PayPal] onError:', err);
                     const msg = err?.message || String(err);

@@ -71,12 +71,6 @@ export const BEELIBER_SERVICE_SCHEMA = {
         highPrice: '10000',
         offerCount: '3',
       },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.9',
-        reviewCount: '1240',
-        bestRating: '5',
-      },
     },
     {
       '@type': 'Service',
@@ -124,7 +118,7 @@ export function buildBreadcrumbSchema(items: BreadcrumbItem[]) {
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: item.url,
+      item: { '@type': 'Thing', '@id': item.url, name: item.name },
     })),
   };
 }

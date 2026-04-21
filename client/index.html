@@ -2,6 +2,36 @@
 <html lang="zh-TW">
 
 <head>
+  <!-- 언어 감지 즉시 리다이렉트 — React 로드 전 실행, 깜빡임 방지 -->
+  <script>
+    (function () {
+      var path = window.location.pathname;
+      // 이미 언어 경로에 있거나, 관리자/스태프/에셋 경로면 스킵
+      if (/^\/(ko|en|ja|zh-tw|zh-hk|zh)(\/|$)/i.test(path)) return;
+      if (/^\/(admin|staff|sitemap|robots|favicon|assets|__spa)/i.test(path)) return;
+      if (path !== '/' && path !== '') return;
+
+      // 1순위: localStorage 저장값 (사용자가 직접 선택한 언어)
+      var stored = '';
+      try {
+        var raw = localStorage.getItem('beeliber-app-storage');
+        if (raw) stored = (JSON.parse(raw).state || {}).lang || '';
+      } catch (e) {}
+
+      // 2순위: 브라우저 언어
+      var detect = stored || navigator.language || navigator.userLanguage || 'zh-TW';
+      var d = detect.toLowerCase();
+      var lang = 'ko'; // 기본값
+      if (d.startsWith('ko')) lang = 'ko';
+      else if (d.startsWith('ja')) lang = 'ja';
+      else if (d.includes('hk')) lang = 'zh-hk';
+      else if (d.includes('tw')) lang = 'zh-tw';
+      else if (d.startsWith('zh')) lang = 'zh';
+      else if (d.startsWith('en')) lang = 'en';
+
+      window.location.replace('/' + lang);
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -140,7 +170,7 @@
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "5.0",
-      "reviewCount": "5",
+      "reviewCount": "126",
       "bestRating": "5",
       "worstRating": "1"
     }

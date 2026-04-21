@@ -99,6 +99,7 @@ img{max-width:100%;display:block}
 }
 .screen.active{ transform:translateX(0); z-index:2; }
 .screen.leaving{ transform:translateX(-20%); z-index:1; }
+.screen.leaving-back{ transform:translateX(100%); z-index:2; transition:transform .28s cubic-bezier(.4,0,.2,1); }
 .screen[data-theme="dark"]{ background:var(--bg-dark); color:#fff; }
 
 /* ====== HEADER ====== */
@@ -1379,8 +1380,11 @@ function back(){
   const next = document.getElementById(id);
   if(!next || cur===next) return;
   cur.classList.remove('active');
+  cur.classList.add('leaving-back');
   next.classList.remove('leaving');
   next.classList.add('active');
+  setTimeout(()=>cur.classList.remove('leaving-back'), 300);
+  try{ sessionStorage.setItem('bl:screen', id); }catch(e){}
 }
 
 function startReserve(svc){

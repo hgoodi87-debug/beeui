@@ -23,8 +23,8 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
 
         try {
             const { default: html2canvas } = await import('html2canvas');
-        const canvas = await html2canvas(voucherElement, {
-                scale: 2, // High quality
+            const canvas = await html2canvas(voucherElement, {
+                scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff'
             });
@@ -126,6 +126,88 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
     };
 
     const curT = t_success[lang as keyof typeof t_success] || t_success.en;
+
+    const checkin_i18n: Record<string, { title: string; steps: string[]; contact_title: string; instagram: string; chatbot: string; email: string }> = {
+        ko: {
+            title: "이용 방법 (4단계)",
+            steps: [
+                "예약 지점을 방문하세요.",
+                "저장해 둔 QR 바우처를 직원에게 보여 주세요.",
+                "짐을 맡겨 주세요.",
+                "예약하신 시간에 픽업 장소에 도착하여 짐을 찾아가세요.\n(아래 지점 안내를 참고해 주세요)"
+            ],
+            contact_title: "문의하기",
+            instagram: "인스타그램 DM",
+            chatbot: "웹 챗봇",
+            email: "이메일 문의"
+        },
+        en: {
+            title: "How It Works (4 Steps)",
+            steps: [
+                "Visit the reservation location.",
+                "Present the saved QR voucher to the staff.",
+                "Drop off your luggage.",
+                "Arrive at the Pick-up Location at your scheduled time to collect your luggage.\n(Refer to the location guide below)"
+            ],
+            contact_title: "Contact Us",
+            instagram: "Instagram DM",
+            chatbot: "Web Chatbot",
+            email: "Send Email"
+        },
+        ja: {
+            title: "ご利用方法（4ステップ）",
+            steps: [
+                "予約した店舗を訪問してください。",
+                "保存したQRバウチャーをスタッフに提示してください。",
+                "お荷物を預けてください。",
+                "ご予約の時間にピックアップ場所へお越しいただき、お荷物をお受け取りください。\n（下記の場所案内をご参照ください）"
+            ],
+            contact_title: "お問い合わせ",
+            instagram: "Instagram DM",
+            chatbot: "Webチャット",
+            email: "メールで問い合わせ"
+        },
+        zh: {
+            title: "使用方法（4步骤）",
+            steps: [
+                "前往预约地点。",
+                "向工作人员出示保存的QR凭证。",
+                "存放您的行李。",
+                "在预约时间到达取件地点领取行李。\n（请参考下方地点指南）"
+            ],
+            contact_title: "联系我们",
+            instagram: "Instagram 私信",
+            chatbot: "网页客服",
+            email: "发送邮件"
+        },
+        'zh-TW': {
+            title: "使用方法（4步驟）",
+            steps: [
+                "前往預約地點。",
+                "向工作人員出示儲存的QR憑證。",
+                "存放您的行李。",
+                "在預約時間到達取件地點領取行李。\n（請參考下方地點指南）"
+            ],
+            contact_title: "聯絡我們",
+            instagram: "Instagram 私訊",
+            chatbot: "網頁客服",
+            email: "寄送郵件"
+        },
+        'zh-HK': {
+            title: "使用方法（4步驟）",
+            steps: [
+                "前往預約地點。",
+                "向工作人員出示儲存的QR憑證。",
+                "存放您的行李。",
+                "在預約時間到達取件地點領取行李。\n（請參考下方地點指南）"
+            ],
+            contact_title: "聯絡我們",
+            instagram: "Instagram 私訊",
+            chatbot: "網頁客服",
+            email: "寄送郵件"
+        }
+    };
+    const curCheckin = checkin_i18n[lang as keyof typeof checkin_i18n] || checkin_i18n.en;
 
     const getLocName = (l: LocationOption) => {
         const dbLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0];
@@ -250,6 +332,65 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                             dropoffLoc={dropoffLoc}
                             onBack={() => { }} // Not needed here
                         />
+                    </div>
+                </motion.div>
+
+                {/* 4-Step Check-in Guide */}
+                <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.33 }}
+                    className="bg-bee-black rounded-[40px] p-8 md:p-10 shadow-2xl overflow-hidden"
+                >
+                    <h2 className="text-xl font-black italic text-bee-yellow uppercase tracking-tighter mb-6 text-center">
+                        {curCheckin.title}
+                    </h2>
+                    <div className="space-y-3">
+                        {curCheckin.steps.map((text, i) => (
+                            <div key={i} className="flex items-start gap-4 bg-white/5 rounded-3xl p-5">
+                                <div className="w-9 h-9 shrink-0 rounded-full bg-bee-yellow text-bee-black flex items-center justify-center font-black text-base">
+                                    {i + 1}
+                                </div>
+                                <p className="text-white font-bold text-sm leading-relaxed pt-1 whitespace-pre-line">{text}</p>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+
+                {/* Contact Us Buttons */}
+                <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.36 }}
+                    className="bg-white rounded-[40px] p-8 md:p-10 shadow-xl border border-gray-100"
+                >
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter text-bee-black mb-6 text-center">
+                        {curCheckin.contact_title}
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <a
+                            href="https://ig.me/m/beeliber"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col items-center gap-3 p-5 bg-gradient-to-br from-[#f09433] via-[#e6683c] to-[#bc1888] text-white rounded-3xl font-black text-sm hover:scale-[1.03] transition-transform shadow-lg"
+                        >
+                            <i className="fa-brands fa-instagram text-2xl"></i>
+                            {curCheckin.instagram}
+                        </a>
+                        <button
+                            onClick={onBack}
+                            className="flex flex-col items-center gap-3 p-5 bg-bee-black text-bee-yellow rounded-3xl font-black text-sm hover:scale-[1.03] transition-transform shadow-lg"
+                        >
+                            <i className="fa-solid fa-comment-dots text-2xl"></i>
+                            {curCheckin.chatbot}
+                        </button>
+                        <a
+                            href={`mailto:support@bee-liber.com?subject=Inquiry - ${booking.reservationCode || booking.id}&body=Reservation: ${booking.reservationCode || booking.id}%0A%0A`}
+                            className="flex flex-col items-center gap-3 p-5 bg-gray-100 text-bee-black rounded-3xl font-black text-sm hover:scale-[1.03] transition-transform shadow-lg hover:bg-gray-200"
+                        >
+                            <i className="fa-solid fa-envelope text-2xl"></i>
+                            {curCheckin.email}
+                        </a>
                     </div>
                 </motion.div>
 

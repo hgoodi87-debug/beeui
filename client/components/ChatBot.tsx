@@ -324,7 +324,25 @@ const ChatBot: React.FC<ChatBotProps> = ({ t, lang }) => {
             </div>
             <div className="p-3 bg-white border-t border-gray-100">
                 {showEscalate && (
-                    <button onClick={async () => { setShowEscalate(false); await processMessage(L.escalate_btn); }} className="w-full mb-2 bg-bee-yellow text-bee-black font-black py-2.5 rounded-2xl text-xs hover:bg-bee-yellow/80 transition-all flex items-center justify-center gap-2">
+                    <button onClick={async () => {
+                        setShowEscalate(false);
+                        try {
+                            await fetch(GOOGLE_CHAT_NOTIFY_ENDPOINT, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    type: 'escalate',
+                                    sessionId,
+                                    senderName: userInfo.name,
+                                    senderEmail: userInfo.email,
+                                    snsChannel: userInfo.snsChannel,
+                                    snsId: userInfo.snsId,
+                                    recentMessages: messages.slice(-8).map(m => ({ role: m.role, text: m.text })),
+                                }),
+                            });
+                        } catch (e) { console.error('상담원 연결 알림 실패:', e); }
+                        await processMessage(L.escalate_btn);
+                    }} className="w-full mb-2 bg-bee-yellow text-bee-black font-black py-2.5 rounded-2xl text-xs hover:bg-bee-yellow/80 transition-all flex items-center justify-center gap-2">
                         <i className="fa-solid fa-headset text-xs"></i>{L.escalate_btn}
                     </button>
                 )}

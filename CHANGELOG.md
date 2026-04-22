@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.4.0.0] - 2026-04-22
+
+### Added
+- **예약 완료 페이지 체크인 안내**: 바우처 하단에 4단계 체크인 가이드 (6개 언어 — ko/en/ja/zh/zh-TW/zh-HK) 표시
+- **예약 완료 페이지 문의 버튼**: Instagram DM · 웹 챗봇 · 이메일 3종 버튼 추가, 예약 코드가 메일 제목에 자동 삽입
+- **챗봇 3탭 구조 (Home/Messages/Help)**: Bounce 애니메이션 스타일 탭 리뉴얼 — 홈탭 빠른 링크 · 메시지탭 대화 · 도움말탭 FAQ
+- **챗봇 상담원 연결 웹훅**: 상담원 연결 시 고객정보·대화내역을 전용 웹훅으로 전송
+- **쿠키 배너 + Google Consent Mode v2**: GDPR/CCPA 동의 플로우, GCM analytics/ads_storage 연동
+- **정산 영수증 업로드**: 일일 정산 지출 영수증 업로드 기능 (Supabase Storage 연동)
+- **booking_analytics 뷰**: EMS anon 전용 예약 집계 뷰 — 민감 컬럼 제외
+- **지점 운영상태 배지**: 운영중/예약가능/마감 3단계 실시간 배지
+
+### Changed
+- **키오스크 장부 리뉴얼**: 보관장부 1열 + A/B/C 구역 3열 카드 레이아웃, 이벤트 할인 버튼 디자인 개선
+- **QR 스캔 jsQR 전환**: WebRTC 기반 jsQR 라이브러리로 전환 + 예약 조회 RPC 추가
+- **PayPal USD 가격 안내 다국어**: 랜딩·로케이션·예약 페이지 6개 언어 USD 가격 표시
+- **히어로 CTA 버튼**: Split 버튼(짐보관 / 공항배송) 구조로 개편
+- **캐러셀 이미지 동기화**: 리뷰 이미지 프리미엄 버전으로 통합 + 가격 ₩4,000/₩25,000 통일
+
+### Fixed
+- **챗봇 zh-TW 언어 키 불일치**: LABELS 맵 `'zh-TW'` → `'zh-tw'` 수정 — URL 경로 소문자와 불일치로 대만 사용자 전원 영어 폴백되던 버그
+- **관리자 대시보드 Edge Function 인증**: anon key Bearer 토큰 → `getActiveAdminRequestHeaders()` 어드민 JWT로 교체 (신뢰경계 위반 수정)
+- **chat_sessions RLS 강화**: anon UPDATE `WITH CHECK (is_bot_disabled = false)` — anon이 봇 비활성화 불가하도록 제한
+- **admin RPC anon 권한 제거**: `admin_update_booking_details` SECURITY DEFINER 함수에서 anon EXECUTE 권한 철회
+- **키오스크 예약 접수 FK**: booking_details 생성 시 reservation_id FK 연결 누락 수정
+- **PayPal 결제 취소 안내**: onCancel 6개 언어 안내 메시지 + stale closure 수정
+- **SEO 구조화 데이터**: 브랜드 금지어 4건 + JSON-LD 오류 수정
+- **frankfurter CORS**: Vite 프록시 + 환경별 URL 분기로 개발환경 CORS 우회
+- **바우처 QR 스캔 무반응**: jsQR 전환 후 예약 조회 연동 버그 수정
+- **완료 체크박스 독립 컬럼 복구**: 키오스크 탭 체크박스 해제 불가 버그 수정
+- **GA4 SPA 라우트 page_view 누락**: 라우트 변경 시 page_view 이벤트 자동 전송 수정
+- **모바일 UI 최적화**: 5건 레이아웃 수정
+
+### Security
+- `chat_sessions` anon UPDATE 정책: `USING(true)/WITH CHECK(true)` → `WITH CHECK (is_bot_disabled = false)` 강화
+- `admin_update_booking_details` RPC: anon EXECUTE 권한 철회 (`REVOKE EXECUTE ... FROM anon`)
+- `AdminDashboard` Edge Function 호출: anon key Bearer → admin JWT 인증 헤더로 교체
+
 ## [1.3.2.0] - 2026-04-18
 
 ### Fixed

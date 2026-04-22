@@ -68,7 +68,7 @@ const LABELS: Record<string, {
         start_chat: 'Start Chat', name: 'Name', email: 'Email', sns: 'SNS Channel',
         online: 'Online', staff: 'Staff Answer', header: 'Beeliber Support', send_msg_empty: 'Send Message',
     },
-    'zh-TW': {
+    'zh-tw': {
         greeting: '您好 👋', greeting_sub: '需要幫助嗎？',
         send_btn: '請傳送訊息給我們', tab_home: '首頁', tab_messages: '訊息', tab_help: '幫助',
         no_msg: '沒有訊息', no_msg_sub: '我們團隊的訊息將顯示在這裡',

@@ -21,6 +21,7 @@ import { Branch } from "../types";
 import TrackingWidget from "./TrackingWidget";
 import LandingHero from "./landing/LandingHero";
 import LandingOperationsMarquee from "./landing/LandingOperationsMarquee";
+import CookieBanner from "./landing/CookieBanner";
 import Navbar from "./Navbar";
 
 // [스봉이] 아래 섹션들은 스크롤 할 때만 불러오도록 지능적으로 세팅했어요. 💅✨
@@ -82,6 +83,8 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
 
     return (
         <div className="w-full bg-white selection:bg-bee-yellow selection:text-bee-black overflow-x-hidden">
+
+            <CookieBanner lang={lang} />
 
             {/* Sticky CTA — 히어로 스크롤 후 하단 고정 (전환율 개선) */}
 
@@ -201,7 +204,7 @@ const LandingRenewal: React.FC<LandingRenewalProps> = ({
                     <LandingReviews t={t} />
 
                     {/* L-FREE (7) - 자유 섹션 ✨ */}
-                    <LandingFreedomSection t={t} />
+                    <LandingFreedomSection t={t} lang={lang} />
                     
                     {/* L-PRICE (9) - 가격표 🏷️ */}
                     <LandingPricing t={t} onNavigate={handleBookingNavigate} lang={lang} />

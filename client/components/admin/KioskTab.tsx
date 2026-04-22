@@ -646,7 +646,21 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
   const [filterStat, setFilterStat] = useState('all');
   const [findTag, setFindTag] = useState('');
   const [findResult, setFindResult] = useState<React.ReactNode>(null);
+  const [editTagId, setEditTagId] = useState<number | null>(null);
+  const [editTagVal, setEditTagVal] = useState('');
   const now = Date.now();
+
+  const handleTagEdit = async (id: number, newVal: string) => {
+    const n = parseInt(newVal);
+    if (!n || n < 1 || n > 999) { setEditTagId(null); return; }
+    const entry = entries.find(e => e.id === id);
+    if (!entry) { setEditTagId(null); return; }
+    const dup = entries.find(e => e.id !== id && e.date === entry.date && e.tag === n);
+    if (dup) { alert(`태그 #${n}은 이미 사용 중입니다.`); return; }
+    await updateStorageLog(id, { tag: n } as any);
+    onUpdate();
+    setEditTagId(null);
+  };
 
   const todayEntries = entries.filter(e => e.date === (filterDate || tdy()));
   const filtered = entries.filter(e => {
@@ -855,8 +869,26 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
                   style={{ gridTemplateColumns: 'minmax(70px,1fr) 44px 32px 50px 48px 56px 60px 48px 56px 60px 68px 76px 68px 36px minmax(80px,160px)' }}>
                   {/* 날짜 */}
                   <span className="text-gray-400 text-[10px]">{e.date}</span>
-                  {/* 태그 */}
-                  <span className="font-black text-bee-black">#{e.tag}</span>
+                  {/* 태그 — 클릭하여 수정 */}
+                  {editTagId === e.id ? (
+                    <input
+                      type="number" autoFocus min={1} max={999}
+                      value={editTagVal}
+                      onChange={ev => setEditTagVal(ev.target.value)}
+                      onBlur={() => handleTagEdit(e.id, editTagVal)}
+                      onKeyDown={ev => {
+                        if (ev.key === 'Enter') handleTagEdit(e.id, editTagVal);
+                        if (ev.key === 'Escape') setEditTagId(null);
+                      }}
+                      className="w-10 border border-bee-yellow rounded px-1 text-xs font-black text-center outline-none"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => { setEditTagId(e.id); setEditTagVal(String(e.tag)); }}
+                      className="font-black text-bee-black hover:text-bee-yellow transition-colors"
+                      title="클릭하여 태그 번호 수정"
+                    >#{e.tag}</button>
+                  )}
                   {/* 열 */}
                   <span className="w-5 h-5 rounded-md flex items-center justify-center font-black text-white text-[10px]"
                     style={{ background: ROW_COLORS[e.rowLabel] ?? '#ccc' }}>{e.rowLabel}</span>

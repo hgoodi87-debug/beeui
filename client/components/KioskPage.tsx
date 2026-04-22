@@ -1066,7 +1066,7 @@ const KioskPage: React.FC = () => {
       setStep('form');
       setServiceMode('select');
       setSmallQty(0); setCarrierQty(0); setDuration(0);
-      setPayment('현금'); setDiscount(0);
+      setPayment('현금'); setDiscount(0); setEventParticipated(false);
       setResultTag(0); setResultRow('A'); setResultLogId(null);
       setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime('');
       setBookingCode(''); setBookingResult(null); setBookingLookupStep('input'); setBookingLookupError('');
@@ -1132,7 +1132,7 @@ const KioskPage: React.FC = () => {
     setStep('form');
     setServiceMode('select');
     setSmallQty(0); setCarrierQty(0); setDuration(0);
-    setPayment('현금'); setDiscount(0);
+    setPayment('현금'); setDiscount(0); setEventParticipated(false);
     setResultTag(0); setResultRow('A'); setResultLogId(null);
     setDeliveryAirport(null); setDeliveryDate(''); setDeliveryTime('');
     setBookingCode(''); setBookingResult(null); setBookingLookupStep('scan'); setBookingLookupError('');
@@ -1746,9 +1746,9 @@ const KioskPage: React.FC = () => {
                   {[1000, 2000, 4000, 0].map((amt) => (
                     <button
                       key={amt}
-                      onClick={() => setDiscount(amt)}
+                      onClick={() => setDiscount(amt === 0 ? originalPrice : amt)}
                       className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all active:scale-95 border ${
-                        discount === amt
+                        (amt === 0 ? discount >= originalPrice && originalPrice > 0 : discount === amt && discount < originalPrice)
                           ? 'bg-[#323126] border-[#323126] text-white'
                           : 'bg-white border-gray-200 text-[#111111] hover:border-gray-400'
                       }`}
@@ -2616,11 +2616,11 @@ const KioskPage: React.FC = () => {
               <div className="bg-white rounded-2xl px-4 py-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
                 <span className="text-gray-400 text-xs font-bold">{t.discount}</span>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => setDiscount((d) => Math.max(0, d - cfg.discount.unit))}
-                    className="w-7 h-7 rounded-full bg-gray-100 text-[#111111] font-black text-sm active:scale-95">−</button>
+                  <button disabled={!eventParticipated} onClick={() => setDiscount((d) => Math.max(0, d - cfg.discount.unit))}
+                    className={`w-7 h-7 rounded-full font-black text-sm active:scale-95 transition-opacity ${eventParticipated ? 'bg-gray-100 text-[#111111]' : 'bg-gray-100 text-gray-300 cursor-not-allowed opacity-40'}`}>−</button>
                   <span className="font-black text-[#111111] text-sm tabular-nums min-w-[44px] text-center">{discount.toLocaleString()}원</span>
-                  <button onClick={() => { const max = cfg.discount.allow_free ? originalPrice : originalPrice - cfg.discount.unit; setDiscount((d) => Math.min(max, d + cfg.discount.unit)); }}
-                    className="w-7 h-7 rounded-full bg-[#F5C842] text-[#111111] font-black text-sm active:scale-95">+</button>
+                  <button disabled={!eventParticipated} onClick={() => { const max = cfg.discount.allow_free ? originalPrice : originalPrice - cfg.discount.unit; setDiscount((d) => Math.min(max, d + cfg.discount.unit)); }}
+                    className={`w-7 h-7 rounded-full font-black text-sm active:scale-95 transition-opacity ${eventParticipated ? 'bg-[#F5C842] text-[#111111]' : 'bg-[#F5C842]/30 text-gray-400 cursor-not-allowed opacity-40'}`}>+</button>
                   {discount > 0 && <span className="font-black text-[#111111] text-xs tabular-nums ml-1">→ {finalPrice.toLocaleString()}원</span>}
                 </div>
               </div>
@@ -2659,11 +2659,11 @@ const KioskPage: React.FC = () => {
             <div className="bg-white rounded-2xl px-5 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
               <span className="text-gray-400 text-xs font-bold">{t.discount}</span>
               <div className="flex items-center gap-2">
-                <button onClick={() => setDiscount((d) => Math.max(0, d - cfg.discount.unit))}
-                  className="w-8 h-8 rounded-full bg-gray-100 text-[#111111] font-black text-sm active:scale-95">−</button>
+                <button disabled={!eventParticipated} onClick={() => setDiscount((d) => Math.max(0, d - cfg.discount.unit))}
+                  className={`w-8 h-8 rounded-full font-black text-sm active:scale-95 transition-opacity ${eventParticipated ? 'bg-gray-100 text-[#111111]' : 'bg-gray-100 text-gray-300 cursor-not-allowed opacity-40'}`}>−</button>
                 <span className="font-black text-[#111111] text-sm tabular-nums min-w-[52px] text-center">{discount.toLocaleString()}원</span>
-                <button onClick={() => { const max = cfg.discount.allow_free ? originalPrice : originalPrice - cfg.discount.unit; setDiscount((d) => Math.min(max, d + cfg.discount.unit)); }}
-                  className="w-8 h-8 rounded-full bg-[#F5C842] text-[#111111] font-black text-sm active:scale-95">+</button>
+                <button disabled={!eventParticipated} onClick={() => { const max = cfg.discount.allow_free ? originalPrice : originalPrice - cfg.discount.unit; setDiscount((d) => Math.min(max, d + cfg.discount.unit)); }}
+                  className={`w-8 h-8 rounded-full font-black text-sm active:scale-95 transition-opacity ${eventParticipated ? 'bg-[#F5C842] text-[#111111]' : 'bg-[#F5C842]/30 text-gray-400 cursor-not-allowed opacity-40'}`}>+</button>
                 {discount > 0 && <span className="font-black text-[#111111] text-sm tabular-nums ml-1">→ {finalPrice.toLocaleString()}원</span>}
               </div>
             </div>

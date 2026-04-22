@@ -828,8 +828,8 @@ export const en = {
             },
             {
                 category: "booking",
-                question: "How does airport delivery work? What time do I need to drop off my bags?",
-                answer: "Select the 'Incheon Airport Delivery' option when booking.\n\n• Drop your bags at a branch by 8:00 AM on your departure day to receive them at Incheon Airport the same day.\n• For flights before 9:00 AM, we recommend dropping off the evening before.\n\nOnce delivered, you'll receive a photo confirmation by email."
+                question: "How does airport delivery work? What time do I need to book by?",
+                answer: "Select the 'Incheon Airport Delivery' option when booking.\n\n• Book by 1:00 PM (13:00) on your departure day to pick up your bags at Incheon Airport the same day, anytime between 4:00 PM and 9:00 PM (16:00–21:00).\n• For early morning flights the next day, bags must be collected from the airport's separate storage facility. An additional storage fee will apply.\n\nOnce delivered, you'll receive a photo confirmation by email."
             },
             {
                 category: "booking",

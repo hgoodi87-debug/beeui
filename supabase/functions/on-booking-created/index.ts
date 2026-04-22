@@ -13,7 +13,11 @@ import { sendEdgeMail } from "../_shared/mailer.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GOOGLE_CHAT_WEBHOOK_URL = Deno.env.get("GOOGLE_CHAT_WEBHOOK_URL") || "";
+// 예약 알림 전용 웹훅 (챗봇 채널과 분리). 미설정 시 공용 채널로 폴백.
+const GOOGLE_CHAT_WEBHOOK_URL =
+  Deno.env.get("GOOGLE_CHAT_BOOKING_WEBHOOK_URL") ||
+  Deno.env.get("GOOGLE_CHAT_WEBHOOK_URL") ||
+  "";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

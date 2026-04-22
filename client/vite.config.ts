@@ -32,6 +32,11 @@ export default defineConfig({
         target: process.env.VITE_SUPABASE_URL || 'https://localhost:54321',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/supabase/, '')
+      },
+      '/frankfurter': {
+        target: 'https://api.frankfurter.app',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/frankfurter/, '')
       }
     }
   },

@@ -3,8 +3,39 @@ import { getSupabaseBaseUrl, getSupabaseConfig } from './supabaseRuntime';
 const SUPABASE_URL = getSupabaseBaseUrl();
 const SUPABASE_KEY = getSupabaseConfig().anonKey;
 
-// 1 USD ≈ 1380 KRW — 분기마다 업데이트 권장
-const KRW_USD_RATE = 1380;
+const FALLBACK_KRW_USD_RATE = 1380;
+const RATE_CACHE_KEY = 'bee_usd_krw_rate';
+const RATE_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6시간
+
+let _cachedRate: number = FALLBACK_KRW_USD_RATE;
+
+export async function fetchExchangeRate(): Promise<number> {
+    try {
+        const stored = localStorage.getItem(RATE_CACHE_KEY);
+        if (stored) {
+            const { rate, ts } = JSON.parse(stored);
+            if (Date.now() - ts < RATE_CACHE_TTL_MS) {
+                _cachedRate = rate;
+                return rate;
+            }
+        }
+        const apiUrl = import.meta.env.DEV
+            ? '/frankfurter/latest?from=USD&to=KRW'
+            : 'https://api.frankfurter.app/latest?from=USD&to=KRW';
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const rate = data?.rates?.KRW ?? FALLBACK_KRW_USD_RATE;
+        localStorage.setItem(RATE_CACHE_KEY, JSON.stringify({ rate, ts: Date.now() }));
+        _cachedRate = rate;
+        return rate;
+    } catch {
+        return _cachedRate;
+    }
+}
+
+export function getCachedRate(): number {
+    return _cachedRate;
+}
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID?.trim() || '';
 
@@ -18,8 +49,8 @@ export function isPayPalEnabled(): boolean {
     return !!PAYPAL_CLIENT_ID;
 }
 
-export function krwToUsd(amountKRW: number): string {
-    const usd = amountKRW / KRW_USD_RATE;
+export function krwToUsd(amountKRW: number, rate?: number): string {
+    const usd = amountKRW / (rate ?? _cachedRate);
     return Math.max(0.01, usd).toFixed(2);
 }
 

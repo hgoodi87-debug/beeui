@@ -1154,6 +1154,7 @@ const KioskPage: React.FC = () => {
         row_label: rowLabel,
         source: 'kiosk' as const,
         commission_rate: 0,
+        reservation_id: bookingResult.id ?? null,
       };
       const saved = await insertStorageLog(payload);
       const actualTag = saved?.tag ?? tag;

@@ -46,6 +46,7 @@ export interface KioskStorageLog {
   row_label: string;
   source: string;
   commission_rate: number;
+  reservation_id?: string | null;
   created_at: string;
 }
 

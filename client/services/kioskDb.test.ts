@@ -30,7 +30,7 @@ import {
 } from './kioskDb';
 
 // ── 헬퍼 ──────────────────────────────────────────────────────────────────
-const P = DEFAULT_CFG.prices; // { small_4h:4000, carrier_2h:3000, carrier_4h:5000, extra_per_hour:1000 }
+const P = DEFAULT_CFG.prices; // { small_4h:4000, carrier_4h:5000, small_day:8000, carrier_day:10000, extra_per_hour:1000 }
 
 const makeLog = (tag: number): Omit<KioskStorageLog, 'id' | 'created_at'> => ({
   branch_id: 'br-1',
@@ -66,8 +66,8 @@ describe('calcPrice', () => {
     expect(calcPrice(2, 0, 6, P)).toBe(12000);
   });
 
-  it('캐리어 1개 2시간 → 단기가 3,000', () => {
-    expect(calcPrice(0, 1, 2, P)).toBe(3000);
+  it('캐리어 1개 2시간 → 4시간가 5,000 적용 (2h ≤ 4h)', () => {
+    expect(calcPrice(0, 1, 2, P)).toBe(5000);
   });
 
   it('캐리어 1개 3시간 → 4시간가 5,000 적용 (3h ≤ 4h)', () => {

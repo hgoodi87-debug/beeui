@@ -615,20 +615,52 @@ export interface KioskBookingLookup {
 
 /**
  * 예약 코드 또는 예약번호로 booking_details 조회.
- * admin_booking_list_v1 뷰는 anon SELECT 허용.
+ * kiosk-auth Edge Function (service_role)을 경유하여 anon RLS 제약 우회.
  */
 export const lookupBookingByCode = async (code: string): Promise<KioskBookingLookup | null> => {
   const upper = code.trim().toUpperCase();
   if (!upper) return null;
   try {
-    const rows = await supabaseGet<KioskBookingLookup[]>(
-      `admin_booking_list_v1?select=id,reservation_code,reservation_no,user_name,bags,bag_sizes,final_price,payment_status,payment_method,service_type,pickup_date,pickup_time,pickup_location_name&or=(reservation_code.eq.${encodeURIComponent(upper)},reservation_no.eq.${encodeURIComponent(upper)})&is_deleted=eq.false&limit=1`,
-      _ANON
-    );
-    return rows?.[0] ?? null;
+    const res = await fetch(`${_SUPABASE_URL}/functions/v1/kiosk-auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _ANON,
+        'Authorization': `Bearer ${_ANON}`,
+      },
+      body: JSON.stringify({ action: 'lookup_booking', code: upper }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
   } catch (e) {
     console.error('[kioskDb] lookupBookingByCode error:', e);
     return null;
+  }
+};
+
+/**
+ * checkInBooking — booking_details.ops_status를 'checked_in'으로 업데이트
+ * kiosk-auth Edge Function (service_role)으로 RLS 우회.
+ */
+export const checkInBooking = async (
+  branchId: string,
+  bookingId: string,
+): Promise<{ ok: boolean; error?: string }> => {
+  try {
+    const res = await fetch(`${_SUPABASE_URL}/functions/v1/kiosk-auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _ANON,
+        'Authorization': `Bearer ${_ANON}`,
+      },
+      body: JSON.stringify({ action: 'checkin', branch_id: branchId, booking_id: bookingId }),
+    });
+    const json = await res.json();
+    return { ok: json.ok === true, error: json.error };
+  } catch (e) {
+    return { ok: false, error: String(e) };
   }
 };
 

@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
     });
   }
 
-  // delete, reset_password 액션은 branch_id 불필요
-  if (action !== "delete" && action !== "reset_password" && !branch_id) {
+  // delete, reset_password, checkin, lookup_booking 액션은 branch_id 불필요
+  if (action !== "delete" && action !== "reset_password" && action !== "checkin" && action !== "lookup_booking" && !branch_id) {
     return new Response(JSON.stringify({ ok: false, error: "branch_id is required" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -217,6 +217,64 @@ Deno.serve(async (req) => {
     if (error) {
       console.error("[kiosk-auth] reset_password failed:", error);
       return new Response(JSON.stringify({ ok: false, error: error.message || "비밀번호 변경 실패" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // lookup_booking: 예약코드/예약번호로 booking 조회 (service_role로 anon 권한 우회)
+  if (action === "lookup_booking") {
+    const { code } = body as { code?: string };
+    if (!code) {
+      return new Response(JSON.stringify({ ok: false, error: "code is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const upper = code.trim().toUpperCase();
+    const { data, error: dbErr } = await supabase
+      .from("admin_booking_list_v1")
+      .select("id,reservation_code,reservation_no,user_name,bags,bag_sizes,final_price,payment_status,payment_method,service_type,pickup_date,pickup_time,pickup_location_name")
+      .or(`reservation_code.eq.${upper},reservation_no.eq.${upper}`)
+      .eq("is_deleted", false)
+      .limit(1)
+      .maybeSingle();
+
+    if (dbErr) {
+      console.error("[kiosk-auth] lookup_booking failed:", dbErr);
+      return new Response(JSON.stringify({ ok: false, error: "DB error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ ok: true, data: data ?? null }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // checkin: booking_details.ops_status = 'checked_in' (service_role로 RLS 우회)
+  if (action === "checkin") {
+    const { booking_id } = body as { booking_id?: string };
+    if (!booking_id) {
+      return new Response(JSON.stringify({ ok: false, error: "booking_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { error } = await supabase
+      .from("booking_details")
+      .update({ ops_status: "checked_in" })
+      .eq("id", booking_id);
+
+    if (error) {
+      console.error("[kiosk-auth] checkin failed:", error);
+      return new Response(JSON.stringify({ ok: false, error: "DB error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

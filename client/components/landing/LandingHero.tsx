@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Smartphone, ChevronRight, MapPin } from "lucide-react";
 import { Branch } from "../../types";
 import LandingGoogleReviewsStrip from "./LandingGoogleReviewsStrip";
+import { fetchExchangeRate, getCachedRate, krwToUsd } from "../../services/paypalService";
 
 const ORIGINAL_HERO_IMAGE_URL = "https://firebasestorage.googleapis.com/v0/b/beeliber-main.firebasestorage.app/o/vc%2F1_background_cinematic_2k_202602230049.jpeg?alt=media&token=66532fb7-1f97-417f-8b7d-062e1f3a1b2b";
 
@@ -17,6 +18,15 @@ interface LandingHeroProps {
 }
 
 const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackClick, branchCode, branchData }) => {
+    const [rate, setRate] = useState<number>(getCachedRate());
+    useEffect(() => { fetchExchangeRate().then(setRate); }, []);
+
+    const isKo = lang === 'ko';
+    const rawSubtitle: string = t.hero?.subtitle ?? '';
+    const subtitle = isKo
+        ? rawSubtitle
+        : rawSubtitle.replace(/₩([\d,]+)/g, (_, num) => `USD $${krwToUsd(Number(num.replace(/,/g, '')), rate)}`);
+
     const { scrollY } = useScroll();
 
     // Parallax effects for typography
@@ -72,7 +82,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ t, lang, onNavigate, onTrackC
                     </h1>
 
                     <p className="text-white/70 text-base md:text-xl font-medium mt-8 max-w-2xl mx-auto break-keep leading-relaxed opacity-90">
-                        {t.hero.subtitle}
+                        {subtitle}
                     </p>
                 </motion.div>
             </div>

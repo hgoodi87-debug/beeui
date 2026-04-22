@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchExchangeRate, getCachedRate, krwToUsd } from '../../services/paypalService';
 
 interface LandingStickyCTAProps {
     t: {
@@ -39,8 +40,16 @@ const STICKY_LABELS: Record<string, {
 const LandingStickyCTA: React.FC<LandingStickyCTAProps> = ({ lang, onNavigate }) => {
     const [visible, setVisible] = useState(false);
     const [dismissed, setDismissed] = useState(false);
+    const [rate, setRate] = useState<number>(getCachedRate());
+    useEffect(() => { fetchExchangeRate().then(setRate); }, []);
 
-    const labels = STICKY_LABELS[lang?.toLowerCase()] ?? STICKY_LABELS['en'];
+    const isKo = lang?.toLowerCase() === 'ko';
+    const baseLabels = STICKY_LABELS[lang?.toLowerCase()] ?? STICKY_LABELS['en'];
+    const labels = {
+        ...baseLabels,
+        price_hint: isKo ? baseLabels.price_hint : `from USD $${krwToUsd(4000, rate)}/4h`,
+    };
+    const deliveryHint = isKo ? '₩10,000~' : `USD $${krwToUsd(10000, rate)}+`;
 
     const handleScroll = useCallback(() => {
         if (dismissed) return;
@@ -108,7 +117,7 @@ const LandingStickyCTA: React.FC<LandingStickyCTAProps> = ({ lang, onNavigate })
                                 className="flex-1 bg-[#F5C842] text-[#111] font-black py-3 sm:py-2 rounded-xl sm:rounded-full text-[13px] sm:text-[12px] tracking-wide transition-all active:scale-[0.97] shadow-lg shadow-[#F5C842]/20 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5"
                             >
                                 <span>{labels.delivery}</span>
-                                <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">₩10,000~</span>
+                                <span className="text-[10px] font-bold text-[#111]/50 normal-case tracking-normal">{deliveryHint}</span>
                             </button>
                         </div>
 

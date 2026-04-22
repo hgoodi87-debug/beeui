@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-04-22
+
+### 키오스크 QR 예약 접수 시스템 완성
+
+| 이슈 | 파일 | 핵심 |
+|---|---|---|
+| QR 카메라 인식률 낮음 | `KioskQRScanner.tsx` | `inversionAttempts: 'dontInvert'` → `'attemptBoth'`로 변경. 전방/후방 카메라 토글 버튼 추가 (fa-camera-rotate 아이콘). `facingMode` state로 동적 전환, effect deps `[facingMode]` |
+| 예약 접수 시 booking_details 상태 미업데이트 | `kiosk-auth` Edge Function + `kioskDb.ts` | `checkin` 액션 추가: `booking_details.ops_status = 'checked_in'` service_role 업데이트. `checkInBooking()` 함수 추가. `handleBookingCheckin` 성공 후 fire-and-forget으로 호출 |
+| 직원 PIN 없이 접수 가능 | `KioskPage.tsx` | "접수진행" 버튼 → 직원 PIN 모달 오픈 (`showStaffPinModal`). 4자리 numpad, `verifyAdminPin` 통과 시 `handleBookingCheckin` 호출 |
+| DELIVERY 예약 키오스크 접수 시도 | `KioskPage.tsx` | `bookingResult.service_type === 'DELIVERY'` 시 접수 버튼 대신 "직원 안내" 메시지 표시 |
+| 보관 장부 태그 번호 수정 불가 | `KioskPage.tsx` + `AdminPanel` | 관리자 잠금 해제 시 태그 원형 클릭 → inline 숫자 input. `handleTagEdit` 함수로 중복 확인 후 `updateStorageLog` PATCH. `AdminPanelProps`에 `handleTagEdit` 추가 |
+| `kiosk_storage_log`↔`booking_details` FK 없음 | `20260422000001_kiosk_log_reservation_fk.sql` | `reservation_id uuid REFERENCES booking_details(id) ON DELETE SET NULL` 추가 |
+
+ops_status 값 목록: `cancelled \| completed \| pickup_completed \| refunded \| checked_in`
+
+---
+
 ## 2026-04-20
 
 ### 지점 관리자 QR 스캔 무반응 버그 수정

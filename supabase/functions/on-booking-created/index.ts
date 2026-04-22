@@ -164,6 +164,7 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
       nametagNumber: String(booking.nametag_number || ""),
       pickupImageUrl: pickupInfo.pickupImageUrl || undefined,
       pickupGuide: pickupInfo.pickupGuide || undefined,
+      pickupAddress: pickupInfo.address || undefined,
       pickupMapUrl: buildMapUrl(pickupInfo) || undefined,
       adminNote: typeof booking.admin_note === "string" && booking.admin_note.trim()
         ? booking.admin_note.trim()

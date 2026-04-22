@@ -32,6 +32,7 @@ const KioskQRScanner: React.FC<KioskQRScannerProps> = ({
 
   const [camError, setCamError] = useState<string | null>(null);
   const [detected, setDetected] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   // 카메라 중지
   const stopCamera = useCallback(() => {
@@ -48,7 +49,7 @@ const KioskQRScanner: React.FC<KioskQRScannerProps> = ({
       rafRef.current = requestAnimationFrame(tick);
       return;
     }
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
 
     canvas.width = video.videoWidth;
@@ -57,7 +58,7 @@ const KioskQRScanner: React.FC<KioskQRScannerProps> = ({
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const result = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'dontInvert',
+      inversionAttempts: 'attemptBoth',
     });
 
     if (result?.data && !detectedRef.current) {
@@ -72,45 +73,48 @@ const KioskQRScanner: React.FC<KioskQRScannerProps> = ({
     rafRef.current = requestAnimationFrame(tick);
   }, [onDetected, stopCamera]);
 
-  // 카메라 시작 (전방 카메라 우선)
-  const startCamera = useCallback(async () => {
+  // 카메라 시작 (facingMode에 따라 전방/후방 선택)
+  const startCamera = useCallback(async (mode: 'user' | 'environment') => {
+    stopCamera();
     setCamError(null);
     detectedRef.current = false;
     setDetected(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        videoRef.current.play().catch((e) => { if (e.name !== 'AbortError') console.warn('[QR] play error:', e); });
       }
       rafRef.current = requestAnimationFrame(tick);
     } catch {
-      // 전방 카메라 실패 시 후방 시도
+      // 요청 카메라 실패 시 제약 없이 재시도
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-          audio: false,
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.play();
+          videoRef.current.play().catch((e) => { if (e.name !== 'AbortError') console.warn('[QR] play error:', e); });
         }
         rafRef.current = requestAnimationFrame(tick);
-      } catch (e) {
+      } catch {
         setCamError(labelError);
       }
     }
-  }, [tick, labelError]);
+  }, [tick, stopCamera, labelError]);
 
+  // facingMode 변경 시 카메라 재시작
   useEffect(() => {
-    startCamera();
+    startCamera(facingMode);
     return () => stopCamera();
-  }, [startCamera, stopCamera]);
+  }, [facingMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleCamera = useCallback(() => {
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center">
@@ -124,7 +128,14 @@ const KioskQRScanner: React.FC<KioskQRScannerProps> = ({
           <span className="text-sm font-bold">{labelClose}</span>
         </button>
         <span className="text-white/40 text-xs font-bold tracking-widest uppercase">QR SCAN</span>
-        <div className="w-16" /> {/* spacer */}
+        {/* 카메라 전환 버튼 */}
+        <button
+          onClick={toggleCamera}
+          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all active:scale-90"
+          title={facingMode === 'user' ? '후방 카메라로 전환' : '전방 카메라로 전환'}
+        >
+          <i className="fa-solid fa-camera-rotate text-base" />
+        </button>
       </div>
 
       {camError ? (
@@ -135,7 +146,7 @@ const KioskQRScanner: React.FC<KioskQRScannerProps> = ({
           </div>
           <p className="text-white font-bold text-base">{camError}</p>
           <button
-            onClick={startCamera}
+            onClick={() => startCamera(facingMode)}
             className="px-6 py-3 bg-[#F5C842] text-[#111111] font-black rounded-full text-sm"
           >
             {labelRetry}

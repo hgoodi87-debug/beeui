@@ -31,6 +31,7 @@ import {
   verifyAdminPin,
   changeAdminPin,
   lookupBookingByCode,
+  checkInBooking,
   todayStr,
   timeStr,
   addHours,
@@ -99,6 +100,11 @@ const LABELS: Record<Lang, Record<string, string>> = {
     booking_retry: '다시 검색',
     booking_success: '예약 접수 완료!',
     booking_success_sub: 'Reservation checked in',
+    staff_pin_title: '직원 PIN 입력',
+    staff_pin_hint: '접수를 완료하려면 직원 비밀번호를 입력해주세요',
+    staff_pin_wrong: '비밀번호가 틀렸습니다',
+    delivery_staff_guide: '배송 예약은 직원이 직접 처리합니다.\n직원에게 이 화면을 보여주세요.',
+    tag_edit_label: '태그 번호 수정',
   },
   en: {
     small: 'Small Bag', small_desc: 'Tote · Backpack · Small Carry-on',
@@ -156,6 +162,11 @@ const LABELS: Record<Lang, Record<string, string>> = {
     booking_retry: 'Search Again',
     booking_success: 'Check-in Complete!',
     booking_success_sub: 'Reservation checked in',
+    staff_pin_title: 'Staff PIN',
+    staff_pin_hint: 'Enter staff password to confirm check-in',
+    staff_pin_wrong: 'Wrong password',
+    delivery_staff_guide: 'Delivery bookings are handled by staff.\nPlease show this screen to a staff member.',
+    tag_edit_label: 'Edit tag number',
   },
   zh: {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型拉杆箱',
@@ -213,6 +224,11 @@ const LABELS: Record<Lang, Record<string, string>> = {
     booking_retry: '重新搜索',
     booking_success: '登记完成！',
     booking_success_sub: 'Reservation checked in',
+    staff_pin_title: '员工PIN码',
+    staff_pin_hint: '请输入员工密码以完成登记',
+    staff_pin_wrong: '密码错误',
+    delivery_staff_guide: '配送预约由员工处理。\n请将此画面出示给员工。',
+    tag_edit_label: '修改标签号码',
   },
   'zh-TW': {
     small: '小型行李', small_desc: '手提包 · 背包 · 小型行李箱',
@@ -270,6 +286,11 @@ const LABELS: Record<Lang, Record<string, string>> = {
     booking_retry: '重新搜尋',
     booking_success: '登記完成！',
     booking_success_sub: 'Reservation checked in',
+    staff_pin_title: '員工PIN碼',
+    staff_pin_hint: '請輸入員工密碼以完成登記',
+    staff_pin_wrong: '密碼錯誤',
+    delivery_staff_guide: '配送預約由員工處理。\n請將此畫面出示給員工。',
+    tag_edit_label: '修改標籤號碼',
   },
   'zh-HK': {
     small: '細型行李', small_desc: '手袋 · 背囊 · 小型行李箱',
@@ -327,6 +348,11 @@ const LABELS: Record<Lang, Record<string, string>> = {
     booking_retry: '重新搜尋',
     booking_success: '登記完成！',
     booking_success_sub: 'Reservation checked in',
+    staff_pin_title: '員工PIN碼',
+    staff_pin_hint: '請輸入員工密碼以完成登記',
+    staff_pin_wrong: '密碼錯誤',
+    delivery_staff_guide: '配送預約由員工處理。\n請將此畫面出示給員工。',
+    tag_edit_label: '修改標籤號碼',
   },
   ja: {
     small: '小型バッグ', small_desc: 'トートバッグ · リュック · 小型スーツケース',
@@ -384,6 +410,11 @@ const LABELS: Record<Lang, Record<string, string>> = {
     booking_retry: '再検索',
     booking_success: '受付完了！',
     booking_success_sub: 'Reservation checked in',
+    staff_pin_title: 'スタッフPIN',
+    staff_pin_hint: '受付を完了するにはスタッフパスワードを入力してください',
+    staff_pin_wrong: 'パスワードが違います',
+    delivery_staff_guide: '配送予約はスタッフが対応します。\nスタッフにこの画面をお見せください。',
+    tag_edit_label: 'タグ番号を変更',
   },
 };
 
@@ -405,6 +436,7 @@ interface AdminPanelProps {
   setAdminError: (v: boolean) => void;
   handleAdminLogin: () => void;
   handleMarkDone: (entry: KioskStorageLog) => void;
+  handleTagEdit: (id: number, newTag: number) => Promise<void>;
   setCfg: React.Dispatch<React.SetStateAction<KioskCfg>>;
 }
 
@@ -412,9 +444,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   cfg, branch, todayLog, offlineCount,
   adminUnlocked, adminError, t,
   setShowAdmin, setAdminUnlocked, setAdminPw, setAdminError,
-  handleAdminLogin, handleMarkDone, setCfg,
+  handleAdminLogin, handleMarkDone, handleTagEdit, setCfg,
 }) => {
   const [adminTab, setAdminTab] = React.useState<'log' | 'stats' | 'settings'>('log');
+  const [editingTagId, setEditingTagId] = React.useState<number | null>(null);
+  const [editTagValue, setEditTagValue] = React.useState('');
   const [localOps, setLocalOps] = React.useState({ ...cfg.operations });
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
@@ -699,10 +733,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                   {todayLog.length === 0 && <p className="text-white/30 text-sm text-center py-10">오늘 접수 없음</p>}
                   {todayLog.map((e, i) => (
                     <div key={i} className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all ${e.done ? 'bg-white/5 opacity-50' : 'bg-[#1C1B1B]'}`}>
-                      {/* 태그 번호 */}
-                      <span className={`w-11 h-11 rounded-full flex items-center justify-center font-black text-lg flex-shrink-0 ${e.done ? 'bg-white/10 text-white/30' : 'bg-[#F5C842] text-[#111111]'}`}>
-                        {e.tag}
-                      </span>
+                      {/* 태그 번호 — 관리자 잠금 해제 시 클릭해서 수정 가능 */}
+                      {adminUnlocked && editingTagId === e.id ? (
+                        <input
+                          type="number"
+                          value={editTagValue}
+                          autoFocus
+                          min={1} max={999}
+                          onChange={(ev) => setEditTagValue(ev.target.value)}
+                          onKeyDown={async (ev) => {
+                            if (ev.key === 'Enter') {
+                              const n = parseInt(editTagValue);
+                              if (n > 0) { await handleTagEdit(e.id, n); }
+                              setEditingTagId(null);
+                            } else if (ev.key === 'Escape') {
+                              setEditingTagId(null);
+                            }
+                          }}
+                          onBlur={async () => {
+                            const n = parseInt(editTagValue);
+                            if (n > 0) { await handleTagEdit(e.id, n); }
+                            setEditingTagId(null);
+                          }}
+                          className="w-11 h-11 rounded-full bg-[#F5C842] text-[#111111] font-black text-sm text-center flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        />
+                      ) : (
+                        <span
+                          onClick={() => { if (adminUnlocked) { setEditingTagId(e.id); setEditTagValue(String(e.tag)); } }}
+                          className={`w-11 h-11 rounded-full flex items-center justify-center font-black text-lg flex-shrink-0 transition-all ${e.done ? 'bg-white/10 text-white/30' : 'bg-[#F5C842] text-[#111111]'} ${adminUnlocked ? 'cursor-pointer hover:ring-2 hover:ring-white/40 active:scale-90' : ''}`}
+                        >
+                          {e.tag}
+                        </span>
+                      )}
                       {/* 상세 정보 */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
@@ -894,6 +956,11 @@ const KioskPage: React.FC = () => {
   const [bookingLookupLoading, setBookingLookupLoading] = useState(false);
   const [bookingLookupError, setBookingLookupError] = useState('');
   const [showQRScanner, setShowQRScanner] = useState(false);
+  // 직원 PIN 모달 상태
+  const [showStaffPinModal, setShowStaffPinModal] = useState(false);
+  const [staffPin, setStaffPin] = useState('');
+  const [staffPinLoading, setStaffPinLoading] = useState(false);
+  const [staffPinError, setStaffPinError] = useState('');
   const [smallQty, setSmallQty] = useState(0);
   const [carrierQty, setCarrierQty] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -1073,6 +1140,21 @@ const KioskPage: React.FC = () => {
     setShowLangModal(true);
   };
 
+  const handleTagEdit = useCallback(async (id: number, newTag: number) => {
+    const existing = todayLog.find((e) => e.tag === newTag && e.id !== id);
+    if (existing) {
+      alert(`태그 ${newTag}번은 이미 사용 중입니다.`);
+      return;
+    }
+    try {
+      await updateStorageLog(id, { tag: newTag });
+      setTodayLog((prev) => prev.map((e) => (e.id === id ? { ...e, tag: newTag } : e)));
+    } catch (err) {
+      console.error('[kiosk] handleTagEdit error:', err);
+      alert('태그 번호 수정에 실패했습니다.');
+    }
+  }, [todayLog]);
+
   const handleAdminLogin = async () => {
     if (!branch) return;
     const ok = await verifyAdminPin(getBranchId(branch), adminPw);
@@ -1174,6 +1256,12 @@ const KioskPage: React.FC = () => {
       setResultStartTime(startTime);
       setTodayLog((prev) => [...prev, { ...payload, tag: actualTag, id: saved?.id ?? actualTag, created_at: new Date().toISOString() }]);
       setOfflineCount(getOfflineQueueSize());
+      // booking_details.ops_status 업데이트 (실패해도 접수는 완료 처리)
+      if (bookingResult.id) {
+        checkInBooking(bid, bookingResult.id).catch((err) =>
+          console.warn('[kiosk] checkInBooking failed (non-critical):', err)
+        );
+      }
       setStep('success');
     } catch (e) {
       console.error('[kiosk] booking checkin error:', e);
@@ -1221,7 +1309,7 @@ const KioskPage: React.FC = () => {
     cfg, branch, todayLog, offlineCount,
     adminUnlocked, adminPw, adminError, t,
     setShowAdmin, setAdminUnlocked, setAdminPw, setAdminError,
-    handleAdminLogin, handleMarkDone, setCfg,
+    handleAdminLogin, handleMarkDone, handleTagEdit, setCfg,
   };
 
 
@@ -1923,21 +2011,31 @@ const KioskPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 접수진행 버튼 */}
-                <button
-                  onClick={handleBookingCheckin}
-                  disabled={submitting}
-                  className={`w-full py-4 rounded-full font-black text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
-                    !submitting
-                      ? 'bg-[#F5C842] text-[#111111] shadow-[0_8px_28px_rgba(245,200,66,0.45)] kiosk-cta-shimmer'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  {submitting
-                    ? <><i className="fa-solid fa-spinner animate-spin" /> 처리 중...</>
-                    : <><i className="fa-solid fa-check-circle" /> {t.booking_confirm_btn}</>
-                  }
-                </button>
+                {/* DELIVERY 예약: 직원 안내 */}
+                {bookingResult.service_type === 'DELIVERY' ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
+                    <i className="fa-solid fa-truck text-amber-400 text-2xl mb-3" />
+                    <p className="text-amber-800 font-bold text-sm leading-relaxed whitespace-pre-line">
+                      {t.delivery_staff_guide}
+                    </p>
+                  </div>
+                ) : (
+                  /* STORAGE 예약: 직원 PIN 입력 후 접수 */
+                  <button
+                    onClick={() => { setStaffPin(''); setStaffPinError(''); setShowStaffPinModal(true); }}
+                    disabled={submitting}
+                    className={`w-full py-4 rounded-full font-black text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                      !submitting
+                        ? 'bg-[#F5C842] text-[#111111] shadow-[0_8px_28px_rgba(245,200,66,0.45)] kiosk-cta-shimmer'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {submitting
+                      ? <><i className="fa-solid fa-spinner animate-spin" /> 처리 중...</>
+                      : <><i className="fa-solid fa-check-circle" /> {t.booking_confirm_btn}</>
+                    }
+                  </button>
+                )}
 
                 {/* 다시 검색 */}
                 <button
@@ -1950,6 +2048,102 @@ const KioskPage: React.FC = () => {
             )}
           </div>
         </main>
+      )}
+
+      {/* ─── 직원 PIN 모달 ──────────────────────────────────────────────────── */}
+      {showStaffPinModal && (
+        <div className="fixed inset-0 z-[300] bg-black/70 flex items-center justify-center p-6">
+          <div className="bg-[#1a1a1a] rounded-3xl p-7 w-full max-w-xs flex flex-col items-center gap-5">
+            <div className="w-14 h-14 rounded-full bg-[#F5C842]/15 flex items-center justify-center">
+              <i className="fa-solid fa-lock text-[#F5C842] text-xl" />
+            </div>
+            <div className="text-center">
+              <p className="text-white font-black text-lg">{t.staff_pin_title}</p>
+              <p className="text-white/40 text-xs mt-1">{t.staff_pin_hint}</p>
+            </div>
+            {/* PIN 도트 표시 */}
+            <div className="flex gap-3">
+              {[0,1,2,3].map((i) => (
+                <div key={i} className={`w-4 h-4 rounded-full border-2 transition-all ${
+                  i < staffPin.length ? 'bg-[#F5C842] border-[#F5C842]' : 'border-white/30'
+                }`} />
+              ))}
+            </div>
+            {staffPinError && (
+              <p className="text-red-400 text-sm font-bold">{staffPinError}</p>
+            )}
+            {/* 키패드 */}
+            <div className="grid grid-cols-3 gap-2.5 w-52">
+              {['1','2','3','4','5','6','7','8','9'].map((d) => (
+                <button key={d}
+                  onClick={() => {
+                    if (staffPin.length < 4 && !staffPinLoading) {
+                      const next = staffPin + d;
+                      setStaffPin(next);
+                      setStaffPinError('');
+                      if (next.length === 4) {
+                        setStaffPinLoading(true);
+                        verifyAdminPin(getBranchId(branch!), next).then((ok) => {
+                          setStaffPinLoading(false);
+                          if (ok) {
+                            setShowStaffPinModal(false);
+                            handleBookingCheckin();
+                          } else {
+                            setStaffPinError(t.staff_pin_wrong);
+                            setStaffPin('');
+                          }
+                        });
+                      }
+                    }
+                  }}
+                  disabled={staffPinLoading}
+                  className="h-13 py-3 rounded-xl bg-white/10 text-white font-black text-lg active:bg-[#F5C842] active:text-[#111111] transition-colors select-none disabled:opacity-50"
+                >
+                  {d}
+                </button>
+              ))}
+              <div />
+              <button
+                onClick={() => {
+                  if (staffPin.length < 4 && !staffPinLoading) {
+                    const next = staffPin + '0';
+                    setStaffPin(next);
+                    setStaffPinError('');
+                    if (next.length === 4) {
+                      setStaffPinLoading(true);
+                      verifyAdminPin(getBranchId(branch!), next).then((ok) => {
+                        setStaffPinLoading(false);
+                        if (ok) {
+                          setShowStaffPinModal(false);
+                          handleBookingCheckin();
+                        } else {
+                          setStaffPinError(t.staff_pin_wrong);
+                          setStaffPin('');
+                        }
+                      });
+                    }
+                  }
+                }}
+                disabled={staffPinLoading}
+                className="h-13 py-3 rounded-xl bg-white/10 text-white font-black text-lg active:bg-[#F5C842] active:text-[#111111] transition-colors select-none disabled:opacity-50"
+              >0</button>
+              <button
+                onClick={() => { setStaffPin((p) => p.slice(0, -1)); setStaffPinError(''); }}
+                disabled={staffPinLoading}
+                className="h-13 py-3 rounded-xl bg-white/10 text-white/60 flex items-center justify-center active:bg-white/20 transition-colors select-none"
+              >
+                <i className="fa-solid fa-delete-left" />
+              </button>
+            </div>
+            {/* 취소 */}
+            <button
+              onClick={() => setShowStaffPinModal(false)}
+              className="text-white/30 text-sm font-bold hover:text-white/60 transition-colors"
+            >
+              {t.qr_close}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ─── 배송 폼 ────────────────────────────────────────────────────────── */}

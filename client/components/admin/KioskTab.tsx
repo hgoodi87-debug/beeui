@@ -831,7 +831,7 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
 
         {/* 테이블 헤더 */}
         <div className="grid text-[10px] font-black text-bee-yellow bg-bee-black px-3 py-2"
-          style={{ gridTemplateColumns: '72px 48px 36px 56px 56px 72px 72px 56px 60px 60px 72px 76px 72px 40px 1fr' }}>
+          style={{ gridTemplateColumns: 'minmax(70px,1fr) 44px 32px 50px 48px 56px 60px 48px 56px 60px 68px 76px 68px 36px minmax(80px,160px)' }}>
           {['날짜','태그','열','유형','수량','시작','픽업예정','상태','초과시간','정가','할인','최종금액','결제','완료','메모'].map(h => (
             <span key={h} className="truncate">{h}</span>
           ))}
@@ -852,7 +852,7 @@ const AdminView: React.FC<AdminViewProps> = ({ t, cfg, entries, onUpdate, branch
               return (
                 <div key={e.id}
                   className={`grid items-center px-3 py-2 text-xs ${rowBg} hover:bg-gray-50 transition-colors`}
-                  style={{ gridTemplateColumns: '72px 48px 36px 56px 56px 72px 72px 56px 60px 60px 72px 76px 72px 40px 1fr' }}>
+                  style={{ gridTemplateColumns: 'minmax(70px,1fr) 44px 32px 50px 48px 56px 60px 48px 56px 60px 68px 76px 68px 36px minmax(80px,160px)' }}>
                   {/* 날짜 */}
                   <span className="text-gray-400 text-[10px]">{e.date}</span>
                   {/* 태그 */}

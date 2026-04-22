@@ -824,7 +824,7 @@ export const en = {
             {
                 category: "booking",
                 question: "How do I pay? Can I use PayPal or a foreign credit card?",
-                answer: "PayPal is the easiest option when booking online — perfect for travelers from Taiwan, Hong Kong, Japan, and other countries.\n\nOn-site cash payment (Korean Won) is also available at all branches.\n\nCredit card availability varies by location, so please check the branch details when booking."
+                answer: "PayPal is the easiest option when booking online — perfect for travelers from Taiwan, Hong Kong, Japan, and other countries.\n\nCredit card availability varies by location, so please check the branch details when booking."
             },
             {
                 category: "booking",

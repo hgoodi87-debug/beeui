@@ -216,16 +216,28 @@
 
   <!-- reCAPTCHA Enterprise: lazy loaded on first booking interaction -->
 
-  <!-- Google tag (gtag.js) - GA4 📊 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PQBL1SG842"></script>
+  <!-- Google Consent Mode v2 — analytics denied by default until user consents -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    var _beeConsent = localStorage.getItem('beeliber_cookie_consent');
+    var _granted = _beeConsent === 'all' ? 'granted' : 'denied';
+    gtag('consent', 'default', {
+      analytics_storage: _granted,
+      ad_storage: _granted,
+      ad_user_data: _granted,
+      ad_personalization: _granted,
+    });
+  </script>
+
+  <!-- Google tag (gtag.js) - GA4 📊 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PQBL1SG842"></script>
+  <script>
     gtag('js', new Date());
     gtag('config', 'G-PQBL1SG842');
   </script>
 
-  <!-- Meta Pixel Code 💅 -->
+  <!-- Meta Pixel Code 💅 — only initialises after consent -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -235,8 +247,10 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '2813327635677634');
-    fbq('track', 'PageView');
+    if (localStorage.getItem('beeliber_cookie_consent') === 'all') {
+      fbq('init', '2813327635677634');
+      fbq('track', 'PageView');
+    }
   </script>
 
   <!-- Naver Maps SDK (Moved to index.html for Stability & Auth Fix) 💅 -->
@@ -437,12 +451,12 @@
       }
     };
   </script>
-  <script type="module" crossorigin src="/assets/index-0KCAgzJ7.js"></script>
+  <script type="module" crossorigin src="/assets/index-C6dpUvZY.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-react-dom-B-4pjoWT.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-motion-BUt1lcWJ.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-RvhTvX1M.js">
   <link rel="modulepreload" crossorigin href="/assets/vendor-query-N1jjWJFK.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-DgwA7Y2c.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-faa5Mzjw.css">
 </head>
 
 <body class="antialiased">

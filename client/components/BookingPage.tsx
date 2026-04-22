@@ -21,7 +21,7 @@ import { StorageService } from '../services/storageService';
 import { supabaseGet } from '../services/supabaseClient';
 import { getAdParams, inferChannelFromReferrer } from '../src/utils/gads';
 import { createTossPaymentSession, isTossPaymentsEnabled, isTossPaymentsFlowEnabled, isTossPaymentsMockMode, requestTossCardPayment } from '../services/tossPaymentsService';
-import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd, warmPayPalFunction } from '../services/paypalService';
+import { isPayPalEnabled, loadPayPalSDK, createPayPalOrder, capturePayPalOrder, krwToUsd, warmPayPalFunction, fetchExchangeRate, getCachedRate } from '../services/paypalService';
 import { formatKSTDate, isPastKSTTime, getFirstAvailableSlot, isAllSlotsPast, addDaysToDateStr, add2MonthsToDateStr } from '../utils/dateUtils';
 import { COUNTRY_NAMES } from '../src/constants/countries';
 import { calculateDeliveryStoragePrice, STORAGE_RATES, calculateStoragePrice } from '../utils/pricing';
@@ -86,6 +86,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const normalizedInitialBagSizes = initialServiceType === ServiceType.DELIVERY
         ? sanitizeDeliveryBagSizes(initialBagSizes)
         : sanitizeBagSizes(initialBagSizes);
+
+    const [usdRate, setUsdRate] = useState<number>(getCachedRate());
+    useEffect(() => { fetchExchangeRate().then(setUsdRate); }, []);
 
     const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
     const [storageTiers, setStorageTiers] = useState<StorageTier[]>([]);
@@ -1271,8 +1274,17 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                                 {isDelivery ? (lang.startsWith('ko') ? '1회 배송 기준' : 'Per delivery') : (lang.startsWith('ko') ? '기본 4시간 요금' : 'Base 4h price')}
                                                             </div>
                                                             <div className="mt-1 text-[1.15rem] sm:text-[1.35rem] font-black leading-none text-bee-yellow whitespace-nowrap">
-                                                                ₩{unitPrice.toLocaleString()}
+                                                                {lang === 'ko'
+                                                                    ? `₩${unitPrice.toLocaleString()}`
+                                                                    : `USD $${krwToUsd(unitPrice, usdRate)}`}
                                                             </div>
+                                                            {unitPrice > 0 && (
+                                                                <div className="text-[8px] font-bold text-gray-400 mt-0.5">
+                                                                    {lang === 'ko'
+                                                                        ? `약 USD $${krwToUsd(unitPrice, usdRate)}`
+                                                                        : `≈ ₩${unitPrice.toLocaleString()}`}
+                                                                </div>
+                                                            )}
                                                             <div className="mt-1.5 text-[9px] sm:text-[10px] font-bold leading-[1.45] text-gray-500 break-keep">
                                                                 {isDelivery
                                                                     ? (lang.startsWith('ko') ? '결제는 예약 단계에서 바로 반영됩니다.' : 'Added to your delivery total instantly.')
@@ -1461,14 +1473,30 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     <div className="flex justify-between items-end group">
                                         <span className="text-gray-400 text-xs font-black uppercase tracking-[0.2em] group-hover:text-bee-yellow transition-colors">{tBooking.final_total || 'TOTAL'}</span>
                                         <div className="text-right">
-                                            <div className="flex items-baseline gap-2 justify-end">
-                                                <span className="text-bee-yellow font-black italic text-3xl">₩</span>
-                                                <span className="text-4xl font-black italic tracking-tighter tabular-nums">{priceDetails.total.toLocaleString()}</span>
-                                            </div>
-                                            {isPayPalEnabled() && priceDetails.total > 0 && (
-                                                <p className="text-[10px] text-gray-400 font-bold mt-0.5">
-                                                    {({ ko: '약', 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈'} USD ${krwToUsd(priceDetails.total)}
-                                                </p>
+                                            {lang === 'ko' ? (
+                                                <>
+                                                    <div className="flex items-baseline gap-2 justify-end">
+                                                        <span className="text-bee-yellow font-black italic text-3xl">₩</span>
+                                                        <span className="text-4xl font-black italic tracking-tighter tabular-nums">{priceDetails.total.toLocaleString()}</span>
+                                                    </div>
+                                                    {priceDetails.total > 0 && (
+                                                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                                                            약 USD ${krwToUsd(priceDetails.total, usdRate)}
+                                                        </p>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="flex items-baseline gap-2 justify-end">
+                                                        <span className="text-bee-yellow font-black italic text-3xl">$</span>
+                                                        <span className="text-4xl font-black italic tracking-tighter tabular-nums">{krwToUsd(priceDetails.total, usdRate)}</span>
+                                                    </div>
+                                                    {priceDetails.total > 0 && (
+                                                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                                                            {({ 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈'} ₩{priceDetails.total.toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1599,13 +1627,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         </p>
                                         <div className="text-center text-[11px] text-gray-400 font-bold mb-3">
                                             {({
-                                                ko: `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()} 원)`,
-                                                'zh-TW': `USD $${krwToUsd(priceDetails.total)}（約 ₩${priceDetails.total.toLocaleString()} 韓元）`,
-                                                'zh-HK': `USD $${krwToUsd(priceDetails.total)}（約 ₩${priceDetails.total.toLocaleString()} 韓元）`,
-                                                zh: `USD $${krwToUsd(priceDetails.total)}（约 ₩${priceDetails.total.toLocaleString()} 韩元）`,
-                                                ja: `USD $${krwToUsd(priceDetails.total)}（約 ₩${priceDetails.total.toLocaleString()} ウォン）`,
-                                                en: `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()} KRW)`,
-                                            } as Record<string, string>)[lang] ?? `USD $${krwToUsd(priceDetails.total)} (≈ ₩${priceDetails.total.toLocaleString()} KRW)`}
+                                                ko: `USD $${krwToUsd(priceDetails.total, usdRate)} (≈ ₩${priceDetails.total.toLocaleString()} 원)`,
+                                                'zh-TW': `USD $${krwToUsd(priceDetails.total, usdRate)}（約 ₩${priceDetails.total.toLocaleString()} 韓元）`,
+                                                'zh-HK': `USD $${krwToUsd(priceDetails.total, usdRate)}（約 ₩${priceDetails.total.toLocaleString()} 韓元）`,
+                                                zh: `USD $${krwToUsd(priceDetails.total, usdRate)}（约 ₩${priceDetails.total.toLocaleString()} 韩元）`,
+                                                ja: `USD $${krwToUsd(priceDetails.total, usdRate)}（約 ₩${priceDetails.total.toLocaleString()} ウォン）`,
+                                                en: `USD $${krwToUsd(priceDetails.total, usdRate)} (≈ ₩${priceDetails.total.toLocaleString()} KRW)`,
+                                            } as Record<string, string>)[lang] ?? `USD $${krwToUsd(priceDetails.total, usdRate)} (≈ ₩${priceDetails.total.toLocaleString()} KRW)`}
                                         </div>
                                         {paypalValidationMsg && (
                                             <p className="text-xs text-red-500 font-bold text-center mb-2">

@@ -14,6 +14,7 @@ export interface VoucherEmailTemplateInput {
   nametagNumber?: string;
   pickupImageUrl?: string;
   pickupGuide?: string;
+  pickupAddress?: string;
   pickupMapUrl?: string;
   adminNote?: string;
   paymentMethod?: string;
@@ -226,14 +227,18 @@ export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
             <tr><td style="padding:10px 0;color:#64748b;border-bottom:1px solid #f1f5f9;">수하물</td><td style="padding:10px 0;color:#111827;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:800;">${bagSummary}</td></tr>
             <tr><td style="padding:16px 0 0;color:#111827;font-weight:900;">결제 금액</td><td style="padding:16px 0 0;color:#111827;text-align:right;font-size:24px;font-weight:900;">${formatCurrency(input.finalPrice)}</td></tr>
           </table>
-          ${(input.pickupImageUrl || input.pickupGuide) ? `
+          ${(input.pickupImageUrl || input.pickupGuide || input.pickupAddress) ? `
           <div style="margin-top:24px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:20px;overflow:hidden;">
             <div style="padding:14px 18px;background:#111827;display:flex;align-items:center;justify-content:space-between;">
               <div style="font-size:11px;font-weight:900;color:#facc15;letter-spacing:0.14em;text-transform:uppercase;">📍 픽업 지점 안내</div>
               ${input.pickupMapUrl ? `<a href="${escapeHtml(input.pickupMapUrl)}" style="font-size:11px;font-weight:900;color:#facc15;text-decoration:none;background:rgba(250,204,21,0.15);padding:5px 12px;border-radius:8px;border:1px solid rgba(250,204,21,0.3);">🗺 길찾기</a>` : ""}
             </div>
             ${input.pickupImageUrl ? `<img src="${escapeHtml(input.pickupImageUrl)}" alt="픽업 지점 사진" style="display:block;width:100%;max-height:240px;object-fit:cover;" />` : ""}
-            ${input.pickupGuide ? `<div style="padding:16px 18px;"><p style="margin:0;color:#374151;font-size:13px;font-weight:700;white-space:pre-line;line-height:1.7;">${escapeHtml(input.pickupGuide)}</p></div>` : ""}
+            <div style="padding:16px 18px;">
+              ${input.pickupLabel ? `<div style="margin-bottom:10px;font-size:14px;font-weight:900;color:#111827;">🏢 ${escapeHtml(input.pickupLabel)}</div>` : ""}
+              ${input.pickupAddress ? `<div style="margin-bottom:10px;display:flex;align-items:flex-start;gap:6px;"><span style="font-size:13px;color:#64748b;flex-shrink:0;">📌</span><span style="font-size:13px;color:#374151;font-weight:700;line-height:1.5;">${escapeHtml(input.pickupAddress)}</span></div>` : ""}
+              ${input.pickupGuide ? `<div style="padding:12px 14px;background:#fef3c7;border-radius:12px;border-left:4px solid #f59e0b;"><p style="margin:0;color:#92400e;font-size:13px;font-weight:800;white-space:pre-line;line-height:1.7;">🚩 ${escapeHtml(input.pickupGuide)}</p></div>` : ""}
+            </div>
           </div>
           ` : ""}
           ${input.adminNote ? `

@@ -587,7 +587,7 @@ export const zhTW = {
             {
                 category: "booking",
                 question: "如何付款？可以用 PayPal 或外幣信用卡嗎？",
-                answer: "線上預約時使用 PayPal 付款最方便！台灣、香港旅客可直接用 PayPal 帳戶輕鬆結帳，不需要韓元信用卡。\n\n現場也支援現金（韓元）付款。\n\n信用卡付款的可用性因門市而異，預約時請確認該門市資訊。"
+                answer: "線上預約時使用 PayPal 付款最方便！台灣、香港旅客可直接用 PayPal 帳戶輕鬆結帳，不需要韓元信用卡。\n\n信用卡付款的可用性因門市而異，預約時請確認該門市資訊。"
             },
             {
                 category: "booking",

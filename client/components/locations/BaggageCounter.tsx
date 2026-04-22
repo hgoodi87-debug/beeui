@@ -1,8 +1,8 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, Minus } from "lucide-react";
 import { STORAGE_RATES } from "../../utils/pricing";
-import { isPayPalEnabled, krwToUsd } from "../../services/paypalService";
+import { krwToUsd, fetchExchangeRate, getCachedRate } from "../../services/paypalService";
 import {
     BagCategoryId,
     DEFAULT_DELIVERY_PRICES,
@@ -26,6 +26,8 @@ interface BaggageCounterProps {
 }
 
 const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts, onCountChange, onConfirm, deliveryPrices, currentService }) => {
+    const [rate, setRate] = useState<number>(getCachedRate());
+    useEffect(() => { fetchExchangeRate().then(setRate); }, []);
     const isDelivery = currentService === 'SAME_DAY' || currentService === 'SCHEDULED';
     const serviceType = isDelivery ? ServiceType.DELIVERY : ServiceType.STORAGE;
     const categories = getBagCategoriesForService(serviceType);
@@ -85,18 +87,34 @@ const BaggageCounter: React.FC<BaggageCounterProps> = ({ t, lang, baggageCounts,
                                     
                                     <div className="flex flex-col items-start gap-2 mt-auto">
                                         <div className="flex flex-col">
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-[18px] md:text-[22px] font-black text-bee-yellow font-montserrat leading-none">
-                                                    ₩{unitPrice.toLocaleString()}
-                                                </span>
-                                                <span className="text-[8px] md:text-[9px] font-bold text-gray-300 uppercase font-montserrat tracking-tighter">
-                                                    {isDelivery ? '/Trip' : '/4h'}
-                                                </span>
-                                            </div>
-                                            {isPayPalEnabled() && (
-                                                <span className="text-[9px] font-bold text-gray-400 mt-0.5">
-                                                    {({ ko: '약', 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈'} USD ${krwToUsd(unitPrice)}
-                                                </span>
+                                            {lang === 'ko' ? (
+                                                <>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-[18px] md:text-[22px] font-black text-bee-yellow font-montserrat leading-none">
+                                                            ₩{unitPrice.toLocaleString()}
+                                                        </span>
+                                                        <span className="text-[8px] md:text-[9px] font-bold text-gray-300 uppercase font-montserrat tracking-tighter">
+                                                            {isDelivery ? '/Trip' : '/4h'}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[9px] font-bold text-gray-400 mt-0.5">
+                                                        약 USD ${krwToUsd(unitPrice, rate)}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-[18px] md:text-[22px] font-black text-bee-yellow font-montserrat leading-none">
+                                                            USD ${krwToUsd(unitPrice, rate)}
+                                                        </span>
+                                                        <span className="text-[8px] md:text-[9px] font-bold text-gray-300 uppercase font-montserrat tracking-tighter">
+                                                            {isDelivery ? '/Trip' : '/4h'}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[9px] font-bold text-gray-400 mt-0.5">
+                                                        {({ 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈'} ₩{unitPrice.toLocaleString()}
+                                                    </span>
+                                                </>
                                             )}
                                         </div>
 

@@ -1,12 +1,22 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { fetchExchangeRate, getCachedRate, krwToUsd } from "../../services/paypalService";
 
 interface LandingFreedomSectionProps {
     t: any;
+    lang?: string;
 }
 
-const LandingFreedomSection: React.FC<LandingFreedomSectionProps> = ({ t }) => {
+const LandingFreedomSection: React.FC<LandingFreedomSectionProps> = ({ t, lang }) => {
+    const [rate, setRate] = useState<number>(getCachedRate());
+    useEffect(() => { fetchExchangeRate().then(setRate); }, []);
+
+    const isKo = !lang || lang === 'ko';
+    const rawHeadline = t.freedom?.headline || '짐은 빌리버에게.<br /><span class="text-bee-yellow">지금 이 자유,</span> ₩4,000부터.';
+    const headline = isKo
+        ? rawHeadline
+        : rawHeadline.replace(/₩[\d,]+/g, `USD $${krwToUsd(4000, rate)}`);
     return (
         <section className="relative h-[60vh] md:h-[80vh] flex items-center justify-center overflow-hidden bg-black">
             <div className="absolute inset-0 z-0">
@@ -35,8 +45,8 @@ const LandingFreedomSection: React.FC<LandingFreedomSectionProps> = ({ t }) => {
                     <div className="px-4 py-1.5 bg-bee-yellow text-bee-black font-black text-[10px] tracking-widest rounded-full mb-8 shadow-2xl">
                         {t.freedom?.badge || 'AFTER'}
                     </div>
-                    <h2 className="text-4xl md:text-7xl font-display font-black text-white mb-6 tracking-tighter drop-shadow-2xl" 
-                        dangerouslySetInnerHTML={{ __html: t.freedom?.headline || '짐은 빌리버에게.<br /><span class="text-bee-yellow">지금 이 자유,</span> ₩4,000부터.' }} 
+                    <h2 className="text-4xl md:text-7xl font-display font-black text-white mb-6 tracking-tighter drop-shadow-2xl"
+                        dangerouslySetInnerHTML={{ __html: headline }}
                     />
                     <p className="text-lg md:text-2xl text-white/80 font-bold tracking-tight">
                         {t.freedom?.sub_copy || '무거운 짐 없이 가볍게, 서울의 낭만을 즐기세요. 💅✨'}

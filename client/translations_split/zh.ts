@@ -551,7 +551,7 @@ export const zh = {
             {
                 category: "booking",
                 question: "如何付款？可以用 PayPal 或外币信用卡吗？",
-                answer: "在线预约时使用 PayPal 付款最方便！台湾、香港旅客可直接用 PayPal 账户轻松结账，不需要韩元信用卡。\n\n现场也支持现金（韩元）付款。\n\n信用卡付款的可用性因门市而异，预约时请确认该门市信息。"
+                answer: "在线预约时使用 PayPal 付款最方便！台湾、香港旅客可直接用 PayPal 账户轻松结账，不需要韩元信用卡。\n\n信用卡付款的可用性因门市而异，预约时请确认该门市信息。"
             },
             {
                 category: "booking",

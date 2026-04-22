@@ -494,10 +494,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     try {
       const bookingDetailId = await resolveBookingDetailId(booking.id);
       const SUPABASE_URL = getSupabaseBaseUrl();
-      const SUPABASE_KEY = getSupabaseConfig().anonKey;
+      const { getActiveAdminRequestHeaders } = await import('../services/adminAuthService');
+      const adminHeaders = await getActiveAdminRequestHeaders();
       const res = await fetch(`${SUPABASE_URL}/functions/v1/on-booking-created`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+        headers: { 'Content-Type': 'application/json', 'apikey': getSupabaseConfig().anonKey, ...adminHeaders },
         body: JSON.stringify({ type: 'INSERT', table: 'booking_details', record: {
           id: bookingDetailId,
           reservation_code: booking.reservationCode,

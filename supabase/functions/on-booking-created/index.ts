@@ -165,7 +165,10 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
       deliveryTime: String(booking.delivery_time || booking.return_time || ""),
       finalPrice: Number(booking.final_price || 0),
       bagSummary,
-      nametagNumber: String(booking.nametag_number || ""),
+      nametagNumber: String((booking as any).nametag_id || ""),
+      storageNumbers: Array.isArray((booking as any).storage_numbers)
+        ? (booking as any).storage_numbers.map((n: unknown) => Number(n)).filter((n: number) => Number.isFinite(n))
+        : undefined,
       pickupImageUrl: pickupInfo.pickupImageUrl || undefined,
       pickupGuide: pickupInfo.pickupGuide || undefined,
       pickupAddress: pickupInfo.address || undefined,

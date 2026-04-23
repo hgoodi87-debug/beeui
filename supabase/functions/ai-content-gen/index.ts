@@ -5,6 +5,8 @@ import { authenticateAdminRequest, CORS_HEADERS, EdgeHttpError } from "../_share
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
+const OLLAMA_BASE_URL = Deno.env.get("OLLAMA_BASE_URL") || "";
+const OLLAMA_MODEL = Deno.env.get("OLLAMA_MODEL") || "gemma4";
 
 const RATE_LIMIT_PER_MINUTE = 10;
 
@@ -42,7 +44,6 @@ async function generateTranslations(locationData: {
   pickupGuide?: string;
   description?: string;
 }): Promise<Record<string, string>> {
-  if (!ANTHROPIC_API_KEY) throw new EdgeHttpError(503, "ANTHROPIC_API_KEY not configured");
 
   const systemPrompt = `You are a professional translator for Beeliber, a premium luggage storage and delivery service in Seoul targeting Taiwanese, Hong Kong, and Japanese travelers.
 
@@ -67,12 +68,11 @@ Address: ${safeAddress}
 Pickup Guide: ${safeGuide}
 Description: ${safeDesc}`;
 
-  return await callClaude(systemPrompt, userPrompt);
+  return await callAI(systemPrompt, userPrompt);
 }
 
 // CS 응답 초안 생성 (use_case: 'cs_reply')
 async function generateCsReply(inquiryBody: string, customerLang: string): Promise<Record<string, string>> {
-  if (!ANTHROPIC_API_KEY) throw new EdgeHttpError(503, "ANTHROPIC_API_KEY not configured");
 
   const langMap: Record<string, string> = {
     "zh-TW": "Traditional Chinese (Taiwan)", "zh-HK": "Traditional Chinese (Hong Kong)",
@@ -97,8 +97,33 @@ Return ONLY valid JSON: {"reply": "the response text"}`;
   const safeInquiry = String(inquiryBody || "").slice(0, 1000);
   const userPrompt = `Customer inquiry: ${safeInquiry}`;
 
-  const result = await callClaude(systemPrompt, userPrompt);
-  return result;
+  return await callAI(systemPrompt, userPrompt);
+}
+
+async function callGemma(systemPrompt: string, userPrompt: string): Promise<Record<string, string>> {
+  const response = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      stream: false,
+      options: { num_predict: 2048, temperature: 0.3 },
+    }),
+  });
+
+  if (!response.ok) {
+    const status = response.status;
+    if (status === 503) throw new EdgeHttpError(503, "Ollama 서비스가 응답하지 않습니다. 실행 중인지 확인해 주세요.");
+    throw new EdgeHttpError(502, `Gemma API 오류 [${status}]. 잠시 후 다시 시도해 주세요.`);
+  }
+
+  const data = await response.json();
+  const text: string = data.choices?.[0]?.message?.content ?? "";
+  return parseJsonFromText(text);
 }
 
 async function callClaude(systemPrompt: string, userPrompt: string): Promise<Record<string, string>> {
@@ -118,7 +143,6 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Rec
   });
 
   if (!response.ok) {
-    // Claude API 에러 본문 클라이언트에 그대로 노출 금지
     const status = response.status;
     if (status === 529 || status === 503) {
       throw new EdgeHttpError(503, "AI 서비스가 일시적으로 바쁩니다. 잠시 후 다시 시도해 주세요.");
@@ -128,7 +152,10 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Rec
 
   const data = await response.json();
   const text = data.content?.[0]?.text ?? "";
+  return parseJsonFromText(text);
+}
 
+function parseJsonFromText(text: string): Record<string, string> {
   // 중첩 JSON 안전 파싱: 첫 { 부터 마지막 } 까지
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
@@ -138,6 +165,12 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Rec
   } catch {
     throw new EdgeHttpError(502, "AI 응답 파싱 실패. 잠시 후 다시 시도해 주세요.");
   }
+}
+
+async function callAI(systemPrompt: string, userPrompt: string): Promise<Record<string, string>> {
+  if (OLLAMA_BASE_URL) return callGemma(systemPrompt, userPrompt);
+  if (ANTHROPIC_API_KEY) return callClaude(systemPrompt, userPrompt);
+  throw new EdgeHttpError(503, "OLLAMA_BASE_URL 또는 ANTHROPIC_API_KEY를 설정해 주세요.");
 }
 
 Deno.serve(async (req: Request) => {

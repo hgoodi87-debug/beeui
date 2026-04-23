@@ -819,7 +819,7 @@ export const en = {
             {
                 category: "general",
                 question: "What types of luggage can I store? Are there size or weight limits?",
-                answer: "We accept most luggage — carry-on bags, large suitcases, backpacks, and shopping bags.\n\nPricing by size:\n• Small (carry-on / handbag) — ₩3,000/day\n• Medium (24–28\" suitcase) — ₩5,000/day\n• Large (29\"+ suitcase) — ₩7,000/day\n\nStrollers, kick scooters, and small bicycles depend on branch availability — please inquire when booking.\n\n⚠️ Cash, valuables over ₩500,000, food, and hazardous materials cannot be stored."
+                answer: "We accept most luggage — carry-on bags, large suitcases, backpacks, and shopping bags.\n\nStorage pricing:\n• Handbag / Shopping bag  4hrs ₩4,000 · 1 day ₩8,000\n• Suitcase / Carrier  4hrs ₩5,000 · 1 day ₩10,000\n• Stroller / Bicycle (oversized)  4hrs ₩10,000 · 1 day ₩14,000\n\nInsurance is included in the price — no extra charge.\n\n⚠️ Cash, valuables over ₩500,000, food, and hazardous materials cannot be stored."
             },
             {
                 category: "booking",
@@ -829,7 +829,7 @@ export const en = {
             {
                 category: "booking",
                 question: "How does airport delivery work? What time do I need to book by?",
-                answer: "Select the 'Incheon Airport Delivery' option when booking.\n\n• Book by 1:00 PM (13:00) on your departure day to pick up your bags at Incheon Airport the same day, anytime between 4:00 PM and 9:00 PM (16:00–21:00).\n• For pick-up after 10:00 PM (22:00), bags must be collected from the airport's separate storage facility and an additional storage fee will apply. Please contact us separately.\n• For early morning flights the next day, bags must be collected from the airport's separate storage facility.\n\nOnce delivered, you'll receive a photo confirmation by email."
+                answer: "Airport delivery is available only at Hub locations (Yeonnam, Itaewon, Dongdaemun, Mapo, Hongdae Bao, Myeongdong).\n\nSelect the 'Incheon Airport Delivery' option when booking, then drop off your bags at a Hub location between 09:00 and 13:00 on the same day.\n\n• Pick up your bags at Incheon Airport the same day, anytime between 4:00 PM and 9:00 PM (16:00–21:00).\n• For pick-up after 10:00 PM (22:00), bags must be collected from the airport's separate storage facility and an additional storage fee will apply. Please contact us separately.\n• For early morning flights the next day, bags must be collected from the airport's separate storage facility.\n\nOnce delivered, you'll receive a photo confirmation by email."
             },
             {
                 category: "booking",
@@ -844,7 +844,7 @@ export const en = {
             {
                 category: "safety",
                 question: "How much compensation will I get if my luggage is damaged or lost?",
-                answer: "Basic compensation covers up to ₩500,000 per bag.\n\nAdd our 'Peace of Mind' option at booking to increase coverage up to ₩3,000,000.\n\nIf damage or loss occurs, email us with the drop-off photos and receipt and we'll guide you through the claims process.\n\n⚠️ Cash, valuables, and personal electronics are excluded from basic coverage."
+                answer: "Insurance is included in your booking — coverage up to ₩500,000 per bag for damage or loss.\n\nIf damage or loss occurs, email us with the drop-off photos and we'll guide you through the claims process.\n\n⚠️ Cash, valuables, and personal electronics are excluded from coverage."
             },
             {
                 category: "booking",
@@ -864,7 +864,7 @@ export const en = {
             {
                 category: "general",
                 question: "What items are not allowed?",
-                answer: "The following items cannot be stored:\n\n• Cash, passports, and important documents\n• Valuables and jewelry over ₩500,000\n• Food and perishable items\n• Explosives, flammables, and hazardous materials\n• Live animals\n\nLaptops and cameras are accepted, but compensation for electronics damage is limited — the 'Peace of Mind' option is recommended."
+                answer: "The following items cannot be stored:\n\n• Cash, passports, and important documents\n• Valuables and jewelry over ₩500,000\n• Food and perishable items\n• Explosives, flammables, and hazardous materials\n• Live animals\n\nLaptops and cameras are accepted, but compensation for electronics damage is limited. Insurance is included in your booking (max ₩500,000 coverage)."
             },
             {
                 category: "general",

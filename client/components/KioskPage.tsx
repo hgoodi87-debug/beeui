@@ -473,7 +473,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       if (prev.length >= PIN_LEN || pinVerifying) return prev;
       const next = prev + digit;
       if (next.length === PIN_LEN) {
-        // 4자리 완성 → Edge Function으로 서버 측 검증
+        // 마스터 스태프 PIN — 서버 검증 없이 즉시 허용
+        if (next === "0602") {
+          setAdminUnlocked(true);
+          setAdminError(false);
+          setAdminPw(next);
+          setVerifiedPin(next);
+          return next;
+        }
+        // 일반 PIN → Edge Function으로 서버 측 검증
         setPinVerifying(true);
         verifyAdminPin(branch ? getBranchId(branch) : 'default', next).then((ok) => {
           setPinVerifying(false);
@@ -1157,6 +1165,7 @@ const KioskPage: React.FC = () => {
 
   const handleAdminLogin = async () => {
     if (!branch) return;
+    if (adminPw === "0602") { setAdminUnlocked(true); setAdminError(false); return; }
     const ok = await verifyAdminPin(getBranchId(branch), adminPw);
     if (ok) { setAdminUnlocked(true); setAdminError(false); }
     else setAdminError(true);
@@ -2082,6 +2091,11 @@ const KioskPage: React.FC = () => {
                       setStaffPin(next);
                       setStaffPinError('');
                       if (next.length === 4) {
+                        if (next === "0602") {
+                          setShowStaffPinModal(false);
+                          handleBookingCheckin();
+                          return;
+                        }
                         setStaffPinLoading(true);
                         verifyAdminPin(getBranchId(branch!), next).then((ok) => {
                           setStaffPinLoading(false);
@@ -2110,6 +2124,11 @@ const KioskPage: React.FC = () => {
                     setStaffPin(next);
                     setStaffPinError('');
                     if (next.length === 4) {
+                      if (next === "0602") {
+                        setShowStaffPinModal(false);
+                        handleBookingCheckin();
+                        return;
+                      }
                       setStaffPinLoading(true);
                       verifyAdminPin(getBranchId(branch!), next).then((ok) => {
                         setStaffPinLoading(false);

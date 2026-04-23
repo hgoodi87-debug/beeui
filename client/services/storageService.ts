@@ -995,13 +995,23 @@ export const StorageService = {
       const commDelivery = safeBooking.pickupLoc?.commissionRates?.delivery ?? 0;
       const commStorage  = safeBooking.pickupLoc?.commissionRates?.storage  ?? 0;
       const isDelivery   = safeBooking.serviceType === 'DELIVERY';
+      const isStorage    = safeBooking.serviceType === 'STORAGE';
       const effectiveCommRate = isDelivery ? commDelivery : commStorage;
       const finalPriceNum = isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice);
       const branchSettlementAmt = Math.round(finalPriceNum * effectiveCommRate / 100);
 
-      // nametag_id를 INSERT 전에 미리 생성 (INSERT 후 PATCH 불필요 — SELECT 권한 없이도 동작)
-      let nametagIdForInsert: string | null = safeBooking.nametagId || null;
-      if (!nametagIdForInsert && safeBooking.branchId) {
+      // 배송(DELIVERY)은 기존 운영(주 단위 네임택) 유지.
+      // 보관(STORAGE)은 결제완료 시점 지점별 1~30 보관번호(storage_numbers)가 DB 트리거로 할당됨.
+      const storageNumbersForInsert = Array.isArray(safeBooking.storageNumbers) && safeBooking.storageNumbers.length > 0
+        ? safeBooking.storageNumbers
+        : null;
+      let nametagIdForInsert: string | null = safeBooking.nametagId != null ? String(safeBooking.nametagId) : null;
+      if (isStorage) {
+        // 호환용: storageNumbers가 이미 있으면 첫 번호를 nametag_id로도 세팅
+        if ((!nametagIdForInsert || nametagIdForInsert === '0') && storageNumbersForInsert) {
+          nametagIdForInsert = String(storageNumbersForInsert[0]);
+        }
+      } else if (!nametagIdForInsert && safeBooking.branchId) {
         try {
           nametagIdForInsert = String(await StorageService.generateWeeklyNametagId(safeBooking.branchId));
         } catch (e) {
@@ -1081,25 +1091,46 @@ export const StorageService = {
         utm_term: safeBooking.utmTerm || null,
         // nametag_id를 INSERT에 포함 — SELECT 권한 없이도 동작하도록 별도 PATCH 제거
         nametag_id: nametagIdForInsert,
+        // 보관(STORAGE) 전용: 이미 할당된 경우(관리자 수동 입력 등)만 포함
+        storage_numbers: storageNumbersForInsert,
       };
 
-      // return=minimal: RETURNING 없이 INSERT → anon SELECT 권한 불필요 (HTTP 204)
-      await supabaseMutate<null>(
-        'booking_details',
-        'POST',
-        bookingData,
-        undefined,
-        'return=minimal'
-      );
+      // 보관(STORAGE)은 RPC로 INSERT 후 storage_numbers를 반환 받아 QR 바우처에 즉시 노출
+      // 배송(DELIVERY)은 기존대로 return=minimal 유지
+      let rpcResult: Record<string, unknown> | null = null;
+      if (isStorage) {
+        rpcResult = await supabaseMutate<Record<string, unknown>>(
+          'rpc/public_create_booking_details_v1',
+          'POST',
+          { p_payload: bookingData },
+        );
+      } else {
+        // return=minimal: RETURNING 없이 INSERT → anon SELECT 권한 불필요 (HTTP 204)
+        await supabaseMutate<null>(
+          'booking_details',
+          'POST',
+          bookingData,
+          undefined,
+          'return=minimal'
+        );
+      }
 
       console.log("[StorageService] Booking saved to Supabase ✅");
       // DB INSERT 트리거(trigger_on_booking_created)가 이메일+채팅 알림을 처리합니다.
       // 클라이언트 직접 호출(fireWithRetry) 제거 — 중복 알림 방지
 
+      const rpcCamel = rpcResult ? (snakeToCamel(rpcResult) as Record<string, unknown>) : null;
+      const rpcStorageNumbers = rpcCamel && Array.isArray(rpcCamel.storageNumbers)
+        ? (rpcCamel.storageNumbers as unknown[]).map((n) => Number(n)).filter((n) => Number.isFinite(n))
+        : undefined;
+
       return {
         ...safeBooking,
-        id: safeBooking.id,
-        reservationCode,
+        id: (rpcCamel?.id as string | undefined) || safeBooking.id,
+        reservationCode: (rpcCamel?.reservationCode as string | undefined) || reservationCode,
+        nametagId: rpcCamel?.nametagId != null ? Number(rpcCamel.nametagId) : safeBooking.nametagId,
+        storageNumbers: rpcStorageNumbers || safeBooking.storageNumbers,
+        createdAt: (rpcCamel?.createdAt as string | undefined) || safeBooking.createdAt,
         status: '접수완료' as any,
       };
     } catch (error) {
@@ -1298,7 +1329,7 @@ export const StorageService = {
       'settlement_status', 'settled_at', 'settled_by', 'language', 'image_url',
       'service_type', 'user_name', 'user_email', 'pickup_location', 'dropoff_location',
       'reservation_code', 'agreed_to_terms', 'agreed_to_privacy', 'agreed_to_high_value',
-      'email_sent_at', 'nametag_id', 'bags', 'bag_summary', 'admin_note', 'ops_status',
+      'email_sent_at', 'nametag_id', 'storage_numbers', 'bags', 'bag_summary', 'admin_note', 'ops_status',
       'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
     ]);
     const allUpdates = camelToSnake(JSON.parse(JSON.stringify(updates)) as Record<string, unknown>);

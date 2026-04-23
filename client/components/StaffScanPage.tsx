@@ -330,7 +330,37 @@ const StaffScanPage: React.FC<StaffScanPageProps> = ({ onBack, adminName, t, lan
                     transition={{ delay: 0.12 }}
                     className="bg-bee-black rounded-[32px] overflow-hidden shadow-xl"
                 >
-                    {booking.nametagId ? (
+                    {booking.serviceType !== ServiceType.DELIVERY ? (
+                        <div className="p-6">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 text-center">
+                                🧳 &nbsp;보관번호 (지점별 1~30, KST 일 단위)
+                            </p>
+                            {Array.isArray(booking.storageNumbers) && booking.storageNumbers.length > 0 ? (
+                                <div className="bg-bee-yellow rounded-[24px] py-8 flex flex-col items-center justify-center mb-4 shadow-[0_10px_40px_rgba(255,191,0,0.4)]">
+                                    <span className="text-[72px] font-black text-bee-black leading-none tracking-tighter">
+                                        {(() => {
+                                            const ns = booking.storageNumbers as number[];
+                                            if (ns.length <= 4) return ns.join(',');
+                                            const start = ns[0];
+                                            const end = ns[ns.length - 1];
+                                            return start === end ? String(start) : `${start}-${end}`;
+                                        })()}
+                                    </span>
+                                    <span className="text-[11px] font-black text-bee-black/50 uppercase tracking-[0.3em] mt-1">STORAGE NO.</span>
+                                </div>
+                            ) : (
+                                <div className="bg-white/10 rounded-[24px] py-8 px-5 text-center border border-white/10">
+                                    <p className="text-sm font-black text-white">아직 보관번호가 배정되지 않았어요</p>
+                                    <p className="text-[11px] font-bold text-gray-500 mt-2">
+                                        결제완료 시점에 자동으로 배정됩니다.
+                                    </p>
+                                </div>
+                            )}
+                            <p className="text-[10px] text-gray-500 font-bold text-center">
+                                고객 바우처(QR)에 보관번호가 크게 표시됩니다.
+                            </p>
+                        </div>
+                    ) : booking.nametagId ? (
                         /* ── 태그 번호 배정됨: 대형 표시 ── */
                         <div className="p-6">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 text-center">

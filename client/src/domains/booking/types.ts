@@ -100,6 +100,7 @@ export interface BookingState {
     statusVersion?: number;            // [스봉이] 낙관적 락을 위한 버전 🔒
     auditNote?: string;                // [스봉이] 상태 변경 사유 (감사 로그용) 🛡️
     nametagId?: number;                // [스봉이] 주 단위 1~100 순환 네임텍 번호 1~100 🔢✨
+    storageNumbers?: number[];         // 보관(STORAGE) 전용: 결제완료 시점 지점별(KST 일 단위) 1~30 연속 번호
     updatedAt?: string;                // [스봉이] 마지막 업데이트 일시 🕰️
     // UTM 채널 어트리뷰션 (어느 SNS/광고에서 왔는지)
     utmSource?: string;

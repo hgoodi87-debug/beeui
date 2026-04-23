@@ -1,8 +1,11 @@
 // Supabase Edge Function: chat-ai
-// Gemini AI 챗봇 — FAQ 자동 응답 + 에스컬레이션 감지
+// Gemma4 (Ollama) 챗봇 — FAQ 자동 응답 + 에스컬레이션 감지
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
+const OLLAMA_BASE_URL = Deno.env.get("OLLAMA_BASE_URL") || "";
+const OLLAMA_MODEL = Deno.env.get("OLLAMA_MODEL") || "gemma4";
+// Gemini fallback (OLLAMA_BASE_URL 미설정 시)
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 
 const CORS_HEADERS = {
@@ -101,14 +104,58 @@ Example escalation response:
 `;
 };
 
+async function callOllama(
+  messages: { role: string; content: string }[],
+  systemPrompt: string,
+): Promise<string> {
+  const response = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      stream: false,
+      options: { num_predict: 600, temperature: 0.7 },
+    }),
+  });
+  if (!response.ok) throw new Error(`Ollama ${response.status}: ${await response.text()}`);
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
+async function callGemini(
+  messages: { role: "user" | "assistant"; content: string }[],
+  systemPrompt: string,
+): Promise<string> {
+  const geminiContents = messages.map(m => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: geminiContents,
+        generationConfig: { maxOutputTokens: 600, temperature: 0.7 },
+      }),
+    },
+  );
+  if (!response.ok) throw new Error(`Gemini ${response.status}: ${await response.text()}`);
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
   }
 
-  if (!GEMINI_API_KEY) {
+  if (!OLLAMA_BASE_URL && !GEMINI_API_KEY) {
     return new Response(
-      JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
+      JSON.stringify({ error: "OLLAMA_BASE_URL 또는 GEMINI_API_KEY를 설정해 주세요." }),
       { status: 503, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
     );
   }
@@ -126,36 +173,15 @@ serve(async (req) => {
       );
     }
 
-    // Gemini 포맷으로 변환 (assistant → model)
-    const geminiContents = messages.map(m => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
+    const systemPrompt = getSystemPrompt(lang);
+    let text: string;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: getSystemPrompt(lang) }] },
-          contents: geminiContents,
-          generationConfig: { maxOutputTokens: 600, temperature: 0.7 },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("[chat-ai] Gemini error:", err);
-      return new Response(
-        JSON.stringify({ error: "AI service error", detail: err }),
-        { status: 502, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-      );
+    if (OLLAMA_BASE_URL) {
+      text = await callOllama(messages, systemPrompt);
+    } else {
+      text = await callGemini(messages, systemPrompt);
     }
 
-    const data = await response.json();
-    const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     const shouldEscalate = text.includes("[ESCALATE]");
     const cleanText = text.replace(/\[ESCALATE\]\s*/g, "").trim();
 

@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
     const upper = code.trim().toUpperCase();
     const { data, error: dbErr } = await supabase
       .from("admin_booking_list_v1")
-      .select("id,reservation_code,reservation_no,user_name,bags,bag_sizes,final_price,payment_status,payment_method,service_type,pickup_date,pickup_time,pickup_location_name")
+      .select("id,reservation_code,reservation_no,user_name,bags,bag_sizes,final_price,payment_status,payment_method,service_type,pickup_date,pickup_time,pickup_location_name,nametag_id,storage_numbers")
       .or(`reservation_code.eq.${upper},reservation_no.eq.${upper}`)
       .eq("is_deleted", false)
       .limit(1)

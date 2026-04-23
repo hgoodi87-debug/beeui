@@ -201,14 +201,31 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.reservation_id || 'Reservation ID'}</p>
                             <h3 className="text-sm font-black text-bee-black">{booking.reservationCode || booking.id}</h3>
                         </div>
-                        {booking.nametagId && (
+                        {String(booking.serviceType || '').toUpperCase() === 'STORAGE' && Array.isArray(booking.storageNumbers) && booking.storageNumbers.length > 0 ? (
+                            <div className="flex flex-col items-center">
+                                <p className="text-[9px] font-black text-bee-yellow bg-bee-black px-2 py-0.5 rounded-full mb-1 uppercase tracking-tighter">
+                                    {lang === 'ko' ? '보관번호' : 'Storage No.'}
+                                </p>
+                                <div className="h-11 px-4 rounded-full bg-bee-yellow flex items-center justify-center shadow-lg border-2 border-white">
+                                    <span className="text-[22px] font-black text-bee-black leading-none tracking-widest">
+                                        {(() => {
+                                            const ns = booking.storageNumbers as number[];
+                                            if (ns.length <= 4) return ns.join(',');
+                                            const start = ns[0];
+                                            const end = ns[ns.length - 1];
+                                            return start === end ? String(start) : `${start}-${end}`;
+                                        })()}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : booking.nametagId ? (
                             <div className="flex flex-col items-center">
                                 <p className="text-[9px] font-black text-bee-yellow bg-bee-black px-2 py-0.5 rounded-full mb-1 uppercase tracking-tighter">Nametag No.</p>
                                 <div className="w-10 h-10 rounded-full bg-bee-yellow flex items-center justify-center shadow-lg border-2 border-white">
                                     <span className="text-lg font-black text-bee-black leading-none">{booking.nametagId}</span>
                                 </div>
                             </div>
-                        )}
+                        ) : null}
                         <div className="text-right">
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.issue_date || 'Issue Date'}</p>
                             <h3 className="text-sm font-black text-bee-black">

@@ -12,6 +12,8 @@ export interface VoucherEmailTemplateInput {
   finalPrice: number;
   bagSummary: string;
   nametagNumber?: string;
+  storageNumbers?: number[];
+  storageNumbersLabel?: string;
   pickupImageUrl?: string;
   pickupGuide?: string;
   pickupAddress?: string;
@@ -41,6 +43,16 @@ const escapeHtml = (value: unknown) =>
     .replaceAll("'", "&#39;");
 
 const formatCurrency = (value: number) => `₩${Number(value || 0).toLocaleString("ko-KR")}`;
+
+const formatStorageNumbersLabel = (numbers?: number[] | null, fallback?: string) => {
+  if (Array.isArray(numbers) && numbers.length > 0) {
+    if (numbers.length <= 4) return numbers.join(",");
+    const start = numbers[0];
+    const end = numbers[numbers.length - 1];
+    return start === end ? String(start) : `${start}-${end}`;
+  }
+  return String(fallback || "").trim();
+};
 
 const buildQrCodeUrl = (reservationCode: string) => {
   // QR은 직원 스캔용 — /staff/scan 으로 연결
@@ -187,11 +199,15 @@ const buildReceiptBlock = (input: VoucherEmailTemplateInput) => {
 export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
   const reservationCode = escapeHtml(input.reservationCode);
   const bookingId = escapeHtml(input.bookingId);
-  const serviceType = escapeHtml(input.serviceType === "DELIVERY" ? "배송" : "보관");
+  const isDelivery = String(input.serviceType || "").toUpperCase() === "DELIVERY";
+  const serviceType = escapeHtml(isDelivery ? "배송" : "보관");
   const pickupLabel = escapeHtml(input.pickupLabel || "주소 직접 입력");
   const dropoffLabel = escapeHtml(input.dropoffLabel || input.pickupLabel || "주소 직접 입력");
   const bagSummary = escapeHtml(input.bagSummary || "-");
   const nametagNumber = escapeHtml(input.nametagNumber || "");
+  const storageNumbersLabel = escapeHtml(
+    formatStorageNumbersLabel(input.storageNumbers || null, input.storageNumbersLabel),
+  );
   const qrCodeUrl = buildQrCodeUrl(input.reservationCode || input.bookingId);
 
   return `
@@ -205,10 +221,12 @@ export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
           <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:20px;padding:20px;text-align:center;margin-bottom:24px;">
             <div style="font-size:11px;font-weight:900;color:#92400e;letter-spacing:0.12em;text-transform:uppercase;">Reservation Code</div>
             <div style="font-size:30px;font-weight:900;color:#111827;letter-spacing:0.08em;margin-top:8px;">${reservationCode}</div>
-            ${nametagNumber ? `
+            ${(!isDelivery && storageNumbersLabel) || (isDelivery && nametagNumber) ? `
               <div style="margin-top:14px;padding-top:14px;border-top:1px dashed #f59e0b;">
-                <div style="font-size:11px;font-weight:800;color:#92400e;">Nametag Number</div>
-                <div style="margin-top:8px;display:inline-block;background:#111827;color:#facc15;border-radius:999px;padding:8px 18px;font-size:20px;font-weight:900;">#${nametagNumber}</div>
+                <div style="font-size:12px;font-weight:900;color:#92400e;letter-spacing:0.06em;">${isDelivery ? "Nametag Number" : "보관번호"}</div>
+                <div style="margin-top:8px;display:inline-block;background:#111827;color:#facc15;border-radius:999px;padding:10px 20px;font-size:26px;font-weight:900;letter-spacing:0.08em;">
+                  ${isDelivery ? `#${nametagNumber}` : storageNumbersLabel}
+                </div>
               </div>
             ` : ""}
           </div>

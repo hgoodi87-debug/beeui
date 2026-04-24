@@ -195,15 +195,11 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         </div>
                     </div>
 
-                    {/* Booking ID & Date Row */}
-                    <div className="px-8 py-6 bg-gray-50/50 flex justify-between items-center border-b border-dashed border-gray-200">
-                        <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.reservation_id || 'Reservation ID'}</p>
-                            <h3 className="text-sm font-black text-bee-black">{booking.reservationCode || booking.id}</h3>
-                        </div>
+                    {/* Nametag Hero + Meta Row */}
+                    <div className="px-8 py-5 bg-gray-50/50 flex items-center gap-6 border-b border-dashed border-gray-200">
+                        {/* 네임택 — 크게 표시 */}
                         {(() => {
                             const isStorage = String(booking.serviceType || '').toUpperCase() === 'STORAGE';
-                            const isDelivery = String(booking.serviceType || '').toUpperCase() === 'DELIVERY';
                             const tagColor = isStorage ? '#FFBF00' : '#EF4444';
                             const tagLabel = isStorage
                                 ? (lang === 'ko' ? '보관번호' : 'Storage No.')
@@ -219,24 +215,27 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                 if (booking.nametagId) return String(booking.nametagId);
                                 return null;
                             })();
-                            if (!numberDisplay) return null;
-                            const fontSize = numberDisplay.length > 3 ? 10 : numberDisplay.length > 2 ? 13 : 17;
+                            const fontSize = numberDisplay
+                                ? (numberDisplay.length > 3 ? 10 : numberDisplay.length > 2 ? 13 : 17)
+                                : 10;
                             return (
-                                <div className="flex flex-col items-center gap-0.5">
-                                    <p className="text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full"
+                                <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                                    <p className="text-[8px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full"
                                         style={{ color: tagColor, backgroundColor: '#1a1a1a' }}>
                                         {tagLabel}
                                     </p>
-                                    {/* 네임택 SVG — 노란색(보관) / 빨간색(배송) */}
-                                    <svg width="48" height="60" viewBox="0 0 48 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        {/* 고리 */}
+                                    {/* 네임택 SVG 96×120 — 번호는 크게, 미배정 시 점선 플레이트 */}
+                                    <svg width="96" height="120" viewBox="0 0 48 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M24 2 C20 2 17 5 17 9 C17 12 19 14 22 15 L22 17 L26 17 L26 15 C29 14 31 12 31 9 C31 5 28 2 24 2 Z" fill={tagColor} />
                                         <circle cx="24" cy="9" r="2.5" fill="white" opacity="0.6" />
-                                        {/* 태그 몸통 */}
                                         <rect x="4" y="16" width="40" height="42" rx="7" fill={tagColor} />
-                                        {/* 흰색 번호판 */}
-                                        <rect x="10" y="22" width="28" height="30" rx="5" fill="white" />
-                                        {/* 번호 */}
+                                        <rect x="10" y="22" width="28" height="30" rx="5"
+                                            fill={numberDisplay ? 'white' : 'none'}
+                                            stroke={numberDisplay ? 'none' : 'white'}
+                                            strokeWidth={numberDisplay ? 0 : 1}
+                                            strokeDasharray={numberDisplay ? undefined : '3 2'}
+                                            opacity={numberDisplay ? 1 : 0.5}
+                                        />
                                         <text
                                             x="24"
                                             y={37 + (fontSize < 13 ? 1 : 0)}
@@ -245,19 +244,25 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                                             fontSize={fontSize}
                                             fontWeight="900"
                                             fontFamily="Arial Black, sans-serif"
-                                            fill="#1a1a1a"
+                                            fill={numberDisplay ? '#1a1a1a' : 'white'}
+                                            opacity={numberDisplay ? 1 : 0.4}
                                         >
-                                            {numberDisplay}
+                                            {numberDisplay ?? '—'}
                                         </text>
                                     </svg>
                                 </div>
                             );
                         })()}
-                        <div className="text-right">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.issue_date || 'Issue Date'}</p>
-                            <h3 className="text-sm font-black text-bee-black">
-                                {safeDate(booking.createdAt || '')}
-                            </h3>
+                        {/* 예약 코드 + 날짜 — 작게 */}
+                        <div className="flex flex-col gap-3 min-w-0">
+                            <div>
+                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.reservation_id || 'Reservation ID'}</p>
+                                <h3 className="text-xs font-black text-bee-black leading-tight">{booking.reservationCode || booking.id}</h3>
+                            </div>
+                            <div>
+                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.issue_date || 'Issue Date'}</p>
+                                <h3 className="text-xs font-black text-bee-black leading-tight">{safeDate(booking.createdAt || '')}</h3>
+                            </div>
                         </div>
                     </div>
 

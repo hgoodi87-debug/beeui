@@ -2537,13 +2537,54 @@ a { color: inherit; text-decoration: none; }
     min-width: 220px;
     border-radius: 50px;
   }
+  /* ═══ 히어로 하단 리뷰 4열 그리드 ═══ */
   .hero-ticker-wrap {
     width: 100%;
     max-width: var(--container);
     margin: 0 auto;
     padding-bottom: clamp(24px, 3vw, 40px);
   }
-  .hero-ticker-item { min-width: 300px; max-width: 300px; }
+  .hero-ticker-label {
+    margin-bottom: 14px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    opacity: 0.75;
+  }
+  /* 마퀴 → 고정 4열 그리드 */
+  .hero-ticker {
+    overflow: visible !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+  .hero-ticker-track {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+    animation: none !important;
+    transform: none !important;
+    width: 100% !important;
+  }
+  /* 복제된 아이템 숨기기 (마퀴용 중복 항목) */
+  .hero-ticker-track .hero-ticker-item:nth-child(n+5) { display: none !important; }
+  /* 카드 스타일: 흰 배경 */
+  .hero-ticker-item {
+    min-width: unset !important;
+    max-width: unset !important;
+    width: auto !important;
+    background: rgba(255,255,255,0.95) !important;
+    border-radius: 16px !important;
+    padding: 16px 18px !important;
+    color: #111 !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .hero-ticker-item .htk-name { color: #111 !important; font-weight: 700; font-size: 13px; }
+  .hero-ticker-item .htk-stars { color: #FFC700 !important; }
+  .hero-ticker-item .htk-text { color: #333 !important; font-size: 13px; line-height: 1.5; }
+  .hero-ticker-item .htk-time { color: #999 !important; font-size: 11px; }
+  .hero-ticker-item .htk-avatar { background: #e0e0e0 !important; color: #333 !important; }
+  .hero-ticker-item .htk-g { background: #fff !important; color: #4285F4 !important; border: 1px solid #e0e0e0 !important; }
 
   /* ═══ 공통 섹션 컨테이너 ═══ */
   .section {

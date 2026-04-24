@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($homepage = Get-Content \"C:\\\\Users\\\\hyunjung\\\\Downloads\\\\chlwhd.html\" -Raw; $index = Get-Content \"C:\\\\Users\\\\hyunjung\\\\Documents\\\\beeliber_ui\\\\index.html\" -Raw; $styleStart = $homepage.IndexOf\\('<style>'\\) + 7; $styleEnd = $homepage.IndexOf\\('</style>'\\); $homepageStyle = $homepage.Substring\\($styleStart, $styleEnd - $styleStart\\); $bodyStart = $homepage.IndexOf\\('<body>'\\) + 6; $bodyEnd = $homepage.IndexOf\\('</body>'\\); $homepageBody = $homepage.Substring\\($bodyStart, $bodyEnd - $bodyStart\\); Write-Output \"Style length: $\\($homepageStyle.Length\\), Body length: $\\($homepageBody.Length\\)\"; $homeTag = '<section class=\"screen\" id=\"home\"'; $homeIdx = $index.IndexOf\\($homeTag\\); Write-Output \"Home tag found at: $homeIdx\")"
+    ]
+  }
+}

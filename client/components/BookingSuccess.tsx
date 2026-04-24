@@ -335,25 +335,168 @@ const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, locations, onB
                     </div>
                 </motion.div>
 
-                {/* 4-Step Check-in Guide */}
+                {/* 3-Step Visual Customer Guide */}
                 <motion.div
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.33 }}
-                    className="bg-bee-black rounded-[40px] p-8 md:p-10 shadow-2xl overflow-hidden"
+                    className="bg-bee-black rounded-[40px] p-7 md:p-10 shadow-2xl overflow-hidden"
                 >
-                    <h2 className="text-xl font-black italic text-bee-yellow uppercase tracking-tighter mb-6 text-center">
+                    <h2 className="text-xl font-black italic text-bee-yellow uppercase tracking-tighter mb-1 text-center">
                         {curCheckin.title}
                     </h2>
-                    <div className="space-y-3">
-                        {curCheckin.steps.map((text, i) => (
-                            <div key={i} className="flex items-start gap-4 bg-white/5 rounded-3xl p-5">
-                                <div className="w-9 h-9 shrink-0 rounded-full bg-bee-yellow text-bee-black flex items-center justify-center font-black text-base">
-                                    {i + 1}
-                                </div>
-                                <p className="text-white font-bold text-sm leading-relaxed pt-1 whitespace-pre-line">{text}</p>
+                    <p className="text-white/40 text-[10px] font-bold text-center mb-7 uppercase tracking-widest">
+                        {lang === 'ko' ? '이용 전 꼭 확인하세요' : lang === 'ja' ? 'ご利用前にご確認ください' : lang.startsWith('zh') ? '使用前请仔细阅读' : 'Please read before your visit'}
+                    </p>
+
+                    {/* 3 illustration panels */}
+                    <div className="grid grid-cols-3 gap-3 mb-6">
+
+                        {/* Panel 1: Visit + QR */}
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-full aspect-square bg-white/5 rounded-3xl flex items-center justify-center p-2 border border-white/10 relative overflow-hidden">
+                                {/* Step 1 SVG — 지점 방문, 환영하는 직원 */}
+                                <svg viewBox="0 0 80 96" className="w-full h-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    {/* Head */}
+                                    <circle cx="40" cy="17" r="12" fill="#F5CBA7"/>
+                                    {/* Hair */}
+                                    <path d="M28 14 Q28 5 40 5 Q52 5 52 14 Q52 9 40 9 Q28 9 28 14Z" fill="#2C1A0E"/>
+                                    {/* Neck */}
+                                    <rect x="37" y="27" width="6" height="5" rx="2" fill="#F5CBA7"/>
+                                    {/* Body / Black uniform */}
+                                    <path d="M20 38 L28 30 Q34 32 40 32 Q46 32 52 30 L60 38 L56 72 L24 72Z" fill="#1a1a1a"/>
+                                    {/* Yellow collar accent */}
+                                    <path d="M34 30 L40 40 L46 30" stroke="#FFBF00" strokeWidth="2.5" fill="none" strokeLinejoin="round"/>
+                                    {/* Name badge */}
+                                    <rect x="33" y="46" width="14" height="9" rx="2" fill="#FFBF00"/>
+                                    {/* Right arm — raised high, welcoming */}
+                                    <path d="M56 38 Q68 28 70 18" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round"/>
+                                    {/* Left arm — relaxed down */}
+                                    <path d="M24 38 Q16 48 18 58" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round"/>
+                                    {/* Legs */}
+                                    <rect x="28" y="70" width="9" height="22" rx="4" fill="#1a1a1a"/>
+                                    <rect x="43" y="70" width="9" height="22" rx="4" fill="#1a1a1a"/>
+                                    {/* Shoes */}
+                                    <ellipse cx="32" cy="93" rx="8" ry="3.5" fill="#111"/>
+                                    <ellipse cx="47" cy="93" rx="8" ry="3.5" fill="#111"/>
+                                </svg>
                             </div>
-                        ))}
+                            <div className="w-7 h-7 rounded-full bg-bee-yellow text-bee-black flex items-center justify-center font-black text-sm shrink-0">1</div>
+                            <p className="text-white/80 text-center font-bold text-[10px] leading-tight whitespace-pre-line">
+                                {lang === 'ko' ? '지점 방문\nQR 바우처 제시' : lang === 'ja' ? '店舗を訪問\nQRを提示' : lang.startsWith('zh') ? '前往门店\n出示QR凭证' : 'Visit branch\nShow QR voucher'}
+                            </p>
+                        </div>
+
+                        {/* Panel 2: Nametag attachment — KEY instruction */}
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-full aspect-square bg-bee-yellow/10 rounded-3xl flex items-center justify-center p-2 border-2 border-bee-yellow/50 relative overflow-hidden">
+                                {/* Step 2 SVG — 네임택을 짐에 직접 달기 */}
+                                <svg viewBox="0 0 80 96" className="w-full h-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    {/* Head (leaning forward) */}
+                                    <circle cx="28" cy="17" r="11" fill="#F5CBA7"/>
+                                    <path d="M17 14 Q17 6 28 6 Q39 6 39 14 Q39 9 28 9 Q17 9 17 14Z" fill="#2C1A0E"/>
+                                    {/* Neck */}
+                                    <rect x="25" y="26" width="6" height="4" rx="2" fill="#F5CBA7"/>
+                                    {/* Body — leaning forward */}
+                                    <path d="M12 35 L20 28 Q24 29 28 30 Q33 29 38 27 L50 33 L48 60 L16 60Z" fill="#1a1a1a"/>
+                                    {/* Yellow collar */}
+                                    <path d="M24 29 L28 38 L33 27" stroke="#FFBF00" strokeWidth="2" fill="none"/>
+                                    {/* Name badge */}
+                                    <rect x="22" y="42" width="11" height="7" rx="1.5" fill="#FFBF00"/>
+                                    {/* Right arm reaching to tag */}
+                                    <path d="M46 34 Q60 40 63 52" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round"/>
+                                    {/* Hand */}
+                                    <circle cx="64" cy="55" r="5" fill="#F5CBA7"/>
+                                    {/* Left arm */}
+                                    <path d="M14 36 Q8 46 10 54" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round"/>
+                                    {/* Legs bent */}
+                                    <path d="M22 58 L18 82" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round"/>
+                                    <path d="M34 58 L38 80" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round"/>
+                                    {/* Suitcase / Luggage */}
+                                    <rect x="48" y="56" width="26" height="34" rx="5" fill="#444"/>
+                                    <rect x="55" y="52" width="12" height="7" rx="3" stroke="#666" strokeWidth="2" fill="none"/>
+                                    {/* Luggage detail lines */}
+                                    <line x1="61" y1="60" x2="61" y2="86" stroke="#555" strokeWidth="1"/>
+                                    {/* YELLOW TAG — focal point */}
+                                    <rect x="68" y="61" width="10" height="14" rx="2" fill="#FFBF00"/>
+                                    <circle cx="73" cy="60" r="2" fill="#FFBF00"/>
+                                    <line x1="73" y1="58" x2="73" y2="54" stroke="#FFBF00" strokeWidth="1.5"/>
+                                    {/* Tag loop */}
+                                    <ellipse cx="73" cy="53" rx="3" ry="2" stroke="#FFBF00" strokeWidth="1.5" fill="none"/>
+                                    {/* Tag text line (decoration) */}
+                                    <line x1="70" y1="67" x2="76" y2="67" stroke="white" strokeWidth="1" opacity="0.5"/>
+                                    <line x1="70" y1="70" x2="76" y2="70" stroke="white" strokeWidth="1" opacity="0.5"/>
+                                </svg>
+                            </div>
+                            <div className="w-7 h-7 rounded-full bg-bee-yellow text-bee-black flex items-center justify-center font-black text-sm shrink-0">2</div>
+                            <p className="text-bee-yellow text-center font-black text-[10px] leading-tight whitespace-pre-line">
+                                {lang === 'ko' ? '네임택을 짐에\n직접 달아주세요!' : lang === 'ja' ? 'ネームタグを\n直接お付けください!' : lang.startsWith('zh') ? '请将名牌\n直接挂在行李上!' : 'Attach nametag\ndirectly to bag!'}
+                            </p>
+                        </div>
+
+                        {/* Panel 3: Collect at scheduled time */}
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-full aspect-square bg-white/5 rounded-3xl flex items-center justify-center p-2 border border-white/10 relative overflow-hidden">
+                                {/* Step 3 SVG — 배달기사 + 빨간 네임택 */}
+                                <svg viewBox="0 0 80 96" className="w-full h-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    {/* Cap */}
+                                    <ellipse cx="40" cy="12" rx="16" ry="5" fill="#555"/>
+                                    <rect x="24" y="10" width="32" height="6" rx="2" fill="#555"/>
+                                    <rect x="20" y="14" width="8" height="3" rx="1" fill="#555"/>
+                                    {/* Head */}
+                                    <circle cx="40" cy="21" r="10" fill="#F5CBA7"/>
+                                    {/* Neck */}
+                                    <rect x="37" y="30" width="6" height="4" rx="2" fill="#F5CBA7"/>
+                                    {/* Body / Gray delivery uniform */}
+                                    <path d="M22 42 L30 33 Q35 34 40 35 Q45 34 50 33 L58 42 L56 72 L24 72Z" fill="#777"/>
+                                    {/* Shoulder badge */}
+                                    <rect x="22" y="40" width="6" height="10" rx="2" fill="#FFBF00"/>
+                                    <rect x="52" y="40" width="6" height="10" rx="2" fill="#FFBF00"/>
+                                    {/* Name badge */}
+                                    <rect x="33" y="46" width="14" height="9" rx="2" fill="#FFBF00"/>
+                                    {/* Right arm holding box */}
+                                    <path d="M55 43 Q65 46 66 56" stroke="#777" strokeWidth="8" strokeLinecap="round"/>
+                                    {/* Package */}
+                                    <rect x="58" y="55" width="18" height="16" rx="3" fill="#C9A96E"/>
+                                    <line x1="67" y1="55" x2="67" y2="71" stroke="#A07840" strokeWidth="1"/>
+                                    <line x1="58" y1="63" x2="76" y2="63" stroke="#A07840" strokeWidth="1"/>
+                                    {/* Left arm */}
+                                    <path d="M25 43 Q17 52 20 62" stroke="#777" strokeWidth="8" strokeLinecap="round"/>
+                                    {/* RED TAG hanging */}
+                                    <rect x="17" y="54" width="10" height="14" rx="2" fill="#EF4444"/>
+                                    <circle cx="22" cy="53" r="2" fill="#EF4444"/>
+                                    <line x1="22" y1="51" x2="22" y2="47" stroke="#EF4444" strokeWidth="1.5"/>
+                                    <ellipse cx="22" cy="46" rx="3" ry="2" stroke="#EF4444" strokeWidth="1.5" fill="none"/>
+                                    {/* Legs */}
+                                    <rect x="28" y="70" width="9" height="22" rx="4" fill="#555"/>
+                                    <rect x="43" y="70" width="9" height="22" rx="4" fill="#555"/>
+                                    {/* Shoes */}
+                                    <ellipse cx="32" cy="93" rx="8" ry="3.5" fill="#333"/>
+                                    <ellipse cx="47" cy="93" rx="8" ry="3.5" fill="#333"/>
+                                </svg>
+                            </div>
+                            <div className="w-7 h-7 rounded-full bg-bee-yellow text-bee-black flex items-center justify-center font-black text-sm shrink-0">3</div>
+                            <p className="text-white/80 text-center font-bold text-[10px] leading-tight whitespace-pre-line">
+                                {lang === 'ko' ? '예약 시간에\n짐 찾기' : lang === 'ja' ? '予約時間に\nお受け取り' : lang.startsWith('zh') ? '按预约时间\n取回行李' : 'Collect at\nscheduled time'}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    {/* Nametag instruction callout — 직접 달아야 함 강조 */}
+                    <div className="bg-bee-yellow/10 border border-bee-yellow/30 rounded-2xl p-4 flex items-start gap-3">
+                        <i className="fa-solid fa-tag text-bee-yellow mt-0.5 shrink-0"></i>
+                        <p className="text-bee-yellow font-black text-[11px] leading-relaxed">
+                            {lang === 'ko'
+                                ? '네임택은 짐을 구분하는 고유 번호표입니다. 받으신 네임택을 짐에 직접 달아주셔야 합니다.'
+                                : lang === 'ja'
+                                ? 'ネームタグはお荷物を識別するための固有番号です。受け取ったネームタグをお荷物に直接お付けください。'
+                                : lang === 'zh-TW' || lang === 'zh-HK'
+                                ? '名牌是識別行李的唯一號碼。請將收到的名牌直接掛在您的行李上。'
+                                : lang.startsWith('zh')
+                                ? '名牌是识别行李的唯一编号。请将收到的名牌直接挂在您的行李上。'
+                                : 'The nametag is your luggage\'s unique ID number. You must directly attach the nametag to your bag before check-in.'}
+                        </p>
                     </div>
                 </motion.div>
 

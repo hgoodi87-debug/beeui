@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabaseMutate } from '../services/supabaseClient';
 import { BookingState, BookingStatus, ServiceType, LocationOption, LocationType, PriceSettings, StorageTier, AdminUser, SystemNotice, HeroConfig, GoogleCloudConfig, SnsType, BagSizes, CashClosing, Expenditure, AdminTab } from '../types';
 import { OPERATING_STATUS_CONFIG, BOOKING_STATUS_DISPLAY_MAP } from '../src/constants/admin';
-import { StorageService } from '../services/storageService';
+import { StorageService, DEFAULT_COMMISSION_AMOUNTS } from '../services/storageService';
+import type { CommissionAmounts } from '../src/domains/location/types';
 import { AuditService } from '../services/auditService';
 import { sendZPL, buildBookingLabelZPL } from '../services/zebraPrintService';
 import { uploadBranchManagedAsset, uploadHeroManagedAsset, uploadNoticeManagedAsset } from '../services/supabaseStorageUploadService';
@@ -245,7 +246,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
-  const [commissionRates, setCommissionRates] = useState<{ delivery: number; storage: number }>({ delivery: 0, storage: 0 });
+  const [commissionAmounts, setCommissionAmounts] = useState<CommissionAmounts>(DEFAULT_COMMISSION_AMOUNTS);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
@@ -917,8 +918,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const savedCloud = StorageService.getCloudConfig();
       if (savedCloud) setCloudConfig(savedCloud);
 
-      const cloudCommissionRates = await StorageService.getCommissionRates();
-      setCommissionRates(cloudCommissionRates);
+      const cloudCommAmounts = await StorageService.getCommissionAmounts();
+      setCommissionAmounts(cloudCommAmounts);
 
       // Storage policies fetching has been offloaded to their respective components
 
@@ -1205,10 +1206,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     StorageService.saveStorageTiers(updated).catch(console.error);
   };
 
-  const updateCommissionRate = (type: 'delivery' | 'storage', value: number) => {
-    const updated = { ...commissionRates, [type]: value };
-    setCommissionRates(updated);
-    StorageService.saveCommissionRates(updated).catch(console.error);
+  const updateCommissionAmounts = (amounts: CommissionAmounts) => {
+    setCommissionAmounts(amounts);
+    StorageService.saveCommissionAmounts(amounts).catch(console.error);
   };
 
   const addLocation = async () => {
@@ -3043,8 +3043,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               updateDeliveryPrice={updateDeliveryPrice}
               storageTiers={storageTiers}
               updateStoragePrice={updateStoragePrice}
-              commissionRates={commissionRates}
-              updateCommissionRate={updateCommissionRate}
+              commissionAmounts={commissionAmounts}
+              updateCommissionAmounts={updateCommissionAmounts}
               cloudConfig={cloudConfig}
               setCloudConfig={setCloudConfig}
               saveCloudSettings={saveCloudSettings}

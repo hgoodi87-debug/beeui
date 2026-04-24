@@ -191,25 +191,20 @@ const ReportsTab: React.FC<ReportsTabProps> = ({
 
         const totalCountryCount = Object.values(countryStats).reduce((a, b) => a + b, 0);
 
-        // 지점별 커미션 집계
-        const branchCommissionMap: Record<string, { name: string; total: number; delivery: number; storage: number; deliveryCount: number; storageCount: number; commDeliveryRate: number; commStorageRate: number }> = {};
+        // 지점별 커미션 집계 (branch_settlement_amount 기준)
+        const branchCommissionMap: Record<string, { name: string; total: number; delivery: number; storage: number; deliveryCount: number; storageCount: number }> = {};
         validBookings.filter(b => b.status === BookingStatus.COMPLETED).forEach(b => {
             const bName = b.branchName || '본사/직접';
             if (!branchCommissionMap[bName]) {
-                const loc = locations.find(l => l.id === b.branchId || l.name === bName || l.shortCode === b.branchCode);
                 branchCommissionMap[bName] = {
                     name: bName,
                     total: 0, delivery: 0, storage: 0,
                     deliveryCount: 0, storageCount: 0,
-                    commDeliveryRate: loc?.commissionRates?.delivery ?? 0,
-                    commStorageRate: loc?.commissionRates?.storage ?? 0,
                 };
             }
             const entry = branchCommissionMap[bName];
-            const price = b.settlementHardCopyAmount ?? b.finalPrice ?? 0;
+            const commAmt = b.branchSettlementAmount ?? 0;
             const isDelivery = b.serviceType === ServiceType.DELIVERY;
-            const commRate = isDelivery ? entry.commDeliveryRate : entry.commStorageRate;
-            const commAmt = Math.floor(price * (commRate / 100));
             entry.total += commAmt;
             if (isDelivery) { entry.delivery += commAmt; entry.deliveryCount += 1; }
             else { entry.storage += commAmt; entry.storageCount += 1; }

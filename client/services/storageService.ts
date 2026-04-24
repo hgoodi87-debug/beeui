@@ -380,6 +380,59 @@ const SETTINGS_CACHE_TTL_MS = 5 * 60 * 1000;
 let _storageTiersCache: { data: ReturnType<typeof normalizeStorageTiers>; ts: number } | null = null;
 let _deliveryPricesCache: { data: PriceSettings; ts: number } | null = null;
 let _commissionRatesCache: { data: { delivery: number; storage: number }; ts: number } | null = null;
+let _commissionAmountsCache: { data: CommissionAmounts; ts: number } | null = null;
+
+import type { CommissionAmounts } from '../src/domains/location/types';
+
+export const DEFAULT_COMMISSION_AMOUNTS: CommissionAmounts = {
+  storage: {
+    handBag:         { hours4: 2000, day1: 3000 },
+    carrier:         { hours4: 2000, day1: 3000 },
+    strollerBicycle: { hours4: 3000, day1: 5000 },
+  },
+  delivery: {
+    handBag:         2000,
+    carrier:         3000,
+    strollerBicycle: 3000,
+  },
+};
+
+const calcStorageHours = (
+  pickupDate?: string, pickupTime?: string,
+  returnDate?: string, returnTime?: string,
+): number => {
+  if (!pickupDate || !pickupTime || !returnDate || !returnTime) return 25; // 기본: 1일 초과
+  try {
+    const start = new Date(`${pickupDate}T${pickupTime}:00+09:00`).getTime();
+    const end   = new Date(`${returnDate}T${returnTime}:00+09:00`).getTime();
+    if (!isFinite(start) || !isFinite(end) || end <= start) return 25;
+    return (end - start) / (1000 * 60 * 60);
+  } catch {
+    return 25;
+  }
+};
+
+export const calcCommissionAmount = (
+  booking: { serviceType?: string; bagSizes?: { handBag?: number; carrier?: number; strollerBicycle?: number } | null; pickupDate?: string; pickupTime?: string; returnDate?: string; returnTime?: string },
+  amounts: CommissionAmounts = DEFAULT_COMMISSION_AMOUNTS,
+): number => {
+  const bags = booking.bagSizes || {};
+  const isDelivery = String(booking.serviceType || '').toUpperCase() === 'DELIVERY';
+  if (isDelivery) {
+    return (
+      (bags.handBag         ?? 0) * amounts.delivery.handBag +
+      (bags.carrier         ?? 0) * amounts.delivery.carrier +
+      (bags.strollerBicycle ?? 0) * amounts.delivery.strollerBicycle
+    );
+  }
+  const hours    = calcStorageHours(booking.pickupDate, booking.pickupTime, booking.returnDate, booking.returnTime);
+  const tier     = hours <= 4 ? 'hours4' : 'day1';
+  return (
+    (bags.handBag         ?? 0) * amounts.storage.handBag[tier] +
+    (bags.carrier         ?? 0) * amounts.storage.carrier[tier] +
+    (bags.strollerBicycle ?? 0) * amounts.storage.strollerBicycle[tier]
+  );
+};
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
 const KEYS = {
@@ -992,14 +1045,12 @@ export const StorageService = {
     try {
       console.log("[StorageService] Saving booking to Supabase...");
 
-      // 지점 수수료 및 정산액 자동 계산
-      const commDelivery = safeBooking.pickupLoc?.commissionRates?.delivery ?? 0;
-      const commStorage  = safeBooking.pickupLoc?.commissionRates?.storage  ?? 0;
+      // 지점 수수료 및 정산액 자동 계산 (품목별 고정금액 방식)
       const isDelivery   = safeBooking.serviceType === 'DELIVERY';
       const isStorage    = safeBooking.serviceType === 'STORAGE';
-      const effectiveCommRate = isDelivery ? commDelivery : commStorage;
       const finalPriceNum = isNaN(Number(safeBooking.finalPrice)) ? 0 : Number(safeBooking.finalPrice);
-      const branchSettlementAmt = Math.round(finalPriceNum * effectiveCommRate / 100);
+      const cachedAmounts = _commissionAmountsCache?.data ?? DEFAULT_COMMISSION_AMOUNTS;
+      const branchSettlementAmt = calcCommissionAmount(safeBooking, cachedAmounts);
 
       // 배송(DELIVERY)은 기존 운영(주 단위 네임택) 유지.
       // 보관(STORAGE)은 결제완료 시점 지점별 1~30 보관번호(storage_numbers)가 DB 트리거로 할당됨.
@@ -1041,8 +1092,8 @@ export const StorageService = {
         insurance_level: safeBooking.insuranceLevel || null,
         insurance_bag_count: safeBooking.insuranceBagCount || null,
         use_insurance: safeBooking.useInsurance || false,
-        branch_commission_delivery: commDelivery,
-        branch_commission_storage: commStorage,
+        branch_commission_delivery: 0,
+        branch_commission_storage: 0,
         branch_settlement_amount: branchSettlementAmt,
         settlement_status: 'PENDING',
         base_price: isNaN(Number(safeBooking.price)) ? 0 : Number(safeBooking.price),
@@ -1781,46 +1832,56 @@ export const StorageService = {
     }
   },
 
-  // --- Global Commission Rates ---
+  // --- Global Commission Rates (legacy %, kept for reference) ---
   getCommissionRates: async (): Promise<{ delivery: number; storage: number }> => {
     if (_commissionRatesCache && Date.now() - _commissionRatesCache.ts < SETTINGS_CACHE_TTL_MS) {
       return _commissionRatesCache.data;
     }
-    if (isSupabaseDataEnabled()) {
-      try {
-        const rows = await supabaseGet<Array<{ key: string; value: any }>>(
-          'app_settings?select=value&key=eq.commission_rates&limit=1'
-        );
-        if (rows?.[0]?.value) {
-          const result = { delivery: Number(rows[0].value.delivery) || 0, storage: Number(rows[0].value.storage) || 0 };
-          _commissionRatesCache = { data: result, ts: Date.now() };
-          return result;
-        }
-      } catch (e) {
-        console.warn("[Storage] commission_rates fetch failed:", e);
-      }
-    }
     return { delivery: 0, storage: 0 };
   },
 
-  saveCommissionRates: async (rates: { delivery: number; storage: number }): Promise<void> => {
-    _commissionRatesCache = null;
+  saveCommissionRates: async (_rates: { delivery: number; storage: number }): Promise<void> => {
+    // 레거시 — 더 이상 사용하지 않음
+  },
+
+  // --- Global Commission Amounts (품목별 고정금액) ---
+  getCommissionAmounts: async (): Promise<CommissionAmounts> => {
+    if (_commissionAmountsCache && Date.now() - _commissionAmountsCache.ts < SETTINGS_CACHE_TTL_MS) {
+      return _commissionAmountsCache.data;
+    }
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>(
+          'app_settings?select=value&key=eq.commission_amounts&limit=1'
+        );
+        if (rows?.[0]?.value) {
+          const data = rows[0].value as CommissionAmounts;
+          _commissionAmountsCache = { data, ts: Date.now() };
+          return data;
+        }
+      } catch (e) {
+        console.warn("[Storage] commission_amounts fetch failed:", e);
+      }
+    }
+    return DEFAULT_COMMISSION_AMOUNTS;
+  },
+
+  saveCommissionAmounts: async (amounts: CommissionAmounts): Promise<void> => {
+    _commissionAmountsCache = { data: amounts, ts: Date.now() };
     if (isSupabaseDataEnabled()) {
       try {
         const { supabaseMutate } = await import('./supabaseClient');
-        // upsert: PATCH 먼저 시도, 없으면 POST
         const existing = await supabaseGet<Array<{ key: string }>>(
-          'app_settings?select=key&key=eq.commission_rates&limit=1'
+          'app_settings?select=key&key=eq.commission_amounts&limit=1'
         );
         if (existing && existing.length > 0) {
-          await supabaseMutate('app_settings?key=eq.commission_rates', 'PATCH', { value: rates });
+          await supabaseMutate('app_settings?key=eq.commission_amounts', 'PATCH', { value: amounts });
         } else {
-          await supabaseMutate('app_settings', 'POST', { key: 'commission_rates', value: rates });
+          await supabaseMutate('app_settings', 'POST', { key: 'commission_amounts', value: amounts });
         }
-        console.log("[Storage] Commission rates saved to Supabase ✅");
-        return;
+        console.log("[Storage] Commission amounts saved ✅");
       } catch (e) {
-        console.warn("[Storage] commission_rates save failed:", e);
+        console.warn("[Storage] commission_amounts save failed:", e);
         throw e;
       }
     }

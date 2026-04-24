@@ -94,6 +94,19 @@ export interface LocationOption {
     distance?: number; // [스봉이] 사용자 위치로부터의 거리 (정렬용) 🛰️✨
 }
 
+export interface CommissionAmounts {
+    storage: {
+        handBag:         { hours4: number; day1: number };
+        carrier:         { hours4: number; day1: number };
+        strollerBicycle: { hours4: number; day1: number };
+    };
+    delivery: {
+        handBag:         number;
+        carrier:         number;
+        strollerBicycle: number;
+    };
+}
+
 export interface Branch {
     id: string;
     name: string;

@@ -6,17 +6,29 @@ import {
     getBagCategoryLabel,
     getStoragePriceForCategory,
 } from '../../src/domains/booking/bagCategoryUtils';
+import type { CommissionAmounts } from '../../src/domains/location/types';
 
 const DELIVERY_BAG_CATEGORIES = getBagCategoriesForService(ServiceType.DELIVERY);
 const STORAGE_BAG_CATEGORIES = getBagCategoriesForService(ServiceType.STORAGE);
+
+const STORAGE_BAG_ROWS = [
+    { key: 'handBag' as const,         label: '손가방',        icon: 'fa-shopping-bag' },
+    { key: 'carrier' as const,         label: '캐리어',        icon: 'fa-suitcase' },
+    { key: 'strollerBicycle' as const, label: '특수(유모차·자전거)', icon: 'fa-bicycle' },
+];
+const DELIVERY_BAG_ROWS = [
+    { key: 'handBag' as const,         label: '손가방',        icon: 'fa-shopping-bag' },
+    { key: 'carrier' as const,         label: '캐리어',        icon: 'fa-suitcase' },
+    { key: 'strollerBicycle' as const, label: '특수(유모차·자전거)', icon: 'fa-bicycle' },
+];
 
 interface SystemTabProps {
     deliveryPrices: PriceSettings;
     updateDeliveryPrice: (size: keyof PriceSettings, val: number) => void;
     storageTiers: StorageTier[];
     updateStoragePrice: (id: string, size: keyof PriceSettings, val: number) => void;
-    commissionRates: { delivery: number; storage: number };
-    updateCommissionRate: (type: 'delivery' | 'storage', value: number) => void;
+    commissionAmounts: CommissionAmounts;
+    updateCommissionAmounts: (amounts: CommissionAmounts) => void;
     cloudConfig: GoogleCloudConfig;
     setCloudConfig: (c: GoogleCloudConfig) => void;
     saveCloudSettings: () => void;
@@ -28,8 +40,8 @@ const SystemTab: React.FC<SystemTabProps> = ({
     updateDeliveryPrice,
     storageTiers,
     updateStoragePrice,
-    commissionRates,
-    updateCommissionRate,
+    commissionAmounts,
+    updateCommissionAmounts,
     cloudConfig,
     setCloudConfig,
     saveCloudSettings,
@@ -76,47 +88,115 @@ const SystemTab: React.FC<SystemTabProps> = ({
                         <h3 className="text-xl font-black flex items-center gap-3">
                             <span className="w-2 h-8 bg-emerald-500 rounded-full"></span>파트너 커미션 정책
                         </h3>
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Commission Rates</span>
+                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Fixed Commission Amounts</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 hover:border-emerald-300 transition-all">
-                            <label className="text-[10px] font-black text-emerald-500 tracking-widest uppercase mb-3 block flex items-center gap-2">
-                                <i className="fa-solid fa-truck"></i> 배송 커미션
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    step={0.1}
-                                    value={commissionRates.delivery}
-                                    onChange={(e) => updateCommissionRate('delivery', parseFloat(e.target.value) || 0)}
-                                    className="bg-transparent font-black text-3xl w-full outline-none text-emerald-700"
-                                />
-                                <span className="font-black text-emerald-400 text-2xl">%</span>
-                            </div>
-                            <p className="mt-3 text-[10px] text-emerald-500/70 font-medium">배송 예약 매출 중 파트너 지급 비율</p>
+
+                    {/* 보관 커미션 */}
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <i className="fa-solid fa-box-archive text-blue-500 text-xs"></i>
+                            <span className="text-[11px] font-black text-blue-600 uppercase tracking-widest">보관 커미션 (원/개)</span>
                         </div>
-                        <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 hover:border-blue-300 transition-all">
-                            <label className="text-[10px] font-black text-blue-500 tracking-widest uppercase mb-3 block flex items-center gap-2">
-                                <i className="fa-solid fa-box-archive"></i> 보관 커미션
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    step={0.1}
-                                    value={commissionRates.storage}
-                                    onChange={(e) => updateCommissionRate('storage', parseFloat(e.target.value) || 0)}
-                                    className="bg-transparent font-black text-3xl w-full outline-none text-blue-700"
-                                />
-                                <span className="font-black text-blue-400 text-2xl">%</span>
-                            </div>
-                            <p className="mt-3 text-[10px] text-blue-500/70 font-medium">보관 예약 매출 중 파트너 지급 비율</p>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs border-separate border-spacing-y-1">
+                                <thead>
+                                    <tr className="text-[10px] font-black text-gray-400 uppercase">
+                                        <th className="text-left px-3 py-2 w-40">품목</th>
+                                        <th className="text-center px-3 py-2">4시간 (원)</th>
+                                        <th className="text-center px-3 py-2">1일 (원)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {STORAGE_BAG_ROWS.map(row => (
+                                        <tr key={row.key} className="bg-blue-50/40 rounded-xl">
+                                            <td className="px-3 py-2.5 font-black text-blue-700 rounded-l-xl">
+                                                <span className="flex items-center gap-1.5">
+                                                    <i className={`fa-solid ${row.icon} text-[10px] text-blue-400`}></i>
+                                                    {row.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-center">
+                                                {row.key === 'handBag' ? (
+                                                    <div className="relative inline-flex items-center gap-1">
+                                                        <input
+                                                            type="number" disabled
+                                                            value={commissionAmounts.storage[row.key].hours4}
+                                                            className="w-20 text-center bg-gray-100 rounded-lg px-2 py-1 font-black text-gray-400 border border-gray-200 cursor-not-allowed text-xs"
+                                                        />
+                                                        <i className="fa-solid fa-lock text-[9px] text-gray-400" title="손가방 4시간 커미션 동결"></i>
+                                                    </div>
+                                                ) : (
+                                                    <input
+                                                        type="number" min={0} step={100}
+                                                        value={commissionAmounts.storage[row.key].hours4}
+                                                        onChange={e => updateCommissionAmounts({
+                                                            ...commissionAmounts,
+                                                            storage: { ...commissionAmounts.storage, [row.key]: { ...commissionAmounts.storage[row.key], hours4: parseInt(e.target.value) || 0 } }
+                                                        })}
+                                                        className="w-20 text-center bg-white rounded-lg px-2 py-1 font-black text-blue-700 border border-blue-100 focus:border-blue-400 outline-none text-xs"
+                                                    />
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-center rounded-r-xl">
+                                                <input
+                                                    type="number" min={0} step={100}
+                                                    value={commissionAmounts.storage[row.key].day1}
+                                                    onChange={e => updateCommissionAmounts({
+                                                        ...commissionAmounts,
+                                                        storage: { ...commissionAmounts.storage, [row.key]: { ...commissionAmounts.storage[row.key], day1: parseInt(e.target.value) || 0 } }
+                                                    })}
+                                                    className="w-20 text-center bg-white rounded-lg px-2 py-1 font-black text-blue-700 border border-blue-100 focus:border-blue-400 outline-none text-xs"
+                                                />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p className="mt-2 text-[10px] text-blue-400/70 font-medium">4시간 초과 시 1일 요금 적용 · 손가방 4시간 동결(2,000원)</p>
+                    </div>
+
+                    {/* 배송 커미션 */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <i className="fa-solid fa-truck text-emerald-500 text-xs"></i>
+                            <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">배송 커미션 (원/개)</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs border-separate border-spacing-y-1">
+                                <thead>
+                                    <tr className="text-[10px] font-black text-gray-400 uppercase">
+                                        <th className="text-left px-3 py-2 w-40">품목</th>
+                                        <th className="text-center px-3 py-2">배송 1건 (원)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {DELIVERY_BAG_ROWS.map(row => (
+                                        <tr key={row.key} className="bg-emerald-50/40 rounded-xl">
+                                            <td className="px-3 py-2.5 font-black text-emerald-700 rounded-l-xl">
+                                                <span className="flex items-center gap-1.5">
+                                                    <i className={`fa-solid ${row.icon} text-[10px] text-emerald-400`}></i>
+                                                    {row.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-center rounded-r-xl">
+                                                <input
+                                                    type="number" min={0} step={100}
+                                                    value={commissionAmounts.delivery[row.key]}
+                                                    onChange={e => updateCommissionAmounts({
+                                                        ...commissionAmounts,
+                                                        delivery: { ...commissionAmounts.delivery, [row.key]: parseInt(e.target.value) || 0 }
+                                                    })}
+                                                    className="w-20 text-center bg-white rounded-lg px-2 py-1 font-black text-emerald-700 border border-emerald-100 focus:border-emerald-400 outline-none text-xs"
+                                                />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <p className="mt-6 text-[10px] text-gray-400 font-medium">* 여기서 설정한 값은 신규 지점 기본값으로 사용됩니다. 지점별 개별 설정은 거점 관리에서 변경하세요.</p>
+                    <p className="mt-6 text-[10px] text-gray-400 font-medium">* 가방 1개당 지급되는 고정 금액입니다. 변경 즉시 DB에 반영됩니다.</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

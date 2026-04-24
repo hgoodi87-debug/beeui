@@ -273,40 +273,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
         setSelectedIds([]);
     };
 
-    // [스봉이] 커미션 정산 퍼센트 일괄 조절 💅✨
-    const handleBulkCommissionUpdate = () => {
-        if (!selectedIds.length) {
-            alert("사장님, 지점을 골라야 일을 하죠! 제 시간 귀한 거 아시죠? 🙄");
-            return;
-        }
-
-        const res = window.prompt(
-            `[스봉이 정산 마법사] 💅✨\n선택된 ${selectedIds.length}개 지점의 커미션 비율을 일괄 변경합니다.\n\n"배송,보관" 형식으로 입력해 주세요.\n예: 70,60 (배송 70%, 보관 60%)`, 
-            "70,60"
-        );
-
-        if (!res) return;
-
-        const parts = res.split(',').map(s => s.trim());
-        if (parts.length !== 2) {
-            alert("사장님, 쉼표 하나 찍어서 '배송,보관' 형식으로 똑바로 입력해 보세요. 휴... 🙄");
-            return;
-        }
-
-        const delivery = parseFloat(parts[0]);
-        const storage = parseFloat(parts[1]);
-
-        if (isNaN(delivery) || isNaN(storage)) {
-            alert("사장님, 숫자를 제대로 입력하셔야 제가 일을 하죠. ☕");
-            return;
-        }
-
-        // 일괄 업데이트 실행
-        handleBulkUpdateLocations(selectedIds, {
-            commissionRates: { delivery, storage }
-        });
-        setSelectedIds([]);
-    };
 
     const TYPE_FILTERS = [
         { id: 'ALL', label: '전체', icon: 'fa-th' },
@@ -490,9 +456,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                     <i className={`fa-solid ${btn.icon} text-[8px]`}></i>{btn.label}
                                 </button>
                             ))}
-                            <button onClick={handleBulkCommissionUpdate} title="선택된 지점의 커미션 일괄 조절" className="px-2 py-1.5 bg-bee-black text-bee-yellow border border-bee-black rounded-lg text-[9px] font-black hover:scale-105 transition-all shadow-md flex items-center gap-1.5 ml-auto">
-                                <i className="fa-solid fa-percent text-[8px]"></i> 커미션 일괄 변경 💅
-                            </button>
                         </div>
                         <div className="text-[10px] font-black text-gray-400">{filteredLocations.length}개 표시 중 / 전체 {locations.length}개</div>
                     </div>
@@ -508,7 +471,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                         <th className="px-5 py-4">상태 및 유형</th>
                                         <th className="px-5 py-4">지점명 / ID</th>
                                         <th className="px-5 py-4">제공 서비스</th>
-                                        <th className="px-5 py-4">수수료 (배송/보관)</th>
                                         <th className="px-5 py-4 text-center">연동 설정</th>
                                         <th className="px-5 py-4 w-10"></th>
                                     </tr>
@@ -538,10 +500,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                                     {loc.isOrigin && <i title="출발 허브" className="fa-solid fa-right-from-bracket text-[9px] text-purple-500 bg-purple-50 w-5 h-5 flex items-center justify-center rounded-md border border-purple-100"></i>}
                                                     {loc.isDestination && <i title="도착지/픽업지" className="fa-solid fa-location-dot text-[9px] text-teal-500 bg-teal-50 w-5 h-5 flex items-center justify-center rounded-md border border-teal-100"></i>}
                                                 </div>
-                                            </td>
-                                            <td className="px-5 py-4 font-black italic">
-                                                <span className="text-[10px] text-emerald-600 mr-2">{loc.commissionRates?.delivery ?? 0}%</span>
-                                                <span className="text-[10px] text-blue-600">{loc.commissionRates?.storage ?? 0}%</span>
                                             </td>
                                             <td className="px-5 py-4 text-center">
                                                 {loc.lat && loc.lng ? (
@@ -684,22 +642,6 @@ const LocationsTab: React.FC<LocationsTabProps> = ({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label htmlFor="delivery-commission" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">정산 수수료 (배송)</label>
-                                    <div className="relative">
-                                        <input autoComplete="off" id="delivery-commission" type="number" value={locForm.commissionRates?.delivery ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, delivery: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label htmlFor="storage-commission" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">정산 수수료 (보관)</label>
-                                    <div className="relative">
-                                        <input autoComplete="off" id="storage-commission" type="number" value={locForm.commissionRates?.storage ?? 0} onChange={e => setLocForm({ ...locForm, commissionRates: { ...locForm.commissionRates, storage: parseFloat(e.target.value) || 0 } })} className="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 focus:border-bee-yellow outline-none text-xs pr-8" />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
-                                    </div>
-                                </div>
-                            </div>
 
                             <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">지점 연락처</label>

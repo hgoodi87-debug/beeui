@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="112" fill="#0A0A0A"/>
   <g transform="translate(256 256)">
-    <circle r="140" fill="#F5B200"/>
+    <circle r="140" fill="#FFC700"/>
     <text x="0" y="22" font-family="Outfit, system-ui, sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="#0A0A0A" letter-spacing="-6">b</text>
   </g>
 </svg>

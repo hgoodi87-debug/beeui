@@ -11,7 +11,7 @@
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="application-name" content="beeliber">
-<meta name="theme-color" content="#F5B200" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#FFC700" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 
@@ -40,7 +40,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --yellow:#F5B200; --yellow-deep:#D99700; --yellow-soft:#FFE27A;
+  --yellow:#FFC700; --yellow-deep:#D9A900; --yellow-soft:#FFF1A8;
   --bg:#FFFFFF; --bg-soft:#FAFAF8; --bg-dark:#0A0A0A; --bg-dark-2:#141414;
   --ink:#1A1A1A; --ink-2:#3D3D3D; --ink-3:#6B6B6B; --ink-4:#A0A0A0;
   --line:#D4D4D4; --line-2:#E2E2E2;
@@ -1479,11 +1479,12 @@ const ICONS = {
 
 // ====== BRANCHES (lat/lng offsets applied after geolocation) ======
 const branches = [
-  {id:'yn', nm:'수하물 보관 경의선 숲길 공원', kind:'오피스', hours:'09:00 - 21:00', address:'서울 마포구 연남동 223-23', dist:'1 min', rating:'4.88 (25)', price:'7,000', badge:'가장 가까운', dLat: 0.0005, dLng: 0.0003, photo:'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80'},
-  {id:'hd', nm:'수하물 보관 동교로25길', kind:'카페', hours:'10:00 - 22:00', address:'서울 마포구 동교로25길 14', dist:'3 min', rating:'5 (1)', price:'7,000', dLat: -0.0008, dLng: 0.0012, photo:'https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=400&q=80'},
-  {id:'hb', nm:'홍대 보관함 Near Yeonhui-ro', kind:'편의점', hours:'24시간 영업', address:'서울 마포구 연희로 32', dist:'2 min', rating:'4.9 (92)', price:'5,200', dLat: 0.0018, dLng: -0.0015, photo:'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&q=80'},
-  {id:'mp', nm:'망원역 보관소', kind:'오피스', hours:'10:00 - 20:00', address:'서울 마포구 망원동 415-3', dist:'8 min', rating:'4.7 (41)', price:'6,500', dLat: -0.0025, dLng: 0.0028, photo:'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80'},
-  {id:'hy', nm:'합정 커먼그라운드', kind:'호텔', hours:'24시간', address:'서울 마포구 양화로 45', dist:'12 min', rating:'4.95 (120)', price:'8,000', dLat: 0.0032, dLng: 0.0022, photo:'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80'},
+  {id:'myn', nm:'빌리버 연남점', kind:'Hub · 보관+배송', hours:'09:00 - 21:00', address:'서울 마포구 연남동', dist:'1 min', rating:'4.9 (120)', price:'5,000', badge:'가장 가까운', dLat: 0.0005, dLng: 0.0003, photo:'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80'},
+  {id:'hbo', nm:'빌리버 홍대바오점', kind:'Hub · 보관+배송', hours:'09:00 - 21:00', address:'서울 마포구 홍대입구', dist:'4 min', rating:'4.9 (88)', price:'5,000', dLat: -0.0008, dLng: 0.0012, photo:'https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=400&q=80'},
+  {id:'mmp', nm:'빌리버 마포점', kind:'Hub · 보관+배송', hours:'09:00 - 21:00', address:'서울 마포구', dist:'8 min', rating:'4.9 (65)', price:'5,000', dLat: 0.0018, dLng: -0.0015, photo:'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&q=80'},
+  {id:'miw', nm:'빌리버 이태원점', kind:'Hub · 보관+배송', hours:'09:00 - 21:00', address:'서울 용산구 이태원동', dist:'18 min', rating:'4.9 (72)', price:'5,000', dLat: -0.0025, dLng: 0.0028, photo:'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80'},
+  {id:'mbx', nm:'빌리버 명동본점', kind:'Hub · 보관+배송', hours:'09:00 - 21:00', address:'서울 중구 명동', dist:'22 min', rating:'4.95 (150)', price:'5,000', dLat: 0.0032, dLng: 0.0022, photo:'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80'},
+  {id:'mdd', nm:'빌리버 동대문점', kind:'Hub · 보관+배송', hours:'09:00 - 21:00', address:'서울 중구 동대문', dist:'26 min', rating:'4.9 (98)', price:'5,000', dLat: 0.0045, dLng: 0.0038, photo:'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?w=400&q=80'},
 ];
 // backward-compat: keep addr label (kind · hours)
 branches.forEach(b=>b.addr = `${b.kind} · ${b.hours}`);
@@ -1783,7 +1784,7 @@ function renderFaq(){
 const reviews = [
   {n:'Enzo Chen', i:'E', c:'#34C759', t:'Nice service, nice environment, will come again.'},
   {n:'I-Han', i:'I', c:'#FF3B30', t:'공항까지 짐을 빠르게 보내줘서 너무 편했어요.'},
-  {n:'Maya S.', i:'M', c:'#F5B200', t:'Super convenient for travelers. Highly recommended!'},
+  {n:'Maya S.', i:'M', c:'#FFC700', t:'Super convenient for travelers. Highly recommended!'},
   {n:'Kenji', i:'K', c:'#38BDF8', t:'仁川空港まで安全に届けてくれました。感謝!'},
   {n:'이지은', i:'이', c:'#FF6B6B', t:'가격도 합리적이고 직원분도 친절해요.'},
   {n:'Tom R.', i:'T', c:'#9333EA', t:'Easy booking, clean facility. 10/10.'},

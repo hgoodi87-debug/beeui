@@ -2589,7 +2589,14 @@ a { color: inherit; text-decoration: none; }
     width: auto !important;
   }
 
-  /* ═══ Before/After 세로 + 화살표 ═══ */
+  /* 1. 히어로 티커 무한 루프 보장 */
+  .hero-ticker-track {
+    animation: ticker-scroll 28s linear infinite !important;
+    animation-play-state: running !important;
+  }
+  .hero-ticker-track:hover { animation-play-state: paused !important; }
+
+  /* 2. Before/After 세로 + AFTER 사진 크게 + 화살표 */
   .ba-stack {
     max-width: 720px;
     margin: 0 auto;
@@ -2600,14 +2607,15 @@ a { color: inherit; text-decoration: none; }
     border-radius: 20px;
     overflow: hidden;
   }
-  .ba-card.before, .ba-card.after { width: 100%; border-radius: 0; }
+  .ba-card.before { height: 260px !important; width: 100%; border-radius: 0; }
+  .ba-card.after  { height: 440px !important; width: 100%; border-radius: 0; }
   /* 세로 중앙 화살표 ↓ */
   .ba-stack::after {
     content: '↓';
     position: absolute;
     left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    top: calc(260px - 28px);   /* before 하단 경계 */
+    transform: translateX(-50%);
     width: 56px;
     height: 56px;
     background: #FFC700;
@@ -2622,6 +2630,43 @@ a { color: inherit; text-decoration: none; }
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     line-height: 1;
   }
+
+  /* 3. 빌리버 가이드 steps 한 줄 강제 */
+  .guide-steps-simple {
+    max-width: none !important;
+    width: calc(100% + var(--gutter) * 2) !important;
+    margin-left: calc(-1 * var(--gutter)) !important;
+    margin-right: calc(-1 * var(--gutter)) !important;
+    padding: 0 var(--gutter) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: clamp(12px, 2vw, 28px) !important;
+  }
+  .guide-step-simple {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+
+  /* 4. Safe & Trust 카드 높이 확대 */
+  .vip-section {
+    padding: clamp(80px, 10vw, 140px) var(--gutter) !important;
+  }
+  .vip-cards {
+    gap: clamp(16px, 2vw, 28px) !important;
+    margin-bottom: 64px !important;
+  }
+  .vip-card {
+    min-height: 260px !important;
+    padding: 40px 24px !important;
+    gap: 16px;
+  }
+  .vip-card-icon {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  .vip-card-icon svg { width: 36px !important; height: 36px !important; }
+  .vip-card-title { font-size: 18px !important; margin-top: 8px !important; }
 
   /* ═══ 이용 단계 3열 ═══ */
   .guide-steps-simple {

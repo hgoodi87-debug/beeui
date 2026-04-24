@@ -270,6 +270,24 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
         return (sz.handBag || 0) + (sz.carrier || 0) + (sz.strollerBicycle || 0);
     };
 
+    const getNametagLabel = (b: BookingState): string | null => {
+        const isDelivery = String(b.serviceType || '').toUpperCase() === 'DELIVERY';
+        if (!isDelivery) {
+            const nums = Array.isArray(b.storageNumbers) ? (b.storageNumbers as number[]).filter(n => Number.isFinite(Number(n))) : [];
+            if (nums.length > 0) {
+                if (nums.length === 1) return String(nums[0]);
+                if (nums.length <= 4) return nums.join('·');
+                return `${nums[0]}-${nums[nums.length - 1]}`;
+            }
+            return (b as any).nametagId ? String((b as any).nametagId) : null;
+        }
+        const id = (b as any).nametagId;
+        if (!id) return null;
+        const loc = locations.find(l => l.id === b.pickupLocation || (l as any).supabaseId === b.pickupLocation || l.shortCode === b.pickupLocation);
+        const code = loc?.shortCode || b.reservationCode?.split('-')[0] || '';
+        return code ? `${code}${id}` : String(id);
+    };
+
     // 예약별 커미션 금액
     // branchSettlementAmount = 이미 커미션율이 적용된 지점 지급 확정액 → 그대로 사용
     // 미설정 시 전체 금액(settlementHardCopyAmount || finalPrice)에 커미션율 적용
@@ -544,7 +562,19 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                         <div className="flex justify-between items-start mb-2.5">
                                             <div>
                                                 <div className="font-black text-[13px] text-bee-black">{b.userName}</div>
-                                                <div className="text-[9px] font-mono text-gray-300 mt-0.5">{b.reservationCode || b.id}</div>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    {(() => {
+                                                        const label = getNametagLabel(b);
+                                                        if (!label) return null;
+                                                        const isDel = b.serviceType === ServiceType.DELIVERY;
+                                                        return (
+                                                            <span className={`h-5 px-1.5 rounded text-[10px] font-black flex items-center gap-0.5 ${isDel ? 'bg-red-500 text-white' : 'bg-bee-yellow text-bee-black'}`}>
+                                                                <i className="fa-solid fa-tag text-[7px]"></i>{label}
+                                                            </span>
+                                                        );
+                                                    })()}
+                                                    <span className="text-[9px] font-mono text-gray-300">{b.reservationCode || b.id}</span>
+                                                </div>
                                             </div>
                                             <select
                                                 value={b.status}
@@ -609,7 +639,19 @@ const BranchAdminPage: React.FC<BranchAdminPageProps> = ({ branchId: propsBranch
                                                     <tr className="hover:bg-gray-50/60 transition-colors group border-b border-gray-50 last:border-b-0">
                                                         <td className="px-6 py-4">
                                                             <div className="font-black text-[13px] text-bee-black leading-tight">{b.userName}</div>
-                                                            <div className="text-[10px] text-gray-300 font-mono mt-0.5">{b.reservationCode || b.id}</div>
+                                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                                {(() => {
+                                                                    const label = getNametagLabel(b);
+                                                                    if (!label) return null;
+                                                                    const isDel = b.serviceType === ServiceType.DELIVERY;
+                                                                    return (
+                                                                        <span className={`h-5 px-1.5 rounded text-[10px] font-black flex items-center gap-0.5 ${isDel ? 'bg-red-500 text-white' : 'bg-bee-yellow text-bee-black'}`}>
+                                                                            <i className="fa-solid fa-tag text-[7px]"></i>{label}
+                                                                        </span>
+                                                                    );
+                                                                })()}
+                                                                <span className="text-[10px] text-gray-300 font-mono">{b.reservationCode || b.id}</span>
+                                                            </div>
                                                         </td>
                                                         <td className="px-4 py-4">
                                                             <div className="flex flex-col gap-1">

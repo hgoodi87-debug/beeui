@@ -49,6 +49,14 @@ const OpsDeliveryListTab: React.FC<OpsDeliveryListTabProps> = ({
         }
     };
 
+    const getDeliveryNametagLabel = (b: BookingState): string | null => {
+        const id = (b as any).nametagId;
+        if (!id) return null;
+        const loc = locations.find(l => l.id === b.pickupLocation || (l as any).supabaseId === b.pickupLocation || l.shortCode === b.pickupLocation);
+        const code = loc?.shortCode || b.reservationCode?.split('-')[0] || '';
+        return code ? `${code}${id}` : String(id);
+    };
+
     return (
         <div className="space-y-6 md:space-y-8 animate-fade-in-up">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-2">
@@ -82,7 +90,18 @@ const OpsDeliveryListTab: React.FC<OpsDeliveryListTabProps> = ({
                                 <tr key={b.id} className="group transition-all duration-300">
                                     <td className="px-6 py-5 bg-gray-50/50 rounded-l-3xl group-hover:bg-bee-black group-hover:text-white transition-colors">
                                         <div className="flex flex-col">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-bee-yellow/60">#{b.reservationCode || b.id?.slice(-8).toUpperCase()}</span>
+                                            <div className="flex items-center gap-1.5 mb-1">
+                                                {(() => {
+                                                    const label = getDeliveryNametagLabel(b);
+                                                    if (!label) return null;
+                                                    return (
+                                                        <span className="h-6 px-2 rounded-md bg-red-500 text-white text-[11px] font-black flex items-center gap-0.5 group-hover:bg-red-400">
+                                                            <i className="fa-solid fa-tag text-[8px]"></i>{label}
+                                                        </span>
+                                                    );
+                                                })()}
+                                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest group-hover:text-bee-yellow/60">#{b.reservationCode || b.id?.slice(-8).toUpperCase()}</span>
+                                            </div>
                                             <span className="font-black text-bee-black group-hover:text-white transition-colors">{b.userName}</span>
                                         </div>
                                     </td>

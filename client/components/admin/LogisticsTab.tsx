@@ -113,6 +113,23 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
     const findLocName = (id: string | undefined) =>
         locations.find(l => l.id === id || l.supabaseId === id || l.shortCode === id)?.name || id || '-';
 
+    const getNametagLabel = (b: BookingState): string | null => {
+        const isDelivery = String(b.serviceType || '').toUpperCase() === 'DELIVERY';
+        if (!isDelivery) {
+            const nums = Array.isArray(b.storageNumbers) ? (b.storageNumbers as number[]).filter(n => Number.isFinite(Number(n))) : [];
+            if (nums.length > 0) {
+                if (nums.length === 1) return String(nums[0]);
+                if (nums.length <= 4) return nums.join('·');
+                return `${nums[0]}-${nums[nums.length - 1]}`;
+            }
+            return b.nametagId ? String(b.nametagId) : null;
+        }
+        if (!b.nametagId) return null;
+        const loc = locations.find(l => l.id === b.pickupLocation || (l as any).supabaseId === b.pickupLocation || l.shortCode === b.pickupLocation);
+        const code = loc?.shortCode || b.reservationCode?.split('-')[0] || '';
+        return code ? `${code}${b.nametagId}` : String(b.nametagId);
+    };
+
     const paymentBadgeLabel = (booking: BookingState) => {
         if (booking.paymentMethod === 'cash') return '방문 현금';
         if (booking.paymentStatus === 'paid') {
@@ -357,14 +374,22 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-1.5 mb-1.5">
+                                                {/* 네임택 번호 — 예약코드 앞에 표시 */}
+                                                {(() => {
+                                                    const label = getNametagLabel(b);
+                                                    if (!label) return null;
+                                                    const isDel = b.serviceType === ServiceType.DELIVERY;
+                                                    return (
+                                                        <div title={isDel ? `배송 네임택 ${label}` : `보관번호 ${label}`}
+                                                            className={`h-6 px-2 rounded-md text-[11px] font-black flex items-center gap-0.5 shrink-0 ${isDel ? 'bg-red-500 text-white' : 'bg-bee-yellow text-bee-black'}`}>
+                                                            <i className="fa-solid fa-tag text-[8px]"></i>
+                                                            {label}
+                                                        </div>
+                                                    );
+                                                })()}
                                                 <div className="px-2 py-0.5 bg-gray-900 text-white text-[9px] font-black w-fit rounded tracking-tighter">
                                                     {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
                                                 </div>
-                                                {b.nametagId && (
-                                                    <div className="min-w-[24px] h-6 px-1.5 rounded-full bg-bee-yellow text-bee-black text-[10px] font-black flex items-center justify-center" title={`네임태그 #${b.nametagId}`}>
-                                                        #{b.nametagId}
-                                                    </div>
-                                                )}
                                             </div>
                                             <span className="font-black text-bee-black text-sm group-hover:text-bee-yellow transition-colors cursor-pointer" onClick={() => { setSelectedBooking({ ...b }); }}>
                                                 {adminRole === 'super' ? b.userName : maskName(b.userName || '')}
@@ -570,6 +595,18 @@ const LogisticsTab: React.FC<LogisticsTabProps> = ({
                             <div className="flex justify-between items-start">
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
+                                        {/* 네임택 번호 (모바일) */}
+                                        {(() => {
+                                            const label = getNametagLabel(b);
+                                            if (!label) return null;
+                                            const isDel = b.serviceType === ServiceType.DELIVERY;
+                                            return (
+                                                <div className={`h-6 px-2 rounded-md text-[11px] font-black flex items-center gap-0.5 shrink-0 ${isDel ? 'bg-red-500 text-white' : 'bg-bee-yellow text-bee-black'}`}>
+                                                    <i className="fa-solid fa-tag text-[8px]"></i>
+                                                    {label}
+                                                </div>
+                                            );
+                                        })()}
                                         <div className="px-2 py-0.5 bg-gray-900 text-white text-[8px] font-black rounded tracking-tighter">
                                             {b.reservationCode || b.id?.slice(0, 8).toUpperCase()}
                                         </div>

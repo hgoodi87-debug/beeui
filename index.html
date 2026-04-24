@@ -2373,83 +2373,267 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ====================================================
-   DESKTOP RESPONSIVE (≥1024px) — chlwhd homepage
+   DESKTOP RESPONSIVE (≥1024px) — Standard Web Layout
    ==================================================== */
+
+/* 기본 숨김 */
+.desktop-nav, .desktop-cta-btn { display: none; }
+
 @media (min-width: 1024px) {
-  /* ─── 전체 컨테이너 ─── */
-  .section { padding: 100px 0; }
-  .section > *:not(.section-full),
-  .section-title, .section-desc, .section-label,
-  .section-head, .section-narrow,
-  .before-after, .step-list, .price-cards,
-  .faq-list, .footer-top, .footer-bottom,
-  .rv-wrap, .vip-section > * {
-    max-width: 1200px;
+
+  /* ═══ 공통 컨테이너 ═══ */
+  :root {
+    --container: 1280px;
+    --gutter: clamp(32px, 5vw, 80px);
+  }
+
+  /* ═══ 헤더: 표준 웹 구조 (로고 좌 / 네비 중앙 / CTA 우) ═══ */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 0;
+    background: rgba(10,10,10,0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    z-index: 100;
+    transition: background 0.3s;
+  }
+  .header.scrolled { background: rgba(10,10,10,0.95); }
+  .header-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+    height: 72px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    background: none !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+  }
+  .header-inner .logo { height: 26px; flex-shrink: 0; }
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  /* 네비 중앙 배치 */
+  .desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(24px, 3vw, 48px);
+    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .desktop-nav a {
+    color: rgba(255,255,255,0.85);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+  .desktop-nav a:hover { color: #FFC700; }
+
+  /* CTA 우측 */
+  .desktop-cta-btn {
+    display: flex;
+    align-items: center;
+    height: 42px;
+    padding: 0 22px;
+    background: #FFC700;
+    color: #111;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: auto;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .desktop-cta-btn:hover { background: #e6b200; transform: translateY(-1px); }
+  .menu-btn { display: none !important; }
+
+  /* ═══ 히어로 ═══ */
+  .hero {
+    min-height: 100svh;
+    padding: 0 var(--gutter) 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .hero-content {
+    max-width: 900px;
+    padding-top: 72px;
+    margin-bottom: 36px;
+    text-align: center;
+  }
+  .hero-title {
+    font-size: clamp(56px, 6vw, 90px) !important;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  .hero-sub {
+    font-size: clamp(16px, 1.5vw, 20px);
+    line-height: 1.7;
+    margin-bottom: 0;
+    color: rgba(255,255,255,0.75);
+  }
+  .hero-cta-group {
+    flex-direction: row;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 48px;
+  }
+  .hero-cta-group .btn {
+    height: 58px;
+    padding: 0 36px;
+    font-size: 16px;
+    font-weight: 700;
+    min-width: 200px;
+  }
+  .hero-ticker-wrap {
+    width: 100%;
+    max-width: var(--container);
+    margin: 0 auto;
+  }
+  .hero-ticker-item { min-width: 300px; max-width: 300px; }
+
+  /* ═══ 공통 섹션 컨테이너 ═══ */
+  .section {
+    padding: clamp(64px, 8vw, 120px) var(--gutter);
+  }
+  .section-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+  }
+  /* 각 섹션 내부 직접 자식 컨텐츠 최대폭 */
+  .section-label,
+  .section-title,
+  .section-desc,
+  .section-head,
+  .section-narrow { max-width: 720px; margin-left: auto; margin-right: auto; text-align: center; }
+  .section-title { font-size: clamp(36px, 3.5vw, 52px) !important; }
+  .section-desc { font-size: clamp(15px, 1.2vw, 18px); }
+
+  /* ═══ 리뷰 카드 overflow → grid ═══ */
+  .rv-cards-track {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: clamp(16px, 2vw, 28px) !important;
+    overflow: visible !important;
+    transform: none !important;
+    width: 100% !important;
+  }
+  .rv-card { margin: 0; flex: none !important; min-width: unset !important; max-width: unset !important; width: auto !important; }
+  /* 원래 overflow 컨테이너 해제 */
+  .rv-cards { overflow: visible !important; }
+
+  /* ═══ Before/After 2열 ═══ */
+  .ba-stack {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(20px, 3vw, 40px);
+    align-items: start;
+  }
+  .ba-card.before, .ba-card.after { width: 100%; }
+
+  /* ═══ 이용 단계 3열 ═══ */
+  .guide-steps-simple {
+    max-width: 960px;
+    margin: 0 auto;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: clamp(16px, 2vw, 32px);
+  }
+  .guide-step-simple { text-align: center; flex: none !important; }
+
+  /* ═══ VIP 다크 섹션 ═══ */
+  .vip-section {
+    padding: clamp(64px, 8vw, 120px) var(--gutter);
+  }
+  .vip-section > * {
+    max-width: var(--container);
     margin-left: auto;
     margin-right: auto;
-    padding-left: 48px;
-    padding-right: 48px;
   }
 
-  /* ─── 헤더 ─── */
-  .header { padding: 16px 40px; }
-  .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 68px; }
-  .header-inner .logo { font-size: 28px; }
-  .menu-btn { display: none; }
-  .header-inner::after {
-    content: "서비스 소개   이용방법   요금안내   Q&A";
-    color: rgba(255,255,255,0.85);
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
+  /* ═══ 가격 카드 2열 (카드 2개) ═══ */
+  .price-section {
+    padding: clamp(64px, 8vw, 120px) var(--gutter);
+  }
+  .price-cards {
+    max-width: 860px;
+    margin: 0 auto;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: clamp(20px, 3vw, 40px);
+  }
+
+  /* ═══ FAQ 2열 ═══ */
+  .faq-section { padding: clamp(64px, 8vw, 120px) var(--gutter); }
+  .faq-section .section-head {
+    max-width: var(--container);
     margin-left: auto;
-    white-space: nowrap;
+    margin-right: auto;
+  }
+  .faq-list {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 clamp(24px, 4vw, 60px);
+  }
+  .faq-q { font-size: 15px; }
+
+  /* ═══ 푸터 ═══ */
+  .footer { padding: clamp(64px, 6vw, 100px) var(--gutter) 40px; }
+  .footer-top {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: clamp(40px, 6vw, 100px);
+    padding-bottom: 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(16px, 2vw, 32px);
+  }
+  .footer-bottom {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding-top: 28px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
 
-  /* ─── 히어로 ─── */
-  .hero { padding: 0 80px 80px; min-height: 100svh; justify-content: center; }
-  .hero-content { max-width: 680px; padding-top: 120px; }
-  .hero-title { font-size: 72px; line-height: 1.05; }
-  .hero-sub { font-size: 20px; max-width: 520px; margin-bottom: 40px; }
-  .hero-cta-group { flex-direction: row; gap: 16px; }
-  .hero-cta-group .btn { flex: 0 0 auto; min-width: 220px; height: 60px; font-size: 17px; }
-  .hero-proof { margin-top: 48px; }
-  .hero-ticker-item { min-width: 280px; max-width: 280px; }
+  /* ═══ FAB 위치 ═══ */
+  .chatbot-fab { bottom: 40px; right: 40px; width: 56px; height: 56px; }
+  .lang-selector { bottom: 108px; right: 40px; }
+  .lang-fab { width: 48px; height: 48px; }
 
-  /* ─── 리뷰 섹션 ─── */
-  .rv-wrap { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-  .rv-card { margin: 0; }
-
-  /* ─── Before/After ─── */
-  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-
-  /* ─── 이용 단계 ─── */
-  .step-list { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
-  .step-item { text-align: center; }
-
-  /* ─── VIP 섹션 ─── */
-  .vip-section { padding: 100px 80px; }
-  .vip-section > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
-
-  /* ─── 가격 카드 ─── */
-  .price-section { padding: 100px 0; }
-  .price-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; padding: 0 48px; }
-
-  /* ─── FAQ ─── */
-  .faq-section { padding: 100px 0; }
-  .faq-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; padding: 0 48px; }
-  .faq-item { break-inside: avoid; }
-  .faq-q { font-size: 16px; }
-
-  /* ─── 푸터 ─── */
-  .footer { padding: 80px 0 40px; }
-  .footer-top { display: grid; grid-template-columns: 1fr auto; gap: 80px; padding: 0 80px 56px; }
-  .footer-nav { display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; }
-  .footer-bottom { padding: 24px 80px; flex-direction: row; justify-content: space-between; }
-
-  /* ─── 챗봇 FAB 위치 ─── */
-  .chatbot-fab { bottom: 40px; right: 40px; width: 60px; height: 60px; }
-  .lang-fab { bottom: 110px; right: 40px; width: 52px; height: 52px; }
+  /* ═══ 태블릿 중간 조정 (1024~1279) ═══ */
+  @media (max-width: 1279px) {
+    .price-cards { grid-template-columns: 1fr !important; max-width: 480px !important; }
+    .rv-cards-track { grid-template-columns: repeat(2, 1fr) !important; }
+    .guide-steps-simple { grid-template-columns: 1fr !important; }
+    .ba-stack { grid-template-columns: 1fr !important; }
+  }
 }
 
 </style>
@@ -2487,7 +2671,15 @@ a { color: inherit; text-decoration: none; }
   <path class="cls-2" d="M217.26,24.81c.67-3.15,1.31-6.52,1.87-9.55.09-.5.52-.85,1.03-.85h6.87c.63,0,1.12.55,1.04,1.17-.03.24-.07.51-.11.8-.14,1,1.08,1.61,1.78.88,1.88-1.95,4.3-3.22,7.74-3.48.7-.05,1.26.58,1.12,1.26l-1.46,7.15c-.1.47-.5.8-.99.83-5.97.37-10.17,3.9-11.72,11.25l-3.05,14.42c-.1.49-.53.83-1.03.83h-7.07c-.67,0-1.17-.62-1.03-1.27l5-23.45Z"/>
 </svg>
     </a>
+    <!-- 데스크톱 네비 -->
+    <nav class="desktop-nav">
+      <a href="#" onclick="go('about');return false">서비스 소개</a>
+      <a href="#" onclick="go('how');return false">이용방법</a>
+      <a href="#" onclick="go('price');return false">요금안내</a>
+      <a href="#" onclick="go('faq');return false">Q&A</a>
+    </nav>
     <div class="header-right">
+      <button class="desktop-cta-btn" onclick="startReserve('storage')">예약하기</button>
       <button class="menu-btn" aria-label="메뉴 열기" onclick="go('menu')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round">
           <line x1="4" y1="7" x2="20" y2="7"/>

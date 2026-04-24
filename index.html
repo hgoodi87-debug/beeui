@@ -43,17 +43,18 @@
 .screen.home-v2{
   position:static !important; inset:auto !important;
   transform:none !important; display:block !important;
-  overflow-y:auto; height:auto; min-height:100dvh;
+  overflow-y:visible; height:auto; min-height:100dvh;
   background:#fff;
 }
 .screen.home-v2:not(.active){ display:none !important; }
-/* When home-v2 is active, make app shell scrollable */
+/* When home-v2 is active, make app shell and html scrollable */
+html:has(.home-v2.active){ overflow:auto !important; height:auto !important; }
+body:has(.home-v2.active){ overflow-x:hidden !important; overflow-y:auto !important; height:auto !important; padding-bottom:0 !important; }
 .app:has(.home-v2.active){
   position:static !important; transform:none !important;
   width:100% !important; height:auto !important; max-width:none !important;
   overflow:visible !important; box-shadow:none !important; border-radius:0 !important;
 }
-body:has(.home-v2.active){ background:#fff !important; overflow-y:auto !important; }
 :root{
   --yellow:#FFC700; --yellow-deep:#D9A900; --yellow-soft:#FFF1A8;
   --bg:#FFFFFF; --bg-soft:#FAFAF8; --bg-dark:#0A0A0A; --bg-dark-2:#141414;
@@ -2369,6 +2370,86 @@ a { color: inherit; text-decoration: none; }
   .gss-desc { font-size: 10px; }
   .price-name { font-size: 16px; }
   .price-value .won { font-size: 22px; }
+}
+
+/* ====================================================
+   DESKTOP RESPONSIVE (≥1024px) — chlwhd homepage
+   ==================================================== */
+@media (min-width: 1024px) {
+  /* ─── 전체 컨테이너 ─── */
+  .section { padding: 100px 0; }
+  .section > *:not(.section-full),
+  .section-title, .section-desc, .section-label,
+  .section-head, .section-narrow,
+  .before-after, .step-list, .price-cards,
+  .faq-list, .footer-top, .footer-bottom,
+  .rv-wrap, .vip-section > * {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+
+  /* ─── 헤더 ─── */
+  .header { padding: 16px 40px; }
+  .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 68px; }
+  .header-inner .logo { font-size: 28px; }
+  .menu-btn { display: none; }
+  .header-inner::after {
+    content: "서비스 소개   이용방법   요금안내   Q&A";
+    color: rgba(255,255,255,0.85);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  /* ─── 히어로 ─── */
+  .hero { padding: 0 80px 80px; min-height: 100svh; justify-content: center; }
+  .hero-content { max-width: 680px; padding-top: 120px; }
+  .hero-title { font-size: 72px; line-height: 1.05; }
+  .hero-sub { font-size: 20px; max-width: 520px; margin-bottom: 40px; }
+  .hero-cta-group { flex-direction: row; gap: 16px; }
+  .hero-cta-group .btn { flex: 0 0 auto; min-width: 220px; height: 60px; font-size: 17px; }
+  .hero-proof { margin-top: 48px; }
+  .hero-ticker-item { min-width: 280px; max-width: 280px; }
+
+  /* ─── 리뷰 섹션 ─── */
+  .rv-wrap { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .rv-card { margin: 0; }
+
+  /* ─── Before/After ─── */
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+
+  /* ─── 이용 단계 ─── */
+  .step-list { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
+  .step-item { text-align: center; }
+
+  /* ─── VIP 섹션 ─── */
+  .vip-section { padding: 100px 80px; }
+  .vip-section > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+  /* ─── 가격 카드 ─── */
+  .price-section { padding: 100px 0; }
+  .price-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; padding: 0 48px; }
+
+  /* ─── FAQ ─── */
+  .faq-section { padding: 100px 0; }
+  .faq-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; padding: 0 48px; }
+  .faq-item { break-inside: avoid; }
+  .faq-q { font-size: 16px; }
+
+  /* ─── 푸터 ─── */
+  .footer { padding: 80px 0 40px; }
+  .footer-top { display: grid; grid-template-columns: 1fr auto; gap: 80px; padding: 0 80px 56px; }
+  .footer-nav { display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; }
+  .footer-bottom { padding: 24px 80px; flex-direction: row; justify-content: space-between; }
+
+  /* ─── 챗봇 FAB 위치 ─── */
+  .chatbot-fab { bottom: 40px; right: 40px; width: 60px; height: 60px; }
+  .lang-fab { bottom: 110px; right: 40px; width: 52px; height: 52px; }
 }
 
 </style>

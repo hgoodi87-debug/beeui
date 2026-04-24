@@ -25,6 +25,7 @@ interface AccountingTabProps {
     expenditures: Expenditure[];
     deleteExpenditure: (id: string) => void;
     bookings: BookingState[];
+    allBookings?: BookingState[];
     locations: LocationOption[];
     onExpenditureSaved?: (exp: Expenditure) => void;
     t: any;
@@ -48,6 +49,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     expenditures,
     deleteExpenditure,
     bookings,
+    allBookings,
     locations,
     onExpenditureSaved,
     t
@@ -1177,7 +1179,7 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                 {/* 🏪 지점 정산 탭 */}
                 {activeSubTab === 'branch' && (
                     <BranchSettlementPanel
-                        bookings={bookings}
+                        bookings={allBookings ?? bookings}
                         locations={locations}
                         expenditures={expenditures}
                         revenueStartDate={revenueStartDate}

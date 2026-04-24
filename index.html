@@ -2563,43 +2563,11 @@ a { color: inherit; text-decoration: none; }
   .section-title { font-size: clamp(36px, 3.5vw, 52px) !important; }
   .section-desc { font-size: clamp(15px, 1.2vw, 18px); }
 
-  /* ═══ 리뷰 섹션 흰 배경 ═══ */
-  .reviews-section {
-    background: #fff !important;
-    color: #111 !important;
+  /* ═══ 리뷰 카드 한 줄 3열 그리드 ═══ */
+  .rv-cards {
+    overflow: visible !important;
+    padding: 0 !important;
   }
-  .reviews-section .section-label { color: #FFC700 !important; }
-  .reviews-section .section-title,
-  .reviews-section .section-desc { color: #111 !important; }
-  .reviews-section .rv-stars-big { color: #FFC700 !important; }
-  /* 평점 바 */
-  .reviews-section .rv-num { color: #111 !important; }
-  .reviews-section .rv-score-stars { color: #FFC700 !important; }
-  .reviews-section .rv-count { color: #666 !important; }
-  .reviews-section .rv-bar-label { color: #333 !important; }
-  .reviews-section .rv-bar-pct { color: #333 !important; }
-  .reviews-section .rv-bar-track { background: #eee !important; }
-  .reviews-section .rv-bar-fill { background: #FFC700 !important; }
-  /* 사진/헤더 */
-  .reviews-section .rv-photos-header span,
-  .reviews-section .rv-photos-header a { color: #111 !important; }
-  /* 카드 */
-  .reviews-section .rv-card {
-    background: #fff !important;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06) !important;
-  }
-  .reviews-section .rv-card-name { color: #111 !important; }
-  .reviews-section .rv-card-text { color: #333 !important; }
-  .reviews-section .rv-card-date { color: #999 !important; }
-  .reviews-section .rv-card-stars { color: #FFC700 !important; }
-  /* 개요 박스 */
-  .reviews-section .rv-overview {
-    background: #f8f8f8 !important;
-    border: 1px solid #eee !important;
-    color: #111 !important;
-  }
-
-  /* ═══ 리뷰 카드 overflow → grid ═══ */
   .rv-cards-track {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
@@ -2607,10 +2575,18 @@ a { color: inherit; text-decoration: none; }
     overflow: visible !important;
     transform: none !important;
     width: 100% !important;
+    max-width: var(--container) !important;
+    margin: 0 auto !important;
   }
-  .rv-card { margin: 0; flex: none !important; min-width: unset !important; max-width: unset !important; width: auto !important; }
-  /* 원래 overflow 컨테이너 해제 */
-  .rv-cards { overflow: visible !important; }
+  /* 스크롤용 복제 카드 숨기기 */
+  .rv-cards-track .rv-card:nth-child(n+4) { display: none !important; }
+  .rv-card {
+    margin: 0 !important;
+    flex: none !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    width: auto !important;
+  }
 
   /* ═══ Before/After 세로 + 화살표 ═══ */
   .ba-stack {

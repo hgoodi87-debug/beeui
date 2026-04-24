@@ -82,9 +82,108 @@ img{max-width:100%;display:block}
   .app{ width:100%; height:100dvh; border-radius:0; }
 }
 /* 큰 화면: 폰 프레임 스타일 */
-@media (min-width:481px), (min-height:901px){
+@media (min-width:481px) and (max-width:1023px), (min-height:901px) and (max-width:1023px){
   body{ background:#0A0A0A; }
   .app{ border-radius:32px; }
+}
+
+/* ====== DESKTOP (≥1024px): WEB LAYOUT ====== */
+@media (min-width:1024px){
+  body{ background:#fff; overflow-y:auto; }
+  .app{
+    position:static; transform:none;
+    width:100%; max-width:none; height:auto; min-height:100dvh;
+    box-shadow:none; border-radius:0; overflow:visible;
+  }
+  .screen{
+    position:relative; inset:auto;
+    min-height:100dvh; transform:none !important;
+    transition:opacity .2s ease;
+  }
+  .screen:not(.active){ display:none; }
+  .screen.active, .screen.leaving, .screen.leaving-back{ display:flex; }
+  .screen.leaving, .screen.leaving-back{ display:none; }
+
+  /* 헤더: 풀폭 */
+  .sc-header{ padding:0 max(32px,calc((100% - 1200px)/2)); height:72px; }
+  .sc-header .title{ font-size:18px; }
+  .sc-body{ padding:0; }
+
+  /* ===== HOME ===== */
+  #home{ min-height:100dvh; }
+  #home .sc-header{ padding:0 max(32px,calc((100% - 1200px)/2)); }
+  .hero{
+    min-height:calc(100dvh - 72px); padding:120px max(32px,calc((100% - 1200px)/2)) 80px;
+    display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center;
+  }
+  .hero-title{ font-size:80px !important; line-height:1.05; margin:0 0 24px; }
+  .hero-sub{ font-size:20px; line-height:1.6; margin-bottom:36px; max-width:520px; }
+  .hero-cta{ flex-direction:row !important; gap:14px; max-width:560px; }
+  .hero-cta .btn{ flex:1; }
+  .hero-proof{ margin-top:32px; font-size:14px; justify-content:flex-start; gap:12px; }
+  .review-strip{ max-width:1200px; margin:0 auto; padding:40px 32px 60px; }
+
+  /* ===== MENU (데스크톱에서 숨기고 상단 네비로 대체) ===== */
+  #home .sc-header .hamburger{ display:none; }
+  #home .sc-header::after{
+    content:"서비스 소개  ·  이용방법  ·  요금 안내  ·  Q&A";
+    color:#fff; font-size:14px; margin-left:auto; letter-spacing:0.02em;
+  }
+
+  /* ===== 공통 페이지: 중앙 컨텐츠 1200px ===== */
+  #about .sc-body, #how .sc-body, #price .sc-body, #faq .sc-body,
+  #biz .sc-body, #privacy .sc-body, #terms .sc-body{
+    max-width:1200px; margin:0 auto; padding:48px 32px 80px;
+  }
+  .page-title{ font-size:48px !important; }
+  .page-desc{ font-size:18px !important; }
+
+  /* 요금 카드 3-column */
+  #price .sc-body{ display:block; }
+  #price .price-card{
+    display:inline-block; width:calc(33.333% - 12px); margin:0 8px 16px 0;
+    vertical-align:top;
+  }
+  #price .price-card:nth-child(3n){ margin-right:0; }
+
+  /* 이용방법·서비스 카드 그리드 */
+  #about .step-card, #how .step-card{
+    display:inline-block; width:calc(33.333% - 12px); margin:0 8px 16px 0;
+    vertical-align:top;
+  }
+  #about .step-card:nth-child(3n), #how .step-card:nth-child(3n){ margin-right:0; }
+
+  /* ===== 예약 플로우: 중앙 640px 컬럼 ===== */
+  #reserve-time, #reserve-user, #reserve-2{
+    background:#fafafa;
+  }
+  #reserve-time .sc-body, #reserve-user .sc-body, #reserve-2 .sc-body{
+    max-width:640px; margin:0 auto; background:#fff;
+    box-shadow:0 2px 20px rgba(0,0,0,0.06); border-radius:20px;
+    padding:32px; margin-top:24px; margin-bottom:24px;
+  }
+  #reserve-time .sc-header, #reserve-user .sc-header, #reserve-2 .sc-header,
+  #reserve-1 .sc-header{ max-width:640px; margin:0 auto; }
+  #reserve-time .step-head, #reserve-user .step-head, #reserve-2 .step-head{
+    max-width:640px; margin:0 auto;
+  }
+  #reserve-time .progress, #reserve-user .progress, #reserve-2 .progress, #reserve-1 .progress{
+    max-width:640px; margin:0 auto;
+  }
+  #reserve-time .sc-footer, #reserve-user .sc-footer, #reserve-2 .sc-footer{
+    max-width:640px; margin:0 auto;
+  }
+
+  /* 지도 플로우: 풀폭 */
+  #reserve-1 .map-wrap{ height:calc(100dvh - 180px); }
+
+  /* 메뉴: 좌측 사이드바 스타일 */
+  #menu{ min-height:100dvh; }
+  #menu .sc-body{ max-width:720px; margin:0 auto; padding:64px 32px; }
+  .menu-list{ font-size:20px; }
+
+  /* FAQ 2-column */
+  #faq .faq-q{ font-size:18px; }
 }
 
 /* ====== SCREEN SYSTEM ====== */
@@ -817,7 +916,7 @@ img{max-width:100%;display:block}
       </div>
     </header>
     <div class="hero">
-      <h1 class="hero-title">짐 없이<br>시작되는<br><span class="ac">진짜 한국 여행</span></h1>
+      <h1 class="hero-title">짐 없는 자유,<br><span class="ac">온전한 만끽</span></h1>
       <p class="hero-sub">서울 전역 40여개 이상의 지점,<br>당신의 짐을 안전하게 보관하고 배송합니다.</p>
       <div class="hero-cta">
         <button class="btn btn-primary" onclick="startReserve('storage')">가까운 보관소 찾기 →</button>
@@ -1016,6 +1115,18 @@ img{max-width:100%;display:block}
             <li>캐리어 <b>₩25,000</b> · 쇼핑백 <b>₩10,000</b></li>
             <li>인천공항 <b>제1터미널 · 제2터미널</b></li>
             <li>김포공항 <b>국내선 · 국제선</b></li>
+            <li>맡김 <b>09:00 - 13:00</b> · 공항 수령 <b>16:00 - 21:00</b></li>
+          </ul>
+        </div>
+
+        <!-- 보험 -->
+        <div class="price-card">
+          <div class="label">INSURANCE</div>
+          <h3>보험 포함</h3>
+          <div class="amount">₩2,000<small>/ 짐 1개당</small></div>
+          <ul>
+            <li>단 <b>₩2,000</b>으로 <b>최대 50만원</b> 보상</li>
+            <li>사고 발생 시 신속 처리</li>
           </ul>
         </div>
       </div>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -48,12 +48,14 @@
 }
 .screen.home-v2:not(.active){ display:none !important; }
 /* When home-v2 is active, make app shell and html scrollable */
+@media (min-width: 1024px) {
 html:has(.home-v2.active){ overflow-x:hidden !important; overflow-y:scroll !important; height:auto !important; }
 body:has(.home-v2.active){ overflow:visible !important; height:auto !important; padding-bottom:0 !important; }
 .app:has(.home-v2.active){
   position:static !important; transform:none !important;
   width:100% !important; height:auto !important; max-width:none !important;
   overflow:visible !important; box-shadow:none !important; border-radius:0 !important;
+}
 }
 :root{
   --yellow:#FFC700; --yellow-deep:#D9A900; --yellow-soft:#FFF1A8;
@@ -2755,6 +2757,96 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+
+/* === MOBILE HOME CSS === */
+.mobile-home-wrapper { display:block; }
+.desktop-home-wrapper { display:none; }
+@media (min-width:1024px){
+  .mobile-home-wrapper { display:none !important; }
+  .desktop-home-wrapper { display:block; }
+}
+.m-hero {
+  position:relative; flex:1; display:flex; flex-direction:column;
+  padding:calc(64px + 32px) 24px 8px;
+  background: linear-gradient(180deg,rgba(10,10,10,0.35) 0%,rgba(10,10,10,0.65) 55%,rgba(10,10,10,0.98) 100%), url('https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=1200&q=85') center 30%/cover;
+  color:#fff; min-height: calc(100dvh - 80px);
+}
+.m-hero-title { font-size:43px; line-height:1.1; font-weight:800; letter-spacing:-0.03em; margin-top:auto; margin-bottom:16px; text-shadow:0 4px 20px rgba(0,0,0,0.6); }
+.m-ac { color:#FFC700; }
+.m-hero-sub { color:rgba(255,255,255,0.7); font-size:17px; margin-bottom:24px; }
+.m-hero-cta { display:flex; flex-direction:column; gap:10px; }
+.m-hero-proof { margin-top:18px; display:flex; align-items:center; gap:8px; font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.04em; text-transform:uppercase; }
+.m-review-strip { background:#141414; padding:14px 0; overflow:hidden; border-top:1px solid rgba(255,255,255,0.05); }
+.m-review-track { display:flex; gap:12px; animation:marquee 28s linear infinite; width:max-content; }
+@keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.m-review-card { flex:0 0 240px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; color:#fff; }
+.m-review-head { display:flex; align-items:center; margin-bottom:8px; }
+.m-avatar { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:#fff; margin-right:8px; }
+.m-review-card b { font-size:13px; }
+.m-stars { color:#FFC700; font-size:11px; margin-left:6px; }
+.m-review-card p { font-size:12px; color:rgba(255,255,255,0.8); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+/* 모바일 홈 SPA 동작 (mobile-home-wrapper가 보일 때) */
+@media (max-width:1023px){
+  .screen.home-v2 { position:absolute !important; inset:0 !important; height:100% !important; overflow-y:auto !important; display:flex !important; flex-direction:column !important; }
+}
+
+/* === 새 예약 플로우 CSS === */
+.progress { display:flex; gap:4px; padding:12px 24px 0; }
+.progress .dot { flex:1; height:3px; background:var(--line); border-radius:2px; transition:background .3s ease; }
+.progress .dot.active { background:#FFC700; }
+.progress .dot.done { background:#111; }
+.step-head { padding:18px 24px 8px; }
+.step-head .num { display:inline-block; font-family:'Outfit',sans-serif; font-size:11px; font-weight:800; color:#D99700; letter-spacing:0.12em; }
+.step-head h2 { font-size:24px; font-weight:800; letter-spacing:-0.02em; margin-top:6px; }
+.step-head p { font-size:13px; color:var(--ink-3); margin-top:4px; }
+.r-body { padding:8px 24px 24px; }
+.svc-tabs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+.svc-tab { padding:20px 16px; border-radius:16px; border:2px solid var(--line); background:#fff; text-align:left; transition:all .2s ease; cursor:pointer; }
+.svc-tab.active { border-color:#111; background:#111; color:#fff; }
+.svc-tab .ic { font-size:28px; display:block; margin-bottom:8px; }
+.svc-tab .tt { font-weight:800; font-size:15px; display:block; }
+.svc-tab .sub { font-size:11px; color:var(--ink-3); margin-top:2px; display:block; }
+.svc-tab.active .sub { color:rgba(255,255,255,0.6); }
+.dt-chip { display:flex; align-items:center; padding:14px 12px; background:var(--bg-soft,#FAFAF8); border-radius:14px; border:1.5px solid transparent; min-width:0; overflow:hidden; }
+.dt-chip:focus-within { border-color:#FFC700; }
+.dt-chip input, .dt-chip select { flex:1; min-width:0; width:100%; background:transparent; border:none; outline:none; font-size:15px; font-weight:700; color:var(--ink,#1A1A1A); appearance:none; -webkit-appearance:none; padding:0; }
+.r-branch-list { display:flex; flex-direction:column; gap:10px; }
+.r-branch-card { display:flex; gap:12px; align-items:center; padding:14px; border-radius:16px; border:2px solid var(--line,#E8E8E8); background:#fff; transition:all .15s ease; text-align:left; width:100%; cursor:pointer; }
+.r-branch-card.selected { border-color:#FFC700; background:#FFFBEA; }
+.r-branch-card .pin { flex:0 0 44px; height:44px; border-radius:50%; background:#FFC700; display:flex; align-items:center; justify-content:center; font-size:20px; }
+.r-branch-card .info { flex:1; min-width:0; }
+.r-branch-card .nm { font-weight:800; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.r-branch-card .meta { font-size:12px; color:var(--ink-3,#6B6B6B); margin-top:2px; }
+.r-branch-card .dist { font-size:12px; font-weight:700; color:#D99700; flex-shrink:0; }
+.r-item-card { background:var(--bg-soft,#FAFAF8); border-radius:18px; padding:16px; margin-bottom:12px; border:1px solid var(--line-2,#F0F0F0); }
+.r-item-card .row { display:flex; align-items:center; gap:12px; }
+.r-item-card .ic { width:56px; height:56px; border-radius:14px; background:#fff; display:flex; align-items:center; justify-content:center; font-size:30px; border:1px solid var(--line-2,#F0F0F0); }
+.r-item-card .ti { flex:1; min-width:0; }
+.r-item-card .nm { font-weight:800; font-size:15px; }
+.r-item-card .pr { font-family:'Outfit',sans-serif; font-size:14px; color:#D99700; font-weight:700; margin-top:2px; }
+.r-item-card .pr small { color:var(--ink-3,#6B6B6B); font-weight:500; margin-left:4px; }
+.r-counter { display:flex; align-items:center; gap:10px; }
+.r-counter button { width:36px; height:36px; border-radius:50%; background:#fff; border:1.5px solid var(--line,#E8E8E8); font-size:18px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.r-counter button.plus { background:#111; color:#fff; border-color:#111; }
+.r-counter button:disabled { opacity:0.4; }
+.r-counter .q { font-weight:800; font-size:18px; min-width:20px; text-align:center; }
+.r-summary { background:#FFFBEA; border-radius:18px; padding:16px; margin-top:16px; border:1px solid #FFE27A; }
+.r-summary-row { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; color:var(--ink-2,#3D3D3D); }
+.r-summary-row.total { border-top:1px dashed #D99700; margin-top:8px; padding-top:10px; font-size:16px; font-weight:800; color:#111; }
+.r-summary-row .amt { font-family:'Outfit',sans-serif; font-weight:700; }
+.r-total-bar { display:flex; align-items:center; justify-content:space-between; padding:0 8px 10px; font-size:13px; }
+.r-total-bar .tl { color:var(--ink-3,#6B6B6B); }
+.r-total-bar .tv { font-family:'Outfit',sans-serif; font-size:20px; font-weight:800; color:#111; }
+.r-done-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; text-align:center; }
+.r-done-check { width:88px; height:88px; border-radius:50%; background:#FFC700; display:flex; align-items:center; justify-content:center; font-size:44px; margin-bottom:20px; }
+.r-voucher { width:100%; background:#111; color:#fff; border-radius:20px; padding:20px; text-align:left; margin-bottom:20px; }
+.r-voucher .v-code { font-family:'Outfit',sans-serif; font-size:13px; color:#FFC700; letter-spacing:0.1em; }
+.r-voucher .v-name { font-weight:800; font-size:18px; margin-top:4px; }
+.r-voucher .v-meta { font-size:12px; color:rgba(255,255,255,0.6); margin-top:8px; line-height:1.6; }
+.r-qr-box { width:180px; height:180px; background:#fff; border-radius:16px; margin:16px auto 0; padding:12px; }
+.r-qr-box svg { width:100%; height:100%; }
+.r-agree { display:flex; align-items:flex-start; gap:10px; padding:12px 0; font-size:13px; color:var(--ink-2,#3D3D3D); }
+.r-agree input { width:20px; height:20px; accent-color:#FFC700; margin-top:2px; }
 </style>
 </head>
 <body>
@@ -2763,7 +2855,37 @@ a { color: inherit; text-decoration: none; }
   <!-- ============ HOME ============ -->
   <section class="screen active home-v2" id="home">
 
+<!-- === MOBILE HOME === -->
+<div class="mobile-home-wrapper">
+  <header class="sc-header" style="position:absolute;top:0;left:0;right:0;background:#000;border:none;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:64px;">
+    <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;color:#fff;letter-spacing:-0.02em;">bee<em style="font-style:italic;color:#FFC700;">liber</em></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button id="mLangBtn" onclick="toggleLang(event)" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.14);border-radius:12px;overflow:hidden;border:none;cursor:pointer;padding:0;">
+        <span class="flag flag-ko" id="mLangFlag" style="display:inline-block;width:26px;height:19px;background-size:cover;background-position:center;border-radius:3px;background-image:url('https://flagcdn.com/w80/kr.png');"></span>
+      </button>
+      <button onclick="go('menu')" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#FFC700;border-radius:12px;border:none;cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="m-hero">
+    <h1 class="m-hero-title">짐 없이<br>시작되는<br><span class="m-ac">진짜 한국 여행</span></h1>
+    <p class="m-hero-sub">서울 전역 40여개 이상의 지점,<br>당신의 짐을 안전하게 보관하고 배송합니다.</p>
+    <div class="m-hero-cta">
+      <button class="btn btn-primary" onclick="startReserve('storage')">가까운 보관소 찾기 →</button>
+      <button class="btn btn-ghost-dark" onclick="startReserve('delivery')">공항 배송 예약 →</button>
+    </div>
+    <div class="m-hero-proof">
+      <span>VERIFIED GOOGLE FEEDBACK</span><span style="color:rgba(255,255,255,0.3);">•</span>
+      <span style="color:#FFC700;font-weight:700;">5★ / 1,000+ People</span>
+    </div>
+  </div>
+  <div class="m-review-strip">
+    <div class="m-review-track" id="mReviewTrack"></div>
+  </div>
+</div>
 
+<div class="desktop-home-wrapper">
 <!-- ===== HEADER ===== -->
 <header class="header" id="header">
   <div class="header-inner">
@@ -3435,6 +3557,8 @@ a { color: inherit; text-decoration: none; }
   <span class="chatbot-dot"></span>
 </button>
 
+</div><!-- /desktop-home-wrapper -->
+
 <script>
 // ===== Header scroll effect =====
 const header = document.getElementById('header');
@@ -3727,251 +3851,175 @@ document.querySelectorAll('button').forEach(btn => {
   </section>
 
   <!-- ============ RESERVE STEP 1 ============ -->
-  <section class="screen" id="reserve-time">
+  <section class="screen" id="r-step1">
     <header class="sc-header">
       <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-      <div class="title">이용 시간</div>
+      <div class="title">예약하기</div>
     </header>
-    <div class="progress four"><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-    <div class="step-head" style="padding-bottom:10px">
-      <h2 style="font-size:24px">언제 이용하세요?</h2>
-      <p style="font-size:15px">이용 가능한 지점을 찾아드릴게요.</p>
-    </div>
+    <div class="progress"><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="step-head"><span class="num">STEP 01 / 05</span><h2>서비스를 선택하세요</h2><p>어떤 서비스가 필요하신가요?</p></div>
     <div class="sc-body">
       <div class="r-body">
         <div class="svc-tabs">
-          <button class="svc-tab active" data-svc="storage" onclick="selectService('storage')">
-            <span class="ic">🧳</span><span class="tt">짐 보관</span>
+          <button class="svc-tab" data-svc="storage" onclick="rSelectService('storage')">
+            <span class="ic">🧳</span><span class="tt">짐 보관</span><span class="sub">시간 단위 보관</span>
           </button>
-          <button class="svc-tab" data-svc="delivery" onclick="selectService('delivery')">
-            <span class="ic">✈️</span><span class="tt">공항 배송</span>
+          <button class="svc-tab" data-svc="delivery" onclick="rSelectService('delivery')">
+            <span class="ic">✈️</span><span class="tt">공항 배송</span><span class="sub">당일 인천공항</span>
           </button>
-        </div>
-        <div class="field" id="airport-field" hidden>
-          <div class="field-label rt-label">도착지</div>
-          <select class="input" id="airport-select" onchange="onAirportChange()">
-            <option value="icn-t1">인천공항 제1터미널</option>
-            <option value="icn-t2">인천공항 제2터미널</option>
-            <option value="gmp">김포공항</option>
-          </select>
         </div>
         <div class="field">
-          <div class="field-label rt-label" id="time-label">이용 시간</div>
-          <div class="time-grid">
-            <span class="tg-label">맡김</span>
-            <div class="dt-chip"><input type="date" id="dropDate"></div>
-            <div class="dt-chip"><select class="time-sel" id="dropTime"></select></div>
-            <span class="tg-label">찾음</span>
-            <div class="dt-chip"><input type="date" id="pickDate"></div>
-            <div class="dt-chip"><select class="time-sel" id="pickTime"></select></div>
+          <div class="field-label">맡길 날짜 · 시간</div>
+          <div class="row-2">
+            <div class="dt-chip"><input type="date" id="r-dropDate"></div>
+            <div class="dt-chip"><select id="r-dropTime"></select></div>
           </div>
         </div>
-        <div class="field" style="margin-bottom:0">
-          <div class="field-label rt-label">가방</div>
-          <div class="bag-grid">
-            <div class="bag-card">
-              <span class="bag-ic">🧳</span>
-              <span class="bag-nm">캐리어</span>
-              <div class="counter"><button class="minus" onclick="changeQty('carrier',-1)">−</button><span class="q" id="q-carrier">1</span><button class="plus" onclick="changeQty('carrier',1)">+</button></div>
-            </div>
-            <div class="bag-card">
-              <span class="bag-ic">🛍️</span>
-              <span class="bag-nm">쇼핑백</span>
-              <div class="counter"><button class="minus" onclick="changeQty('bag',-1)">−</button><span class="q" id="q-bag">0</span><button class="plus" onclick="changeQty('bag',1)">+</button></div>
-            </div>
+        <div class="field">
+          <div class="field-label">찾을 날짜 · 시간</div>
+          <div class="row-2">
+            <div class="dt-chip"><input type="date" id="r-pickDate"></div>
+            <div class="dt-chip"><select id="r-pickTime"></select></div>
           </div>
         </div>
       </div>
     </div>
     <div class="sc-footer">
-      <button class="btn btn-primary" onclick="goToMap()">지점 찾기 →</button>
+      <button class="btn btn-primary" onclick="go('r-step2')">다음 →</button>
     </div>
   </section>
 
-  <!-- ============ RESERVE STEP 2: MAP ============ -->
-  <section class="screen" id="reserve-1">
+  <!-- ============ RESERVE STEP 2 ============ -->
+  <section class="screen" id="r-step2">
     <header class="sc-header">
       <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-      <div class="title">지점 선택</div>
+      <div class="title">예약하기</div>
     </header>
-    <div class="progress four"><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
-    <div class="sc-body no-scroll" style="padding:0">
-      <div class="map-wrap">
-        <div id="map" class="map-leaflet"></div>
-        <div class="map-search">
-          <svg class="ms-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="mapSearchInput" placeholder="주소, 역, 호텔명">
-          <button class="map-loc" id="gpsBtn" onclick="toggleGPS()" aria-label="GPS" title="GPS">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-          </button>
-        </div>
-        <div class="map-sheet" id="mapSheet">
-          <button class="sheet-handle-btn" id="sheetHandleBtn" aria-label="닫기"><span class="sheet-handle"></span></button>
-          <div class="sheet-head" id="sheetHead"><b id="sheetCity">내 주변</b>의 보관 장소 <span id="branchCount">0</span>곳</div>
-          <div class="branch-list" id="branchList"></div>
-          <div class="branch-detail" id="branchDetail" hidden>
-            <button class="bd-back" id="bdBackBtn" aria-label="닫기">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-            <div class="bd-row">
-              <img class="bd-photo" id="bdPhoto" src="" alt="">
-              <div class="bd-info">
-                <div class="bd-nm" id="bdNm"></div>
-                <div class="bd-line bd-line-pin"><svg class="bd-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="bdAddr"></span></div>
-                <div class="bd-line bd-line-clock"><svg class="bd-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="bdHours"></span></div>
-                <div class="bd-line bd-line-star"><svg class="bd-ic bd-ic-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.2L12 17.8 5.8 21.4l1.6-7.2L2 9.5l7.1-.6z"/></svg><span id="bdRating"></span><span class="bd-dot">·</span><svg class="bd-ic bd-ic-walk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M7 22l3-8 3 2 2 6M13 11l-3-2-2 4M15 14l3-3"/></svg><span id="bdDist"></span></div>
-              </div>
-            </div>
-            <button class="btn btn-primary bd-cta" onclick="confirmBranch()">이 지점에서 예약하기 →</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ RESERVE STEP 3: USER INFO ============ -->
-  <section class="screen" id="reserve-user">
-    <header class="sc-header">
-      <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-      <div class="title">예약자 정보</div>
-    </header>
-    <div class="progress four"><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div></div>
-    <div class="step-head" style="padding-bottom:10px">
-      <h2 style="font-size:24px">예약자 정보를 입력해주세요</h2>
-      <p style="font-size:15px">예약 확인 메일을 받을 정보예요.</p>
-    </div>
+    <div class="progress"><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="step-head"><span class="num">STEP 02 / 05</span><h2>지점을 선택하세요</h2><p>가까운 지점 순으로 표시됩니다.</p></div>
     <div class="sc-body">
       <div class="r-body">
-        <div class="field">
-          <div class="field-label">이름</div>
-          <input class="input" id="f-name" placeholder="홍길동">
-        </div>
-        <div class="field">
-          <div class="field-label">이메일</div>
-          <input class="input" id="f-email" type="email" placeholder="example@mail.com">
-          <p class="field-hint">바우처가 이메일로 전송되니 실제로 사용 가능한 주소를 입력해주세요.</p>
-        </div>
-        <div class="field">
-          <div class="field-label">연락처 (SNS)</div>
-          <div class="sns-row">
-            <input class="input sns-id" id="f-phone" type="text" placeholder="아이디 입력">
-            <select class="select sns-type" id="f-sns-type">
-              <option value="instagram">Instagram</option>
-              <option value="wechat">WeChat</option>
-              <option value="line">LINE</option>
-              <option value="kakao">KakaoTalk</option>
-              <option value="whatsapp">WhatsApp</option>
-            </select>
-          </div>
-          <p class="field-hint">직원과 연락할 수 있는 SNS 계정을 입력해주세요.</p>
-        </div>
-        <label class="agree"><input type="checkbox" id="f-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
+        <input class="input" type="text" placeholder="🔍 호텔명 · 역이름으로 검색" style="margin-bottom:14px">
+        <div class="r-branch-list" id="rBranchList"></div>
       </div>
     </div>
     <div class="sc-footer">
-      <button class="btn btn-primary" onclick="goToPayment()">다음 →</button>
+      <button class="btn btn-primary" id="r2-next" onclick="go('r-step3')" disabled>다음 →</button>
     </div>
   </section>
 
-  <!-- ============ RESERVE STEP 4: CHECKOUT ============ -->
-  <section class="screen" id="reserve-2">
+  <!-- ============ RESERVE STEP 3 ============ -->
+  <section class="screen" id="r-step3">
+    <header class="sc-header">
+      <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="title">예약하기</div>
+    </header>
+    <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="step-head"><span class="num">STEP 03 / 05</span><h2>짐 수량을 선택하세요</h2><p>실시간으로 금액이 계산됩니다.</p></div>
+    <div class="sc-body">
+      <div class="r-body">
+        <div class="r-item-card">
+          <div class="row"><div class="ic">🧳</div>
+            <div class="ti"><div class="nm">캐리어</div><div class="pr">₩25,000<small>/ 1회</small></div></div>
+            <div class="r-counter"><button class="minus" onclick="rChangeQty('carrier',-1)">−</button><span class="q" id="rq-carrier">0</span><button class="plus" onclick="rChangeQty('carrier',1)">+</button></div>
+          </div>
+        </div>
+        <div class="r-item-card">
+          <div class="row"><div class="ic">🛍️</div>
+            <div class="ti"><div class="nm">쇼핑백 · 손가방</div><div class="pr">₩10,000<small>/ 1회</small></div></div>
+            <div class="r-counter"><button class="minus" onclick="rChangeQty('bag',-1)">−</button><span class="q" id="rq-bag">0</span><button class="plus" onclick="rChangeQty('bag',1)">+</button></div>
+          </div>
+        </div>
+        <div class="r-item-card">
+          <div class="row"><div class="ic">🎒</div>
+            <div class="ti"><div class="nm">백팩 · 소형 가방</div><div class="pr">₩8,000<small>/ 1회</small></div></div>
+            <div class="r-counter"><button class="minus" onclick="rChangeQty('backpack',-1)">−</button><span class="q" id="rq-backpack">0</span><button class="plus" onclick="rChangeQty('backpack',1)">+</button></div>
+          </div>
+        </div>
+        <div class="r-summary">
+          <div class="r-summary-row"><span>캐리어 × <span id="rs-carrier">0</span></span><span class="amt" id="ra-carrier">₩0</span></div>
+          <div class="r-summary-row"><span>쇼핑백 × <span id="rs-bag">0</span></span><span class="amt" id="ra-bag">₩0</span></div>
+          <div class="r-summary-row"><span>백팩 × <span id="rs-backpack">0</span></span><span class="amt" id="ra-backpack">₩0</span></div>
+          <div class="r-summary-row total"><span>총 결제금액</span><span class="amt" id="ra-total">₩0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sc-footer">
+      <div class="r-total-bar"><span class="tl">총 <span id="rfoot-qty">0</span>개</span><span class="tv" id="rfoot-total">₩0</span></div>
+      <button class="btn btn-primary" id="r3-next" onclick="go('r-step4')" disabled>다음 →</button>
+    </div>
+  </section>
+
+  <!-- ============ RESERVE STEP 4 ============ -->
+  <section class="screen" id="r-step4">
+    <header class="sc-header">
+      <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="title">예약하기</div>
+    </header>
+    <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div></div>
+    <div class="step-head"><span class="num">STEP 04 / 05</span><h2>예약자 정보</h2><p>QR 바우처가 이메일로 발송됩니다.</p></div>
+    <div class="sc-body">
+      <div class="r-body">
+        <div class="field"><div class="field-label">이름</div><input class="input" id="rf-name" placeholder="홍길동"></div>
+        <div class="field"><div class="field-label">연락처</div><input class="input" id="rf-phone" type="tel" placeholder="010-0000-0000"></div>
+        <div class="field"><div class="field-label">이메일</div><input class="input" id="rf-email" type="email" placeholder="example@mail.com"></div>
+        <div class="field"><div class="field-label">요청사항 (선택)</div><textarea class="textarea" id="rf-note" placeholder="깨지기 쉬운 물품 등"></textarea></div>
+        <label class="r-agree"><input type="checkbox" id="rf-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
+      </div>
+    </div>
+    <div class="sc-footer">
+      <button class="btn btn-primary" onclick="rGoPayment()">결제하기 →</button>
+    </div>
+  </section>
+
+  <!-- ============ RESERVE STEP 5 ============ -->
+  <section class="screen" id="r-step5">
     <header class="sc-header">
       <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="title">결제</div>
     </header>
-    <div class="progress four"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div></div>
+    <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div></div>
+    <div class="step-head"><span class="num">STEP 05 / 05</span><h2>결제 수단을 선택하세요</h2></div>
     <div class="sc-body">
-      <div class="chk-body">
-        <!-- Selected branch + quick info -->
-        <div class="chk-card">
-          <div class="chk-card-title" id="chk-branch-nm">지점 선택됨</div>
-          <div class="chk-card-sub" id="chk-branch-addr"></div>
-          <div class="chk-row">
-            <span class="ic">🧳</span>
-            <span class="lb"><span id="chk-qty-breakdown">캐리어 1개</span></span>
-            <button class="chk-edit" onclick="editField('reserve-time')">편집</button>
-          </div>
-          <div class="chk-row">
-            <span class="ic">🕒</span>
-            <span class="lb"><span id="chk-drop">오늘, 지금</span> → <span id="chk-pick">18:00</span></span>
-            <button class="chk-edit" onclick="editField('reserve-time')">편집</button>
-          </div>
+      <div class="r-body">
+        <div class="r-summary" style="margin-top:0;margin-bottom:20px">
+          <div class="r-summary-row total" style="border:none;margin:0;padding:0"><span>결제 금액</span><span class="amt" id="rpay-total">₩0</span></div>
         </div>
-
-
-        <!-- Payment method -->
-        <div class="chk-card">
-          <div class="chk-card-title">지불 방법</div>
-          <label class="pay-opt">
-            <span class="pay-ic pay-gp">G Pay</span>
-            <span class="pay-nm">Google Pay</span>
-            <input type="radio" name="pay" value="gpay" checked>
-            <span class="pay-radio"></span>
-          </label>
-          <label class="pay-opt">
-            <span class="pay-ic pay-card">💳</span>
-            <span class="pay-nm">신용 카드</span>
-            <input type="radio" name="pay" value="card">
-            <span class="pay-radio"></span>
-          </label>
-          <label class="pay-opt">
-            <span class="pay-ic pay-kakao">K</span>
-            <span class="pay-nm">카카오페이</span>
-            <input type="radio" name="pay" value="kakao">
-            <span class="pay-radio"></span>
-          </label>
-        </div>
-
-        <!-- Promo -->
-        <button class="chk-card chk-promo" type="button">
-          <span class="ic">🏷️</span>
-          <span class="lb">프로모션 코드 추가</span>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
-        </button>
-
-
-        <!-- Summary -->
-        <div class="chk-summary">
-          <div class="s-row"><span id="sum-label">짐 보관 0개</span><span id="sum-base">₩0</span></div>
-          <div class="s-row total"><span>총</span><span id="sum-total">₩0</span></div>
+        <div class="field">
+          <div class="field-label">결제 수단</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="card" checked style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">신용 · 체크카드</div><div class="meta">Visa, Master, JCB 지원</div></div></label>
+            <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="kakao" style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">카카오페이</div><div class="meta">간편결제</div></div></label>
+            <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="naver" style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">네이버페이</div><div class="meta">간편결제</div></div></label>
+          </div>
         </div>
       </div>
     </div>
     <div class="sc-footer">
-      <button class="btn btn-primary btn-pay" id="payBtn" onclick="completePayment()">
-        <span class="pay-amt" id="pay-btn-txt">₩0</span>
-        <span class="pay-lb">결제하기</span>
-      </button>
+      <button class="btn btn-primary" id="rpay-btn" onclick="rCompletePayment()"><span id="rpay-btn-txt">결제하기</span></button>
     </div>
   </section>
 
   <!-- ============ RESERVE DONE ============ -->
-  <section class="screen" id="reserve-done" data-theme="dark">
-    <header class="sc-header">
-      <div class="logo">bee<em>liber</em></div>
-      <button class="back" onclick="go('home')" aria-label="닫기">
+  <section class="screen" id="r-done" data-theme="dark">
+    <header class="sc-header" style="background:rgba(10,10,10,0.85);border-bottom-color:rgba(255,255,255,0.08);">
+      <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;color:#fff;letter-spacing:-0.02em;">bee<em style="font-style:italic;color:#FFC700;">liber</em></div>
+      <button class="back" onclick="go('home')" style="color:#fff;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </header>
     <div class="sc-body">
-      <div class="done-wrap">
-        <div class="done-check">✓</div>
-        <h2 style="color:#fff">예약이 완료되었습니다!</h2>
-        <div class="voucher">
-          <div class="qr-box"><svg viewBox="0 0 100 100" id="qrSvg"></svg></div>
-          <div class="v-title">직원에게 QR코드를 보여주세요</div>
-          <div class="v-rows">
-            <div class="v-row"><span class="v-lb">예약번호</span><span class="v-vl" id="v-code">BL-000000</span></div>
-            <div class="v-row"><span class="v-lb">이름</span><span class="v-vl" id="v-name">-</span></div>
-            <div class="v-row"><span class="v-lb">맡기는 시간</span><span class="v-vl" id="v-drop">-</span></div>
-            <div class="v-row"><span class="v-lb">픽업 시간</span><span class="v-vl" id="v-pick">-</span></div>
-          </div>
-          <div class="v-warn">⚠️ 예약 시간을 꼭 지켜주세요. 시간 변경은 고객센터로 문의 바랍니다.</div>
+      <div class="r-done-wrap">
+        <div class="r-done-check">✓</div>
+        <h2 style="color:#fff;font-size:26px;font-weight:800;margin-bottom:8px;">예약이 완료되었습니다</h2>
+        <p style="color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:24px;">현장에서 아래 QR을 보여주세요</p>
+        <div class="r-voucher">
+          <div class="v-code" id="rv-code">BL-000000</div>
+          <div class="v-name" id="rv-name">예약자</div>
+          <div class="v-meta" id="rv-meta"></div>
+          <div class="r-qr-box"><svg viewBox="0 0 100 100" id="rQrSvg"></svg></div>
         </div>
-        <button class="btn btn-primary" onclick="saveVoucher()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          모바일에 저장
-        </button>
+        <button class="btn btn-ghost-dark" onclick="go('home')" style="width:100%">홈으로</button>
       </div>
     </div>
   </section>
@@ -4594,6 +4642,173 @@ document.addEventListener('touchend', e=>{
   if(now-lastTouch<=300) e.preventDefault();
   lastTouch = now;
 }, {passive:false});
+
+// ====== 새 예약 플로우 STATE ======
+const rState = {
+  service: 'storage',
+  dropDate: '', dropTime: '09:00',
+  pickDate: '', pickTime: '18:00',
+  branch: null,
+  qty: { carrier:0, bag:0, backpack:0 },
+  prices: { carrier:25000, bag:10000, backpack:8000 },
+  info: {},
+  _total: 0,
+};
+const rBranches = [
+  {id:'myn', nm:'빌리버 연남점', addr:'마포구 동교동', dist:'9m', badge:'가장 가까운'},
+  {id:'hbo', nm:'빌리버 홍대바오점', addr:'마포구 양화로', dist:'355m'},
+  {id:'mmp', nm:'빌리버 마포점', addr:'마포구 망원동', dist:'1.2km'},
+  {id:'miw', nm:'빌리버 이태원점', addr:'용산구 이태원동', dist:'3.1km'},
+  {id:'mbx', nm:'빌리버 명동본점', addr:'중구 명동', dist:'5.8km'},
+  {id:'mdd', nm:'빌리버 동대문점', addr:'중구 을지로', dist:'6.2km'},
+];
+function startReserve(svc){
+  rState.service = svc;
+  const today = new Date();
+  const tomorrow = new Date(today.getTime()+86400000);
+  rState.dropDate = today.toISOString().slice(0,10);
+  rState.pickDate = tomorrow.toISOString().slice(0,10);
+  const dd = document.getElementById('r-dropDate');
+  const pd = document.getElementById('r-pickDate');
+  if(dd) dd.value = rState.dropDate;
+  if(pd) pd.value = rState.pickDate;
+  document.querySelectorAll('.svc-tab').forEach(t=>t.classList.toggle('active', t.dataset.svc===svc));
+  rState.qty = {carrier:0,bag:0,backpack:0};
+  rState.branch = null;
+  rUpdateSummary();
+  rRenderBranches();
+  go('r-step1');
+}
+function rSelectService(svc){
+  rState.service = svc;
+  document.querySelectorAll('.svc-tab').forEach(t=>t.classList.toggle('active', t.dataset.svc===svc));
+}
+function rRenderBranches(){
+  const el = document.getElementById('rBranchList');
+  if(!el) return;
+  el.innerHTML = rBranches.map(b=>`
+    <button class="r-branch-card ${rState.branch===b.id?'selected':''}" onclick="rSelectBranch('${b.id}')">
+      <div class="pin">🧳</div>
+      <div class="info">
+        <div class="nm">${b.nm}${b.badge?` <span style="font-size:10px;color:#D99700;margin-left:4px">✨${b.badge}</span>`:''}</div>
+        <div class="meta">${b.addr} · 영업중</div>
+      </div>
+      <div class="dist">${b.dist}</div>
+    </button>
+  `).join('');
+}
+function rSelectBranch(id){
+  rState.branch = id;
+  rRenderBranches();
+  const nb = document.getElementById('r2-next');
+  if(nb) nb.disabled = false;
+}
+function rChangeQty(key, delta){
+  rState.qty[key] = Math.max(0, rState.qty[key]+delta);
+  const el = document.getElementById('rq-'+key);
+  if(el) el.textContent = rState.qty[key];
+  rUpdateSummary();
+}
+function rUpdateSummary(){
+  let total=0, totalQty=0;
+  for(const k of ['carrier','bag','backpack']){
+    const q = rState.qty[k];
+    const amt = q * rState.prices[k];
+    total += amt; totalQty += q;
+    const se = document.getElementById('rs-'+k); if(se) se.textContent=q;
+    const ae = document.getElementById('ra-'+k); if(ae) ae.textContent='₩'+amt.toLocaleString();
+  }
+  const at = document.getElementById('ra-total'); if(at) at.textContent='₩'+total.toLocaleString();
+  const ft = document.getElementById('rfoot-total'); if(ft) ft.textContent='₩'+total.toLocaleString();
+  const fq = document.getElementById('rfoot-qty'); if(fq) fq.textContent=totalQty;
+  const pt = document.getElementById('rpay-total'); if(pt) pt.textContent='₩'+total.toLocaleString();
+  const pb = document.getElementById('rpay-btn-txt'); if(pb) pb.textContent='₩'+total.toLocaleString()+' 결제하기';
+  const nb = document.getElementById('r3-next'); if(nb) nb.disabled = totalQty===0;
+  rState._total = total;
+}
+function rGoPayment(){
+  const name = document.getElementById('rf-name').value.trim();
+  const phone = document.getElementById('rf-phone').value.trim();
+  const email = document.getElementById('rf-email').value.trim();
+  const agree = document.getElementById('rf-agree').checked;
+  if(!name||!phone||!email){ alert('이름·연락처·이메일을 입력해주세요.'); return; }
+  if(!agree){ alert('개인정보 수집에 동의해주세요.'); return; }
+  rState.info = { name, phone, email, note: document.getElementById('rf-note').value };
+  go('r-step5');
+}
+function rCompletePayment(){
+  const btn = document.getElementById('rpay-btn');
+  btn.textContent = '결제 처리 중...'; btn.disabled = true;
+  setTimeout(()=>{
+    btn.disabled = false;
+    const code = 'BL-' + Math.random().toString(36).slice(2,8).toUpperCase();
+    document.getElementById('rv-code').textContent = code;
+    document.getElementById('rv-name').textContent = rState.info.name + ' 님';
+    const branch = rBranches.find(b=>b.id===rState.branch);
+    document.getElementById('rv-meta').innerHTML =
+      `${branch?.nm||''} · ${rState.service==='storage'?'짐 보관':'공항 배송'}<br>`+
+      `맡김 ${rState.dropDate} ${rState.dropTime} → 찾음 ${rState.pickDate} ${rState.pickTime}<br>`+
+      `총 ${Object.values(rState.qty).reduce((a,b)=>a+b,0)}개 · ₩${(rState._total||0).toLocaleString()}`;
+    rDrawQR(code);
+    go('r-done');
+    btn.innerHTML = '<span id="rpay-btn-txt">결제하기</span>';
+  }, 900);
+}
+function rDrawQR(code){
+  const svg = document.getElementById('rQrSvg');
+  if(!svg) return;
+  let seed=0; for(const c of code) seed=(seed*31+c.charCodeAt(0))>>>0;
+  function rnd(){ seed=(seed*1664525+1013904223)>>>0; return seed/0xffffffff; }
+  const n=21, size=100/n; let s='';
+  for(let y=0;y<n;y++) for(let x=0;x<n;x++){
+    const corner=(x<7&&y<7)||(x>=n-7&&y<7)||(x<7&&y>=n-7);
+    if(corner){ const cx=x<7?x:n-1-x,cy=y<7?y:n-1-y; const inR=cx<7&&cy<7; const border=(cx===0||cx===6||cy===0||cy===6); const center=(cx>=2&&cx<=4&&cy>=2&&cy<=4); if(inR&&(border||center)) s+=`<rect x="${x*size}" y="${y*size}" width="${size}" height="${size}" fill="#111"/>`;
+    } else if(rnd()>0.5){ s+=`<rect x="${x*size}" y="${y*size}" width="${size}" height="${size}" fill="#111"/>`; }
+  }
+  svg.innerHTML = s;
+}
+// 모바일 홈 리뷰 마퀴
+const mReviews = [
+  {n:'Enzo Chen', i:'E', c:'#34C759', t:'Nice service, nice environment, will come again.'},
+  {n:'I-Hang Chung', i:'I', c:'#FF3B30', t:'Very convenient and helpful staff!'},
+  {n:'Maya S.', i:'M', c:'#F5B200', t:'Super convenient for travelers. Highly recommended!'},
+  {n:'Jenny K.', i:'J', c:'#38BDF8', t:'Best luggage storage in Seoul. Highly recommended!'},
+  {n:'이지은', i:'이', c:'#FF6B6B', t:'가격도 합리적이고 직원분도 친절해요.'},
+  {n:'Chloey W.', i:'C', c:'#9333EA', t:'This service is so nice and staff here are very welcome!'},
+];
+function renderMobileReviews(){
+  const el = document.getElementById('mReviewTrack');
+  if(!el) return;
+  const list = [...mReviews, ...mReviews];
+  el.innerHTML = list.map(r=>`
+    <div class="m-review-card">
+      <div class="m-review-head">
+        <span class="m-avatar" style="background:${r.c}">${r.i}</span>
+        <b>${r.n}</b><span class="m-stars">★★★★★</span>
+      </div>
+      <p>"${r.t}"</p>
+    </div>
+  `).join('');
+}
+// 시간 옵션 빌드 (새 예약 폼용)
+function buildRTimeOptions(selectEl, defaultVal){
+  if(!selectEl) return;
+  const opts=[];
+  for(let h=9;h<=21;h++){ opts.push(`${String(h).padStart(2,'0')}:00`); if(h<21) opts.push(`${String(h).padStart(2,'0')}:30`); }
+  selectEl.innerHTML = opts.map(t=>{
+    const H=+t.split(':')[0], mm=t.split(':')[1];
+    return `<option value="${t}" ${t===defaultVal?'selected':''}>${H<12?'오전':'오후'} ${(H%12)||12}:${mm}</option>`;
+  }).join('');
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderMobileReviews();
+  buildRTimeOptions(document.getElementById('r-dropTime'), '09:00');
+  buildRTimeOptions(document.getElementById('r-pickTime'), '18:00');
+  ['r-dropDate','r-dropTime','r-pickDate','r-pickTime'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('change', e=>{ const k=id.replace('r-',''); rState[k]=e.target.value; });
+  });
+});
 </script>
 </body>
 </html>

@@ -21,6 +21,7 @@ export interface VoucherEmailTemplateInput {
   adminNote?: string;
   paymentMethod?: string;
   paidAt?: string;
+  language?: string;
 }
 
 export interface ArrivalEmailTemplateInput {
@@ -196,6 +197,110 @@ const buildReceiptBlock = (input: VoucherEmailTemplateInput) => {
   `;
 };
 
+const CHECKIN_GUIDE: Record<string, { title: string; steps: string[]; nametagNote: string }> = {
+  ko: {
+    title: "이용 방법 (4단계)",
+    steps: [
+      "예약 지점을 방문하세요.",
+      "저장해 둔 QR 바우처를 직원에게 보여 주세요.",
+      "짐을 맡겨 주세요.",
+      "예약하신 시간에 픽업 장소에 도착하여 짐을 찾아가세요.",
+    ],
+    nametagNote: "네임택은 짐을 구분하는 고유 번호표입니다. 받으신 네임택을 짐에 직접 달아주셔야 합니다.",
+  },
+  ja: {
+    title: "ご利用方法（4ステップ）",
+    steps: [
+      "予約した店舗を訪問してください。",
+      "保存したQRバウチャーをスタッフに提示してください。",
+      "お荷物を預けてください。",
+      "ご予約の時間にピックアップ場所へお越しいただき、お荷物をお受け取りください。",
+    ],
+    nametagNote: "ネームタグはお荷物を識別するための固有番号です。受け取ったネームタグをお荷物に直接お付けください。",
+  },
+  "zh-TW": {
+    title: "使用方法（4步驟）",
+    steps: [
+      "前往預約地點。",
+      "向工作人員出示儲存的QR憑證。",
+      "存放您的行李。",
+      "在預約時間到達取件地點領取行李。",
+    ],
+    nametagNote: "名牌是識別行李的唯一號碼。請將收到的名牌直接掛在您的行李上。",
+  },
+  "zh-HK": {
+    title: "使用方法（4步驟）",
+    steps: [
+      "前往預約地點。",
+      "向工作人員出示儲存的QR憑證。",
+      "存放您的行李。",
+      "在預約時間到達取件地點領取行李。",
+    ],
+    nametagNote: "名牌是識別行李的唯一號碼。請將收到的名牌直接掛在您的行李上。",
+  },
+  zh: {
+    title: "使用方法（4步骤）",
+    steps: [
+      "前往预约地点。",
+      "向工作人员出示保存的QR凭证。",
+      "存放您的行李。",
+      "在预约时间到达取件地点领取行李。",
+    ],
+    nametagNote: "名牌是识别行李的唯一编号。请将收到的名牌直接挂在您的行李上。",
+  },
+  en: {
+    title: "How It Works (4 Steps)",
+    steps: [
+      "Visit the reservation location.",
+      "Present the saved QR voucher to the staff.",
+      "Drop off your luggage.",
+      "Arrive at the pick-up location at your scheduled time to collect your luggage.",
+    ],
+    nametagNote: "The nametag is your luggage's unique ID number. You must directly attach the nametag to your bag before check-in.",
+  },
+};
+
+const getCheckinGuide = (lang: string) => {
+  if (lang === "zh-TW" || lang === "zh-HK") return CHECKIN_GUIDE[lang];
+  if (lang.startsWith("zh")) return CHECKIN_GUIDE.zh;
+  if (lang.startsWith("ja")) return CHECKIN_GUIDE.ja;
+  if (lang === "ko" || lang.startsWith("ko")) return CHECKIN_GUIDE.ko;
+  return CHECKIN_GUIDE.en;
+};
+
+const buildCheckinGuideBlock = (lang: string, isDelivery: boolean, hasNametag: boolean): string => {
+  const g = getCheckinGuide(lang);
+  const stepRows = g.steps.map((step, i) => `
+    <tr>
+      <td style="padding:6px 0;vertical-align:top;width:28px;">
+        <div style="width:22px;height:22px;border-radius:50%;background:#facc15;color:#111827;font-size:11px;font-weight:900;text-align:center;line-height:22px;">${i + 1}</div>
+      </td>
+      <td style="padding:6px 0 6px 10px;color:#e2e8f0;font-size:13px;font-weight:700;line-height:1.6;">${escapeHtml(step)}</td>
+    </tr>
+  `).join("");
+
+  const nametagBlock = (isDelivery && hasNametag)
+    ? `<div style="margin-top:14px;padding:12px 16px;background:#fef3c7;border:2px solid #facc15;border-radius:14px;">
+        <table style="width:100%;border-collapse:collapse;"><tr>
+          <td style="vertical-align:top;width:24px;font-size:18px;padding-right:10px;">🏷️</td>
+          <td style="color:#78350f;font-size:13px;font-weight:800;line-height:1.6;">${escapeHtml(g.nametagNote)}</td>
+        </tr></table>
+       </div>`
+    : "";
+
+  return `
+    <div style="margin-top:24px;border-radius:20px;overflow:hidden;border:1px solid #334155;">
+      <div style="padding:12px 18px;background:#111827;">
+        <div style="font-size:11px;font-weight:900;color:#facc15;letter-spacing:0.12em;text-transform:uppercase;">📋 ${escapeHtml(g.title)}</div>
+      </div>
+      <div style="padding:16px 18px;background:#1e293b;">
+        <table style="width:100%;border-collapse:collapse;">${stepRows}</table>
+        ${nametagBlock}
+      </div>
+    </div>
+  `;
+};
+
 export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
   const reservationCode = escapeHtml(input.reservationCode);
   const bookingId = escapeHtml(input.bookingId);
@@ -259,6 +364,8 @@ export const buildVoucherEmailHtml = (input: VoucherEmailTemplateInput) => {
             </div>
           </div>
           ` : ""}
+          ${buildCheckinGuideBlock(input.language || "en", isDelivery, !!(isDelivery ? nametagNumber : storageNumbersLabel))}
+
           ${input.adminNote ? `
           <div style="margin-top:20px;padding:16px 20px;background:#fffbeb;border:1px solid #fde68a;border-radius:18px;">
             <div style="font-size:10px;font-weight:900;color:#92400e;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">📋 운영 메모</div>

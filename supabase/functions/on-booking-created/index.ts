@@ -184,6 +184,7 @@ async function sendVoucherEmail(booking: Record<string, unknown>) {
         : typeof booking.created_at === "string"
         ? booking.created_at
         : undefined,
+      language: typeof booking.language === "string" ? booking.language : "en",
     };
 
     await sendEdgeMail({

@@ -151,7 +151,8 @@ img{max-width:100%;display:block}
   /* ===== 공통 페이지: 중앙 컨텐츠 1200px ===== */
   #about .sc-body, #how .sc-body, #price .sc-body, #faq .sc-body,
   #biz .sc-body, #privacy .sc-body, #terms .sc-body{
-    max-width:1200px; margin:0 auto; padding:48px 32px 80px;
+    width:100%; max-width:1200px; margin:0 auto; padding:48px 32px 80px;
+    align-self:stretch;
   }
   .page-title{ font-size:48px !important; }
   .page-desc{ font-size:18px !important; }
@@ -173,29 +174,56 @@ img{max-width:100%;display:block}
 
   /* ===== 예약 플로우: 중앙 640px 컬럼 ===== */
   #reserve-time, #reserve-user, #reserve-2,
-  #r-step1, #r-step2, #r-step3, #r-step4, #r-step5, #r-done {
+  #r-step1, #r-step2, #r-step3, #r-step4, #r-step5 {
     background:#fafafa;
   }
+  /* 완료 화면은 다크 테마 유지 */
+  #r-done { background:var(--bg-dark) !important; }
   #reserve-time .sc-body, #reserve-user .sc-body, #reserve-2 .sc-body,
   #r-step1 .sc-body, #r-step2 .sc-body, #r-step3 .sc-body,
   #r-step4 .sc-body, #r-step5 .sc-body {
-    max-width:640px; margin:0 auto; background:#fff;
-    box-shadow:0 2px 20px rgba(0,0,0,0.06); border-radius:20px;
-    padding:32px; margin-top:24px; margin-bottom:24px;
+    width:100% !important; max-width:640px !important;
+    margin:0 auto !important; align-self:stretch !important;
+    background:#fff !important;
+    box-shadow:0 2px 20px rgba(0,0,0,0.06) !important; border-radius:20px !important;
+    padding:32px !important; margin-top:24px !important; margin-bottom:24px !important;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
   }
-  #reserve-time .sc-header, #reserve-user .sc-header, #reserve-2 .sc-header,
-  #reserve-1 .sc-header,
+  /* 예약 헤더: 640px 중앙 정렬, 일반 desktop 패딩 제거 */
   #r-step1 .sc-header, #r-step2 .sc-header, #r-step3 .sc-header,
-  #r-step4 .sc-header, #r-step5 .sc-header, #r-done .sc-header { max-width:640px; margin:0 auto; }
-  #reserve-time .step-head, #reserve-user .step-head, #reserve-2 .step-head,
-  #r-step1 .step-head, #r-step2 .step-head, #r-step3 .step-head,
-  #r-step4 .step-head, #r-step5 .step-head { max-width:640px; margin:0 auto; }
-  #reserve-time .progress, #reserve-user .progress, #reserve-2 .progress, #reserve-1 .progress,
+  #r-step4 .sc-header, #r-step5 .sc-header, #r-done .sc-header {
+    max-width:640px !important; margin:0 auto !important;
+    padding:0 16px !important; height:64px !important;
+  }
+  /* 예약 progress/step-head/footer: 640px 중앙 정렬 */
   #r-step1 .progress, #r-step2 .progress, #r-step3 .progress,
-  #r-step4 .progress, #r-step5 .progress { max-width:640px; margin:0 auto; }
-  #reserve-time .sc-footer, #reserve-user .sc-footer, #reserve-2 .sc-footer,
+  #r-step4 .progress, #r-step5 .progress {
+    max-width:640px !important; margin:0 auto !important;
+  }
+  #r-step1 .step-head, #r-step2 .step-head, #r-step3 .step-head,
+  #r-step4 .step-head, #r-step5 .step-head {
+    max-width:640px !important; margin:0 auto !important;
+  }
   #r-step1 .sc-footer, #r-step2 .sc-footer, #r-step3 .sc-footer,
-  #r-step4 .sc-footer, #r-step5 .sc-footer { max-width:640px; margin:0 auto; }
+  #r-step4 .sc-footer, #r-step5 .sc-footer {
+    max-width:640px !important; margin:0 auto !important;
+    background:transparent !important; border-top:none !important;
+    padding-bottom:40px !important;
+  }
+  /* 완료 화면: 다크 테마, 중앙 정렬 */
+  #r-done .sc-body { max-width:640px !important; margin:0 auto !important; background:transparent !important; box-shadow:none !important; border-radius:0 !important; }
+  /* 구형 예약 스크린 */
+  #reserve-time .sc-header, #reserve-user .sc-header, #reserve-2 .sc-header,
+  #reserve-1 .sc-header { max-width:640px; margin:0 auto; }
+  #reserve-time .step-head, #reserve-user .step-head, #reserve-2 .step-head {
+    max-width:640px; margin:0 auto;
+  }
+  #reserve-time .progress, #reserve-user .progress, #reserve-2 .progress, #reserve-1 .progress {
+    max-width:640px; margin:0 auto;
+  }
+  #reserve-time .sc-footer, #reserve-user .sc-footer, #reserve-2 .sc-footer {
+    max-width:640px; margin:0 auto;
+  }
 
   /* 지도 플로우: 풀폭 */
   #reserve-1 .map-wrap{ height:calc(100dvh - 180px); }
@@ -2485,12 +2513,10 @@ a { color: inherit; text-decoration: none; }
     border-radius: 0 !important;
     box-shadow: none !important;
   }
-  .screen:not(.home-v2) .sc-body {
-    padding: 0 max(24px, calc((100% - 1080px) / 2)) !important;
-  }
+  /* 일반 서브페이지 헤더 풀폭 */
   .screen:not(.home-v2) .sc-header {
-    padding: 0 max(24px, calc((100% - 1080px) / 2)) !important;
-    max-width: 100% !important;
+    padding: 0 max(24px, calc((100% - 1080px) / 2));
+    max-width: 100%;
   }
   /* 예약 완료 이미지 등 full-width 이미지 */
   .screen:not(.home-v2) img:not(.logo img):not([width]) {

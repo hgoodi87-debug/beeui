@@ -2460,6 +2460,38 @@ a { color: inherit; text-decoration: none; }
   .desktop-cta-btn:hover { background: #e6b200; transform: translateY(-1px); }
   .menu-btn { display: none !important; }
 
+  /* ═══ 공항 배송 버튼 흰색 ═══ */
+  .hero-cta-group .btn-secondary {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #fff !important;
+  }
+  .hero-cta-group .btn-secondary:hover {
+    background: rgba(255,255,255,0.88) !important;
+  }
+
+  /* ═══ 예약/서브 페이지 전체화면 ═══ */
+  .screen:not(.home-v2) {
+    max-width: 100% !important;
+    width: 100% !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .screen:not(.home-v2) .sc-body {
+    padding: 0 max(40px, calc((100% - 800px) / 2)) !important;
+  }
+  .screen:not(.home-v2) .sc-header {
+    padding: 0 max(40px, calc((100% - 800px) / 2)) !important;
+    max-width: 100% !important;
+  }
+  /* 예약 완료 이미지 등 full-width 이미지 */
+  .screen:not(.home-v2) img:not(.logo img):not([width]) {
+    max-height: 50vh;
+    width: 100%;
+    object-fit: cover;
+  }
+
   /* ═══ 히어로 ═══ */
   .hero {
     min-height: 100svh;
@@ -2543,16 +2575,41 @@ a { color: inherit; text-decoration: none; }
   /* 원래 overflow 컨테이너 해제 */
   .rv-cards { overflow: visible !important; }
 
-  /* ═══ Before/After 2열 ═══ */
+  /* ═══ Before/After 화살표 비교 ═══ */
   .ba-stack {
     max-width: var(--container);
     margin: 0 auto;
     display: grid !important;
     grid-template-columns: 1fr 1fr;
-    gap: clamp(20px, 3vw, 40px);
-    align-items: start;
+    gap: 0;
+    align-items: stretch;
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
   }
-  .ba-card.before, .ba-card.after { width: 100%; }
+  .ba-card.before, .ba-card.after { width: 100%; border-radius: 0; }
+  /* 중앙 화살표 오버레이 */
+  .ba-stack::after {
+    content: '→';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    background: #FFC700;
+    color: #111;
+    font-size: 24px;
+    font-weight: 900;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    line-height: 1;
+    padding-top: 1px;
+  }
 
   /* ═══ 이용 단계 3열 ═══ */
   .guide-steps-simple {

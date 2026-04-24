@@ -245,6 +245,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
 
   const [deliveryPrices, setDeliveryPrices] = useState<PriceSettings>(DEFAULT_DELIVERY_PRICES);
   const [storageTiers, setStorageTiers] = useState<StorageTier[]>(INITIAL_STORAGE_TIERS);
+  const [commissionRates, setCommissionRates] = useState<{ delivery: number; storage: number }>({ delivery: 0, storage: 0 });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
@@ -916,6 +917,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
       const savedCloud = StorageService.getCloudConfig();
       if (savedCloud) setCloudConfig(savedCloud);
 
+      const cloudCommissionRates = await StorageService.getCommissionRates();
+      setCommissionRates(cloudCommissionRates);
+
       // Storage policies fetching has been offloaded to their respective components
 
       // Storage policies fetching has been offloaded to their respective components
@@ -1199,6 +1203,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
     localStorage.setItem('beeliber_storage_tiers', JSON.stringify(updated));
     // Keep Supabase settings in sync
     StorageService.saveStorageTiers(updated).catch(console.error);
+  };
+
+  const updateCommissionRate = (type: 'delivery' | 'storage', value: number) => {
+    const updated = { ...commissionRates, [type]: value };
+    setCommissionRates(updated);
+    StorageService.saveCommissionRates(updated).catch(console.error);
   };
 
   const addLocation = async () => {
@@ -3030,6 +3040,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               updateDeliveryPrice={updateDeliveryPrice}
               storageTiers={storageTiers}
               updateStoragePrice={updateStoragePrice}
+              commissionRates={commissionRates}
+              updateCommissionRate={updateCommissionRate}
               cloudConfig={cloudConfig}
               setCloudConfig={setCloudConfig}
               saveCloudSettings={saveCloudSettings}

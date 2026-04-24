@@ -15,6 +15,8 @@ interface SystemTabProps {
     updateDeliveryPrice: (size: keyof PriceSettings, val: number) => void;
     storageTiers: StorageTier[];
     updateStoragePrice: (id: string, size: keyof PriceSettings, val: number) => void;
+    commissionRates: { delivery: number; storage: number };
+    updateCommissionRate: (type: 'delivery' | 'storage', value: number) => void;
     cloudConfig: GoogleCloudConfig;
     setCloudConfig: (c: GoogleCloudConfig) => void;
     saveCloudSettings: () => void;
@@ -26,6 +28,8 @@ const SystemTab: React.FC<SystemTabProps> = ({
     updateDeliveryPrice,
     storageTiers,
     updateStoragePrice,
+    commissionRates,
+    updateCommissionRate,
     cloudConfig,
     setCloudConfig,
     saveCloudSettings,
@@ -64,6 +68,57 @@ const SystemTab: React.FC<SystemTabProps> = ({
 
             {/* Tab Contents */}
             {activeSubTab === 'PRICES' && (
+                <div className="space-y-8">
+
+                {/* 커미션 설정 */}
+                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-xl font-black flex items-center gap-3">
+                            <span className="w-2 h-8 bg-emerald-500 rounded-full"></span>파트너 커미션 정책
+                        </h3>
+                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Commission Rates</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 hover:border-emerald-300 transition-all">
+                            <label className="text-[10px] font-black text-emerald-500 tracking-widest uppercase mb-3 block flex items-center gap-2">
+                                <i className="fa-solid fa-truck"></i> 배송 커미션
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    step={0.1}
+                                    value={commissionRates.delivery}
+                                    onChange={(e) => updateCommissionRate('delivery', parseFloat(e.target.value) || 0)}
+                                    className="bg-transparent font-black text-3xl w-full outline-none text-emerald-700"
+                                />
+                                <span className="font-black text-emerald-400 text-2xl">%</span>
+                            </div>
+                            <p className="mt-3 text-[10px] text-emerald-500/70 font-medium">배송 예약 매출 중 파트너 지급 비율</p>
+                        </div>
+                        <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 hover:border-blue-300 transition-all">
+                            <label className="text-[10px] font-black text-blue-500 tracking-widest uppercase mb-3 block flex items-center gap-2">
+                                <i className="fa-solid fa-box-archive"></i> 보관 커미션
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    step={0.1}
+                                    value={commissionRates.storage}
+                                    onChange={(e) => updateCommissionRate('storage', parseFloat(e.target.value) || 0)}
+                                    className="bg-transparent font-black text-3xl w-full outline-none text-blue-700"
+                                />
+                                <span className="font-black text-blue-400 text-2xl">%</span>
+                            </div>
+                            <p className="mt-3 text-[10px] text-blue-500/70 font-medium">보관 예약 매출 중 파트너 지급 비율</p>
+                        </div>
+                    </div>
+                    <p className="mt-6 text-[10px] text-gray-400 font-medium">* 여기서 설정한 값은 신규 지점 기본값으로 사용됩니다. 지점별 개별 설정은 거점 관리에서 변경하세요.</p>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 h-fit">
                         <div className="flex items-center justify-between mb-8">
@@ -128,6 +183,7 @@ const SystemTab: React.FC<SystemTabProps> = ({
                             ))}
                         </div>
                     </div>
+                </div>
                 </div>
             )}
 

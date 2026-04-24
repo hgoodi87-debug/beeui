@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.0.0] - 2026-04-22
+## [1.4.0.0] - 2026-04-24
 
 ### Added
 - **예약 완료 페이지 체크인 안내**: 바우처 하단에 4단계 체크인 가이드 (6개 언어 — ko/en/ja/zh/zh-TW/zh-HK) 표시
@@ -37,6 +37,14 @@
 - `chat_sessions` anon UPDATE 정책: `USING(true)/WITH CHECK(true)` → `WITH CHECK (is_bot_disabled = false)` 강화
 - `admin_update_booking_details` RPC: anon EXECUTE 권한 철회 (`REVOKE EXECUTE ... FROM anon`)
 - `AdminDashboard` Edge Function 호출: anon key Bearer → admin JWT 인증 헤더로 교체
+- **보관번호 신뢰 경계 수정**: `public_create_booking_details_v1` RPC — anon 사용자 storage_numbers 입력 무시, 트리거 강제 실행으로 1~30 번호 카운터 보호
+
+### Added (2026-04-23~24)
+- **보관 1~30 번호 자동 할당**: 결제완료 시점 DB 트리거(`trg_assign_storage_numbers_on_payment`)로 지점별·일별 순번 자동 배정 — QR 바우처 즉시 노출
+- **Google Chat 알림 채널 분리**: 예약 알림과 챗봇 상담원 연결 알림을 별도 웹훅 채널로 분리
+
+### Fixed (2026-04-23~24)
+- **공항 배송 FAQ**: 13시 예약 마감·16~21시 수령·22시 이후 별도 보관비 안내 6개 언어 표시 정정
 
 ## [1.3.2.0] - 2026-04-18
 

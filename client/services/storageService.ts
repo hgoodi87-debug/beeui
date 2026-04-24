@@ -379,6 +379,7 @@ import {
 const SETTINGS_CACHE_TTL_MS = 5 * 60 * 1000;
 let _storageTiersCache: { data: ReturnType<typeof normalizeStorageTiers>; ts: number } | null = null;
 let _deliveryPricesCache: { data: PriceSettings; ts: number } | null = null;
+let _commissionRatesCache: { data: { delivery: number; storage: number }; ts: number } | null = null;
 
 // Keys for LocalStorage (Only for minimal config cache if needed, but largely removed)
 const KEYS = {
@@ -1777,6 +1778,51 @@ export const StorageService = {
     } catch (e) {
       console.error("Failed to save delivery prices", e);
       throw e;
+    }
+  },
+
+  // --- Global Commission Rates ---
+  getCommissionRates: async (): Promise<{ delivery: number; storage: number }> => {
+    if (_commissionRatesCache && Date.now() - _commissionRatesCache.ts < SETTINGS_CACHE_TTL_MS) {
+      return _commissionRatesCache.data;
+    }
+    if (isSupabaseDataEnabled()) {
+      try {
+        const rows = await supabaseGet<Array<{ key: string; value: any }>>(
+          'app_settings?select=value&key=eq.commission_rates&limit=1'
+        );
+        if (rows?.[0]?.value) {
+          const result = { delivery: Number(rows[0].value.delivery) || 0, storage: Number(rows[0].value.storage) || 0 };
+          _commissionRatesCache = { data: result, ts: Date.now() };
+          return result;
+        }
+      } catch (e) {
+        console.warn("[Storage] commission_rates fetch failed:", e);
+      }
+    }
+    return { delivery: 0, storage: 0 };
+  },
+
+  saveCommissionRates: async (rates: { delivery: number; storage: number }): Promise<void> => {
+    _commissionRatesCache = null;
+    if (isSupabaseDataEnabled()) {
+      try {
+        const { supabaseMutate } = await import('./supabaseClient');
+        // upsert: PATCH 먼저 시도, 없으면 POST
+        const existing = await supabaseGet<Array<{ key: string }>>(
+          'app_settings?select=key&key=eq.commission_rates&limit=1'
+        );
+        if (existing && existing.length > 0) {
+          await supabaseMutate('app_settings?key=eq.commission_rates', 'PATCH', { value: rates });
+        } else {
+          await supabaseMutate('app_settings', 'POST', { key: 'commission_rates', value: rates });
+        }
+        console.log("[Storage] Commission rates saved to Supabase ✅");
+        return;
+      } catch (e) {
+        console.warn("[Storage] commission_rates save failed:", e);
+        throw e;
+      }
     }
   },
 

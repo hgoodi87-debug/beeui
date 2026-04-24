@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { BookingState, Expenditure, CashClosing, AdminTab, BankTransaction, BankTxType } from '../../types';
+import { BookingState, Expenditure, CashClosing, AdminTab, BankTransaction, BankTxType, LocationOption } from '../../types';
 import { StorageService } from '../../services/storageService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { exportKoreanAccountingXLSX } from '../../utils/accountingExport';
 import { exportPaymentMethodWordDoc } from '../../utils/wordExport';
 import { loadAllLogsForRange, KioskStorageLog } from '../../services/kioskDb';
 import { useBankTransactions, useBankTransactionsMutations } from '../../src/domains/admin/hooks/useBankTransactions';
+import { ServiceType } from '../../src/domains/shared/types';
 
 
 interface AccountingTabProps {
@@ -24,10 +25,12 @@ interface AccountingTabProps {
     expenditures: Expenditure[];
     deleteExpenditure: (id: string) => void;
     bookings: BookingState[];
+    locations: LocationOption[];
+    onExpenditureSaved?: (exp: Expenditure) => void;
     t: any;
 }
 
-type SubTab = 'revenue' | 'expenditure' | 'calendar' | 'kiosk' | 'bank';
+type SubTab = 'revenue' | 'expenditure' | 'calendar' | 'kiosk' | 'bank' | 'branch';
 
 const AccountingTab: React.FC<AccountingTabProps> = ({
     revenueStartDate,
@@ -45,6 +48,8 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
     expenditures,
     deleteExpenditure,
     bookings,
+    locations,
+    onExpenditureSaved,
     t
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<SubTab>('revenue');
@@ -274,6 +279,12 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                                 className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'bank' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
                             >
                                 🏦 통장 잔고
+                            </button>
+                            <button
+                                onClick={() => setActiveSubTab('branch')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-tight transition-all whitespace-nowrap ${activeSubTab === 'branch' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-bee-black'}`}
+                            >
+                                🏪 지점 정산
                             </button>
                         </div>
                     </div>
@@ -1162,6 +1173,244 @@ const AccountingTab: React.FC<AccountingTabProps> = ({
                         </div>
                     </div>
                 )}
+
+                {/* 🏪 지점 정산 탭 */}
+                {activeSubTab === 'branch' && (
+                    <BranchSettlementPanel
+                        bookings={bookings}
+                        locations={locations}
+                        expenditures={expenditures}
+                        revenueStartDate={revenueStartDate}
+                        revenueEndDate={revenueEndDate}
+                        onExpenditureSaved={onExpenditureSaved}
+                    />
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ─── 지점 정산 패널 ────────────────────────────────────────────────────
+interface BranchSettlementEntry {
+    branchId: string;
+    branchName: string;
+    deliveryAmount: number;
+    storageAmount: number;
+    totalCommission: number;
+    deliveryCount: number;
+    storageCount: number;
+    commDeliveryRate: number;
+    commStorageRate: number;
+    isPaid: boolean;
+    existingExpId?: string;
+}
+
+const BranchSettlementPanel: React.FC<{
+    bookings: BookingState[];
+    locations: LocationOption[];
+    expenditures: Expenditure[];
+    revenueStartDate: string;
+    revenueEndDate: string;
+    onExpenditureSaved?: (exp: Expenditure) => void;
+}> = ({ bookings, locations, expenditures, revenueStartDate, revenueEndDate, onExpenditureSaved }) => {
+    const [saving, setSaving] = useState<string | null>(null);
+    const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+    const [paidIds, setPaidIds] = useState<Set<string>>(new Set());
+
+    const entries = useMemo<BranchSettlementEntry[]>(() => {
+        const map: Record<string, BranchSettlementEntry> = {};
+
+        const filtered = bookings.filter(b => {
+            const d = b.pickupDate || '';
+            return d >= revenueStartDate && d <= revenueEndDate && !b.isDeleted;
+        });
+
+        filtered.forEach(b => {
+            const key = b.branchId || b.branchName || '기타';
+            const loc = locations.find(l =>
+                l.id === b.branchId ||
+                l.name === b.branchName ||
+                (l as any).shortCode === (b as any).branchCode
+            );
+            const bName = b.branchName || loc?.name || key;
+            if (!map[key]) {
+                map[key] = {
+                    branchId: key,
+                    branchName: bName,
+                    deliveryAmount: 0,
+                    storageAmount: 0,
+                    totalCommission: 0,
+                    deliveryCount: 0,
+                    storageCount: 0,
+                    commDeliveryRate: loc?.commissionRates?.delivery ?? 0,
+                    commStorageRate: loc?.commissionRates?.storage ?? 0,
+                    isPaid: false,
+                };
+            }
+            const entry = map[key];
+            const price = (b as any).settlementHardCopyAmount ?? b.finalPrice ?? 0;
+            const isDelivery = b.serviceType === ServiceType.DELIVERY;
+            const rate = isDelivery ? entry.commDeliveryRate : entry.commStorageRate;
+            const comm = Math.floor(price * (rate / 100));
+            entry.totalCommission += comm;
+            if (isDelivery) { entry.deliveryAmount += comm; entry.deliveryCount += 1; }
+            else { entry.storageAmount += comm; entry.storageCount += 1; }
+        });
+
+        // 이미 이 기간에 수수료 지출 처리된 지점 표시
+        expenditures.forEach(exp => {
+            if (exp.category !== '수수료') return;
+            const matchKey = Object.keys(map).find(k => exp.description?.includes(map[k].branchName));
+            if (matchKey && exp.date >= revenueStartDate && exp.date <= revenueEndDate) {
+                map[matchKey].isPaid = true;
+                map[matchKey].existingExpId = exp.id;
+            }
+        });
+
+        return Object.values(map).filter(e => e.totalCommission > 0).sort((a, b) => b.totalCommission - a.totalCommission);
+    }, [bookings, locations, expenditures, revenueStartDate, revenueEndDate]);
+
+    const totalCommission = entries.reduce((s, e) => s + e.totalCommission, 0);
+    const paidCommission = entries.filter(e => e.isPaid || paidIds.has(e.branchId)).reduce((s, e) => s + e.totalCommission, 0);
+
+    const handleMarkPaid = async (entry: BranchSettlementEntry) => {
+        if (saving) return;
+        setSaving(entry.branchId);
+        try {
+            const exp: Expenditure = {
+                date: revenueEndDate,
+                category: '수수료',
+                description: `수수료(${entry.branchName}) ${revenueStartDate}~${revenueEndDate}`,
+                amount: entry.totalCommission,
+                branchId: entry.branchId !== '기타' ? entry.branchId : undefined,
+                costType: 'variable' as any,
+                paymentType: 'corporate' as any,
+                createdBy: 'admin',
+                createdAt: new Date().toISOString(),
+            };
+            const saved = await StorageService.saveExpenditure(exp);
+            onExpenditureSaved?.(saved);
+            setPaidIds(prev => new Set([...prev, entry.branchId]));
+            setToast({ msg: `${entry.branchName} 커미션 완료 처리 ✅`, type: 'success' });
+            setTimeout(() => setToast(null), 3000);
+        } catch (e) {
+            console.error(e);
+            setToast({ msg: '저장 실패', type: 'error' });
+            setTimeout(() => setToast(null), 3000);
+        } finally {
+            setSaving(null);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            {toast && (
+                <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-2xl text-white text-xs font-black shadow-xl transition-all ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                    {toast.msg}
+                </div>
+            )}
+
+            {/* 요약 카드 */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm">
+                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1.5">총 커미션</p>
+                    <p className="text-xl font-black text-bee-black">₩{totalCommission.toLocaleString()}</p>
+                    <p className="text-[9px] text-gray-400 font-bold mt-1">{entries.length}개 지점</p>
+                </div>
+                <div className="bg-white p-5 rounded-[24px] border border-emerald-100 shadow-sm">
+                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1.5">완료 처리</p>
+                    <p className="text-xl font-black text-emerald-600">₩{paidCommission.toLocaleString()}</p>
+                    <p className="text-[9px] text-emerald-400 font-bold mt-1">{entries.filter(e => e.isPaid || paidIds.has(e.branchId)).length}개 지점</p>
+                </div>
+                <div className="bg-white p-5 rounded-[24px] border border-orange-100 shadow-sm">
+                    <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest mb-1.5">미지급</p>
+                    <p className="text-xl font-black text-orange-500">₩{(totalCommission - paidCommission).toLocaleString()}</p>
+                    <p className="text-[9px] text-orange-400 font-bold mt-1">{entries.filter(e => !e.isPaid && !paidIds.has(e.branchId)).length}개 지점</p>
+                </div>
+            </div>
+
+            {/* 지점별 테이블 */}
+            <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-8 py-5 border-b border-gray-50 flex items-center justify-between">
+                    <h3 className="font-black text-bee-black flex items-center gap-2">
+                        <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
+                        지점별 커미션 정산 현황
+                    </h3>
+                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{revenueStartDate} ~ {revenueEndDate}</span>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-gray-50">
+                                <th className="px-6 py-4 text-left text-[9px] font-black text-gray-300 uppercase tracking-widest">지점명</th>
+                                <th className="px-6 py-4 text-right text-[9px] font-black text-gray-300 uppercase tracking-widest">배송 커미션</th>
+                                <th className="px-6 py-4 text-right text-[9px] font-black text-gray-300 uppercase tracking-widest">보관 커미션</th>
+                                <th className="px-6 py-4 text-right text-[9px] font-black text-gray-300 uppercase tracking-widest">합계</th>
+                                <th className="px-6 py-4 text-center text-[9px] font-black text-gray-300 uppercase tracking-widest">상태</th>
+                                <th className="px-6 py-4 text-center text-[9px] font-black text-gray-300 uppercase tracking-widest">처리</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50 text-xs">
+                            {entries.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-16 text-center text-gray-300 font-black italic">
+                                        선택 기간에 커미션 내역이 없습니다.
+                                    </td>
+                                </tr>
+                            )}
+                            {entries.map(entry => {
+                                const isPaid = entry.isPaid || paidIds.has(entry.branchId);
+                                const isProcessing = saving === entry.branchId;
+                                return (
+                                    <tr key={entry.branchId} className={`transition-colors ${isPaid ? 'bg-emerald-50/30' : 'hover:bg-gray-50/50'}`}>
+                                        <td className="px-6 py-4">
+                                            <div className="font-black text-bee-black">{entry.branchName}</div>
+                                            <div className="text-[9px] text-gray-400 mt-0.5">
+                                                배송 {entry.commDeliveryRate}% / 보관 {entry.commStorageRate}% | {entry.deliveryCount + entry.storageCount}건
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="font-black text-blue-600">₩{entry.deliveryAmount.toLocaleString()}</div>
+                                            <div className="text-[9px] text-gray-400">{entry.deliveryCount}건</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="font-black text-purple-600">₩{entry.storageAmount.toLocaleString()}</div>
+                                            <div className="text-[9px] text-gray-400">{entry.storageCount}건</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-black text-bee-black text-sm">
+                                            ₩{entry.totalCommission.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black ${isPaid ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-500'}`}>
+                                                <i className={`fa-solid ${isPaid ? 'fa-circle-check' : 'fa-clock'} text-[8px]`}></i>
+                                                {isPaid ? '완료' : '대기'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            {isPaid ? (
+                                                <span className="text-[9px] text-gray-300 font-bold">지출 처리됨</span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleMarkPaid(entry)}
+                                                    disabled={!!saving}
+                                                    className="px-4 py-2 bg-emerald-500 text-white text-[9px] font-black rounded-xl hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5 mx-auto"
+                                                >
+                                                    {isProcessing
+                                                        ? <><i className="fa-solid fa-circle-notch animate-spin"></i> 처리중</>
+                                                        : <><i className="fa-solid fa-check"></i> 완료 처리</>
+                                                    }
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-100">
+                    <p className="text-[9px] text-gray-400 font-medium">* 완료 처리 시 지출 내역에 <span className="font-black text-gray-600">수수료(지점명)</span> 항목으로 자동 등록됩니다.</p>
+                </div>
             </div>
         </div>
     );

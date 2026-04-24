@@ -2939,6 +2939,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, onStaffMode, ad
               expenditures={filteredExpenditures}
               deleteExpenditure={deleteExpenditure}
               bookings={bookings}
+              locations={locations}
+              onExpenditureSaved={upsertExpenditureCache}
               t={t}
             />
           )}

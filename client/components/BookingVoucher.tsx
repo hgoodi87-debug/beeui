@@ -653,6 +653,73 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                         <span className="text-2xl font-black italic text-bee-yellow">bee</span>
                         <span className="text-2xl font-black text-bee-black">liber</span>
                     </div>
+                    {/* 네임택 섹션 */}
+                    {(() => {
+                        const isStorage = String(booking.serviceType || '').toUpperCase() === 'STORAGE';
+                        const tagColor = isStorage ? '#FFBF00' : '#EF4444';
+                        const tagBg = isStorage ? '#FFF9E6' : '#FFF1F1';
+                        const tagLabel = isStorage ? 'STORAGE NO.' : 'DELIVERY NO.';
+                        const numberDisplay = (() => {
+                            if (isStorage && Array.isArray(booking.storageNumbers) && booking.storageNumbers.length > 0) {
+                                const ns = booking.storageNumbers as number[];
+                                if (ns.length <= 4) return ns.join(',');
+                                const start = ns[0];
+                                const end = ns[ns.length - 1];
+                                return start === end ? String(start) : `${start}-${end}`;
+                            }
+                            if ((booking as any).nametagId) {
+                                const nid = (booking as any).nametagId;
+                                const code = pickupLoc?.shortCode || '';
+                                return isStorage ? String(nid) : (code ? `${code}${nid}` : String(nid));
+                            }
+                            return null;
+                        })();
+                        const fontSize = numberDisplay
+                            ? (numberDisplay.length > 4 ? 20 : numberDisplay.length > 3 ? 24 : numberDisplay.length > 2 ? 30 : 38)
+                            : 20;
+                        return (
+                            <div className="w-full mb-6 rounded-[24px] flex items-center justify-center gap-6 py-5 px-6"
+                                style={{ backgroundColor: tagBg, border: `2px solid ${tagColor}30` }}>
+                                <svg width="72" height="90" viewBox="0 0 48 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M24 2 C20 2 17 5 17 9 C17 12 19 14 22 15 L22 17 L26 17 L26 15 C29 14 31 12 31 9 C31 5 28 2 24 2 Z" fill={tagColor} />
+                                    <circle cx="24" cy="9" r="2.5" fill="white" opacity="0.6" />
+                                    <rect x="4" y="16" width="40" height="42" rx="7" fill={tagColor} />
+                                    <rect x="10" y="22" width="28" height="30" rx="5"
+                                        fill={numberDisplay ? 'white' : 'none'}
+                                        stroke={numberDisplay ? 'none' : 'white'}
+                                        strokeWidth={numberDisplay ? 0 : 1}
+                                        strokeDasharray={numberDisplay ? undefined : '3 2'}
+                                        opacity={numberDisplay ? 1 : 0.5}
+                                    />
+                                    <text
+                                        x="24" y="37"
+                                        textAnchor="middle"
+                                        dominantBaseline="middle"
+                                        fontSize={fontSize}
+                                        fontWeight="900"
+                                        fontFamily="Arial Black, sans-serif"
+                                        fill={numberDisplay ? '#1a1a1a' : 'white'}
+                                        opacity={numberDisplay ? 1 : 0.4}
+                                    >
+                                        {numberDisplay ?? '—'}
+                                    </text>
+                                </svg>
+                                <div className="flex flex-col items-start gap-1">
+                                    <p className="text-[9px] font-black uppercase tracking-widest"
+                                        style={{ color: tagColor }}>{tagLabel}</p>
+                                    <p className="text-3xl font-black leading-none"
+                                        style={{ color: '#1a1a1a' }}>
+                                        {numberDisplay ?? (
+                                            <span style={{ color: tagColor, opacity: 0.4 }}>—</span>
+                                        )}
+                                    </p>
+                                    <p className="text-[9px] font-bold text-gray-400 mt-1">
+                                        {isStorage ? '보관 시 직원이 짐에 부착합니다' : '배송 시 직원이 짐에 부착합니다'}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })()}
                     <div className="w-64 h-64 bg-white rounded-[40px] p-6 mb-6 border-4 border-bee-yellow/10 flex items-center justify-center shadow-sm">
                             <img
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${window.location.origin}/staff/scan?id=${booking.id || booking.reservationCode}`)}`}

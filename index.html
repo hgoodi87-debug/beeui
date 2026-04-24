@@ -2898,6 +2898,18 @@ a { color: inherit; text-decoration: none; }
 .r-qr-box svg { width:100%; height:100%; }
 .r-agree { display:flex; align-items:flex-start; gap:10px; padding:12px 0; font-size:13px; color:var(--ink-2,#3D3D3D); }
 .r-agree input { width:20px; height:20px; accent-color:#FFC700; margin-top:2px; }
+/* GPS 버튼 */
+.btn-gps { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:48px; border-radius:14px; border:1.5px solid var(--line); background:#fff; font-size:14px; font-weight:700; color:var(--ink-2); margin-bottom:14px; cursor:pointer; transition:all .15s; }
+.btn-gps:active { background:var(--bg-soft); }
+.btn-gps.loading { color:var(--ink-4); pointer-events:none; }
+.btn-gps.done { border-color:var(--yellow); color:var(--yellow-deep); background:#FFFBEA; }
+/* 최종 확인 박스 */
+.r-confirm-box { background:var(--bg-soft,#FAFAF8); border-radius:16px; border:1px solid var(--line-2,#F0F0F0); margin-bottom:20px; overflow:hidden; }
+.r-confirm-row { display:flex; justify-content:space-between; align-items:center; padding:11px 14px; font-size:13px; border-bottom:1px solid var(--line-2,#F0F0F0); }
+.r-confirm-row:last-child { border-bottom:none; }
+.r-confirm-row .ck { color:var(--ink-3,#6B6B6B); font-weight:600; }
+.r-confirm-row .cv { font-weight:700; text-align:right; color:var(--ink,#1A1A1A); }
+.r-section-label { font-size:12px; font-weight:700; color:var(--ink-3); letter-spacing:0.04em; text-transform:uppercase; margin:18px 0 8px; }
 </style>
 </head>
 <body>
@@ -2908,15 +2920,23 @@ a { color: inherit; text-decoration: none; }
 
 <!-- === MOBILE HOME === -->
 <div class="mobile-home-wrapper">
-  <header class="sc-header" style="position:absolute;top:0;left:0;right:0;background:#000;border:none;z-index:5;display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px calc(0px);padding-top:var(--safe-top);height:calc(64px + var(--safe-top));">
-    <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;color:#fff;letter-spacing:-0.02em;">bee<em style="font-style:italic;color:#FFC700;">liber</em></div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button id="mLangBtn" onclick="toggleLang(event)" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.14);border-radius:12px;overflow:hidden;border:none;cursor:pointer;padding:0;">
-        <span class="flag flag-ko" id="mLangFlag" style="display:inline-block;width:26px;height:19px;background-size:cover;background-position:center;border-radius:3px;background-image:url('https://flagcdn.com/w80/kr.png');"></span>
+  <header class="sc-header">
+    <div class="logo">bee<em>liber</em></div>
+    <div class="right">
+      <button class="lang" id="langBtn" onclick="toggleLang(event)" aria-label="언어">
+        <span class="flag flag-ko" id="langFlag"></span>
       </button>
-      <button onclick="go('menu')" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#FFC700;border-radius:12px;border:none;cursor:pointer;">
+      <button class="menu" onclick="go('menu')" aria-label="메뉴">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
       </button>
+    </div>
+    <div class="lang-sheet" id="langSheet">
+      <button class="lang-opt on" data-lang="ko"><span class="flag flag-ko"></span><span>한국어</span></button>
+      <button class="lang-opt" data-lang="en"><span class="flag flag-en"></span><span>English</span></button>
+      <button class="lang-opt" data-lang="ja"><span class="flag flag-ja"></span><span>日本語</span></button>
+      <button class="lang-opt" data-lang="zh"><span class="flag flag-zh"></span><span>中文 (简体)</span></button>
+      <button class="lang-opt" data-lang="tw"><span class="flag flag-tw"></span><span>中文 (繁體)</span></button>
+      <button class="lang-opt" data-lang="hk"><span class="flag flag-hk"></span><span>粵語</span></button>
     </div>
   </header>
   <div class="m-hero">
@@ -3947,10 +3967,11 @@ document.querySelectorAll('button').forEach(btn => {
       <div class="title">예약하기</div>
     </header>
     <div class="progress"><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
-    <div class="step-head"><span class="num">STEP 02 / 04</span><h2>지점을 선택하세요</h2><p>가까운 지점 순으로 표시됩니다.</p></div>
+    <div class="step-head"><span class="num">STEP 02 / 04</span><h2>지점을 선택하세요</h2><p>GPS로 가까운 지점을 찾아드립니다.</p></div>
     <div class="sc-body">
       <div class="r-body">
-        <input class="input" type="text" placeholder="🔍 호텔명 · 역이름으로 검색" style="margin-bottom:14px">
+        <button class="btn-gps" id="rGpsBtn" onclick="rGetGPS()">📍 내 위치 기준으로 정렬</button>
+        <input class="input" type="text" id="rBranchSearch" placeholder="🔍 호텔명 · 역이름으로 검색" oninput="rFilterBranches(this.value)" style="margin-bottom:14px">
         <div class="r-branch-list" id="rBranchList"></div>
       </div>
     </div>
@@ -3966,9 +3987,40 @@ document.querySelectorAll('button').forEach(btn => {
       <div class="title">예약하기</div>
     </header>
     <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div></div>
-    <div class="step-head"><span class="num">STEP 03 / 04</span><h2>짐 수량을 선택하세요</h2><p>실시간으로 금액이 계산됩니다.</p></div>
+    <div class="step-head"><span class="num">STEP 03 / 04</span><h2>예약자 정보</h2><p>QR 바우처가 이메일로 발송됩니다.</p></div>
     <div class="sc-body">
       <div class="r-body">
+        <div class="field"><div class="field-label">이름</div><input class="input" id="rf-name" placeholder="홍길동"></div>
+        <div class="field"><div class="field-label">연락처</div><input class="input" id="rf-phone" type="tel" placeholder="010-0000-0000"></div>
+        <div class="field"><div class="field-label">이메일</div><input class="input" id="rf-email" type="email" placeholder="example@mail.com"></div>
+        <div class="field"><div class="field-label">요청사항 (선택)</div><textarea class="textarea" id="rf-note" placeholder="깨지기 쉬운 물품 등"></textarea></div>
+        <label class="r-agree"><input type="checkbox" id="rf-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
+      </div>
+    </div>
+    <div class="sc-footer">
+      <button class="btn btn-primary" onclick="rGoStep4()">다음 →</button>
+    </div>
+  </section>
+
+  <!-- ============ RESERVE STEP 4 ============ -->
+  <section class="screen" id="r-step4">
+    <header class="sc-header">
+      <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="title">최종 확인 &amp; 결제</div>
+    </header>
+    <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div></div>
+    <div class="step-head"><span class="num">STEP 04 / 04</span><h2>예약 내용 확인</h2><p>짐 수량을 확인하고 결제해주세요.</p></div>
+    <div class="sc-body">
+      <div class="r-body">
+        <!-- 예약 요약 -->
+        <div class="r-confirm-box" id="rConfirmBox">
+          <div class="r-confirm-row"><span class="ck">서비스</span><span class="cv" id="rcs-svc">-</span></div>
+          <div class="r-confirm-row"><span class="ck">지점</span><span class="cv" id="rcs-branch">-</span></div>
+          <div class="r-confirm-row"><span class="ck">맡김</span><span class="cv" id="rcs-drop">-</span></div>
+          <div class="r-confirm-row"><span class="ck">찾음</span><span class="cv" id="rcs-pick">-</span></div>
+        </div>
+        <!-- 짐 수량 -->
+        <div class="r-section-label">짐 수량</div>
         <div class="r-item-card">
           <div class="row"><div class="ic">🧳</div>
             <div class="ti"><div class="nm">캐리어</div><div class="pr">₩25,000<small>/ 1회</small></div></div>
@@ -3987,59 +4039,33 @@ document.querySelectorAll('button').forEach(btn => {
             <div class="r-counter"><button class="minus" onclick="rChangeQty('backpack',-1)">−</button><span class="q" id="rq-backpack">0</span><button class="plus" onclick="rChangeQty('backpack',1)">+</button></div>
           </div>
         </div>
+        <!-- 금액 요약 -->
         <div class="r-summary">
           <div class="r-summary-row"><span>캐리어 × <span id="rs-carrier">0</span></span><span class="amt" id="ra-carrier">₩0</span></div>
           <div class="r-summary-row"><span>쇼핑백 × <span id="rs-bag">0</span></span><span class="amt" id="ra-bag">₩0</span></div>
           <div class="r-summary-row"><span>백팩 × <span id="rs-backpack">0</span></span><span class="amt" id="ra-backpack">₩0</span></div>
           <div class="r-summary-row total"><span>총 결제금액</span><span class="amt" id="ra-total">₩0</span></div>
         </div>
+        <!-- 결제 수단 -->
+        <div class="r-section-label">결제 수단</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
+          <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="card" checked style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">신용 · 체크카드</div><div class="meta">Visa, Master, JCB 지원</div></div></label>
+          <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="kakao" style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">카카오페이</div><div class="meta">간편결제</div></div></label>
+          <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="naver" style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">네이버페이</div><div class="meta">간편결제</div></div></label>
+        </div>
       </div>
     </div>
     <div class="sc-footer">
       <div class="r-total-bar"><span class="tl">총 <span id="rfoot-qty">0</span>개</span><span class="tv" id="rfoot-total">₩0</span></div>
-      <button class="btn btn-primary" id="r3-next" onclick="go('r-step4')" disabled>다음 →</button>
-    </div>
-  </section>
-
-  <!-- ============ RESERVE STEP 4 ============ -->
-  <section class="screen" id="r-step4">
-    <header class="sc-header">
-      <button class="back" onclick="back()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-      <div class="title">결제하기</div>
-    </header>
-    <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div></div>
-    <div class="step-head"><span class="num">STEP 04 / 04</span><h2>예약자 정보 &amp; 결제</h2><p>QR 바우처가 이메일로 발송됩니다.</p></div>
-    <div class="sc-body">
-      <div class="r-body">
-        <div class="field"><div class="field-label">이름</div><input class="input" id="rf-name" placeholder="홍길동"></div>
-        <div class="field"><div class="field-label">연락처</div><input class="input" id="rf-phone" type="tel" placeholder="010-0000-0000"></div>
-        <div class="field"><div class="field-label">이메일</div><input class="input" id="rf-email" type="email" placeholder="example@mail.com"></div>
-        <div class="field"><div class="field-label">요청사항 (선택)</div><textarea class="textarea" id="rf-note" placeholder="깨지기 쉬운 물품 등"></textarea></div>
-        <label class="r-agree"><input type="checkbox" id="rf-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
-        <div style="margin:20px 0;border-top:1px solid var(--line)"></div>
-        <div class="r-summary" style="margin-top:0;margin-bottom:16px">
-          <div class="r-summary-row total" style="border:none;margin:0;padding:0"><span>결제 금액</span><span class="amt" id="rpay-total">₩0</span></div>
-        </div>
-        <div class="field">
-          <div class="field-label">결제 수단</div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="card" checked style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">신용 · 체크카드</div><div class="meta">Visa, Master, JCB 지원</div></div></label>
-            <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="kakao" style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">카카오페이</div><div class="meta">간편결제</div></div></label>
-            <label class="r-branch-card" style="cursor:pointer"><input type="radio" name="rpay" value="naver" style="margin-right:10px;accent-color:#FFC700"><div class="info"><div class="nm">네이버페이</div><div class="meta">간편결제</div></div></label>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="sc-footer">
       <button class="btn btn-primary" id="rpay-btn" onclick="rCompletePayment()"><span id="rpay-btn-txt">결제하기</span></button>
     </div>
   </section>
 
   <!-- ============ RESERVE DONE ============ -->
   <section class="screen" id="r-done" data-theme="dark">
-    <header class="sc-header" style="background:rgba(10,10,10,0.85);border-bottom-color:rgba(255,255,255,0.08);">
-      <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;color:#fff;letter-spacing:-0.02em;">bee<em style="font-style:italic;color:#FFC700;">liber</em></div>
-      <button class="back" onclick="go('home')" style="color:#fff;">
+    <header class="sc-header">
+      <div class="logo">bee<em>liber</em></div>
+      <button class="back" onclick="go('home')" aria-label="닫기">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </header>
@@ -4690,12 +4716,12 @@ const rState = {
   _total: 0,
 };
 const rBranches = [
-  {id:'myn', nm:'빌리버 연남점', addr:'마포구 동교동', dist:'9m', badge:'가장 가까운'},
-  {id:'hbo', nm:'빌리버 홍대바오점', addr:'마포구 양화로', dist:'355m'},
-  {id:'mmp', nm:'빌리버 마포점', addr:'마포구 망원동', dist:'1.2km'},
-  {id:'miw', nm:'빌리버 이태원점', addr:'용산구 이태원동', dist:'3.1km'},
-  {id:'mbx', nm:'빌리버 명동본점', addr:'중구 명동', dist:'5.8km'},
-  {id:'mdd', nm:'빌리버 동대문점', addr:'중구 을지로', dist:'6.2km'},
+  {id:'myn', nm:'빌리버 연남점',  addr:'마포구 동교동',   dist:'–', lat:37.5540, lng:126.9249, badge:'가장 가까운'},
+  {id:'hbo', nm:'빌리버 홍대바오점', addr:'마포구 양화로', dist:'–', lat:37.5524, lng:126.9215},
+  {id:'mmp', nm:'빌리버 마포점',  addr:'마포구 망원동',   dist:'–', lat:37.5551, lng:126.9065},
+  {id:'miw', nm:'빌리버 이태원점', addr:'용산구 이태원동', dist:'–', lat:37.5344, lng:126.9948},
+  {id:'mbx', nm:'빌리버 명동본점', addr:'중구 명동',       dist:'–', lat:37.5636, lng:126.9849},
+  {id:'mdd', nm:'빌리버 동대문점', addr:'중구 을지로',     dist:'–', lat:37.5667, lng:127.0090},
 ];
 function startReserve(svc){
   rState.service = svc;
@@ -4710,6 +4736,13 @@ function startReserve(svc){
   document.querySelectorAll('.svc-tab').forEach(t=>t.classList.toggle('active', t.dataset.svc===svc));
   rState.qty = {carrier:0,bag:0,backpack:0};
   rState.branch = null;
+  rState.info = {};
+  // reset personal info fields
+  ['rf-name','rf-phone','rf-email','rf-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const agr = document.getElementById('rf-agree'); if(agr) agr.checked=false;
+  // reset GPS button
+  const gb = document.getElementById('rGpsBtn'); if(gb){gb.textContent='📍 내 위치 기준으로 정렬';gb.className='btn-gps';gb.disabled=false;}
+  const bs = document.getElementById('rBranchSearch'); if(bs) bs.value='';
   rUpdateSummary();
   rRenderBranches();
   go('r-step1');
@@ -4718,25 +4751,55 @@ function rSelectService(svc){
   rState.service = svc;
   document.querySelectorAll('.svc-tab').forEach(t=>t.classList.toggle('active', t.dataset.svc===svc));
 }
+function rBranchCardHTML(b){
+  return `<button class="r-branch-card ${rState.branch===b.id?'selected':''}" onclick="rSelectBranch('${b.id}')">
+    <div class="pin">🧳</div>
+    <div class="info">
+      <div class="nm">${b.nm}${b.badge?` <span style="font-size:10px;color:#D99700;margin-left:4px">✨${b.badge}</span>`:''}</div>
+      <div class="meta">${b.addr} · 영업중</div>
+    </div>
+    <div class="dist">${b.dist}</div>
+  </button>`;
+}
 function rRenderBranches(){
   const el = document.getElementById('rBranchList');
   if(!el) return;
-  el.innerHTML = rBranches.map(b=>`
-    <button class="r-branch-card ${rState.branch===b.id?'selected':''}" onclick="rSelectBranch('${b.id}')">
-      <div class="pin">🧳</div>
-      <div class="info">
-        <div class="nm">${b.nm}${b.badge?` <span style="font-size:10px;color:#D99700;margin-left:4px">✨${b.badge}</span>`:''}</div>
-        <div class="meta">${b.addr} · 영업중</div>
-      </div>
-      <div class="dist">${b.dist}</div>
-    </button>
-  `).join('');
+  el.innerHTML = rBranches.map(b=>rBranchCardHTML(b)).join('');
+}
+function rFilterBranches(q){
+  const el = document.getElementById('rBranchList');
+  if(!el) return;
+  const kw = q.trim().toLowerCase();
+  const list = kw ? rBranches.filter(b=>b.nm.toLowerCase().includes(kw)||b.addr.toLowerCase().includes(kw)) : rBranches;
+  el.innerHTML = list.map(b=>rBranchCardHTML(b)).join('');
 }
 function rSelectBranch(id){
   rState.branch = id;
   rRenderBranches();
   const nb = document.getElementById('r2-next');
   if(nb) nb.disabled = false;
+}
+// ====== GPS ======
+function rCalcDist(lat1,lng1,lat2,lng2){
+  const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function rGetGPS(){
+  const btn = document.getElementById('rGpsBtn');
+  if(!navigator.geolocation){ alert('이 기기는 GPS를 지원하지 않습니다.'); return; }
+  btn.textContent='⏳ 위치 확인 중...'; btn.className='btn-gps loading'; btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude:lat,longitude:lng}=pos.coords;
+    rBranches.forEach(b=>{ const d=rCalcDist(lat,lng,b.lat,b.lng); b.dist=d<1000?Math.round(d)+'m':(d/1000).toFixed(1)+'km'; b._d=d; });
+    rBranches.sort((a,b)=>a._d-b._d);
+    rBranches.forEach((b,i)=>{ if(i===0) b.badge='가장 가까운'; else delete b.badge; });
+    rRenderBranches();
+    btn.textContent='✅ 내 위치 기준 정렬됨'; btn.className='btn-gps done'; btn.disabled=false;
+  }, ()=>{
+    btn.textContent='📍 내 위치 기준으로 정렬'; btn.className='btn-gps'; btn.disabled=false;
+    alert('위치 접근 권한이 필요합니다. 설정에서 허용해주세요.');
+  },{timeout:8000,maximumAge:60000});
 }
 function rChangeQty(key, delta){
   rState.qty[key] = Math.max(0, rState.qty[key]+delta);
@@ -4750,18 +4813,18 @@ function rUpdateSummary(){
     const q = rState.qty[k];
     const amt = q * rState.prices[k];
     total += amt; totalQty += q;
+    const qe = document.getElementById('rq-'+k); if(qe) qe.textContent=q;
     const se = document.getElementById('rs-'+k); if(se) se.textContent=q;
     const ae = document.getElementById('ra-'+k); if(ae) ae.textContent='₩'+amt.toLocaleString();
   }
   const at = document.getElementById('ra-total'); if(at) at.textContent='₩'+total.toLocaleString();
   const ft = document.getElementById('rfoot-total'); if(ft) ft.textContent='₩'+total.toLocaleString();
   const fq = document.getElementById('rfoot-qty'); if(fq) fq.textContent=totalQty;
-  const pt = document.getElementById('rpay-total'); if(pt) pt.textContent='₩'+total.toLocaleString();
-  const pb = document.getElementById('rpay-btn-txt'); if(pb) pb.textContent='₩'+total.toLocaleString()+' 결제하기';
-  const nb = document.getElementById('r3-next'); if(nb) nb.disabled = totalQty===0;
+  const pb = document.getElementById('rpay-btn-txt'); if(pb) pb.textContent= totalQty>0 ? '₩'+total.toLocaleString()+' 결제하기' : '결제하기';
   rState._total = total;
 }
-function rCompletePayment(){
+// ====== STEP 3→4 전환: 개인정보 검증 후 확인화면 렌더링 ======
+function rGoStep4(){
   const name = document.getElementById('rf-name').value.trim();
   const phone = document.getElementById('rf-phone').value.trim();
   const email = document.getElementById('rf-email').value.trim();
@@ -4769,18 +4832,35 @@ function rCompletePayment(){
   if(!name||!phone||!email){ alert('이름·연락처·이메일을 입력해주세요.'); return; }
   if(!agree){ alert('개인정보 수집에 동의해주세요.'); return; }
   rState.info = { name, phone, email, note: document.getElementById('rf-note').value };
+  rRenderConfirm();
+  rUpdateSummary();
+  go('r-step4');
+}
+function rRenderConfirm(){
+  const fmt = t => { const[h,m]=t.split(':'); const H=+h; return (H<12?'오전':'오후')+' '+(H%12||12)+':'+m; };
+  const branch = rBranches.find(b=>b.id===rState.branch);
+  const svc = rState.service==='storage'?'🧳 짐 보관':'✈️ 공항 배송';
+  const el = id => document.getElementById(id);
+  if(el('rcs-svc')) el('rcs-svc').textContent = svc;
+  if(el('rcs-branch')) el('rcs-branch').textContent = branch?.nm || '-';
+  if(el('rcs-drop')) el('rcs-drop').textContent = rState.dropDate + ' ' + fmt(rState.dropTime);
+  if(el('rcs-pick')) el('rcs-pick').textContent = rState.pickDate + ' ' + fmt(rState.pickTime);
+}
+function rCompletePayment(){
+  const totalQty = Object.values(rState.qty).reduce((a,b)=>a+b,0);
+  if(totalQty===0){ alert('짐 수량을 1개 이상 선택해주세요.'); return; }
   const btn = document.getElementById('rpay-btn');
   btn.textContent = '결제 처리 중...'; btn.disabled = true;
   setTimeout(()=>{
     btn.disabled = false;
     const code = 'BL-' + Math.random().toString(36).slice(2,8).toUpperCase();
     document.getElementById('rv-code').textContent = code;
-    document.getElementById('rv-name').textContent = rState.info.name + ' 님';
+    document.getElementById('rv-name').textContent = (rState.info.name||'예약자') + ' 님';
     const branch = rBranches.find(b=>b.id===rState.branch);
     document.getElementById('rv-meta').innerHTML =
       `${branch?.nm||''} · ${rState.service==='storage'?'짐 보관':'공항 배송'}<br>`+
       `맡김 ${rState.dropDate} ${rState.dropTime} → 찾음 ${rState.pickDate} ${rState.pickTime}<br>`+
-      `총 ${Object.values(rState.qty).reduce((a,b)=>a+b,0)}개 · ₩${(rState._total||0).toLocaleString()}`;
+      `총 ${totalQty}개 · ₩${(rState._total||0).toLocaleString()}`;
     rDrawQR(code);
     go('r-done');
     btn.innerHTML = '<span id="rpay-btn-txt">결제하기</span>';

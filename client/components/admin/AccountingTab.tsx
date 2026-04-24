@@ -1224,17 +1224,22 @@ const BranchSettlementPanel: React.FC<{
 
         const filtered = bookings.filter(b => {
             const d = b.pickupDate || '';
-            return d >= revenueStartDate && d <= revenueEndDate && !b.isDeleted;
+            return d >= revenueStartDate && d <= revenueEndDate && !b.isDeleted && b.status === '완료';
         });
 
         filtered.forEach(b => {
-            const key = b.branchId || b.branchName || '기타';
+            // pickup_location 기반 위치 매칭 (branchId/branchName null 예약 포함)
             const loc = locations.find(l =>
                 l.id === b.branchId ||
                 l.name === b.branchName ||
-                (l as any).shortCode === (b as any).branchCode
+                (l as any).shortCode === (b as any).branchCode ||
+                l.id === b.pickupLocation ||
+                (l as any).shortCode === b.pickupLocation ||
+                l.name === b.pickupLocation
             );
-            const bName = b.branchName || loc?.name || key;
+            // loc.id(=shortCode)로 키 정규화 → 'DDP'와 '동대문DDP점' 동일 버킷
+            const key = b.branchId || b.branchName || loc?.id || b.pickupLocation || '기타';
+            const bName = b.branchName || loc?.name || b.pickupLocation || key;
             if (!map[key]) {
                 map[key] = {
                     branchId: key,
@@ -1279,18 +1284,38 @@ const BranchSettlementPanel: React.FC<{
         if (saving) return;
         setSaving(entry.branchId);
         try {
+            const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            const branchUuid = UUID_RE.test(entry.branchId) ? entry.branchId : undefined;
+
             const exp: Expenditure = {
                 date: revenueEndDate,
                 category: '수수료',
                 description: `수수료(${entry.branchName}) ${revenueStartDate}~${revenueEndDate}`,
                 amount: entry.totalCommission,
-                branchId: entry.branchId !== '기타' ? entry.branchId : undefined,
+                branchId: branchUuid,
                 costType: 'variable' as any,
                 paymentType: 'corporate' as any,
                 createdBy: 'admin',
                 createdAt: new Date().toISOString(),
             };
-            const saved = await StorageService.saveExpenditure(exp);
+
+            const { supabaseMutate } = await import('../../services/supabaseClient');
+            const payoutPayload = {
+                branch_id: branchUuid ?? null,
+                branch_name: entry.branchName,
+                period_start: revenueStartDate,
+                period_end: revenueEndDate,
+                total_amount: entry.totalCommission,
+                booking_count: entry.deliveryCount + entry.storageCount,
+                paid_at: new Date().toISOString(),
+                paid_by: 'admin',
+                notes: `수수료(${entry.branchName}) ${revenueStartDate}~${revenueEndDate}`,
+            };
+
+            const [saved] = await Promise.all([
+                StorageService.saveExpenditure(exp),
+                supabaseMutate('branch_payouts', 'POST', payoutPayload),
+            ]);
             onExpenditureSaved?.(saved);
             setPaidIds(prev => new Set([...prev, entry.branchId]));
             setToast({ msg: `${entry.branchName} 커미션 완료 처리 ✅`, type: 'success' });

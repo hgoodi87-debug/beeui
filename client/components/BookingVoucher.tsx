@@ -201,31 +201,58 @@ const BookingVoucher: React.FC<BookingVoucherProps> = ({ booking, t, lang, picku
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.reservation_id || 'Reservation ID'}</p>
                             <h3 className="text-sm font-black text-bee-black">{booking.reservationCode || booking.id}</h3>
                         </div>
-                        {String(booking.serviceType || '').toUpperCase() === 'STORAGE' && Array.isArray(booking.storageNumbers) && booking.storageNumbers.length > 0 ? (
-                            <div className="flex flex-col items-center">
-                                <p className="text-[9px] font-black text-bee-yellow bg-bee-black px-2 py-0.5 rounded-full mb-1 uppercase tracking-tighter">
-                                    {lang === 'ko' ? '보관번호' : 'Storage No.'}
-                                </p>
-                                <div className="h-11 px-4 rounded-full bg-bee-yellow flex items-center justify-center shadow-lg border-2 border-white">
-                                    <span className="text-[22px] font-black text-bee-black leading-none tracking-widest">
-                                        {(() => {
-                                            const ns = booking.storageNumbers as number[];
-                                            if (ns.length <= 4) return ns.join(',');
-                                            const start = ns[0];
-                                            const end = ns[ns.length - 1];
-                                            return start === end ? String(start) : `${start}-${end}`;
-                                        })()}
-                                    </span>
+                        {(() => {
+                            const isStorage = String(booking.serviceType || '').toUpperCase() === 'STORAGE';
+                            const isDelivery = String(booking.serviceType || '').toUpperCase() === 'DELIVERY';
+                            const tagColor = isStorage ? '#FFBF00' : '#EF4444';
+                            const tagLabel = isStorage
+                                ? (lang === 'ko' ? '보관번호' : 'Storage No.')
+                                : (lang === 'ko' ? '배송번호' : 'Delivery No.');
+                            const numberDisplay = (() => {
+                                if (isStorage && Array.isArray(booking.storageNumbers) && booking.storageNumbers.length > 0) {
+                                    const ns = booking.storageNumbers as number[];
+                                    if (ns.length <= 4) return ns.join(',');
+                                    const start = ns[0];
+                                    const end = ns[ns.length - 1];
+                                    return start === end ? String(start) : `${start}-${end}`;
+                                }
+                                if (booking.nametagId) return String(booking.nametagId);
+                                return null;
+                            })();
+                            if (!numberDisplay) return null;
+                            const fontSize = numberDisplay.length > 3 ? 10 : numberDisplay.length > 2 ? 13 : 17;
+                            return (
+                                <div className="flex flex-col items-center gap-0.5">
+                                    <p className="text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full"
+                                        style={{ color: tagColor, backgroundColor: '#1a1a1a' }}>
+                                        {tagLabel}
+                                    </p>
+                                    {/* 네임택 SVG — 노란색(보관) / 빨간색(배송) */}
+                                    <svg width="48" height="60" viewBox="0 0 48 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        {/* 고리 */}
+                                        <path d="M24 2 C20 2 17 5 17 9 C17 12 19 14 22 15 L22 17 L26 17 L26 15 C29 14 31 12 31 9 C31 5 28 2 24 2 Z" fill={tagColor} />
+                                        <circle cx="24" cy="9" r="2.5" fill="white" opacity="0.6" />
+                                        {/* 태그 몸통 */}
+                                        <rect x="4" y="16" width="40" height="42" rx="7" fill={tagColor} />
+                                        {/* 흰색 번호판 */}
+                                        <rect x="10" y="22" width="28" height="30" rx="5" fill="white" />
+                                        {/* 번호 */}
+                                        <text
+                                            x="24"
+                                            y={37 + (fontSize < 13 ? 1 : 0)}
+                                            textAnchor="middle"
+                                            dominantBaseline="middle"
+                                            fontSize={fontSize}
+                                            fontWeight="900"
+                                            fontFamily="Arial Black, sans-serif"
+                                            fill="#1a1a1a"
+                                        >
+                                            {numberDisplay}
+                                        </text>
+                                    </svg>
                                 </div>
-                            </div>
-                        ) : booking.nametagId ? (
-                            <div className="flex flex-col items-center">
-                                <p className="text-[9px] font-black text-bee-yellow bg-bee-black px-2 py-0.5 rounded-full mb-1 uppercase tracking-tighter">Nametag No.</p>
-                                <div className="w-10 h-10 rounded-full bg-bee-yellow flex items-center justify-center shadow-lg border-2 border-white">
-                                    <span className="text-lg font-black text-bee-black leading-none">{booking.nametagId}</span>
-                                </div>
-                            </div>
-                        ) : null}
+                            );
+                        })()}
                         <div className="text-right">
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{voucherText.issue_date || 'Issue Date'}</p>
                             <h3 className="text-sm font-black text-bee-black">

@@ -4365,7 +4365,7 @@ document.querySelectorAll('button').forEach(btn => {
           </div>
           <div class="chk-row">
             <span class="ic">🕒</span>
-            <span class="lb"><span id="chk-drop">오늘, 지금</span> &nbsp;→&nbsp; <span id="chk-pick">18:00</span></span>
+            <span class="lb"><span id="chk-drop">-</span> &nbsp;→&nbsp; <span id="chk-pick">-</span></span>
             <button class="chk-edit" onclick="editField('reserve-time')">편집</button>
           </div>
         </div>
@@ -4375,7 +4375,7 @@ document.querySelectorAll('button').forEach(btn => {
             <span class="pay-ic pay-card-ic">
               <svg width="28" height="18" viewBox="0 0 40 26" fill="none"><rect width="40" height="26" rx="4" fill="#1A1F71"/><rect y="6" width="40" height="7" fill="#F7B600"/><rect x="3" y="16" width="10" height="6" rx="1" fill="#fff" opacity=".8"/></svg>
             </span>
-            <span class="pay-nm">체크 / 신용카드<br><span class="pay-sub">Visa · Mastercard · JCB</span></span>
+            <span class="pay-nm">체크 / 신용카드<br><span class="pay-sub">Visa · Mastercard · UnionPay</span></span>
             <input type="radio" name="pay" value="card" checked>
             <span class="pay-radio"></span>
           </label>
@@ -4529,8 +4529,8 @@ function goToMap(){
   const pd=document.getElementById('pickDate'); if(pd) state.pickDate=pd.value;
   const pt=document.getElementById('pickTime'); if(pt) state.pickTime=pt.value;
   const fmt = (d,t)=> d ? `${d.slice(5).replace('-','/')} ${t||''}`.trim() : '';
-  const cd=document.getElementById('chk-drop'); if(cd) cd.textContent=fmt(state.dropDate,state.dropTime)||'오늘';
-  const cp=document.getElementById('chk-pick'); if(cp) cp.textContent=fmt(state.pickDate,state.pickTime)||'오늘';
+  const cd=document.getElementById('chk-drop'); if(cd) cd.textContent=fmt(state.dropDate,state.dropTime)||'-';
+  const cp=document.getElementById('chk-pick'); if(cp) cp.textContent=fmt(state.pickDate,state.pickTime)||'-';
   updateSummary();
   if(state.editReturn){
     const target = state.editReturn;

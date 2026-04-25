@@ -3368,7 +3368,7 @@ a { color: inherit; text-decoration: none; }
 
 /* 지점 상세 팝업 */
 .dw-detail-overlay {
-  position: absolute; inset: 0; z-index: 10;
+  position: fixed; inset: 0; z-index: 9000;
   background: rgba(0,0,0,0.35);
   display: flex; align-items: center; justify-content: center;
 }
@@ -4823,20 +4823,6 @@ document.querySelectorAll('button').forEach(btn => {
       <button class="dw-btn-prev" onclick="dwGoStep(1)">← 이전</button>
     </div>
 
-    <!-- 지점 상세 팝업 -->
-    <div class="dw-detail-overlay" id="dwDetailOverlay" hidden onclick="dwCloseDetail()">
-      <div class="dw-detail-popup" onclick="event.stopPropagation()">
-        <button class="dw-detail-close" onclick="dwCloseDetail()">✕</button>
-        <img class="dw-detail-photo" id="dwDetailPhoto" src="" alt="">
-        <div class="dw-detail-body">
-          <div class="dw-detail-nm" id="dwDetailNm"></div>
-          <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="dwDetailAddr"></span></div>
-          <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="dwDetailHours"></span></div>
-          <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.2L12 17.8 5.8 21.4l1.6-7.2L2 9.5l7.1-.6z"/></svg><span id="dwDetailRating"></span>&nbsp;·&nbsp;<span id="dwDetailDist"></span></div>
-          <button class="dw-detail-cta" onclick="dwConfirmBranch()">이 지점에서 예약하기 →</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- STEP 3 -->
@@ -4904,6 +4890,21 @@ document.querySelectorAll('button').forEach(btn => {
     </div>
   </div>
 
+</div>
+
+<!-- ===== 데스크톱 지점 상세 팝업 ===== -->
+<div class="dw-detail-overlay" id="dwDetailOverlay" hidden onclick="dwCloseDetail()">
+  <div class="dw-detail-popup" onclick="event.stopPropagation()">
+    <button class="dw-detail-close" onclick="dwCloseDetail()">✕</button>
+    <img class="dw-detail-photo" id="dwDetailPhoto" src="" alt="">
+    <div class="dw-detail-body">
+      <div class="dw-detail-nm" id="dwDetailNm"></div>
+      <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="dwDetailAddr"></span></div>
+      <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="dwDetailHours"></span></div>
+      <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.2L12 17.8 5.8 21.4l1.6-7.2L2 9.5l7.1-.6z"/></svg><span id="dwDetailRating"></span>&nbsp;·&nbsp;<span id="dwDetailDist"></span></div>
+      <button class="dw-detail-cta" onclick="dwConfirmBranch()">이 지점에서 예약하기 →</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===== 프로모션 코드 모달 ===== -->

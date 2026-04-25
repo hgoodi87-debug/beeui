@@ -2971,13 +2971,13 @@ a { color: inherit; text-decoration: none; }
   display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px !important;
 }
 #reserve-time .svc-tab {
-  padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line);
-  background: #fff; display: flex; align-items: center; justify-content: center;
-  gap: 8px; transition: all .2s;
+  padding: 12px 14px; border-radius: 12px; border: 2px solid var(--line);
+  background: #fff; display: flex; flex-direction: row; align-items: center; justify-content: center;
+  gap: 8px; transition: all .2s; white-space: nowrap;
 }
 #reserve-time .svc-tab.active { border-color: #111; background: #111; color: #fff; }
 #reserve-time .svc-tab .ic { font-size: 20px; flex: 0 0 auto; line-height: 1; }
-#reserve-time .svc-tab .tt { font-weight: 800; font-size: 14px; line-height: 1.2; }
+#reserve-time .svc-tab .tt { font-weight: 800; font-size: 14px; line-height: 1; }
 
 /* field 간격 압축 */
 #reserve-time .field,
@@ -3006,9 +3006,9 @@ a { color: inherit; text-decoration: none; }
   width: 28px; text-align: left; letter-spacing: -0.01em;
 }
 #reserve-time .dt-chip {
-  display: flex; align-items: center; padding: 11px 10px;
+  display: flex; align-items: center; padding: 0 10px;
   background: var(--bg-soft); border-radius: 12px; border: 1.5px solid transparent;
-  min-width: 0; overflow: hidden;
+  min-width: 0; overflow: hidden; height: 44px;
 }
 #reserve-time .dt-chip:focus-within { border-color: #F5B200; }
 #reserve-time .dt-chip input,
@@ -3016,7 +3016,7 @@ a { color: inherit; text-decoration: none; }
   flex: 1; min-width: 0; width: 100%; background: transparent; border: none; outline: none;
   font-size: 13px; font-weight: 700; color: var(--ink);
   appearance: none; -webkit-appearance: none; padding: 0;
-  font-feature-settings: "tnum" 1;
+  font-feature-settings: "tnum" 1; height: 100%;
 }
 
 /* 가방 그리드 */
@@ -3113,22 +3113,23 @@ a { color: inherit; text-decoration: none; }
 }
 .dt-cal-btn:active { background: rgba(0,0,0,0.14); }
 
-/* ── 맡김/찾음/가방 배경 회색 대비 강화 ── */
+/* ── 맡김/찾음/가방 배경 회색 대비 ── */
 #reserve-time .dt-chip {
-  background: #E0E0E0 !important;
-  border: 1.5px solid #C8C8C8 !important;
+  background: #EBEBEB !important;
+  border: 1.5px solid #D8D8D8 !important;
+  min-height: 44px;
 }
 #reserve-time .dt-chip:focus-within {
   border-color: #EBA500 !important;
-  background: #F0F0F0 !important;
+  background: #F4F4F4 !important;
 }
 #reserve-time .bag-card {
-  background: #E8E8E8 !important;
-  border: 1px solid #D0D0D0 !important;
+  background: #EFEFEF !important;
+  border: 1px solid #DCDCDC !important;
 }
 #reserve-time .bag-card .counter button {
   background: #fff !important;
-  border: 1.5px solid #B8B8B8 !important;
+  border: 1.5px solid #C4C4C4 !important;
 }
 #reserve-time .bag-card .counter button.plus {
   background: #111 !important;

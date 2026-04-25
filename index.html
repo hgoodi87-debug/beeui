@@ -3066,7 +3066,12 @@ a { color: inherit; text-decoration: none; }
   margin-top: 5px !important; line-height: 1.4 !important;
 }
 #reserve-user .sns-row { display: grid; grid-template-columns: 1fr 110px; gap: 7px; }
-#reserve-user .agree { padding: 10px 0 !important; font-size: 13px !important; }
+#reserve-user .agree { padding: 7px 0 !important; font-size: 12.5px !important; }
+#reserve-user .agree-group { border-top: 1px solid var(--line-2); margin-top: 4px; }
+#reserve-user .field { margin-bottom: 10px !important; }
+#reserve-user .field-hint { font-size: 11px !important; margin-top: 4px !important; }
+#reserve-user .r-body { padding: 6px 20px 10px !important; }
+#reserve-user .field .input { height: 42px !important; font-size: 14px !important; }
 
 /* 취급금지 안내 박스 */
 .prohibited-box {
@@ -4385,14 +4390,16 @@ document.querySelectorAll('button').forEach(btn => {
           </div>
           <p class="field-hint">직원과 연락할 수 있는 SNS 계정을 입력해주세요.</p>
         </div>
-        <label class="agree"><input type="checkbox" id="f-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
-
-        <!-- 취급금지 안내 -->
-        <label class="agree" style="margin-top:0;align-items:center;">
-          <input type="checkbox" id="f-prohibited" disabled>
-          <span style="flex:1;min-width:0;">취급 금지 품목 및 배상 책임 안내 동의 <span style="color:#EBA500;font-weight:700">(필수)</span></span>
-          <button class="prohibited-view-btn" onclick="openProhibited();event.preventDefault()" style="flex:0 0 auto;">자세히 보기</button>
-        </label>
+        <div class="agree-group">
+          <label class="agree"><input type="checkbox" id="f-terms"><span>서비스 이용약관에 동의합니다. (필수)</span></label>
+          <label class="agree"><input type="checkbox" id="f-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
+          <!-- 취급금지 안내 -->
+          <label class="agree" style="align-items:center;">
+            <input type="checkbox" id="f-prohibited" disabled>
+            <span style="flex:1;min-width:0;">취급 금지 품목 및 배상 책임 안내 동의 <span style="color:#EBA500;font-weight:700">(필수)</span></span>
+            <button class="prohibited-view-btn" onclick="openProhibited();event.preventDefault()" style="flex:0 0 auto;">자세히 보기</button>
+          </label>
+        </div>
       </div>
     </div>
     <div class="sc-footer">
@@ -4849,6 +4856,8 @@ function goToPayment(){
   const email = document.getElementById('f-email').value.trim();
   const agree = document.getElementById('f-agree').checked;
   if(!name || !phone || !email){ alert('이름·연락처·이메일을 입력해주세요.'); return; }
+  const terms = document.getElementById('f-terms').checked;
+  if(!terms){ alert('서비스 이용약관에 동의해주세요.'); return; }
   if(!agree){ alert('개인정보 수집에 동의해주세요.'); return; }
   const prohibited = document.getElementById('f-prohibited').checked;
   if(!prohibited){ alert('취급 금지 품목 및 배상 책임 안내에 동의해주세요.'); return; }

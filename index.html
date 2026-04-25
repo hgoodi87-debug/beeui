@@ -4356,8 +4356,11 @@ document.querySelectorAll('button').forEach(btn => {
     <div class="sc-body">
       <div class="chk-body">
         <div class="chk-card">
-          <div class="chk-card-title" id="chk-branch-nm">지점 선택됨</div>
-          <div class="chk-card-sub" id="chk-branch-addr"></div>
+          <div class="chk-row" style="border-top:none;padding-top:0">
+            <span class="ic">📍</span>
+            <span class="lb"><b>지점</b>&nbsp;&nbsp;<span id="chk-branch-nm" style="font-weight:500;color:var(--ink-2)">-</span></span>
+            <button class="chk-edit" onclick="changeBranch()">변경</button>
+          </div>
           <div class="chk-row">
             <span class="ic">🧳</span>
             <span class="lb"><span id="chk-qty-breakdown">캐리어 1개</span></span>
@@ -4717,9 +4720,30 @@ function confirmBranch(){
   const b = branches.find(x=>x.id===state.branch);
   if(!b) return;
   const nm=document.getElementById('chk-branch-nm'); if(nm) nm.textContent=b.nm;
-  const ad=document.getElementById('chk-branch-addr'); if(ad) ad.textContent=`${b.kind} · ${b.address||b.addr}`;
   updateSummary();
-  go('reserve-user');
+  if(state.editReturn){
+    const target = state.editReturn;
+    state.editReturn = null;
+    go(target);
+  } else {
+    go('reserve-user');
+  }
+}
+
+function changeBranch(){
+  // 지도 화면으로 돌아가서 지점 변경 — 완료 후 reserve-2로 복귀
+  state.editReturn = 'reserve-2';
+  // 시트 리스트 다시 열기
+  const list=document.getElementById('branchList');
+  const head=document.getElementById('sheetHead');
+  const detail=document.getElementById('branchDetail');
+  const sheet=document.getElementById('mapSheet');
+  if(list) list.hidden=false;
+  if(head) head.hidden=false;
+  if(detail) detail.hidden=true;
+  if(sheet){ sheet.classList.remove('collapsed','detail-open'); }
+  renderBranches();
+  go('reserve-1');
 }
 
 function goToPayment(){

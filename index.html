@@ -3098,6 +3098,12 @@ a { color: inherit; text-decoration: none; }
 .prohibited-list { margin: 0 0 12px 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
 .prohibited-list li { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
 .prohibited-warn { font-size: 13px; font-weight: 700; color: #111; margin: 0; }
+.prohibited-view-btn {
+  flex: 0 0 auto; background: none; border: none; padding: 0;
+  font-size: 12px; font-weight: 700; color: #EBA500; text-decoration: underline; cursor: pointer;
+}
+#f-prohibited:disabled + span { color: var(--ink-4); }
+#f-prohibited:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── 결제 화면 (reserve-2) ── */
 #reserve-2 .sc-body { background: var(--bg-soft, #FAFAF8) !important; }
@@ -4379,11 +4385,11 @@ document.querySelectorAll('button').forEach(btn => {
         <label class="agree"><input type="checkbox" id="f-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
 
         <!-- 취급금지 안내 -->
-        <div class="prohibited-box" onclick="openProhibited()">
-          <span class="prohibited-title">⚠️ 취급 금지 품목 및 배상 책임 안내</span>
-          <span class="prohibited-toggle">자세히 보기 →</span>
-        </div>
-        <label class="agree" style="margin-top:4px"><input type="checkbox" id="f-prohibited"><span>위 취급 금지 품목 및 배상 책임 안내에 동의합니다. (필수)</span></label>
+        <label class="agree" style="margin-top:0">
+          <input type="checkbox" id="f-prohibited" disabled>
+          <span style="flex:1;">취급 금지 품목 및 배상 책임 안내에 동의합니다. (필수)</span>
+          <button class="prohibited-view-btn" onclick="openProhibited();event.preventDefault()">자세히 보기</button>
+        </label>
       </div>
     </div>
     <div class="sc-footer">
@@ -4819,6 +4825,8 @@ function openProhibited(){
 function closeProhibited(){
   const m = document.getElementById('prohibitedModal');
   if(m) m.hidden = true;
+  const cb = document.getElementById('f-prohibited');
+  if(cb) cb.disabled = false;
 }
 
 function goToPayment(){

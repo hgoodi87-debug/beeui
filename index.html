@@ -3100,8 +3100,9 @@ a { color: inherit; text-decoration: none; }
 .prohibited-warn { font-size: 13px; font-weight: 700; color: #111; margin: 0; }
 
 .prohibited-view-btn {
-  display: block; background: none; border: none; padding: 0;
-  font-size: 12px; font-weight: 700; color: #EBA500; text-decoration: underline; cursor: pointer;
+  background: none; border: none; padding: 0 0 0 6px;
+  font-size: 12px; font-weight: 700; color: #EBA500; text-decoration: underline;
+  cursor: pointer; white-space: nowrap; flex: 0 0 auto;
 }
 .dt-clk-ic { flex: 0 0 auto; color: var(--ink-3); margin-left: 4px; }
 #f-prohibited:disabled + span { color: var(--ink-4); }
@@ -4387,13 +4388,11 @@ document.querySelectorAll('button').forEach(btn => {
         <label class="agree"><input type="checkbox" id="f-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
 
         <!-- 취급금지 안내 -->
-        <div style="margin-top:0">
-          <label class="agree" style="margin-bottom:2px">
-            <input type="checkbox" id="f-prohibited" disabled>
-            <span>취급 금지 품목 및 배상 책임 안내에 동의합니다. <span style="color:#EBA500;font-weight:700">(필수)</span></span>
-          </label>
-          <button class="prohibited-view-btn" onclick="openProhibited()" style="margin-left:30px;margin-bottom:4px">자세히 보기 →</button>
-        </div>
+        <label class="agree" style="margin-top:0;align-items:center;">
+          <input type="checkbox" id="f-prohibited" disabled>
+          <span style="flex:1;min-width:0;">취급 금지 품목 및 배상 책임 안내 동의 <span style="color:#EBA500;font-weight:700">(필수)</span></span>
+          <button class="prohibited-view-btn" onclick="openProhibited();event.preventDefault()" style="flex:0 0 auto;">자세히 보기</button>
+        </label>
       </div>
     </div>
     <div class="sc-footer">

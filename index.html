@@ -3070,18 +3070,34 @@ a { color: inherit; text-decoration: none; }
 
 /* 취급금지 안내 박스 */
 .prohibited-box {
-  border: 1.5px solid #E0E0E0; border-radius: 12px; overflow: hidden; margin-top: 8px;
-}
-.prohibited-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; cursor: pointer; background: #F8F8F8;
+  border: 1.5px solid #E0E0E0; border-radius: 12px;
+  padding: 12px 14px; margin-top: 8px; cursor: pointer; background: #F8F8F8;
 }
 .prohibited-title { font-size: 13px; font-weight: 700; color: var(--ink); }
-.prohibited-toggle { font-size: 12px; color: var(--ink-3); white-space: nowrap; margin-left: 8px; }
-.prohibited-content { padding: 12px 14px; background: #fff; border-top: 1px solid #EBEBEB; }
-.prohibited-list { margin: 0 0 8px 0; padding-left: 16px; display: flex; flex-direction: column; gap: 5px; }
-.prohibited-list li { font-size: 13px; color: var(--ink-2); line-height: 1.4; }
-.prohibited-warn { font-size: 12px; font-weight: 700; color: #111; margin: 0; }
+.prohibited-toggle { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+
+/* 취급금지 모달 */
+.prohibited-modal {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; justify-content: center;
+}
+.prohibited-modal[hidden] { display: none !important; }
+.prohibited-modal-box {
+  width: 100%; max-width: 480px; background: #fff;
+  border-radius: 20px 20px 0 0; overflow: hidden;
+}
+.prohibited-modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 16px 14px; font-size: 14px; font-weight: 800; border-bottom: 1px solid #EBEBEB;
+}
+.prohibited-modal-head button {
+  background: none; border: none; font-size: 18px; color: var(--ink-3); cursor: pointer; padding: 0;
+}
+.prohibited-modal-body { padding: 16px; }
+.prohibited-list { margin: 0 0 12px 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+.prohibited-list li { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.prohibited-warn { font-size: 13px; font-weight: 700; color: #111; margin: 0; }
 
 /* ── 결제 화면 (reserve-2) ── */
 #reserve-2 .sc-body { background: var(--bg-soft, #FAFAF8) !important; }
@@ -4363,24 +4379,11 @@ document.querySelectorAll('button').forEach(btn => {
         <label class="agree"><input type="checkbox" id="f-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
 
         <!-- 취급금지 안내 -->
-        <div class="prohibited-box">
-          <div class="prohibited-header" onclick="toggleProhibited()">
-            <span class="prohibited-title">⚠️ 취급 금지 품목 및 배상 책임 안내</span>
-            <span class="prohibited-toggle" id="prohibitedToggle">자세히 보기 ▾</span>
-          </div>
-          <div class="prohibited-content" id="prohibitedContent" hidden>
-            <ul class="prohibited-list">
-              <li>현금, 유가증권, 귀금속 (개당 50만원 이상)</li>
-              <li>예술품, 골동품, 희귀수집품</li>
-              <li>폭발성, 인화성, 휘발성물질</li>
-              <li>동물, 유해, 부패성 물품, 폐기물</li>
-              <li>전자기기 및 정밀기기</li>
-              <li>불법물품, 무기류, 위험물</li>
-            </ul>
-            <p class="prohibited-warn">* 해당 품목 발견 시 보관 거부 혹은 제한될 수 있습니다.</p>
-          </div>
+        <div class="prohibited-box" onclick="openProhibited()">
+          <span class="prohibited-title">⚠️ 취급 금지 품목 및 배상 책임 안내</span>
+          <span class="prohibited-toggle">자세히 보기 →</span>
         </div>
-        <label class="agree" style="margin-top:8px"><input type="checkbox" id="f-prohibited"><span>위 취급 금지 품목 및 배상 책임 안내에 동의합니다. (필수)</span></label>
+        <label class="agree" style="margin-top:4px"><input type="checkbox" id="f-prohibited"><span>위 취급 금지 품목 및 배상 책임 안내에 동의합니다. (필수)</span></label>
       </div>
     </div>
     <div class="sc-footer">
@@ -4483,6 +4486,28 @@ document.querySelectorAll('button').forEach(btn => {
     </div>
   </section>
 
+</div>
+
+<!-- ===== 취급금지 모달 ===== -->
+<div class="prohibited-modal" id="prohibitedModal" hidden onclick="closeProhibited()">
+  <div class="prohibited-modal-box" onclick="event.stopPropagation()">
+    <div class="prohibited-modal-head">
+      <span>⚠️ 취급 금지 품목 및 배상 책임 안내</span>
+      <button onclick="closeProhibited()">✕</button>
+    </div>
+    <div class="prohibited-modal-body">
+      <ul class="prohibited-list">
+        <li>현금, 유가증권, 귀금속 (개당 50만원 이상)</li>
+        <li>예술품, 골동품, 희귀수집품</li>
+        <li>폭발성, 인화성, 휘발성물질</li>
+        <li>동물, 유해, 부패성 물품, 폐기물</li>
+        <li>전자기기 및 정밀기기</li>
+        <li>불법물품, 무기류, 위험물</li>
+      </ul>
+      <p class="prohibited-warn">* 해당 품목 발견 시 보관 거부 혹은 제한될 수 있습니다.</p>
+    </div>
+    <button class="btn btn-primary" onclick="closeProhibited()" style="margin:0 16px 16px;width:calc(100% - 32px);">확인</button>
+  </div>
 </div>
 
 <script>
@@ -4787,13 +4812,13 @@ function changeBranch(){
   go('reserve-1');
 }
 
-function toggleProhibited(){
-  const content = document.getElementById('prohibitedContent');
-  const toggle = document.getElementById('prohibitedToggle');
-  if(!content) return;
-  const open = content.hidden;
-  content.hidden = !open;
-  toggle.textContent = open ? '접기 ▴' : '자세히 보기 ▾';
+function openProhibited(){
+  const m = document.getElementById('prohibitedModal');
+  if(m) m.hidden = false;
+}
+function closeProhibited(){
+  const m = document.getElementById('prohibitedModal');
+  if(m) m.hidden = true;
 }
 
 function goToPayment(){

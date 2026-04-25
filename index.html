@@ -3187,6 +3187,185 @@ a { color: inherit; text-decoration: none; }
   border-color: #111 !important;
 }
 
+/* ═══════════════════════════════════════════
+   데스크톱 예약 위젯 (dw-*)
+═══════════════════════════════════════════ */
+.dw-backdrop {
+  position: fixed; inset: 0; z-index: 8000;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+}
+.dw-modal {
+  position: fixed; z-index: 8001;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: min(900px, 96vw); max-height: 88vh;
+  background: #fff; border-radius: 20px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.dw-modal[hidden], .dw-backdrop[hidden] { display: none !important; }
+
+/* 헤더 */
+.dw-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px 14px; border-bottom: 1px solid #EBEBEB;
+  background: #0A0A0A; flex-shrink: 0;
+}
+.dw-steps { display: flex; align-items: center; gap: 8px; }
+.dw-step { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4); white-space: nowrap; }
+.dw-step.active { color: #FFC700; }
+.dw-step.done { color: rgba(255,255,255,0.7); }
+.dw-step-arrow { color: rgba(255,255,255,0.25); font-size: 16px; }
+.dw-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 20px; cursor: pointer; padding: 0 0 0 12px; }
+.dw-close:hover { color: #fff; }
+
+/* 바디 */
+.dw-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
+.dw-cols { display: grid; grid-template-columns: 1fr 300px; gap: 0; flex: 1; min-height: 0; }
+.dw-cols-3 { grid-template-columns: 1fr 280px; }
+.dw-left { padding: 24px 24px 16px; border-right: 1px solid #EBEBEB; overflow-y: auto; }
+.dw-right { padding: 24px 20px 16px; overflow-y: auto; background: #FAFAF8; }
+
+.dw-section-label { font-size: 11px; font-weight: 800; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+
+/* 서비스 탭 */
+.dw-svc-tabs { display: flex; gap: 8px; }
+.dw-svc-tab {
+  flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid #E8E8E8;
+  background: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all .15s;
+}
+.dw-svc-tab.active { border-color: #111; background: #111; color: #fff; }
+
+/* 시간 */
+.dw-time-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+.dw-time-col { display: flex; flex-direction: column; gap: 5px; }
+.dw-time-label { font-size: 11px; font-weight: 700; color: #999; }
+.dw-chip {
+  display: flex; align-items: center; gap: 4px;
+  background: #F2F2F0; border: 1.5px solid #E0E0E0; border-radius: 10px;
+  padding: 0 10px; height: 40px; transition: border-color .15s;
+}
+.dw-chip:focus-within { border-color: #EBA500; background: #fff; }
+.dw-chip input, .dw-chip select {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 13px; font-weight: 700; color: #1A1A1A;
+  appearance: none; -webkit-appearance: none; padding: 0;
+}
+.dw-chip input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
+.dw-chip svg { flex-shrink: 0; color: #aaa; }
+
+/* 지역 */
+.dw-region-search-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: #F2F2F0; border: 1.5px solid #E0E0E0; border-radius: 10px;
+  padding: 0 12px; height: 40px; margin-bottom: 10px; transition: border-color .15s;
+}
+.dw-region-search-wrap:focus-within { border-color: #EBA500; background: #fff; }
+.dw-region-search-wrap svg { color: #aaa; flex-shrink: 0; }
+.dw-region-search { flex: 1; background: transparent; border: none; outline: none; font-size: 13px; color: #1A1A1A; }
+.dw-region-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.dw-region-tab {
+  padding: 6px 14px; border-radius: 999px; border: 1.5px solid #E0E0E0;
+  background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.dw-region-tab.active { border-color: #111; background: #111; color: #fff; }
+.dw-region-tab:hover:not(.active) { border-color: #bbb; }
+
+/* 가방 */
+.dw-bag-list { display: flex; flex-direction: column; gap: 10px; }
+.dw-bag-row {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border: 1.5px solid #E8E8E8; border-radius: 12px; padding: 12px 14px;
+}
+.dw-bag-ic { font-size: 24px; }
+.dw-bag-info { flex: 1; }
+.dw-bag-nm { font-size: 14px; font-weight: 800; }
+.dw-bag-price { font-size: 12px; color: #888; margin-top: 1px; }
+.dw-counter { display: flex; align-items: center; gap: 10px; }
+.dw-counter button { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #DDD; background: #F5F5F5; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.dw-counter button.plus { background: #111; color: #fff; border-color: #111; }
+.dw-counter span { font-size: 16px; font-weight: 800; min-width: 20px; text-align: center; }
+.dw-subtotal { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid #EBEBEB; font-weight: 700; font-size: 15px; }
+#dw-subtotal { font-size: 18px; font-weight: 900; color: #111; }
+
+/* 푸터 */
+.dw-footer {
+  padding: 14px 24px; border-top: 1px solid #EBEBEB;
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  background: #fff; flex-shrink: 0;
+}
+.dw-footer-hint { flex: 1; font-size: 12px; color: #E53935; }
+.dw-btn-next {
+  padding: 0 28px; height: 46px; border-radius: 12px;
+  background: #EBA500; color: #111; font-size: 15px; font-weight: 800;
+  border: none; cursor: pointer; transition: background .15s;
+}
+.dw-btn-next:hover { background: #d99500; }
+.dw-btn-prev {
+  padding: 0 20px; height: 46px; border-radius: 12px;
+  background: #F2F2F0; color: #555; font-size: 14px; font-weight: 700;
+  border: 1.5px solid #E0E0E0; cursor: pointer;
+}
+.dw-btn-pay {
+  padding: 0 32px; height: 46px; border-radius: 12px;
+  background: #111; color: #FFC700; font-size: 15px; font-weight: 800;
+  border: none; cursor: pointer; transition: background .15s;
+}
+.dw-btn-pay:hover { background: #2a2a2a; }
+
+/* STEP 2 지도 */
+.dw-map-layout { display: grid; grid-template-columns: 1fr 300px; flex: 1; min-height: 420px; }
+.dw-map-panel { position: relative; }
+.dw-map { width: 100%; height: 100%; min-height: 420px; }
+.dw-branch-panel { padding: 16px; border-left: 1px solid #EBEBEB; overflow-y: auto; background: #FAFAF8; }
+.dw-branch-head { font-size: 14px; font-weight: 700; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #EBEBEB; }
+.dw-branch-list { display: flex; flex-direction: column; gap: 8px; }
+.dw-branch-card {
+  background: #fff; border: 1.5px solid #E8E8E8; border-radius: 12px; padding: 12px;
+  cursor: pointer; transition: border-color .15s; display: flex; gap: 10px; align-items: flex-start;
+}
+.dw-branch-card:hover { border-color: #EBA500; }
+.dw-branch-card.selected { border-color: #111; background: #FFFBEA; }
+.dw-branch-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.dw-branch-info { flex: 1; min-width: 0; }
+.dw-branch-nm { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+.dw-branch-meta { font-size: 11px; color: #888; margin-bottom: 2px; }
+.dw-branch-addr { font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dw-branch-select-btn {
+  margin-top: 8px; width: 100%; padding: 7px 0; border-radius: 8px;
+  background: #111; color: #FFC700; font-size: 12px; font-weight: 800;
+  border: none; cursor: pointer;
+}
+
+/* STEP 3 */
+.dw-field { margin-bottom: 12px; }
+.dw-field label { display: block; font-size: 12px; font-weight: 700; color: #888; margin-bottom: 5px; }
+.dw-input {
+  width: 100%; height: 40px; border: 1.5px solid #E0E0E0; border-radius: 10px;
+  padding: 0 12px; font-size: 14px; background: #fff; outline: none; box-sizing: border-box;
+  transition: border-color .15s;
+}
+.dw-input:focus { border-color: #EBA500; }
+.dw-agree-group { border-top: 1px solid #EBEBEB; margin-top: 8px; padding-top: 4px; }
+.dw-agree { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12.5px; color: #444; cursor: pointer; }
+.dw-agree input { width: 16px; height: 16px; accent-color: #EBA500; flex-shrink: 0; }
+
+.dw-summary-card { background: #fff; border: 1.5px solid #E8E8E8; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+.dw-sum-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; gap: 8px; }
+.dw-sum-row span:first-child { color: #888; }
+.dw-sum-row span:last-child { font-weight: 700; text-align: right; }
+.dw-sum-divider { height: 1px; background: #EBEBEB; margin: 8px 0; }
+.dw-sum-total span { font-size: 15px; font-weight: 900; color: #111; }
+.dw-promo-btn { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px dashed #DDD; background: #FAFAF8; font-size: 13px; font-weight: 700; color: #888; cursor: pointer; text-align: left; display: flex; align-items: center; }
+.dw-promo-btn:hover { border-color: #EBA500; color: #EBA500; }
+.dw-pay-opts { display: flex; gap: 8px; margin-top: 8px; }
+.dw-pay-opt { flex: 1; cursor: pointer; }
+.dw-pay-opt input { display: none; }
+.dw-pay-inner { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border: 2px solid #E0E0E0; border-radius: 10px; font-size: 13px; font-weight: 700; transition: all .15s; }
+.dw-pay-opt input:checked + .dw-pay-inner { border-color: #111; background: #111; color: #fff; }
+
 /* ── SNS 칸 비율: ID 짧게, type 넓게 ── */
 #reserve-user .sns-row {
   display: grid !important;
@@ -4505,6 +4684,178 @@ document.querySelectorAll('button').forEach(btn => {
 
 </div>
 
+<!-- ===== 데스크톱 예약 위젯 ===== -->
+<div class="dw-backdrop" id="dwBackdrop" hidden onclick="closeDeskWidget()"></div>
+<div class="dw-modal" id="dwModal" hidden>
+
+  <!-- 헤더 -->
+  <div class="dw-header">
+    <div class="dw-steps">
+      <span class="dw-step active" id="dws-1">① 일정 &amp; 가방</span>
+      <span class="dw-step-arrow">›</span>
+      <span class="dw-step" id="dws-2">② 지점 선택</span>
+      <span class="dw-step-arrow">›</span>
+      <span class="dw-step" id="dws-3">③ 결제</span>
+    </div>
+    <button class="dw-close" onclick="closeDeskWidget()">✕</button>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="dw-body" id="dwStep1">
+    <div class="dw-cols">
+
+      <!-- 왼쪽: 시간 + 지역 -->
+      <div class="dw-left">
+
+        <!-- 서비스 탭 -->
+        <div class="dw-section-label">서비스</div>
+        <div class="dw-svc-tabs">
+          <button class="dw-svc-tab active" data-svc="storage" onclick="dwSelectSvc('storage')">🧳 짐 보관</button>
+          <button class="dw-svc-tab" data-svc="delivery" onclick="dwSelectSvc('delivery')">✈️ 공항 배송</button>
+        </div>
+
+        <!-- 시간 -->
+        <div class="dw-section-label" style="margin-top:20px">이용 시간</div>
+        <div class="dw-time-row">
+          <div class="dw-time-col">
+            <div class="dw-time-label">맡기는 날짜</div>
+            <div class="dw-chip"><input type="date" id="dw-dropDate"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          </div>
+          <div class="dw-time-col">
+            <div class="dw-time-label">맡기는 시간</div>
+            <div class="dw-chip"><select id="dw-dropTime"></select><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div>
+          </div>
+          <div class="dw-time-col">
+            <div class="dw-time-label">찾는 날짜</div>
+            <div class="dw-chip"><input type="date" id="dw-pickDate"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          </div>
+          <div class="dw-time-col">
+            <div class="dw-time-label">찾는 시간</div>
+            <div class="dw-chip"><select id="dw-pickTime"></select><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div>
+          </div>
+        </div>
+
+        <!-- 지역 -->
+        <div class="dw-section-label" style="margin-top:20px">지역 선택</div>
+        <div class="dw-region-search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="dwRegionSearch" class="dw-region-search" placeholder="지역 검색 (예: 홍대, 명동…)" oninput="dwFilterRegion(this.value)">
+        </div>
+        <div class="dw-region-tabs" id="dwRegionTabs"></div>
+      </div>
+
+      <!-- 오른쪽: 가방 -->
+      <div class="dw-right">
+        <div class="dw-section-label">가방 종류 &amp; 수량</div>
+        <div class="dw-bag-list">
+          <div class="dw-bag-row">
+            <span class="dw-bag-ic">🧳</span>
+            <div class="dw-bag-info"><div class="dw-bag-nm">캐리어</div><div class="dw-bag-price">₩25,000/일</div></div>
+            <div class="dw-counter"><button onclick="dwQty('carrier',-1)">−</button><span id="dw-q-carrier">1</span><button class="plus" onclick="dwQty('carrier',1)">+</button></div>
+          </div>
+          <div class="dw-bag-row">
+            <span class="dw-bag-ic">🛍️</span>
+            <div class="dw-bag-info"><div class="dw-bag-nm">쇼핑백</div><div class="dw-bag-price">₩10,000/일</div></div>
+            <div class="dw-counter"><button onclick="dwQty('bag',-1)">−</button><span id="dw-q-bag">0</span><button class="plus" onclick="dwQty('bag',1)">+</button></div>
+          </div>
+        </div>
+        <div class="dw-subtotal">
+          <span>소계</span><span id="dw-subtotal">₩25,000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dw-footer">
+      <div class="dw-footer-hint" id="dw-step1-hint"></div>
+      <button class="dw-btn-next" onclick="dwGoStep2()">지점 찾기 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="dw-body" id="dwStep2" hidden>
+    <div class="dw-map-layout">
+      <div class="dw-map-panel">
+        <div id="dwMap" class="dw-map"></div>
+      </div>
+      <div class="dw-branch-panel">
+        <div class="dw-branch-head">
+          <span id="dw-region-label">지역</span>의 보관 장소 <strong id="dw-branch-count">0</strong>곳
+        </div>
+        <div class="dw-branch-list" id="dwBranchList"></div>
+      </div>
+    </div>
+    <div class="dw-footer">
+      <button class="dw-btn-prev" onclick="dwGoStep(1)">← 이전</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="dw-body" id="dwStep3" hidden>
+    <div class="dw-cols dw-cols-3">
+
+      <!-- 왼쪽: 예약자 정보 -->
+      <div class="dw-left">
+        <div class="dw-section-label">예약자 정보</div>
+        <div class="dw-field"><label>이름</label><input class="dw-input" id="dw-name" placeholder="홍길동"></div>
+        <div class="dw-field"><label>이메일</label><input class="dw-input" id="dw-email" type="email" placeholder="example@mail.com"></div>
+        <div class="dw-field"><label>연락처 (SNS)</label>
+          <div style="display:flex;gap:8px;">
+            <input class="dw-input" id="dw-sns" placeholder="아이디" style="flex:1;">
+            <select class="dw-input" id="dw-sns-type" style="flex:0 0 130px;">
+              <option value="instagram">Instagram</option>
+              <option value="wechat">WeChat</option>
+              <option value="line">LINE</option>
+              <option value="kakao">KakaoTalk</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 동의 -->
+        <div class="dw-agree-group">
+          <label class="dw-agree"><input type="checkbox" id="dw-terms"><span>서비스 이용약관 동의 (필수)</span></label>
+          <label class="dw-agree"><input type="checkbox" id="dw-privacy"><span>개인정보 수집 및 이용 동의 (필수)</span></label>
+          <label class="dw-agree" style="align-items:center;">
+            <input type="checkbox" id="dw-prohibited-chk" disabled>
+            <span style="flex:1;">취급 금지 품목 및 배상 책임 안내 동의 (필수)</span>
+            <button class="prohibited-view-btn" onclick="openProhibited();event.preventDefault()">자세히 보기</button>
+          </label>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 요약 + 결제 -->
+      <div class="dw-right">
+        <div class="dw-section-label">예약 요약</div>
+        <div class="dw-summary-card">
+          <div class="dw-sum-row"><span>📍 지점</span><span id="dw-sum-branch">-</span></div>
+          <div class="dw-sum-row"><span>🕒 시간</span><span id="dw-sum-time">-</span></div>
+          <div class="dw-sum-row"><span>🧳 가방</span><span id="dw-sum-bags">-</span></div>
+          <div class="dw-sum-divider"></div>
+          <div class="dw-sum-row dw-sum-total"><span>총 금액</span><span id="dw-sum-total">₩0</span></div>
+        </div>
+
+        <!-- 프로모션 -->
+        <button class="dw-promo-btn" onclick="openPromoModal()">🏷️ 프로모션 코드 <span id="dw-promo-applied" hidden style="color:#10A35B;font-weight:700;margin-left:6px;">✓ 적용됨</span></button>
+
+        <!-- 결제 -->
+        <div class="dw-section-label" style="margin-top:16px;">결제 수단</div>
+        <div class="dw-pay-opts">
+          <label class="dw-pay-opt"><input type="radio" name="dw-pay" value="card" checked><span class="dw-pay-inner"><svg width="24" height="16" viewBox="0 0 40 26" fill="none"><rect width="40" height="26" rx="4" fill="#1A1F71"/><rect y="6" width="40" height="7" fill="#F7B600"/><rect x="3" y="16" width="10" height="6" rx="1" fill="#fff" opacity=".8"/></svg>카드</span></label>
+          <label class="dw-pay-opt"><input type="radio" name="dw-pay" value="paypal"><span class="dw-pay-inner"><svg width="24" height="16" viewBox="0 0 50 32" fill="none"><rect width="50" height="32" rx="4" fill="#fff"/><text x="6" y="22" font-family="Arial" font-weight="800" font-size="14" fill="#003087">Pay</text><text x="22" y="22" font-family="Arial" font-weight="800" font-size="14" fill="#009CDE">Pal</text></svg>PayPal</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="dw-footer">
+      <button class="dw-btn-prev" onclick="dwGoStep(2)">← 이전</button>
+      <button class="dw-btn-pay" onclick="dwCompletePayment()">
+        <span id="dw-pay-amt">₩0</span> 결제하기
+      </button>
+    </div>
+  </div>
+
+</div>
+
 <!-- ===== 프로모션 코드 모달 ===== -->
 <div class="prohibited-modal" id="promoModal" hidden onclick="closePromoModal()">
   <div class="prohibited-modal-box" onclick="event.stopPropagation()">
@@ -4603,6 +4954,10 @@ window.addEventListener('popstate', (e)=>{
 });
 
 function startReserve(svc){
+  if(window.innerWidth >= 768){
+    openDeskWidget(svc);
+    return;
+  }
   state.service = svc;
   const today = new Date();
   state.dropDate = today.toISOString().slice(0,10);
@@ -4867,6 +5222,197 @@ function changeBranch(){
   go('reserve-1');
 }
 
+// ══════════════════════════════════════════
+// 데스크톱 예약 위젯 (dw)
+// ══════════════════════════════════════════
+const DW_REGIONS = [
+  { id:'hongdae', label:'홍대' },
+  { id:'myeongdong', label:'명동' },
+  { id:'gangnam', label:'강남' },
+  { id:'insadong', label:'인사동' },
+  { id:'itaewon', label:'이태원' },
+  { id:'dongdaemun', label:'동대문' },
+  { id:'sinchon', label:'신촌' },
+  { id:'jamsil', label:'잠실' },
+];
+const dw = {
+  step: 1,
+  svc: 'storage',
+  dropDate:'', dropTime:'10:00',
+  pickDate:'', pickTime:'18:00',
+  region: null,
+  qty: { carrier:1, bag:0 },
+  branch: null,
+  map: null,
+  markers: [],
+};
+
+function openDeskWidget(svc='storage'){
+  dw.svc = svc;
+  dw.step = 1;
+  dw.branch = null;
+  dw.region = null;
+  const today = new Date().toISOString().slice(0,10);
+  dw.dropDate = today; dw.pickDate = today;
+  document.getElementById('dw-dropDate').value = today;
+  document.getElementById('dw-pickDate').value = today;
+  document.getElementById('dw-dropTime').value = '10:00';
+  document.getElementById('dw-pickTime').value = '18:00';
+  document.querySelectorAll('.dw-svc-tab').forEach(t=>t.classList.toggle('active', t.dataset.svc===svc));
+  dwRenderRegions('');
+  dwUpdateSubtotal();
+  dwGoStep(1);
+  document.getElementById('dwBackdrop').hidden = false;
+  document.getElementById('dwModal').hidden = false;
+}
+
+function closeDeskWidget(){
+  document.getElementById('dwBackdrop').hidden = true;
+  document.getElementById('dwModal').hidden = true;
+}
+
+function dwSelectSvc(svc){
+  dw.svc = svc;
+  document.querySelectorAll('.dw-svc-tab').forEach(t=>t.classList.toggle('active', t.dataset.svc===svc));
+}
+
+function dwRenderRegions(q){
+  const list = document.getElementById('dwRegionTabs');
+  const filtered = DW_REGIONS.filter(r=>r.label.includes(q) || r.id.includes(q.toLowerCase()));
+  list.innerHTML = filtered.map(r=>`
+    <button class="dw-region-tab${dw.region===r.id?' active':''}" onclick="dwSelectRegion('${r.id}','${r.label}')">${r.label}</button>
+  `).join('');
+}
+
+function dwFilterRegion(q){ dwRenderRegions(q); }
+
+function dwSelectRegion(id, label){
+  dw.region = id;
+  document.getElementById('dwRegionSearch').value = label;
+  dwRenderRegions(label);
+}
+
+function dwQty(key, delta){
+  dw.qty[key] = Math.max(0, (dw.qty[key]||0)+delta);
+  document.getElementById('dw-q-'+key).textContent = dw.qty[key];
+  dwUpdateSubtotal();
+}
+
+function dwUpdateSubtotal(){
+  const prices = { carrier:25000, bag:10000 };
+  const total = (dw.qty.carrier||0)*prices.carrier + (dw.qty.bag||0)*prices.bag;
+  const disc = state.promoDiscount||0;
+  document.getElementById('dw-subtotal').textContent = '₩'+(Math.max(0,total-disc)).toLocaleString();
+  const payAmt = document.getElementById('dw-pay-amt');
+  if(payAmt) payAmt.textContent = '₩'+(Math.max(0,total-disc)).toLocaleString();
+}
+
+function dwGoStep(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('dwStep'+i).hidden = i!==n;
+    const s = document.getElementById('dws-'+i);
+    s.classList.toggle('active', i===n);
+    s.classList.toggle('done', i<n);
+  });
+  dw.step = n;
+  if(n===2) dwInitMap();
+  if(n===3) dwFillSummary();
+}
+
+function dwGoStep2(){
+  const total = (dw.qty.carrier||0)+(dw.qty.bag||0);
+  const hint = document.getElementById('dw-step1-hint');
+  if(total===0){ hint.textContent='가방을 1개 이상 선택해주세요.'; return; }
+  if(!dw.region){ hint.textContent='지역을 선택해주세요.'; return; }
+  hint.textContent='';
+  dwGoStep(2);
+  dwRenderBranches();
+}
+
+let dwMapObj = null;
+function dwInitMap(){
+  if(dwMapObj) { dwMapObj.invalidateSize(); return; }
+  const sel = DW_REGIONS.find(r=>r.id===dw.region);
+  const center = [37.5563, 126.9236]; // 기본 서울 중심
+  dwMapObj = L.map('dwMap', { zoomControl:true }).setView(center, 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(dwMapObj);
+}
+
+function dwRenderBranches(){
+  const avail = branches.filter(isBranchAvailable).slice(0,3);
+  const cnt = document.getElementById('dw-branch-count');
+  const lbl = document.getElementById('dw-region-label');
+  const sel = DW_REGIONS.find(r=>r.id===dw.region);
+  if(lbl && sel) lbl.textContent = sel.label;
+  if(cnt) cnt.textContent = avail.length;
+
+  // 지도 마커
+  if(dwMapObj){
+    dw.markers.forEach(m=>m.remove());
+    dw.markers = [];
+    avail.forEach(b=>{
+      const m = L.marker([b.dLat, b.dLng]).addTo(dwMapObj).bindPopup(b.nm);
+      dw.markers.push(m);
+    });
+    if(avail.length) dwMapObj.setView([avail[0].dLat, avail[0].dLng], 14);
+  }
+
+  // 리스트
+  const list = document.getElementById('dwBranchList');
+  list.innerHTML = avail.map(b=>`
+    <div class="dw-branch-card${dw.branch===b.id?' selected':''}" id="dwcard-${b.id}">
+      <img class="dw-branch-thumb" src="${b.photo}" alt="">
+      <div class="dw-branch-info">
+        <div class="dw-branch-nm">${b.nm}</div>
+        <div class="dw-branch-meta">⭐ ${b.rating} · ${b.dist} · ${b.hours}</div>
+        <div class="dw-branch-addr">${b.address||b.addr}</div>
+        <button class="dw-branch-select-btn" onclick="dwSelectBranch('${b.id}')">이 지점 선택 →</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function dwSelectBranch(id){
+  dw.branch = id;
+  dwGoStep(3);
+}
+
+function dwFillSummary(){
+  const b = branches.find(x=>x.id===dw.branch);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('dw-sum-branch', b?b.nm:'-');
+  const fmt=d=>d?d.slice(5).replace('-','/'):'';
+  set('dw-sum-time', `${fmt(dw.dropDate)} ${dw.dropTime} → ${fmt(dw.pickDate)} ${dw.pickTime}`);
+  const parts=[];
+  if(dw.qty.carrier>0) parts.push(`캐리어 ${dw.qty.carrier}개`);
+  if(dw.qty.bag>0) parts.push(`쇼핑백 ${dw.qty.bag}개`);
+  set('dw-sum-bags', parts.join(', ')||'-');
+  dwUpdateSubtotal();
+  const prices={carrier:25000,bag:10000};
+  const total=(dw.qty.carrier||0)*prices.carrier+(dw.qty.bag||0)*prices.bag;
+  const grand=Math.max(0,total-(state.promoDiscount||0));
+  set('dw-sum-total','₩'+grand.toLocaleString());
+  set('dw-pay-amt','₩'+grand.toLocaleString());
+  // 취급금지 체크박스 sync
+  const cb = document.getElementById('dw-prohibited-chk');
+  if(cb) cb.disabled = true;
+}
+
+function dwCompletePayment(){
+  const name = document.getElementById('dw-name').value.trim();
+  const email = document.getElementById('dw-email').value.trim();
+  const sns = document.getElementById('dw-sns').value.trim();
+  if(!name||!email||!sns){ alert('예약자 정보를 모두 입력해주세요.'); return; }
+  if(!document.getElementById('dw-terms').checked){ alert('서비스 이용약관에 동의해주세요.'); return; }
+  if(!document.getElementById('dw-privacy').checked){ alert('개인정보 수집에 동의해주세요.'); return; }
+  if(!document.getElementById('dw-prohibited-chk').checked){ alert('취급 금지 품목 및 배상 책임 안내에 동의해주세요.'); return; }
+  closeDeskWidget();
+  alert('예약이 완료되었습니다! 바우처가 이메일로 전송됩니다.');
+}
+
+// 취급금지 확인 시 데스크톱 체크박스도 활성화
+const _origCloseProhibited = typeof closeProhibited === 'function' ? closeProhibited : null;
+
 // ====== PROMO ======
 const PROMOS = { 'test1': 1000 };
 function openPromoModal(){
@@ -4908,6 +5454,8 @@ function closeProhibited(){
   if(m) m.hidden = true;
   const cb = document.getElementById('f-prohibited');
   if(cb) cb.disabled = false;
+  const cb2 = document.getElementById('dw-prohibited-chk');
+  if(cb2) cb2.disabled = false;
 }
 
 function goToPayment(){
@@ -5071,6 +5619,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   renderFaq();
   buildTimeOptions(document.getElementById('dropTime'), '10:00');
   buildTimeOptions(document.getElementById('pickTime'), '18:00');
+  buildTimeOptions(document.getElementById('dw-dropTime'), '10:00');
+  buildTimeOptions(document.getElementById('dw-pickTime'), '18:00');
   updateNextBtn();
   // initial dates
   const today = new Date();

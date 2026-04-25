@@ -2893,7 +2893,7 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden !important;
 }
 
-/* btn-primary 예약 플로우 전용 색 (homepage V2 override 차단) */
+/* btn-primary 예약 플로우 전용 색 — 그림자·하이라이트 없음 */
 #reserve-time .btn-primary,
 #reserve-1 .btn-primary,
 #reserve-user .btn-primary,
@@ -2902,8 +2902,18 @@ a { color: inherit; text-decoration: none; }
   background: #EBA500 !important;
   color: #111 !important;
   font-size: 16px !important;
-  box-shadow: 0 6px 18px rgba(235,165,0,0.35) !important;
+  box-shadow: none !important;
   height: 56px !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+#reserve-time .btn-primary:active,
+#reserve-1 .btn-primary:active,
+#reserve-user .btn-primary:active,
+#reserve-2 .btn-primary:active,
+#reserve-done .btn-primary:active {
+  background: #D99500 !important;
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 /* progress 바 */
@@ -3082,6 +3092,87 @@ a { color: inherit; text-decoration: none; }
 #reserve-done .voucher .v-row { font-size: 12px !important; }
 #reserve-done .voucher .v-warn { margin-top: 8px !important; font-size: 11px !important; }
 #reserve-done .btn-primary { margin-top: 0 !important; }
+
+/* ── 달력 아이콘 버튼 (date input 옆) ── */
+#reserve-time .dt-chip {
+  position: relative; display: flex; align-items: center; gap: 4px;
+}
+#reserve-time .dt-chip input[type="date"] {
+  flex: 1; min-width: 0; opacity: 1;
+  /* 네이티브 달력 피커 아이콘 숨기기 */
+  -webkit-appearance: none; appearance: none;
+}
+#reserve-time .dt-chip input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+.dt-cal-btn {
+  flex: 0 0 auto; width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: rgba(0,0,0,0.07); color: var(--ink-3);
+  cursor: pointer; transition: background .15s;
+}
+.dt-cal-btn:active { background: rgba(0,0,0,0.14); }
+
+/* ── 맡김/찾음/가방 배경 회색 대비 강화 ── */
+#reserve-time .dt-chip {
+  background: #E0E0E0 !important;
+  border: 1.5px solid #C8C8C8 !important;
+}
+#reserve-time .dt-chip:focus-within {
+  border-color: #EBA500 !important;
+  background: #F0F0F0 !important;
+}
+#reserve-time .bag-card {
+  background: #E8E8E8 !important;
+  border: 1px solid #D0D0D0 !important;
+}
+#reserve-time .bag-card .counter button {
+  background: #fff !important;
+  border: 1.5px solid #B8B8B8 !important;
+}
+#reserve-time .bag-card .counter button.plus {
+  background: #111 !important;
+  border-color: #111 !important;
+}
+
+/* ── SNS 칸 비율: ID 짧게, type 넓게 ── */
+#reserve-user .sns-row {
+  display: grid !important;
+  grid-template-columns: 1fr 130px !important;
+  gap: 7px !important;
+  align-items: center;
+}
+/* SNS select — 드롭다운 화살표 명확히 */
+#reserve-user #f-sns-type {
+  padding-right: 32px !important;
+  background-color: #EEEEEE !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231A1A1A' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+/* ── 결제 수단 아이콘 크기 ── */
+.pay-ic.pay-card-ic,
+.pay-ic.pay-pp-ic {
+  width: 48px; height: 30px; padding: 2px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); background: #fff;
+}
+.pay-opt .pay-sub {
+  font-size: 11px; font-weight: 500; color: var(--ink-4); display: block; margin-top: 1px;
+}
+.pay-opt .pay-nm {
+  line-height: 1.3 !important;
+}
+
+/* ── 결제 btn-pay 그림자 제거 ── */
+#reserve-2 .btn-pay {
+  box-shadow: none !important;
+  background: #111 !important;
+}
+#reserve-2 .btn-pay:active { background: #2a2a2a !important; box-shadow: none !important; }
 
 /* map sheet 내 branch-card photo 스타일 */
 .map-sheet .branch-card .thumb {
@@ -4131,10 +4222,20 @@ document.querySelectorAll('button').forEach(btn => {
           <div class="field-label rt-label">이용 시간</div>
           <div class="time-grid">
             <span class="tg-label">맡김</span>
-            <div class="dt-chip"><input type="date" id="dropDate"></div>
+            <div class="dt-chip">
+              <input type="date" id="dropDate">
+              <label class="dt-cal-btn" for="dropDate">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </label>
+            </div>
             <div class="dt-chip"><select class="time-sel" id="dropTime"></select></div>
             <span class="tg-label">찾음</span>
-            <div class="dt-chip"><input type="date" id="pickDate"></div>
+            <div class="dt-chip">
+              <input type="date" id="pickDate">
+              <label class="dt-cal-btn" for="pickDate">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </label>
+            </div>
             <div class="dt-chip"><select class="time-sel" id="pickTime"></select></div>
           </div>
         </div>
@@ -4264,28 +4365,26 @@ document.querySelectorAll('button').forEach(btn => {
           </div>
           <div class="chk-row">
             <span class="ic">🕒</span>
-            <span class="lb"><span id="chk-drop">오늘, 지금</span> → <span id="chk-pick">18:00</span></span>
+            <span class="lb"><span id="chk-drop">오늘, 지금</span> &nbsp;→&nbsp; <span id="chk-pick">18:00</span></span>
             <button class="chk-edit" onclick="editField('reserve-time')">편집</button>
           </div>
         </div>
         <div class="chk-card">
           <div class="chk-card-title">지불 방법</div>
           <label class="pay-opt">
-            <span class="pay-ic pay-gp">G Pay</span>
-            <span class="pay-nm">Google Pay</span>
-            <input type="radio" name="pay" value="gpay" checked>
+            <span class="pay-ic pay-card-ic">
+              <svg width="28" height="18" viewBox="0 0 40 26" fill="none"><rect width="40" height="26" rx="4" fill="#1A1F71"/><rect y="6" width="40" height="7" fill="#F7B600"/><rect x="3" y="16" width="10" height="6" rx="1" fill="#fff" opacity=".8"/></svg>
+            </span>
+            <span class="pay-nm">체크 / 신용카드<br><span class="pay-sub">Visa · Mastercard · JCB</span></span>
+            <input type="radio" name="pay" value="card" checked>
             <span class="pay-radio"></span>
           </label>
           <label class="pay-opt">
-            <span class="pay-ic pay-card">💳</span>
-            <span class="pay-nm">신용 카드</span>
-            <input type="radio" name="pay" value="card">
-            <span class="pay-radio"></span>
-          </label>
-          <label class="pay-opt">
-            <span class="pay-ic pay-kakao">K</span>
-            <span class="pay-nm">카카오페이</span>
-            <input type="radio" name="pay" value="kakao">
+            <span class="pay-ic pay-pp-ic">
+              <svg width="28" height="18" viewBox="0 0 50 32" fill="none"><rect width="50" height="32" rx="4" fill="#fff"/><text x="6" y="22" font-family="Arial" font-weight="800" font-size="14" fill="#003087">Pay</text><text x="22" y="22" font-family="Arial" font-weight="800" font-size="14" fill="#009CDE">Pal</text></svg>
+            </span>
+            <span class="pay-nm">PayPal</span>
+            <input type="radio" name="pay" value="paypal">
             <span class="pay-radio"></span>
           </label>
         </div>
@@ -4791,11 +4890,21 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Branch detail close handlers
   const bdBackBtn = document.getElementById('bdBackBtn');
   const sheetHandleBtn = document.getElementById('sheetHandleBtn');
-  const bdRow = document.querySelector('#branchDetail .bd-row');
   const sheet = document.getElementById('mapSheet');
-  const closeIfOpen = (e)=>{ if(e) e.stopPropagation(); const d=document.getElementById('branchDetail'); if(d && !d.hidden) closeBranchDetail(); };
-  if(bdBackBtn) bdBackBtn.addEventListener('click', closeIfOpen);
-  if(bdRow) bdRow.addEventListener('click', closeIfOpen);
+  // X버튼: 상세패널 닫고 지도만 보이게 (리스트도 숨김)
+  if(bdBackBtn) bdBackBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const detail = document.getElementById('branchDetail');
+    const list = document.getElementById('branchList');
+    const head = document.getElementById('sheetHead');
+    if(detail) detail.hidden = true;
+    if(list) list.hidden = true;
+    if(head) head.hidden = true;
+    if(sheet){ sheet.classList.remove('detail-open'); sheet.classList.add('collapsed'); }
+    // 핀 활성화 해제
+    branchMarkers.forEach(m=>{ const p=m.getElement()?.querySelector('.bl-pin'); if(p) p.classList.remove('active'); });
+  });
+  // bd-row 클릭으로 닫기 비활성화 (X버튼만)
 
   // Handle drag + tap to collapse/expand sheet
   if(sheetHandleBtn && sheet){

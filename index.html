@@ -4660,7 +4660,7 @@ function placeBranches(center){
 function renderBranches(){
   const el = document.getElementById('branchList');
   if(!el) return;
-  const avail = branches.filter(isBranchAvailable);
+  const avail = branches.filter(isBranchAvailable).slice(0,3);
   el.innerHTML = avail.length ? avail.map(b=>`
     <button class="branch-card" onclick="selectBranch('${b.id}')">
       <img class="thumb" src="${b.photo}" alt="" loading="lazy">

@@ -4156,7 +4156,11 @@ function go(id, push=true){
   if(body) body.scrollTop = 0;
   try{ sessionStorage.setItem('bl:screen', id); }catch(e){}
   if(id==='reserve-1'){
-    setTimeout(()=>{ initMap(); if(map) map.invalidateSize(); }, 50);
+    setTimeout(()=>{
+      initMap();
+      if(map) map.invalidateSize();
+      renderBranches();
+    }, 80);
   }
 }
 function back(){
@@ -4277,6 +4281,7 @@ function initMap(){
     if(d && !d.hidden) closeBranchDetail();
   });
   placeBranches(DEFAULT_CENTER);
+  renderBranches();
 }
 
 function locateMe(){
@@ -4291,6 +4296,7 @@ function locateMe(){
       icon: L.divIcon({ className:'', html:'<div class="bl-me"></div>', iconSize:[18,18], iconAnchor:[9,9] })
     }).addTo(map);
     placeBranches(latLng);
+    renderBranches();
     const btn=document.getElementById('gpsBtn'); if(btn) btn.classList.add('active');
   }, err=>{
     console.warn('geolocation denied', err);

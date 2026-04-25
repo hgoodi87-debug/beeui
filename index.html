@@ -3098,12 +3098,12 @@ a { color: inherit; text-decoration: none; }
 .prohibited-list { margin: 0 0 12px 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
 .prohibited-list li { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
 .prohibited-warn { font-size: 13px; font-weight: 700; color: #111; margin: 0; }
-.dt-clk-ic { flex: 0 0 auto; color: var(--ink-3); margin-right: 4px; }
 
 .prohibited-view-btn {
-  flex: 0 0 auto; background: none; border: none; padding: 0;
+  display: block; background: none; border: none; padding: 0;
   font-size: 12px; font-weight: 700; color: #EBA500; text-decoration: underline; cursor: pointer;
 }
+.dt-clk-ic { flex: 0 0 auto; color: var(--ink-3); margin-left: 4px; }
 #f-prohibited:disabled + span { color: var(--ink-4); }
 #f-prohibited:disabled { opacity: 0.35; cursor: not-allowed; }
 
@@ -4274,7 +4274,7 @@ document.querySelectorAll('button').forEach(btn => {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </label>
             </div>
-            <div class="dt-chip"><svg class="dt-clk-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg><select class="time-sel" id="dropTime"></select></div>
+            <div class="dt-chip"><select class="time-sel" id="dropTime"></select><svg class="dt-clk-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div>
             <span class="tg-label">찾음</span>
             <div class="dt-chip">
               <input type="date" id="pickDate">
@@ -4282,7 +4282,7 @@ document.querySelectorAll('button').forEach(btn => {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </label>
             </div>
-            <div class="dt-chip"><svg class="dt-clk-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg><select class="time-sel" id="pickTime"></select></div>
+            <div class="dt-chip"><select class="time-sel" id="pickTime"></select><svg class="dt-clk-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div>
           </div>
         </div>
         <div class="field" style="margin-bottom:0">
@@ -4387,11 +4387,13 @@ document.querySelectorAll('button').forEach(btn => {
         <label class="agree"><input type="checkbox" id="f-agree"><span>개인정보 수집 및 이용에 동의합니다. (필수)</span></label>
 
         <!-- 취급금지 안내 -->
-        <label class="agree" style="margin-top:0">
-          <input type="checkbox" id="f-prohibited" disabled>
-          <span style="flex:1;">취급 금지 품목 및 배상 책임 안내에 동의합니다. (필수)</span>
-          <button class="prohibited-view-btn" onclick="openProhibited();event.preventDefault()">자세히 보기</button>
-        </label>
+        <div style="margin-top:0">
+          <label class="agree" style="margin-bottom:2px">
+            <input type="checkbox" id="f-prohibited" disabled>
+            <span>취급 금지 품목 및 배상 책임 안내에 동의합니다. <span style="color:#EBA500;font-weight:700">(필수)</span></span>
+          </label>
+          <button class="prohibited-view-btn" onclick="openProhibited()" style="margin-left:30px;margin-bottom:4px">자세히 보기 →</button>
+        </div>
       </div>
     </div>
     <div class="sc-footer">

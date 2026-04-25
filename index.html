@@ -5332,21 +5332,16 @@ function dwGoStep2(){
 let dwMapObj = null;
 function dwInitMap(){
   if(dwMapObj){
-    setTimeout(()=>dwMapObj.invalidateSize(), 100);
-    dwPlaceMarkers();
+    setTimeout(()=>{ dwMapObj.invalidateSize(); dwPlaceMarkers(); }, 100);
     return;
   }
   dwMapObj = L.map('dwMap', { zoomControl: true, attributionControl: false })
-    .setView([37.5563, 126.9236], 12);
+    .setView(DEFAULT_CENTER, 14);
 
-  // CartoDB Positron — POI 없는 깔끔한 스타일
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 19
-  }).addTo(dwMapObj);
-
-  // 도로 라벨만 별도 레이어로 (지명만, 음식점·POI 없음)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 19
+  // 모바일과 동일: Voyager 타일
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20, subdomains: 'abcd',
+    attribution: '© OpenStreetMap · © CARTO'
   }).addTo(dwMapObj);
 
   dwPlaceMarkers();
@@ -5354,31 +5349,29 @@ function dwInitMap(){
 
 function dwPlaceMarkers(){
   if(!dwMapObj) return;
-  // 기존 마커 제거
   dw.markers.forEach(m=>m.remove());
   dw.markers = [];
 
   const avail = branches.filter(isBranchAvailable);
-  avail.forEach(b=>{
+  avail.forEach((b, idx)=>{
+    const lat = DEFAULT_CENTER[0] + b.dLat;
+    const lng = DEFAULT_CENTER[1] + b.dLng;
+    b._dwLatLng = [lat, lng];
     const icon = L.divIcon({
       className: '',
-      html: `<div style="
-        background:#FFC700;color:#0A0A0A;font-weight:900;font-size:11px;
-        border-radius:999px;padding:5px 10px;white-space:nowrap;
-        box-shadow:0 2px 8px rgba(0,0,0,0.22);border:2px solid #0A0A0A;
-        font-family:system-ui,sans-serif;cursor:pointer;
-      ">b ${b.nm}</div>`,
-      iconAnchor: [0, 0]
+      html: `<div class="bl-pin${idx===0?' active':''}">🧳</div>`,
+      iconSize: [32,32], iconAnchor: [16,16]
     });
-    const m = L.marker([b.dLat, b.dLng], { icon })
-      .addTo(dwMapObj)
-      .bindPopup(`<b>${b.nm}</b><br>${b.hours}<br>${b.dist}`);
+    const m = L.marker([lat, lng], { icon }).addTo(dwMapObj);
+    m.on('click', ()=>{
+      dwSelectBranch(b.id);
+    });
     dw.markers.push(m);
   });
 
   if(avail.length){
-    const bounds = L.latLngBounds(avail.map(b=>[b.dLat, b.dLng]));
-    dwMapObj.fitBounds(bounds, { padding: [48, 48] });
+    const bounds = L.latLngBounds(avail.map(b=>b._dwLatLng));
+    dwMapObj.fitBounds(bounds, { padding: [56, 56] });
   }
 }
 
@@ -5409,6 +5402,12 @@ function dwRenderBranches(){
 
 function dwSelectBranch(id){
   dw.branch = id;
+  // 마커 active 토글
+  const avail = branches.filter(isBranchAvailable);
+  dw.markers.forEach((m, idx)=>{
+    const pin = m.getElement()?.querySelector('.bl-pin');
+    if(pin) pin.classList.toggle('active', avail[idx]?.id === id);
+  });
   dwGoStep(3);
 }
 

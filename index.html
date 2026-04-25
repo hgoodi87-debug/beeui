@@ -4561,38 +4561,46 @@ const state = {
 
 // ====== NAV ======
 const stack = ['home'];
-function go(id, push=true){
+history.replaceState({ screen: 'home' }, '', '#home');
+function _showScreen(id){
   const cur = document.querySelector('.screen.active');
   const next = document.getElementById(id);
   if(!next || cur===next) return;
-  if(push) stack.push(id);
   cur.classList.remove('active');
   cur.classList.add('leaving');
   next.classList.add('active');
   setTimeout(()=>cur.classList.remove('leaving'), 300);
-  // scroll to top
   const body = next.querySelector('.sc-body');
   if(body) body.scrollTop = 0;
   try{ sessionStorage.setItem('bl:screen', id); }catch(e){}
   if(id==='reserve-1'){
-    setTimeout(()=>{
-      initMap();
-      if(map) map.invalidateSize();
-      renderBranches();
-    }, 80);
+    setTimeout(()=>{ initMap(); if(map) map.invalidateSize(); renderBranches(); }, 80);
   }
 }
-function back(){
-  if(stack.length<=1){ go('home',false); return; }
-  stack.pop();
-  const id = stack[stack.length-1];
+
+function go(id, push=true){
   const cur = document.querySelector('.screen.active');
   const next = document.getElementById(id);
   if(!next || cur===next) return;
-  cur.classList.remove('active');
-  next.classList.remove('leaving');
-  next.classList.add('active');
+  if(push){
+    stack.push(id);
+    history.pushState({ screen: id }, '', '#' + id);
+  }
+  _showScreen(id);
 }
+
+function back(){
+  history.back();
+}
+
+window.addEventListener('popstate', (e)=>{
+  const id = e.state?.screen || 'home';
+  // sync internal stack
+  const idx = stack.lastIndexOf(id);
+  if(idx >= 0) stack.splice(idx + 1);
+  else { stack.length = 0; stack.push(id); }
+  _showScreen(id);
+});
 
 function startReserve(svc){
   state.service = svc;

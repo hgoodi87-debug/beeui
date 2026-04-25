@@ -4131,7 +4131,7 @@ document.querySelectorAll('button').forEach(btn => {
 // ====== STATE ======
 const state = {
   service: 'storage',
-  dropDate: '', dropTime: '09:00',
+  dropDate: '', dropTime: '10:00',
   pickDate: '', pickTime: '18:00',
   branch: null,
   qty: { carrier:0, bag:0 },
@@ -4178,6 +4178,9 @@ function startReserve(svc){
   state.pickDate = today.toISOString().slice(0,10);
   const dd=document.getElementById('dropDate'); if(dd) dd.value=state.dropDate;
   const pd=document.getElementById('pickDate'); if(pd) pd.value=state.pickDate;
+  state.dropTime = '10:00'; state.pickTime = '18:00';
+  const dt=document.getElementById('dropTime'); if(dt) dt.value='10:00';
+  const pt=document.getElementById('pickTime'); if(pt) pt.value='18:00';
   state.qty = {carrier:1,bag:0};
   state.branch = null;
   ['carrier','bag'].forEach(k=>{const el=document.getElementById('q-'+k);if(el)el.textContent=state.qty[k]});
@@ -4551,7 +4554,7 @@ function buildTimeOptions(selectEl, defaultVal){
 
 document.addEventListener('DOMContentLoaded', ()=>{
   renderFaq();
-  buildTimeOptions(document.getElementById('dropTime'), '09:00');
+  buildTimeOptions(document.getElementById('dropTime'), '10:00');
   buildTimeOptions(document.getElementById('pickTime'), '18:00');
   // initial dates
   const today = new Date();
@@ -4564,9 +4567,47 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener('change', e=>{ state[id]=e.target.value; });
   });
-  // wire up bd-back button
-  const bdBack = document.getElementById('bdBackBtn');
-  if(bdBack) bdBack.addEventListener('click', closeBranchDetail);
+  // Branch detail close handlers
+  const bdBackBtn = document.getElementById('bdBackBtn');
+  const sheetHandleBtn = document.getElementById('sheetHandleBtn');
+  const bdRow = document.querySelector('#branchDetail .bd-row');
+  const sheet = document.getElementById('mapSheet');
+  const closeIfOpen = (e)=>{ if(e) e.stopPropagation(); const d=document.getElementById('branchDetail'); if(d && !d.hidden) closeBranchDetail(); };
+  if(bdBackBtn) bdBackBtn.addEventListener('click', closeIfOpen);
+  if(bdRow) bdRow.addEventListener('click', closeIfOpen);
+
+  // Handle drag + tap to collapse/expand sheet
+  if(sheetHandleBtn && sheet){
+    let startY=null, moved=false;
+    sheetHandleBtn.addEventListener('pointerdown', (e)=>{
+      startY = e.clientY; moved = false;
+      sheet.style.transition = 'none';
+      try{ sheetHandleBtn.setPointerCapture(e.pointerId); }catch{}
+    });
+    sheetHandleBtn.addEventListener('pointermove', (e)=>{
+      if(startY==null) return;
+      const dy = e.clientY - startY;
+      if(Math.abs(dy)>4) moved = true;
+    });
+    const finish = (e)=>{
+      if(startY==null) return;
+      const dy = (e.clientY||0) - startY;
+      sheet.style.transition = '';
+      if(moved){
+        if(dy>24) sheet.classList.add('collapsed');
+        else if(dy<-24) sheet.classList.remove('collapsed');
+      } else {
+        // tap: close detail if open, else toggle collapse
+        const d = document.getElementById('branchDetail');
+        if(d && !d.hidden) closeBranchDetail();
+        else sheet.classList.toggle('collapsed');
+      }
+      startY = null; moved = false;
+    };
+    sheetHandleBtn.addEventListener('pointerup', finish);
+    sheetHandleBtn.addEventListener('pointercancel', ()=>{ startY=null; sheet.style.transition=''; });
+  }
+
   // Restore last screen (dev convenience: survives live-reload)
   try{
     const saved = sessionStorage.getItem('bl:screen');
@@ -4576,6 +4617,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
       home.classList.remove('active');
       next.classList.add('active');
       stack.length = 0; stack.push('home', saved);
+      if(saved==='reserve-1'){
+        setTimeout(()=>{ initMap(); if(map) map.invalidateSize(); }, 150);
+      }
     }
   }catch(e){}
 });

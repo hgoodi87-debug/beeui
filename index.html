@@ -3366,6 +3366,41 @@ a { color: inherit; text-decoration: none; }
 .dw-pay-inner { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border: 2px solid #E0E0E0; border-radius: 10px; font-size: 13px; font-weight: 700; transition: all .15s; }
 .dw-pay-opt input:checked + .dw-pay-inner { border-color: #111; background: #111; color: #fff; }
 
+/* 지점 상세 팝업 */
+.dw-detail-overlay {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+}
+.dw-detail-overlay[hidden] { display: none !important; }
+.dw-detail-popup {
+  position: relative; background: #fff; border-radius: 16px;
+  width: 340px; overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+  animation: dwPopIn .18s ease;
+}
+@keyframes dwPopIn { from { transform: scale(.94); opacity:0; } to { transform: scale(1); opacity:1; } }
+.dw-detail-close {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  background: rgba(0,0,0,0.45); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 50%; font-size: 13px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.dw-detail-photo { width: 100%; height: 160px; object-fit: cover; display: block; }
+.dw-detail-body { padding: 16px; }
+.dw-detail-nm { font-size: 16px; font-weight: 900; margin-bottom: 10px; letter-spacing: -0.02em; }
+.dw-detail-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: #555; margin-bottom: 6px;
+}
+.dw-detail-row svg { flex-shrink: 0; color: #999; }
+.dw-detail-cta {
+  margin-top: 14px; width: 100%; height: 42px; border-radius: 10px;
+  background: #111; color: #FFC700; font-size: 14px; font-weight: 800;
+  border: none; cursor: pointer; transition: background .15s;
+}
+.dw-detail-cta:hover { background: #2a2a2a; }
+
 /* ── SNS 칸 비율: ID 짧게, type 넓게 ── */
 #reserve-user .sns-row {
   display: grid !important;
@@ -4787,6 +4822,21 @@ document.querySelectorAll('button').forEach(btn => {
     <div class="dw-footer">
       <button class="dw-btn-prev" onclick="dwGoStep(1)">← 이전</button>
     </div>
+
+    <!-- 지점 상세 팝업 -->
+    <div class="dw-detail-overlay" id="dwDetailOverlay" hidden onclick="dwCloseDetail()">
+      <div class="dw-detail-popup" onclick="event.stopPropagation()">
+        <button class="dw-detail-close" onclick="dwCloseDetail()">✕</button>
+        <img class="dw-detail-photo" id="dwDetailPhoto" src="" alt="">
+        <div class="dw-detail-body">
+          <div class="dw-detail-nm" id="dwDetailNm"></div>
+          <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="dwDetailAddr"></span></div>
+          <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="dwDetailHours"></span></div>
+          <div class="dw-detail-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.2L12 17.8 5.8 21.4l1.6-7.2L2 9.5l7.1-.6z"/></svg><span id="dwDetailRating"></span>&nbsp;·&nbsp;<span id="dwDetailDist"></span></div>
+          <button class="dw-detail-cta" onclick="dwConfirmBranch()">이 지점에서 예약하기 →</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- STEP 3 -->
@@ -5394,13 +5444,15 @@ function dwRenderBranches(){
         <div class="dw-branch-nm">${b.nm}</div>
         <div class="dw-branch-meta">⭐ ${b.rating} · ${b.dist} · ${b.hours}</div>
         <div class="dw-branch-addr">${b.address||b.addr}</div>
-        <button class="dw-branch-select-btn" onclick="dwSelectBranch('${b.id}')">이 지점 선택 →</button>
+        <button class="dw-branch-select-btn" onclick="dwOpenDetail('${b.id}')">상세 보기 →</button>
       </div>
     </div>
   `).join('');
 }
 
-function dwSelectBranch(id){
+function dwOpenDetail(id){
+  const b = branches.find(x=>x.id===id);
+  if(!b) return;
   dw.branch = id;
   // 마커 active 토글
   const avail = branches.filter(isBranchAvailable);
@@ -5408,8 +5460,24 @@ function dwSelectBranch(id){
     const pin = m.getElement()?.querySelector('.bl-pin');
     if(pin) pin.classList.toggle('active', avail[idx]?.id === id);
   });
+  // 팝업 채우기
+  const set=(el,v)=>{ const e=document.getElementById(el); if(e) e.textContent=v; };
+  const img = document.getElementById('dwDetailPhoto'); if(img) img.src = b.photo||'';
+  set('dwDetailNm', b.nm);
+  set('dwDetailAddr', b.address||b.addr);
+  set('dwDetailHours', b.hours);
+  set('dwDetailRating', '⭐ '+b.rating);
+  set('dwDetailDist', b.dist);
+  document.getElementById('dwDetailOverlay').hidden = false;
+}
+function dwCloseDetail(){
+  document.getElementById('dwDetailOverlay').hidden = true;
+}
+function dwConfirmBranch(){
+  dwCloseDetail();
   dwGoStep(3);
 }
+function dwSelectBranch(id){ dwOpenDetail(id); }
 
 function dwFillSummary(){
   const b = branches.find(x=>x.id===dw.branch);

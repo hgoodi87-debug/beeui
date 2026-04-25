@@ -4452,13 +4452,14 @@ document.querySelectorAll('button').forEach(btn => {
             <span class="pay-radio"></span>
           </label>
         </div>
-        <button class="chk-card chk-promo" type="button">
+        <button class="chk-card chk-promo" type="button" onclick="openPromoModal()" id="promoBtn">
           <span class="ic">🏷️</span>
-          <span class="lb">프로모션 코드 추가</span>
+          <span class="lb" id="promoBtnTxt">프로모션 코드 추가</span>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
         </button>
         <div class="chk-summary">
           <div class="s-row"><span>일반 가방 <span id="sum-qty">0</span>개</span><span id="sum-base">₩0</span></div>
+          <div class="s-row s-row-discount" id="sum-discount-row" hidden><span>프로모션 할인</span><span id="sum-discount" style="color:#10A35B;font-weight:700">-₩0</span></div>
           <div class="s-row total"><span>총</span><span id="sum-total">₩0</span></div>
         </div>
       </div>
@@ -4504,6 +4505,24 @@ document.querySelectorAll('button').forEach(btn => {
 
 </div>
 
+<!-- ===== 프로모션 코드 모달 ===== -->
+<div class="prohibited-modal" id="promoModal" hidden onclick="closePromoModal()">
+  <div class="prohibited-modal-box" onclick="event.stopPropagation()">
+    <div class="prohibited-modal-head">
+      <span>🏷️ 프로모션 코드</span>
+      <button onclick="closePromoModal()">✕</button>
+    </div>
+    <div class="prohibited-modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input id="promoInput" class="input" placeholder="코드를 입력하세요" style="flex:1;height:44px;" oninput="promoError.hidden=true">
+        <button class="btn btn-primary" style="width:72px;height:44px;font-size:14px;" onclick="applyPromo()">적용</button>
+      </div>
+      <p id="promoError" style="font-size:12px;color:#E53935;margin:0;" hidden>유효하지 않은 코드입니다.</p>
+      <p id="promoSuccess" style="font-size:12px;color:#10A35B;font-weight:700;margin:0;" hidden></p>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 취급금지 모달 ===== -->
 <div class="prohibited-modal" id="prohibitedModal" hidden onclick="closeProhibited()">
   <div class="prohibited-modal-box" onclick="event.stopPropagation()">
@@ -4537,6 +4556,7 @@ const state = {
   prices: { carrier:25000, bag:10000 },
   info: {},
   pay: 'card',
+  promoCode: null, promoDiscount: 0,
 };
 
 // ====== NAV ======
@@ -4839,6 +4859,38 @@ function changeBranch(){
   go('reserve-1');
 }
 
+// ====== PROMO ======
+const PROMOS = { 'test1': 1000 };
+function openPromoModal(){
+  document.getElementById('promoModal').hidden = false;
+  const inp = document.getElementById('promoInput');
+  inp.value = state.promoCode || '';
+  document.getElementById('promoError').hidden = true;
+  document.getElementById('promoSuccess').hidden = true;
+}
+function closePromoModal(){
+  document.getElementById('promoModal').hidden = true;
+}
+function applyPromo(){
+  const code = document.getElementById('promoInput').value.trim().toLowerCase();
+  const discount = PROMOS[code];
+  if(!discount){
+    document.getElementById('promoError').hidden = false;
+    document.getElementById('promoSuccess').hidden = true;
+    return;
+  }
+  state.promoCode = code;
+  state.promoDiscount = discount;
+  document.getElementById('promoError').hidden = true;
+  const msg = document.getElementById('promoSuccess');
+  msg.textContent = `코드 적용 완료! ₩${discount.toLocaleString()} 할인`;
+  msg.hidden = false;
+  updateSummary();
+  const btn = document.getElementById('promoBtnTxt');
+  if(btn) btn.textContent = `코드 적용됨: ${code.toUpperCase()}`;
+  setTimeout(closePromoModal, 800);
+}
+
 function openProhibited(){
   const m = document.getElementById('prohibitedModal');
   if(m) m.hidden = false;
@@ -4879,7 +4931,8 @@ function updateSummary(){
     const amt = q * state.prices[k];
     total += amt; totalQty += q;
   }
-  const grand = total;
+  const discount = state.promoDiscount || 0;
+  const grand = Math.max(0, total - discount);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   const parts=[];
   if(state.qty.carrier>0) parts.push(`캐리어 ${state.qty.carrier}개`);
@@ -4887,6 +4940,9 @@ function updateSummary(){
   set('chk-qty-breakdown', parts.length?parts.join(', '):'가방 0개');
   set('sum-qty', totalQty);
   set('sum-base', '₩'+total.toLocaleString());
+  const discRow = document.getElementById('sum-discount-row');
+  if(discRow) discRow.hidden = discount === 0;
+  set('sum-discount', '-₩'+discount.toLocaleString());
   set('sum-total', '₩'+grand.toLocaleString());
   set('pay-btn-txt', '₩'+grand.toLocaleString());
   state._total = grand;

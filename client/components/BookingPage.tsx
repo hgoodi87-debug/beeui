@@ -83,9 +83,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const isDirectBookingMode = !isTossPaymentFlowEnabled;
     const isMember = !!user && !user.isAnonymous;
     const defaultDate = formatKSTDate();
+    const defaultInitialBagSizes = React.useMemo<BagSizes>(() => ({
+        ...createEmptyBagSizes(),
+        carrier: 1,
+    }), []);
     const normalizedInitialBagSizes = initialServiceType === ServiceType.DELIVERY
-        ? sanitizeDeliveryBagSizes(initialBagSizes)
-        : sanitizeBagSizes(initialBagSizes);
+        ? sanitizeDeliveryBagSizes(initialBagSizes || defaultInitialBagSizes)
+        : sanitizeBagSizes(initialBagSizes || defaultInitialBagSizes);
 
     const [usdRate, setUsdRate] = useState<number>(getCachedRate());
     useEffect(() => { fetchExchangeRate().then(setUsdRate); }, []);
@@ -104,6 +108,17 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const [couponInput, setCouponInput] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; amount: number; type: 'fixed' | 'percent' } | null>(null);
     const [couponMessage, setCouponMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+
+    // 💳 결제 수단 선택 상태 — 목업 디자인 이식
+    // 'card' = Toss 카드 결제 / 'paypal' = PayPal 결제
+    // 기본값: PayPal 활성화돼 있으면 paypal, 아니면 card (기존 동작 보존)
+    const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>(() => {
+        try {
+            return isPayPalEnabled() ? 'paypal' : 'card';
+        } catch {
+            return 'card';
+        }
+    });
 
     const parseKstDateTime = React.useCallback((dateStr?: string, timeStr?: string, fallbackTime: string = '00:00') => {
         if (!dateStr) return null;
@@ -280,6 +295,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
     const paypalContainerRef = useRef<HTMLDivElement>(null);
     const paypalRenderedRef = useRef(false);
     const latestPayPalCtxRef = useRef<{ priceTotal: number; serviceType: ServiceType; finalBooking: any; lang: string } | null>(null);
+    const validatedPayPalBookingRef = useRef<BookingState | null>(null);
     const [paypalLoadError, setPaypalLoadError] = useState(false);
     const [paypalValidationMsg, setPaypalValidationMsg] = useState('');
 
@@ -548,50 +564,70 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
     const normalizeContactValue = (value?: string) => String(value || '').trim();
 
-    const handleBook = async () => {
-        if (!booking.pickupLocation) {
-            alert(tBooking.select_storage || 'Please select a location.');
-            return;
+    const validateBookingDraft = (draft: Partial<BookingState>): { ok: true; booking: BookingState; email: string } | { ok: false; message: string } => {
+        if (!draft.pickupLocation) {
+            return { ok: false, message: tBooking.select_storage || 'Please select a location.' };
         }
 
-        const normalizedBagSizes = booking.serviceType === ServiceType.DELIVERY
-            ? sanitizeDeliveryBagSizes(booking.bagSizes)
-            : sanitizeBagSizes(booking.bagSizes);
+        const normalizedBagSizes = draft.serviceType === ServiceType.DELIVERY
+            ? sanitizeDeliveryBagSizes(draft.bagSizes)
+            : sanitizeBagSizes(draft.bagSizes);
         const totalBags = getTotalBags(normalizedBagSizes);
         if (totalBags <= 0) {
-            alert(lang.startsWith('ko') ? '짐을 1개 이상 선택해 주세요.' : 'Please select at least one bag.');
-            return;
+            return { ok: false, message: lang.startsWith('ko') ? '짐을 1개 이상 선택해 주세요.' : 'Please select at least one bag.' };
         }
 
-        const normalizedUserName = normalizeContactValue(booking.userName);
-        const normalizedUserEmail = normalizeContactValue(booking.userEmail || user?.email).toLowerCase();
-        const normalizedSnsId = normalizeContactValue(booking.snsId);
+        const normalizedUserName = normalizeContactValue(draft.userName);
+        const normalizedUserEmail = normalizeContactValue(draft.userEmail || user?.email).toLowerCase();
+        const normalizedSnsId = normalizeContactValue(draft.snsId);
 
-        if (!isMember) {
-            if (!normalizedUserName || !normalizedUserEmail || !normalizedSnsId) {
-                alert(tBooking.alert_fill_info || 'Please fill in your information.');
-                return;
-            }
+        if (!isMember && (!normalizedUserName || !normalizedUserEmail || !normalizedSnsId)) {
+            return { ok: false, message: tBooking.alert_fill_info || 'Please fill in your information.' };
         }
         if (normalizedUserEmail && !isValidEmail(normalizedUserEmail)) {
-            alert(lang.startsWith('ko') ? '이메일 형식을 확인해 주세요.' : 'Please enter a valid email address.');
-            return;
+            return { ok: false, message: lang.startsWith('ko') ? '이메일 형식을 확인해 주세요.' : 'Please enter a valid email address.' };
         }
         if (!isMember && normalizedSnsId.length < 2) {
-            alert(lang.startsWith('ko') ? '연락 가능한 SNS ID를 입력해 주세요.' : 'Please enter a reachable SNS ID.');
-            return;
+            return { ok: false, message: lang.startsWith('ko') ? '연락 가능한 SNS ID를 입력해 주세요.' : 'Please enter a reachable SNS ID.' };
         }
-        if (!booking.agreedToTerms || !booking.agreedToPrivacy || !booking.agreedToHighValue) {
-            alert(tBooking.alert_agree_terms || 'Please agree to the terms.');
-            return;
+        if (!draft.agreedToTerms || !draft.agreedToPrivacy || !draft.agreedToHighValue) {
+            return { ok: false, message: tBooking.alert_agree_terms || 'Please agree to the terms.' };
         }
-        if (booking.serviceType === ServiceType.DELIVERY && !booking.dropoffLocation) {
-            alert(tBooking.select_dest || 'Please select a destination.');
+        if (draft.serviceType === ServiceType.DELIVERY && !draft.dropoffLocation) {
+            return { ok: false, message: tBooking.select_dest || 'Please select a destination.' };
+        }
+        if (draft.serviceType === ServiceType.DELIVERY && hasStandaloneHandBagDeliverySelection(normalizedBagSizes)) {
+            return {
+                ok: false,
+                message: lang.startsWith('ko')
+                    ? '배송은 쇼핑백, 손가방만 단독으로 접수할 수 없어요. 캐리어를 1개 이상 함께 선택해 주세요.'
+                    : 'Delivery cannot be booked with only shopping bags or handbags. Please add at least one suitcase.'
+            };
+        }
+
+        return {
+            ok: true,
+            email: normalizedUserEmail,
+            booking: {
+                ...draft as BookingState,
+                userName: normalizedUserName || draft.userName || '',
+                userEmail: normalizedUserEmail,
+                snsId: normalizedSnsId || draft.snsId || '',
+                bagSizes: normalizedBagSizes,
+                bags: totalBags,
+            },
+        };
+    };
+
+    const handleBook = async () => {
+        const validation = validateBookingDraft(booking);
+        if (!validation.ok) {
+            alert(validation.message);
             return;
         }
 
         // 단시간 중복 예약 감지 (10분 이내 동일 이메일+날짜+지점)
-        const email = normalizedUserEmail;
+        const email = validation.email;
         if (email && booking.pickupDate && pickupLoc?.supabaseId) {
             try {
                 const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -599,14 +635,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     `booking_details?user_email=eq.${encodeURIComponent(email)}&pickup_date=eq.${booking.pickupDate}&pickup_location_id=eq.${encodeURIComponent(pickupLoc.supabaseId)}&created_at=gte.${encodeURIComponent(since)}&select=id,reservation_code,created_at&limit=1`
                 );
                 if (Array.isArray(rows) && rows.length > 0) {
-                    pendingBookingRef.current = {
-                        ...booking as BookingState,
-                        userName: normalizedUserName || booking.userName || '',
-                        userEmail: email,
-                        snsId: normalizedSnsId || booking.snsId || '',
-                        bagSizes: normalizedBagSizes,
-                        bags: totalBags,
-                    };
+                    pendingBookingRef.current = validation.booking;
                     setShowDupeConfirm(true);
                     return;
                 }
@@ -615,14 +644,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
             }
         }
 
-        await proceedBooking({
-            ...booking as BookingState,
-            userName: normalizedUserName || booking.userName || '',
-            userEmail: email,
-            snsId: normalizedSnsId || booking.snsId || '',
-            bagSizes: normalizedBagSizes,
-            bags: totalBags,
-        });
+        await proceedBooking(validation.booking);
     };
 
     // 중복 확인 후 실제 예약 진행
@@ -738,14 +760,13 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     const ctx = latestPayPalCtxRef.current;
                     if (!ctx || ctx.priceTotal <= 0) throw new Error('결제 금액이 없습니다.');
                     const fb = ctx.finalBooking;
-                    if (!fb.userName || !fb.userEmail) {
-                        setPaypalValidationMsg(lang === 'ko' ? '이름과 이메일을 먼저 입력해 주세요.' : 'Please enter your name and email first.');
-                        throw new Error('폼 미완성');
+                    const validation = validateBookingDraft(fb);
+                    if (!validation.ok) {
+                        setPaypalValidationMsg(validation.message);
+                        throw new Error('폼 검증 실패');
                     }
-                    if (!fb.agreedToTerms || !fb.agreedToPrivacy || !fb.agreedToHighValue) {
-                        setPaypalValidationMsg(lang === 'ko' ? '이용약관에 동의해 주세요.' : 'Please agree to the terms.');
-                        throw new Error('약관 미동의');
-                    }
+                    validatedPayPalBookingRef.current = validation.booking;
+                    ctx.finalBooking = validation.booking;
                     setPaypalValidationMsg('');
                     const desc = ctx.serviceType === 'DELIVERY' ? 'Beeliber Airport Delivery' : 'Beeliber Luggage Storage';
                     return createPayPalOrder(ctx.priceTotal, desc);
@@ -756,8 +777,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         const capture = await capturePayPalOrder(data.orderID);
                         const ctx = latestPayPalCtxRef.current;
                         if (!ctx?.finalBooking) throw new Error('예약 정보가 없습니다.');
+                        const payableBooking = validatedPayPalBookingRef.current || ctx.finalBooking;
                         await onSuccess({
-                            ...ctx.finalBooking,
+                            ...payableBooking,
                             paymentMethod: 'paypal',
                             paymentStatus: 'paid',
                             paymentProvider: 'paypal',
@@ -787,7 +809,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     console.error('[PayPal] onError:', err);
                     const msg = err?.message || String(err);
                     // 폼 검증 오류는 버튼 유지 — alert는 createOrder에서 이미 처리됨
-                    if (msg === '폼 미완성' || msg === '약관 미동의' || msg === '결제 금액이 없습니다.') return;
+                    if (msg === '폼 검증 실패' || msg === '결제 금액이 없습니다.') return;
                     setPaypalLoadError(true);
                 },
             };
@@ -851,9 +873,24 @@ const BookingPage: React.FC<BookingPageProps> = ({
         return (l[`name_${dbLang}` as keyof LocationOption] as string) || l.name_en || l.name;
     };
 
+    const reservationSteps = lang.startsWith('ko')
+        ? ['일정', '가방', '예약자', '결제']
+        : ['Schedule', 'Bags', 'Guest', 'Payment'];
+    const bookingIntro = lang.startsWith('ko')
+        ? {
+            eyebrow: '예약 정보 입력',
+            title: '예약자 정보를 입력해주세요',
+            desc: '선택한 일정과 수하물을 확인하고, 연락 가능한 정보를 입력하면 결제로 이어집니다.',
+        }
+        : {
+            eyebrow: 'Reservation details',
+            title: 'Enter guest information',
+            desc: 'Review your schedule and bags, then add contact details before checkout.',
+        };
+
 
     return (
-        <div className="w-full min-h-screen bg-white">
+        <div className="renewal-screen w-full min-h-screen bg-[#FAFAF8]">
             {/* 중복 예약 확인 다이얼로그 */}
             <AnimatePresence>
                 {showDupeConfirm && (
@@ -908,58 +945,119 @@ const BookingPage: React.FC<BookingPageProps> = ({
             </AnimatePresence>
 
             {/* Header */}
-            <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 md:px-6 py-4 flex justify-between items-center z-50">
-                <div className="flex items-center gap-4">
+            <div className="renewal-sc-header md:hidden">
+                <button
+                    title={t.common?.back || "Back"}
+                    aria-label={t.common?.back || "Back"}
+                    onClick={onBack}
+                    className="renewal-back"
+                >
+                    <ChevronLeft size={24} />
+                </button>
+                <div className="renewal-title">{lang === 'ko' ? '예약자 정보' : 'Guest information'}</div>
+            </div>
+
+            <div className="sticky top-0 z-50 hidden border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-md md:block md:px-6">
+                <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-3">
                     <button
                         title={t.common?.back || "Back"}
                         aria-label={t.common?.back || "Back"}
                         onClick={onBack}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-bee-black"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-bee-black transition-colors hover:bg-gray-100"
                     >
                         <ChevronLeft size={24} />
                     </button>
-                    <h2 className="text-xl font-black italic tracking-tighter flex items-center gap-2">
+                        <h2 className="flex min-w-0 items-center gap-2 truncate text-lg font-black tracking-normal text-bee-black md:text-xl">
                         <span className="text-bee-yellow">beeliber</span>{' '}
                         {lang === 'ko' ? '예약' : lang === 'ja' ? '予約' : lang.startsWith('zh') ? '預約' : 'Booking'}
                     </h2>
+                    </div>
+                    <div className="hidden items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 sm:flex">
+                        <span className="h-2 w-2 rounded-full bg-bee-yellow" />
+                        {lang.startsWith('ko') ? '예약 진행 중' : 'Booking in progress'}
+                    </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-8 md:px-8 md:py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="mx-auto px-0 py-0 md:px-6 md:py-8">
+                <div className="hidden mb-5 rounded-[20px] border border-gray-200 bg-white p-5 shadow-sm md:p-6">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                        {bookingIntro.eyebrow}
+                    </p>
+                    <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                        <div>
+                            <h1 className="text-2xl font-black tracking-normal text-bee-black md:text-4xl">
+                                {bookingIntro.title}
+                            </h1>
+                            <p className="mt-2 max-w-2xl text-sm font-bold leading-relaxed text-gray-500">
+                                {bookingIntro.desc}
+                            </p>
+                        </div>
+                        <div className="inline-flex w-fit items-center gap-2 rounded-full bg-bee-black px-4 py-2 text-[11px] font-black uppercase tracking-normal text-bee-yellow">
+                            <span className="h-2 w-2 rounded-full bg-bee-yellow" />
+                            {booking.serviceType === ServiceType.DELIVERY ? (t.booking?.delivery || 'Delivery') : (t.booking?.storage || 'Storage')}
+                        </div>
+                    </div>
+                </div>
+                <div className="renewal-booking-dw">
+                    <div className="renewal-dw-header">
+                        <div className="renewal-dw-steps">
+                            <span className="renewal-dw-step done">① 일정 &amp; 가방</span>
+                            <span className="renewal-dw-arrow">›</span>
+                            <span className="renewal-dw-step done">② 지점 선택</span>
+                            <span className="renewal-dw-arrow">›</span>
+                            <span className="renewal-dw-step active">③ 결제</span>
+                        </div>
+                        <button onClick={onBack} className="text-white/60 hover:text-white">✕</button>
+                    </div>
+
+                <div className="renewal-dw-cols">
 
                     {/* Left Column: Input Forms */}
-                    <div className="lg:col-span-7 space-y-10">
+                    <div className="renewal-dw-left space-y-8">
+                        <div className="md:hidden">
+                            <div className="renewal-progress">
+                                <div className="dot done" />
+                                <div className="dot done" />
+                                <div className="dot active" />
+                                <div className="dot" />
+                            </div>
+                            <div className="renewal-step-head">
+                                <h2>예약자 정보를<br />입력해주세요</h2>
+                                <p>예약 확인 메일을 받을 정보예요.</p>
+                            </div>
+                        </div>
                         {/* Step 1: Locations & Schedule */}
-                        <section className="space-y-6">
+                        <section className="hidden space-y-6">
                             <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 bg-bee-black text-bee-yellow rounded-full flex items-center justify-center text-xs font-black italic">01</div>
-                                <h3 className="text-xl font-black italic uppercase tracking-tight">{tBooking.schedule_info || 'Schedule & Locations'}</h3>
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bee-black text-xs font-black text-bee-yellow">01</div>
+                                <h3 className="text-xl font-black uppercase tracking-normal text-bee-black">{tBooking.schedule_info || 'Schedule & Locations'}</h3>
                             </div>
 
-                            <div className="p-5 sm:p-6 xl:p-7 bg-gray-50 rounded-[2.2rem] border border-gray-100">
+                            <div className="rounded-[20px] border border-gray-200 bg-white p-4 shadow-sm sm:p-5 xl:p-6">
                                 {/* Service Type Toggle - Modified Position */}
-                                <div className="flex bg-white rounded-xl p-1 border border-gray-200 mb-6 max-w-sm mx-auto">
+                                <div className="mx-auto mb-5 flex max-w-sm rounded-2xl border border-gray-200 bg-gray-50 p-1">
                                     <button
                                         onClick={() => setBooking(prev => {
                                             const nextBagSizes = sanitizeDeliveryBagSizes(prev.bagSizes);
                                             return { ...prev, serviceType: ServiceType.DELIVERY, bagSizes: nextBagSizes, bags: getTotalBags(nextBagSizes) };
                                         })}
-                                        className={`flex-1 py-2.5 rounded-lg text-xs font-black transition-all ${booking.serviceType === ServiceType.DELIVERY ? 'bg-bee-black text-bee-yellow shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
+                                        className={`flex-1 rounded-xl py-3 text-xs font-black transition-all ${booking.serviceType === ServiceType.DELIVERY ? 'bg-bee-black text-bee-yellow shadow-md' : 'text-gray-500 hover:bg-white'}`}
                                     >
                                         {t.booking?.delivery || 'DELIVERY'}
                                     </button>
                                     <button
                                         onClick={() => setBooking(prev => ({ ...prev, serviceType: ServiceType.STORAGE }))}
-                                        className={`flex-1 py-2.5 rounded-lg text-xs font-black transition-all ${booking.serviceType === ServiceType.STORAGE ? 'bg-bee-yellow text-bee-black shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
+                                        className={`flex-1 rounded-xl py-3 text-xs font-black transition-all ${booking.serviceType === ServiceType.STORAGE ? 'bg-bee-yellow text-bee-black shadow-md' : 'text-gray-500 hover:bg-white'}`}
                                     >
                                         {t.booking?.storage || 'STORAGE'}
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-5 xl:items-stretch">
+                                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
                                     <div className="h-full">
-                                        <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">
+                                        <div className="h-full space-y-4 rounded-[18px] border border-gray-200 bg-[#FAFAF8] p-4">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{booking.serviceType === ServiceType.DELIVERY ? tBooking.from : tBooking.select_storage}</label>
                                             <select
                                                 title="Select Pickup Location"
@@ -1032,7 +1130,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
                                     <div className="h-full">
                                         {booking.serviceType === ServiceType.DELIVERY ? (
-                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">
+                                            <div className="h-full space-y-4 rounded-[18px] border border-gray-200 bg-[#FAFAF8] p-4">
                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.to || 'To'}</label>
                                                     <select
                                                         title="Select Dropoff Location"
@@ -1108,8 +1206,8 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="rounded-[1.9rem] border border-gray-100 bg-white p-4 sm:p-5 shadow-[0_18px_45px_rgba(15,23,42,0.05)] space-y-4 h-full">
-                                                <div className="p-5 sm:p-6 bg-white rounded-[2rem] border-2 border-bee-yellow/20 shadow-xl shadow-bee-yellow/5 space-y-4">
+                                            <div className="h-full space-y-4 rounded-[18px] border border-gray-200 bg-[#FAFAF8] p-4">
+                                                <div className="space-y-4 rounded-[18px] border border-bee-yellow/30 bg-white p-4 shadow-sm sm:p-5">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 bg-bee-yellow/10 rounded-2xl flex items-center justify-center">
                                                             <Info className="text-bee-yellow" size={20} />
@@ -1188,7 +1286,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 exit={{ opacity: 0, height: 0, marginTop: 0 }}
                                                 className="overflow-hidden"
                                             >
-                                                <div className="p-5 bg-bee-yellow/10 border border-bee-yellow/30 rounded-3xl flex items-start gap-4 shadow-sm">
+                                                <div className="flex items-start gap-4 rounded-[18px] border border-bee-yellow/30 bg-bee-yellow/10 p-4 shadow-sm">
                                                     <div className="w-10 h-10 bg-bee-yellow/20 rounded-full flex items-center justify-center shrink-0 shadow-inner">
                                                         <AlertCircle className="text-bee-yellow" size={20} />
                                                     </div>
@@ -1207,10 +1305,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         </section>
 
                         {/* Step 2: Bags */}
-                        <section className="space-y-6">
+                        <section className="hidden space-y-6">
                             <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 bg-bee-black text-bee-yellow rounded-full flex items-center justify-center text-xs font-black italic">02</div>
-                                <h3 className="text-xl font-black italic uppercase tracking-tight">{tBooking.bags_label || 'Baggage Selection'}</h3>
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bee-black text-xs font-black text-bee-yellow">02</div>
+                                <h3 className="text-xl font-black uppercase tracking-normal text-bee-black">{tBooking.bags_label || 'Baggage Selection'}</h3>
                             </div>
 
                             <div className={`grid gap-4 ${booking.serviceType === ServiceType.DELIVERY ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
@@ -1225,7 +1323,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     const description = getBagCategoryDescription(category.id, lang, booking.serviceType || ServiceType.STORAGE);
 
                                     return (
-                                        <div key={category.id} className="h-full w-full min-w-0 overflow-hidden rounded-[1.7rem] border border-gray-100 bg-white shadow-[0_14px_42px_rgba(15,23,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-[0_20px_48px_rgba(15,23,42,0.1)]">
+                                        <div key={category.id} className="h-full w-full min-w-0 overflow-hidden rounded-[18px] border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-bee-yellow/70 hover:shadow-lg">
                                             <div className="flex h-full flex-col gap-2.5 p-3 sm:p-3.5">
                                                 <div className="flex min-h-[5.6rem] items-start justify-between gap-2.5 sm:min-h-[6.2rem]">
                                                     <div className="min-w-0 flex-1">
@@ -1334,15 +1432,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
                         </section>
 
                         {/* Step 3: User Info */}
-                        <section className="space-y-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 bg-bee-black text-bee-yellow rounded-full flex items-center justify-center text-xs font-black italic">03</div>
-                                <h3 className="text-xl font-black italic uppercase tracking-tight">{tBooking.contact_info_title || tBooking.contact_info || 'Contact Information'}</h3>
+                        <section id="reserve-user" className="space-y-6">
+                            <div className="hidden md:flex items-center gap-4">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bee-black text-xs font-black text-bee-yellow">01</div>
+                                <h3 className="text-xl font-black uppercase tracking-normal text-bee-black">{tBooking.contact_info_title || tBooking.contact_info || 'Contact Information'}</h3>
                             </div>
 
-                            <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] space-y-4 shadow-sm">
+                            <div className="renewal-user-card space-y-4 rounded-[20px] border border-gray-200 bg-white p-5 shadow-sm md:p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
+                                    <div className="renewal-form-field space-y-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.name || 'Name'}</label>
                                         <input
                                             type="text"
@@ -1362,7 +1460,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-bee-yellow/50 transition-all"
                                         />
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="renewal-form-field space-y-2">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.email || 'Email'}</label>
                                         <input
                                             type="email"
@@ -1383,25 +1481,9 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.sns || 'SNS Channel'}</label>
-                                        <select
-                                            title="SNS Channel"
-                                            aria-label="SNS Channel"
-                                            value={booking.snsChannel}
-                                            onChange={e => setBooking(prev => ({ ...prev, snsChannel: e.target.value }))}
-                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-bee-yellow/50 transition-all"
-                                        >
-                                            <option value="kakao">KakaoTalk</option>
-                                            <option value="line">Line</option>
-                                            <option value="whatsapp">WhatsApp</option>
-                                            <option value="instagram">Instagram</option>
-                                            <option value="wechat">WeChat</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.snsId || 'SNS ID'}</label>
+                                <div className="renewal-form-field space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tBooking.sns || 'SNS'}</label>
+                                    <div className="renewal-sns-row" style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: '7px' }}>
                                         <input
                                             type="text"
                                             title="SNS ID"
@@ -1411,11 +1493,24 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                             placeholder={tBooking.snsId || "ID"}
                                             className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-bee-yellow/50 transition-all"
                                         />
+                                        <select
+                                            title="SNS Channel"
+                                            aria-label="SNS Channel"
+                                            value={booking.snsChannel}
+                                            onChange={e => setBooking(prev => ({ ...prev, snsChannel: e.target.value }))}
+                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-bee-yellow/50 transition-all"
+                                        >
+                                            <option value="instagram">Instagram</option>
+                                            <option value="wechat">WeChat</option>
+                                            <option value="line">LINE</option>
+                                            <option value="kakao">KakaoTalk</option>
+                                            <option value="whatsapp">WhatsApp</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 {/* [스봉리포트 전용] 국가 선택 필드 추가 🌏💅 */}
-                                <div className="space-y-2 pt-2">
+                                <div className="renewal-form-field space-y-2 pt-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                         {lang === 'ko' ? '거주 국가 (리포트용)' : 'Country of Residence'}
                                     </label>
@@ -1441,11 +1536,10 @@ const BookingPage: React.FC<BookingPageProps> = ({
                     </div>
 
                     {/* Right Column: Summary & Checkout */}
-                    <div className="lg:col-span-5">
-                        <div className="sticky top-24 space-y-4">
-                            <div className="bg-bee-black text-white rounded-[2.8rem] p-7 md:p-9 shadow-2xl relative overflow-hidden ring-1 ring-white/10">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-bee-yellow/5 rounded-full blur-3xl -mr-16 -mt-16" />
-                                <h3 className="text-xl font-black italic uppercase tracking-tight mb-8 flex items-center gap-3">
+                    <div id="reserve-2" className="renewal-dw-right">
+                        <div className="md:sticky md:top-24 space-y-4">
+                            <div className="renewal-checkout-card relative overflow-hidden rounded-[20px] bg-bee-black p-6 text-white shadow-2xl ring-1 ring-white/10 md:p-7">
+                                <h3 className="mb-7 flex items-center gap-3 text-xl font-black uppercase tracking-normal">
                                     <span className="w-2 h-2 bg-bee-yellow rounded-full animate-pulse" />
                                     {tBooking.booking_summary || 'BOOKING SUMMARY'}
                                 </h3>
@@ -1539,7 +1633,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                 </div>
 
                                 <div className="mt-8 space-y-3 relative z-10">
-                                    <label className="flex items-center gap-4 group cursor-pointer">
+                                    <label className="renewal-agree-row flex items-center gap-4 group cursor-pointer">
                                         <div className="relative w-5 h-5 flex-shrink-0">
                                             <input
                                                 type="checkbox"
@@ -1551,15 +1645,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 <CheckCircle2 size={12} strokeWidth={4} />
                                             </div>
                                         </div>
-                                        <span className="text-gray-600">
+                                        <span className="text-sm font-bold leading-relaxed text-white/75">
                                             {tBooking.terms_agree_1 || '[Req] Agree to Terms of Service'}
-                                            <button onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }} className="ml-2 text-bee-black font-black underline underline-offset-4 decoration-bee-yellow decoration-2">
+                                            <button onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }} className="ml-2 text-bee-yellow font-black underline underline-offset-4 decoration-bee-yellow decoration-2">
                                                 {tBooking.terms_link || 'Link'}
                                             </button>
                                         </span>
                                     </label>
 
-                                    <label className="flex items-center gap-4 group cursor-pointer">
+                                    <label className="renewal-agree-row flex items-center gap-4 group cursor-pointer">
                                         <div className="relative w-5 h-5 flex-shrink-0">
                                             <input
                                                 type="checkbox"
@@ -1571,15 +1665,15 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 <CheckCircle2 size={12} strokeWidth={4} />
                                             </div>
                                         </div>
-                                        <span className="text-gray-600">
+                                        <span className="text-sm font-bold leading-relaxed text-white/75">
                                             {tBooking.terms_agree_2 || '[Req] Agree to Privacy Policy'}
-                                            <button onClick={(e) => { e.preventDefault(); window.open('/privacy-policy', '_blank'); }} className="ml-2 text-bee-black font-black underline underline-offset-4 decoration-bee-yellow decoration-2">
+                                            <button onClick={(e) => { e.preventDefault(); window.open('/privacy-policy', '_blank'); }} className="ml-2 text-bee-yellow font-black underline underline-offset-4 decoration-bee-yellow decoration-2">
                                                 {tBooking.terms_link || 'Link'}
                                             </button>
                                         </span>
                                     </label>
 
-                                    <label className="flex items-center gap-4 group cursor-pointer">
+                                    <label className="renewal-agree-row flex items-center gap-4 group cursor-pointer">
                                         <div className="relative w-5 h-5 flex-shrink-0">
                                             <input
                                                 type="checkbox"
@@ -1591,7 +1685,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                                 <CheckCircle2 size={12} strokeWidth={4} />
                                             </div>
                                         </div>
-                                        <span className="text-gray-600">{tBooking.terms_agree_3 || '[Req] Prohibited High-Value Items Policy'}</span>
+                                        <span className="text-sm font-bold leading-relaxed text-white/75">{tBooking.terms_agree_3 || '[Req] Prohibited High-Value Items Policy'}</span>
                                     </label>
                                 </div>
 
@@ -1612,9 +1706,70 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                     </ul>
                                 </div>
 
-                                {/* PayPal 활성화 시: PayPal + 현금결제 버튼 */}
-                                {isPayPalEnabled() && priceDetails.total > 0 ? (
-                                    <div className="mt-8">
+                                {/* ============ 결제 수단 (목업 이식) ============ */}
+                                {/* total > 0 이고 결제 모드일 때만 결제 수단 선택 */}
+                                {priceDetails.total > 0 && !isDirectBookingMode && (
+                                    <div className="mt-8 rounded-[1.5rem] bg-white border border-gray-100 px-5 py-4 shadow-sm">
+                                        <div className="text-xs font-black text-bee-black uppercase tracking-widest mb-2">
+                                            {({
+                                                ko: '지불 방법',
+                                                'zh-TW': '付款方式',
+                                                'zh-HK': '付款方式',
+                                                zh: '支付方式',
+                                                ja: 'お支払い方法',
+                                                en: 'Payment Method',
+                                            } as Record<string, string>)[lang] ?? 'Payment Method'}
+                                        </div>
+
+                                        {/* Toss / 카드 옵션 — Toss 활성화 시에만 (PayPal 없는 환경) */}
+                                        {!isPayPalEnabled() && (
+                                            <label
+                                                className="flex items-center gap-3 py-3 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                                onClick={() => setPaymentMethod('card')}
+                                            >
+                                                <span className="w-10 h-7 flex-shrink-0 flex items-center justify-center rounded-md overflow-hidden">
+                                                    <svg width="32" height="20" viewBox="0 0 40 26" fill="none">
+                                                        <rect width="40" height="26" rx="4" fill="#1A1F71" />
+                                                        <rect y="6" width="40" height="7" fill="#F7B600" />
+                                                        <rect x="3" y="16" width="10" height="6" rx="1" fill="#fff" opacity=".8" />
+                                                    </svg>
+                                                </span>
+                                                <span className="flex-1 text-sm font-black text-bee-black leading-tight">
+                                                    {lang.startsWith('ko') ? '체크 / 신용카드' : 'Credit / Debit Card'}
+                                                    <span className="block text-[10px] font-bold text-gray-400 mt-0.5">Visa · Mastercard · UnionPay</span>
+                                                </span>
+                                                <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${paymentMethod === 'card' ? 'border-bee-yellow' : 'border-gray-300'}`}>
+                                                    {paymentMethod === 'card' && <span className="w-2.5 h-2.5 rounded-full bg-bee-yellow" />}
+                                                </span>
+                                            </label>
+                                        )}
+
+                                        {/* PayPal 옵션 — PayPal 활성화 시에만 */}
+                                        {isPayPalEnabled() && (
+                                            <label
+                                                className="flex items-center gap-3 py-3 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                                onClick={() => setPaymentMethod('paypal')}
+                                            >
+                                                <span className="w-10 h-7 flex-shrink-0 flex items-center justify-center rounded-md overflow-hidden border border-gray-200">
+                                                    <svg width="34" height="22" viewBox="0 0 50 32" fill="none">
+                                                        <rect width="50" height="32" rx="4" fill="#fff" />
+                                                        <text x="6" y="22" fontFamily="Arial" fontWeight="800" fontSize="14" fill="#003087">Pay</text>
+                                                        <text x="22" y="22" fontFamily="Arial" fontWeight="800" fontSize="14" fill="#009CDE">Pal</text>
+                                                    </svg>
+                                                </span>
+                                                <span className="flex-1 text-sm font-black text-bee-black">PayPal</span>
+                                                <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${paymentMethod === 'paypal' ? 'border-bee-yellow' : 'border-gray-300'}`}>
+                                                    {paymentMethod === 'paypal' && <span className="w-2.5 h-2.5 rounded-full bg-bee-yellow" />}
+                                                </span>
+                                            </label>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* ============ 결제 트리거 (PayPal vs 카드/Direct) ============ */}
+                                {/* PayPal 결제 — paymentMethod가 paypal일 때 PayPal 버튼 컨테이너 노출 */}
+                                {isPayPalEnabled() && priceDetails.total > 0 && paymentMethod === 'paypal' ? (
+                                    <div className="mt-6">
                                         <p className="text-center text-xs font-black text-gray-500 mb-1">
                                             {({
                                                 ko: '아래 버튼으로 결제 후 예약이 확정됩니다',
@@ -1654,26 +1809,41 @@ const BookingPage: React.FC<BookingPageProps> = ({
                                         ) : (
                                             <div ref={paypalContainerRef} id="paypal-button-container" />
                                         )}
-
                                     </div>
                                 ) : (
-                                    <motion.button
-                                        whileHover={{ scale: 1.02, y: -2 }}
-                                        whileTap={{ scale: 0.98 }}
+                                    /* Toss 카드 결제 / Direct 예약 — 목업 스타일 풀 가로폭 결제 버튼 */
+                                    <button
                                         onClick={handleBook}
                                         disabled={isSubmitting}
-                                        className="hidden w-full mt-8 py-4 bg-bee-yellow text-bee-black font-black text-lg rounded-2xl shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        className="renewal-pay-button mt-6 flex h-[58px] w-full items-center justify-between gap-3 rounded-full bg-bee-black px-7 text-white shadow-xl transition-all hover:bg-[#2a2a2a] active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
                                     >
                                         {isSubmitting ? (
-                                            <div className="w-5 h-5 border-2 border-bee-black border-t-transparent rounded-full animate-spin" />
+                                            <span className="mx-auto flex items-center gap-2">
+                                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                                <span className="text-sm font-black">{tBooking.processing || 'Processing'}</span>
+                                            </span>
+                                        ) : isDirectBookingMode ? (
+                                            <>
+                                                <span className="text-lg font-black tracking-tight tabular-nums">
+                                                    {lang === 'ko' ? `₩${priceDetails.total.toLocaleString()}` : `$${krwToUsd(priceDetails.total, usdRate)}`}
+                                                </span>
+                                                <span className="text-sm font-black uppercase tracking-wider flex items-center gap-1.5">
+                                                    {lang.startsWith('ko') ? '예약 확정하기' : 'Confirm booking'}
+                                                    <ArrowRight size={16} />
+                                                </span>
+                                            </>
                                         ) : (
                                             <>
-                                                {isMockPaymentMode
-                                                    ? (lang === 'ko' ? '결제 흐름 테스트하기' : 'TEST PAYMENT FLOW')
-                                                    : (tBooking.book_now || 'COMPLETE BOOKING')} <ArrowRight size={20} />
+                                                <span className="text-lg font-black tracking-tight tabular-nums">
+                                                    {lang === 'ko' ? `₩${priceDetails.total.toLocaleString()}` : `$${krwToUsd(priceDetails.total, usdRate)}`}
+                                                </span>
+                                                <span className="text-sm font-black uppercase tracking-wider flex items-center gap-1.5">
+                                                    {tBooking.pay_now || (lang.startsWith('ko') ? '결제하기' : 'Pay now')}
+                                                    <ArrowRight size={16} />
+                                                </span>
                                             </>
                                         )}
-                                    </motion.button>
+                                    </button>
                                 )}
                             </div>
                         </div>
@@ -1681,7 +1851,7 @@ const BookingPage: React.FC<BookingPageProps> = ({
 
                 </div>
             </div>
-
+            </div>
         </div>
     );
 };

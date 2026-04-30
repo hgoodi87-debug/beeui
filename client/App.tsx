@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, Outlet } from 'react-router-dom';
 import { captureAdParams, fireBookingConversion } from './src/utils/gads';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
@@ -40,6 +40,7 @@ const KioskVoucherPage = lazy(() => import('./components/KioskVoucherPage'));
 const KioskStaffReturnPage = lazy(() => import('./components/KioskStaffReturnPage'));
 const MyLoginPage = lazy(() => import('./components/MyLoginPage'));
 const MyReservationsPage = lazy(() => import('./components/MyReservationsPage'));
+const BookingFlowModal = lazy(() => import('./components/BookingFlowModal'));
 import { useParams } from 'react-router-dom';
 import ErrorBoundary, { PageErrorFallback } from './components/ErrorBoundary';
 import NoticePopup from './components/NoticePopup';
@@ -147,6 +148,15 @@ const App: React.FC = () => {
     captureAdParams();
   }, []);
 
+  // GA4 Measurement ID 동적 적용 — 관리자 저장값이 있으면 하드코딩 값을 덮어씀
+  useEffect(() => {
+    const config = StorageService.getCloudConfig();
+    const measurementId = config?.measurementId?.trim();
+    if (measurementId && typeof window.gtag === 'function') {
+      window.gtag('config', measurementId, { send_page_view: false });
+    }
+  }, []);
+
   const {
     lang,
     setLang,
@@ -196,6 +206,10 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginModalRedirectTo, setLoginModalRedirectTo] = useState('');
   const [showSignupModal, setShowSignupModal] = useState(false);
+  // 💼 데스크탑 예약 팝업 모달 (목업의 dw-modal 이식) - 모바일은 기존 라우팅 유지
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const bookingModalOpenRef = useRef(false); // stale closure 방지용 ref
+  const [bookingModalServiceType, setBookingModalServiceType] = useState<ServiceType | undefined>(undefined);
   const { data: currentUser } = useCurrentUser();
   const adminHomePath = getAdminHomePath(adminInfo.role, adminInfo.jobTitle, adminInfo.branchId);
   const shouldLoadBookingLocations =
@@ -376,6 +390,10 @@ const App: React.FC = () => {
       returnDate,
       bagCounts
     });
+    // 💼 데스크탑 예약 모달이 열려 있으면 라우팅 대신 모달 내부에서 step 전환
+    // (BookingFlowModal이 onLocationSelect 콜백 후 step='booking'으로 전환)
+    // bookingModalOpenRef.current 사용: stale closure 방지
+    if (bookingModalOpenRef.current) return;
     navigate(`/${lang}/booking`);
   };
 
@@ -513,14 +531,33 @@ const App: React.FC = () => {
         // TODO: 이메일 로그인 임시 비활성화 — SMTP 설정 완료 후 재활성화
         console.log("[App] Pre-selecting STORAGE service type");
         setPreSelectedBooking({ ...preSelectedBooking, serviceType: ServiceType.STORAGE });
+        // 💼 데스크탑(>=768px) → 팝업 모달 / 모바일 → 풀페이지 라우팅
+        if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+            setBookingModalServiceType(ServiceType.STORAGE);
+            bookingModalOpenRef.current = true;
+            setBookingModalOpen(true);
+            return;
+        }
         return navigate(`/${lang}/locations`);
       case 'LOCATIONS_DELIVER':
         // TODO: 이메일 로그인 임시 비활성화 — SMTP 설정 완료 후 재활성화
         console.log("[App] Pre-selecting DELIVERY service type");
         setPreSelectedBooking({ ...preSelectedBooking, serviceType: ServiceType.DELIVERY });
+        if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+            setBookingModalServiceType(ServiceType.DELIVERY);
+            bookingModalOpenRef.current = true;
+            setBookingModalOpen(true);
+            return;
+        }
         return navigate(`/${lang}/locations`);
       case 'LOCATIONS':
         // TODO: 이메일 로그인 임시 비활성화 — SMTP 설정 완료 후 재활성화
+        if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+            setBookingModalServiceType(undefined);
+            bookingModalOpenRef.current = true;
+            setBookingModalOpen(true);
+            return;
+        }
         return navigate(`/${lang}/locations`);
       case 'VISION': return navigate(`/${lang}/vision`);
       case 'USER': default: return navigate(`/${lang}`);
@@ -811,6 +848,24 @@ const App: React.FC = () => {
             onSignupSuccess={() => setShowSignupModal(false)}
             onSwitchToLogin={() => { setShowSignupModal(false); setShowLoginModal(true); }}
           />
+          {/* 💼 데스크탑 예약 팝업 모달 — md:이상에서만 노출 */}
+          <Suspense fallback={null}>
+            <BookingFlowModal
+              open={bookingModalOpen}
+              onClose={() => { bookingModalOpenRef.current = false; setBookingModalOpen(false); }}
+              t={t}
+              lang={lang}
+              onLangChange={changeLanguage}
+              user={currentUser}
+              onSuccess={handleBookingSuccess}
+              initialServiceType={bookingModalServiceType}
+              bookingLocations={bookingLocations}
+              customerBranchId={customerBranch?.id}
+              customerBranchRates={customerBranch?.commissionRates}
+              preSelectedBooking={preSelectedBooking as any}
+              onLocationSelect={handleLocationSelect}
+            />
+          </Suspense>
         </>
       )}
     </div>

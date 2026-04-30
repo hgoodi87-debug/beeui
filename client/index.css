@@ -33,7 +33,42 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* iOS / Android 공통 호환 — 갤럭시·아이폰 모두 대응 */
+html {
+  /* 노치 / 홈바 안전 영역 변수 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* iOS Safari 오버스크롤 바운스 / 텍스트 자동 확대 방지 */
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* iOS 줌 방지: 입력창은 반드시 16px 이상 */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* 터치 영역 최소 44px (Apple HIG) — 안드로이드도 권장 */
+button, a[role="button"], [role="button"] {
+  touch-action: manipulation; /* iOS 더블탭 줌 방지 */
+}
+
+/* iOS Safari 100vh 버그 대응용 유틸리티 */
+.h-screen-safe { height: 100vh; height: 100dvh; }
+.min-h-screen-safe { min-height: 100vh; min-height: 100dvh; }
+
+/* 노치 안전영역 패딩 유틸 */
+.pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem); }
+.pt-safe { padding-top: calc(env(safe-area-inset-top, 0px) + 1rem); }
+.pl-safe { padding-left: calc(env(safe-area-inset-left, 0px) + 1rem); }
+.pr-safe { padding-right: calc(env(safe-area-inset-right, 0px) + 1rem); }
 
 /* 접근성: 키보드 포커스 링 (WCAG 2.1 AA) */
 *:focus-visible {
@@ -51,6 +86,11 @@ body {
   letter-spacing: -0.05em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* 노치 좌우 안전영역 */
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+  /* 안드로이드 폰트 렌더링 */
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -460,4 +500,900 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-marquee-slide:hover {
   animation-play-state: paused;
+}
+
+/* ===== Renewal HTML import layer (/Users/cm/Downloads/리뉴얼.html) ===== */
+:root {
+  --renewal-yellow: #FFC700;
+  --renewal-yellow-deep: #D9A900;
+  --renewal-bg-soft: #FAFAF8;
+  --renewal-bg-dark: #0A0A0A;
+  --renewal-ink: #1A1A1A;
+  --renewal-ink-2: #3D3D3D;
+  --renewal-ink-3: #6B6B6B;
+  --renewal-ink-4: #A0A0A0;
+  --renewal-line: #D4D4D4;
+  --renewal-line-2: #E2E2E2;
+}
+
+.renewal-screen {
+  min-height: 100dvh;
+  background: var(--renewal-bg-soft);
+  color: var(--renewal-ink);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+}
+
+.renewal-phone-col {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  background: #fff;
+  min-height: 100dvh;
+}
+
+.renewal-sc-header {
+  height: 64px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--renewal-line-2);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.renewal-back {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #111;
+}
+
+.renewal-title {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.renewal-progress {
+  display: flex;
+  gap: 4px;
+  padding: 10px 24px 0;
+  background: #fff;
+}
+
+.renewal-progress .dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--renewal-line);
+}
+
+.renewal-progress .dot.active { background: #F5B200; }
+.renewal-progress .dot.done { background: #111; }
+
+.renewal-step-head {
+  padding: 14px 24px 10px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.renewal-step-head h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #111;
+}
+
+.renewal-step-head p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--renewal-ink-3);
+  text-align: left;
+  line-height: 1.45;
+}
+
+.renewal-sc-footer {
+  padding: 10px 20px calc(10px + var(--safe-bot, 0px));
+  background: #fff;
+  border-top: 1px solid var(--renewal-line-2, #E2E2E2);
+}
+
+.renewal-sc-footer .renewal-btn-primary {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 14px;
+  background: var(--renewal-yellow, #FFC700);
+  color: #111;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+
+.renewal-sc-footer .renewal-btn-primary:hover {
+  background: #F5B200;
+}
+
+.renewal-r-body {
+  padding: 8px 20px 16px;
+  background: #fff;
+}
+
+/* Step-1 chips: mobile — hide SVG icons, compact font */
+@media (max-width: 767px) {
+  .renewal-dt-chip { padding: 0 8px; }
+  .renewal-dt-chip svg { display: none; }
+  .renewal-dt-chip input,
+  .renewal-dt-chip select { font-size: 12px; }
+  .renewal-svc-tab { font-size: 12px; gap: 6px; padding: 10px 0; }
+}
+
+/* Step-1 narrow left column: compact chips on desktop */
+@media (min-width: 768px) {
+  /* 데스크탑: 모바일 absolute 오버라이드 리셋 */
+  #reserve-1 {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    height: 100% !important;
+    flex: 1;
+  }
+
+  .renewal-map-panel {
+    padding: 12px 12px 16px;
+  }
+
+  .renewal-map-search-static {
+    margin: 0 0 10px;
+  }
+
+  .renewal-map-sheet-static {
+    max-height: min(48dvh, 430px);
+    padding-bottom: 16px;
+  }
+
+  .step1-narrow-col .renewal-dt-chip {
+    padding: 0 8px;
+    gap: 0;
+  }
+  .step1-narrow-col .renewal-dt-chip svg {
+    display: none;
+  }
+  .step1-narrow-col .renewal-dt-chip input,
+  .step1-narrow-col .renewal-dt-chip select {
+    font-size: 12px;
+  }
+  .step1-narrow-col .renewal-svc-tab {
+    font-size: 12px;
+    gap: 6px;
+  }
+  .step1-narrow-col .renewal-svc-tab svg {
+    display: none;
+  }
+}
+
+.renewal-svc-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.renewal-svc-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 0;
+  border: 2px solid var(--renewal-line);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.renewal-svc-tab.active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.renewal-field {
+  margin-bottom: 14px;
+}
+
+.renewal-field-label {
+  margin-bottom: 7px;
+  color: var(--renewal-ink-3);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.renewal-time-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 7px;
+  align-items: center;
+}
+
+.renewal-tg-label {
+  width: 28px;
+  color: var(--renewal-ink-3);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.renewal-dt-chip {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  background: #F2F2F0;
+}
+
+.renewal-dt-chip:focus-within {
+  border-color: #F5B200;
+  background: #fff;
+}
+
+.renewal-dt-chip input,
+.renewal-dt-chip select {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--renewal-ink);
+  font-size: 13px;
+  font-weight: 800;
+  appearance: none;
+}
+
+.renewal-dt-chip input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+.renewal-bag-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.renewal-bag-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 8px;
+  border: 1px solid var(--renewal-line-2);
+  border-radius: 14px;
+  background: var(--renewal-bg-soft);
+}
+
+.renewal-bag-ic { font-size: 26px; line-height: 1; }
+.renewal-bag-nm { font-size: 14px; font-weight: 800; }
+
+.renewal-counter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.renewal-counter button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--renewal-line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.renewal-counter .plus {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.renewal-counter .q {
+  min-width: 18px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.renewal-map-wrap {
+  position: relative;
+  min-height: calc(100dvh - 64px);
+  background: #e8eadf;
+  overflow: hidden;
+}
+
+.renewal-map-search {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
+
+.renewal-map-panel {
+  padding: 12px 12px 16px;
+  background: transparent;
+}
+
+.renewal-map-search-static {
+  position: relative;
+  z-index: 36;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 4px 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.16);
+}
+
+.renewal-map-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  max-height: 46%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 20px;
+  border-radius: 20px 20px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
+}
+
+.renewal-map-sheet-static {
+  position: relative;
+  z-index: 35;
+  display: flex;
+  max-height: min(48dvh, 430px);
+  flex-direction: column;
+  padding: 0 14px 16px;
+  border-radius: 20px 20px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.12), 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.renewal-sheet-handle {
+  width: 40px;
+  height: 4px;
+  margin: 10px auto 8px;
+  border-radius: 2px;
+  background: var(--renewal-line);
+}
+
+.renewal-sheet-head {
+  padding: 4px 4px 14px;
+  border-bottom: 1px solid var(--renewal-line-2);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.renewal-branch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-top: 10px;
+}
+
+.renewal-branch-card {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--renewal-line-2);
+  border-radius: 16px;
+  background: #fff;
+  text-align: left;
+}
+
+.renewal-branch-card.selected {
+  border-color: var(--renewal-yellow);
+  background: #FFFBEA;
+}
+
+.renewal-branch-badge {
+  position: absolute;
+  top: -7px;
+  left: 12px;
+  z-index: 2;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #111;
+  color: var(--renewal-yellow);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.renewal-branch-thumb {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: 12px;
+  border: 1px solid var(--renewal-line-2);
+  background: var(--renewal-bg-soft);
+  overflow: hidden;
+}
+
+.renewal-branch-nm {
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.renewal-branch-meta {
+  margin-top: 4px;
+  display: grid;
+  grid-template-columns: 46px 68px 1fr;
+  gap: 3px;
+  color: var(--renewal-ink-2);
+  font-size: 11px;
+}
+
+.renewal-branch-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.renewal-branch-address {
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--renewal-ink-4);
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 지점 상태 색상 뱃지 */
+.renewal-branch-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.renewal-branch-status::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.renewal-branch-status.open::before  { background: #22c55e; }
+.renewal-branch-status.open          { color: #16a34a; }
+.renewal-branch-status.bookable::before { background: #f59e0b; }
+.renewal-branch-status.bookable      { color: #b45309; }
+.renewal-branch-status.closed::before{ background: #d1d5db; }
+.renewal-branch-status.closed        { color: #9ca3af; }
+
+/* 시트 헤드 강조 */
+.renewal-sheet-head b {
+  font-weight: 900;
+  color: #111;
+}
+
+/* 서비스 탭 — 이모지 아이콘 간격 */
+.renewal-svc-tabs {
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* 진행 바 연결선 */
+.renewal-progress {
+  position: relative;
+}
+.renewal-progress::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: var(--renewal-line-2, #E2E2E2);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+.renewal-progress .dot {
+  position: relative;
+  z-index: 1;
+}
+
+/* 지점 카드 hover 폴리시 */
+.renewal-branch-card:hover {
+  border-color: #F5B200;
+  background: #FFFEF5;
+  box-shadow: 0 4px 14px rgba(245, 178, 0, 0.12);
+  transform: translateY(-1px);
+  transition: all 0.18s ease;
+}
+.renewal-branch-card {
+  transition: all 0.18s ease;
+}
+
+/* 지점 찾기 버튼 강화 */
+.renewal-sc-footer .renewal-btn-primary {
+  box-shadow: 0 4px 16px rgba(245,178,0,0.35);
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.renewal-sc-footer .renewal-btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(245,178,0,0.25);
+}
+
+.renewal-booking-dw {
+  max-width: 1100px;
+  margin: 24px auto;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.12);
+}
+
+.renewal-dw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px;
+  background: #0A0A0A;
+  color: #fff;
+}
+
+.renewal-dw-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.renewal-dw-step {
+  white-space: nowrap;
+  color: rgba(255,255,255,0.4);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.renewal-dw-step.done { color: rgba(255,255,255,0.72); }
+.renewal-dw-step.active { color: var(--renewal-yellow); }
+.renewal-dw-arrow { color: rgba(255,255,255,0.25); }
+
+.renewal-dw-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  min-height: 560px;
+}
+
+.renewal-dw-left {
+  padding: 24px;
+  border-right: 1px solid #EBEBEB;
+}
+
+.renewal-dw-right {
+  padding: 24px 20px;
+  background: var(--renewal-bg-soft);
+}
+
+.renewal-dw-section-label {
+  margin-bottom: 10px;
+  color: #888;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.renewal-dw-card {
+  border: 1.5px solid #E8E8E8;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
+.renewal-dw-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+
+.renewal-dw-row span:first-child { color: #888; }
+.renewal-dw-row span:last-child { font-weight: 800; text-align: right; }
+.renewal-dw-row.total {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #EBEBEB;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.renewal-dw-pay {
+  width: 100%;
+  height: 46px;
+  margin-top: 14px;
+  border-radius: 12px;
+  background: #111;
+  color: var(--renewal-yellow);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.renewal-user-card {
+  border-radius: 14px;
+}
+
+.renewal-form-field label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--renewal-ink-3);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.renewal-form-field input,
+.renewal-form-field select {
+  min-height: 48px;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  background: #F2F2F0;
+  color: var(--renewal-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.renewal-form-field input:focus,
+.renewal-form-field select:focus {
+  border-color: #F5B200;
+  background: #fff;
+  box-shadow: none;
+}
+
+.renewal-checkout-card {
+  border: 1px solid var(--renewal-line-2);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--renewal-ink);
+  box-shadow: none;
+}
+
+.renewal-checkout-card h3,
+.renewal-checkout-card .font-black {
+  color: var(--renewal-ink);
+}
+
+.renewal-checkout-card .text-bee-yellow {
+  color: #111;
+}
+
+.renewal-checkout-card .text-gray-400,
+.renewal-checkout-card .text-white\/75,
+.renewal-checkout-card .text-white {
+  color: var(--renewal-ink-3);
+}
+
+.renewal-checkout-card .bg-white\/5,
+.renewal-checkout-card .bg-white\/10,
+.renewal-checkout-card .bg-white\/20 {
+  background: #F2F2F0;
+}
+
+.renewal-checkout-card .border-white\/10,
+.renewal-checkout-card .h-px {
+  border-color: var(--renewal-line-2);
+  background: var(--renewal-line-2);
+}
+
+.renewal-checkout-card input[type="text"] {
+  color: var(--renewal-ink);
+  background: #F2F2F0;
+}
+
+.renewal-agree-row {
+  align-items: flex-start;
+  padding: 12px 0;
+  border-top: 1px solid var(--renewal-line-2);
+}
+
+.renewal-pay-button {
+  border-radius: 12px;
+  background: #111;
+  color: var(--renewal-yellow);
+}
+
+.renewal-pay-button:hover {
+  background: #111;
+  color: var(--renewal-yellow);
+}
+
+.renewal-done-screen {
+  min-height: 100dvh;
+  background: #0A0A0A;
+  color: #fff;
+}
+
+.renewal-done-hero {
+  padding: 54px 24px 34px;
+  background: #0A0A0A;
+  text-align: center;
+}
+
+.renewal-done-check {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--renewal-yellow);
+  color: #111;
+  font-size: 34px;
+  font-weight: 900;
+  box-shadow: 0 14px 34px rgba(255,199,0,0.26);
+}
+
+.renewal-voucher-shell {
+  max-width: 430px;
+  margin: -10px auto 0;
+  padding: 0 18px 40px;
+}
+
+.renewal-voucher-card {
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.42);
+}
+
+.renewal-done-save {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  border-radius: 12px;
+  background: var(--renewal-yellow);
+  color: #111;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.renewal-done-section {
+  max-width: 720px;
+  margin: 0 auto;
+  border-radius: 18px;
+}
+
+@media (max-width: 767px) {
+  .renewal-screen {
+    background: #fff;
+  }
+
+  .renewal-booking-dw {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .renewal-dw-header {
+    display: none;
+  }
+
+  .renewal-dw-cols {
+    display: block;
+    min-height: auto;
+  }
+
+  .renewal-dw-left {
+    padding: 0 16px;
+    border: 0;
+    background: #fff;
+  }
+
+  .renewal-dw-right {
+    padding: 0;
+    border: 0;
+    background: #fff;
+  }
+
+  /* ── 모바일 맵 스텝: 검색바 상단 고정 / 지점 시트 하단 고정 ── */
+  #reserve-1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100% !important;
+    margin-top: 0 !important;
+  }
+
+  .renewal-map-panel {
+    padding: 0;
+  }
+
+  /* 검색바: 상단 safe-area 여유 + 좌우 패딩 */
+  .renewal-map-search-static {
+    margin: calc(env(safe-area-inset-top, 0px) + 8px) 12px 0;
+  }
+
+  /* 칩 행: 검색바 바로 아래 */
+  #reserve-1 .relative.border-b {
+    margin-bottom: 0;
+  }
+
+  /* 지점 시트: 하단 safe-area 포함, 높이 확보 */
+  .renewal-map-sheet-static {
+    max-height: 50dvh;
+    margin-top: 0;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    border-radius: 20px 20px 0 0;
+  }
+
+  /* 지점 카드 터치 영역 */
+  .renewal-branch-card {
+    min-height: 72px;
+    padding: 10px 10px;
+  }
+
+  /* Config 스텝: 전체 높이 내에서 스크롤 가능 */
+  #reserve-time {
+    max-height: 100dvh;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .renewal-checkout-card {
+    border-width: 0;
+    border-top: 8px solid var(--renewal-bg-soft);
+    border-radius: 0;
+    padding: 20px 24px;
+  }
 }

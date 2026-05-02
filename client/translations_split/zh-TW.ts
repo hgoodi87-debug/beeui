@@ -1,8 +1,8 @@
 export const zhTW = {
     seo: {
-        title: 'Beeliber - 首爾旅行最後一天 行李無憂 | 弘大/首爾站 行李寄存 & 機場當日配送 💅',
-        description: '首爾退房後行李寄存及配送至仁川機場。酒店、弘大入口站、首爾站、機場當日行李箱配送服務。放下重擔，盡情享受首爾行程。',
-        keywords: '首爾行李寄存, 弘大行李寄存, 首爾站行李寄存, 仁川機場行李配送, 金浦機場行李配送, 酒店行李配送, 首爾旅行最後一天, 首爾退房後行程, 搭機前行李寄存',
+        title: 'Beeliber 行李寄放 | 首爾弘大・明洞・聖水・江南',
+        description: '首爾弘大、明洞、聖水行李寄放，4小時₩4,000起。每日09:00–22:00營業，無需預約直接入店。退房後輕裝出發，暢遊首爾不費力。即時線上預訂。',
+        keywords: '首爾行李寄放, 弘大行李寄放, 明洞行李寄放, 聖水行李寄放, 首爾退房行李, 首爾旅遊行李寄放, 行李寄放價格, 首爾旅行最後一天',
         locations_title: '分店指南 | 查找首爾附近 Beeliber 行李寄存點',
         locations_desc: '查看離您最近的 Beeliber 行李寄存分店、營業時間，以及可用的寄存與配送服務。',
         services_title: '服務介紹 | 行李寄存與機場即日配送',
@@ -13,7 +13,7 @@ export const zhTW = {
     nav: {
         services: '服務介紹',
         locations: '分店指南',
-        tracking: '配送查詢',
+        tracking: '預約查詢',
         partners: '加盟諮詢',
         community: '社群',
         about: '品牌故事',
@@ -287,7 +287,6 @@ export const zhTW = {
         booking_summary: '預訂摘要',
         service_type: '服務類型',
         baggage_count: '行李數量',
-        duration: '寄存時間',
         final_total: '合計',
         enter_coupon: '輸入折扣碼',
         terms_agree_1: '[必填] 同意服務條款',
@@ -331,6 +330,7 @@ export const zhTW = {
         confirm_btn: '確認取消',
         close_btn: '關閉',
         alert_cancel_success: '您的預訂已成功取消。',
+        alert_cancel_paypal_refunded: '預訂已取消，PayPal退款已處理。款項將在3-7個工作日內退還。',
         alert_cancel_error: '取消過程中發生錯誤。請聯繫客服。'
     },
     storage_tiers: {

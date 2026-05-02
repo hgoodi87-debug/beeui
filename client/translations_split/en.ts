@@ -1,8 +1,8 @@
 export const en = {
     seo: {
-        title: 'Beeliber - Last Day in Seoul, Luggage-Free | Hongdae Storage & Airport Delivery 💅',
-        description: 'Luggage storage & delivery at Hongdae, Seoul Station, Incheon/Gimpo Airport. Same-day luggage delivery between hotel and airport. Travel light with Beeliber.',
-        keywords: 'Seoul luggage storage, Hongdae luggage storage, Incheon Airport luggage delivery, same-day luggage delivery, hotel luggage delivery, last day in Seoul, after checkout luggage, airport bag delivery',
+        title: 'Beeliber | Seoul Luggage Storage — Hongdae, Myeongdong & Seongsu',
+        description: 'Store bags at Beeliber in Hongdae, Myeongdong & Seongsu. From ₩4,000 for 4 hrs. Open daily 09:00–22:00. Walk in anytime — no reservation needed. Instant online booking available.',
+        keywords: 'Seoul luggage storage, Hongdae luggage storage, Myeongdong luggage storage, Seongsu luggage storage, Seoul bag storage, luggage storage Seoul price, after checkout Seoul, last day Seoul bags',
         locations_title: 'Locations | Find nearby luggage storage in Seoul',
         locations_desc: 'Check nearby Beeliber luggage storage branches, opening hours, and available storage or delivery services.',
         services_title: 'Services | Luggage storage and same-day airport delivery',
@@ -13,7 +13,7 @@ export const en = {
     nav: {
         services: 'Services',
         locations: 'Locations',
-        tracking: 'Tracking',
+        tracking: 'My Booking',
         partners: 'Partners',
         community: 'Community',
         about: 'About Us',
@@ -308,7 +308,6 @@ export const en = {
         booking_summary: "Booking Summary",
         service_type: "Service Type",
         baggage_count: "Baggage Count",
-        duration: "Duration",
         final_total: "Total",
         enter_coupon: "Enter promo code",
         terms_agree_1: "[Req] Agree to Terms of Service",
@@ -352,6 +351,7 @@ export const en = {
         confirm_btn: 'Confirm Cancellation',
         close_btn: 'Close',
         alert_cancel_success: 'Booking cancelled successfully.',
+        alert_cancel_paypal_refunded: 'Booking cancelled and PayPal refund initiated. Funds will be returned within 3-7 business days.',
         alert_cancel_error: 'Error during cancellation. Please contact support.'
     },
     storage_tiers: {

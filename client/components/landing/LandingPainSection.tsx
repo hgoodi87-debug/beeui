@@ -1,90 +1,80 @@
 
 import React from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface LandingPainSectionProps {
     t: any;
 }
 
 const LandingPainSection: React.FC<LandingPainSectionProps> = ({ t }) => {
-    const targetRef = React.useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({
-        target: targetRef,
-        offset: ["start end", "end start"]
-    });
-
-    // 좌우 분할 스크롤 모션을 위한 Transform
-    const leftX = useTransform(scrollYProgress, [0, 0.5], [-100, 0]);
-    const rightX = useTransform(scrollYProgress, [0, 0.5], [100, 0]);
-    const leftOpacity = useTransform(scrollYProgress, [0, 0.3, 0.5], [0, 0.5, 1]);
-    const rightOpacity = useTransform(scrollYProgress, [0, 0.3, 0.5], [0, 0.5, 1]);
+    const cards = [
+        {
+            label: "STORAGE",
+            title: t.pain?.storage_title || "시간 단위 짐 보관",
+            desc: t.pain?.storage_desc || "24시간 CCTV와 전담 직원이 상주하는 안전한 보관소를 운영합니다.",
+        },
+        {
+            label: "DELIVERY",
+            title: t.pain?.delivery_title || "공항 당일 배송",
+            desc: t.pain?.delivery_desc || "호텔·지점에서 접수한 짐을 인천공항까지 당일 안전하게 배송합니다.",
+        },
+        {
+            label: "COVERAGE",
+            title: t.pain?.coverage_title || "서울 전역 40+ 거점",
+            desc: t.pain?.coverage_desc || "홍대·명동·강남·종로 등 주요 관광지 인근에 파트너 지점이 있습니다.",
+        },
+    ];
 
     return (
-        <section ref={targetRef} className="relative py-10 md:py-16 bg-white overflow-hidden">
+        <section className="relative py-16 md:py-24 bg-white overflow-hidden">
             {/* Background Texture */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none noise-overlay" />
 
-            <div className="max-w-7xl mx-auto px-6 relative z-10">
-                <div className="hidden">
-                </div>
+            <div className="max-w-[1200px] mx-auto px-6 relative z-10">
+                {/* Section header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.7 }}
+                    className="mb-12 md:mb-16"
+                >
+                    <h2 className="text-3xl md:text-5xl font-black tracking-[-0.03em] text-[#111] leading-[1.1] mb-4 break-keep">
+                        {t.pain?.section_title || "짐 없이, 진짜 여행"}
+                    </h2>
+                    <p className="text-sm md:text-base text-[#555] font-medium max-w-[680px] leading-relaxed break-keep">
+                        {t.pain?.section_desc || "beeliber는 서울 40여개 거점에서 짐을 보관하고, 인천공항까지 당일 배송해드리는 여행자 짐 서비스입니다."}
+                    </p>
+                </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-                    {/* Left Side: After (자유로운 여행) */}
-                    <motion.div
-                        style={{ x: leftX, opacity: leftOpacity }}
-                        className="relative rounded-[2rem] shadow-2xl aspect-[3/2] md:aspect-[2/1]"
-                    >
-                        <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-yellow/10 group">
-                            <picture>
-                                <source srcSet="/images/landing/after.webp" type="image/webp" />
-                                <img
-                                    src="/images/landing/after.jpg"
-                                    alt="빌리버 서비스를 이용해 짐 없이 가볍게 한강을 산책하는 자유로운 모습"
-                                    loading="lazy"
-                                    width="800"
-                                    height="600"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s]"
-                                />
-                            </picture>
-                            {/* After 캡션 */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
-                                <span className="inline-block px-3 py-1 bg-bee-yellow text-bee-black text-xs font-black rounded-full mb-2">AFTER</span>
-                                <p className="text-white font-bold text-sm md:text-lg leading-snug break-keep">
-                                    {t.pain?.after_caption || "무거운 짐은 빌리버에게 맡기고,\n당신은 자유로운 여행만 즐기세요."}
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
+                {/* 3 Cards — left vertical timeline */}
+                <div className="relative flex flex-col gap-5 pl-6 md:pl-8">
+                    {/* Vertical timeline line */}
+                    <div className="absolute left-0 top-3 bottom-3 w-[2px] bg-gradient-to-b from-[#F5B200] via-[#F5B200]/40 to-transparent" />
 
-                    {/* Right Side: Before (무거운 짐) */}
-                    <motion.div
-                        style={{ x: rightX, opacity: rightOpacity }}
-                        className="relative rounded-[2rem] shadow-2xl aspect-[3/2] md:aspect-[2/1]"
-                    >
-                        <div className="w-full h-full rounded-[3rem] overflow-hidden bg-bee-black group">
-                            <picture>
-                                <source srcSet="/images/landing/before.webp" type="image/webp" />
-                                <img
-                                    src="/images/landing/before.jpg"
-                                    alt="캐리어를 들고 지하철 계단을 오르는 여행자의 모습"
-                                    loading="lazy"
-                                    width="800"
-                                    height="600"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s] grayscale group-hover:grayscale-0"
-                                />
-                            </picture>
-                            {/* Before 캡션 */}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 md:p-8">
-                                <span className="inline-block px-3 py-1 bg-white/20 text-white text-xs font-black rounded-full mb-2 backdrop-blur-sm">BEFORE</span>
-                                <p className="text-white/80 font-bold text-sm md:text-lg leading-snug break-keep">
-                                    {t.pain?.before_caption || "여행의 설렘은 사라지고,\n무거운 짐과의 사투만 남으시겠습니까?"}
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
+                    {cards.map((card, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true, margin: "-60px" }}
+                            transition={{ duration: 0.6, delay: i * 0.12 }}
+                            className="relative bg-[#fafafa] border border-[#eee] rounded-2xl p-6 md:p-8 hover:border-[#F5B200]/40 hover:shadow-md transition-all duration-300"
+                        >
+                            {/* Yellow bullet on the left side (touching the timeline) */}
+                            <div className="absolute -left-[calc(1.5rem+5px)] md:-left-[calc(2rem+5px)] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#F5B200] border-2 border-white shadow-sm" />
 
-                <div className="hidden">
+                            <span className="inline-block text-[10px] font-black tracking-[0.2em] text-[#F5B200] uppercase mb-2">
+                                {card.label}
+                            </span>
+                            <h3 className="text-lg md:text-xl font-black text-[#111] mb-2 break-keep">
+                                {card.title}
+                            </h3>
+                            <p className="text-sm text-[#666] font-medium leading-relaxed break-keep">
+                                {card.desc}
+                            </p>
+                        </motion.div>
+                    ))}
                 </div>
             </div>
 

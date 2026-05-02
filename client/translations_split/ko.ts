@@ -13,7 +13,7 @@ export const ko = {
     nav: {
         services: '서비스 소개',
         locations: '지점 안내',
-        tracking: '배송 조회',
+        tracking: '예약 조회',
         partners: '제휴 문의',
         community: '커뮤니티',
         about: '브랜드 스토리',
@@ -331,7 +331,6 @@ export const ko = {
         booking_summary: "예약 요약",
         service_type: "서비스 유형",
         baggage_count: "짐 수량",
-        duration: "이용 시간",
         final_total: "총 결제 금액",
         enter_coupon: "프로모션 코드 입력",
         terms_agree_1: "[필수] 서비스 이용약관 동의",
@@ -368,6 +367,15 @@ export const ko = {
         cancel_btn: '예약 취소',
         alert_modification_locked: '당일 이후의 예약은 수정할 수 없습니다.',
         alert_cancellation_locked: '당일 이후의 예약은 취소할 수 없습니다.'
+    },
+    refund: {
+        title: '취소 및 환불 정책',
+        content: '• 서비스 24시간 전 취소: 전액 환불\n• 12시간 전 취소: 50% 환불\n• 12시간 이내 또는 노쇼: 환불 불가\n\n* 환불은 결제 수단에 따라 3~7영업일이 소요될 수 있습니다.',
+        confirm_btn: '예약 취소 확인',
+        close_btn: '닫기',
+        alert_cancel_success: '예약이 성공적으로 취소되었습니다.',
+        alert_cancel_paypal_refunded: '예약이 취소되었으며 PayPal 환불이 처리되었습니다. 3~7영업일 내에 반환됩니다.',
+        alert_cancel_error: '취소 처리 중 오류가 발생했습니다. 고객센터로 문의해 주세요.'
     },
     refund_page: {
         title: '신뢰의 기준, Beeliber 취소·환불정책 v1.0',

@@ -16,6 +16,11 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
 
     const usdPrefix = ({ ko: '약', 'zh-TW': '約', 'zh-HK': '約', zh: '约', ja: '約', en: '≈' } as Record<string, string>)[lang] ?? '≈';
     const PRICE_NUMERICS = [lang === 'ko' ? 5000 : 4000, 25000];
+    const isKo = lang === 'ko';
+    const rawDesc: string = t.pricing?.desc ?? '';
+    const pricingDesc = isKo
+        ? rawDesc
+        : rawDesc.replace(/₩([\d,]+)/g, (_, num) => `USD $${krwToUsd(Number(num.replace(/,/g, '')), rate)}`);
     const prices = [
         {
             image: "/images/bags/carrier-photo.png",
@@ -61,7 +66,7 @@ const LandingPricing: React.FC<LandingPricingProps> = ({ t, onNavigate, lang }) 
                         {t.pricing.headline}
                     </h2>
                     <p className="text-lg md:text-xl text-bee-black font-bold max-w-2xl mx-auto break-keep opacity-90 whitespace-pre-line px-4">
-                        {t.pricing.desc}
+                        {pricingDesc}
                     </p>
                 </div>
 

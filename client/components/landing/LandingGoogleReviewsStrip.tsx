@@ -37,6 +37,15 @@ function setCachedData(data: { reviews: GoogleReview[]; summary: ReviewSummary |
     } catch { /* quota exceeded 무시 */ }
 }
 
+const maskName = (name: string) => {
+    const parts = name.trim().split(' ');
+    return parts.map((part, i) => {
+        if (i === 0 && parts.length > 1) return part;
+        if (part.length <= 1) return part;
+        return part[0] + '*'.repeat(part.length - 1);
+    }).join(' ');
+};
+
 const LandingGoogleReviewsStrip: React.FC = () => {
     const cached = useRef(getCachedData());
     const [reviews, setReviews] = useState<GoogleReview[]>(cached.current?.reviews || [
@@ -79,7 +88,7 @@ const LandingGoogleReviewsStrip: React.FC = () => {
     const renderPlaceholderCard = (index: number) => (
         <div
             key={`placeholder-${index}`}
-            className="w-[220px] sm:w-[250px] md:w-[280px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 md:p-4 backdrop-blur-xl"
+            className="w-[250px] sm:w-[280px] md:w-[310px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 backdrop-blur-xl"
         >
             <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
@@ -97,13 +106,13 @@ const LandingGoogleReviewsStrip: React.FC = () => {
 
     const renderCard = (review: GoogleReview, i: number) => {
         return (
-            <div key={`${review.id}-${i}`} className="w-[220px] sm:w-[250px] md:w-[280px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 md:p-4 backdrop-blur-xl group hover:border-bee-yellow/50 transition-all duration-500">
+            <div key={`${review.id}-${i}`} className="w-[250px] sm:w-[280px] md:w-[310px] shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 backdrop-blur-xl group hover:border-bee-yellow/50 transition-all duration-500 text-left">
                 <div className="flex items-center gap-2 mb-2">
                     <div className="w-7 h-7 rounded-full bg-bee-yellow/20 flex items-center justify-center text-[10px] font-black text-bee-yellow border border-bee-yellow/30 shadow-sm">
                         {(review.author_name || "U")[0]}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-white/90 truncate">{review.author_name}</p>
+                        <p className="text-xs font-bold text-white/90 truncate">{maskName(review.author_name)}</p>
                         {renderStars(review.rating)}
                     </div>
                     <svg viewBox="0 0 24 24" className="w-3 h-3 shrink-0 opacity-40 grayscale brightness-200">
@@ -126,14 +135,14 @@ const LandingGoogleReviewsStrip: React.FC = () => {
     };
 
     return (
-        <section className="py-3 md:py-4 bg-transparent overflow-hidden relative z-20">
+        <section className="py-4 md:py-6 bg-transparent overflow-hidden relative z-20">
             {summary && (
-                <div className="flex items-center justify-center gap-3 mb-4 md:mb-6">
-                    <span className="text-[11px] font-black text-white/40 tracking-[0.25em] uppercase">
+                <div className="flex items-center justify-center gap-2 mb-4 md:mb-6 whitespace-nowrap flex-nowrap px-4">
+                    <span className="text-[10px] font-medium text-white/40 tracking-[0.1em] uppercase shrink-0">
                         Verified Google Feedback
                     </span>
-                    <div className="w-1 h-1 bg-bee-yellow rounded-full" />
-                    <span className="text-[10px] font-bold text-bee-yellow">
+                    <div className="w-1 h-1 bg-bee-yellow rounded-full shrink-0" />
+                    <span className="text-[10px] font-bold text-bee-yellow shrink-0">
                         {summary.average_rating}★ / {summary.total_reviews.toLocaleString()} People Experienced
                     </span>
                 </div>

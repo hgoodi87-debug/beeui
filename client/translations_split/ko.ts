@@ -76,9 +76,9 @@ export const ko = {
         ]
     },
     hero: {
-        badge: '서울 여행 짐보관·공항배송 파트너 🐝',
-        main_title_1: '체크아웃 후, 홀가분한',
-        main_title_2: '서울 여행의 완성',
+        badge: '서울 여행 짐보관·공항배송 파트너',
+        main_title_1: '서울·부산 짐 보관',
+        main_title_2: '인천공항 당일 배송',
         subtitle: '홍대·명동·강남 등 40+ 거점 보관 ₩4,000~\n인천공항 당일 배송 ₩25,000~',
         btn_now: '지금 예약하기',
         cta_storage: "가까운 보관소 찾기",
@@ -103,6 +103,14 @@ export const ko = {
         check_info: '정보를 다시 확인해주세요.'
     },
     pain: {
+        section_title: "어떤 서비스를 운영하나요?",
+        section_desc: "빌리버는 명동·홍대·동대문·강남·부산 등 총 40여 개 거점에서 짐을 보관하고, 인천공항까지 배송해드리는 여행자 짐 서비스입니다.",
+        storage_title: "시간 단위 짐 보관",
+        storage_desc: "빌리버는 고객이 원하는 시간만큼만 짐 보관이 가능합니다.",
+        delivery_title: "공항 당일 배송",
+        delivery_desc: "빌리버는 호텔·지점에서 접수한 짐을 인천공항까지 당일 안전하게 배송합니다.",
+        coverage_title: "서울·부산 주요 40개 이상 거점",
+        coverage_desc: "빌리버는 홍대·명동·강남·종로·해운대·광안리 등 주요 관광지 인근에 파트너 지점이 있습니다.",
         headline: "무거운 캐리어는 빌리버가,\n당신의 손엔 서울의\n낭만만 💅",
         sub_copy: "복잡한 서울 지하철 계단과 만원 버스 속 캐리어는 이제 그만.\n빌리버가 당신의 귀한 4.5시간을 자유로 채워드립니다.",
         point1: "악명 높은 지하철 계단은 당신의 적입니다",
@@ -116,16 +124,20 @@ export const ko = {
         before_caption: "캐리어 끌고 계단·지하철·관광지를… 정말요?"
     },
     howitworks: {
-        headline: "수하물로부터 해방된,\n진정한 서울 여행의 시작.",
-        badge_label: "SERVICE PROCESS",
-        step1: { title: "허브에서 짐 맡기기", desc: "입국 후 6개 허브 지점(09:00-13:00) 중 한 곳을 방문하세요. 짐을 맡기고 바로 투어를 시작하세요.", badge: "STEP 01" },
-        step2: { title: "실시간 위치 확인", desc: "배송 추적 링크를 받아보세요. 커피 한 잔의 여유를 즐기는 동안 당신의 짐은 안전하게 이동합니다.", badge: "STEP 02" },
-        step3: { title: "공항에서 짐 찾기", desc: "짐은 인천공항(16:00-21:00)에 미리 도착해 있습니다. 가벼운 몸으로 공항에서 짐을 받아 바로 출국하세요.", badge: "STEP 03" }
+        headline: "쉽고 빠른 4단계",
+        subtitle: "복잡한 절차 없이, 예약부터 픽업까지.",
+        step1: { title: "서비스 선택", desc: "짐 보관 또는 공항 배송 중 필요한 서비스를 선택합니다." },
+        step2: { title: "지점 및 시간 선택", desc: "가까운 지점을 찾고 맡길 시간과 찾을 시간을 지정하세요." },
+        step3: { title: "결제 완료", desc: "카드·간편결제로 즉시 예약이 확정됩니다." },
+        step4: { title: "QR 바우처로 이용", desc: "지점에서 QR만 보여주면 끝. 더 이상 줄 서지 마세요." },
     },
     freedom: {
-        badge: "AFTER",
-        headline: "짐은 빌리버에게.<br /><span class=\"text-bee-yellow\">지금 이 자유,</span> ₩4,000부터.",
-        sub_copy: "무거운 짐 없이 가볍게, 서울의 낭만을 즐기세요. 💅✨"
+        headline: "간편한 예약 프로세스",
+        subtitle: "예약부터 픽업까지 복잡한 절차 없이 간편하게.",
+        step1: { title: "거점에서 짐 맡기기", desc: "자신에게 가까운 거점을 선택 후, 간편하게 예약하고 짐을 맡기세요!" },
+        step2: { title: "실시간 위치 확인", desc: "빌리버 홈페이지에서 내 짐의 현황을 확인할 수 있습니다." },
+        step3: { title: "안전하게 배송·보관", desc: "전 지점 24시간 CCTV 가동 중, 전문 배송기사가 안전하게 공항까지 배송해줍니다." },
+        step4: { title: "QR 바우처로 짐 픽업하기", desc: "지점에서 QR만 보여주면 끝. 더 이상 줄 서지 마세요." },
     },
     trust: {
         headline: "당신의 짐은,<br class=\"md:hidden\" /> 우리에겐 <span class=\"text-bee-yellow italic\">VIP</span>입니다.",
@@ -136,6 +148,16 @@ export const ko = {
         footer_label1: "마포/서울 공식 파트너십",
         footer_label2: "검증된 보관 거점",
         footer_label3: "이미 수만 명이 경험한 신뢰"
+    },
+    vip: {
+        headline: "beeliber MEMBERSHIP",
+        desc: "빌리버를 자주 이용할수록 다양한 혜택이 쌓입니다. 더 가볍게, 더 자유롭게 여행하세요.",
+        silver_condition: "10회 이용 시",
+        silver_title: "다음 예약 10% 할인",
+        gold_condition: "20회 이용 시",
+        gold_title: "전용 픽업 서비스 + 20% 할인",
+        platinum_condition: "50회 이용 시",
+        platinum_title: "콘시어지 전담 + 30% 할인"
     },
     pricing: {
         headline: "가장 투명한 가격,\n숨은 비용 없이",
@@ -164,7 +186,7 @@ export const ko = {
         }
     },
     reviews_section: {
-        headline: "서울을 다녀간 여행자들의\n생생한 목소리를 확인하세요.",
+        headline: "beeliber 글로벌 고객 구글리뷰",
         verified_google: "검증된 구글 피드백",
         people_experienced: "명의 사용자가 경험함",
         reviews_count: "+개의 리뷰",
@@ -177,7 +199,8 @@ export const ko = {
         review_5: { name: "Min-Ji", location: "Korea", text: "성수동 카페 투어할 때 짐이 짐이었는데, 빌리버로 보내버리니 세상 편하네요! ☕" },
         review_6: { name: "Chen", location: "China", text: "광화문 광장의 웅장함을 짐 없이 온전히 느낄 수 있어서 너무 좋았습니다. 🛡️" },
         review_7: { name: "Hans", location: "Germany", text: "익선동의 아기자기한 상점들을 구경할 때 짐이 없으니 정말 자유로웠어요. 10/10! 🎁" },
-        review_8: { name: "Sofia", location: "Italy", text: "한강공원에서 피크닉 할 때 짐을 미리 호텔로 보내길 정말 잘한 것 같아요. 🧺" }
+        review_8: { name: "Sofia", location: "Italy", text: "한강공원에서 피크닉 할 때 짐을 미리 호텔로 보내길 정말 잘한 것 같아요. 🧺" },
+        review_9: { name: "Mei-Ling", location: "Taiwan", text: "홍대에서 명동까지 짐 없이 이동하니 쇼핑도 훨씬 편했어요. beeliber 없었으면 어쩔 뻔! 🛍️" }
     },
     final_cta: {
         headline: "아직도 캐리어 끌고 다니세요?\n지금 맡기고 자유롭게 여행하세요.",

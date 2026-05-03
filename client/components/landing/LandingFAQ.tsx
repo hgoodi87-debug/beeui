@@ -31,15 +31,16 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-bee-yellow/8 rounded-full blur-[100px] -ml-48 -mb-24 pointer-events-none" />
 
       <div className="max-w-[1000px] mx-auto px-6 relative z-10">
-        <div className="mb-8 md:mb-12">
+        <div className="mb-8 md:mb-12 text-center md:text-left">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-2xl md:text-5xl font-display font-black text-white mb-4 tracking-tighter"
+            className="text-3xl md:text-5xl font-display font-black text-bee-yellow mb-4 tracking-[-0.03em] text-center"
           >
-            {t.qna.title}
+            {t.qna.title?.replace(/\(FAQ\)/i, '')}
+            <span className="font-bold tracking-[0.04em]"> (FAQ)</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -72,13 +73,13 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
                   className="w-full flex items-center justify-between p-5 md:p-7 text-left"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black transition-colors shrink-0 ${
                       isOpen ? 'bg-bee-yellow text-bee-black' : 'bg-white/8 text-white/40 group-hover:bg-bee-yellow/15 group-hover:text-bee-yellow'
                     }`}>
                       Q
                     </div>
-                    <span className="text-base md:text-lg font-bold text-white leading-tight break-keep">
+                    <span className="text-sm md:text-base font-bold text-white leading-snug break-words">
                       {item.question}
                     </span>
                   </div>
@@ -109,15 +110,6 @@ const LandingFAQ: React.FC<LandingFAQProps> = ({ t }) => {
           })}
         </div>
 
-        <div className="mt-8 text-center">
-            <button
-                onClick={() => window.dispatchEvent(new CustomEvent('NAVIGATE', { detail: 'QNA' }))}
-                className="inline-flex items-center gap-2 group px-8 py-4 bg-bee-yellow text-bee-black rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white hover:text-bee-black transition-all shadow-xl"
-            >
-                {t.qna.view_all}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-        </div>
       </div>
     </section>
   );
